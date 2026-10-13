@@ -1,0 +1,7 @@
+{$APP_DOMAIN} {
+    request_body {
+        max_size 26MB
+    }
+    reverse_proxy app:8765
+    encode zstd gzip
+}

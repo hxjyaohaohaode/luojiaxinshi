@@ -1,0 +1,13 @@
+.calendar-guide{margin:18px 0 24px;border:1px solid var(--line);border-radius:11px;background:#fff;overflow:hidden}
+.calendar-guide>summary{padding:16px 18px;cursor:pointer;font-size:14px;font-weight:600;color:var(--green);min-height:52px}
+.calendar-guide[open]>summary{border-bottom:1px solid var(--line)}
+.calendar-guide-body{padding:18px}
+.calendar-guide-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.calendar-guide-options details{align-self:start;border:1px solid var(--line);border-radius:8px;padding:0 14px;background:#fbfcfa;font-size:13px;min-width:0}
+.calendar-guide-options summary{padding:13px 0;cursor:pointer;min-height:48px;line-height:1.7}
+.calendar-guide-options p{line-height:1.85;color:var(--muted);margin:0 0 11px;overflow-wrap:anywhere}
+.calendar-guide-options a{display:inline-block;font-size:12px;margin:0 0 12px;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.calendar-check{padding:15px 17px;border-radius:9px;background:#f2f6ee;font-size:12px;line-height:1.9;color:#58715a}
+.calendar-check strong{color:#375a43;font-size:13px}
+.calendar-check p{margin-top:7px}
+@media(max-width:600px){.calendar-guide-options{grid-template-columns:minmax(0,1fr)}.calendar-guide-body{padding:14px}.calendar-guide>summary{padding:14px}}
