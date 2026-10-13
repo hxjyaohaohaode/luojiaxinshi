@@ -67,6 +67,12 @@ def readable(parts):
     return '\n\n'.join(lines)
 
 
+def message_parts(raw,tier,validated,limits,data):
+    if tier==3 or tier==2 and not validated:
+        return [{'kind':'text','text':raw}]
+    return parse_message(raw,limits,data)
+
+
 def load_message(conn, item, settings):
     row=conn.execute('SELECT * FROM genui_messages WHERE message_id=?',(item['id'],)).fetchone()
     if not row or row['protocol_version']!=1:
@@ -74,7 +80,7 @@ def load_message(conn, item, settings):
         return item
     try:
         data=safe_value(json.loads(row['trusted_data']),{**LIMITS,**settings.genui_limits})
-        parts=parse_message(row['raw'],settings.genui_limits,data) if row['tier']<3 else [{'kind':'text','text':row['raw']}]
+        parts=message_parts(row['raw'],row['tier'],row['validated'],settings.genui_limits,data)
         if not row['validated']:
             for part in parts:
                 if part['kind']=='ui':part['spec']['complete']=False
@@ -181,7 +187,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                                 live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
                                 if not live or live['processing_token']!=token:raise asyncio.CancelledError()
                                 conn.execute('UPDATE genui_messages SET raw=?,updated_at=? WHERE message_id=?',(raw,int(time.time()),mid))
-                            seq+=1;yield packet('delta',{'message_id':mid,'text':event['text']},seq)
+                            seq+=1;yield packet('delta',{'message_id':mid,'text':event['text'],'expanded_template':event.get('expanded_template',False)},seq)
                         elif event['type']=='complete':result=event['result'];usage=event.get('usage',{})
                 if result is None:raise AIError('模型没有完整结束，已保留收到的部分。')
                 if result['answer']!=raw:raise AIError('完整回复与已接收内容不一致，保留接收到的部分。')
@@ -198,7 +204,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                     with db.connect(write=True) as conn:
                         live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
                         if live and live['processing_token']==token:
-                            parts=parse_message(raw,settings.genui_limits,trusted) if tier<3 else [{'kind':'text','text':raw}]
+                            parts=message_parts(raw,tier,status=='complete',settings.genui_limits,trusted)
                             if status!='complete':
                                 for part in parts:
                                     if part['kind']=='ui':part['spec']['complete']=False
@@ -212,7 +218,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             stored=conn.execute('SELECT raw FROM genui_messages WHERE message_id=?',(mid,)).fetchone()
                             message=conn.execute('SELECT status FROM conversation_messages WHERE id=?',(mid,)).fetchone()
                             if stored and message and message['status']=='cancelled':
-                                parts=parse_message(stored['raw'],settings.genui_limits,trusted) if tier<3 else [{'kind':'text','text':stored['raw']}]
+                                parts=message_parts(stored['raw'],tier,False,settings.genui_limits,trusted)
                                 conn.execute('UPDATE conversation_messages SET content=? WHERE id=?',(readable(parts),mid))
                 finally:
                     if active.get(cid,(None,None))[1] is task:active.pop(cid,None)

@@ -9,12 +9,18 @@ from pydantic import Field,ConfigDict
 from .ai import AIError, check_evidence
 from .chat_ai import ChatAnswer, IMAGE_MIME, PROMPT
 from .genui import LIMITS
+from .genui_prompt import system_prompt,expand_template
+from .genui import parse_message
 
 
 class UIAnswer(ChatAnswer):
     # Whitespace is meaningful in a streamed Markdown answer and must reconcile exactly.
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=False)
     answer: str = Field(min_length=1, max_length=80000)
+
+
+class TemplateAnswer(UIAnswer):
+    ui_template: dict | None = None
 
 
 def capabilities(settings):
@@ -125,10 +131,8 @@ def payload(settings, sources, messages, profile, tier):
         if source['kind'] in IMAGE_MIME and source['content'] and source['status'] != 'failed':
             materials += [{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
                           {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}]
-    # The original persona and evidence rules are preserved; Phase 5 supplies the separate UI module.
-    prompt = PROMPT + json.dumps(UIAnswer.model_json_schema(), ensure_ascii=False)
-    if not settings.ai_supports_json:
-        prompt = PROMPT.rsplit('输出中文 JSON', 1)[0] + '输出中文 Markdown 文字，不输出 HTML 或 genui。原文引用尚未程序校验，请提醒本人核对。'
+    response_model=TemplateAnswer if tier==2 else UIAnswer
+    prompt = system_prompt(tier,response_model.model_json_schema(),settings.ai_supports_json)
     request = {'model':settings.ai_model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':m['content']} for m in messages],
                'stream':True,'stream_options':{'include_usage':True},'enable_thinking':False,'max_tokens':6000}
     if settings.ai_supports_json:
@@ -186,12 +190,19 @@ async def stream_reply(settings, sources, messages, profile, tier):
         if finish!='stop':
             raise AIError('模型回复未完整结束，已保留收到的内容；请重试或缩小问题。')
         if settings.ai_supports_json:
-            result=UIAnswer.model_validate_json(raw)
+            result=(TemplateAnswer if tier==2 else UIAnswer).model_validate_json(raw)
             check_evidence(result.citations,sources)
             available={s['id'] for s in sources if s['kind'] in IMAGE_MIME and s['status']!='failed'}
             if any(sid not in available for sid in result.image_sources) or result.answer!=answer.output or not result.answer.strip():
                 raise ValueError('invalid_evidence_or_stream')
             result=result.model_dump()
+            if tier==2:
+                if any(p['kind']=='ui' for p in parse_message(result['answer'])):
+                    raise ValueError('template_mode_raw_ui')
+                appended=expand_template(result.pop('ui_template',None))
+                if appended:
+                    result['answer']+=appended
+                    yield {'type':'delta','text':appended,'expanded_template':True}
         else:
             result={'answer':raw,'citations':[],'image_sources':[]}
         yield {'type':'complete','result':result,'usage':{'input_tokens':usage.get('prompt_tokens'),'output_tokens':usage.get('completion_tokens')}}
