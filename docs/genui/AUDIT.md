@@ -2,6 +2,8 @@
 
 审计日期：2026-10-13。范围为 `系统_开发`，未读取密钥文件。现有数据与验收夹具隔离。
 
+本文件保留 Phase 0 基线。2026-10-14 最终实现与验收见 DESIGN.md、TESTING.md 和 RELEASE.md；新增模块包括工作台 chrome、附件预览、CSV/XLSX 解析、媒体访问、资料追加导入、个人回答偏好及工作区既有 MiMo 语音集成。当前 GitHub 共享还包含用户指定的项目方案与原创视觉附件，不包含业务数据库。
+
 ## 基线
 
 - 技术栈：Python 3.12、FastAPI、SQLite WAL；前端为原生 ES modules、CSS 与 DOM，无框架、无构建依赖。运行时 Node 不参与应用服务。

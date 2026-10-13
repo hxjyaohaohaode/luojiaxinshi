@@ -11,6 +11,9 @@ MAX_TEXT = 10000
 
 
 def extract(data, kind):
+    if kind in {'csv','xlsx'}:
+        from .spreadsheet import spreadsheet_sections
+        return spreadsheet_sections(data,kind)
     if kind in {'png','jpg','jpeg','webp'}:
         import warnings
         from PIL import Image
@@ -72,7 +75,7 @@ def extract(data, kind):
                 warnings.append('文档含图片：图片内容未识别，请补充其中的关键信息')
             if any(x.filename.startswith(('word/header','word/footer','word/footnotes','word/endnotes')) for x in infos):
                 warnings.append('页眉、页脚或脚注未纳入正文，请核对是否包含办理信息')
-    elif kind == 'txt':
+    elif kind in {'txt','md'}:
         try:
             text = data.decode('utf-8-sig')
         except UnicodeDecodeError:

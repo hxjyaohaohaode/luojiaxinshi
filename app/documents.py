@@ -23,8 +23,11 @@ def text_source(text, name='通知正文'):
 def file_source(filename, data):
     name = re.split(r'[/\\]', filename)[-1][:160]
     suffix = Path(name).suffix.lower().lstrip('.')
-    if suffix not in {'pdf','docx','txt','png','jpg','jpeg','webp'}:
-        raise ValueError('支持 PDF、DOCX、TXT、PNG、JPEG、WebP 文件')
+    if suffix in {'mp4','webm'}:
+        from .chat_media import chat_file_source
+        return chat_file_source(filename,data)
+    if suffix not in {'pdf','docx','txt','md','csv','xlsx','png','jpg','jpeg','webp'}:
+        raise ValueError('支持 PDF、DOCX、XLSX、CSV、TXT、Markdown、图片、MP4 和 WebM；DOC / XLS 请另存为新版格式')
     if not data or len(data)>MAX_FILE:
         raise ValueError('每份附件须大于 0 字节且不超过 5 MB')
     if not PARSER_SLOTS.acquire(timeout=2):

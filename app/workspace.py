@@ -18,6 +18,7 @@ from .documents import file_source,text_source,total_chars,MAX_FILE,MAX_CHARS
 from .models import Strict,Version,safe_url
 from .security import rate_limit
 from .genui_api import load_message,install_genui
+from .chat_media import chat_file_source, VIDEO_MIME, video_response
 
 
 class NewConversation(Strict):
@@ -169,7 +170,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     raise HTTPException(422,'附件字段不正确')
                 data=await file.read(MAX_FILE+1)
                 try:
-                    materials.append(await run_in_threadpool(file_source,file.filename or '',data))
+                    materials.append(await run_in_threadpool(chat_file_source,file.filename or '',data))
                 except ValueError as error:
                     raise HTTPException(422,str(error)) from None
             if not materials:
@@ -208,13 +209,15 @@ def install_workspace(app,db,settings,user,heavy_lock):
             return conversation_detail(conn,cid,current['id'],settings)
 
     @app.get('/api/conversations/{cid}/sources/{sid}/download')
-    def download(cid:str,sid:str,preview:bool=False,current=Depends(user)):
+    def download(cid:str,sid:str,request:Request,preview:bool=False,current=Depends(user)):
         with db.connect() as conn:
             own(conn,cid,current['id'])
             source=conn.execute('SELECT * FROM conversation_sources WHERE conversation_id=? AND id=?',(cid,sid)).fetchone()
             if not source:
                 raise HTTPException(404,'材料不存在')
         content=source['content'] or '\n'.join(s['text'] for s in json.loads(source['sections'])).encode()
+        if source['kind'] in VIDEO_MIME:
+            return video_response(content,source['kind'],source['name'],request.headers.get('range'),preview)
         mime=chat_ai.IMAGE_MIME.get(source['kind'],'application/octet-stream')
         disposition='inline' if preview and source['kind'] in chat_ai.IMAGE_MIME and source['status']!='failed' else 'attachment'
         return Response(content,media_type=mime,headers={'Content-Disposition':disposition+"; filename*=UTF-8''"+quote(source['name'])})
@@ -309,6 +312,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
             own(conn,cid,current['id'],payload.version,idle=True)
             wanted=set(payload.source_ids)
             selected=[s for s in sources_for(conn,cid,True) if s['id'] in wanted]
+            if any(s['kind'] in VIDEO_MIME for s in selected):
+                raise HTTPException(422,'视频可留在对话中播放；转为通知时请选择可核对的原文、文档或截图')
             if len(selected)!=len(wanted):
                 raise HTTPException(404,'所选材料不存在或不属于此对话')
             fingerprint=hashlib.sha256(dumps(sorted(s['sha256'] for s in selected)).encode()).hexdigest()

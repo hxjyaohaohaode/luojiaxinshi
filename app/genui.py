@@ -228,6 +228,8 @@ def validate_node(node, limits=None):
             for item in value:
                 expressions(item)
     expressions(props)
+    if node['type']=='Plot' and isinstance(props.get('expression'),str):
+        validate_expression(props['expression'],limits)
     children = node.get('children', [])
     if not isinstance(children, list) or len(children) > limits['nodes'] or any(not safe_key(c) for c in children) or (not definition['children'] and children):
         fail('invalid_children')

@@ -115,6 +115,13 @@
         "label": {
           "type": "string",
           "maxLength": 8192
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "controls"
+          ]
         }
       },
       "required": [],
@@ -162,6 +169,13 @@
         "label": {
           "type": "string",
           "maxLength": 8192
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "controls"
+          ]
         }
       },
       "required": [],
@@ -2172,7 +2186,7 @@
       },
       "children": false,
       "tier": "P1",
-      "a11y": "使用语义结构和可见焦点"
+      "a11y": "替代文字、保留纵横比、可打开原尺寸预览；仅授权资源"
     },
     "HostView": {
       "properties": {
@@ -2234,6 +2248,125 @@
       "children": false,
       "tier": "P2",
       "a11y": "使用语义结构和可见焦点"
+    },
+    "Video": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "src": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 8192
+        }
+      },
+      "required": [
+        "src",
+        "label"
+      ],
+      "defaults": {
+        "status": "ready"
+      },
+      "children": false,
+      "tier": "P1",
+      "a11y": "原生播放控件、无自动播放、可见文字说明；只加载当前会话授权资源"
+    },
+    "Plot": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "expression": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "xMin": {
+          "type": "number",
+          "minimum": -1000000,
+          "maximum": 1000000
+        },
+        "xMax": {
+          "type": "number",
+          "minimum": -1000000,
+          "maximum": 1000000
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 120
+        },
+        "xLabel": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "yLabel": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "unit": {
+          "type": "string",
+          "maxLength": 8192
+        }
+      },
+      "required": [
+        "expression",
+        "xMin",
+        "xMax"
+      ],
+      "defaults": {
+        "status": "ready",
+        "label": "参数与结果",
+        "parameters": {},
+        "samples": 81,
+        "xLabel": "x",
+        "yLabel": "y",
+        "unit": ""
+      },
+      "children": false,
+      "tier": "P1",
+      "a11y": "受限表达式确定性采样；坐标和单位；等价表格；参数交互不发网络请求"
     }
   },
   "actions": {

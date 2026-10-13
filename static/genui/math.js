@@ -30,6 +30,6 @@ export function mathTree(text){
 export function formula(text){
   const ns='http://www.w3.org/1998/Math/MathML',math=document.createElementNS(ns,'math');math.setAttribute('display','block');math.setAttribute('aria-label',text);
   function build(tree){const n=document.createElementNS(ns,tree.tag);for(const child of tree.children)n.append(typeof child==='string'?document.createTextNode(child):build(child));return n;}
-  try{math.append(build(mathTree(text)));}catch{const fallback=document.createElementNS(ns,'mtext');fallback.textContent=text;math.append(fallback);}
+  try{math.append(build(mathTree(text)));}catch{const fallback=document.createElement('span');fallback.className='gu-math-fallback';fallback.setAttribute('role','math');fallback.setAttribute('aria-label',text);fallback.textContent=text;return fallback;}
   return math;
 }

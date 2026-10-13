@@ -1,4 +1,19 @@
-# 珞珈小信使视觉资产
+# 校园助手视觉资产
+
+## 应用 Logo · V4
+
+采用用户确认的视觉平衡版：老图书馆中央屋顶、通知纸张与行动对勾。原图保存在项目根目录的 `视觉设计/Logo/`。界面资产由定稿等比缩小生成，保留完整方形画布、透明通道、原始配色及已经校正的视觉重心。
+
+| 文件 | 规格与用途 |
+|---|---|
+| `static/assets/campus-notice-mark-v4.png` | 256 × 256，透明底；桌面侧栏、登录／注册／找回页、手机顶部导航、启动加载画面 |
+| `static/assets/campus-notice-icon-v4-32.png` | 32 × 32，浅底；浏览器图标 |
+| `static/assets/campus-notice-icon-v4-64.png` | 64 × 64，浅底；高像素密度浏览器图标、组件验收页 |
+| `static/assets/campus-notice-icon-v4-180.png` | 180 × 180，浅底；Apple 主屏幕图标 |
+
+`static/brand.css` 负责按场景控制图标尺寸与文字对齐，不裁切图案或拉伸宽高。资源文件名带版本号，刷新页面即可请求新版图标；PNG 沿用静态图片缓存策略。主屏幕图标元数据不代表已经提供离线运行能力。
+
+## 珞珈小信使
 
 本项目的原创应用角色。图像使用内置 imagegen 生成；第二张使用第一张作为角色一致性参考。两张图片均为带真实透明通道的 PNG，已保存于项目内，页面不依赖外部图床。
 
@@ -39,3 +54,9 @@ Preserve this EXACT character identity: same round ivory bird, navy eyes, golden
 Change only the pose, facial mood, and handheld prop: the bird is calmly sitting, feet visible, a gentle closed-beak smile with open attentive eyes; both wings cradle a small open cream notebook with just 2 or 3 understated green ruled lines. No checkmarks, no check circles, no success badge, so it conveys 'ready when you are' rather than a confirmed success.
 Full body centered, compact charming rounded silhouette readable at 90 to 120 px. Isolated character ONLY, real transparent alpha background; soft tiny contact shadow may remain. Character fills 82 percent of a square canvas with generous clean edges. No scene, no extra floating objects, no panel background, no words, no official seal, no typography, no watermark, no copied university logo. Keep two wings and two feet anatomically consistent.
 ```
+
+## 共享仓库中的资源
+
+原 `视觉设计/Logo/` 的原创设计文件随仓库放在 `项目资料/视觉设计/Logo/`，文件内容不变。应用实际加载的全部资源仍在 `static/assets/`，共五个小信使姿态、四个 V4 图标和一个演示视频，不依赖原电脑的路径。
+
+`genui-demo.webm` 为本项目 Canvas 绘制的 640×360、约 3 秒合成动画，100020 字节，仅用于验证原生视频控制与可视展示，不代表外部事件或真实模型生成素材。未使用第三方音轨、视频或字体文件。

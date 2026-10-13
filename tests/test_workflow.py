@@ -87,7 +87,7 @@ def test_health_and_authentication(env):
     headers=a.get('/').headers
     assert "frame-ancestors 'none'" in headers['content-security-policy']
     assert headers['x-content-type-options']=='nosniff'
-    assert a.get('/api/session').json()['ai']=={'configured':False,'model':'qwen3.8-flash'}
+    assert a.get('/api/session').json()['ai']=={'configured':False,'model':'mimo-v2.6-pro'}
 
 
 def test_invite_single_use_and_password_policy(env):

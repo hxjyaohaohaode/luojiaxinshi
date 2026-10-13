@@ -1,3 +1,4 @@
+from .preferences import PERSONAL_KEYS,presentation_prompt
 """Existing compatible model transport, now with bounded SSE and JSON-string streaming."""
 import base64
 import codecs
@@ -124,17 +125,18 @@ class AnswerDecoder:
 
 
 def payload(settings, sources, messages, profile, tier):
-    context = {'personal_conditions': {k: v for k, v in profile.items() if k in {'campus_role','school','level','grade','college','major','semester','goals'}},
-               'materials': [{'id': s['id'], 'name': s['name'], 'status': s['status'], 'warning': s['warning'], 'sections': s['sections']} for s in sources]}
+    from .chat_media import resource_index
+    context = {'personal_conditions': {k: v for k, v in profile.items() if k in PERSONAL_KEYS},
+               'materials': [{'id': s['id'], 'name': s['name'], 'status': s['status'], 'warning': s['warning'], 'sections': s['sections']} for s in sources], 'resources':resource_index(sources)}
     materials = [{'type': 'text', 'text': json.dumps(context, ensure_ascii=False)}]
     for source in sources:
         if source['kind'] in IMAGE_MIME and source['content'] and source['status'] != 'failed':
             materials += [{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
                           {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}]
     response_model=TemplateAnswer if tier==2 else UIAnswer
-    prompt = system_prompt(tier,response_model.model_json_schema(),settings.ai_supports_json)
+    prompt = system_prompt(tier,response_model.model_json_schema(),settings.ai_supports_json)+presentation_prompt(profile)
     request = {'model':settings.ai_model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':m['content']} for m in messages],
-               'stream':True,'stream_options':{'include_usage':True},'enable_thinking':False,'max_tokens':6000}
+               'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'disabled'},'max_completion_tokens':6000}
     if settings.ai_supports_json:
         request['response_format'] = {'type':'json_object'}
     return request

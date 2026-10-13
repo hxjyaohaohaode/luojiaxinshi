@@ -1,0 +1,43 @@
+制作方式
+
+内置 image_gen 图像编辑；按用户指定的校徽中央屋顶局部保留建筑轮廓，调整图标的比例、视觉对齐和留白。
+
+====================
+
+比例与水平对齐
+
+
+
+====================
+
+透明底版最终位置校正
+
+Use case: precise-object-edit.
+Edit target: the attached transparent forest-green and gold app logo.
+
+This is a final optical placement correction only. Preserve the existing artwork exactly: the recognizable Old Library upper roof and finial, the symmetric green roof, the lower rectangular roof segments, the green rounded notice page, the gold folded corner, the two horizontal transparent slots, the bold transparent checkmark, and the green wing tip. Do not redesign, recolor, add or remove any elements. Preserve the artwork's scale.
+
+The current source is 1254 x 1254. Its visible artwork bounds are approximately x=186 to1068, y=207 to1119. Move the ENTIRE assembled artwork UP by approximately60 pixels, as a single rigid unit. Keep the horizontal position unchanged. The finished visible silhouette should extend approximately x=186 to1068, y=147 to1059 in a1254-square canvas: about15% left and right safe margins,12% above the finial,16% below the document. This slight upward optical compensation balances the heavier paper below. The roof finial and document stay centered on x=627. Never move the roof separately from the page. The final whole symbol must feel optically centered, with comfortably balanced space inside a square app-icon area.
+
+Square canvas, genuine fully transparent background and cutouts. Preserve existing transparency. All green and gold interior fills should remain opaque, crisp and clean. No new background, no border, no text, no mockup, no gradients, no shadows. Return the single finished centered transparent logo.
+
+====================
+
+浅底应用图标
+
+Use case: background-extraction / precise-object-edit.
+Asset type: production application icon, square opaque PNG.
+
+The attached image is the FINAL approved geometry and optical placement of a campus notification assistant logo. Preserve the emblem EXACTLY: same scale, same placement within the square, same architectural roof, same small finial, same roof segments, same green notice body, same large checkmark and wing, same gold fold, same two document slots. Do not move, enlarge, shrink, distort, redraw or redesign the symbol.
+
+Make only this change: replace ALL transparent pixels with a single uniform solid light warm ivory background #F6F7F0. This includes the background outside the emblem, the checkmark's negative space, the document strokes, and the architectural gaps. The resulting canvas is a complete filled square from edge to edge with no transparency. Keep all forest-green and muted gold artwork intact.
+
+This is an app icon source file. Do not draw an additional smaller tile, inner rounded rectangle, border, frame or shadow. Do not round the outside corners in the source image; platform masks will do that. Preserve the existing safe margins and optical centering. No new texture, gradients, glow, embossing, words, letterforms, slogans, labels, badges or background shapes. Crisp flat appearance. Only one square finished app icon.
+
+====================
+
+参考出处
+
+用户截图：参考/用户指定_老图书馆中央屋顶.png
+武汉大学标识官网：https://www.whu.edu.cn/xxgk/wdbs.htm
+

@@ -17,11 +17,11 @@ export class UIRenderer{
     this.unsubscribe=this.store.subscribe(()=>{this.changed();this.schedule();});this.update(spec,true);
   }
   changed(){this.root.dataset.dirty='true';this.options.onChange?.(this.snapshot());}
-  announce(text){this.feedback.textContent=text;}
+  announce(text){this.feedback.textContent=text;if(text)this.footer.hidden=false;}
   snapshot(){return {state:this.store.snapshot(),view:safeClone(this.view)};}
   update(spec,immediate=false){this.spec=spec;try{this.store.defaults(spec.state||{});}catch{this.announce('状态更新超出限制，已保留当前值。');}if(immediate)this.paint();else this.schedule();}
   schedule(){if(!this.frame&&!this.disposed)this.frame=requestAnimationFrame(()=>{this.frame=0;this.paint();});}
-  dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.unsubscribe?.();this.records.clear();this.root.remove();}
+  dispose(){this.disposed=true;cancelAnimationFrame(this.frame);this.unsubscribe?.();for(const r of this.records.values())r.cleanup?.();this.records.clear();this.root.remove();}
   node(id,depth=0){
     if(depth>CATALOG.limits.depth)return el('p','gu-error','内容层级过多，请查看文字。');
     const model=this.spec.nodes[id];let record=this.records.get(id);
@@ -30,12 +30,12 @@ export class UIRenderer{
       if(!model){record.content.replaceChildren(el('p',this.spec.complete?'gu-error':'gu-skeleton',this.spec.complete?'这部分内容未提供，请以文字说明为准。':'正在接收这部分内容…'));record.children.replaceChildren();return record.element;}
       const definition=Object.hasOwn(CATALOG.components,model.type)?CATALOG.components[model.type]:null,props=resolve(model.props,this.store.values,this.spec.data||{},0,this.limits);
       if(model.type!=='Unknown'&&(!definition||!matches(props,{type:'object',properties:definition.properties,required:definition.required,additionalProperties:false},false)))throw Error('数据尚未完整或不符合组件要求');
-      this.paintItems+=(props.items?.length||0)+(props.data?.length||0)+Math.min(props.rows?.length||0,50)+(props.edges?.length||0)+1;
+      this.paintItems+=(props.items?.length||0)+(props.data?.length||0)+Math.min(props.rows?.length||0,50)+(props.edges?.length||0)+(model.type==='Plot'?props.samples||81:0)+1;
       if(this.paintItems>this.limits.renderItems)throw Error('render_limit');
       delete record.element.dataset.error;record.model=model;record.props=props;const signature=JSON.stringify([model.type,props,model.on,model.children]);
       if(signature!==record.signature){
         const focused=record.content.contains(document.activeElement)?document.activeElement:null,field=focused?.dataset.field,selection=focused&&'selectionStart'in focused?focused.selectionStart:null;
-        record.signature=signature;record.refresh=null;record.mount=null;record.content.className='';record.content.replaceChildren();record.children.replaceChildren();record.element.className='gu-node gu-'+model.type.toLowerCase();
+        record.cleanup?.();record.cleanup=null;record.signature=signature;record.refresh=null;record.mount=null;record.content.className='';record.content.replaceChildren();record.children.replaceChildren();record.element.className='gu-node gu-'+model.type.toLowerCase();
         if(model.type==='Unknown')record.content.append(el('p','gu-error',props.text||errorText));
         else if(props.status==='loading')record.content.append(el('p','gu-skeleton','正在准备…'));
         else if(props.status==='empty')record.content.append(el('p','gu-muted',props.fallback||'暂时没有内容'));
@@ -47,13 +47,13 @@ export class UIRenderer{
       if(definition?.children&&(!props.status||props.status==='ready')){
         const children=(model.children||[]).map(child=>this.node(child,depth+1));if(record.mount)record.mount(children);else replaceInOrder(record.children,children);
       }
-    }catch(error){record.signature=null;record.refresh=null;record.mount=null;record.content.replaceChildren(el('p','gu-error',model?.props?.fallback&&typeof model.props.fallback==='string'?model.props.fallback:errorText));record.children.replaceChildren();record.element.dataset.error='true';}
+    }catch(error){record.cleanup?.();record.cleanup=null;record.signature=null;record.refresh=null;record.mount=null;record.content.replaceChildren(el('p','gu-error',model?.props?.fallback&&typeof model.props.fallback==='string'?model.props.fallback:errorText));record.children.replaceChildren();record.element.dataset.error='true';}
     return record.element;
   }
   paint(){
-    if(this.disposed)return;this.paintItems=0;const start=performance.now();replaceInOrder(this.body,this.spec.roots.map(id=>this.node(id)));
+    if(this.disposed)return;this.paintItems=0;const start=performance.now();replaceInOrder(this.body,this.spec.roots.map(id=>this.node(id)));for(const [id,r]of this.records)if(!this.body.contains(r.element)){r.cleanup?.();this.records.delete(id);}
     const label=this.options.aiLabel===false?'':typeof this.options.aiLabel==='string'?this.options.aiLabel:'AI 生成内容';this.status.textContent=[label,!this.spec.complete?'未完整接收':this.spec.errors?.length?'部分内容已降级':''].filter(Boolean).join(' · ');
-    this.save.hidden=!this.options.onSave||!Object.values(this.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown'].includes(n.type)||n.type.endsWith('Chart'));this.footer.hidden=this.options.compact&&!this.status.textContent&&this.save.hidden;this.root.dataset.complete=String(!!this.spec.complete);this.options.onRender?.(performance.now()-start);
+    this.save.hidden=!!this.options.externalActions||!this.options.onSave||!Object.values(this.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart'));this.footer.hidden=this.options.compact&&!this.status.textContent&&this.save.hidden&&!this.feedback.textContent;this.root.dataset.complete=String(!!this.spec.complete);this.options.onRender?.(performance.now()-start);
   }
   set(record,value){const bind=record.props.bind;if(!bind)throw Error('此控件尚未绑定状态');this.store.set(bind,value);}
   get(record){return this.store.get(record.props.bind);}
@@ -78,14 +78,14 @@ export class UIRenderer{
   build(record){
     const {model,props:p,content:c,children:child,local:v}=record,t=model.type;
     if(['Stack','Row','Grid','Card'].includes(t)){
-      record.element.dataset.gap=p.gap||'md';record.element.dataset.columns=p.columns||2;record.element.dataset.tone=p.tone||'neutral';if(p.title||p.label)c.append(el('h3','gu-heading',p.title||p.label));if(p.description)c.append(el('p','gu-muted',p.description));return;
+      record.element.dataset.gap=p.gap||'md';record.element.dataset.columns=p.columns||2;record.element.dataset.layout=p.layout||'auto';record.element.dataset.tone=p.tone||'neutral';if(p.title||p.label)c.append(el('h3','gu-heading',p.title||p.label));if(p.description)c.append(el('p','gu-muted',p.description));return;
     }
     if(['Tabs','Carousel','Accordion'].includes(t)){this.groups(record);return;}
     if(t==='Divider'){c.append(el('hr','gu-divider'));return;}
     if(t==='Markdown'){v.markdown??={};c.append(markdown(p.text,{view:v.markdown,changed:()=>this.changed()}));return;}
     if(t==='Heading'){c.append(el('h'+p.level,'gu-heading',p.text));return;}
     if(t==='Callout'||t==='Badge'){const node=el(t==='Badge'?'span':'aside',t==='Badge'?'gu-badge':'gu-callout');node.dataset.tone=p.tone||'info';if(p.label)node.append(el('strong','',p.label));node.append(el('span','',p.text));c.append(node);return;}
-    if(t==='Stat'){const value=el('strong','gu-stat-value',string(p.value)+(p.unit?' '+p.unit:''));value.setAttribute('aria-live','polite');c.append(el('span','gu-muted',p.label),value);if(p.description)c.append(el('p','gu-muted',p.description));return;}
+    if(t==='Stat'){const value=el('strong','gu-stat-value',string(p.value)+(p.unit?' '+p.unit:''));value.setAttribute('aria-live','polite');c.className='gu-stat-band';c.append(el('span','gu-stat-label',p.label),value);if(p.description)c.append(el('p','gu-muted',p.description));return;}
     if(t==='KeyValue'){const dl=el('dl','gu-kv');for(const item of p.items||[]){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.value));dl.append(row);}if(!dl.childNodes.length)c.append(el('p','gu-muted','暂无信息'));else c.append(dl);return;}
     if(['List','Steps','Checklist','Timeline'].includes(t)){this.items(record);return;}
     if(t==='Table'){c.append(dataTable(p,{view:v,changed:()=>this.changed()}));return;}
@@ -93,9 +93,9 @@ export class UIRenderer{
     if(t==='Progress'){const label=el('div','gu-control-label',p.label),progress=el('progress');progress.max=p.max;progress.value=Math.min(p.max,Math.max(0,p.value));progress.setAttribute('aria-label',p.label||'进度');label.append(el('span','gu-numeric',`${Math.round(progress.value/p.max*100)}%`));c.append(label,progress);return;}
     if(['Slider','Stepper','Select','Toggle','TextInput','ButtonGroup'].includes(t)){this.input(record);return;}
     if(t==='Button'){const b=button(p.label,()=>this.action(record,'click',{},true),'gu-button gu-'+p.variant);b.disabled=p.disabled||!model.on?.click;c.append(b);return;}
-    if(t.endsWith('Chart')){
+    if(t.endsWith('Chart')||t==='Plot'){
       c.append(el('div','gu-skeleton','正在绘制图表…'));const signature=record.signature;
-      (chartsModule??=import('./charts.js')).then(module=>{if(!this.disposed&&record.signature===signature)try{c.replaceChildren(module.chart(t,p,{view:v,changed:()=>this.changed()}));}catch{c.replaceChildren(el('p','gu-error',errorText));}}).catch(()=>{if(!this.disposed)c.replaceChildren(el('p','gu-error','图表暂不可用，请复制为文字查看数据。'));});return;
+      (chartsModule??=import('./charts.js')).then(module=>{if(!this.disposed&&this.records.get(record.id)===record&&record.signature===signature)try{const chart=module.chart(t,p,{view:v,width:c.getBoundingClientRect().width,changed:()=>this.changed()});record.cleanup=()=>chart.dispose();c.replaceChildren(chart);}catch{c.replaceChildren(el('p','gu-error',t==='Plot'?'这个取值范围无法计算，请调整参数或查看文字公式。':errorText));}}).catch(()=>{if(!this.disposed&&this.records.get(record.id)===record)c.replaceChildren(el('p','gu-error','图表暂不可用，请复制为文字查看数据。'));});return;
     }
     if(t==='Compare'){const grid=el('div','gu-compare-grid');for(const item of p.items||[]){const card=el('section','gu-compare-card');card.append(el('h4','',item.label));const dl=el('dl','gu-kv');for(const dimension of p.dimensions||[]){const row=el('div');row.append(el('dt','',dimension),el('dd','',item.values[dimension]??'未提供'));dl.append(row);}card.append(dl);grid.append(card);}c.append(grid.childNodes.length?grid:el('p','gu-muted','暂无对比项'));return;}
     if(t==='Math'){c.append(formula(p.text));if(p.label)c.append(el('p','gu-muted',p.label));return;}
@@ -104,10 +104,18 @@ export class UIRenderer{
     if(t==='Image'){
       const url=safeUrl(p.src,{hosts:this.options.imageHosts||[]}),permitted=url&&(new URL(url).origin!==location.origin||this.options.imageResources?.some(src=>new URL(src,location.origin).href===url));
       if(!permitted){c.append(el('p','gu-muted',p.alt+'（图片未获授权加载）'));return;}
-      const img=el('img','gu-image');img.alt=p.alt;img.loading='lazy';img.referrerPolicy='no-referrer';img.addEventListener('error',()=>{img.replaceWith(el('p','gu-error',p.alt+'（图片加载失败）'));},{once:true});img.src=url;c.append(img);if(p.caption)c.append(el('p','gu-muted',p.caption));return;
+      const figure=el('figure','gu-figure'),img=el('img','gu-image'),preview=button('',()=>this.previewImage(url,p.alt),'gu-image-open');preview.setAttribute('aria-label','放大查看：'+p.alt);preview.title='放大查看原图';img.alt=p.alt;img.loading='lazy';img.referrerPolicy='no-referrer';img.addEventListener('error',()=>{preview.replaceWith(el('p','gu-error',p.alt+'（图片加载失败）'));},{once:true});img.src=url;preview.append(img);figure.append(preview);if(p.caption)figure.append(el('figcaption','gu-muted',p.caption));c.append(figure);return;
+    }
+    if(t==='Video'){
+      const url=safeUrl(p.src,{hosts:[]}),permitted=url&&new URL(url).origin===location.origin&&this.options.mediaResources?.some(src=>new URL(src,location.origin).href===url);
+      if(!permitted){c.append(el('p','gu-muted',p.label+'（视频未获授权加载）'));return;}
+      const figure=el('figure','gu-figure'),video=el('video','gu-video');video.controls=true;video.playsInline=true;video.preload='none';video.setAttribute('aria-label',p.label);video.src=url;video.append(document.createTextNode('当前浏览器无法播放此视频，请查看材料原件。'));video.addEventListener('error',()=>{video.replaceWith(el('p','gu-error','视频暂时无法播放，可在材料面板下载原件。'));},{once:true});figure.append(el('strong','gu-media-title',p.label),video);if(p.caption)figure.append(el('figcaption','gu-muted',p.caption));c.append(figure);record.cleanup=()=>{video.pause();video.removeAttribute('src');video.load();};return;
     }
     if(t==='HostView'){const host=this.options.hostViews?.[p.view];if(!host){c.append(el('p','gu-muted',p.title||'请在工作台查看此内容'));return;}const result=host(p);if(!(result instanceof Node))throw Error('invalid_host_view');c.append(result);return;}
     throw Error('unknown_component');
+  }
+  previewImage(url,alt){
+    const dialog=el('dialog','gu-media-dialog'),bar=el('div','gu-media-toolbar'),close=button('关闭预览',()=>dialog.close()),full=el('a','gu-button','打开原图');full.href=url;full.target='_blank';full.rel='noopener noreferrer';const image=el('img');image.src=url;image.alt=alt;bar.append(el('strong','',alt),full,close);dialog.append(bar,image);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();close.focus();
   }
   groups(record){
     const {model,props:p,content:c,children:container,local:v}=record,accordion=model.type==='Accordion';const keys=model.children||[],labels=keys.map((_,i)=>p.labels?.[i]||'第 '+(i+1)+' 项');
@@ -171,7 +179,7 @@ export class MessageRenderer{
   push(chunk){this.parser.push(chunk);this.parts=this.parser.snapshot();this.schedule();}
   finish(){this.parts=this.parser.finish();this.schedule();return this.parts;}
   update(parts){this.parts=parts;this.schedule();}
-  setHostContext(context){Object.assign(this.options,context);for(const r of this.rendered||[])if(r.ui){Object.assign(r.ui.options,context);for(const record of r.ui.records.values())if(record.model?.type==='HostView')record.signature=null;r.ui.schedule();}}
+  setHostContext(context){Object.assign(this.options,context);for(const r of this.rendered||[])if(r.ui){Object.assign(r.ui.options,context);for(const record of r.ui.records.values())if(['HostView','Image','Video'].includes(record.model?.type))record.signature=null;r.ui.schedule();}}
   schedule(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.paint();});}
   paint(){
     const follow=this.options.beforeRender?.(),elements=[];this.rendered??=[];

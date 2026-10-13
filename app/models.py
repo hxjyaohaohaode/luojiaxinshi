@@ -30,6 +30,14 @@ class Register(Login):
 
 
 class Profile(Strict):
+    preferred_name: str = Field(default='', max_length=30)
+    campus_area: str = Field(default='', max_length=80)
+    interests: str = Field(default='', max_length=500)
+    available_time: str = Field(default='', max_length=300)
+    response_detail: Literal['concise','balanced','detailed'] = 'balanced'
+    response_style: Literal['warm','direct','academic'] = 'warm'
+    response_preferences: str = Field(default='', max_length=600)
+    avatar_tone: Literal['forest','blue','plum','amber'] = 'forest'
     campus_role: Literal['student','teacher','staff','other'] = 'student'
     school: str = Field(default='武汉大学', max_length=80)
     student_id: str = Field(default='', max_length=40)

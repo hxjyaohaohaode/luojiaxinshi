@@ -6,8 +6,11 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#115740">
   <meta name="description" content="把校园通知转为有原文依据、经本人确认的个人待办。">
-  <title>校园通知智能转办助手</title>
-  <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+  <title>珞珈信使</title>
+  <link rel="icon" href="/static/assets/campus-notice-icon-v4-32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/static/assets/campus-notice-icon-v4-64.png" type="image/png" sizes="64x64">
+  <link rel="apple-touch-icon" href="/static/assets/campus-notice-icon-v4-180.png" sizes="180x180">
+  <meta name="apple-mobile-web-app-title" content="珞珈信使">
   <link rel="stylesheet" href="/static/app.css">
   <link rel="stylesheet" href="/static/continuity.css">
   <link rel="stylesheet" href="/static/companion.css">
@@ -16,10 +19,13 @@
   <link rel="stylesheet" href="/static/calendar.css">
   <link rel="stylesheet" href="/static/library.css">
   <link rel="stylesheet" href="/static/genui/genui.css">
+  <link rel="stylesheet" href="/static/density.css">
+  <link rel="stylesheet" href="/static/brand.css">
+  <link rel="stylesheet" href="/static/experience.css">
   <script src="/static/app.js" type="module"></script>
 </head>
 <body>
-  <div id="app"><div class="boot"><img src="/static/logo.svg" alt="" width="48" height="48"><p>正在打开个人工作台…</p></div></div>
+  <div id="app"><div class="boot"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="珞珈信使" width="72" height="72" fetchpriority="high"><p>正在打开个人工作台…</p></div></div>
   <div id="toast" role="status" aria-live="polite"></div>
   <dialog id="dialog" aria-label="操作窗口"></dialog>
   <noscript>此工作台需要启用 JavaScript。通知数据保存在服务端，浏览器不会保存 API 密钥。</noscript>

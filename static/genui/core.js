@@ -32,6 +32,7 @@ export function validateNode(input,limits=CATALOG.limits){
   if(!matches(props,{type:'object',properties:definition.properties,required:definition.required,additionalProperties:false}))throw Error('invalid_props');
   if(props.bind!==undefined)pathParts(props.bind);
   expressions(props,limits);
+  if(node.type==='Plot'&&typeof props.expression==='string')parseExpression(props.expression,limits);
   const children=node.children||[];if(!Array.isArray(children)||children.length>limits.nodes||children.some(id=>!safeKey(id))||(!definition.children&&children.length))throw Error('invalid_children');
   const on=node.on||Object.create(null);if(typeof on!=='object'||Array.isArray(on)||Object.keys(on).some(k=>!['click','change','submit'].includes(k)))throw Error('invalid_event');
   for(const action of Object.values(on))validateAction(action);
@@ -126,7 +127,8 @@ export function blockMarkdown(spec,state=spec.state){
     else if(t.endsWith('Chart')){lines.push(value(p.label));table([{key:'x',label:p.xLabel||'项目'},{key:'y',label:(p.yLabel||'数值')+(p.unit?'（'+p.unit+'）':'')}],p.data||[]);}
     else if(t==='Compare'){table([{key:'label',label:'选项'},...(p.dimensions||[]).map(d=>({key:d,label:d}))],(p.items||[]).map(item=>({...item.values,label:item.label})));}
     else if(t==='Diagram'){for(const n of p.nodes||[])lines.push('- '+n.label);for(const e of p.edges||[])lines.push(`${p.nodes?.find(n=>n.id===e.from)?.label||e.from} → ${p.nodes?.find(n=>n.id===e.to)?.label||e.to}${e.label?'：'+e.label:''}`);}
-    else if(t==='Image')lines.push(value(p.alt),value(p.caption));
+    else if(t==='Image'||t==='Video')lines.push(value(p.alt||p.label),value(p.caption));
+    else if(t==='Plot')lines.push(value(p.label),'y = '+value(p.expression),value(p.xMin)+' ≤ x ≤ '+value(p.xMax),'参数：'+JSON.stringify(p.parameters||{}));
     else if(t==='Code'){const fence='`'.repeat(Math.max(3,...(value(p.text).match(/`+/g)||[]).map(s=>s.length+1)));lines.push(fence+(p.language||''),value(p.text),fence);}
     else if(t==='Form'){lines.push(value(p.label));for(const f of p.fields||[])lines.push('- '+f.label+(f.required?'（必填）':'')+(f.options?'：'+f.options.map(o=>o.label).join(' / '):''));}
     else if(t==='Progress')lines.push(value(p.label)+'：'+value(p.value)+' / '+value(p.max));

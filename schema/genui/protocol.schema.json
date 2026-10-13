@@ -806,6 +806,44 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Video"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Video"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Plot"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Plot"
+              }
+            }
+          }
         }
       ]
     },
@@ -1055,6 +1093,20 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "auto",
+                "controls"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1133,6 +1185,20 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "auto",
+                "controls"
+              ]
             },
             {
               "$ref": "#/$defs/Binding"
@@ -5148,6 +5214,237 @@
       },
       "required": [
         "view"
+      ],
+      "additionalProperties": false
+    },
+    "Video": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "src": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [
+        "src",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "Plot": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "xMin": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "xMax": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "samples": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 120
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "xLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "yLabel": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [
+        "expression",
+        "xMin",
+        "xMax"
       ],
       "additionalProperties": false
     }

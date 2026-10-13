@@ -1,0 +1,19 @@
+生成方式：内置 image_gen 工具
+用途：校园通知智能转办助手 Logo
+输出：校园通知智能转办助手_Logo_透明底_v1.png
+
+最终生成提示词：
+
+Use case: logo-brand.
+Asset type: finished standalone symbol logo for a university productivity application, transparent PNG, square 1024x1024 composition.
+
+Project: 校园通知智能转办助手, a campus notification-to-personal-action assistant. It reads notices and attachments, preserves original evidence, helps students check what applies to them, and turns it into confirmed tasks, deadlines, and calendar plans. Existing visual identity uses deep Luojia forest green #115740 and a friendly campus messenger character with a green Chinese tiled-roof cap. This new asset is the app's concise identifying logo.
+
+Create ONE elegant, memorable, expertly drawn flat geometric logo. Concept: a campus notice becoming a clear action. Integrate three ideas into ONE coherent compact silhouette: a simplified campus-library roof with subtly upturned eaves at the top; a softly rounded, upright folded notice/paper body below; and one bold ascending checkmark whose long arm evokes a messenger's wing and forward motion. The roof should be only a beautifully controlled solid curve, with no architectural details. The checkmark is formed in generous transparent negative space through the deep-green document body, opening toward the upper right. A single small flat muted warm-gold #C4A269 paper fold may support the notification idea. If necessary use at most two very short generous negative-space document strokes, never a cluttered checklist. A cohesive original mark, optically balanced and confident; avoid simply stacking stock icons.
+
+Style: premium contemporary visual identity, pure flat 2D vector-like geometry, crisp precise edges, thoughtful rounded corners, restrained university character, approachable but professional. The mark should work as a silhouette and remain legible at 32 to 48 pixels. Primarily one solid forest green #115740, with at most a tiny muted gold accent. Broad shapes and open negative space; no fine hairlines. Center the entire mark in the square, approximately 76-80 percent of canvas width and height, balanced empty margins.
+
+Background: genuinely transparent alpha everywhere outside the mark and through its negative-space openings. No opaque white or colored background tile, no simulated checkerboard.
+Text: none. No Chinese characters, no English letters, no brand name, no taglines.
+Avoid: logo presentation boards, multiple options, mockups, shadows, 3D, gradients, texture, light effects, brain icons, circuits, robots, ornamental sparkles, seals, official university crests, laurel wreaths, full buildings, cartoon faces, little floating symbols, watermarks. Deliver only the single finished symbol.
+

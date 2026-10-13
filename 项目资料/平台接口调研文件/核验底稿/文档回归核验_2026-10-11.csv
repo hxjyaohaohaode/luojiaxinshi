@@ -1,0 +1,20 @@
+﻿编号,核验项,结果,说明,层级
+plan-zip,Word 文件完整,通过,ZIP/OOXML 可读,文档／渲染核验，非功能实测
+plan-format,全部实际格式与完整嵌入字体,通过,逐段字体、字号、缩进、行距；表格；边距；原 PAGE 页脚；无页眉,文档／渲染核验，非功能实测
+plan-copy,导出副本与交付 Word 一致,通过,PDF 从字节一致的 Word 副本导出,文档／渲染核验，非功能实测
+plan-export-origin,最终 PDF 对应此次 Word 的导出记录,通过,导出时记录 Word 与 PDF 的 SHA-256；不以文本相似替代来源一致,文档／渲染核验，非功能实测
+plan-text,Word 与 PDF 所有正文及单元格逐段对应,通过,136 段；遗漏 0 段,文档／渲染核验，非功能实测
+plan-pages,页码连续、无空页,通过,4 页；每页检查页脚数值,文档／渲染核验，非功能实测
+plan-fonts,PDF 实际用字字体符合要求,通过,"已使用字体：/BCDFEE+TimesNewRomanPSMT, /BCDGEE+___WRD_EMBED_SUB_48, /BCDIEE+TimesNewRomanPSMT",文档／渲染核验，非功能实测
+plan-links,官方超链接在 PDF 中保留,通过,Word 0 个；PDF 0 个,文档／渲染核验，非功能实测
+plan-spec,生成内容与审定文本一致,通过,逐段角色、文字与单元格内容比对,文档／渲染核验，非功能实测
+research-zip,Word 文件完整,通过,ZIP/OOXML 可读,文档／渲染核验，非功能实测
+research-format,全部实际格式与完整嵌入字体,通过,逐段字体、字号、缩进、行距；表格；边距；原 PAGE 页脚；无页眉,文档／渲染核验，非功能实测
+research-copy,导出副本与交付 Word 一致,通过,PDF 从字节一致的 Word 副本导出,文档／渲染核验，非功能实测
+research-export-origin,最终 PDF 对应此次 Word 的导出记录,通过,导出时记录 Word 与 PDF 的 SHA-256；不以文本相似替代来源一致,文档／渲染核验，非功能实测
+research-text,Word 与 PDF 所有正文及单元格逐段对应,通过,293 段；遗漏 0 段,文档／渲染核验，非功能实测
+research-pages,页码连续、无空页,通过,6 页；每页检查页脚数值,文档／渲染核验，非功能实测
+research-fonts,PDF 实际用字字体符合要求,通过,"已使用字体：/BCDFEE+TimesNewRomanPSMT, /BCDGEE+___WRD_EMBED_SUB_48, /BCDIEE+TimesNewRomanPSMT, /BCDHEE+TimesNewRomanPS-BoldMT",文档／渲染核验，非功能实测
+research-links,官方超链接在 PDF 中保留,通过,Word 45 个；PDF 45 个,文档／渲染核验，非功能实测
+research-spec,生成内容与审定文本一致,通过,逐段角色、文字与单元格内容比对,文档／渲染核验，非功能实测
+originals,用户原件与既有交付未被覆盖,通过,6 份原件逐个比对 SHA-256,文档／渲染核验，非功能实测

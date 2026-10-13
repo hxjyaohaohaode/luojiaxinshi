@@ -1,4 +1,5 @@
-export function createNoticeComposer({esc,field,area,icon,toast,persist}) {
+import {dictate} from './dictation.js';
+export function createNoticeComposer({esc,field,area,icon,toast,persist,showDialog,api,ask}) {
   const $=selector=>document.querySelector(selector);
   function render(){
     $('#content').innerHTML=`<div class="notice-compose">
@@ -8,8 +9,8 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist}) {
         <section class="stack" data-notice-step="content">
           ${field('通知标题','title','','text','required maxlength="160" placeholder="给这则通知一个便于查找的标题"')}
           ${area('通知正文','body','',5,'maxlength="10000" placeholder="粘贴完整原文，或在下面上传附件。"')}
-          <div class="between small muted"><span>正文、附件至少填写一项</span><span id="char-count">0 / 10,000 字</span></div>
-          <label class="upload">${icon('upload')}<strong>选择或拖入附件</strong><span class="small muted">PDF、DOCX、TXT、图片 · 最多 5 份，每份 5 MB</span><input type="file" name="files" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" aria-label="上传通知附件"></label>
+          <div class="between small muted"><button type="button" class="button small plain" data-notice-voice aria-label="语音补充通知正文">${icon('mic')} 语音补充</button><span id="char-count">0 / 10,000 字</span></div>
+          <label class="upload">${icon('upload')}<strong>选择或拖入附件</strong><span class="small muted">文档、Excel、文字、图片或视频 · 每份 5 MB</span><input type="file" name="files" multiple accept=".pdf,.docx,.xlsx,.csv,.md,.txt,.png,.jpg,.jpeg,.webp,.mp4,.webm" aria-label="上传通知附件"></label>
           <div class="files-list" id="files-list"></div>
           <div class="form-footer"><a class="button" href="#notices">返回资料</a><button type="button" class="button primary" data-notice-step-to="review">下一步 ${icon('arrow')}</button></div>
         </section>
@@ -40,8 +41,10 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist}) {
     persist();form.scrollIntoView({block:'start'});
     form.querySelector(`[data-notice-step="${next}"] input`)?.focus({preventScroll:true});
   }
-  document.addEventListener('click',event=>{const button=event.target.closest('[data-notice-step-to]');if(button)step(button.dataset.noticeStepTo);});
+  document.addEventListener('click',event=>{const button=event.target.closest('[data-notice-step-to]');if(button)step(button.dataset.noticeStepTo);const voice=event.target.closest('[data-notice-voice]');if(voice)dictate($('#notice-form').elements.body,voice,{api,toast,ask});});
   document.addEventListener('invalid',event=>{if(event.target.name==='source_url'&&event.target.closest('#notice-form'))event.target.closest('details').open=true;},true);
   function advanceIfNeeded(){if($('#notice-form [data-notice-step="content"]')?.hidden===false){step('review');return true;}return false;}
+  document.addEventListener('dragover',event=>{if(event.target.closest('#notice-form .upload,#supplement-form .upload'))event.preventDefault();});
+  document.addEventListener('drop',event=>{const zone=event.target.closest('#notice-form .upload,#supplement-form .upload');if(!zone)return;event.preventDefault();const input=zone.querySelector('input[type=file]'),items=[...input.files,...event.dataTransfer.files];if(items.length>5||items.some(f=>f.size>5*1024*1024)){toast('最多 5 份附件，每份不超过 5 MB。',true);return;}const transfer=new DataTransfer();items.forEach(f=>transfer.items.add(f));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));persist();});
   return {render,advanceIfNeeded};
 }

@@ -17,6 +17,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 if (-not (Test-Path -LiteralPath '.env')) { Copy-Item -LiteralPath '.env.example' -Destination '.env' }
 $configuration = Get-TaskConfiguration
+$expectedVersion = (& $taskPython -c "from app.version import VERSION; print(VERSION)").Trim()
 if ($configuration.production) { throw 'Use OPERATIONS.md for production HTTPS deployment.' }
 if ($Restart) { Stop-OwnedTask $configuration }
 $existing = Get-OwnedTaskProcess $configuration
@@ -39,7 +40,7 @@ $ready = $false
 for ($attempt=0; $attempt -lt 40; $attempt++) {
     try {
         $health = Invoke-RestMethod -Uri ($configuration.origin + '/api/health') -TimeoutSec 2
-        if ($health.status -eq 'ok' -and $health.version -eq '1.1.0') { $ready=$true; break }
+        if ($health.status -eq 'ok' -and $health.version -eq $expectedVersion) { $ready=$true; break }
     } catch { }
     Start-Sleep -Milliseconds 250
 }

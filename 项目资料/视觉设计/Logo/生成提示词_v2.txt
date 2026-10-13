@@ -1,0 +1,22 @@
+生成方式：内置 image_gen 图像编辑
+参考：用户截取的老图书馆中央屋顶
+官网校徽参考：https://www.whu.edu.cn/xxgk/wdbs.htm
+输出：校园通知智能转办助手_Logo_老图书馆_v2.png
+
+Use case: precise-object-edit / logo-brand.
+Asset type: revised application symbol logo, transparent PNG.
+
+Image 1 is the EDIT TARGET: the existing forest-green campus notice assistant logo with a roof above a rounded document, a small warm-gold folded corner, two transparent text strokes, and a large ascending negative-space checkmark with a green wing-shaped tip.
+Image 2 is the EXACT USER-SELECTED SHAPE REFERENCE, showing ONLY the CENTRAL UPPER ROOF from the Wuhan University Old Library depiction in its emblem. It is a small crop and must be interpreted faithfully.
+
+Make ONE specific change: replace ONLY the existing generic single-curved roof at the top of Image 1 with a carefully enlarged and cleanly redrawn version of the navy roof silhouette visible in Image 2, recolored to match Image 1's deep forest green #115740. The user explicitly wants THIS cropped upper roof, not a full building.
+
+Faithfully preserve these distinctive features from Image 2: a small upright ornamental finial at the exact center, rising from a short broad horizontal roof ridge; symmetrical roof profile with the stepped central upper roof and elegant upturned eave tips; the lower, wider curved eave line; and the slim architectural band at the bottom with a few clearly spaced rectangular negative-space openings. Match the reference's relative contours and symmetry. Keep the central roof ridge broad and horizontal, not a tall triangular cone. Smooth and simplify very tiny details only enough for a usable app logo, without replacing the reference with a generic pagoda or temple. Preserve a discreet separation between the roof and the paper so the mark breathes.
+
+Fit this roof into the previous roof's approximate overall width, centered above the document. If needed, reduce the roof width moderately to keep its authentic proportions and fit the square canvas with balanced margins. The roof should feel like the crown of the same logo, connected visually with the document through matching color, corner treatment and visual weight. It should occupy only the upper region of the finished logo.
+
+Keep all other design elements and their relative placement unchanged: the rounded green paper body, the exact large cut-out checkmark, its rising wing tip, the two document strokes, the small gold page fold, and the existing deep-green/gold palette. Do not redesign the document or add new symbols.
+Preserve the transparent canvas and transparent cutouts. Produce one centered logo on a square canvas, comfortably inside all four edges.
+Clean flat vector-like artwork with crisp controlled edges; strong filled shapes and readable negative space; no texture, gradients, shadows or 3D.
+Do not include the reference image's white background, the cropped circular green seal border, any university wording, the date 1893, a complete university seal, lower building facade, pillars, windows beyond the cropped roof band, stairs, or side buildings.
+No text, no labels, no watermarks, no mockups, no multiple options. Only the revised standalone symbol.

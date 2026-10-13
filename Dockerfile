@@ -5,6 +5,8 @@ COPY requirements.lock .
 RUN pip install --no-cache-dir -r requirements.lock && useradd --create-home --uid 10001 campus && mkdir /data && chown campus:campus /data
 COPY --chown=campus:campus app ./app
 COPY --chown=campus:campus static ./static
+COPY --chown=campus:campus schema ./schema
+COPY --chown=campus:campus docs/genui ./docs/genui
 COPY --chown=campus:campus manage.py .
 USER campus
 VOLUME ["/data"]

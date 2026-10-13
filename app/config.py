@@ -15,8 +15,8 @@ class Settings:
     data_dir: Path
     origin: str = "http://127.0.0.1:8765"
     production: bool = False
-    ai_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    ai_model: str = "qwen3.8-flash"
+    ai_base_url: str = "https://api.xiaomimimo.com/v1"
+    ai_model: str = "mimo-v2.6-pro"
     ai_api_key: str = ""
     ai_timeout: int = 90
     ai_daily_limit: int = 30
@@ -32,6 +32,11 @@ class Settings:
     ai_supports_tools: bool = False
     ai_context_tokens: int = 32768
     genui_limits: dict = field(default_factory=dict)
+    asr_model: str = 'mimo-v2.5-asr'
+    tts_model: str = 'mimo-v2.5-tts'
+    voice_design_model: str = 'mimo-v2.5-tts-voicedesign'
+    voice_clone_model: str = 'mimo-v2.5-tts-voiceclone'
+    tts_voice: str = 'mimo_default'
 
     @classmethod
     def from_env(cls):
@@ -40,10 +45,20 @@ class Settings:
             data = ROOT / data
         result = cls(data.resolve(), os.getenv("APP_ORIGIN", "http://127.0.0.1:8765").rstrip("/"),
                      os.getenv("APP_ENV", "local") == "production",
-                     os.getenv("AI_BASE_URL", cls.ai_base_url).rstrip("/"),
-                     os.getenv("AI_MODEL", cls.ai_model), os.getenv("AI_API_KEY", ""),
+                     os.getenv("MIMO_BASE_URL", cls.ai_base_url).strip().rstrip("/"),
+                     os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
                      int(os.getenv("AI_TIMEOUT_SECONDS", "90")), int(os.getenv("AI_DAILY_LIMIT", "30")))
         parsed = urlparse(result.origin)
+        for attr, key in [('asr_model','MIMO_ASR_MODEL'),('tts_model','MIMO_TTS_MODEL'),
+                          ('voice_design_model','MIMO_VOICE_DESIGN_MODEL'),('voice_clone_model','MIMO_VOICE_CLONE_MODEL'),
+                          ('tts_voice','MIMO_TTS_VOICE')]:
+            setattr(result,attr,os.getenv(key,getattr(cls,attr)).strip())
+        expected = {'ai_model':'mimo-v2.6-pro','asr_model':'mimo-v2.5-asr','tts_model':'mimo-v2.5-tts',
+                    'voice_design_model':'mimo-v2.5-tts-voicedesign','voice_clone_model':'mimo-v2.5-tts-voiceclone'}
+        if any(getattr(result,k)!=v for k,v in expected.items()):
+            raise ValueError('MiMo 模型配置与当前适配器不匹配，请使用 .env.example 中的五个模型 ID')
+        if result.tts_voice not in {'mimo_default','冰糖','茉莉','苏打','白桦','Mia','Chloe','Milo','Dean'}:
+            raise ValueError('MIMO_TTS_VOICE 必须是小米官方预置音色')
         result.qq_bot_app_id=os.getenv('QQ_BOT_APP_ID','').strip()
         result.qq_bot_secret=os.getenv('QQ_BOT_SECRET','').strip()
         result.wechat_publisher_app_id=os.getenv('WECHAT_PUBLISHER_APP_ID','').strip()
@@ -68,8 +83,9 @@ class Settings:
         if not result.production and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
             raise ValueError("对外提供服务须使用 production 模式及 HTTPS")
         ai_url=urlparse(result.ai_base_url)
-        if ai_url.scheme != "https" or not ai_url.hostname or ai_url.username or ai_url.password or ai_url.query or ai_url.fragment:
-            raise ValueError("AI_BASE_URL 必须使用 HTTPS")
+        if (ai_url.scheme != "https" or ai_url.hostname != 'api.xiaomimimo.com' or ai_url.port not in {None,443}
+                or ai_url.path != '/v1' or ai_url.username or ai_url.password or ai_url.query or ai_url.fragment):
+            raise ValueError("MIMO_BASE_URL 须为小米按量 API 端点 https://api.xiaomimimo.com/v1")
         if not 10 <= result.ai_timeout <= 180 or not 1 <= result.ai_daily_limit <= 1000:
             raise ValueError('AI 超时须为 10—180 秒，每账号每日上限须为 1—1000 次')
         return result

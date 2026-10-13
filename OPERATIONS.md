@@ -78,9 +78,9 @@ Remove-Item Env:DATA_DIR
 APP_ENV=production
 APP_DOMAIN=你的域名
 APP_ORIGIN=https://你的域名
-AI_BASE_URL=与密钥地域和空间匹配的HTTPS端点
-AI_MODEL=qwen3.8-flash
-AI_API_KEY=在服务器本地填写
+MIMO_BASE_URL=https://api.xiaomimimo.com/v1
+MIMO_TEXT_MODEL=mimo-v2.6-pro
+MIMO_API_KEY=在服务器本地填写小米按量API密钥
 BACKUP_RETENTION_DAYS=7
 ```
 
@@ -104,3 +104,5 @@ docker compose ps
 升级前运行 `manage.py backup`，妥善保留旧版代码及快照。启动新版本时数据库从版本 1 / 2 升至 3，增加会话、恢复码、来源和接入记录，不删除原通知及待办；旧版代码不能直接打开新结构。回退应恢复到新的空数据目录并使用对应旧版本程序。
 
 `compose.yaml` 通过 `env_file: .env` 读取 AI 和渠道凭证。QQ、公众号的环境变量和平台控制台配置见 `INTEGRATIONS.md`。本机回环模式不能接收公网平台回调；请在具备 HTTPS 域名的服务器部署后配置 QQ Webhook。填写凭证后重启服务，前端不提供密钥输入或查看。
+
+全部模型配置及语音联调参见 [MIMO_INTEGRATION.md](MIMO_INTEGRATION.md)。

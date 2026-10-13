@@ -13,7 +13,9 @@ on 只能映射 click/change/submit。state 动作 {kind:"state",key:"已有路�
 【内容与布局】先明确用户要读结论、比较、试算、执行还是补充信息，不照搬示例措辞或固定面板。没有可靠数据就用文字澄清，不生成空图表。一次只突出一个主结果；小结与界面不能重复同一段内容。
 试算先给 Stat 结果，再用 Grid/Row 把输入与结果分区；过程放 Accordion。计划优先 Checklist/Steps，依据和备选放折叠区；对比用 Compare 或 Table，超过4维时优先表格；趋势用图表并提供单位和数据来源。多主题用 Tabs，不能把不相关内容挤在一张大卡片。
 第一层建议最多3个信息分组、2个主要操作；Card 只在确实需要分组时使用，禁止卡片套卡片。节点短标题说具体内容，不写“智能分析”“我的面板”等装饰标题。每个按钮必须有明确用途；可调整值才放输入，无需交互的数字用 Stat/KeyValue。长解释保留为正文，不全塞进组件。所有界面都必须能在窄屏单列阅读。
-Table columns=[{key,label,unit?,sortable?}], rows=[对象]；Checklist 的 bind 对应已勾选 id 数组。Chart data=[{x,y,label?,series?}] 必须提供坐标轴名称与单位；大数据从 $ref 来。不输出外部图片。语言跟随用户。
+Table columns=[{key,label,unit?,sortable?}], rows=[对象]；Checklist 的 bind 对应已勾选 id 数组。Chart data=[{x,y,label?,series?}] 提供坐标轴名称与单位，大数据从 $ref 来。语言跟随用户。
+Image/Video 的 src 只能引用当前 materials 配套 resources 中已有的 src，优先用 $ref:resources.0.src；没有素材则保留文字，不编造网址。图片须有 alt，视频须有 label 和必要文字说明；视频仅供播放，不能声称看过或提取了其中的事实。不调用外部媒体网站。
+需要解释变量如何影响结果时，可用 Plot(expression,xMin,xMax,parameters)：只含 x 和 parameters 的受限数学表达式，最多120采样点。parameters 的各数值可用 $bind/$expr 绑定输入。参数区可用 Grid layout:controls；结论用 Stat，补充说明进 Accordion。普通数据图表不能伪装成函数演示。
 '''
 
 
@@ -36,6 +38,10 @@ def examples():
             {'op':'node','id':'steps','type':'Checklist','props':{'label':'准备顺序','bind':'checked','items':[{'id':'a','label':'核对资格'},{'id':'b','label':'收集材料'},{'id':'c','label':'检查表格'}]}},end]),
         example('方案A每周2小时、线下；方案B每周3小时、线上，对比一下。','以下只比较你给出的两个维度。',[
             begin,{'op':'node','id':'compare','type':'Compare','props':{'dimensions':['时长','形式'],'items':[{'label':'方案A','values':{'时长':'每周2小时','形式':'线下'}},{'label':'方案B','values':{'时长':'每周3小时','形式':'线上'}}]}},end]),
+        example('我给了 y=a*x²，画图让我调 a。','调整系数观察开口变化。',[
+            begin,{'op':'state','set':{'a':1}},
+            {'op':'node','id':'a','type':'Slider','props':{'label':'系数 a','bind':'a','min':-2,'max':2,'step':.25}},
+            {'op':'node','id':'curve','type':'Plot','props':{'expression':'a*pow(x,2)','parameters':{'a':{'$bind':'a'}},'xMin':-3,'xMax':3}},end]),
     ])
 
 

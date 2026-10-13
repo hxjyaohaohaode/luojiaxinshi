@@ -1657,5 +1657,50 @@
     {
       "op": "end"
     }
+  ],
+  "Video": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Video",
+      "props": {
+        "src": "/static/assets/genui-demo.webm",
+        "label": "参数联动演示（工程素材）",
+        "caption": "本项目自行录制的图形演示，无真实教学或校务信息。"
+      }
+    },
+    {
+      "op": "end"
+    }
+  ],
+  "Plot": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Plot",
+      "props": {
+        "label": "二次函数（示例）",
+        "expression": "a*pow(x,2)+b",
+        "parameters": {
+          "a": 1,
+          "b": 0
+        },
+        "xMin": -3,
+        "xMax": 3,
+        "xLabel": "x",
+        "yLabel": "y"
+      }
+    },
+    {
+      "op": "end"
+    }
   ]
 }

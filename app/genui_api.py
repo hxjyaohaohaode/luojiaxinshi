@@ -167,7 +167,8 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
             return StreamingResponse(replay(),media_type='text/event-stream')
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
         tier=feature['tier']
-        trusted={'materials':[{'id':s['id'],'name':s['name'],'status':s['status']} for s in sources]}
+        from .chat_media import resource_index
+        trusted={'materials':[{'id':s['id'],'name':s['name'],'status':s['status']} for s in sources],'resources':resource_index(sources)}
         try:
             with db.connect(write=True) as conn:
                 conn.execute('INSERT INTO genui_messages(message_id,trusted_data,tier,ai_label,updated_at) VALUES(?,?,?,?,?)',(mid,dumps(trusted),tier,settings.genui_ai_label,int(time.time())))

@@ -47,3 +47,9 @@
 `PUT /api/conversations/{cid}/messages/{mid}/ui-state` 显式保存各 UI part 的 `{state,view}`。独立 snapshot_version 执行比较并交换；状态类型、节点范围、原型键、深度和总大小均校验。滑动、勾选、排序不会调用此接口。
 
 `PUT /api/genui/preferences` 保存个人开关和亮/暗/随系统主题；部署开关 GENUI_ENABLED 拥有最终禁用权。能力由 JSON 输出、工具调用、上下文长度和显式 tier 配置描述，模型名称不参与能力推断。
+
+## 扩展组件与展示边界
+
+新增 `Video` 使用受信任 `src`、说明和浏览器原生 controls，不支持任意 embed、iframe 或 autoplay。`Plot` 使用受限表达式、限定变量和最多 120 个采样点，由本地代码生成 SVG；解析和求值预算生效。确切属性、枚举、上限以唯一目录 `schema/genui/catalog.json` 为准，前后端与提示说明由此派生。
+
+素材索引、来源时间和正文引用仍来自宿主，模型不可以通过 data 操作把任意 URL 升级成可信视频/图片。普通 Markdown、模型流、历史加载与复制均保留等价文字表达。

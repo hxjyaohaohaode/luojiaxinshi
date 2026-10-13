@@ -33,7 +33,7 @@ def fixture(question):
         return '以下为本机工程示例，不代表学校正式信息。\n\n```genui\n'+'\n'.join(json.dumps(op, ensure_ascii=False) for op in GALLERY[selected])+'\n```'
     if '故障' in question:
         return RAW.replace('{"op":"end"}', '{"op":"node","id":"broken","type":"UnknownWidget","props":{"fallback":"这一块暂不支持"}}\n{not valid json}\n{"op":"end"}')
-    key='compare' if '对比' in question else 'data' if '趋势' in question else 'plan' if '清单' in question else 'calculate'
+    key='explore' if '曲线' in question or '函数' in question else 'illustrated' if '图文' in question else 'compare' if '对比' in question else 'data' if '趋势' in question else 'plan' if '清单' in question else 'calculate'
     scene=SCENARIOS[key]
     return scene['intro']+'\n\n```genui\n'+'\n'.join(json.dumps(op,ensure_ascii=False) for op in scene['ops'])+'\n```'
 

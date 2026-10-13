@@ -1,5 +1,6 @@
 genui v1；s=字符串,n=数值,i=整数,b=布尔,?=可省略。
-Stack/Row/Grid(gap?:sm|md|lg,columns?:i,label?:s) children:ids
+Stack(gap?:sm|md|lg,columns?:i,label?:s) children:ids
+Row/Grid(gap?:sm|md|lg,columns?:i,label?:s,layout?:auto|controls) children:ids
 Tabs/Accordion/Carousel(labels?:[s],label?:s,bind?:s) children:ids
 Card(title?:s,description?:s,tone?:neutral|info|success|warning|danger) children:ids
 Divider()
@@ -23,4 +24,6 @@ Diagram(label?:s,nodes?:[{id:s,label:s}],edges?:[{from:s,to:s,label?:s}])
 Form(label?:s,fields?:[{name:s,label:s,type:text|number|date|select|checkbox,required?:b,min?:n,max?:n,options?:[{value:值,label:s}]}],submitLabel?:s)
 Image(src:s,alt:s,caption?:s)
 HostView(view:campus_schedule|material_index|messenger,title?:s,items?:[obj],pose?:welcome|reading|planning|blossom|rest)
+Video(src:s,label:s,caption?:s)
+Plot(label?:s,expression:s,parameters?:obj,xMin:n,xMax:n,samples?:i,xLabel?:s,yLabel?:s,unit?:s)
 纯函数：round,floor,ceil,abs,min,max,sum,pow,clamp,format。

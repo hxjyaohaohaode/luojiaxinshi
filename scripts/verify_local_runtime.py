@@ -81,7 +81,7 @@ def main():
         nonlocal worker,log
         log=open(temporary/'server.log','ab')
         environment={**os.environ,'PYTHONUTF8':'1','DATA_DIR':str(data_dir),'APP_ENV':'local',
-                     'APP_HOST':'127.0.0.1','APP_PORT':str(port),'APP_ORIGIN':origin,'AI_API_KEY':''}
+                     'APP_HOST':'127.0.0.1','APP_PORT':str(port),'APP_ORIGIN':origin,'MIMO_API_KEY':''}
         worker=subprocess.Popen([sys.executable,str(ROOT/'manage.py'),'serve'],cwd=ROOT,
                                 env=environment,stdin=subprocess.DEVNULL,stdout=log,stderr=log,
                                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))

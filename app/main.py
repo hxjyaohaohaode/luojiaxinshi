@@ -20,6 +20,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import ai
+from .version import VERSION
 from .backups import daily_backup
 from .calendar_export import build_calendar, eligible
 from .config import ROOT, Settings
@@ -31,6 +32,7 @@ from .security import DUMMY_PASSWORD, hash_password, new_invite, rate_limit, tok
 from .workspace import install_workspace, conversation_detail
 from .genui_api import feature_settings
 from .integrations import install_integrations
+from .speech import install_speech
 from .schedule import install_schedule, serialize as serialize_arrangement, own as own_arrangement
 
 MAX_BODY = 26*1024*1024
@@ -40,6 +42,11 @@ CST = timezone(timedelta(hours=8))
 class RequestGuard:
     def __init__(self, app, origin, production):
         self.app, self.origin, self.production = app, origin, production
+        # Exact hash of the installed browser annotation stylesheet, local preview only.
+        # No third-party CSS is copied or executed by this application.
+        local_preview = not production and urlparse(origin).hostname in {'localhost','127.0.0.1','::1'}
+        style_hash = " 'sha256-WO55anZ1V8A0G22bY2t72RV4dI79SLI4VnYLgsEeWUc='" if local_preview else ''
+        self.csp = ("default-src 'self'; script-src 'self'; style-src 'self'" + style_hash + "; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'").encode('ascii')
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
@@ -77,8 +84,8 @@ class RequestGuard:
                 started=True
                 extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'DENY'),
                        (b'referrer-policy',b'no-referrer'),(b'cache-control',b'public, max-age=86400' if scope.get('path','').startswith('/static/assets/') else b'no-store'),
-                       (b'permissions-policy',b'camera=(), microphone=(), geolocation=()'),
-                       (b'content-security-policy',b"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")]
+                       (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
+                       (b'content-security-policy',self.csp)]
                 if self.production:
                     extra.append((b'strict-transport-security',b'max-age=31536000'))
                 message['headers']=message.get('headers',[])+extra
@@ -221,7 +228,7 @@ def create_app(settings=None):
     def health():
         with db.connect() as conn:
             conn.execute('SELECT 1').fetchone()
-        return {'status':'ok','version':'1.1.0'}
+        return {'status':'ok','version':VERSION}
 
     @app.get('/api/session')
     def session(current=Depends(user)):
@@ -497,15 +504,34 @@ def create_app(settings=None):
             return detailed_notice(conn,nid,current['id'])
 
     @app.get('/api/notices/{nid}/sources/{sid}/download')
-    def download(nid:str,sid:str,preview:bool=False,current=Depends(user)):
+    def download(nid:str,sid:str,request:Request,preview:bool=False,current=Depends(user)):
         with db.connect() as conn:
             own_notice(conn,nid,current['id'])
             source=conn.execute('SELECT * FROM sources WHERE id=? AND notice_id=?',(sid,nid)).fetchone()
             if source is None or source['content'] is None:
                 raise HTTPException(404,'附件不存在')
+            from .chat_media import VIDEO_MIME,video_response
+            if source['kind'] in VIDEO_MIME and source['status']!='failed':return video_response(source['content'],source['kind'],source['name'],request.headers.get('range') if preview else None,preview)
             from .chat_ai import IMAGE_MIME
             inline=preview and source['kind'] in IMAGE_MIME and source['status']!='failed'
             return Response(source['content'],media_type=IMAGE_MIME[source['kind']] if inline else 'application/octet-stream',headers={'Content-Disposition':("inline" if inline else "attachment")+"; filename*=UTF-8''"+quote(source['name'],safe='')})
+
+    @app.post('/api/notices/{nid}/conversation')
+    def notice_conversation(nid:str,payload:Version,current=Depends(user)):
+        rate_limit(db,'notice-chat:'+current['id'],60,3600)
+        with db.connect(write=True) as conn:
+            record=own_notice(conn,nid,current['id']);expect_version(record,payload.version)
+            receipt='notice-chat:'+current['id']+':'+nid+':'+str(record['version'])
+            existing=conn.execute('SELECT conversation_id FROM integration_receipts WHERE receipt_key=?',(receipt,)).fetchone()
+            if existing and existing['conversation_id'] and conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(existing['conversation_id'],current['id'])).fetchone():return {'conversation_id':existing['conversation_id']}
+            rows=conn.execute('SELECT * FROM sources WHERE notice_id=? AND active=1 ORDER BY created_at,rowid',(nid,)).fetchall()
+            if len(rows)>12:raise HTTPException(400,'本通知附件超过单次对话上限，请选取相关材料另建对话')
+            cid=ident();now=int(time.time())
+            conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(cid,current['id'],record['title'][:100],now,now))
+            for row in rows:
+                conn.execute('INSERT INTO conversation_sources(id,conversation_id,name,kind,content,sha256,status,sections,warning,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',(ident(),cid,row['name'],row['kind'],row['content'],row['sha256'],row['status'],row['sections'],row['warning'],now))
+            conn.execute('INSERT OR REPLACE INTO integration_receipts(receipt_key,user_id,conversation_id,created_at) VALUES(?,?,?,?)',(receipt,current['id'],cid,now))
+            return {'conversation_id':cid}
 
     @app.post('/api/notices/{nid}/manual')
     def manual(nid:str,payload:Version,current=Depends(user)):
@@ -622,7 +648,12 @@ def create_app(settings=None):
     @app.get('/api/tasks')
     def tasks(current=Depends(user)):
         with db.connect() as conn:
-            return [serialize_task(r) for r in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=? ORDER BY t.updated_at DESC',(current['id'],))]
+            items=[serialize_task(r) for r in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=? ORDER BY t.updated_at DESC',(current['id'],))]
+            attachments={}
+            for row in conn.execute("SELECT s.id,s.notice_id,s.name,s.kind,s.status,length(s.content) AS size FROM sources s JOIN notices n ON s.notice_id=n.id WHERE n.user_id=? AND s.active=1 AND s.content IS NOT NULL ORDER BY s.created_at",(current['id'],)):
+                attachments.setdefault(row['notice_id'],[]).append(dict(row))
+            for item in items:item['attachments']=attachments.get(item['notice_id'],[])
+            return items
 
     @app.put('/api/tasks/{tid}')
     def update_task(tid:str,payload:TaskUpdate,current=Depends(user)):
@@ -696,8 +727,11 @@ def create_app(settings=None):
             conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
         return {'ok':True,'message':'通知、原件、草稿、待办及历史已删除；请自行删除外部日历副本。备份按保留期限清理。'}
 
+    from .data_transfer import install_data_transfer
+    install_data_transfer(app,db,user)
     install_workspace(app,db,settings,user,heavy_lock)
     install_integrations(app,db,settings,user,admin)
+    install_speech(app,db,settings,user,heavy_lock)
     install_schedule(app,db,user)
     app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 

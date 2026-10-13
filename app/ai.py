@@ -1,3 +1,4 @@
+from .preferences import PERSONAL_KEYS,presentation_prompt
 from datetime import date, datetime, timedelta
 import json
 import re
@@ -99,12 +100,12 @@ def generate(settings, notice, sources, profile):
     if not settings.ai_api_key:
         raise AIError('尚未配置 AI API Key，请在服务端 .env 填写后重启；可先手工整理')
     context={'source_label':notice['source_label'],'published_at':notice['published_at'],
-             'materials_complete':bool(notice['materials_complete']),'profile':{k:v for k,v in profile.items() if k in {'campus_role','school','level','grade','college','major','semester','goals'}},
+             'materials_complete':bool(notice['materials_complete']),'profile':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
              'sources':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections']} for s in sources]}
     payload={'model':settings.ai_model,'messages':[
         {'role':'system','content':SYSTEM_PROMPT+json.dumps(Extraction.model_json_schema(),ensure_ascii=False)},
         {'role':'user','content':json.dumps(context,ensure_ascii=False)}],
-        'response_format':{'type':'json_object'},'enable_thinking':False,'max_tokens':10000}
+        'response_format':{'type':'json_object'},'thinking':{'type':'disabled'},'max_completion_tokens':10000}
     try:
         with httpx.Client(timeout=httpx.Timeout(settings.ai_timeout, connect=10),follow_redirects=False,trust_env=False) as client:
             with client.stream('POST',settings.ai_base_url+'/chat/completions',

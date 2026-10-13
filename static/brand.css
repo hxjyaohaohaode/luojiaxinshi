@@ -1,0 +1,30 @@
+/* Approved V4 artwork includes its own optical spacing. Keep the square canvas. */
+.brand-mark{display:block;object-fit:contain;flex-shrink:0}
+.brand>.brand-mark{width:50px;height:50px}
+.brand>span{min-width:0}
+.brand strong{line-height:1.45}
+.brand small{line-height:1.5}
+.auth-story .brand>.brand-mark{width:56px;height:56px}
+.auth-mobile-brand>.brand-mark{width:44px;height:44px}
+.boot>.brand-mark{width:72px;height:72px}
+.mobile-brand{display:none}
+@media(min-width:851px) and (max-width:1180px){
+  .sidebar .brand{gap:7px;padding-inline:2px}
+  .sidebar .brand>.brand-mark{width:46px;height:46px}
+  .sidebar .brand strong{font-size:14px}
+  .sidebar .brand small{font-size:11px}
+}
+@media(max-width:850px){
+  .mobile-brand{display:flex;align-items:center;justify-content:center;width:40px;height:44px;flex:0 0 40px;border-radius:8px}
+  .mobile-brand>.brand-mark{width:40px;height:40px}
+  .mobile-brand:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+  .topbar-left{gap:6px;flex:1;min-width:0}
+  .topbar-left b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .topbar-right{flex-shrink:0}
+}
+@media(max-width:360px){
+  .topbar{gap:6px}
+  .topbar-left{gap:2px}
+  .mobile-brand{width:36px;flex-basis:36px}
+  .mobile-brand>.brand-mark{width:36px;height:36px}
+}

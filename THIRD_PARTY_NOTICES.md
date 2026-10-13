@@ -12,3 +12,17 @@
 | 珞珈小信使 PNG | 本应用生成的原创角色资产，来源见 ASSETS.md | 类型化宿主组件与情境反馈 |
 
 既有 Python 依赖继续使用 `requirements.lock` 固定版本，本次不升级。安全审计结果在 `docs/genui/TESTING.md` 记录；没有新增依赖不代表不存在既有依赖风险。
+
+## 本轮媒体、附件与协作工具
+
+CSV / XLSX 预览使用 Python 标准库和已锁定的 defusedxml 0.7.1（PSF 许可证）；未新增解析依赖。`static/assets/genui-demo.webm` 是本项目用 Canvas 绘制并录制的合成演示，无第三方片段、音轨或远程资源。V4 图标为本项目生成资源的尺寸适配，来源见 ASSETS.md。
+
+GitHub Actions 只在仓库检查环境中运行，不进入产品包。以下工具均经官方仓库许可证接口核验为 MIT，固定提交而非浮动版本：
+
+| 名称 | 版本 / 固定提交 | 许可证 | 用途 |
+| --- | --- | --- | --- |
+| actions/checkout | v4 / 11d5960a326750d5838078e36cf38b85af677262 | MIT | 获取待检代码 |
+| actions/setup-python | v5 / a26af69be951a213d495a4c3e4e4022e16d87065 | MIT | Python 3.12 测试环境 |
+| actions/setup-node | v4 / 49933ea5288caeca8642d1e84afbd3f7d6820020 | MIT | Node.js 22 测试环境 |
+
+参考资料中的原始文档和历史方案是用户明确指定共享的项目附件，不作为第三方 UI 库、字体或运行时依赖。两张第三方标识/建筑参考图片没有打包再分发。

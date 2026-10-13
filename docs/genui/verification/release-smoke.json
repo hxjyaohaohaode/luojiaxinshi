@@ -1,0 +1,24 @@
+{
+  "source": "source delivery archive; fresh isolated data directory; existing locked Python runtime",
+  "initialization": true,
+  "health": {
+    "status": "ok",
+    "version": "1.2.0"
+  },
+  "verifiedAssets": [
+    "campus-notice-icon-v4-180.png",
+    "campus-notice-icon-v4-32.png",
+    "campus-notice-icon-v4-64.png",
+    "campus-notice-mark-v4.png",
+    "genui-demo.webm",
+    "luojia-messenger-blossom.png",
+    "luojia-messenger-planning.png",
+    "luojia-messenger-reading.png",
+    "luojia-messenger-rest.png",
+    "luojia-messenger-welcome.png"
+  ],
+  "pytestExitCode": 0,
+  "realModelCalls": 0,
+  "secretsCopied": false,
+  "dependenciesFreshInstalled": false
+}
