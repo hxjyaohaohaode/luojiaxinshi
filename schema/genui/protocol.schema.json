@@ -83,7 +83,731 @@
         "id",
         "type"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Stack"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Stack"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Row"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Row"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Grid"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Grid"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Tabs"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Tabs"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Accordion"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Accordion"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Carousel"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Carousel"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Card"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Card"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Divider"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Divider"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Markdown"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Markdown"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Heading"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Heading"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Callout"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Callout"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Badge"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Badge"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Code"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Code"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Math"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Math"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "KeyValue"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/KeyValue"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Stat"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Stat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "List"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/List"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Steps"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Steps"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Checklist"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Checklist"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Timeline"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Timeline"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Table"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Table"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Progress"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Progress"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Slider"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Slider"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Stepper"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Stepper"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Select"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Select"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Toggle"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Toggle"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "TextInput"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/TextInput"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Button"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Button"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ButtonGroup"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/ButtonGroup"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "LineChart"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/LineChart"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "BarChart"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/BarChart"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "PieChart"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/PieChart"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ScatterChart"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/ScatterChart"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Compare"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Compare"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Diagram"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Diagram"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Form"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Form"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Image"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Image"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "HostView"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/HostView"
+              }
+            }
+          }
+        }
+      ]
     },
     {
       "type": "object",
@@ -127,42 +851,127 @@
     }
   ],
   "$defs": {
+    "Binding": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "$bind": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          "required": [
+            "$bind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$expr": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "$expr"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          "required": [
+            "$ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
     "Stack": {
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "gap": {
-          "type": "string",
-          "enum": [
-            "sm",
-            "md",
-            "lg"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "columns": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 4
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -172,38 +981,80 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "gap": {
-          "type": "string",
-          "enum": [
-            "sm",
-            "md",
-            "lg"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "columns": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 4
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -213,38 +1064,80 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "gap": {
-          "type": "string",
-          "enum": [
-            "sm",
-            "md",
-            "lg"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "columns": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 4
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -254,37 +1147,86 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "labels": {
-          "type": "array",
-          "maxItems": 50,
-          "items": {
-            "type": "string",
-            "maxLength": 8192
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 8192
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -294,37 +1236,86 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "labels": {
-          "type": "array",
-          "maxItems": 50,
-          "items": {
-            "type": "string",
-            "maxLength": 8192
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 8192
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -334,37 +1325,86 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "labels": {
-          "type": "array",
-          "maxItems": 50,
-          "items": {
-            "type": "string",
-            "maxLength": 8192
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 8192
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -374,38 +1414,80 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "title": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "description": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "tone": {
-          "type": "string",
-          "enum": [
-            "neutral",
-            "info",
-            "success",
-            "warning",
-            "danger"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "neutral",
+                "info",
+                "success",
+                "warning",
+                "danger"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         }
       },
@@ -416,21 +1498,42 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -440,29 +1543,64 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -472,34 +1610,76 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "level": {
-          "type": "integer",
-          "minimum": 2,
-          "maximum": 4
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -509,38 +1689,80 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "tone": {
-          "type": "string",
-          "enum": [
-            "neutral",
-            "info",
-            "success",
-            "warning",
-            "danger"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "neutral",
+                "info",
+                "success",
+                "warning",
+                "danger"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         }
       },
@@ -551,38 +1773,80 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "tone": {
-          "type": "string",
-          "enum": [
-            "neutral",
-            "info",
-            "success",
-            "warning",
-            "danger"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "neutral",
+                "info",
+                "success",
+                "warning",
+                "danger"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         }
       },
@@ -593,33 +1857,75 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "language": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -629,29 +1935,64 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "text": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -661,47 +2002,96 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "value"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label",
-              "value"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -711,41 +2101,90 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "value": {
-          "type": [
-            "string",
-            "number",
-            "boolean",
-            "null"
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "description": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -757,69 +2196,160 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "text": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "description": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "done": {
-                "type": "boolean"
-              },
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "text": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "done": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -829,69 +2359,160 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "text": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "description": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "done": {
-                "type": "boolean"
-              },
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "text": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "done": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -901,69 +2522,160 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "text": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "description": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "done": {
-                "type": "boolean"
-              },
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "text": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "done": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -973,69 +2685,160 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "text": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "description": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "done": {
-                "type": "boolean"
-              },
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "text": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "done": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1045,66 +2848,157 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "columns": {
-          "type": "array",
-          "maxItems": 20,
-          "items": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "unit": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "sortable": {
-                "type": "boolean"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "unit": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "sortable": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "key",
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "key",
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "rows": {
-          "type": "array",
-          "maxItems": 1000,
-          "items": {
-            "type": "object"
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "pageSize": {
-          "type": "integer",
-          "minimum": 5,
-          "maximum": 50
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 50
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1114,32 +3008,74 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "value": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "max": {
-          "type": "number",
-          "minimum": 1
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 1
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1149,43 +3085,106 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "min": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "max": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "step": {
-          "type": "number",
-          "exclusiveMinimum": 0
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1198,43 +3197,106 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "min": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "max": {
-          "type": "number"
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "step": {
-          "type": "number",
-          "exclusiveMinimum": 0
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1247,55 +3309,118 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "options": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object",
-            "properties": {
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "value",
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "value",
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1308,29 +3433,64 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1343,41 +3503,97 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "placeholder": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "multiline": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "maxLength": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 2000
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2000
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1390,36 +3606,78 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "variant": {
-          "type": "string",
-          "enum": [
-            "primary",
-            "secondary",
-            "plain"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "plain"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "disabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1431,55 +3689,118 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "bind": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "options": {
-          "type": "array",
-          "maxItems": 20,
-          "items": {
-            "type": "object",
-            "properties": {
-              "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "value",
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "value",
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -1492,68 +3813,159 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "data": {
-          "type": "array",
-          "maxItems": 1000,
-          "items": {
-            "type": "object",
-            "properties": {
-              "x": {
-                "type": [
-                  "string",
-                  "number"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "y": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "series": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "y": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "series": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "x",
-              "y"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "xLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "yLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1563,68 +3975,159 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "data": {
-          "type": "array",
-          "maxItems": 1000,
-          "items": {
-            "type": "object",
-            "properties": {
-              "x": {
-                "type": [
-                  "string",
-                  "number"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "y": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "series": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "y": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "series": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "x",
-              "y"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "xLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "yLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1634,68 +4137,159 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "data": {
-          "type": "array",
-          "maxItems": 1000,
-          "items": {
-            "type": "object",
-            "properties": {
-              "x": {
-                "type": [
-                  "string",
-                  "number"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "y": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "series": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "y": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "series": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "x",
-              "y"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "xLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "yLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1705,68 +4299,159 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "data": {
-          "type": "array",
-          "maxItems": 1000,
-          "items": {
-            "type": "object",
-            "properties": {
-              "x": {
-                "type": [
-                  "string",
-                  "number"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 1000,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "y": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "series": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
                 ]
-              },
-              "y": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "series": {
-                "type": "string",
-                "maxLength": 8192
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "x",
-              "y"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "xLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "yLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "unit": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1776,50 +4461,113 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 6,
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "values": {
-                "type": "object"
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 6,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "values": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "label",
+                      "values"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "label",
-              "values"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "dimensions": {
-          "type": "array",
-          "maxItems": 20,
-          "items": {
-            "type": "string",
-            "maxLength": 8192
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 8192
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1829,73 +4577,164 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "nodes": {
-          "type": "array",
-          "maxItems": 40,
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 40,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "id",
-              "label"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "edges": {
-          "type": "array",
-          "maxItems": 60,
-          "items": {
-            "type": "object",
-            "properties": {
-              "from": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "to": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 60,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "to": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "from",
+                      "to"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "from",
-              "to"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1905,97 +4744,216 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "label": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "fields": {
-          "type": "array",
-          "maxItems": 15,
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "label": {
-                "type": "string",
-                "maxLength": 8192
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "text",
-                  "number",
-                  "date",
-                  "select",
-                  "checkbox"
-                ]
-              },
-              "required": {
-                "type": "boolean"
-              },
-              "min": {
-                "type": "number"
-              },
-              "max": {
-                "type": "number"
-              },
-              "options": {
-                "type": "array",
-                "maxItems": 30,
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "value": {
-                      "type": [
-                        "string",
-                        "number",
-                        "boolean",
-                        "null"
-                      ]
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 15,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "type": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "text",
+                              "number",
+                              "date",
+                              "select",
+                              "checkbox"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "required": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "min": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "max": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "options": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "maxItems": 30,
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "anyOf": [
+                                        {
+                                          "type": [
+                                            "string",
+                                            "number",
+                                            "boolean",
+                                            "null"
+                                          ]
+                                        },
+                                        {
+                                          "$ref": "#/$defs/Binding"
+                                        }
+                                      ]
+                                    },
+                                    "label": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "maxLength": 8192
+                                        },
+                                        {
+                                          "$ref": "#/$defs/Binding"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                {
+                                  "$ref": "#/$defs/Binding"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
                     },
-                    "label": {
-                      "type": "string",
-                      "maxLength": 8192
-                    }
+                    "additionalProperties": false,
+                    "required": [
+                      "name",
+                      "label",
+                      "type"
+                    ]
                   },
-                  "additionalProperties": false,
-                  "required": [
-                    "value",
-                    "label"
-                  ]
-                }
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
               }
             },
-            "additionalProperties": false,
-            "required": [
-              "name",
-              "label",
-              "type"
-            ]
-          }
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "submitLabel": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -2005,33 +4963,75 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "src": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "alt": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "caption": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -2044,49 +5044,105 @@
       "type": "object",
       "properties": {
         "status": {
-          "type": "string",
-          "enum": [
-            "ready",
-            "loading",
-            "empty",
-            "error"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "fallback": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "error": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "view": {
-          "type": "string",
-          "enum": [
-            "campus_schedule",
-            "material_index",
-            "messenger"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "campus_schedule",
+                "material_index",
+                "messenger"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         },
         "title": {
-          "type": "string",
-          "maxLength": 8192
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "items": {
-          "type": "array",
-          "maxItems": 100,
-          "items": {
-            "type": "object"
-          }
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         },
         "pose": {
-          "type": "string",
-          "enum": [
-            "welcome",
-            "reading",
-            "planning",
-            "blossom",
-            "rest"
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "welcome",
+                "reading",
+                "planning",
+                "blossom",
+                "rest"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
           ]
         }
       },
