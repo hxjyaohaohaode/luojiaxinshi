@@ -17,6 +17,7 @@ from .db import ident,dumps,audit
 from .documents import file_source,text_source,total_chars,MAX_FILE,MAX_CHARS
 from .models import Strict,Version,safe_url
 from .security import rate_limit
+from .genui_api import load_message,install_genui
 
 
 class NewConversation(Strict):
@@ -89,7 +90,7 @@ def conversation_detail(conn,cid,uid,settings):
         item=dict(message);item['citations']=json.loads(item['citations'])
         if expired and item['status']=='processing':
             item.update(status='failed',error='上次回复已中断，消息已保留，可以重试。')
-        result['messages'].append(item)
+        result['messages'].append(load_message(conn,item,settings))
     result['character_count']=total_chars(result['sources'])
     return result
 
@@ -218,12 +219,11 @@ def install_workspace(app,db,settings,user,heavy_lock):
         disposition='inline' if preview and source['kind'] in chat_ai.IMAGE_MIME and source['status']!='failed' else 'attachment'
         return Response(content,media_type=mime,headers={'Content-Disposition':disposition+"; filename*=UTF-8''"+quote(source['name'])})
 
-    @app.post('/api/conversations/{cid}/messages')
-    async def send(cid:str,payload:SendMessage,current=Depends(user)):
+    def prepare_send(cid,payload,current):
         with db.connect() as conn:
             own(conn,cid,current['id'])
             if conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND request_id=?',(cid,payload.request_id)).fetchone():
-                return conversation_detail(conn,cid,current['id'],settings)
+                return None,conversation_detail(conn,cid,current['id'],settings)
         if settings.ai_api_key and not payload.allow_external_processing:
             raise HTTPException(422,'请确认本会话材料可发送到所配置的模型服务')
         if not heavy_lock.acquire(blocking=False):
@@ -260,6 +260,18 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 messages=[m for m in messages if m['role']=='user' or all(e['source_id'] in current_ids for e in json.loads(m['citations']))]
                 conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,status,request_id,parent_id,model,created_at) VALUES(?,?,'assistant','processing',?,?,?,?)",(mid,cid,payload.request_id,parent,settings.ai_model,now))
                 conn.execute('UPDATE conversations SET processing_token=?,processing_at=? WHERE id=?',(token,now,cid));changed(conn,cid)
+            return {'token':token,'mid':mid,'sources':sources,'messages':messages},None
+        except BaseException:
+            heavy_lock.release()
+            raise
+
+    @app.post('/api/conversations/{cid}/messages')
+    async def send(cid:str,payload:SendMessage,current=Depends(user)):
+        prepared,existing=prepare_send(cid,payload,current)
+        if existing is not None:
+            return existing
+        token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
+        try:
             try:
                 result,usage=await run_in_threadpool(chat_ai.reply,settings,sources,messages,json.loads(current['profile']))
                 status='complete';error=''
@@ -279,13 +291,17 @@ def install_workspace(app,db,settings,user,heavy_lock):
         finally:
             heavy_lock.release()
 
+    cancel_genui=install_genui(app,db,settings,user,heavy_lock,prepare_send,own,changed,conversation_detail,SendMessage)
+
     @app.post('/api/conversations/{cid}/cancel')
     def cancel(cid:str,payload:Version,current=Depends(user)):
         with db.connect(write=True) as conn:
             own(conn,cid,current['id'],payload.version)
             conn.execute("UPDATE conversation_messages SET status='cancelled',error='已停止采纳本次回复；模型服务可能仍在处理并计费。' WHERE conversation_id=? AND status='processing'",(cid,))
             conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
-            return conversation_detail(conn,cid,current['id'],settings)
+            result=conversation_detail(conn,cid,current['id'],settings)
+        cancel_genui(cid)
+        return result
 
     @app.post('/api/conversations/{cid}/promote')
     def promote(cid:str,payload:Promote,current=Depends(user)):

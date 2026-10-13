@@ -116,6 +116,21 @@ CREATE TABLE IF NOT EXISTS arrangements(
 CREATE INDEX IF NOT EXISTS arrangements_owner ON arrangements(user_id);
 """
 
+GENUI_SCHEMA = """
+CREATE TABLE IF NOT EXISTS genui_preferences(
+ user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ enabled INTEGER NOT NULL DEFAULT 1, theme TEXT NOT NULL DEFAULT 'light',
+ version INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS genui_messages(
+ message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ protocol_version INTEGER NOT NULL DEFAULT 1, raw TEXT NOT NULL DEFAULT '',
+ parts TEXT NOT NULL DEFAULT '[]', trusted_data TEXT NOT NULL DEFAULT '{}',
+ tier INTEGER NOT NULL DEFAULT 3, validated INTEGER NOT NULL DEFAULT 0,
+ snapshots TEXT NOT NULL DEFAULT '{}', snapshot_version INTEGER NOT NULL DEFAULT 0,
+ ai_label TEXT NOT NULL DEFAULT 'AI 生成内容', updated_at INTEGER NOT NULL);
+INSERT OR IGNORE INTO meta VALUES('genui_schema_version','1');
+"""
+
 
 class Database:
     def __init__(self, path: Path):
@@ -132,6 +147,7 @@ class Database:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(SCHEMA)
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
+            conn.executescript('BEGIN IMMEDIATE;'+GENUI_SCHEMA+'COMMIT;')
 
     @contextmanager
     def connect(self, write=False):

@@ -29,6 +29,7 @@ from .models import (CalendarRequest, Confirm, EditCache, Generate, Login, Passw
                      TaskData, TaskUpdate, Version, safe_url)
 from .security import DUMMY_PASSWORD, hash_password, new_invite, rate_limit, token_hash, verify_password
 from .workspace import install_workspace, conversation_detail
+from .genui_api import feature_settings
 from .integrations import install_integrations
 from .schedule import install_schedule, serialize as serialize_arrangement, own as own_arrangement
 
@@ -46,7 +47,7 @@ class RequestGuard:
         headers=dict(scope['headers'])
         method=scope['method']
         webhook=scope.get('path')=='/api/integrations/qq/webhook' and method=='POST'
-        body_limit=256*1024 if webhook else MAX_BODY
+        body_limit=256*1024 if webhook or scope.get('path','').endswith('/ui-state') or scope.get('path','').startswith('/api/genui/') else MAX_BODY
         error=None
         try:
             if int(headers.get(b'content-length',b'0'))>body_limit:
@@ -224,9 +225,11 @@ def create_app(settings=None):
 
     @app.get('/api/session')
     def session(current=Depends(user)):
+        with db.connect() as conn:
+            genui=feature_settings(conn,current['id'],settings)
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
                         'role':current['role'],'profile':json.loads(current['profile'])},'csrf':current['csrf'],
-                'ai':{'configured':bool(settings.ai_api_key),'model':settings.ai_model},
+                'ai':{'configured':bool(settings.ai_api_key),'model':settings.ai_model},'genui':genui,
                 'environment':'production' if settings.production else 'local'}
 
     @app.post('/api/auth/login')

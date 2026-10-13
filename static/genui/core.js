@@ -3,15 +3,15 @@ import {safeClone,safeKey,pathParts,readPath,matches,bytes} from './security.js'
 import {parseExpression,evaluateExpression} from './expression.js';
 export {CATALOG,evaluateExpression};
 const textValue=value=>value===null||value===undefined?'':typeof value==='object'?JSON.stringify(value):String(value);
-export function resolve(value,state,data,depth=0){
-  if(depth>CATALOG.limits.depth)throw Error('value_too_deep');
+export function resolve(value,state,data,depth=0,limits=CATALOG.limits){
+  if(depth>limits.depth)throw Error('value_too_deep');
   if(!value||typeof value!=='object')return value;
-  if(Object.keys(value).length===1){if('$bind'in value)return readPath(state,value.$bind);if('$ref'in value)return readPath(data,value.$ref);if('$expr'in value)return evaluateExpression(value.$expr,state);}
-  if(Array.isArray(value))return value.map(v=>resolve(v,state,data,depth+1));
-  const out=Object.create(null);for(const [key,item]of Object.entries(value))out[key]=resolve(item,state,data,depth+1);return out;
+  if(Object.keys(value).length===1){if('$bind'in value)return readPath(state,value.$bind);if('$ref'in value)return readPath(data,value.$ref);if('$expr'in value)return evaluateExpression(value.$expr,state,limits);}
+  if(Array.isArray(value))return value.map(v=>resolve(v,state,data,depth+1,limits));
+  const out=Object.create(null);for(const [key,item]of Object.entries(value))out[key]=resolve(item,state,data,depth+1,limits);return out;
 }
 export function validateAction(action){
-  const clean=safeClone(action),schema=CATALOG.actions[clean.kind];
+  const clean=safeClone(action),schema=Object.hasOwn(CATALOG.actions,clean?.kind)?CATALOG.actions[clean.kind]:null;
   if(!schema||!matches(clean,schema))throw Error('invalid_action');
   if(clean.kind==='state')pathParts(clean.key);
   if(clean.kind==='host'&&!matches(clean.params||{},CATALOG.hostActions[clean.name]))throw Error('invalid_host_params');
@@ -25,7 +25,7 @@ function expressions(value,limits){
 export function validateNode(input,limits=CATALOG.limits){
   const node=safeClone(input,limits);if(!safeKey(node.id)||typeof node.type!=='string')throw Error('invalid_node_id');
   if(Object.keys(node).some(k=>!['op','id','type','props','children','on'].includes(k)))throw Error('invalid_node_field');
-  const definition=CATALOG.components[node.type];
+  const definition=Object.hasOwn(CATALOG.components,node.type)?CATALOG.components[node.type]:null;
   if(!definition)return {id:node.id,type:'Unknown',props:{text:typeof node.props?.fallback==='string'?node.props.fallback:'这部分展示方式暂不支持，请以文字说明为准。'},children:[],error:'unknown_component'};
   if(node.props!==undefined&&(!node.props||typeof node.props!=='object'||Array.isArray(node.props)))throw Error('invalid_props');
   const props=Object.assign(Object.create(null),definition.defaults,node.props||{});

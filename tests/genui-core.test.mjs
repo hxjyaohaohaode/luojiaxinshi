@@ -66,6 +66,7 @@ test('untrusted data cannot forge service data and actions stay allowlisted',()=
   const b=new Block();b.apply(begin);b.apply({op:'data',id:'records',value:[1]});assert.equal(b.data.records,undefined);b.apply({op:'data',id:'records',value:[2]},{trusted:true});assert.deepEqual(plain(b.data.records),[2]);
   assert.throws(()=>validateAction({kind:'host',name:'delete_all',params:{}}));assert.throws(()=>validateAction({kind:'host',name:'review_material',params:{}}));
   assert.equal(validateAction({kind:'host',name:'open_calendar',params:{}}).name,'open_calendar');
+  assert.throws(()=>validateAction({kind:'constructor'}));assert.equal(validateNode({id:'bad',type:'constructor'}).type,'Unknown');
   assert.equal(safeUrl('javascript:alert(1)'),null);assert.equal(safeUrl('https://whu.edu.cn.evil.test'),null);assert.equal(safeUrl('https://www.whu.edu.cn/path'),'https://www.whu.edu.cn/path');
 });
 test('plain fenced code is never interpreted as a UI block',()=>{

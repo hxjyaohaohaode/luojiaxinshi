@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass,field
+import json
 import os
 from pathlib import Path
 from urllib.parse import urlparse
@@ -23,6 +24,14 @@ class Settings:
     qq_bot_secret: str = ''
     wechat_publisher_app_id: str = ''
     wechat_publisher_secret: str = ''
+    genui_enabled: bool = True
+    genui_debug: bool = False
+    genui_ai_label: str = 'AI 生成内容'
+    genui_tier: str = 'auto'
+    ai_supports_json: bool = True
+    ai_supports_tools: bool = False
+    ai_context_tokens: int = 32768
+    genui_limits: dict = field(default_factory=dict)
 
     @classmethod
     def from_env(cls):
@@ -39,6 +48,19 @@ class Settings:
         result.qq_bot_secret=os.getenv('QQ_BOT_SECRET','').strip()
         result.wechat_publisher_app_id=os.getenv('WECHAT_PUBLISHER_APP_ID','').strip()
         result.wechat_publisher_secret=os.getenv('WECHAT_PUBLISHER_SECRET','').strip()
+        result.genui_enabled=os.getenv('GENUI_ENABLED','true').lower() in {'true','1','yes'}
+        result.genui_debug=os.getenv('GENUI_DEBUG','false').lower() in {'true','1','yes'}
+        result.genui_ai_label=os.getenv('GENUI_AI_LABEL','AI 生成内容')[:60]
+        result.genui_tier=os.getenv('GENUI_TIER','auto').lower()
+        result.ai_supports_json=os.getenv('AI_SUPPORTS_JSON','true').lower() in {'true','1','yes'}
+        result.ai_supports_tools=os.getenv('AI_SUPPORTS_TOOLS','false').lower() in {'true','1','yes'}
+        result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS','32768'))
+        if result.genui_tier not in {'auto','1','2','3'} or not 2048<=result.ai_context_tokens<=1000000:
+            raise ValueError('GENUI_TIER 或 AI_CONTEXT_TOKENS 配置无效')
+        from .genui import LIMITS
+        result.genui_limits=json.loads(os.getenv('GENUI_LIMITS_JSON','{}'))
+        if not isinstance(result.genui_limits,dict) or any(k not in LIMITS or type(v) is not int or not 1<=v<=LIMITS[k] for k,v in result.genui_limits.items()):
+            raise ValueError('GENUI_LIMITS_JSON 只能设置已知上限，范围为 1 至目录默认值')
         if not parsed.hostname or parsed.path or parsed.query or parsed.fragment:
             raise ValueError("APP_ORIGIN 必须是完整源地址，不能包含路径")
         if result.production and parsed.scheme != "https":

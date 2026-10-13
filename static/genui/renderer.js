@@ -7,7 +7,7 @@ const errorText='这部分暂时无法显示，其余内容仍可使用。';
 
 export class UIRenderer{
   constructor(container,spec,options={}){
-    this.container=container;this.options=options;this.instance='genui-'+(++nextInstance);this.records=new Map();this.view=safeClone(options.snapshot?.view||{});this.store=new StateStore(spec.state||{});this.frame=0;this.disposed=false;
+    this.container=container;this.options=options;this.limits={...CATALOG.limits,...options.limits};this.instance='genui-'+(++nextInstance);this.records=new Map();this.view=safeClone(options.snapshot?.view||{});this.store=new StateStore(spec.state||{},this.limits);this.frame=0;this.disposed=false;
     if(options.snapshot?.state)for(const [key,value]of Object.entries(options.snapshot.state)){try{this.store.set(key,value);}catch{/* Outdated snapshots cannot override the current schema. */}}
     this.root=el('section','genui');this.root.setAttribute('aria-label','互动回答');this.root.dataset.genuiVersion='1';this.body=el('div','gu-body');this.footer=el('div','gu-footer');this.status=el('span','gu-status');this.feedback=el('span','gu-feedback');this.feedback.setAttribute('role','status');this.feedback.setAttribute('aria-live','polite');
     this.copy=button('复制为文字',async()=>{try{await navigator.clipboard.writeText(blockMarkdown(this.spec,this.store.values));this.announce('已复制');}catch{this.announce('复制失败，可选择回答文字后复制。');}});
@@ -27,10 +27,10 @@ export class UIRenderer{
     if(!record){record={id,element:el('div','gu-node'),content:el('div'),children:el('div','gu-children'),local:this.view[id]??=Object.create(null),signature:null};record.element.dataset.nodeId=id;record.element.append(record.content,record.children);this.records.set(id,record);}
     try{
       if(!model){record.content.replaceChildren(el('p','gu-skeleton','正在接收这部分内容…'));record.children.replaceChildren();return record.element;}
-      const definition=CATALOG.components[model.type],props=resolve(model.props,this.store.values,this.spec.data||{});
+      const definition=Object.hasOwn(CATALOG.components,model.type)?CATALOG.components[model.type]:null,props=resolve(model.props,this.store.values,this.spec.data||{},0,this.limits);
       if(model.type!=='Unknown'&&(!definition||!matches(props,{type:'object',properties:definition.properties,required:definition.required,additionalProperties:false},false)))throw Error('数据尚未完整或不符合组件要求');
       this.paintItems+=(props.items?.length||0)+(props.data?.length||0)+Math.min(props.rows?.length||0,50)+(props.edges?.length||0)+1;
-      if(this.paintItems>(CATALOG.limits.renderItems||5000))throw Error('render_limit');
+      if(this.paintItems>this.limits.renderItems)throw Error('render_limit');
       delete record.element.dataset.error;record.model=model;record.props=props;const signature=JSON.stringify([model.type,props,model.on,model.children]);
       if(signature!==record.signature){
         const focused=record.content.contains(document.activeElement)?document.activeElement:null,field=focused?.dataset.field,selection=focused&&'selectionStart'in focused?focused.selectionStart:null;
@@ -60,7 +60,7 @@ export class UIRenderer{
   async action(record,eventName,values={},explicit=false){
     try{
       const raw=record.model.on?.[eventName];if(!raw)return;
-      const action=validateAction(resolve(raw,this.store.values,this.spec.data||{}));
+      const action=validateAction(resolve(raw,this.store.values,this.spec.data||{},0,this.limits));
       if(action.kind==='state'){this.store.set(action.key,action.value);return;}
       if(!explicit||!['click','submit'].includes(eventName))throw Error('此操作需要点击确认。');
       if(action.kind==='open_url'){const url=safeUrl(action.url,{hosts:this.options.urlHosts||CATALOG.policy.urlHosts});if(!url)throw Error('此链接不在允许范围内。');window.open(url,'_blank','noopener,noreferrer');}
