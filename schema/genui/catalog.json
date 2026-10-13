@@ -12,7 +12,8 @@
     "messageBytes": 1048576,
     "operations": 1500,
     "stateKeys": 100,
-    "dataItems": 1000
+    "dataItems": 1000,
+    "renderItems": 5000
   },
   "functions": [
     "round",

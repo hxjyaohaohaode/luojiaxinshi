@@ -26,7 +26,8 @@ def outputs():
         if op=='node':
             entry['allOf']=[{'if':{'properties':{'type':{'const':name}},'required':['type']},'then':{'properties':{'props':{'$ref':'#/$defs/'+name}}}} for name in catalog['components']]
         schema['oneOf'].append(entry)
-    return {'static/genui/catalog.js':module,'docs/genui/CAPABILITIES.txt':capabilities,'schema/genui/protocol.schema.json':json.dumps(schema,ensure_ascii=False,indent=2)+'\n'}
+    gallery=json.loads((ROOT/'fixtures/genui/gallery.json').read_text(encoding='utf-8')) if (ROOT/'fixtures/genui/gallery.json').exists() else {}
+    return {'static/genui/catalog.js':module,'docs/genui/CAPABILITIES.txt':capabilities,'schema/genui/protocol.schema.json':json.dumps(schema,ensure_ascii=False,indent=2)+'\n','static/genui/fixtures.js':'// Generated from fixtures/genui/gallery.json. Engineering examples only.\nexport const SAMPLES='+json.dumps(gallery,ensure_ascii=False,separators=(',',':'))+';\n'}
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()

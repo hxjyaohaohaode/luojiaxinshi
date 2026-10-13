@@ -51,6 +51,7 @@ export function safeUrl(value,{hosts=CATALOG.policy.urlHosts,origin=typeof locat
   if(typeof value!=='string'||value.length>2000||/[\u0000-\u0020\u007f]/.test(value))return null;
   try{const url=new URL(value,origin);if(url.username||url.password)return null;if(mailto&&url.protocol==='mailto:')return url.href;if(!['https:','http:'].includes(url.protocol))return null;
     if(url.origin===origin)return url.href;
+    if(hosts===null)return url.href;
     if(!hosts.some(host=>url.hostname===host||url.hostname.endsWith('.'+host)))return null;
     return url.href;
   }catch{return null;}
