@@ -1,6 +1,7 @@
 import {CATALOG,StateStore,resolve,validateAction,blockMarkdown,StreamParser} from './core.js';
 import {matches,safeClone,safeKey,safeUrl,readPath} from './security.js';
 import {el,button,replaceInOrder,markdown,dataTable,download,string} from './dom.js';
+import {formula} from './math.js';
 let nextInstance=0,chartsModule;
 const numeric=value=>{if(typeof value!=='number'||!Number.isFinite(value))throw Error('数值暂不可用');return value;};
 const errorText='这部分暂时无法显示，其余内容仍可使用。';
@@ -12,7 +13,7 @@ export class UIRenderer{
     this.root=el('section','genui');this.root.setAttribute('aria-label','互动回答');this.root.dataset.genuiVersion='1';this.body=el('div','gu-body');this.footer=el('div','gu-footer');this.status=el('span','gu-status');this.feedback=el('span','gu-feedback');this.feedback.setAttribute('role','status');this.feedback.setAttribute('aria-live','polite');
     this.copy=button('复制为文字',async()=>{try{await navigator.clipboard.writeText(blockMarkdown(this.spec,this.store.values));this.announce('已复制');}catch{this.announce('复制失败，可选择回答文字后复制。');}});
     this.save=button('保存互动进度',async()=>{if(!this.options.onSave)return;this.save.disabled=true;try{await this.options.onSave(this.snapshot());this.announce('互动进度已保存');this.root.dataset.dirty='false';}catch(error){this.announce(error.message||'暂未保存，请重试。');}finally{this.save.disabled=false;}});
-    this.save.hidden=!options.onSave;this.footer.append(this.status,this.copy,this.save,this.feedback);this.root.append(this.body,this.footer);container.append(this.root);
+    this.copy.hidden=!!options.compact;this.save.hidden=!options.onSave;this.footer.append(this.status,this.copy,this.save,this.feedback);this.root.append(this.body,this.footer);container.append(this.root);
     this.unsubscribe=this.store.subscribe(()=>{this.changed();this.schedule();});this.update(spec,true);
   }
   changed(){this.root.dataset.dirty='true';this.options.onChange?.(this.snapshot());}
@@ -26,7 +27,7 @@ export class UIRenderer{
     const model=this.spec.nodes[id];let record=this.records.get(id);
     if(!record){record={id,element:el('div','gu-node'),content:el('div'),children:el('div','gu-children'),local:this.view[id]??=Object.create(null),signature:null};record.element.dataset.nodeId=id;record.element.append(record.content,record.children);this.records.set(id,record);}
     try{
-      if(!model){record.content.replaceChildren(el('p','gu-skeleton','正在接收这部分内容…'));record.children.replaceChildren();return record.element;}
+      if(!model){record.content.replaceChildren(el('p',this.spec.complete?'gu-error':'gu-skeleton',this.spec.complete?'这部分内容未提供，请以文字说明为准。':'正在接收这部分内容…'));record.children.replaceChildren();return record.element;}
       const definition=Object.hasOwn(CATALOG.components,model.type)?CATALOG.components[model.type]:null,props=resolve(model.props,this.store.values,this.spec.data||{},0,this.limits);
       if(model.type!=='Unknown'&&(!definition||!matches(props,{type:'object',properties:definition.properties,required:definition.required,additionalProperties:false},false)))throw Error('数据尚未完整或不符合组件要求');
       this.paintItems+=(props.items?.length||0)+(props.data?.length||0)+Math.min(props.rows?.length||0,50)+(props.edges?.length||0)+1;
@@ -52,7 +53,7 @@ export class UIRenderer{
   paint(){
     if(this.disposed)return;this.paintItems=0;const start=performance.now();replaceInOrder(this.body,this.spec.roots.map(id=>this.node(id)));
     const label=this.options.aiLabel===false?'':typeof this.options.aiLabel==='string'?this.options.aiLabel:'AI 生成内容';this.status.textContent=[label,!this.spec.complete?'未完整接收':this.spec.errors?.length?'部分内容已降级':''].filter(Boolean).join(' · ');
-    this.root.dataset.complete=String(!!this.spec.complete);this.options.onRender?.(performance.now()-start);
+    this.save.hidden=!this.options.onSave||!Object.values(this.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown'].includes(n.type)||n.type.endsWith('Chart'));this.footer.hidden=this.options.compact&&!this.status.textContent&&this.save.hidden;this.root.dataset.complete=String(!!this.spec.complete);this.options.onRender?.(performance.now()-start);
   }
   set(record,value){const bind=record.props.bind;if(!bind)throw Error('此控件尚未绑定状态');this.store.set(bind,value);}
   get(record){return this.store.get(record.props.bind);}
@@ -97,7 +98,7 @@ export class UIRenderer{
       (chartsModule??=import('./charts.js')).then(module=>{if(!this.disposed&&record.signature===signature)try{c.replaceChildren(module.chart(t,p,{view:v,changed:()=>this.changed()}));}catch{c.replaceChildren(el('p','gu-error',errorText));}}).catch(()=>{if(!this.disposed)c.replaceChildren(el('p','gu-error','图表暂不可用，请复制为文字查看数据。'));});return;
     }
     if(t==='Compare'){const grid=el('div','gu-compare-grid');for(const item of p.items||[]){const card=el('section','gu-compare-card');card.append(el('h4','',item.label));const dl=el('dl','gu-kv');for(const dimension of p.dimensions||[]){const row=el('div');row.append(el('dt','',dimension),el('dd','',item.values[dimension]??'未提供'));dl.append(row);}card.append(dl);grid.append(card);}c.append(grid.childNodes.length?grid:el('p','gu-muted','暂无对比项'));return;}
-    if(t==='Math'){const math=document.createElementNS('http://www.w3.org/1998/Math/MathML','math');math.setAttribute('display','block');math.setAttribute('aria-label',p.text);const text=document.createElementNS(math.namespaceURI,'mtext');text.textContent=p.text;math.append(text);c.append(math);if(p.label)c.append(el('p','gu-muted',p.label));return;}
+    if(t==='Math'){c.append(formula(p.text));if(p.label)c.append(el('p','gu-muted',p.label));return;}
     if(t==='Diagram'){const diagram=el('ol','gu-diagram');for(const n of p.nodes||[]){const li=el('li');li.append(el('strong','',n.label));const edges=(p.edges||[]).filter(e=>e.from===n.id);for(const edge of edges){const dest=p.nodes.find(n=>n.id===edge.to);if(dest)li.append(el('div','gu-muted','→ '+(edge.label?edge.label+'：':'')+dest.label));}diagram.append(li);}c.append(diagram.childNodes.length?diagram:el('p','gu-muted','暂无流程'));return;}
     if(t==='Form'){this.form(record);return;}
     if(t==='Image'){
@@ -122,9 +123,10 @@ export class UIRenderer{
   items(record){
     const {model,props:p,content:c,local:v}=record,check=model.type==='Checklist',list=el(model.type==='Steps'?'ol':'ul','gu-'+model.type.toLowerCase()+'-items');if(p.label)c.append(el('strong','',p.label));c.append(list);
     const controls=[];for(const [i,item]of (p.items||[]).entries()){
-      const li=el('li'),text=el('span');text.append(el('strong','',item.label));if(item.text||item.description)text.append(el('span','gu-muted',item.text||item.description));
+      const li=el('li'),text=el('span');if(i>=6)li.hidden=!v.expanded;text.append(el('strong','',item.label));if(item.text||item.description)text.append(el('span','gu-muted',item.text||item.description));
       if(check){const id=item.id||'item'+i,label=el('label','gu-check'),input=el('input');input.type='checkbox';input.dataset.field=id;input.addEventListener('change',()=>{try{const current=p.bind?this.get(record):(v.checked??[]);if(!Array.isArray(current))throw Error('清单状态无效');const next=current.filter(key=>key!==id);if(input.checked)next.push(id);if(p.bind)this.set(record,next);else this.local(record,'checked',next);this.action(record,'change');}catch(error){this.announce(error.message);record.refresh();}});label.append(input,text);li.append(label);controls.push({input,id,item});}else li.append(text);list.append(li);
     }
+    if((p.items||[]).length>6){const more=button('',()=>{this.local(record,'expanded',!v.expanded);refreshMore();});const refreshMore=()=>{[...list.children].forEach((li,i)=>li.hidden=i>=6&&!v.expanded);more.textContent=v.expanded?'收起其余事项':'查看其余 '+(p.items.length-6)+' 项';more.setAttribute('aria-expanded',String(!!v.expanded));};refreshMore();c.append(more);}
     if(!list.childNodes.length)c.append(el('p','gu-muted','暂无条目'));
     if(check){record.refresh=()=>{const checked=p.bind?this.get(record):v.checked;if(checked!==undefined&&!Array.isArray(checked))throw Error('invalid_checklist_state');controls.forEach(({input,id,item})=>{input.checked=checked?checked.includes(id):!!item.done;});};record.refresh();}
   }
@@ -151,7 +153,7 @@ export class UIRenderer{
     c.append(input);
   }
   form(record){
-    const {props:p,content:c,local:v}=record,form=el('form','gu-form'),inputs=[];form.setAttribute('aria-label',p.label||'补充信息');if(p.label)form.append(el('h4','',p.label));v.fields??=Object.create(null);
+    const {props:p,content:c,local:v}=record,form=el('form','gu-form'),inputs=[];form.dataset.workspaceForm='genui';form.setAttribute('aria-label',p.label||'补充信息');if(p.label)form.append(el('h4','',p.label));v.fields??=Object.create(null);
     const names=new Set();for(const field of p.fields||[]){if(!safeKey(field.name)||names.has(field.name))throw Error('invalid_form_field');names.add(field.name);const label=el('label','gu-form-field'),span=el('span','',field.label+(field.required?' *':'')),input=el(field.type==='select'?'select':'input');input.name=field.name;input.dataset.field=field.name;input.required=!!field.required;
       if(field.type==='select')for(const [index,option]of (field.options||[]).entries()){const o=el('option','',option.label);o.value=String(index);input.append(o);}else input.type=field.type==='checkbox'?'checkbox':field.type;
       if(field.type==='number'){if(field.min!==undefined)input.min=field.min;if(field.max!==undefined)input.max=field.max;input.step='any';}else if(field.type==='text'){input.maxLength=500;input.autocomplete='off';}
@@ -169,6 +171,7 @@ export class MessageRenderer{
   push(chunk){this.parser.push(chunk);this.parts=this.parser.snapshot();this.schedule();}
   finish(){this.parts=this.parser.finish();this.schedule();return this.parts;}
   update(parts){this.parts=parts;this.schedule();}
+  setHostContext(context){Object.assign(this.options,context);for(const r of this.rendered||[])if(r.ui){Object.assign(r.ui.options,context);for(const record of r.ui.records.values())if(record.model?.type==='HostView')record.signature=null;r.ui.schedule();}}
   schedule(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.paint();});}
   paint(){
     const follow=this.options.beforeRender?.(),elements=[];this.rendered??=[];

@@ -114,15 +114,31 @@ export class StreamParser{
 export function parseMessage(raw,options){const parser=new StreamParser(options);parser.push(raw);return parser.finish();}
 export function blockMarkdown(spec,state=spec.state){
   const lines=[],seen=new Set();let count=0;
+  const value=v=>textValue(v),cell=v=>value(v).replace(/\|/g,'\\|').replace(/\n/g,' ');
+  const table=(columns,rows)=>{lines.push('| '+columns.map(c=>cell(c.label)).join(' | ')+' |','| '+columns.map(()=> '---').join(' | ')+' |',...rows.map(row=>'| '+columns.map(c=>cell(row?.[c.key])).join(' | ')+' |'));};
   function visit(id){if(seen.has(id)||++count>CATALOG.limits.nodes)return;seen.add(id);const node=spec.nodes[id];if(!node){lines.push('内容尚未完整接收。');return;}
     let p;try{p=resolve(node.props,state,spec.data);}catch{p=node.props||{};}
-    if(node.type==='Divider')lines.push('---');
-    else if(node.type==='Stat')lines.push(`${textValue(p.label)}：${textValue(p.value)} ${textValue(p.unit)}`);
-    else if(node.type==='Table'){const cols=Array.isArray(p.columns)?p.columns:[],rows=Array.isArray(p.rows)?p.rows:[];const cell=v=>textValue(v).replace(/\|/g,'\\|').replace(/\n/g,' ');lines.push('| '+cols.map(c=>cell(c.label)).join(' | ')+' |','| '+cols.map(()=> '---').join(' | ')+' |',...rows.map(row=>'| '+cols.map(c=>cell(row?.[c.key])).join(' | ')+' |'));}
-    else if(node.type.endsWith('Chart')){lines.push(textValue(p.label),...(Array.isArray(p.data)?p.data:[]).map(row=>`${textValue(row.x)}：${textValue(row.y)} ${textValue(p.unit)}`));}
-    else{if(p.title||p.label)lines.push(textValue(p.title||p.label));if(p.text)lines.push(textValue(p.text));if(p.description)lines.push(textValue(p.description));
-      if(Array.isArray(p.items))lines.push(...p.items.map(item=>'- '+textValue(item.label||item.title||item.text)+(item.value!==undefined?'：'+textValue(item.value):'')));
-      if(p.bind){try{lines.push(textValue(readPath(state,p.bind)));}catch{/* Missing state remains a readable label. */}}
+    const t=node.type;let bound;if(p.bind)try{bound=readPath(state,p.bind);}catch{}
+    if(t==='Divider')lines.push('---');
+    else if(t==='Heading')lines.push('#'.repeat(p.level||3)+' '+value(p.text));
+    else if(t==='Stat')lines.push(`${value(p.label)}：${value(p.value)} ${value(p.unit)}`);
+    else if(t==='Table'){if(p.label)lines.push(p.label);table(Array.isArray(p.columns)?p.columns:[],Array.isArray(p.rows)?p.rows:[]);}
+    else if(t.endsWith('Chart')){lines.push(value(p.label));table([{key:'x',label:p.xLabel||'项目'},{key:'y',label:(p.yLabel||'数值')+(p.unit?'（'+p.unit+'）':'')}],p.data||[]);}
+    else if(t==='Compare'){table([{key:'label',label:'选项'},...(p.dimensions||[]).map(d=>({key:d,label:d}))],(p.items||[]).map(item=>({...item.values,label:item.label})));}
+    else if(t==='Diagram'){for(const n of p.nodes||[])lines.push('- '+n.label);for(const e of p.edges||[])lines.push(`${p.nodes?.find(n=>n.id===e.from)?.label||e.from} → ${p.nodes?.find(n=>n.id===e.to)?.label||e.to}${e.label?'：'+e.label:''}`);}
+    else if(t==='Image')lines.push(value(p.alt),value(p.caption));
+    else if(t==='Code'){const fence='`'.repeat(Math.max(3,...(value(p.text).match(/`+/g)||[]).map(s=>s.length+1)));lines.push(fence+(p.language||''),value(p.text),fence);}
+    else if(t==='Form'){lines.push(value(p.label));for(const f of p.fields||[])lines.push('- '+f.label+(f.required?'（必填）':'')+(f.options?'：'+f.options.map(o=>o.label).join(' / '):''));}
+    else if(t==='Progress')lines.push(value(p.label)+'：'+value(p.value)+' / '+value(p.max));
+    else if(t==='HostView')lines.push(value(p.title)||({campus_schedule:'查看工作台日程',material_index:'查看本次材料',messenger:'珞珈小信使'}[p.view]||'工作台入口'));
+    else{
+      if(p.title||p.label)lines.push(value(p.title||p.label));if(p.text)lines.push(value(p.text));if(p.description)lines.push(value(p.description));
+      if(Array.isArray(p.items))lines.push(...p.items.map((item,index)=>{
+        const mark=t==='Checklist'?(Array.isArray(bound)&&bound.includes(item.id)?'- [x] ':'- [ ] '):t==='Steps'?(index+1)+'. ':'- ';
+        return mark+value(item.label||item.title||item.text)+(item.value!==undefined?'：'+value(item.value):'')+(item.description?' — '+value(item.description):'')+(item.date?' · '+value(item.date):'');
+      }));
+      if(bound!==undefined&&t!=='Checklist')lines.push(value(Array.isArray(p.options)?p.options.find(o=>o.value===bound)?.label??bound:bound)+(p.unit?' '+p.unit:''));
+      if(p.labels)lines.push(p.labels.join(' / '));
     }
     for(const child of node.children||[])visit(child);
   }

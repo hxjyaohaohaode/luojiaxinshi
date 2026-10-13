@@ -156,3 +156,9 @@ def test_server_message_limit_preserves_last_delivered_chunk(env,monkeypatch):
     monkeypatch.setattr(genui_ai,'stream_reply',oversized)
     final=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat)))[-1]['data']['conversation']
     assert final['messages'][-1]['genui']['raw']=='保留。' and final['messages'][-1]['status']=='failed' and not final['processing']
+
+
+def test_tightened_data_limit_degrades_without_stranding_processing():
+    from app.genui_api import message_parts
+    parts=message_parts(RAW,1,True,{'stringBytes':8},{'materials':[{'name':'a very long filename exceeding limit'}]})
+    assert parts==[{'kind':'text','text':RAW}]

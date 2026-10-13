@@ -70,7 +70,11 @@ def readable(parts):
 def message_parts(raw,tier,validated,limits,data):
     if tier==3 or tier==2 and not validated:
         return [{'kind':'text','text':raw}]
-    return parse_message(raw,limits,data)
+    try:
+        return parse_message(raw,limits,data)
+    except (ValueError,TypeError,KeyError,RecursionError):
+        # A tightened deployment limit must never strand a processing message.
+        return [{'kind':'text','text':raw or '互动内容未通过校验，请重新提问。'}]
 
 
 def load_message(conn, item, settings):
