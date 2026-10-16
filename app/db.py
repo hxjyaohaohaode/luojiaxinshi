@@ -114,6 +114,25 @@ CREATE TABLE IF NOT EXISTS arrangements(
  request_id TEXT NOT NULL, data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1,
  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id,request_id));
 CREATE INDEX IF NOT EXISTS arrangements_owner ON arrangements(user_id);
+CREATE TABLE IF NOT EXISTS conversation_ai_consents(
+ conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+ granted_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS material_library(
+ source_id TEXT PRIMARY KEY REFERENCES conversation_sources(id) ON DELETE CASCADE,
+ path TEXT NOT NULL, full_sections TEXT NOT NULL DEFAULT '[]', full_chars INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS reply_selection(
+ parent_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS reply_grounding(
+ message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ sources TEXT NOT NULL DEFAULT '[]', report TEXT NOT NULL DEFAULT '{}');
+CREATE TABLE IF NOT EXISTS reply_reactions(
+ message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ value INTEGER NOT NULL CHECK(value IN (-1,0,1)));
+CREATE TABLE IF NOT EXISTS reply_shares(
+ token_hash TEXT PRIMARY KEY, conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+ message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ title TEXT NOT NULL, body TEXT NOT NULL, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL);
 """
 
 GENUI_SCHEMA = """
@@ -128,6 +147,10 @@ CREATE TABLE IF NOT EXISTS genui_messages(
  tier INTEGER NOT NULL DEFAULT 3, validated INTEGER NOT NULL DEFAULT 0,
  snapshots TEXT NOT NULL DEFAULT '{}', snapshot_version INTEGER NOT NULL DEFAULT 0,
  ai_label TEXT NOT NULL DEFAULT 'AI 生成内容', updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS genui_interactions(
+ message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ origin_message_id TEXT REFERENCES conversation_messages(id) ON DELETE SET NULL,
+ context TEXT NOT NULL);
 INSERT OR IGNORE INTO meta VALUES('genui_schema_version','1');
 """
 
@@ -181,6 +204,8 @@ class Database:
             target.execute("DELETE FROM invites")
             target.execute('DELETE FROM binding_codes')
             target.execute('DELETE FROM external_bindings')
+            target.execute('DELETE FROM reply_shares')
+            target.execute('DELETE FROM conversation_ai_consents')
             target.commit()
 
 

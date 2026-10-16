@@ -82,10 +82,11 @@ class RequestGuard:
             nonlocal started
             if message['type']=='http.response.start':
                 started=True
-                extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'DENY'),
+                pdf_preview=scope.get('path','').startswith('/api/conversations/') and scope.get('path','').endswith('/download') and any(k.lower()==b'content-type' and v.startswith(b'application/pdf') for k,v in message.get('headers',[]))
+                extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview else b'DENY'),
                        (b'referrer-policy',b'no-referrer'),(b'cache-control',b'public, max-age=86400' if scope.get('path','').startswith('/static/assets/') else b'no-store'),
                        (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
-                       (b'content-security-policy',self.csp)]
+                       (b'content-security-policy',self.csp.replace(b"frame-ancestors 'none'",b"frame-ancestors 'self'") if pdf_preview else self.csp)]
                 if self.production:
                     extra.append((b'strict-transport-security',b'max-age=31536000'))
                 message['headers']=message.get('headers',[])+extra
@@ -111,6 +112,9 @@ def create_app(settings=None):
         try:
             yield
         finally:
+            pending=list(getattr(application.state,'genui_workers',()))
+            for task in pending:task.cancel()
+            if pending:await asyncio.gather(*pending,return_exceptions=True)
             worker.cancel()
             try:
                 await worker

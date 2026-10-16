@@ -8,7 +8,11 @@ permissions:
   contents: read
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -24,3 +28,34 @@ jobs:
       - run: python scripts/genui_catalog.py --check
       - run: python scripts/evaluate_genui.py
       - run: npm audit --omit=dev
+      - run: python -m pip_audit -r requirements.lock --strict
+      - run: python scripts/verify_local_runtime.py
+      - run: python scripts/build_release.py
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: docker build -t campus-notice:ci .
+      - name: Start the isolated container without credentials or host data
+        run: >-
+          docker run -d --name campus-ci --read-only
+          --tmpfs /tmp:size=128m,mode=1777 --tmpfs /data:size=128m,mode=1777
+          --cap-drop ALL --security-opt no-new-privileges
+          -e APP_ORIGIN=http://127.0.0.1:18065
+          -p 127.0.0.1:18065:8765 campus-notice:ci
+      - name: Verify health, non-root runtime, database and UI prompt resources
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18065/api/health > /tmp/campus-health.json; then break; fi
+            sleep 1
+          done
+          python -c 'import json; assert json.load(open("/tmp/campus-health.json"))["status"] == "ok"'
+          test "$(docker exec campus-ci id -u)" = 10001
+          docker exec campus-ci python manage.py check
+          docker exec campus-ci python -c 'from app.genui_prompt import capability_module; assert len(capability_module(1)) > 1000'
+          curl --fail --silent http://127.0.0.1:18065/ > /tmp/campus-index.html
+          grep -q 'id="app"' /tmp/campus-index.html
+      - name: Remove the isolated container
+        if: always()
+        run: docker rm -fv campus-ci 2>/dev/null || true

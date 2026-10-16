@@ -106,13 +106,48 @@ def test_disabled_preferences_leave_legacy_interface_usable(env,monkeypatch):
     c=account(env);chat=conversation(c);preference=c.get('/api/genui/preferences').json();assert preference['enabled']
     r=c.put('/api/genui/preferences',json={'version':preference['version'],'enabled':False,'theme':'dark'});assert r.status_code==200 and not r.json()['enabled']
     assert c.put('/api/genui/preferences',json={'version':0,'enabled':True}).status_code==409
-    assert c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat)).status_code==409
+    async def plain_stream(*args):
+        assert args[-1]==3
+        yield {'type':'delta','text':'流式文字回复'}
+        yield {'type':'complete','result':{'answer':'流式文字回复','citations':[],'image_sources':[]}}
+    monkeypatch.setattr(genui_ai,'stream_reply',plain_stream)
+    streamed=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat)))[-1]['data']['conversation']
+    assert streamed['messages'][-1]['content']=='流式文字回复' and streamed['messages'][-1]['genui']['tier']==3
+    chat=streamed
     def legacy(*args):return {'answer':'普通文字回复','citations':[],'image_sources':[]},{}
     monkeypatch.setattr(chat_ai,'reply',legacy)
     old=c.post(f"/api/conversations/{chat['id']}/messages",json=payload(chat));assert old.status_code==200 and old.json()['messages'][-1]['content']=='普通文字回复'
     assert c.get('/api/session').json()['genui']['theme']=='dark'
     env[1].genui_enabled=False;c.put('/api/genui/preferences',json={'version':1,'enabled':True})
     assert not c.get('/api/session').json()['genui']['enabled']
+
+
+def test_steering_cancels_old_provider_keeps_context_and_rejects_stale_targets(env,monkeypatch):
+    c=account(env);chat=conversation(c);started=threading.Event();stopped=threading.Event();captured=[]
+    async def model(settings,sources,messages,profile,tier):
+        captured.append([m['content'] for m in messages if m['role']=='user'])
+        if len(captured)==1:
+            try:
+                started.set();await asyncio.sleep(20)
+                yield {'type':'delta','text':'不能写入的新方向之前的内容'}
+            finally:stopped.set()
+        else:
+            yield {'type':'delta','text':'按补充改为4天。'}
+            yield {'type':'complete','result':{'answer':'按补充改为4天。','citations':[],'image_sources':[]}}
+    monkeypatch.setattr(genui_ai,'stream_reply',model)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        pending=pool.submit(c.post,f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat,content='每天2小时，共3天'))
+        assert started.wait(5);live=c.get('/api/conversations/'+chat['id']).json();mid=live['messages'][-1]['id']
+        body=payload(live,content='补充：改为4天，保留每天2小时',steer_message_id=mid)
+        result=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=body))[-1]['data']['conversation']
+        pending.result(timeout=5);assert stopped.wait(2)
+    assert result['messages'][1]['status']=='cancelled' and '补充' in result['messages'][1]['error']
+    assert result['messages'][1]['content']=='' and result['messages'][-1]['status']=='complete'
+    assert captured[-1]==['每天2小时，共3天','补充：改为4天，保留每天2小时']
+    replay=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=body))
+    assert len(replay)==1 and replay[0]['data']['replayed']
+    stale=c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(result,content='迟到补充',steer_message_id=mid))
+    assert stale.status_code==409 and len(c.get('/api/conversations/'+chat['id']).json()['messages'])==4
 
 
 def test_stream_requires_consent_owner_and_csrf(env,monkeypatch):
@@ -145,7 +180,7 @@ def test_real_adapter_decodes_recorded_sse_and_validates_evidence(env,monkeypatc
     client=httpx.AsyncClient;monkeypatch.setattr(genui_ai.httpx,'AsyncClient',lambda **kwargs:client(transport=httpx.MockTransport(transport),**kwargs))
     async def collect():return [event async for event in genui_ai.stream_reply(cfg,[],[{'role':'user','content':'安排学习'}],{'phone':'private-contact','campus_role':'student'},1)]
     output=asyncio.run(collect());assert ''.join(e['text'] for e in output if e['type']=='delta')==RAW
-    assert output[-1]['result']==result and seen[0]['stream'];assert 'private-contact' not in json.dumps(seen)
+    assert output[-1]['result']=={**result,'claims':[]} and seen[0]['stream'];assert 'private-contact' not in json.dumps(seen)
 
 
 def test_server_message_limit_preserves_last_delivered_chunk(env,monkeypatch):

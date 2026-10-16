@@ -1,5 +1,6 @@
 import {CATALOG} from './catalog.js';
 import {pathParts,readPath,bytes} from './security.js';
+import {DATA_FUNCTIONS,dataFunction} from './data-functions.js';
 const cached=new Map();
 const precedence={'||':1,'&&':2,'==':3,'!=':3,'===':3,'!==':3,'<':4,'<=':4,'>':4,'>=':4,'+':5,'-':5,'*':6,'/':6,'%':6};
 export function parseExpression(source,limits=CATALOG.limits){
@@ -9,7 +10,7 @@ export function parseExpression(source,limits=CATALOG.limits){
   const tokens=[];let cursor=0;
   while(cursor<source.length){
     if(/\s/.test(source[cursor])){cursor++;continue;}
-    const tail=source.slice(cursor),match=tail.match(/^(?:(\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|([A-Za-z_][A-Za-z0-9_.]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(===|!==|<=|>=|==|!=|&&|\|\||[+\-*/%<>()!?:,]))/);
+    const tail=source.slice(cursor),match=tail.match(/^(?:(\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|([A-Za-z_][A-Za-z0-9_.]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(===|!==|<=|>=|==|!=|&&|\|\||[+\-*/%<>()!?:,\[\]]))/);
     if(!match)throw Error('invalid_expression_token');
     const raw=match[0];cursor+=raw.length;
     if(match[1])tokens.push({kind:'literal',value:Number(raw)});
@@ -30,7 +31,8 @@ export function parseExpression(source,limits=CATALOG.limits){
         if(tokens[index]?.kind!==')')do{args.push(parse(0,depth+1));if(tokens[index]?.kind!==',')break;index++;}while(true);
         take(')');left={kind:'call',name:token.value,args};
       }else left={kind:'path',path:token.value};
-    }else if(['!','+','-'].includes(token.kind))left={kind:'unary',op:token.kind,arg:parse(7,depth+1)};
+    }else if(token.kind==='['){const items=[];if(tokens[index]?.kind!==']')do{items.push(parse(0,depth+1));if(items.length>limits.dataItems)throw Error('expression_limit');if(tokens[index]?.kind!==',')break;index++;}while(true);take(']');left={kind:'array',items};}
+    else if(['!','+','-'].includes(token.kind))left={kind:'unary',op:token.kind,arg:parse(7,depth+1)};
     else if(token.kind==='('){left=parse(0,depth+1);take(')');}
     else throw Error('invalid_expression');
     while(tokens[index]&&precedence[tokens[index].kind]>=min){const op=tokens[index++].kind;left={kind:'binary',op,left,right:parse(precedence[op]+1,depth+1)};}
@@ -47,6 +49,7 @@ export function evaluateExpression(source,state,limits=CATALOG.limits){
     if(++steps>limits.expressionSteps||depth>limits.expressionDepth)throw Error('expression_steps');
     let value;
     if(node.kind==='literal')value=node.value;
+    else if(node.kind==='array')value=node.items.map(item=>run(item,depth+1));
     else if(node.kind==='path')value=readPath(state,node.path);
     else if(node.kind==='ternary')value=run(node.test,depth+1)?run(node.yes,depth+1):run(node.no,depth+1);
     else if(node.kind==='unary'){const a=run(node.arg,depth+1);value=node.op==='!'?!a:node.op==='-'?-numeric(a):numeric(a);}
@@ -59,6 +62,7 @@ export function evaluateExpression(source,state,limits=CATALOG.limits){
       else{numeric(a);numeric(b);value=node.op==='+'?a+b:node.op==='-'?a-b:node.op==='*'?a*b:node.op==='/'?a/b:a%b;}
     }else if(node.kind==='call'){
       const args=node.args.map(a=>run(a,depth+1)),flat=args.length===1&&Array.isArray(args[0])?args[0]:args;
+      if(Object.hasOwn(DATA_FUNCTIONS,node.name))return dataFunction(node.name,args,cost=>{steps+=cost;if(steps>limits.expressionSteps)throw Error('expression_steps');});
       const arity={round:[1,2],format:[1,2],floor:[1,1],ceil:[1,1],abs:[1,1],pow:[2,2],clamp:[3,3],min:[1,100],max:[1,100],sum:[1,100]}[node.name];
       if(args.length<arity[0]||args.length>arity[1])throw Error('invalid_arity');
       steps+=flat.length;if(steps>limits.expressionSteps)throw Error('expression_steps');

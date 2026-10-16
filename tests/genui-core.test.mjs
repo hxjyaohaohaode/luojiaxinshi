@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {StreamParser,parseMessage,Block,StateStore,validateNode,validateAction,evaluateExpression,blockMarkdown,CATALOG} from '../static/genui/core.js';
-import {safeClone,safeUrl} from '../static/genui/security.js';
+import {safeClone,safeUrl,safeActionUrl} from '../static/genui/security.js';
 const fixture=readFileSync(new URL('../fixtures/genui/study-plan.md',import.meta.url),'utf8');
 const plain=value=>JSON.parse(JSON.stringify(value));
 const wrap=ops=>'前文中文🌸\n```genui\n'+ops.map(v=>typeof v==='string'?v:JSON.stringify(v)).join('\n')+'\n```\n后文';
@@ -72,4 +72,14 @@ test('untrusted data cannot forge service data and actions stay allowlisted',()=
 test('plain fenced code is never interpreted as a UI block',()=>{
   const raw='```text\n```genui\n'+JSON.stringify(begin)+'\n```\n';assert.equal(parseMessage(raw).filter(p=>p.kind==='ui').length,0);
   const bad=parseMessage(wrap([{op:'begin',v:9},node(),end]));assert.ok(bad[1].spec.errors.some(e=>e.code==='unsupported_version'));
+});
+
+test('verified public source buttons open the exact page without trusting an entire host',()=>{
+  const source='https://www.news.cn/tech/20250827/report.html';
+  const policy={resources:[source],origin:'http://127.0.0.1:8879'};
+  assert.equal(safeActionUrl(source,policy),source);
+  assert.equal(safeActionUrl(source),null);
+  for(const changed of [source+'?redirect=evil',source+'/different','https://www.news.cn/other','https://www.news.cn.evil.test/tech','javascript:alert(1)','https://user:secret@www.news.cn/tech/20250827/report.html'])assert.equal(safeActionUrl(changed,policy),null);
+  assert.equal(safeActionUrl('javascript:alert(1)',{resources:['javascript:alert(1)']}),null);
+  assert.equal(safeActionUrl('https://www.whu.edu.cn/'), 'https://www.whu.edu.cn/');
 });

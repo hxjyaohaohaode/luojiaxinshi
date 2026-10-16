@@ -27,7 +27,9 @@ MIMO_TTS_MODEL=mimo-v2.5-tts
 MIMO_VOICE_DESIGN_MODEL=mimo-v2.5-tts-voicedesign
 MIMO_VOICE_CLONE_MODEL=mimo-v2.5-tts-voiceclone
 MIMO_TTS_VOICE=mimo_default
-AI_TIMEOUT_SECONDS=90
+AI_TIMEOUT_SECONDS=180
+AI_OUTPUT_TOKENS=32768
+AI_WORKFLOW_TIMEOUT_SECONDS=1800
 AI_DAILY_LIMIT=30
 ```
 
@@ -37,7 +39,7 @@ AI_DAILY_LIMIT=30
 
 五个模型统一 POST `https://api.xiaomimimo.com/v1/chat/completions`，使用 `Authorization: Bearer <MIMO_API_KEY>`。兼容协议名称不表示调用了 OpenAI 模型。
 
-- 主模型：保留 `messages`、图片 `image_url` 和 JSON 输出；思考开关改为 `thinking: {"type":"disabled"}`，输出上限使用 `max_completion_tokens`。现有通知整理、聊天及流式互动回答均已替换。`AI_CONTEXT_TOKENS=32768` 是本应用保守预算，不是官方模型最大上下文。
+- 主模型：保留 `messages`、图片 `image_url` 和 JSON 输出，输出上限使用 `max_completion_tokens`。通知整理、检索规划、覆盖检查、原生交互图编排与最终独立复核使用 `thinking: {"type":"enabled"}`，这些调用不传 `temperature` 或 `top_p`。已有覆盖结果的纯文字展示阶段关闭思考并使用 `temperature=0.2`；阶段摘要由 Flash 处理受约束的实际工作状态，不接收内部推理。思考开关与温度限制见[小米官方深度思考说明](https://mimo.mi.com/docs/en-US/quick-start/usage-guide/other/deep-thinking)。`AI_CONTEXT_TOKENS=32768` 是本应用保守预算，不是官方模型最大上下文。
 - ASR：`model=mimo-v2.5-asr`；`user.content` 内放 `type=input_audio`，数据为 `data:audio/wav;base64,...`；`asr_options.language=auto`；读取 `choices[0].message.content`。
 - 普通 TTS：`assistant.content` 放实际播报正文，`user.content` 仅作为风格指令；`audio={"format":"wav","voice":"mimo_default"}`。
 - 音色设计：`user.content` 必填音色描述；`assistant.content` 放已核对正文；`audio={"format":"wav","optimize_text_preview":false}`，不传 `voice`，避免自动润色改变日期、材料或办理要求。

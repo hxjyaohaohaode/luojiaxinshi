@@ -29,7 +29,9 @@ PASSWORD='Test-Only-Password-2026'
 
 @pytest.fixture
 def env(tmp_path):
-    cfg=Settings(tmp_path/'data',origin=ORIGIN)
+    # These fixtures test workflows with recorded answers, never a real provider.
+    # Evidence-pipeline tests explicitly enable grounding and mock its boundaries.
+    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False)
     app=create_app(cfg)
     return app,cfg
 

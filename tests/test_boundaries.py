@@ -53,7 +53,7 @@ def test_provider_contract_and_usage_without_live_credentials(env,monkeypatch):
         assert request.headers['authorization']=='Bearer FAKE-TEST-KEY'
         assert payload['model']=='mimo-v2.6-pro'
         assert payload['response_format']['type']=='json_object'
-        assert payload['thinking']=={'type':'disabled'}
+        assert payload['thinking']=={'type':'enabled'}
         return httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':json.dumps(raw_ai(n),ensure_ascii=False)}}],'usage':{'prompt_tokens':120,'completion_tokens':80}})
     monkeypatch.setattr(ai.httpx,'Client',lambda **kw:original(transport=httpx.MockTransport(handler),**kw))
     draft,usage=ai.generate(cfg,n,n['sources'],{'college':'测试学院'})

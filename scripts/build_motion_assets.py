@@ -1,0 +1,114 @@
+"""Copy the eleven approved SVGs and their original CSS from the user's galleries.
+
+Only presentation style attributes become external CSS (the app has a strict CSP).
+Geometry, masks, gradients, transforms, keyframes and timing stay in source form.
+Usage: python scripts/build_motion_assets.py [legacy-gallery] [v2-gallery]
+"""
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parent.parent
+SELECTION = [
+    ('stroke', 'legacy', 's2', 'anim-splash-2', '金翠流光 · 笔意破晓'),
+    ('matrix', 'legacy', 's4', 'anim-splash-4', '神枢智联 · 脉冲矩阵'),
+    ('seal', 'legacy', 's5', 'anim-splash-5', '印信乾坤 · 呼吸光环'),
+    ('radar', 'legacy', 'e1', 'anim-empty-1', '智能巡检 · 雷达监听中'),
+    ('serene', 'legacy', 'e2', 'anim-empty-2', '万事妥帖 · 清风徐来'),
+    ('routing', 'legacy', 'e3', 'anim-empty-3', 'AI 批阅 · 极速流转'),
+    ('mesh', 'v2', 's04', 'anim-s04', '智算织网 · 脉冲协同'),
+    ('greeting', 'v2', 's05', 'anim-s05', '灵犀跃动 · 友善问候'),
+    ('cascade', 'v2', 'l04', 'anim-l04', '斗拱乐章 · 阶梯式瀑布'),
+    ('listening', 'v2', 'e02', 'anim-e02', '静候佳音 · 智能雷达监听'),
+    ('search', 'v2', 'e04', 'anim-e04', '搜寻未果 · 灵镜探照'),
+]
+
+
+def blocks(css):
+    """Read top-level CSS blocks while keeping keyframes byte-for-byte."""
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+    position = 0
+    while position < len(css):
+        opening = css.find('{', position)
+        if opening < 0:
+            return
+        depth, end = 1, opening + 1
+        while depth and end < len(css):
+            depth += (css[end] == '{') - (css[end] == '}')
+            end += 1
+        yield css[position:opening].strip(), css[opening + 1:end - 1]
+        position = end
+
+
+def build(paths):
+    source = {family: path.read_text(encoding='utf-8') for family, path in paths.items()}
+    templates, manifest, styles = {}, [], []
+    for family in ('legacy', 'v2'):
+        css = re.search(r'<style id="core-svg-animation-styles">(.*?)</style>', source[family], re.S).group(1)
+        chosen = [row[3] for row in SELECTION if row[1] == family]
+        selected_rules, names = [], set()
+        for selector, body in blocks(css):
+            if selector.startswith('@'):
+                continue
+            if '.anim-' in selector and not any('.' + cls + ' ' in selector + ' ' for cls in chosen):
+                continue
+            if not ('.logo-svg' in selector or '.part-' in selector or any('.' + cls in selector for cls in chosen)):
+                continue
+            scoped = ', '.join('.brand-motion.motion-' + family + ' ' + part.strip() for part in selector.split(','))
+            selected_rules.append(scoped + ' {' + body + '}')
+            names.update(re.findall(r'(?:animation|animation-name)\s*:\s*([\w-]+)', body))
+        styles.extend(selected_rules)
+        for selector, body in blocks(css):
+            if selector.startswith('@keyframes ') and selector.split()[-1] in names:
+                styles.append(selector + ' {' + body + '}')
+
+    for name, family, stage, cls, title in SELECTION:
+        start = source[family].index('id="stage-' + stage + '"')
+        svg = re.search(r'<svg\b.*?</svg>', source[family][start:], re.S).group(0)
+        original = svg
+        # SVG style attributes cannot be inserted as inline CSS under style-src 'self'.
+        counter = 0
+        def externalize(match):
+            nonlocal counter
+            counter += 1
+            tag, declarations = match.group(1), match.group(2)
+            extra = 'motion-source-' + name + '-' + str(counter)
+            styles.append('.brand-motion.motion-' + family + ' .' + extra + ' {' + declarations + '}')
+            if re.search(r'\bclass="', tag):
+                tag = re.sub(r'class="([^"]*)"', lambda m: 'class="' + m.group(1) + ' ' + extra + '"', tag, count=1)
+            else:
+                tag += ' class="' + extra + '"'
+            return tag
+        svg = re.sub(r'(<[^>]*?)\sstyle="([^"]*)"', externalize, svg)
+        templates[name] = {'family': family, 'svg': svg}
+        manifest.append({'name': name, 'title': title, 'family': family, 'stage': stage, 'animation_class': cls,
+                         'source': paths[family].name, 'source_svg_sha256': hashlib.sha256(original.encode()).hexdigest(),
+                         'geometry_sha256': hashlib.sha256('\n'.join(re.findall(r'\bd="([^"]*)"', svg)).encode()).hexdigest(),
+                         'externalized_style_attributes': counter})
+    # Share exact repeated path strings without rounding or simplifying coordinates.
+    # Templates reconstruct the original SVG in memory; no geometry is redrawn.
+    paths, lookup = [], {}
+    def share_path(match):
+        path = match.group(1)
+        if path not in lookup:
+            lookup[path] = len(paths)
+            paths.append(path)
+        return 'd="@@luojia-path-' + str(lookup[path]) + '@@"'
+    packed = {name: {**asset, 'svg': re.sub(r'\bd="([^"]*)"', share_path, asset['svg'])} for name, asset in templates.items()}
+    module = '// Generated by scripts/build_motion_assets.py; exact original approved vectors.\n'
+    module += 'const paths=' + json.dumps(paths, ensure_ascii=False, separators=(',', ':')) + ';\n'
+    module += 'const templates=' + json.dumps(packed, ensure_ascii=False, separators=(',', ':')) + ';\n'
+    module += 'export const motionAssets=Object.freeze(Object.fromEntries(Object.entries(templates).map(([name,asset])=>[name,{...asset,svg:asset.svg.replace(/@@luojia-path-(\\d+)@@/g,(_,index)=>paths[Number(index)])}])));\n'
+    (ROOT / 'static/motion-assets.js').write_text(module, encoding='utf-8')
+    (ROOT / 'static/motion-source.css').write_text('/* Original approved animation rules, isolated from application styles. */\n' + '\n'.join(styles) + '\n', encoding='utf-8')
+    (ROOT / 'static/assets/motion-provenance.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps({'variants': len(templates), 'svg_bytes': sum(len(x['svg'].encode()) for x in templates.values()),
+                      'packed_js_bytes': len(module.encode()), 'css_rules': len(styles),
+                      'style_attributes_externalized': sum(x['externalized_style_attributes'] for x in manifest)}, ensure_ascii=False))
+
+
+if __name__ == '__main__':
+    build({'legacy': Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / 'SVG矢量图与动效全集.html',
+           'v2': Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT.parent / 'SVG矢量图与动效系统_v2.html'})

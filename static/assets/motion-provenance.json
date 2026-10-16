@@ -1,0 +1,123 @@
+[
+  {
+    "name": "stroke",
+    "title": "金翠流光 · 笔意破晓",
+    "family": "legacy",
+    "stage": "s2",
+    "animation_class": "anim-splash-2",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "df9497780c83fd06992ac2a88d73d6b888181d00586f4bc4136710187291f9e6",
+    "geometry_sha256": "6de20bbe3055364588a9ae19fe5cf48e5532968d6248b5c35616ecca34cbe7d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "matrix",
+    "title": "神枢智联 · 脉冲矩阵",
+    "family": "legacy",
+    "stage": "s4",
+    "animation_class": "anim-splash-4",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "215ab5c753780199a86d84686346482fd338407bb767cbb5e2b80e2b1a58570c",
+    "geometry_sha256": "6de20bbe3055364588a9ae19fe5cf48e5532968d6248b5c35616ecca34cbe7d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "seal",
+    "title": "印信乾坤 · 呼吸光环",
+    "family": "legacy",
+    "stage": "s5",
+    "animation_class": "anim-splash-5",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "8dc267ba1f05f7c2241d4e8e544803e8196c29378734071598fc93df26571333",
+    "geometry_sha256": "6de20bbe3055364588a9ae19fe5cf48e5532968d6248b5c35616ecca34cbe7d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "radar",
+    "title": "智能巡检 · 雷达监听中",
+    "family": "legacy",
+    "stage": "e1",
+    "animation_class": "anim-empty-1",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "eb5d86853b13a5b1dcc6cdb1c53c7304a033ea2a296655e3278f8265952cd989",
+    "geometry_sha256": "9e34e27bf65020a09d2be6aeb44b2a6d3947dcd31d880652590cdccf28c5f308",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "serene",
+    "title": "万事妥帖 · 清风徐来",
+    "family": "legacy",
+    "stage": "e2",
+    "animation_class": "anim-empty-2",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "2d676f5bb7faeb649efa9c2f7574ce3063794b796e93bdf2018dc4a78a2b1f62",
+    "geometry_sha256": "5ff32538acb2d0e871806fb11c78912cc5d0d4f4228f49aad1a366f3a1e3a59b",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "routing",
+    "title": "AI 批阅 · 极速流转",
+    "family": "legacy",
+    "stage": "e3",
+    "animation_class": "anim-empty-3",
+    "source": "SVG矢量图与动效全集.html",
+    "source_svg_sha256": "281ebe846de9baec69579c408fab4bd03886a027b6d0663da43f9486952f465f",
+    "geometry_sha256": "90e5b54968a5692c4074c54fa6e97e444ac12e6cee7e8e3194a25a5e3548588c",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "mesh",
+    "title": "智算织网 · 脉冲协同",
+    "family": "v2",
+    "stage": "s04",
+    "animation_class": "anim-s04",
+    "source": "SVG矢量图与动效系统_v2.html",
+    "source_svg_sha256": "f6261d1143fb3b5277e04e9d045e0621000183845db99dfe866cc632c0fe74ca",
+    "geometry_sha256": "6de20bbe3055364588a9ae19fe5cf48e5532968d6248b5c35616ecca34cbe7d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "greeting",
+    "title": "灵犀跃动 · 友善问候",
+    "family": "v2",
+    "stage": "s05",
+    "animation_class": "anim-s05",
+    "source": "SVG矢量图与动效系统_v2.html",
+    "source_svg_sha256": "919e0a17a6b9f641298fc3af1e55a7cca8682ae4d98d5dbeae1f480c3b2f973a",
+    "geometry_sha256": "6de20bbe3055364588a9ae19fe5cf48e5532968d6248b5c35616ecca34cbe7d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "cascade",
+    "title": "斗拱乐章 · 阶梯式瀑布",
+    "family": "v2",
+    "stage": "l04",
+    "animation_class": "anim-l04",
+    "source": "SVG矢量图与动效系统_v2.html",
+    "source_svg_sha256": "5e5ed526f900954b85baa33c46f24cc6d940d58cfdfb481bb88539db29c3caee",
+    "geometry_sha256": "90e5b54968a5692c4074c54fa6e97e444ac12e6cee7e8e3194a25a5e3548588c",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "listening",
+    "title": "静候佳音 · 智能雷达监听",
+    "family": "v2",
+    "stage": "e02",
+    "animation_class": "anim-e02",
+    "source": "SVG矢量图与动效系统_v2.html",
+    "source_svg_sha256": "b1ab77db4cc5458a909c52a39a3b5951a1da61e72b3c976f203d2e0adeaa047d",
+    "geometry_sha256": "671252202a236ee5a236421f9c0a136ec296b101a0e55a0ca60f52fb33c4d4d1",
+    "externalized_style_attributes": 0
+  },
+  {
+    "name": "search",
+    "title": "搜寻未果 · 灵镜探照",
+    "family": "v2",
+    "stage": "e04",
+    "animation_class": "anim-e04",
+    "source": "SVG矢量图与动效系统_v2.html",
+    "source_svg_sha256": "f80b33b884b33e198d780366524ff308b9d87b452e0ea8632b873f3711eb4558",
+    "geometry_sha256": "a561ec71114a657049d5a1432a29e7e5f6bc191a1a42ff801efef0b0c0f87cf5",
+    "externalized_style_attributes": 0
+  }
+]

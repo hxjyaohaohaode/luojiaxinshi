@@ -14,6 +14,8 @@ from .db import dumps
 from .genui import CATALOG, LIMITS, parse_message, safe_value, matches
 from .models import Strict
 from .security import rate_limit
+from .genui_state import validate_snapshots, submission_context
+from .visual_evidence import display_citations
 
 
 class Preferences(Strict):
@@ -97,28 +99,9 @@ def load_message(conn, item, settings):
     return item
 
 
-def validate_snapshots(snapshots, parts):
-    if len(dumps(snapshots).encode())>131072:raise ValueError('snapshot_limit')
-    snapshots=safe_value(snapshots,{**LIMITS,'depth':12})
-    if len(snapshots)>LIMITS['blocks']:raise ValueError('snapshot_limit')
-    def same_type(initial,value):
-        if isinstance(initial,bool):return isinstance(value,bool)
-        if isinstance(initial,(int,float)):return isinstance(value,(int,float)) and not isinstance(value,bool)
-        if type(initial) is not type(value):return False
-        if isinstance(initial,dict):return set(initial)==set(value) and all(same_type(initial[k],value[k]) for k in initial)
-        return True
-    for index,snapshot in snapshots.items():
-        if not index.isdigit() or int(index)>=len(parts) or parts[int(index)]['kind']!='ui':raise ValueError('invalid_snapshot_block')
-        if not isinstance(snapshot,dict) or set(snapshot)!={'state','view'}:raise ValueError('invalid_snapshot')
-        spec=parts[int(index)]['spec'];state=snapshot['state'];view=snapshot['view']
-        if not isinstance(state,dict) or not same_type(spec['state'],state):raise ValueError('snapshot_state_type')
-        if not isinstance(view,dict) or set(view)-set(spec['nodes']):raise ValueError('snapshot_view_node')
-        safe_value(state)
-    return snapshots
-
-
-def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, changed, detail, send_type):
+def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, changed, detail, send_type, preflight_steer=None):
     active={}
+    workers=app.state.genui_workers=set()
 
     def cancel_active(cid):
         record=active.get(cid)
@@ -159,14 +142,46 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
         with db.connect() as conn:
             own(conn,cid,current['id'])
             feature=feature_settings(conn,current['id'],settings)
-        if not feature['enabled']:raise HTTPException(409,'互动回答已关闭，请使用文字对话')
+            if payload.ui_context:
+                try:submission_context(conn,cid,payload.ui_context)
+                except (ValueError,TypeError,KeyError):raise HTTPException(422,'当前界面选择未通过检查，未中断原回复；请核对选择后重试') from None
+        if payload.steer_message_id:
+            if settings.ai_api_key and not payload.allow_external_processing:
+                raise HTTPException(422,'补充消息需要允许发送至所配置的模型服务')
+            if payload.retry_message_id or payload.regenerate_message_id or not payload.content.strip():
+                raise HTTPException(422,'补充消息需要新的内容，不能同时重试或重新生成')
+            interrupted=None
+            with db.connect(write=True) as conn:
+                live=own(conn,cid,current['id'])
+                replay=conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND request_id=?',(cid,payload.request_id)).fetchone()
+                if not replay:
+                    latest=conn.execute("SELECT id,status FROM conversation_messages WHERE conversation_id=? AND role='assistant' ORDER BY rowid DESC LIMIT 1",(cid,)).fetchone()
+                    if not latest or latest['id']!=payload.steer_message_id:
+                        raise HTTPException(409,'对话已经收到其他新消息，请刷新后再发送补充；你的草稿已保留')
+                    if latest['status'] not in {'processing','complete'}:
+                        raise HTTPException(409,'上一轮已停止或未完成，请刷新后核对状态与授权，再发送新消息；你的草稿已保留')
+                    if preflight_steer:preflight_steer(cid,payload,current)
+                    if latest['status']=='processing':
+                        interrupted=active.get(cid)
+                        conn.execute("UPDATE conversation_messages SET status='cancelled',error='已收到补充，按更新后的问题继续。' WHERE id=?",(latest['id'],))
+                        conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,))
+                        changed(conn,cid)
+                    version=conn.execute('SELECT version FROM conversations WHERE id=?',(cid,)).fetchone()['version']
+                    payload=payload.model_copy(update={'version':version})
+            if interrupted:
+                cancel_active(cid)
+                # Release this request's model/summary work before starting its replacement.
+                for _ in range(300):
+                    if active.get(cid) is not interrupted:break
+                    await asyncio.sleep(.01)
+                else:raise HTTPException(409,'上一轮正在停止，请再次发送补充；草稿已保留')
         prepared,existing=prepare_send(cid,payload,current)
         def packet(kind,value,seq):return 'id: '+str(seq)+'\nevent: '+kind+'\ndata: '+dumps(value)+'\n\n'
         if existing is not None:
             async def replay():yield packet('done',{'conversation':existing,'replayed':True},1)
             return StreamingResponse(replay(),media_type='text/event-stream')
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
-        tier=feature['tier']
+        tier=feature['tier'] if feature['enabled'] else 3
         from .chat_media import resource_index
         trusted={'materials':[{'id':s['id'],'name':s['name'],'status':s['status']} for s in sources],'resources':resource_index(sources)}
         try:
@@ -182,8 +197,22 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
             task=asyncio.current_task();active[cid]=(asyncio.get_running_loop(),task)
             try:
                 seq+=1;yield packet('start',{'message_id':mid,'conversation':initial,'tier':tier,'data':trusted,'limits':feature['limits']},seq)
-                async with asyncio.timeout(settings.ai_timeout):
-                    async for event in genui_ai.stream_reply(settings,sources,messages,json.loads(current['profile']),tier):
+                from .grounding import events as grounded_events
+                from .work_summary import stream as work_stream
+                stream_events=(work_stream(settings,db,mid,grounded_events(settings,db,current['id'],cid,mid,sources,messages,json.loads(current['profile']),tier))
+                               if settings.ai_grounding else genui_ai.stream_reply(settings,sources,messages,json.loads(current['profile']),tier))
+                from contextlib import aclosing
+                async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(stream_events):
+                    async for event in stream_events:
+                        if event['type']=='phase':
+                            if event.get('data'):
+                                trusted.update(event['data'])
+                                with db.connect(write=True) as conn:conn.execute('UPDATE genui_messages SET trusted_data=? WHERE message_id=?',(dumps(trusted),mid))
+                            seq+=1;yield packet('phase',{'message_id':mid,'phase':event['phase'],'label':event['label'],'data':event.get('data'),'steps':event.get('steps',[])},seq)
+                            continue
+                        if event['type']=='work':
+                            seq+=1;yield packet('work',{'message_id':mid,'steps':event['steps']},seq)
+                            continue
                         if event['type']=='delta':
                             if len((raw+event['text']).encode())>feature['limits']['messageBytes']:raise AIError('回复已达大小上限，已保留收到的部分。')
                             raw+=event['text']
@@ -193,7 +222,10 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                                 if not live or live['processing_token']!=token:raise asyncio.CancelledError()
                                 conn.execute('UPDATE genui_messages SET raw=?,updated_at=? WHERE message_id=?',(raw,int(time.time()),mid))
                             seq+=1;yield packet('delta',{'message_id':mid,'text':event['text'],'expanded_template':event.get('expanded_template',False)},seq)
-                        elif event['type']=='complete':result=event['result'];usage=event.get('usage',{})
+                        elif event['type']=='complete':
+                            result=event['result'];usage=event.get('usage',{})
+                            if event.get('sources'):
+                                trusted['materials']=[{'id':s['id'],'name':s['name'],'status':s['status']} for s in event['sources']]
                 if result is None:raise AIError('模型没有完整结束，已保留收到的部分。')
                 if result['answer']!=raw:raise AIError('完整回复与已接收内容不一致，保留接收到的部分。')
                 status='complete';error=''
@@ -213,10 +245,12 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             if status!='complete':
                                 for part in parts:
                                     if part['kind']=='ui':part['spec']['complete']=False
-                            citations=(result['citations']+[{'source_id':sid,'locator':'图片','quote':'视觉理解结果，请对照图片核实'} for sid in result['image_sources']]) if result and status=='complete' else []
-                            conn.execute('UPDATE genui_messages SET raw=?,parts=?,validated=?,updated_at=? WHERE message_id=?',(raw,dumps(parts),int(status=='complete'),int(time.time()),mid))
+                            citations=display_citations(result) if result and status=='complete' else []
+                            conn.execute('UPDATE genui_messages SET raw=?,parts=?,validated=?,trusted_data=?,updated_at=? WHERE message_id=?',(raw,dumps(parts),int(status=='complete'),dumps(trusted),int(time.time()),mid))
                             conn.execute('UPDATE conversation_messages SET content=?,status=?,error=?,citations=?,input_tokens=?,output_tokens=? WHERE id=?',
                                          (readable(parts),status,error,dumps(citations),usage.get('input_tokens'),usage.get('output_tokens'),mid))
+                            from .conversation_tools import select_reply
+                            select_reply(conn,mid)
                             conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
                         elif live:
                             # An explicit cancel wins. Recover the last delivered checkpoint only.
@@ -232,7 +266,9 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 if conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(cid,current['id'])).fetchone():
                     final=detail(conn,cid,current['id'],settings)
                     seq+=1;yield packet('done',{'conversation':final},seq)
-        return StreamingResponse(generate(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no'})
+        from .stream_job import StreamJob
+        job=StreamJob(generate(),workers)
+        return StreamingResponse(job.subscribe(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no','Cache-Control':'no-cache'})
 
     app.post('/api/conversations/{cid}/messages/stream')(stream)
     return cancel_active

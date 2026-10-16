@@ -1,0 +1,51 @@
+import {brandMotion} from './motion.js';
+export const materialFormats='.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.yaml,.yml,.log,.ini,.toml,.sql,.py,.js,.ts,.css,.c,.cpp,.h,.java,.tex,.ics,.eml,.html,.htm,.svg,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.mp4,.webm,.mp3,.wav,.m4a,.ogg,.flac,.zip';
+export function searchControls({id,esc,icon,scope='materials',kinds=[]}){
+ const label=scope==='history'?'搜索历史对话':scope==='sources'?'搜索通知来源':'搜索本次材料';
+ return `<div class="workspace-search" data-search-host="${id}"><div class="search-mode-tabs" role="group" aria-label="${label}方式">${[['text','文字'],['file','图片 / 文件'],['filter','筛选']].map(([mode,text])=>`<button type="button" data-search-mode="${mode}" aria-pressed="${mode==='text'}">${text}</button>`).join('')}</div><label class="search-input-wrap">${icon('search')}<input id="${id}-search" type="search" placeholder="${scope==='history'?'搜索标题、回复或材料正文':scope==='sources'?'来源、用途、学院或学期':'名称、路径或全文关键词'}" aria-label="${label}" autocomplete="off"><button type="button" data-search-clear aria-label="清空检索">${icon('close')}</button></label><div class="search-reference" hidden><label class="button small">${icon('upload')} 选择图片或文字文件<input type="file" data-search-file accept="${materialFormats.replace(',.zip','')}" hidden></label><span class="search-file-name small muted">文件只用于本次检索</span></div><div class="search-filters" hidden><label>类型<select data-search-kind aria-label="${label}类型"><option value="">全部类型</option>${kinds.map(([v,t])=>`<option value="${esc(v)}">${esc(t)}</option>`).join('')}</select></label>${scope==='materials'?'<label>读取状态<select data-search-status aria-label="材料读取状态"><option value="">全部状态</option><option value="ok">已读取</option><option value="review">需核对</option><option value="failed">读取失败</option></select></label>':''}<label>时间<select data-search-period aria-label="${label}时间"><option value="all">全部时间</option><option value="week">最近 7 天</option><option value="month">最近 30 天</option></select></label></div><div class="search-feedback small muted" role="status" aria-live="polite"></div></div>`;
+}
+export class WorkspaceSearch{
+ constructor(host,{api,scope,conversationId,onResult,onError}){
+  this.host=host;this.options={api,scope,conversationId,onResult,onError};this.sequence=0;this.file=null;this.mode='text';this.reference=null;this.pendingReference=null;
+  host.addEventListener('input',e=>{if(e.target.matches('input[type=search]'))this.schedule();});
+  host.addEventListener('change',e=>{if(e.target.matches('[data-search-file]')){this.file=e.target.files[0]||null;host.querySelector('.search-file-name').textContent=this.file?.name||'文件只用于本次检索';this.run();}else if(e.target.matches('select'))this.run();});
+  host.addEventListener('click',e=>{const mode=e.target.closest('[data-search-mode]');if(mode){this.mode=mode.dataset.searchMode;host.querySelectorAll('[data-search-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===mode)));host.querySelector('.search-reference').hidden=this.mode!=='file';host.querySelector('.search-filters').hidden=this.mode!=='filter';this.sequence++;if(this.mode!=='file')this.run();}
+   if(e.target.closest('[data-search-clear]'))this.clear();
+  });
+ }
+ schedule(){clearTimeout(this.timer);this.sequence++;this.timer=setTimeout(()=>this.run(),250);}
+ hasFilters(){return !!this.host.querySelector('input[type=search]').value.trim()||[...this.host.querySelectorAll('select')].some(s=>s.value&&s.value!=='all')||this.mode!=='text'&&!!this.file;}
+ clear(){this.host.querySelector('input[type=search]').value='';this.file=null;this.reference=null;this.host.querySelector('[data-search-file]').value='';this.host.querySelector('.search-file-name').textContent='文件只用于本次检索';this.host.querySelectorAll('select').forEach(s=>s.selectedIndex=0);this.run();this.host.querySelector('input[type=search]').focus();}
+ async run(){
+  clearTimeout(this.timer);const sequence=++this.sequence,feedback=this.host.querySelector('.search-feedback');
+  const {api,scope,conversationId,onResult,onError}=this.options,data=new FormData();
+  data.set('scope',scope);data.set('query',this.host.querySelector('input[type=search]').value);data.set('kind',this.host.querySelector('[data-search-kind]')?.value||'');data.set('status',this.host.querySelector('[data-search-status]')?.value||'');data.set('period',this.host.querySelector('[data-search-period]').value);
+  const cid=conversationId?.();if(scope==='materials'&&!cid){feedback.textContent='';onResult({items:[],query:'',total:0});return;}if(cid)data.set('conversation_id',cid);
+  feedback.innerHTML=brandMotion('search','search-progress')+'<span>正在检索…</span>';
+  try{
+   let reference=null;
+   if(this.mode!=='text'&&this.file){
+    const file=this.file;if(file.size>5*1024*1024)throw Error('检索文件最多 5 MB，请换一份更小的文件。');
+    if(this.reference?.file===file)reference=this.reference.result;
+    else{
+     if(this.pendingReference?.file!==file){const request=new FormData();for(const [key,value]of data)request.set(key,value);request.set('query','');request.set('file',file);this.pendingReference={file,promise:api('/workspace-search',{method:'POST',body:request})};}
+     const pending=this.pendingReference;
+     try{reference=await pending.promise;this.reference={file,result:reference};}finally{if(this.pendingReference===pending)this.pendingReference=null;}
+    }
+    if(sequence!==this.sequence||!this.host.isConnected)return;
+    data.set('query',(data.get('query')+' '+reference.query).trim());
+   }
+   const result=await api('/workspace-search',{method:'POST',body:data});if(sequence!==this.sequence||!this.host.isConnected)return;
+   feedback.textContent=`${result.total} 项匹配${result.query?' · '+(reference?.method||result.method):''}`;if(reference?.query)feedback.textContent+=` · 识别词：${reference.query.slice(0,80)}`;onResult(result);
+  }
+  catch(error){if(sequence!==this.sequence||!this.host.isConnected)return;feedback.textContent=error.message;onError?.(error.message);}
+ }
+ dispose(){clearTimeout(this.timer);this.sequence++;}
+}
+export function materialTree(sources,{esc,icon,sourceStatus,cid,processing=false,matches=null}){
+ const root={folders:new Map(),files:[],path:''};
+ for(const source of sources){const parts=(source.path||source.name).split('/');let node=root;for(const part of parts.slice(0,-1)){if(!node.folders.has(part))node.folders.set(part,{folders:new Map(),files:[],path:node.path?node.path+'/'+part:part});node=node.folders.get(part);}node.files.push(source);}
+ function draw(node,depth=0){return [...node.folders].map(([name,child])=>`<details class="material-folder" data-folder-path="${esc(child.path)}" ${depth===0?'open':''}><summary>${icon('folder')}<span>${esc(name)}</span><small>${count(child)} 份</small></summary><div class="material-folder-children">${draw(child,depth+1)}</div></details>`).join('')+node.files.map(s=>`<div class="material-item"><button type="button" class="material-open" data-chat-action="preview" data-id="${s.id}"><span class="material-type">${s.kind==='text'?'文':esc(s.kind.toUpperCase())}</span><span><strong title="${esc(s.path||s.name)}">${esc(s.name)}</strong><small class="${s.status==='failed'?'text-error':''}">${sourceStatus(s)} · ${formatSize(s.size)}</small>${matches?.get(s.id)?.snippet?`<small class="material-snippet">${esc(matches.get(s.id).snippet)}</small>`:''}</span></button><button type="button" class="icon-button material-remove" data-chat-action="remove-source" data-id="${s.id}" aria-label="移除 ${esc(s.name)}" ${processing?'disabled':''}>${icon('close')}</button></div>`).join('');}
+ function count(n){return n.files.length+[...n.folders.values()].reduce((a,c)=>a+count(c),0);}return draw(root);
+}
+export function formatSize(size){return size>=1024*1024?(size/1024/1024).toFixed(1)+' MB':size?Math.max(1,Math.ceil(size/1024))+' KB':'文字材料';}

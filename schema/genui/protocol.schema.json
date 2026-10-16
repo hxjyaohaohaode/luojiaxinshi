@@ -844,6 +844,82 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Section"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Section"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Collection"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Collection"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Prose"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Prose"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Choice"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "props": {
+                "$ref": "#/$defs/Choice"
+              }
+            }
+          }
         }
       ]
     },
@@ -1010,6 +1086,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1076,7 +1162,7 @@
             {
               "type": "integer",
               "minimum": 1,
-              "maximum": 4
+              "maximum": 6
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1101,6 +1187,68 @@
               "enum": [
                 "auto",
                 "controls"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "ratios": {
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "minWidth": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 120,
+              "maximum": 480
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "align": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "start",
+                "center",
+                "end",
+                "stretch"
               ]
             },
             {
@@ -1173,7 +1321,7 @@
             {
               "type": "integer",
               "minimum": 1,
-              "maximum": 4
+              "maximum": 6
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1198,6 +1346,68 @@
               "enum": [
                 "auto",
                 "controls"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "ratios": {
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "minWidth": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 120,
+              "maximum": 480
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "align": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "start",
+                "center",
+                "end",
+                "stretch"
               ]
             },
             {
@@ -1293,6 +1503,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1377,6 +1597,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1471,6 +1701,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1555,6 +1795,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1595,6 +1845,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1662,6 +1922,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1741,6 +2011,16 @@
               "type": "integer",
               "minimum": 2,
               "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -1830,6 +2110,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1914,6 +2204,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -1992,6 +2292,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -2054,6 +2364,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -2158,6 +2478,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -2246,6 +2576,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -2416,6 +2756,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -2574,6 +2924,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -2742,6 +3102,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -2900,6 +3270,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -3065,6 +3445,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -3137,6 +3527,16 @@
             {
               "type": "number",
               "minimum": 1
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -3251,6 +3651,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -3358,6 +3768,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -3487,6 +3907,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -3552,6 +3982,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -3660,6 +4100,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -3736,6 +4186,16 @@
           ]
         },
         "disabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
           "anyOf": [
             {
               "type": "boolean"
@@ -3862,6 +4322,16 @@
                   }
                 ]
               }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -4032,6 +4502,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -4189,6 +4669,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -4356,6 +4846,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -4518,6 +5018,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -4629,6 +5139,41 @@
                   }
                 ]
               }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "format": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "matrix",
+                "columns"
+              ]
             },
             {
               "$ref": "#/$defs/Binding"
@@ -4796,6 +5341,16 @@
                   }
                 ]
               }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -5020,6 +5575,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [],
@@ -5093,6 +5658,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -5210,6 +5785,16 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
@@ -5285,6 +5870,16 @@
             {
               "type": "string",
               "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
             },
             {
               "$ref": "#/$defs/Binding"
@@ -5439,12 +6034,629 @@
               "$ref": "#/$defs/Binding"
             }
           ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
         }
       },
       "required": [
         "expression",
         "xMin",
         "xMax"
+      ],
+      "additionalProperties": false
+    },
+    "Section": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "gap": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "surface": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "plain",
+                "soft",
+                "outline"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "eyebrow": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "level": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 4
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Collection": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "gap": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "columns": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "auto",
+                "controls"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "items": {
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 100,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "keyField": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 80
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "emptyText": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "ratios": {
+          "anyOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "minWidth": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 120,
+              "maximum": 480
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "align": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "start",
+                "center",
+                "end",
+                "stretch"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "bind": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 200
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Prose": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "variant": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "body",
+                "lead",
+                "caption",
+                "eyebrow",
+                "quote"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "attribution": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Choice": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ready",
+                "loading",
+                "empty",
+                "error"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "fallback": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "bind": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 8192
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": [
+                              "string",
+                              "number",
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 8192
+                          },
+                          {
+                            "$ref": "#/$defs/Binding"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "value",
+                      "label"
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/Binding"
+                  }
+                ]
+              }
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        },
+        "layout": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "inline",
+                "list"
+              ]
+            },
+            {
+              "$ref": "#/$defs/Binding"
+            }
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "bind"
       ],
       "additionalProperties": false
     }

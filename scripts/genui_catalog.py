@@ -19,9 +19,9 @@ def outputs():
         return {'string':'s','number':'n','integer':'i','boolean':'b','object':'obj'}.get(kind,kind)
     groups={}
     for name,c in catalog['components'].items():
-        shape='('+','.join(k+('' if k in c['required'] else '?')+':'+signature(v) for k,v in c['properties'].items() if k not in {'status','error','fallback'})+')'+(' children:ids' if c['children'] else '')
+        shape='('+','.join(k+('' if k in c['required'] else '?')+':'+signature(v) for k,v in c['properties'].items() if k not in {'status','error','fallback','visible'})+')'+(' children:ids' if c['children'] else '')
         groups.setdefault(shape,[]).append(name)
-    capabilities='genui v1；s=字符串,n=数值,i=整数,b=布尔,?=可省略。\n'+'\n'.join('/'.join(names)+shape for shape,names in groups.items())+'\n'
+    capabilities='genui v1；s=字符串,n=数值,i=整数,b=布尔,?=可省略。所有节点均可用 visible:b（含绑定/表达式）条件显示。\n'+'\n'.join('/'.join(names)+shape for shape,names in groups.items())+'\n'
     capabilities+='纯函数：'+','.join(catalog['functions'])+'。\n'
     schema={'$schema':'https://json-schema.org/draft/2020-12/schema','$id':'urn:campus:genui:v1','title':'genui v1 操作','oneOf':[],'$defs':{}}
     binding={'oneOf':[{'type':'object','properties':{key:{'type':'string','maxLength':catalog['limits']['expressionChars'] if key=='$expr' else 200}},'required':[key],'additionalProperties':False} for key in ('$bind','$expr','$ref')]}
@@ -49,5 +49,5 @@ if __name__=='__main__':
         if args.check:
             if not path.is_file() or path.read_text(encoding='utf-8')!=content: raise SystemExit('Generated artifact drift: '+name)
         else:
-            path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content,encoding='utf-8')
+            path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content,encoding='utf-8',newline='\r\n')
     print('genui catalog artifacts match' if args.check else 'genui catalog artifacts generated')

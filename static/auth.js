@@ -1,3 +1,4 @@
+import {brandMotion} from './motion.js';
 export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,download,route,moveSelection}) {
   function render(){
     const mode=state.invite?'register':location.hash==='#register'?'register':location.hash==='#recover'?'recover':'login',signup=mode==='register',recover=mode==='recover';
@@ -15,7 +16,7 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
     </form><div class="auth-links">${signup?'<a href="#login">已有账号？去登录</a>':recover?'<a href="#login">返回登录</a>':'<a href="#recover">忘记密码</a><a href="#register">第一次来？创建账号</a>'}</div><button type="button" class="link-button auth-connection" data-auth-platform>学号、手机号与微信 / QQ 如何使用？</button>${state.invite?'<p class="footnote">正在使用一次性成员邀请。</p>':''}</div>`;
     const current=document.querySelector('.auth-form-wrap');
     if(current){current.innerHTML=form;const next=document.querySelector('.auth-tabs');if(oldNav&&next){next.replaceWith(oldNav);oldNav.querySelectorAll('a').forEach(a=>{const active=a.getAttribute('href')==='#'+mode;a.classList.toggle('selected',active);active?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});}}
-    else document.querySelector('#app').innerHTML=`<main class="auth"><section class="auth-story"><a href="#login" class="brand"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="56" height="56"><span><strong>珞珈 · 校园助手</strong><small>让校园生活，从容一点</small></span></a><div class="auth-intro"><h1>通知有点多，<br>下一步可以很清楚。</h1><p>带上原文，理清要求。把时间留给热爱。</p></div><div class="auth-scene">${companion('welcome','auth-companion')}</div><div class="auth-foot"><span>材料自己掌握</span><span>重要事项亲自确认</span></div></section><section class="auth-form-wrap">${form}</section></main>`;
+    else document.querySelector('#app').innerHTML=`<main class="auth"><section class="auth-story"><a href="#login" class="brand">${brandMotion('greeting','',{once:true})}<span><strong>珞珈 · 校园助手</strong><small>让校园生活，从容一点</small></span></a><div class="auth-intro"><h1>通知有点多，<br>下一步可以很清楚。</h1><p>带上原文，理清要求。把时间留给热爱。</p></div><div class="auth-scene">${companion('welcome','auth-companion')}</div><div class="auth-foot"><span>材料自己掌握</span><span>重要事项亲自确认</span></div></section><section class="auth-form-wrap">${form}</section></main>`;
     moveSelection(document.querySelector('.auth-tabs'),'a.selected');
   }
   function step(name){document.querySelectorAll('[data-auth-step]').forEach(node=>node.hidden=node.dataset.authStep!==name);const field=document.querySelector(`[data-auth-step="${name}"] input`);field?.focus();}

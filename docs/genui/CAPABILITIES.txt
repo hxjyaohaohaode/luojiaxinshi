@@ -1,6 +1,6 @@
-genui v1；s=字符串,n=数值,i=整数,b=布尔,?=可省略。
+genui v1；s=字符串,n=数值,i=整数,b=布尔,?=可省略。所有节点均可用 visible:b（含绑定/表达式）条件显示。
 Stack(gap?:sm|md|lg,columns?:i,label?:s) children:ids
-Row/Grid(gap?:sm|md|lg,columns?:i,label?:s,layout?:auto|controls) children:ids
+Row/Grid(gap?:sm|md|lg,columns?:i,label?:s,layout?:auto|controls,ratios?:[n],minWidth?:i,align?:start|center|end|stretch) children:ids
 Tabs/Accordion/Carousel(labels?:[s],label?:s,bind?:s) children:ids
 Card(title?:s,description?:s,tone?:neutral|info|success|warning|danger) children:ids
 Divider()
@@ -19,11 +19,15 @@ Toggle(label:s,bind:s)
 TextInput(label:s,bind:s,placeholder?:s,multiline?:b,maxLength?:i)
 Button(label:s,variant?:primary|secondary|plain,disabled?:b)
 LineChart/BarChart/PieChart/ScatterChart(label?:s,data?:[{x:值,y:n,label?:s,series?:s}],xLabel?:s,yLabel?:s,unit?:s)
-Compare(items?:[{label:s,values:obj}],dimensions?:[s])
+Compare(items?:[{label:s,values:obj}],dimensions?:[s],label?:s,format?:matrix|columns)
 Diagram(label?:s,nodes?:[{id:s,label:s}],edges?:[{from:s,to:s,label?:s}])
 Form(label?:s,fields?:[{name:s,label:s,type:text|number|date|select|checkbox,required?:b,min?:n,max?:n,options?:[{value:值,label:s}]}],submitLabel?:s)
 Image(src:s,alt:s,caption?:s)
 HostView(view:campus_schedule|material_index|messenger,title?:s,items?:[obj],pose?:welcome|reading|planning|blossom|rest)
 Video(src:s,label:s,caption?:s)
 Plot(label?:s,expression:s,parameters?:obj,xMin:n,xMax:n,samples?:i,xLabel?:s,yLabel?:s,unit?:s)
-纯函数：round,floor,ceil,abs,min,max,sum,pow,clamp,format。
+Section(gap?:sm|md|lg,label?:s,title?:s,description?:s,surface?:plain|soft|outline,eyebrow?:s,level?:i) children:ids
+Collection(gap?:sm|md|lg,columns?:i,label?:s,layout?:auto|controls,items?:[obj],keyField?:s,emptyText?:s,ratios?:[n],minWidth?:i,align?:start|center|end|stretch,bind?:s) children:ids
+Prose(text?:s,variant?:body|lead|caption|eyebrow|quote,attribution?:s)
+Choice(label:s,bind:s,options?:[{value:值,label:s,description?:s}],layout?:inline|list)
+纯函数：round,floor,ceil,abs,min,max,sum,pow,clamp,format,count,contains,where,search,orderBy,take,pluck,sumBy,meanBy,series。

@@ -6,15 +6,16 @@ const textValue=value=>value===null||value===undefined?'':typeof value==='object
 export function resolve(value,state,data,depth=0,limits=CATALOG.limits){
   if(depth>limits.depth)throw Error('value_too_deep');
   if(!value||typeof value!=='object')return value;
-  if(Object.keys(value).length===1){if('$bind'in value)return readPath(state,value.$bind);if('$ref'in value)return readPath(data,value.$ref);if('$expr'in value)return evaluateExpression(value.$expr,state,limits);}
+  if(Object.keys(value).length===1){if('$bind'in value)return readPath(state,value.$bind);if('$ref'in value)return readPath(data,value.$ref);if('$expr'in value)return evaluateExpression(value.$expr,{...state,data},limits);}
   if(Array.isArray(value))return value.map(v=>resolve(v,state,data,depth+1,limits));
   const out=Object.create(null);for(const [key,item]of Object.entries(value))out[key]=resolve(item,state,data,depth+1,limits);return out;
 }
-export function validateAction(action){
+export function validateAction(action,limits=CATALOG.limits){
   const clean=safeClone(action),schema=Object.hasOwn(CATALOG.actions,clean?.kind)?CATALOG.actions[clean.kind]:null;
   if(!schema||!matches(clean,schema))throw Error('invalid_action');
   if(clean.kind==='state')pathParts(clean.key);
   if(clean.kind==='host'&&!matches(clean.params||{},CATALOG.hostActions[clean.name]))throw Error('invalid_host_params');
+  expressions(clean,limits);
   return clean;
 }
 function expressions(value,limits){
@@ -35,16 +36,19 @@ export function validateNode(input,limits=CATALOG.limits){
   if(node.type==='Plot'&&typeof props.expression==='string')parseExpression(props.expression,limits);
   const children=node.children||[];if(!Array.isArray(children)||children.length>limits.nodes||children.some(id=>!safeKey(id))||(!definition.children&&children.length))throw Error('invalid_children');
   const on=node.on||Object.create(null);if(typeof on!=='object'||Array.isArray(on)||Object.keys(on).some(k=>!['click','change','submit'].includes(k)))throw Error('invalid_event');
-  for(const action of Object.values(on))validateAction(action);
+  for(const action of Object.values(on))validateAction(action,limits);
+  if(node.type==='Button'&&/保存/.test(String(props.label||''))&&Object.values(on).some(a=>a.kind==='state'))throw Error('unsupported_persistent_save');
   return {id:node.id,type:node.type,props,children:[...children],on};
 }
 export class StateStore{
   constructor(initial={},limits=CATALOG.limits){this.limits=limits;this.values=Object.create(null);this.dirty=new Set();this.listeners=new Set();this.defaults(initial);}
   defaults(values){const safe=safeClone(values,this.limits);if(!safe||typeof safe!=='object'||Array.isArray(safe))throw Error('invalid_state');const keys=Object.keys(safe);if(keys.some(key=>!safeKey(key)))throw Error('invalid_state_key');if(new Set([...Object.keys(this.values),...keys]).size>this.limits.stateKeys)throw Error('state_limit');for(const key of keys)if(!this.dirty.has(key))this.values[key]=safe[key];}
   get(path){return readPath(this.values,path);}
-  set(path,value){const parts=pathParts(path);let target=this.values;for(const key of parts.slice(0,-1)){if(!target||typeof target!=='object'||!Object.hasOwn(target,key))throw Error('missing_state');target=target[key];}
+  set(path,value,{choices}={}){const parts=pathParts(path);let target=this.values;for(const key of parts.slice(0,-1)){if(!target||typeof target!=='object'||!Object.hasOwn(target,key))throw Error('missing_state');target=target[key];}
     const key=parts.at(-1);if(!Object.hasOwn(target,key))throw Error('missing_state');const next=safeClone(value,this.limits),old=target[key];
-    if((old===null)!==(next===null)||Array.isArray(old)!==Array.isArray(next)||typeof old!==typeof next)throw Error('state_type_changed');
+    const choice=Array.isArray(choices)&&choices.length<=20&&choices.every(v=>v===null||['string','number','boolean'].includes(typeof v))&&(old===null||choices.includes(old))&&(next===null||choices.includes(next));
+    if(choices!==undefined&&!choice)throw Error('invalid_choice_value');
+    if(!choice&&((old===null)!==(next===null)||Array.isArray(old)!==Array.isArray(next)||typeof old!==typeof next))throw Error('state_type_changed');
     target[key]=next;this.dirty.add(parts[0]);for(const callback of this.listeners)callback(path,next);
   }
   subscribe(callback){this.listeners.add(callback);return()=>this.listeners.delete(callback);}
@@ -113,15 +117,19 @@ export class StreamParser{
   snapshot(){const parts=this.parts.map(p=>p.kind==='text'?{kind:'text',text:p.text}:{kind:'ui',spec:p.block.spec()});if(this.buffer&&!this.block&&!/^\s*`/.test(this.buffer)){if(parts.at(-1)?.kind==='text')parts.at(-1).text+=this.buffer;else parts.push({kind:'text',text:this.buffer});}return parts;}
 }
 export function parseMessage(raw,options){const parser=new StreamParser(options);parser.push(raw);return parser.finish();}
-export function blockMarkdown(spec,state=spec.state){
+export function blockMarkdown(spec,state=spec.state,view={}){
   const lines=[],seen=new Set();let count=0;
   const value=v=>textValue(v),cell=v=>value(v).replace(/\|/g,'\\|').replace(/\n/g,' ');
   const table=(columns,rows)=>{lines.push('| '+columns.map(c=>cell(c.label)).join(' | ')+' |','| '+columns.map(()=> '---').join(' | ')+' |',...rows.map(row=>'| '+columns.map(c=>cell(row?.[c.key])).join(' | ')+' |'));};
-  function visit(id){if(seen.has(id)||++count>CATALOG.limits.nodes)return;seen.add(id);const node=spec.nodes[id];if(!node){lines.push('内容尚未完整接收。');return;}
-    let p;try{p=resolve(node.props,state,spec.data);}catch{p=node.props||{};}
-    const t=node.type;let bound;if(p.bind)try{bound=readPath(state,p.bind);}catch{}
+  function visit(id,scope={},prefix=''){const unique=prefix+id;if(seen.has(unique)||++count>CATALOG.limits.renderItems)return;seen.add(unique);const node=spec.nodes[id];if(!node){lines.push('内容尚未完整接收。');return;}
+    let p;try{p=resolve(node.props,{...state,...scope},spec.data);}catch{p=node.props||{};}if(p.visible===false)return;
+    const t=node.type;let bound;if(p.bind)try{bound=readPath({...state,...scope},p.bind);}catch{}
+    if(t==='Checklist'&&bound===undefined)bound=view[unique]?.checked??(p.items||[]).flatMap((item,index)=>item.done?[item.id||'item'+index]:[]);
+    if(t==='Collection'){if(p.label)lines.push(p.label);for(const [index,item]of (p.items||[]).entries()){const key=p.keyField?readPath(item,p.keyField):index;for(const child of node.children||[])visit(child,{...scope,item,itemIndex:index},unique+':'+encodeURIComponent(typeof key+':'+key)+':');}if(!p.items?.length)lines.push(p.emptyText||'没有符合条件的内容。');return;}
+    if(t==='Tabs'||t==='Carousel'){const children=node.children||[],selected=Math.max(0,Math.min(children.length-1,Number(p.bind?bound:view[unique]?.selected)||0));if(p.label)lines.push(p.label);if(p.labels?.[selected])lines.push(p.labels[selected]);if(children[selected])visit(children[selected],scope,prefix);return;}
     if(t==='Divider')lines.push('---');
     else if(t==='Heading')lines.push('#'.repeat(p.level||3)+' '+value(p.text));
+    else if(t==='Prose'){lines.push(p.variant==='quote'?value(p.text).split('\n').map(line=>'> '+line).join('\n'):value(p.text));if(p.attribution)lines.push(value(p.attribution));}
     else if(t==='Stat')lines.push(`${value(p.label)}：${value(p.value)} ${value(p.unit)}`);
     else if(t==='Table'){if(p.label)lines.push(p.label);table(Array.isArray(p.columns)?p.columns:[],Array.isArray(p.rows)?p.rows:[]);}
     else if(t.endsWith('Chart')){lines.push(value(p.label));table([{key:'x',label:p.xLabel||'项目'},{key:'y',label:(p.yLabel||'数值')+(p.unit?'（'+p.unit+'）':'')}],p.data||[]);}
@@ -130,20 +138,20 @@ export function blockMarkdown(spec,state=spec.state){
     else if(t==='Image'||t==='Video')lines.push(value(p.alt||p.label),value(p.caption));
     else if(t==='Plot')lines.push(value(p.label),'y = '+value(p.expression),value(p.xMin)+' ≤ x ≤ '+value(p.xMax),'参数：'+JSON.stringify(p.parameters||{}));
     else if(t==='Code'){const fence='`'.repeat(Math.max(3,...(value(p.text).match(/`+/g)||[]).map(s=>s.length+1)));lines.push(fence+(p.language||''),value(p.text),fence);}
-    else if(t==='Form'){lines.push(value(p.label));for(const f of p.fields||[])lines.push('- '+f.label+(f.required?'（必填）':'')+(f.options?'：'+f.options.map(o=>o.label).join(' / '):''));}
+    else if(t==='Form'){lines.push(value(p.label));for(const f of p.fields||[]){const current=view[unique]?.fields?.[f.name],display=f.type==='select'&&current!==undefined&&current!==''?f.options?.[Number(current)]?.label:f.type==='checkbox'&&current!==undefined?(current?'已选中':'未选中'):current;lines.push('- '+f.label+(f.required?'（必填）':'')+'：'+value(display??'尚未填写'));}}
     else if(t==='Progress')lines.push(value(p.label)+'：'+value(p.value)+' / '+value(p.max));
     else if(t==='HostView')lines.push(value(p.title)||({campus_schedule:'查看工作台日程',material_index:'查看本次材料',messenger:'珞珈小信使'}[p.view]||'工作台入口'));
     else{
-      if(p.title||p.label)lines.push(value(p.title||p.label));if(p.text)lines.push(value(p.text));if(p.description)lines.push(value(p.description));
+      if(p.eyebrow)lines.push(value(p.eyebrow));if(p.title||p.label)lines.push(value(p.title||p.label));if(p.text)lines.push(value(p.text));if(p.description)lines.push(value(p.description));
       if(Array.isArray(p.items))lines.push(...p.items.map((item,index)=>{
-        const mark=t==='Checklist'?(Array.isArray(bound)&&bound.includes(item.id)?'- [x] ':'- [ ] '):t==='Steps'?(index+1)+'. ':'- ';
+        const mark=t==='Checklist'?(Array.isArray(bound)&&bound.includes(item.id||'item'+index)?'- [x] ':'- [ ] '):t==='Steps'?(index+1)+'. ':'- ';
         return mark+value(item.label||item.title||item.text)+(item.value!==undefined?'：'+value(item.value):'')+(item.description?' — '+value(item.description):'')+(item.date?' · '+value(item.date):'');
       }));
       if(bound!==undefined&&t!=='Checklist')lines.push(value(Array.isArray(p.options)?p.options.find(o=>o.value===bound)?.label??bound:bound)+(p.unit?' '+p.unit:''));
       if(p.labels)lines.push(p.labels.join(' / '));
     }
-    for(const child of node.children||[])visit(child);
+    for(const child of node.children||[])visit(child,scope,prefix);
   }
   for(const root of spec.roots)visit(root);if(!spec.complete)lines.push('（界面未完整接收，以上为已收到的内容。）');return lines.filter(Boolean).join('\n\n');
 }
-export function messageMarkdown(parts){return parts.map(p=>p.kind==='text'?p.text:blockMarkdown(p.spec)).join('\n\n');}
+export function messageMarkdown(parts,snapshots={}){return parts.map((p,index)=>p.kind==='text'?p.text:blockMarkdown(p.spec,snapshots[index]?.state||p.spec.state,snapshots[index]?.view||{})).join('\n\n');}

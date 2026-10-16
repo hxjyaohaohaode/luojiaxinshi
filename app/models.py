@@ -52,6 +52,7 @@ class Profile(Strict):
     major: str = Field(default='', max_length=80)
     semester: str = Field(default='', max_length=40)
     semester_start: str = Field(default='', max_length=10)
+    week_starts_on: Literal[0,1] = 1
 
     @field_validator('semester_start')
     @classmethod

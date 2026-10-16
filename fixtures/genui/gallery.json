@@ -1702,5 +1702,131 @@
     {
       "op": "end"
     }
+  ],
+  "Section": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Section",
+      "props": {
+        "title": "一段自由组织的内容",
+        "description": "文字与交互按内容组合。",
+        "surface": "soft"
+      },
+      "children": [
+        "text"
+      ]
+    },
+    {
+      "op": "node",
+      "id": "text",
+      "type": "Markdown",
+      "props": {
+        "text": "内容结构由每次任务决定。"
+      }
+    },
+    {
+      "op": "end"
+    }
+  ],
+  "Collection": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Collection",
+      "props": {
+        "items": [
+          {
+            "id": "a",
+            "name": "资料一"
+          },
+          {
+            "id": "b",
+            "name": "资料二"
+          }
+        ],
+        "keyField": "id",
+        "columns": 2
+      },
+      "children": [
+        "entry"
+      ]
+    },
+    {
+      "op": "node",
+      "id": "entry",
+      "type": "Heading",
+      "props": {
+        "text": {
+          "$bind": "item.name"
+        }
+      }
+    },
+    {
+      "op": "end"
+    }
+  ],
+  "Prose": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Prose",
+      "props": {
+        "text": "一份内容，先读清楚它说了什么，再检查它凭什么这样说。",
+        "variant": "lead"
+      }
+    },
+    {
+      "op": "end"
+    }
+  ],
+  "Choice": [
+    {
+      "op": "begin",
+      "v": 1
+    },
+    {
+      "op": "state",
+      "set": {
+        "perspective": "evidence"
+      }
+    },
+    {
+      "op": "node",
+      "id": "demo",
+      "type": "Choice",
+      "props": {
+        "label": "选择阅读重点",
+        "bind": "perspective",
+        "layout": "list",
+        "options": [
+          {
+            "value": "evidence",
+            "label": "核对证据",
+            "description": "将事实、解释和未知项分开阅读。"
+          },
+          {
+            "value": "impact",
+            "label": "查看影响",
+            "description": "查看材料已明确和仍需补充的影响。"
+          }
+        ]
+      }
+    },
+    {
+      "op": "end"
+    }
   ]
 }

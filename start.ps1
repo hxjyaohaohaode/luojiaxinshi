@@ -24,7 +24,7 @@ $existing = Get-OwnedTaskProcess $configuration
 if (-not $existing) {
     $listener = Get-NetTCPConnection -State Listen -LocalPort $configuration.port -ErrorAction SilentlyContinue
     if ($listener) { throw ('Port ' + $configuration.port + ' is occupied. Change APP_PORT and APP_ORIGIN together.') }
-    & $taskPython $taskManage init
+    & $taskPython $taskManage init --local-env
     if ($LASTEXITCODE -ne 0) { throw 'Initialization failed.' }
     $logDirectory = Join-Path $configuration.data_dir 'logs'
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
@@ -34,7 +34,7 @@ if (-not $existing) {
             Copy-Item -LiteralPath $logFile -Destination ($logFile + '.previous') -Force
         }
     }
-    Start-Process -FilePath $taskPython -ArgumentList @(('"' + $taskManage + '"'),'serve') -WorkingDirectory $taskRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logDirectory 'server.log') -RedirectStandardError (Join-Path $logDirectory 'server-error.log') | Out-Null
+    Start-Process -FilePath $taskPython -ArgumentList @(('"' + $taskManage + '"'),'serve','--local-env') -WorkingDirectory $taskRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $logDirectory 'server.log') -RedirectStandardError (Join-Path $logDirectory 'server-error.log') | Out-Null
 }
 $ready = $false
 for ($attempt=0; $attempt -lt 40; $attempt++) {
