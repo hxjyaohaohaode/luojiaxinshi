@@ -14,9 +14,11 @@ from app.config import ROOT, Settings
 from app.backups import restore_database
 from app.db import Database
 from app.security import hash_password, new_invite
+from app.console import configure_text_output
 
 
 def main():
+    configure_text_output()
     parser=argparse.ArgumentParser(description='校园通知工作台运行与维护')
     parser.add_argument('command', choices=['serve','init','invite','backup','restore','reset-password','check','runtime'])
     parser.add_argument('--admin',action='store_true')

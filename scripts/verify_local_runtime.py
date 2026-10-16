@@ -27,12 +27,14 @@ from app.backups import restore_database
 from app.db import Database
 from app.models import TaskData
 from app.security import new_invite
+from app.console import configure_text_output
 
 USERS=5
 NOTICES_PER_USER=20
 
 
 def main():
+    configure_text_output()
     artifact_root=(ROOT/'artifacts').resolve()
     artifact_root.mkdir(exist_ok=True)
     scratch=tempfile.TemporaryDirectory(prefix='runtime-check-',dir=artifact_root)
