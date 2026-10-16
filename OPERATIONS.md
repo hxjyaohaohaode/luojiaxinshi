@@ -70,7 +70,7 @@ Remove-Item Env:DATA_DIR
 
 提供单实例应用加 Caddy HTTPS 的 `compose.yaml`、`Dockerfile`、`Caddyfile`。SQLite 数据卷持续保存；前端与 API 同源，应用端口不直接发布到公网。请使用独立 Linux 服务器或兼容 Docker 的主机，域名解析到服务器并开放 80 / 443。
 
-本次已通过 Compose 配置解析，但镜像构建被 Docker Hub 身份服务网络超时阻断，**未完成真实服务器部署和容器运行验收**。服务器阶段须实际构建并复验下面的步骤。
+本机镜像构建曾被 Docker Hub 身份服务网络超时阻断。仓库 CI 另行构建并检查非 root、只读根文件系统、健康、数据库与界面提示资源，结果以当前提交的 GitHub Checks 为准；容器使用 production 配置和占位 HTTPS 源，主机只发布回环测试端口。此检查不包含公网域名、Caddy 证书或真实服务器部署，服务器阶段仍须实际复验下面的步骤。
 
 在服务器目录复制 `.env.example` 为 `.env`，设置：
 
