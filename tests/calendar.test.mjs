@@ -35,6 +35,12 @@ test('official deadlines and preparation times remain distinct, cancelled and ot
   assert.equal(calendarEntries([], [{...task,status:'cancelled'}], '2026-10-13','2026-10-13',{showDone:true}).length,0);
   assert.equal(calendarEntries([], [{...task,data:{...task.data,scope:'other'}}], '2026-10-13','2026-10-13').length,0);
 });
+test('a repeating overnight course carries into the first visible day and midnight adds no empty segment',()=>{
+  const course=record({repeat:'weekly',start_date:'2026-10-13',end_date:'2026-10-14',start_time:'23:00',end_time:'01:00'});
+  const entries=calendarEntries([course],[],'2026-10-14','2026-10-14');assert.equal(entries.length,1);assert.equal(entries[0].start,'00:00');assert.equal(entries[0].continuesBefore,true);
+  const midnight=record({repeat:'none',end_date:'2026-10-14',start_time:'23:00',end_time:'00:00'});assert.equal(calendarEntries([midnight],[],'2026-10-13','2026-10-14').length,1);
+  assert.equal(layoutTimed([{start:'23:55',end:null}])[0].finish,1440);
+});
 test('overlapping class cards use separate columns; adjacent classes reuse full width',()=>{
   const result=layoutTimed([{key:'a',start:'08:00',end:'10:00'},{key:'b',start:'09:00',end:'11:00'},{key:'c',start:'11:00',end:'12:00'}]);
   assert.equal(result[0].lanes,2);assert.equal(result[1].lanes,2);assert.notEqual(result[0].lane,result[1].lane);assert.equal(result[2].lanes,1);

@@ -17,13 +17,13 @@ export function calendarEntries(arrangements,tasks,from,to,{showDone=false}={}){
   const entries=[];
   for(const record of arrangements){
     const d=record.data,interval=d.repeat==='biweekly'?14:d.repeat==='weekly'?7:0;
-    const first=interval?Math.max(0,Math.ceil(dayDistance(d.start_date,from)/interval)):0;
+    const first=interval?Math.max(0,Math.ceil((dayDistance(d.start_date,from)-dayDistance(d.start_date,d.end_date))/interval)):0;
     const last=interval?(to<d.repeat_until?to:d.repeat_until):d.start_date;
     let start=addDays(d.start_date,first*interval);
     for(let safety=0;safety<54&&start<=last;safety++){
-      const end=interval?start:d.end_date;
-      for(let day=start;day<=end;day=addDays(day,1))if(day>=from&&day<=to){
-        entries.push({key:record.id+':'+day,id:record.id,source:'arrangement',kind:d.category,title:d.title,location:d.location,notes:d.notes,day,start:day===start?d.start_time:'00:00',end:day===end?d.end_time:'24:00',allDay:!d.start_time,recurring:!!interval,version:record.version});
+      const end=interval?addDays(start,dayDistance(d.start_date,d.end_date)):d.end_date;
+      for(let day=start;day<=end;day=addDays(day,1))if(day>=from&&day<=to&&!(day===end&&day!==start&&d.end_time==='00:00')){
+        entries.push({key:record.id+':'+day,id:record.id,source:'arrangement',kind:d.category,title:d.title,location:d.location,notes:d.notes,day,start:day===start?d.start_time:'00:00',end:day===end?d.end_time:'24:00',allDay:!d.start_time,continuesBefore:day>start,continuesAfter:day<end,recurring:!!interval,version:record.version});
       }
       if(!interval)break;
       start=addDays(start,interval);
@@ -40,7 +40,7 @@ export function calendarEntries(arrangements,tasks,from,to,{showDone=false}={}){
 
 // Overlapping events receive distinct columns; interval boundaries that touch do not overlap.
 export function layoutTimed(entries){
-  const sorted=entries.filter(e=>!e.allDay).map(e=>({...e,begin:minute(e.start),finish:Math.max(minute(e.start)+20,e.end?minute(e.end):minute(e.start)+30)})).sort((a,b)=>a.begin-b.begin||a.finish-b.finish);
+  const sorted=entries.filter(e=>!e.allDay).map(e=>({...e,begin:minute(e.start),finish:Math.min(1440,Math.max(minute(e.start)+20,e.end?minute(e.end):minute(e.start)+30))})).sort((a,b)=>a.begin-b.begin||a.finish-b.finish);
   let group=[],groupEnd=-1;
   const result=[];
   function flush(){const ends=[],cluster=result.length;for(const event of group){let lane=ends.findIndex(end=>end<=event.begin);if(lane<0)lane=ends.length;ends[lane]=event.finish;event.lane=lane;}for(const event of group)result.push({...event,lanes:ends.length,cluster,clusterSize:group.length});group=[];}

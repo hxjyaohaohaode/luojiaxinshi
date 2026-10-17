@@ -1,4 +1,1060 @@
 {
+  "news": {
+    "title": "新闻对照 · 观点与证据",
+    "intro": "",
+    "ops": [
+      {
+        "op": "begin",
+        "v": 1
+      },
+      {
+        "op": "state",
+        "set": {
+          "focus": "difference",
+          "reader": "resident",
+          "reports": [
+            {
+              "label": "A · 图书馆说明",
+              "values": {
+                "已经明确": "东馆一层、限定日期、试行安排。[1]",
+                "并未明确": "其他馆舍是否跟进；试点结束后是否继续。[1]",
+                "表达的性质": "发布方对试点范围与时间的直接说明。[1]",
+                "解释不能越过": "不能据此写成“全校长期开放到零点”。",
+                "观察的角度": "服务安排：范围、日期、预约方式。",
+                "还欠的证据": "夜间预约细则与试点评估结果。"
+              }
+            },
+            {
+              "label": "B · 校园报道",
+              "values": {
+                "已经明确": "仍称本次安排为“试点”。[2]",
+                "并未明确": "“有望常态化”是否得到发布方承诺。[2]",
+                "表达的性质": "一部分是转述，一部分是记者的条件性预测。[2]",
+                "解释不能越过": "“有望”不能改写为“已经确定”。",
+                "观察的角度": "服务变化与后续可能性。",
+                "还欠的证据": "常态化决定的原始通知。"
+              }
+            },
+            {
+              "label": "C · 学生访谈",
+              "values": {
+                "已经明确": "两位受访者提出夜间路线与照明诉求。[3]",
+                "并未明确": "更多学生的看法、问题实际覆盖范围和校方回应。[3]",
+                "表达的性质": "受访者的体验与诉求，不是政策文本。[3]",
+                "解释不能越过": "两人意见不能代表全部学生；不能据此断言试点已被叫停。",
+                "观察的角度": "使用体验与夜间出行条件。",
+                "还欠的证据": "更广泛的调查与校方回应。"
+              }
+            }
+          ],
+          "note": ""
+        }
+      },
+      {
+        "op": "node",
+        "id": "news",
+        "type": "Section",
+        "props": {
+          "eyebrow": "多源阅读  /  虚构材料演示",
+          "title": "延时开放，是试点还是长期安排？",
+          "level": 2,
+          "gap": "lg"
+        },
+        "children": [
+          "lead",
+          "opening",
+          "lens",
+          "matrix",
+          "reading",
+          "next"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "lead",
+        "type": "Prose",
+        "props": {
+          "text": "三份材料谈的是同一次变化，但它们能证明的事情并不相同。先把**确定安排、条件性预测和个人体验**分开读。",
+          "variant": "lead"
+        }
+      },
+      {
+        "op": "node",
+        "id": "opening",
+        "type": "Grid",
+        "props": {
+          "ratios": [
+            3,
+            2
+          ],
+          "gap": "lg"
+        },
+        "children": [
+          "conclusion",
+          "scope"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "conclusion",
+        "type": "Section",
+        "props": {
+          "title": "先抓住这个结论",
+          "level": 4
+        },
+        "children": [
+          "conclusionText"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "conclusionText",
+        "type": "Prose",
+        "props": {
+          "text": "可以确认的是**东馆一层的限期试点**；“全校长期延时开放”并没有被这些材料证实。[1][2]\n\n访谈补充了出行体验，却不能直接改变试点的政策状态。[3]",
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "scope",
+        "type": "Section",
+        "props": {
+          "title": "这次对照了什么",
+          "level": 4
+        },
+        "children": [
+          "scopeText"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "scopeText",
+        "type": "Prose",
+        "props": {
+          "text": "**A** 发布方说明：看安排本身\n\n**B** 校园报道：分辨转述与预测\n\n**C** 学生访谈：保留体验的样本边界",
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "node",
+        "id": "lens",
+        "type": "Choice",
+        "props": {
+          "label": "选择核对重点",
+          "bind": "focus",
+          "options": [
+            {
+              "value": "difference",
+              "label": "表述与边界"
+            },
+            {
+              "value": "confirmed",
+              "label": "事实与空白"
+            },
+            {
+              "value": "perspective",
+              "label": "视角与补证"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "matrix",
+        "type": "Compare",
+        "props": {
+          "label": "三份材料的逐维对照",
+          "items": {
+            "$bind": "reports"
+          },
+          "dimensions": {
+            "$expr": "focus == \"confirmed\" ? [\"已经明确\",\"并未明确\"] : focus == \"perspective\" ? [\"观察的角度\",\"还欠的证据\"] : [\"表达的性质\",\"解释不能越过\"]"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "reading",
+        "type": "Grid",
+        "props": {
+          "ratios": [
+            2,
+            3
+          ],
+          "gap": "lg"
+        },
+        "children": [
+          "personal",
+          "followup"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "personal",
+        "type": "Choice",
+        "props": {
+          "label": "用一个演示身份看影响",
+          "bind": "reader",
+          "layout": "list",
+          "options": [
+            {
+              "value": "resident",
+              "label": "住校阅读者",
+              "description": "关注晚间返程与预约条件"
+            },
+            {
+              "value": "commuter",
+              "label": "走读阅读者",
+              "description": "关注交通衔接与实际可用时段"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "followup",
+        "type": "Section",
+        "props": {
+          "title": "下一步，核对与你有关的条件",
+          "level": 4
+        },
+        "children": [
+          "personalText",
+          "boundary"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "personalText",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$expr": "reader == \"resident\" ? \"住校视角：先查夜间预约细则和返宿安排。访谈提出了照明诉求，但材料没有证明路线条件已经改善。[1][3]\" : \"走读视角：开放到24:00不等于你能使用到24:00。应另外核对末班交通、返程路线和预约规则；这些信息不在当前三份材料里。\""
+          },
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "boundary",
+        "type": "Prose",
+        "props": {
+          "text": "身份选择只改变阅读重点；上方原文对照保持一致。",
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "node",
+        "id": "next",
+        "type": "Accordion",
+        "props": {
+          "labels": [
+            "保留一个问题，继续核查"
+          ]
+        },
+        "children": [
+          "noteArea"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "noteArea",
+        "type": "Stack",
+        "props": {},
+        "children": [
+          "note",
+          "continue"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "note",
+        "type": "TextInput",
+        "props": {
+          "label": "你还想核查什么",
+          "bind": "note",
+          "multiline": true,
+          "placeholder": "例如：试点结束后，会依据什么决定是否继续？"
+        }
+      },
+      {
+        "op": "node",
+        "id": "continue",
+        "type": "Button",
+        "props": {
+          "label": "将当前重点带入下一问",
+          "variant": "primary"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "围绕所选重点继续核查，请区分已知、推断和待确认，不编造新证据。",
+            "values": {
+              "focus": {
+                "$bind": "focus"
+              },
+              "reader": {
+                "$bind": "reader"
+              },
+              "question": {
+                "$bind": "note"
+              },
+              "materials": {
+                "$bind": "reports"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "end"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "id": "news-a",
+        "name": "虚构材料 A · 图书馆试点说明",
+        "preview": "东馆一层阅览区拟于10月20日至11月3日试行延时开放，闭馆时间由22:00延至24:00。夜间预约方式另行通知。",
+        "evidence_kind": "user_input"
+      },
+      {
+        "id": "news-b",
+        "name": "虚构材料 B · 校园报道",
+        "preview": "本次延时开放仍处于试点阶段。报道认为，如果运行顺利，这项服务有望常态化。",
+        "evidence_kind": "user_input"
+      },
+      {
+        "id": "news-c",
+        "name": "虚构材料 C · 学生访谈",
+        "preview": "两位受访同学表示，希望补充从图书馆到宿舍的夜间照明和路线指引。报道未提供校方回应。",
+        "evidence_kind": "user_input"
+      }
+    ],
+    "citations": [
+      {
+        "source_id": "news-a",
+        "locator": "演示原文",
+        "quote": "东馆一层阅览区拟于10月20日至11月3日试行延时开放，闭馆时间由22:00延至24:00。夜间预约方式另行通知。"
+      },
+      {
+        "source_id": "news-b",
+        "locator": "演示原文",
+        "quote": "本次延时开放仍处于试点阶段。报道认为，如果运行顺利，这项服务有望常态化。"
+      },
+      {
+        "source_id": "news-c",
+        "locator": "演示原文",
+        "quote": "两位受访同学表示，希望补充从图书馆到宿舍的夜间照明和路线指引。报道未提供校方回应。"
+      }
+    ]
+  },
+  "brief": {
+    "title": "内容简报 · 按身份阅读",
+    "intro": "",
+    "ops": [
+      {
+        "op": "begin",
+        "v": 1
+      },
+      {
+        "op": "state",
+        "set": {
+          "audience": "applicant",
+          "depth": 0,
+          "question": "",
+          "checked": []
+        }
+      },
+      {
+        "op": "node",
+        "id": "brief",
+        "type": "Section",
+        "props": {
+          "eyebrow": "长文转简报  /  虚构材料演示",
+          "title": "一页通知，读出真正与你有关的事",
+          "level": 2,
+          "gap": "lg"
+        },
+        "children": [
+          "audience",
+          "summary",
+          "briefViews",
+          "questionArea"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "audience",
+        "type": "Choice",
+        "props": {
+          "label": "换一个阅读身份",
+          "bind": "audience",
+          "options": [
+            {
+              "value": "applicant",
+              "label": "准备报名"
+            },
+            {
+              "value": "organizer",
+              "label": "组织同伴"
+            },
+            {
+              "value": "observer",
+              "label": "先了解一下"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "summary",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$expr": "audience == \"applicant\" ? \"你现在需要准备的是**一页问题说明**。授权说明在入选后补交，材料没有要求所有报名者提前提交。[1]\" : audience == \"organizer\" ? \"向同伴转发时，保留**自愿报名、分阶段提交、地点待通知**这三个边界，避免把意向收集变成强制报名。[1]\" : \"这是一场自愿报名的校园议题工作坊。可以先了解主题，再决定是否报名；当前原文没有写明活动地点。[1]\""
+          },
+          "variant": "lead"
+        }
+      },
+      {
+        "op": "node",
+        "id": "briefViews",
+        "type": "Tabs",
+        "props": {
+          "label": "阅读深度",
+          "bind": "depth",
+          "labels": [
+            "先读摘要",
+            "展开解读",
+            "留意信息空白"
+          ]
+        },
+        "children": [
+          "short",
+          "full",
+          "unknown"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "short",
+        "type": "Grid",
+        "props": {
+          "ratios": [
+            3,
+            2
+          ],
+          "gap": "lg"
+        },
+        "children": [
+          "briefCore",
+          "personalAction"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "briefCore",
+        "type": "Section",
+        "props": {
+          "title": "消息的骨架",
+          "level": 4
+        },
+        "children": [
+          "briefCoreText"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "briefCoreText",
+        "type": "Prose",
+        "props": {
+          "text": "**发生了什么**\n面向校园议题爱好者的工作坊开放自愿报名。[1]\n\n**容易读错什么**\n“报名材料”与“入选后材料”属于两个阶段，不能合并要求。[1]\n\n**暂时不能回答什么**\n活动地点和报名截止时刻，当前提供的原文都没有给出。",
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "personalAction",
+        "type": "Section",
+        "props": {
+          "title": "按当前身份安排下一步",
+          "level": 4
+        },
+        "children": [
+          "applicantSteps",
+          "organizerText",
+          "observerText"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "applicantSteps",
+        "type": "Checklist",
+        "props": {
+          "label": "本地准备清单",
+          "bind": "checked",
+          "visible": {
+            "$expr": "audience == \"applicant\""
+          },
+          "items": [
+            {
+              "id": "read",
+              "label": "确认自己是否想报名"
+            },
+            {
+              "id": "draft",
+              "label": "起草一页问题说明"
+            },
+            {
+              "id": "check",
+              "label": "向发布方补问地点与截止信息"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "organizerText",
+        "type": "Prose",
+        "props": {
+          "text": "建议先询问同伴意愿；转发时附上原通知，并明确授权说明只在入选后补交。不要替同伴作报名承诺。",
+          "variant": "body",
+          "visible": {
+            "$expr": "audience == \"organizer\""
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "observerText",
+        "type": "Prose",
+        "props": {
+          "text": "可以先保留原文，明确自己关心的校园问题。当前不需要为了“以防万一”而补交材料。",
+          "variant": "body",
+          "visible": {
+            "$expr": "audience == \"observer\""
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "full",
+        "type": "Section",
+        "props": {
+          "title": "逐层解释，而不是重复通知",
+          "level": 4
+        },
+        "children": [
+          "fullText",
+          "quotation"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "fullText",
+        "type": "Prose",
+        "props": {
+          "text": "**对象**是对校园议题感兴趣的同学；“面向”说明可参与范围，不意味着所有人必须参加。\n\n**动作**是自愿报名，提交一页问题说明。入选确认是第二阶段的触发条件。\n\n**材料**分两次：报名时的问题说明，以及入选后的授权说明。把两个阶段写成一个“必须立即交齐”的清单会改变原意。[1]\n\n**个人化建议**应随阅读身份变化；原文规定本身不会因为选择了不同身份而改变。",
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "quotation",
+        "type": "Prose",
+        "props": {
+          "text": "本次工作坊面向对校园议题感兴趣的同学，自愿报名。报名需提交一页问题说明。入选后须在活动前补交授权说明；未入选者不要求补交。具体活动地点将在入选确认后通知。",
+          "variant": "quote",
+          "attribution": "虚构演示通知 · 原文节选 [1]"
+        }
+      },
+      {
+        "op": "node",
+        "id": "unknown",
+        "type": "Section",
+        "props": {
+          "title": "把缺口写清楚，避免自行补全",
+          "level": 4
+        },
+        "children": [
+          "unknownText"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "unknownText",
+        "type": "Prose",
+        "props": {
+          "text": "- **地点**：原文说入选后通知，当前不能写成某一教室。[1]\n- **截止时刻**：所给节选没有提到，不能代填“今晚”或“本周五”。\n- **评选标准**：所给节选未包含，不能承诺某种题目一定入选。\n\n建议补问发布方；这里的提问是建议，不是原通知新增的要求。",
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "questionArea",
+        "type": "Section",
+        "props": {
+          "title": "把你的情况接进来",
+          "level": 4
+        },
+        "children": [
+          "briefQuestion",
+          "briefContinue",
+          "briefNote"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "briefQuestion",
+        "type": "TextInput",
+        "props": {
+          "label": "补充你关心的条件或问题",
+          "bind": "question",
+          "multiline": true,
+          "placeholder": "例如：我只想旁听，需要提交哪些材料？"
+        }
+      },
+      {
+        "op": "node",
+        "id": "briefContinue",
+        "type": "Button",
+        "props": {
+          "label": "带着我的情况继续解读",
+          "variant": "primary"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "根据当前身份和补充问题继续解读，先核对原文，缺失条件请直接说明。",
+            "values": {
+              "audience": {
+                "$bind": "audience"
+              },
+              "question": {
+                "$bind": "question"
+              },
+              "checked": {
+                "$bind": "checked"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "briefNote",
+        "type": "Prose",
+        "props": {
+          "text": "勾选只记录这份回答内的阅读进度；不会替你报名或提交材料。",
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "end"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "id": "brief-a",
+        "name": "虚构通知 · 校园议题工作坊",
+        "preview": "本次工作坊面向对校园议题感兴趣的同学，自愿报名。报名需提交一页问题说明。入选后须在活动前补交授权说明；未入选者不要求补交。具体活动地点将在入选确认后通知。",
+        "evidence_kind": "user_input"
+      }
+    ],
+    "citations": [
+      {
+        "source_id": "brief-a",
+        "locator": "演示原文",
+        "quote": "本次工作坊面向对校园议题感兴趣的同学，自愿报名。报名需提交一页问题说明。入选后须在活动前补交授权说明；未入选者不要求补交。具体活动地点将在入选确认后通知。"
+      }
+    ]
+  },
+  "notice": {
+    "title": "公示演练 · 判断与表达",
+    "intro": "",
+    "ops": [
+      {
+        "op": "begin",
+        "v": 1
+      },
+      {
+        "op": "state",
+        "set": {
+          "case": "correction",
+          "exercise": {
+            "answer": null,
+            "revealed": false
+          },
+          "reflection": "",
+          "cases": [
+            {
+              "id": "correction",
+              "title": "情境一 · 信息更正",
+              "question": "公示上的专业名称与你的在读信息不一致。现在应怎样表达？",
+              "context": "公示仍在受理期内，你已找到能核对专业名称的原始记录。",
+              "options": [
+                {
+                  "value": "a",
+                  "label": "直接在群里断言评选无效"
+                },
+                {
+                  "value": "b",
+                  "label": "向受理渠道说明具体错误，附必要依据",
+                  "description": "限定在可核实的信息，不扩大为对动机的指控"
+                },
+                {
+                  "value": "c",
+                  "label": "把他人的无关个人资料一起转发"
+                }
+              ],
+              "correct": "b",
+              "feedback": "专业名称不一致属于可核实的具体问题。用最少必要的信息说明差异，并通过原文列明的受理渠道提交，更符合演示规则。提交后仍需等待核查反馈。[1]",
+              "pitfall": "当前证据支持核对专业名称，不能直接支持“评选无效”或对他人动机的判断。"
+            },
+            {
+              "id": "rumor",
+              "title": "情境二 · 证据不足",
+              "question": "你只看到一张截取局部的聊天截图，怀疑公示有问题。下一步呢？",
+              "context": "截图的上下文和真实性尚未核实，你没有完整通知或相应记录。",
+              "options": [
+                {
+                  "value": "a",
+                  "label": "把怀疑直接写成事实公开传播"
+                },
+                {
+                  "value": "b",
+                  "label": "依据截图替受理部门作出结论"
+                },
+                {
+                  "value": "c",
+                  "label": "先核对原文与上下文，区分疑点和事实",
+                  "description": "如需提出异议，明确未核实部分并补充必要依据"
+                }
+              ],
+              "correct": "c",
+              "feedback": "应先核对来源、完整上下文和可验证记录。可以记录疑点，但不能把尚未核实的截图变成确定指控；异议的处理结果仍由核查反馈确定。[1]",
+              "pitfall": "“值得核对”与“已经证明违规”是不同状态，界面和措辞都应保留这条边界。"
+            },
+            {
+              "id": "window",
+              "title": "情境三 · 期限疑问",
+              "question": "你在第6天才读到这则公示，还能保证按原渠道受理吗？",
+              "context": "演示原文只写第1天至第5天为公示期，没有说明期满后是否另设补充渠道。",
+              "options": [
+                {
+                  "value": "a",
+                  "label": "向受理部门询问是否有补充渠道",
+                  "description": "说明发现时间，避免承诺一定受理"
+                },
+                {
+                  "value": "b",
+                  "label": "声称原文规定第6天仍必须受理"
+                },
+                {
+                  "value": "c",
+                  "label": "自行把公示截止日期改成第7天"
+                }
+              ],
+              "correct": "a",
+              "feedback": "第6天已经超过演示原文列出的公示期，但原文没有给出期满后的处理办法。可以询问补充渠道，不能保证受理，也不能自行修改期限。[1]",
+              "pitfall": "这里不能用“常识”替代缺失条款。询问是建议，是否受理需要受理部门确认。"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "notice",
+        "type": "Section",
+        "props": {
+          "eyebrow": "公示情境演练  /  虚构材料",
+          "title": "先判断边界，再练习怎样回应",
+          "level": 2,
+          "gap": "lg"
+        },
+        "children": [
+          "noticeLead",
+          "caseChoice",
+          "exerciseCase",
+          "exerciseNote"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "noticeLead",
+        "type": "Prose",
+        "props": {
+          "text": "一则公示，可能同时涉及**信息更正、证据核实和期限判断**。换个情境作答，再对照原文检查你的表达。",
+          "variant": "lead"
+        }
+      },
+      {
+        "op": "node",
+        "id": "caseChoice",
+        "type": "Choice",
+        "props": {
+          "label": "选择演练情境",
+          "bind": "case",
+          "options": [
+            {
+              "value": "correction",
+              "label": "信息更正"
+            },
+            {
+              "value": "rumor",
+              "label": "证据不足"
+            },
+            {
+              "value": "window",
+              "label": "期限疑问"
+            }
+          ]
+        },
+        "on": {
+          "change": {
+            "kind": "state",
+            "key": "exercise",
+            "value": {
+              "answer": null,
+              "revealed": false
+            }
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "exerciseCase",
+        "type": "Collection",
+        "props": {
+          "items": {
+            "$expr": "where(cases,\"id\",case)"
+          },
+          "keyField": "id",
+          "columns": 1,
+          "gap": "lg"
+        },
+        "children": [
+          "caseHeader",
+          "question",
+          "context",
+          "answerChoice",
+          "checkAnswer",
+          "feedback",
+          "ruleDetails",
+          "reflection",
+          "noticeContinue"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "caseHeader",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "item.title"
+          },
+          "variant": "eyebrow"
+        }
+      },
+      {
+        "op": "node",
+        "id": "question",
+        "type": "Heading",
+        "props": {
+          "text": {
+            "$bind": "item.question"
+          },
+          "level": 3
+        }
+      },
+      {
+        "op": "node",
+        "id": "context",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "item.context"
+          },
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "answerChoice",
+        "type": "Choice",
+        "props": {
+          "label": "你的判断",
+          "bind": "exercise.answer",
+          "layout": "list",
+          "options": {
+            "$bind": "item.options"
+          }
+        },
+        "on": {
+          "change": {
+            "kind": "state",
+            "key": "exercise.revealed",
+            "value": false
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "checkAnswer",
+        "type": "Button",
+        "props": {
+          "label": "对照原文，查看反馈",
+          "variant": "primary",
+          "disabled": {
+            "$expr": "exercise.answer == null"
+          }
+        },
+        "on": {
+          "click": {
+            "kind": "state",
+            "key": "exercise.revealed",
+            "value": true
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "feedback",
+        "type": "Section",
+        "props": {
+          "visible": {
+            "$bind": "exercise.revealed"
+          },
+          "gap": "sm"
+        },
+        "children": [
+          "feedbackTitle",
+          "feedbackText",
+          "pitfall"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "feedbackTitle",
+        "type": "Heading",
+        "props": {
+          "level": 4,
+          "text": {
+            "$expr": "exercise.answer == item.correct ? \"这个判断守住了原文边界\" : \"再核对一下判断的依据\""
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "feedbackText",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "item.feedback"
+          },
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "pitfall",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "item.pitfall"
+          },
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "node",
+        "id": "ruleDetails",
+        "type": "Accordion",
+        "props": {
+          "labels": [
+            "查看这次演练的完整规则"
+          ]
+        },
+        "children": [
+          "ruleQuote"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "ruleQuote",
+        "type": "Prose",
+        "props": {
+          "text": "公示自发布第1天至第5天。对公示信息有异议，可在公示期内通过材料列明的受理渠道提出，并附必要说明与依据。受理部门核查后反馈；提出异议不代表公示结论已经被撤销。",
+          "variant": "quote",
+          "attribution": "虚构公示 · 演练原文 [1]"
+        }
+      },
+      {
+        "op": "node",
+        "id": "reflection",
+        "type": "TextInput",
+        "props": {
+          "label": "练习写一段你的回应",
+          "bind": "reflection",
+          "multiline": true,
+          "placeholder": "只陈述能够核实的问题，写清希望对方核对什么。"
+        }
+      },
+      {
+        "op": "node",
+        "id": "noticeContinue",
+        "type": "Button",
+        "props": {
+          "label": "请模型点评我的表达"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "请依据当前虚构公示规则点评我的表达，区分事实、疑问与建议，指出是否越过证据边界。不要声称已经提交异议。",
+            "values": {
+              "scenario": {
+                "$bind": "item"
+              },
+              "answer": {
+                "$bind": "exercise.answer"
+              },
+              "draft": {
+                "$bind": "reflection"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "exerciseNote",
+        "type": "Prose",
+        "props": {
+          "text": "这是本地情境练习，不评定真实资格，不替用户提交异议；点击点评才会把练习内容作为下一问。",
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "end"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "id": "notice-a",
+        "name": "虚构公示 · 异议受理规则",
+        "preview": "公示自发布第1天至第5天。对公示信息有异议，可在公示期内通过材料列明的受理渠道提出，并附必要说明与依据。受理部门核查后反馈；提出异议不代表公示结论已经被撤销。",
+        "evidence_kind": "user_input"
+      }
+    ],
+    "citations": [
+      {
+        "source_id": "notice-a",
+        "locator": "演示原文",
+        "quote": "公示自发布第1天至第5天。对公示信息有异议，可在公示期内通过材料列明的受理渠道提出，并附必要说明与依据。受理部门核查后反馈；提出异议不代表公示结论已经被撤销。"
+      }
+    ]
+  },
   "calculate": {
     "title": "时间试算 · 结果与参数联动",
     "intro": "根据每天 2 小时、准备 7 天这两个示例输入，可安排 14 小时。调整后立即重新计算。",
@@ -461,6 +1517,779 @@
       },
       {
         "op": "end"
+      }
+    ]
+  },
+  "compose": {
+    "title": "自由组合 · 内容与数据联动",
+    "intro": "这不是一个固定页面类型。这里展示如何用数据、状态和内容结构组织一份可操作的回答。",
+    "ops": [
+      {
+        "op": "begin",
+        "v": 1
+      },
+      {
+        "op": "state",
+        "set": {
+          "query": "",
+          "category": "全部",
+          "view": 0,
+          "showDetail": true,
+          "records": [
+            {
+              "id": "a",
+              "name": "植物图鉴",
+              "category": "观察",
+              "hours": 2,
+              "description": "记录叶形与生长位置，用图片和文字建立观察笔记。"
+            },
+            {
+              "id": "b",
+              "name": "声音地图",
+              "category": "观察",
+              "hours": 3,
+              "description": "采集声音并标注环境；公开分享前核对授权与隐私。"
+            },
+            {
+              "id": "c",
+              "name": "阅读札记",
+              "category": "表达",
+              "hours": 1.5,
+              "description": "比较文本观点，把关键原句和自己的解释分开放置。"
+            },
+            {
+              "id": "d",
+              "name": "数据故事",
+              "category": "表达",
+              "hours": 4,
+              "description": "选取一个公开数据集，用图表解释变化，并注明数据出处。"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "layout",
+        "type": "Section",
+        "props": {
+          "title": "让内容决定界面",
+          "description": "一组虚构练习数据。搜索、分类、统计、图表与卡片共用同一份数据；试着改变条件。"
+        },
+        "children": [
+          "tools",
+          "summary",
+          "views",
+          "detailToggle",
+          "method"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "tools",
+        "type": "Grid",
+        "props": {
+          "ratios": [
+            2,
+            1
+          ],
+          "align": "end"
+        },
+        "children": [
+          "query",
+          "category"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "query",
+        "type": "TextInput",
+        "props": {
+          "label": "搜索项目",
+          "bind": "query",
+          "placeholder": "输入名称或内容关键词"
+        }
+      },
+      {
+        "op": "node",
+        "id": "category",
+        "type": "Select",
+        "props": {
+          "label": "内容方向",
+          "bind": "category",
+          "options": [
+            {
+              "value": "全部",
+              "label": "全部"
+            },
+            {
+              "value": "观察",
+              "label": "观察"
+            },
+            {
+              "value": "表达",
+              "label": "表达"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "summary",
+        "type": "Row",
+        "props": {
+          "minWidth": 160
+        },
+        "children": [
+          "count",
+          "hours"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "count",
+        "type": "Stat",
+        "props": {
+          "label": "当前项目",
+          "value": {
+            "$expr": "count(search(category == \"全部\" ? records : where(records,\"category\",category),query))"
+          },
+          "unit": "项"
+        }
+      },
+      {
+        "op": "node",
+        "id": "hours",
+        "type": "Stat",
+        "props": {
+          "label": "示例总时长",
+          "value": {
+            "$expr": "sumBy(search(category == \"全部\" ? records : where(records,\"category\",category),query),\"hours\")"
+          },
+          "unit": "小时",
+          "description": "这些是演示输入，不是推荐投入时长。"
+        }
+      },
+      {
+        "op": "node",
+        "id": "views",
+        "type": "Tabs",
+        "props": {
+          "labels": [
+            "浏览内容",
+            "数据与图表"
+          ],
+          "bind": "view"
+        },
+        "children": [
+          "collection",
+          "analysis"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "collection",
+        "type": "Collection",
+        "props": {
+          "items": {
+            "$expr": "search(category == \"全部\" ? records : where(records,\"category\",category),query)"
+          },
+          "keyField": "id",
+          "minWidth": 260,
+          "emptyText": "没有匹配项。可以更换关键词或方向。"
+        },
+        "children": [
+          "itemContent"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "itemContent",
+        "type": "Section",
+        "props": {
+          "surface": "outline"
+        },
+        "children": [
+          "categoryLabel",
+          "itemTitle",
+          "itemDescription",
+          "itemHours",
+          "itemAction"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "categoryLabel",
+        "type": "Badge",
+        "props": {
+          "text": {
+            "$bind": "item.category"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "itemTitle",
+        "type": "Heading",
+        "props": {
+          "text": {
+            "$bind": "item.name"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "itemDescription",
+        "type": "Markdown",
+        "props": {
+          "text": {
+            "$bind": "item.description"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "itemHours",
+        "type": "Markdown",
+        "props": {
+          "text": {
+            "$expr": "\"示例时长：\" + item.hours + \" 小时\""
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "itemAction",
+        "type": "Button",
+        "props": {
+          "label": "围绕这项继续",
+          "variant": "plain"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "根据我选中的项目继续细化；这些是练习数据，不代表真实计划。",
+            "values": {
+              "project": {
+                "$bind": "item"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "analysis",
+        "type": "Grid",
+        "props": {
+          "ratios": [
+            1,
+            1
+          ]
+        },
+        "children": [
+          "table",
+          "chart"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "table",
+        "type": "Table",
+        "props": {
+          "label": "筛选后的数据",
+          "columns": [
+            {
+              "key": "name",
+              "label": "项目"
+            },
+            {
+              "key": "category",
+              "label": "方向"
+            },
+            {
+              "key": "hours",
+              "label": "小时",
+              "sortable": true
+            }
+          ],
+          "rows": {
+            "$expr": "search(category == \"全部\" ? records : where(records,\"category\",category),query)"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "chart",
+        "type": "BarChart",
+        "props": {
+          "label": "示例时长对比",
+          "data": {
+            "$expr": "series(search(category == \"全部\" ? records : where(records,\"category\",category),query),\"name\",\"hours\")"
+          },
+          "xLabel": "项目",
+          "yLabel": "时长",
+          "unit": "小时"
+        }
+      },
+      {
+        "op": "node",
+        "id": "detailToggle",
+        "type": "Toggle",
+        "props": {
+          "label": "显示数据说明",
+          "bind": "showDetail"
+        }
+      },
+      {
+        "op": "node",
+        "id": "method",
+        "type": "Markdown",
+        "props": {
+          "text": "**如何阅读**：所有数字来自上方同一组演示记录。修改筛选只改变当前显示；点击项目按钮会把选择整理成下一问。",
+          "visible": {
+            "$bind": "showDetail"
+          }
+        }
+      },
+      {
+        "op": "end"
+      }
+    ]
+  },
+  "review": {
+    "title": "研读与改稿 · 批注、判断与核查",
+    "intro": "",
+    "ops": [
+      {
+        "op": "begin",
+        "v": 1
+      },
+      {
+        "op": "state",
+        "set": {
+          "query": "",
+          "filter": "all",
+          "stage": 0,
+          "records": [
+            {
+              "id": "a",
+              "title": "发布方说明",
+              "excerpt": "共享工具仅在北区活动中心试点两周；学生自愿预约，借用须登记；扩大范围待评估。",
+              "attribution": "虚构原文 · [1]",
+              "note": "",
+              "decision": "unread"
+            },
+            {
+              "id": "b",
+              "title": "校园报道",
+              "excerpt": "报道中“未来有望覆盖更多社团”仅为记者展望，未获正式决定。",
+              "attribution": "虚构原文 · [2]",
+              "note": "",
+              "decision": "unread"
+            },
+            {
+              "id": "c",
+              "title": "同学访谈",
+              "excerpt": "两名同学提出维护和归还地点的疑问，材料未提供管理方回应。",
+              "attribution": "虚构原文 · [3]",
+              "note": "",
+              "decision": "unread"
+            }
+          ],
+          "draft": "共享工具借用服务将在北区活动中心开展两周试点；扩大范围仍需评估。[1]",
+          "checked": []
+        }
+      },
+      {
+        "op": "node",
+        "id": "opening",
+        "type": "Section",
+        "props": {
+          "title": "从原文到发布稿，保留每一步判断",
+          "eyebrow": "研读与改稿 / 虚构材料演示",
+          "level": 2
+        },
+        "children": [
+          "lead"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "lead",
+        "type": "Prose",
+        "props": {
+          "variant": "lead",
+          "text": "逐条阅读、留下批注，再把确定的信息写进草稿。检索、重排与撤销后，每条笔记仍对应它自己的材料。"
+        }
+      },
+      {
+        "op": "node",
+        "id": "stages",
+        "type": "Tabs",
+        "props": {
+          "label": "当前工作",
+          "bind": "stage",
+          "labels": [
+            "研读与批注",
+            "发布稿与核查"
+          ]
+        },
+        "children": [
+          "reading",
+          "writing"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "reading",
+        "type": "Section",
+        "props": {
+          "title": "先决定每条材料怎么处理",
+          "level": 3
+        },
+        "children": [
+          "controls",
+          "items"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "controls",
+        "type": "Grid",
+        "props": {
+          "columns": 2,
+          "ratios": [
+            3,
+            2
+          ],
+          "gap": "lg"
+        },
+        "children": [
+          "filter",
+          "query"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "filter",
+        "type": "Choice",
+        "props": {
+          "label": "查看处理状态",
+          "bind": "filter",
+          "options": [
+            {
+              "value": "all",
+              "label": "全部材料"
+            },
+            {
+              "value": "question",
+              "label": "有待核实"
+            },
+            {
+              "value": "ready",
+              "label": "可以采用"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "query",
+        "type": "TextInput",
+        "props": {
+          "label": "查找材料或笔记",
+          "bind": "query",
+          "placeholder": "输入关键词",
+          "maxLength": 120
+        }
+      },
+      {
+        "op": "node",
+        "id": "items",
+        "type": "Collection",
+        "props": {
+          "label": "每条批注只属于当前材料",
+          "bind": "records",
+          "items": {
+            "$expr": "search(filter == \"all\" ? records : where(records,\"decision\",filter),query)"
+          },
+          "keyField": "id",
+          "columns": 1,
+          "emptyText": "没有符合当前条件的材料；可切回全部材料，或清空关键词。"
+        },
+        "children": [
+          "record"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "record",
+        "type": "Section",
+        "props": {
+          "title": {
+            "$bind": "item.title"
+          },
+          "level": 3
+        },
+        "children": [
+          "original",
+          "recordFields",
+          "recordFollowup"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "original",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "item.excerpt"
+          },
+          "variant": "quote",
+          "attribution": {
+            "$bind": "item.attribution"
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "recordFields",
+        "type": "Grid",
+        "props": {
+          "columns": 2,
+          "ratios": [
+            3,
+            2
+          ],
+          "gap": "lg"
+        },
+        "children": [
+          "note",
+          "decision"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "note",
+        "type": "TextInput",
+        "props": {
+          "label": "我的批注",
+          "bind": "item.note",
+          "multiline": true,
+          "placeholder": "写下它支持什么、还缺什么证据",
+          "maxLength": 500
+        }
+      },
+      {
+        "op": "node",
+        "id": "decision",
+        "type": "Choice",
+        "props": {
+          "label": "这条材料的处理",
+          "bind": "item.decision",
+          "layout": "list",
+          "options": [
+            {
+              "value": "unread",
+              "label": "尚未判断"
+            },
+            {
+              "value": "question",
+              "label": "有待核实",
+              "description": "留住疑问，暂不写成确定结论"
+            },
+            {
+              "value": "ready",
+              "label": "可以采用",
+              "description": "仅代表我的阅读选择，仍须核对引文"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "recordFollowup",
+        "type": "Button",
+        "props": {
+          "label": "围绕这条材料继续分析",
+          "variant": "plain"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "根据我的批注与处理选择，进一步分析这条虚构材料能支持什么、还缺什么；不要将未证实内容写成事实。",
+            "values": {
+              "record_id": {
+                "$bind": "item.id"
+              },
+              "note": {
+                "$bind": "item.note"
+              },
+              "decision": {
+                "$bind": "item.decision"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "node",
+        "id": "writing",
+        "type": "Section",
+        "props": {
+          "title": "只把能支持的表述写进稿子",
+          "level": 3
+        },
+        "children": [
+          "draftGrid",
+          "selfCheck",
+          "auditDraft"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "draftGrid",
+        "type": "Grid",
+        "props": {
+          "columns": 2,
+          "gap": "lg"
+        },
+        "children": [
+          "draftEditor",
+          "preview"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "draftEditor",
+        "type": "TextInput",
+        "props": {
+          "label": "你的发布稿草稿",
+          "bind": "draft",
+          "multiline": true,
+          "maxLength": 1800
+        }
+      },
+      {
+        "op": "node",
+        "id": "preview",
+        "type": "Section",
+        "props": {
+          "title": "当前草稿预览",
+          "level": 4
+        },
+        "children": [
+          "draftText",
+          "draftNote"
+        ]
+      },
+      {
+        "op": "node",
+        "id": "draftText",
+        "type": "Prose",
+        "props": {
+          "text": {
+            "$bind": "draft"
+          },
+          "variant": "body"
+        }
+      },
+      {
+        "op": "node",
+        "id": "draftNote",
+        "type": "Prose",
+        "props": {
+          "text": "这是可编辑草稿；你新增的表述尚未经过模型核验，也不会自动发布。",
+          "variant": "caption"
+        }
+      },
+      {
+        "op": "node",
+        "id": "selfCheck",
+        "type": "Checklist",
+        "props": {
+          "label": "发布前自查",
+          "bind": "checked",
+          "items": [
+            {
+              "id": "scope",
+              "label": "保留了地点与试点期限的限定"
+            },
+            {
+              "id": "forecast",
+              "label": "没有把记者展望写成正式决定"
+            },
+            {
+              "id": "unknown",
+              "label": "把缺少回应的内容保留为未知"
+            }
+          ]
+        }
+      },
+      {
+        "op": "node",
+        "id": "auditDraft",
+        "type": "Button",
+        "props": {
+          "label": "请模型逐句核查当前稿件"
+        },
+        "on": {
+          "click": {
+            "kind": "ask_model",
+            "prompt": "请逐句核查我的当前草稿，引用原文说明可保留、需改写与不能确认的内容；给出具体修改理由，保留我的写作目标，不执行发布。",
+            "values": {
+              "draft": {
+                "$bind": "draft"
+              },
+              "notes": {
+                "$expr": "pluck(records,\"note\")"
+              },
+              "self_check": {
+                "$bind": "checked"
+              }
+            }
+          }
+        }
+      },
+      {
+        "op": "end"
+      }
+    ],
+    "citations": [
+      {
+        "source_id": "review-1",
+        "locator": "虚构原文",
+        "quote": "共享工具仅在北区活动中心试点两周；学生自愿预约，借用须登记；扩大范围待评估。"
+      },
+      {
+        "source_id": "review-2",
+        "locator": "虚构原文",
+        "quote": "报道中“未来有望覆盖更多社团”仅为记者展望，未获正式决定。"
+      },
+      {
+        "source_id": "review-3",
+        "locator": "虚构原文",
+        "quote": "两名同学提出维护和归还地点的疑问，材料未提供管理方回应。"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "id": "review-1",
+        "name": "发布方说明（虚构）",
+        "preview": "共享工具仅在北区活动中心试点两周；学生自愿预约，借用须登记；扩大范围待评估。",
+        "evidence_kind": "user_input"
+      },
+      {
+        "id": "review-2",
+        "name": "校园报道（虚构）",
+        "preview": "报道中“未来有望覆盖更多社团”仅为记者展望，未获正式决定。",
+        "evidence_kind": "user_input"
+      },
+      {
+        "id": "review-3",
+        "name": "同学访谈（虚构）",
+        "preview": "两名同学提出维护和归还地点的疑问，材料未提供管理方回应。",
+        "evidence_kind": "user_input"
       }
     ]
   }

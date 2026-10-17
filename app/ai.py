@@ -28,6 +28,20 @@ class AIError(Exception):
     pass
 
 
+class AIBudgetError(AIError):
+    """A complete provider response hit its token budget; never publish its body."""
+    def __init__(self, message, *, usage=None):
+        super().__init__(message)
+        self.usage = usage or {}
+
+
+class ReplyValidationError(AIError):
+    """A bounded correction may repair a model's schema or citation output."""
+    def __init__(self,message,*,draft=None):
+        super().__init__(message)
+        self.draft=draft
+
+
 def normalized(value):
     return re.sub(r'\s+', '', value)
 
@@ -105,7 +119,7 @@ def generate(settings, notice, sources, profile):
     payload={'model':settings.ai_model,'messages':[
         {'role':'system','content':SYSTEM_PROMPT+json.dumps(Extraction.model_json_schema(),ensure_ascii=False)},
         {'role':'user','content':json.dumps(context,ensure_ascii=False)}],
-        'response_format':{'type':'json_object'},'thinking':{'type':'disabled'},'max_completion_tokens':10000}
+        'response_format':{'type':'json_object'},'thinking':{'type':'enabled'},'max_completion_tokens':20000}
     try:
         with httpx.Client(timeout=httpx.Timeout(settings.ai_timeout, connect=10),follow_redirects=False,trust_env=False) as client:
             with client.stream('POST',settings.ai_base_url+'/chat/completions',

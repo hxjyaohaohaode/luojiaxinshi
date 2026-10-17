@@ -1,7 +1,8 @@
+import {motionSetting} from './motion.js';
 const preferenceKey='campus.companion.enabled';
 let enabled=true,tipTimer,activeButton,lastTap=0,taps=0,lastBloom=0,tipIndex=0;
 try{enabled=localStorage.getItem(preferenceKey)!=='false';}catch{/* Private mode still works. */}
-const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.dataset.uiMotion==='off';
 
 export function greeting(now=new Date()){
   const hour=Number(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Shanghai',hour:'2-digit',hour12:false}).format(now));
@@ -9,12 +10,13 @@ export function greeting(now=new Date()){
 }
 
 export function companion(pose='welcome',className=''){
+  if(!['welcome','rest','reading','planning','blossom','organize','search','complete','thinking','writing'].includes(pose))pose='welcome';
   if(pose==='welcome'&&greeting()==='夜深了')pose='rest';
-  return `<button type="button" class="companion ${className}" data-companion aria-label="和珞珈小信使打个招呼" aria-expanded="false" aria-controls="companion-bubble" ${enabled?'':'disabled'}><img src="/static/assets/luojia-messenger-${pose}.png" width="1280" height="1280" alt="珞珈小信使" decoding="async" ${pose==='reading'?'loading="lazy"':''}></button>`;
+  return `<button type="button" class="companion ${className}" data-companion data-companion-pose="${pose}" aria-label="和珞珈小信使打个招呼" aria-expanded="false" aria-controls="companion-bubble" ${enabled?'':'disabled'}><img src="/static/assets/luojia-messenger-${pose}.png" width="1280" height="1280" alt="珞珈小信使" decoding="async" ${['reading','search','complete','writing','thinking'].includes(pose)?'loading="lazy"':''}></button>`;
 }
 
 export function companionSetting(){
-  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">想安静专注时，随时关闭。此偏好仅保存在当前浏览器，必要的保存和错误提示始终保留。</p></section>`;
+  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">想安静专注时，随时关闭。此偏好仅保存在当前浏览器，必要的保存和错误提示始终保留。</p>${motionSetting()}</section>`;
 }
 
 function closeTip(){

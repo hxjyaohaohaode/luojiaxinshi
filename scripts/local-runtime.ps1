@@ -6,7 +6,7 @@ $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 
 function Get-TaskConfiguration {
-    $json = & $taskPython $taskManage runtime
+    $json = & $taskPython $taskManage runtime --local-env
     if ($LASTEXITCODE -ne 0) { throw 'Invalid .env configuration.' }
     return ($json | ConvertFrom-Json)
 }

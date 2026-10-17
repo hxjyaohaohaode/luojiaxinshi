@@ -28,14 +28,14 @@ def verify_password(password, stored):
 DUMMY_PASSWORD = hash_password(secrets.token_urlsafe(24))
 
 
-def rate_limit(db, key, maximum, seconds):
+def rate_limit(db, key, maximum, seconds, *, check_only=False):
     now = int(time.time())
-    with db.connect(write=True) as conn:
-        conn.execute("DELETE FROM limits WHERE reset_at < ?", (now,))
-        row = conn.execute("SELECT * FROM limits WHERE key=?", (key,)).fetchone()
+    with db.connect(write=not check_only) as conn:
+        if not check_only:conn.execute("DELETE FROM limits WHERE reset_at < ?", (now,))
+        row = conn.execute("SELECT * FROM limits WHERE key=? AND reset_at>=?", (key,now)).fetchone()
         if row and row['count'] >= maximum:
             raise HTTPException(429, "操作过于频繁，请稍后再试", headers={"Retry-After": str(max(1, row['reset_at']-now))})
-        conn.execute("INSERT INTO limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1", (key, now+seconds))
+        if not check_only:conn.execute("INSERT INTO limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1", (key, now+seconds))
 
 
 def new_invite(db, role='user'):

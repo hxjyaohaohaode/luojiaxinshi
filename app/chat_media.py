@@ -11,11 +11,11 @@ VIDEO_MIME={'mp4':'video/mp4','webm':'video/webm'}
 IMAGE_KINDS={'png','jpg','jpeg','webp'}
 
 
-def chat_file_source(filename,data):
+def chat_file_source(filename,data,max_file=MAX_FILE):
     name=re.split(r'[/\\]',filename)[-1][:160]
     kind=Path(name).suffix.lower().lstrip('.')
     if kind not in VIDEO_MIME:return file_source(filename,data)
-    if not data or len(data)>MAX_FILE:raise ValueError('每份附件须大于 0 字节且不超过 5 MB')
+    if not data or len(data)>max_file:raise ValueError(f'每份附件须大于 0 字节且不超过 {max_file//1024//1024} MB')
     valid=(kind=='mp4' and len(data)>=24 and data[4:8]==b'ftyp' and int.from_bytes(data[:4],'big')>=16)
     valid=valid or (kind=='webm' and data[:4]==b'\x1aE\xdf\xa3' and b'webm' in data[:4096])
     if not valid:raise ValueError('视频格式与内容不符，请上传 MP4 或 WebM 原文件')

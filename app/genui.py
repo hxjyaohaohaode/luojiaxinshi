@@ -104,7 +104,7 @@ def matches(value, schema=None, dynamic=True):
     return True
 
 
-TOKEN = re.compile(r'''(?:(\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|([A-Za-z_][A-Za-z0-9_.]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(===|!==|<=|>=|==|!=|&&|\|\||[+\-*/%<>()!?:,]))''')
+TOKEN = re.compile(r'''(?:(\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|([A-Za-z_][A-Za-z0-9_.]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(===|!==|<=|>=|==|!=|&&|\|\||[+\-*/%<>()!?:,\[\]]))''')
 PRECEDENCE = {'||': 1, '&&': 2, '==': 3, '!=': 3, '===': 3, '!==': 3, '<': 4, '<=': 4, '>': 4, '>=': 4, '+': 5, '-': 5, '*': 6, '/': 6, '%': 6}
 
 
@@ -164,6 +164,16 @@ def validate_expression(source, limits=None):
                         break
                     index += 1
             take(')')
+        elif kind == '[':
+            items=0
+            if peek()!=']':
+                while True:
+                    items+=1
+                    if items>limits['dataItems']:fail('expression_limit')
+                    parse(0,depth+1)
+                    if peek()!=',':break
+                    index+=1
+            take(']')
         elif kind in {'literal', 'name'}:
             pass
         elif kind in {'!', '+', '-'}:
@@ -188,7 +198,18 @@ def validate_expression(source, limits=None):
         fail('invalid_expression')
 
 
-def validate_action(action):
+def validate_expressions(value, limits=None):
+    if isinstance(value, dict):
+        if '$expr' in value:
+            validate_expression(value['$expr'], limits)
+        for item in value.values():
+            validate_expressions(item, limits)
+    elif isinstance(value, list):
+        for item in value:
+            validate_expressions(item, limits)
+
+
+def validate_action(action, limits=None):
     action = safe_value(action)
     if not isinstance(action, dict) or action.get('kind') not in CATALOG['actions'] or not matches(action, CATALOG['actions'][action['kind']]):
         fail('invalid_action')
@@ -196,6 +217,7 @@ def validate_action(action):
         path_parts(action['key'])
     if action['kind'] == 'host' and (action.get('name') not in CATALOG['hostActions'] or not matches(action.get('params', {}), CATALOG['hostActions'][action['name']])):
         fail('invalid_host_params')
+    validate_expressions(action, limits)
     return action
 
 
@@ -218,16 +240,7 @@ def validate_node(node, limits=None):
     if 'bind' in props:
         path_parts(props['bind'])
 
-    def expressions(value):
-        if isinstance(value, dict):
-            if '$expr' in value:
-                validate_expression(value['$expr'], limits)
-            for item in value.values():
-                expressions(item)
-        elif isinstance(value, list):
-            for item in value:
-                expressions(item)
-    expressions(props)
+    validate_expressions(props, limits)
     if node['type']=='Plot' and isinstance(props.get('expression'),str):
         validate_expression(props['expression'],limits)
     children = node.get('children', [])
@@ -237,7 +250,9 @@ def validate_node(node, limits=None):
     if not isinstance(on, dict) or set(on) - {'click', 'change', 'submit'}:
         fail('invalid_event')
     for action in on.values():
-        validate_action(action)
+        validate_action(action, limits)
+    if node['type']=='Button' and re.search(r'保存', str(props.get('label',''))) and any(a.get('kind')=='state' for a in on.values()):
+        fail('unsupported_persistent_save')
     return {'id': node['id'], 'type': node['type'], 'props': props, 'children': children[:], 'on': on}
 
 

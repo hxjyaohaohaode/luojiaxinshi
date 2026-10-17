@@ -1,0 +1,43 @@
+{
+  "generated_on": "2026-10-14",
+  "tool": "built-in image_gen.imagegen",
+  "reference": "luojia-messenger-welcome.png",
+  "transparent_background": true,
+  "assets": [
+    {
+      "file": "luojia-messenger-organize.png",
+      "prompt": "Use case: identity-preserve. Asset type: transparent PNG illustration for the Luojia Messenger campus productivity web application. Input image is the character identity and material reference. Keep exactly the same cute small ivory bird, large navy eyes, small golden beak and feet, emerald green curved traditional roof hat with cream gold edging and one soft pink cherry blossom, green cape with gold button and cross-body green satchel. Match the original premium soft tactile 3D illustration, gentle lighting, same proportions and colors. One character only, full body centered with breathing space, front three-quarter view. Real transparent background, no background scenery, no text, no letters, no watermark, no border, no UI. Create a new calm organizing pose: the bird gently aligns two ivory paper sheets and an envelope in its wings, with one understated small gold paper clip. It looks focused but reassuring, with closed smiling beak. Small tidy props, recognizable silhouette even at 100 pixels. This accompanies the first material submission and helps a user begin.",
+      "width": 1254,
+      "height": 1254,
+      "format": "RGBA PNG"
+    },
+    {
+      "file": "luojia-messenger-search.png",
+      "prompt": "Use case: identity-preserve. Asset type: transparent PNG illustration for the Luojia Messenger campus productivity web application. Input image is the character identity and material reference. Keep exactly the same cute small ivory bird, large navy eyes, small golden beak and feet, emerald green curved traditional roof hat with cream gold edging and one soft pink cherry blossom, green cape with gold button and cross-body green satchel. Match the original premium soft tactile 3D illustration, gentle lighting, same proportions and colors. One character only, full body centered with breathing space, front three-quarter view. Real transparent background, no background scenery, no text, no letters, no watermark, no border, no UI. Create a new helpful searching pose: the bird holds a modest gold-rimmed magnifying glass over a single ivory paper sheet, looking attentively at the sheet with a kind inquisitive expression and closed beak. Magnifying glass kept small so face and roof hat are unobscured. Recognizable silhouette at 100 pixels. This accompanies finding a notice or viewing original evidence.",
+      "width": 1254,
+      "height": 1254,
+      "format": "RGBA PNG"
+    },
+    {
+      "file": "luojia-messenger-complete.png",
+      "prompt": "Use case: identity-preserve. Asset type: transparent PNG illustration for the Luojia Messenger campus productivity web application. Input image is the character identity and material reference. Keep exactly the same cute small ivory bird, large navy eyes, small golden beak and feet, emerald green curved traditional roof hat with cream gold edging and one soft pink cherry blossom, green cape with gold button and cross-body green satchel. Match the original premium soft tactile 3D illustration, gentle lighting, same proportions and colors. One character only, full body centered with breathing space, front three-quarter view. Real transparent background, no background scenery, no text, no letters, no watermark, no border, no UI. Create a new understated completion pose: the bird holds a neat ivory card bearing one simple green checkmark (only a check symbol, no words), and raises the other wing in a small satisfied gesture. Warm relaxed smile, no confetti or floating decorations, restrained celebration. Keep recognizable silhouette at 100 pixels. This accompanies a confirmed saved task or all tasks completed.",
+      "width": 1254,
+      "height": 1254,
+      "format": "RGBA PNG"
+    },
+    {
+      "file": "luojia-messenger-writing.png",
+      "prompt": "Create one new full-body pose of the EXACT same Luojia campus messenger mascot from the reference image. Preserve its ivory round bird body, emerald Chinese pavilion roof hat with pale gold edges and pink blossom, emerald short cape with gold clasp and trim, small matching messenger satchel, yellow feet, big gentle dark blue eyes, plush refined 3D rendered style. Pose: actively writing with a small gold fountain pen on a cream notepad held in the other wing, slight thoughtful forward lean, focused friendly closed beak. Clearly readable at small UI avatar sizes. Front three-quarter full body, central composition, generous transparent margins, isolated genuinely transparent RGBA background. No table, no scenery, no lettering, no typography, no extra limbs. This is an alternate mascot asset for a writing reply state, not a redesign. Match the reference's materials, proportions and lighting.",
+      "width": 1254,
+      "height": 1254,
+      "format": "RGBA PNG"
+    },
+    {
+      "file": "luojia-messenger-thinking.png",
+      "prompt": "Create one new full-body pose of the EXACT same Luojia campus messenger mascot from the reference image. Preserve its ivory round bird body, emerald Chinese pavilion roof hat with pale gold edges and pink blossom, emerald short cape with gold clasp and trim, small matching messenger satchel, yellow feet, big gentle dark blue eyes, plush refined 3D rendered style. Pose: thoughtful but reassuring, one wing lightly near its cheek/chin and the other holding a small cream closed notebook, looking slightly upward, friendly small closed beak, relaxed focused expression. Clearly readable at small UI avatar sizes. Front three-quarter full body, central composition, generous transparent margins, isolated genuinely transparent RGBA background. No thought bubbles, no lettering, no typography, no scenery, no extra limbs. An alternate UI mascot asset for preparing/thinking reply state, not a redesign. Match the reference's materials, proportions and lighting.",
+      "width": 1254,
+      "height": 1254,
+      "format": "RGBA PNG"
+    }
+  ]
+}

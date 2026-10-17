@@ -56,3 +56,10 @@ export function safeUrl(value,{hosts=CATALOG.policy.urlHosts,origin=typeof locat
     return url.href;
   }catch{return null;}
 }
+// A checked public source grants this exact URL, never its entire host. The
+// default host policy remains in force for standalone, unverified examples.
+export function safeActionUrl(value,{resources=[],...options}={}){
+  const allowed=safeUrl(value,options);if(allowed)return allowed;
+  const candidate=safeUrl(value,{...options,hosts:null});
+  return candidate&&resources.some(resource=>safeUrl(resource,{...options,hosts:null})===candidate)?candidate:null;
+}

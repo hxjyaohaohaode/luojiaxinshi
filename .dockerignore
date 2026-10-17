@@ -1,5 +1,7 @@
 .venv
 .env
+.env.*
+!.env.example
 data
 backups
 artifacts
@@ -7,3 +9,13 @@ __pycache__
 .pytest_cache
 node_modules
 .git
+releases
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+*.pem
+*.key
+admin-setup.url.txt

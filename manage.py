@@ -14,15 +14,21 @@ from app.config import ROOT, Settings
 from app.backups import restore_database
 from app.db import Database
 from app.security import hash_password, new_invite
+from app.console import configure_text_output
 
 
 def main():
+    configure_text_output()
     parser=argparse.ArgumentParser(description='校园通知工作台运行与维护')
     parser.add_argument('command', choices=['serve','init','invite','backup','restore','reset-password','check','runtime'])
     parser.add_argument('--admin',action='store_true')
     parser.add_argument('--file',type=Path)
     parser.add_argument('--username')
+    parser.add_argument('--local-env',action='store_true',help='Explicit local launcher: read this project .env over inherited variables')
     args=parser.parse_args()
+    if args.local_env:
+        from dotenv import load_dotenv
+        load_dotenv(ROOT/'.env',override=True)
     cfg=Settings.from_env()
     if args.command=='runtime':
         print(json.dumps({'data_dir':str(cfg.data_dir),'origin':cfg.origin,'production':cfg.production,

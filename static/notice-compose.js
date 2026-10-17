@@ -1,12 +1,14 @@
+import {companion} from './companion.js';
+import {contextHint} from './motion.js';
 import {dictate} from './dictation.js';
 export function createNoticeComposer({esc,field,area,icon,toast,persist,showDialog,api,ask}) {
   const $=selector=>document.querySelector(selector);
   function render(){
     $('#content').innerHTML=`<div class="notice-compose">
-      <h1 class="sr-only">处理一则通知</h1>
+      <h1 class="sr-only">处理一则通知</h1><div class="notice-welcome">${companion('organize','compose-companion')}<div><h2>先收好原文，下一步慢慢理清。</h2><p>原文、截图和附件都可以放进来，保存后逐项核对。</p><span class="small">不必一次填完 · 文字编辑会自动暂存</span></div></div>
       <div class="steps" aria-label="提交进度"><span class="active" data-notice-stage="content"><b>1</b> 内容与附件</span><i></i><span data-notice-stage="review"><b>2</b> 来源与核对</span></div>
       <form id="notice-form" class="panel stack">
-        <section class="stack" data-notice-step="content">
+        <section class="stack" data-notice-step="content">${contextHint('notice-original','留住完整上下文','请保留适用对象、日期和附件说明。不确定的地方先标记待核实。')}
           ${field('通知标题','title','','text','required maxlength="160" placeholder="给这则通知一个便于查找的标题"')}
           ${area('通知正文','body','',5,'maxlength="10000" placeholder="粘贴完整原文，或在下面上传附件。"')}
           <div class="between small muted"><button type="button" class="button small plain" data-notice-voice aria-label="语音补充通知正文">${icon('mic')} 语音补充</button><span id="char-count">0 / 10,000 字</span></div>
@@ -15,7 +17,7 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
           <div class="form-footer"><a class="button" href="#notices">返回资料</a><button type="button" class="button primary" data-notice-step-to="review">下一步 ${icon('arrow')}</button></div>
         </section>
         <section class="stack" data-notice-step="review" hidden>
-          <div class="notice-preview"><strong id="notice-review-title"></strong><span class="small muted" id="notice-review-count"></span></div>
+          <div class="review-reassurance">这一步只是保存材料。之后还会逐项核对本人责任和期限，再由你确认待办。</div><div class="notice-preview"><strong id="notice-review-title"></strong><span class="small muted" id="notice-review-count"></span></div>
           <div class="form-grid">${field('来源名称（选填）','source_label','','text','maxlength="100" placeholder="学院官网、年级群等"')}${field('原发布时间（北京时间）','published_at','','datetime-local')}</div>
           <p class="field-note">原文有“明天”“本周五”等说法时，请补充发布时间。</p>
           <details class="details"><summary>原文链接与材料说明</summary><div class="stack">${field('原文链接（选填）','source_url','','url','disabled maxlength="2000" placeholder="https://…"')}<p class="small muted">链接供回查，不代替正文。PDF 最多 50 页；正文和附件合计不超过 10,000 字。扫描件与复杂表格需要对照原件核对。</p><p class="small muted">保存后可手工整理，或另行确认交给 AI 处理。</p></div></details>

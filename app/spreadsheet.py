@@ -10,13 +10,13 @@ NS={'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 
 
-def spreadsheet_sections(data,kind):
+def spreadsheet_sections(data,kind,full=False):
     sheets=[]
     warnings=[]
     if kind=='csv':
         try:text=data.decode('utf-8-sig')
         except UnicodeDecodeError:text=data.decode('gb18030')
-        if len(text)>10000:raise ValueError('表格文字超过 10000 字，请拆分上传')
+        if len(text)>(1000000 if full else 10000):raise ValueError('表格文字超过读取上限，请拆分上传')
         rows=list(csv.reader(io.StringIO(text)))
         sheets=[('CSV',rows)]
     else:
@@ -58,20 +58,20 @@ def spreadsheet_sections(data,kind):
                             value=value or '[公式无缓存值]'
                         values[col-1]=value.replace('\t',' ').replace('\r',' ').replace('\n',' ')
                     rows.append(values)
-                    if len(rows)>1000:raise ValueError('单工作表超过 1000 行，请拆分上传')
+                    if len(rows)>(10000 if full else 1000):raise ValueError('单工作表行数超限，请拆分上传')
                 if root.find('s:mergeCells',NS) is not None:warnings.append('含合并单元格，请下载原件核对对应关系')
                 sheets.append((sheet.attrib.get('name','工作表'),rows))
         warnings.append('文字表格预览不保留格式、图表和日期数字格式，请核对原件')
     sections=[];total=0;cells=0
     for name,rows in sheets:
-        if len(rows)>1000:raise ValueError('单工作表超过 1000 行，请拆分上传')
+        if len(rows)>(10000 if full else 1000):raise ValueError('单工作表行数超限，请拆分上传')
         for i,row in enumerate(rows,1):
             if len(row)>50:raise ValueError('表格超过 50 列，请只保留相关列')
             cells+=len(row)
-            if cells>5000:raise ValueError('表格超过 5000 个单元格，请拆分上传')
+            if cells>(100000 if full else 5000):raise ValueError('表格单元格数量超限，请拆分上传')
             text='\t'.join(str(x).replace('\t',' ').replace('\n',' ').replace('\r',' ') for x in row)
             total+=len(text)
-            if total>10000:raise ValueError('表格文字超过 10000 字，请拆分上传')
+            if total>(1000000 if full else 10000):raise ValueError('表格文字超过读取上限，请拆分上传')
             if text.strip():sections.append({'locator':f'{name[:40]} · 第 {i} 行','text':text,'table':True})
     if not sections:raise ValueError('表格没有可读取的文字')
     return {'sections':sections,'status':'review' if warnings else 'ok','warning':'；'.join(dict.fromkeys(warnings))}

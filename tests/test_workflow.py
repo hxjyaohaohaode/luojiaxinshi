@@ -29,7 +29,9 @@ PASSWORD='Test-Only-Password-2026'
 
 @pytest.fixture
 def env(tmp_path):
-    cfg=Settings(tmp_path/'data',origin=ORIGIN)
+    # These fixtures test workflows with recorded answers, never a real provider.
+    # Evidence-pipeline tests explicitly enable grounding and mock its boundaries.
+    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False)
     app=create_app(cfg)
     return app,cfg
 
@@ -337,7 +339,8 @@ def test_pdf_encrypted_and_scanned_rejected():
     assert '加密' in file_source('locked.pdf',data.getvalue())['warning']
 
 
-def test_backup_integrity_and_restore(env,tmp_path):
+@pytest.mark.parametrize('output_encoding',['utf-8','cp1252'])
+def test_backup_integrity_and_restore(env,tmp_path,output_encoding):
     c=account(env);n=manual(c,notice(c));confirm(c,n)
     dest=tmp_path/'backup.sqlite3';env[0].state.db.backup(dest)
     with sqlite3.connect(dest) as conn:
@@ -346,8 +349,9 @@ def test_backup_integrity_and_restore(env,tmp_path):
         assert conn.execute('SELECT COUNT(*) FROM sessions').fetchone()[0]==0
     target=tmp_path/'restored'
     result=subprocess.run([sys.executable,'manage.py','restore','--file',str(dest)],cwd=ROOT,capture_output=True,
-                          env={**os.environ,'DATA_DIR':str(target),'APP_ORIGIN':ORIGIN,'APP_ENV':'local'})
+                          env={**os.environ,'DATA_DIR':str(target),'APP_ORIGIN':ORIGIN,'APP_ENV':'local','PYTHONUTF8':'0','PYTHONIOENCODING':output_encoding})
     assert result.returncode==0,result.stderr
+    assert '恢复完成' in result.stdout.decode('utf-8')
     restored=create_app(Settings(target,origin=ORIGIN))
     client=TestClient(restored,base_url=ORIGIN,headers={'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     assert client.post('/api/auth/login',json={'username':'alice','password':PASSWORD}).status_code==200

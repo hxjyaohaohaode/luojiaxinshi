@@ -13,16 +13,31 @@ export function download(data,format='json'){
   }else{body=JSON.stringify(clean,null,2);type='application/json';}
   const url=URL.createObjectURL(new Blob([body],{type})),link=el('a');link.href=url;link.download='campus-answer.'+format;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function linkedText(text,parent){
+  const pattern=/https?:\/\/[^\s<>"'`\[\]，。；！？、（）]+/g;let cursor=0;
+  for(const match of text.matchAll(pattern)){
+    let value=match[0].replace(/[.,;:!?]+$/,'');
+    // Keep balanced parentheses in URLs, but leave sentence punctuation outside.
+    while(value.endsWith(')')&&(value.match(/\)/g)||[]).length>(value.match(/\(/g)||[]).length)value=value.slice(0,-1);
+    parent.append(document.createTextNode(text.slice(cursor,match.index)));
+    const url=safeUrl(value,{hosts:null});
+    if(url){const link=el('a','',value);link.href=url;link.rel='noopener noreferrer';link.target='_blank';parent.append(link);}
+    else parent.append(document.createTextNode(value));
+    parent.append(document.createTextNode(match[0].slice(value.length)));cursor=match.index+match[0].length;
+  }
+  parent.append(document.createTextNode(text.slice(cursor)));
+}
 export function inline(text,parent){
+  text=string(text);
   const pattern=/(`[^`\n]+`|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^\s)]+\))/g;let cursor=0;
   for(const match of text.matchAll(pattern)){
-    parent.append(document.createTextNode(text.slice(cursor,match.index)));const raw=match[0];let node;
+    linkedText(text.slice(cursor,match.index),parent);const raw=match[0];let node;
     if(raw.startsWith('`'))node=el('code','gu-inline-code',raw.slice(1,-1));
-    else if(raw.startsWith('**'))node=el('strong','',raw.slice(2,-2));
+    else if(raw.startsWith('**')){node=el('strong');linkedText(raw.slice(2,-2),node);}
     else{const cut=raw.indexOf(']('),url=safeUrl(raw.slice(cut+2,-1),{hosts:null,mailto:true});node=el(url?'a':'span','',raw.slice(1,cut));if(url){node.href=url;node.rel='noopener noreferrer';node.target='_blank';}}
     parent.append(node);cursor=match.index+raw.length;
   }
-  parent.append(document.createTextNode(text.slice(cursor)));
+  linkedText(text.slice(cursor),parent);
 }
 export function dataTable(props,{view={},changed=()=>{}}={}){
   const box=el('div','gu-table-wrap'),table=el('table','gu-table'),caption=el('caption','',props.label||'数据'),head=el('thead'),body=el('tbody'),row=el('tr');
@@ -31,7 +46,7 @@ export function dataTable(props,{view={},changed=()=>{}}={}){
   function paint(){
     const pageSize=props.pageSize||10;view.page=Math.max(0,Math.min(Number(view.page)||0,Math.max(0,Math.ceil(source.length/pageSize)-1)));
     const rows=source.map((value,index)=>({value,index}));if(view.sort)rows.sort((a,b)=>{const av=a.value[view.sort],bv=b.value[view.sort];return ((typeof av==='number'&&typeof bv==='number'?av-bv:string(av).localeCompare(string(bv),'zh-CN',{numeric:true}))*(view.desc?-1:1))||a.index-b.index;});
-    body.replaceChildren();for(const {value} of rows.slice(view.page*pageSize,(view.page+1)*pageSize)){const tr=el('tr');for(const col of columns){const td=el('td','',value[col.key]);td.dataset.label=col.label;tr.append(td);}body.append(tr);}
+    body.replaceChildren();for(const {value} of rows.slice(view.page*pageSize,(view.page+1)*pageSize)){const tr=el('tr');for(const col of columns){const td=el('td');inline(value[col.key],td);td.dataset.label=col.label;tr.append(td);}body.append(tr);}
     if(!rows.length){const td=el('td','gu-muted','暂无数据');td.colSpan=Math.max(1,columns.length);body.append(el('tr'));body.firstChild.append(td);}
     sortButtons.forEach(({th,b,col})=>{th.setAttribute('aria-sort',view.sort===col.key?(view.desc?'descending':'ascending'):'none');b.textContent=col.label+(col.unit?' · '+col.unit:'')+(view.sort===col.key?(view.desc?' ↓':' ↑'):' ↕');});
     status.textContent=`${source.length} 条 · ${view.page+1}/${Math.max(1,Math.ceil(source.length/pageSize))} 页`;previous.disabled=view.page===0;next.disabled=(view.page+1)*pageSize>=source.length;pager.hidden=source.length<=pageSize;
@@ -61,5 +76,5 @@ export function markdown(text,{enhance=true,view={},changed=()=>{}}={}){
     }
     const heading=line.match(/^(#{1,4}) (.*)$/),node=el(heading?'h'+Math.min(4,heading[1].length+1):line.startsWith('> ')?'blockquote':'p');inline(heading?heading[2]:line.replace(/^> /,''),node);host.append(node);i++;
   }
-  if(i<lines.length)host.append(el('p','gu-muted','内容较长，请使用“复制回答”查看完整文字。'));return host;
+  if(i<lines.length){const more=button('展开剩余内容',()=>{const rest=markdown(lines.slice(i).join('\n'),{enhance,view:view.rest??(view.rest={}),changed});more.replaceWith(rest);changed();});host.append(more);}return host;
 }

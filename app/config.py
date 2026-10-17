@@ -18,7 +18,7 @@ class Settings:
     ai_base_url: str = "https://api.xiaomimimo.com/v1"
     ai_model: str = "mimo-v2.6-pro"
     ai_api_key: str = ""
-    ai_timeout: int = 90
+    ai_timeout: int = 180
     ai_daily_limit: int = 30
     qq_bot_app_id: str = ''
     qq_bot_secret: str = ''
@@ -37,6 +37,11 @@ class Settings:
     voice_design_model: str = 'mimo-v2.5-tts-voicedesign'
     voice_clone_model: str = 'mimo-v2.5-tts-voiceclone'
     tts_voice: str = 'mimo_default'
+    ai_grounding: bool = True
+    ai_summary_model: str = 'mimo-v2.6-flash'
+    ai_composition_model: str = 'mimo-v2.6-pro'
+    ai_output_tokens: int = 32768
+    ai_workflow_timeout: int = 1800
 
     @classmethod
     def from_env(cls):
@@ -47,7 +52,7 @@ class Settings:
                      os.getenv("APP_ENV", "local") == "production",
                      os.getenv("MIMO_BASE_URL", cls.ai_base_url).strip().rstrip("/"),
                      os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
-                     int(os.getenv("AI_TIMEOUT_SECONDS", "90")), int(os.getenv("AI_DAILY_LIMIT", "30")))
+                     int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
         parsed = urlparse(result.origin)
         for attr, key in [('asr_model','MIMO_ASR_MODEL'),('tts_model','MIMO_TTS_MODEL'),
                           ('voice_design_model','MIMO_VOICE_DESIGN_MODEL'),('voice_clone_model','MIMO_VOICE_CLONE_MODEL'),
@@ -69,7 +74,18 @@ class Settings:
         result.genui_tier=os.getenv('GENUI_TIER','auto').lower()
         result.ai_supports_json=os.getenv('AI_SUPPORTS_JSON','true').lower() in {'true','1','yes'}
         result.ai_supports_tools=os.getenv('AI_SUPPORTS_TOOLS','false').lower() in {'true','1','yes'}
+        result.ai_grounding=os.getenv('AI_GROUNDING','true').lower() in {'true','1','yes'}
+        result.ai_summary_model=os.getenv('MIMO_SUMMARY_MODEL',cls.ai_summary_model).strip()
+        if result.ai_summary_model!='mimo-v2.6-flash':
+            raise ValueError('MIMO_SUMMARY_MODEL 须为 mimo-v2.6-flash')
+        result.ai_composition_model=os.getenv('MIMO_COMPOSITION_MODEL',cls.ai_composition_model).strip()
+        if result.ai_composition_model not in {'mimo-v2.6-flash','mimo-v2.6-pro'}:
+            raise ValueError('MIMO_COMPOSITION_MODEL 须为 mimo-v2.6-flash 或 mimo-v2.6-pro')
         result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS','32768'))
+        result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS','32768'))
+        result.ai_workflow_timeout=int(os.getenv('AI_WORKFLOW_TIMEOUT_SECONDS','1800'))
+        if not 4096<=result.ai_output_tokens<=65536 or not 60<=result.ai_workflow_timeout<=1800:
+            raise ValueError('AI_OUTPUT_TOKENS 须为 4096—65536，AI_WORKFLOW_TIMEOUT_SECONDS 须为 60—1800')
         if result.genui_tier not in {'auto','1','2','3'} or not 2048<=result.ai_context_tokens<=1000000:
             raise ValueError('GENUI_TIER 或 AI_CONTEXT_TOKENS 配置无效')
         from .genui import LIMITS

@@ -66,6 +66,8 @@ def restore_database(source:Path,destination:Path):
                 if 'binding_codes' in tables:
                     target.execute('DELETE FROM binding_codes')
                     target.execute('DELETE FROM external_bindings')
+                for table in ('reply_shares','conversation_ai_consents'):
+                    if table in tables:target.execute('DELETE FROM '+table)
                 target.execute("UPDATE notices SET status='failed',processing_token=NULL,error='服务恢复后请重新生成草稿' WHERE status='processing'")
                 if 'conversations' in tables:
                     target.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL')

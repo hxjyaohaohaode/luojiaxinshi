@@ -25,7 +25,17 @@
     "sum",
     "pow",
     "clamp",
-    "format"
+    "format",
+    "count",
+    "contains",
+    "where",
+    "search",
+    "orderBy",
+    "take",
+    "pluck",
+    "sumBy",
+    "meanBy",
+    "series"
   ],
   "forbiddenKeys": [
     "__proto__",
@@ -68,6 +78,9 @@
         "label": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -110,7 +123,7 @@
         "columns": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 4
+          "maximum": 6
         },
         "label": {
           "type": "string",
@@ -121,6 +134,33 @@
           "enum": [
             "auto",
             "controls"
+          ]
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "ratios": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          }
+        },
+        "minWidth": {
+          "type": "integer",
+          "minimum": 120,
+          "maximum": 480
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end",
+            "stretch"
           ]
         }
       },
@@ -164,7 +204,7 @@
         "columns": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 4
+          "maximum": 6
         },
         "label": {
           "type": "string",
@@ -175,6 +215,33 @@
           "enum": [
             "auto",
             "controls"
+          ]
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "ratios": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          }
+        },
+        "minWidth": {
+          "type": "integer",
+          "minimum": 120,
+          "maximum": 480
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end",
+            "stretch"
           ]
         }
       },
@@ -222,6 +289,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -268,6 +338,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -314,6 +387,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -362,6 +438,9 @@
             "warning",
             "danger"
           ]
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -391,6 +470,9 @@
         "error": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -427,6 +509,9 @@
         "label": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -469,6 +554,9 @@
           "type": "integer",
           "minimum": 2,
           "maximum": 4
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -517,6 +605,9 @@
             "warning",
             "danger"
           ]
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -564,6 +655,9 @@
             "warning",
             "danger"
           ]
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -605,6 +699,9 @@
         "language": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -642,6 +739,9 @@
         "label": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -697,6 +797,9 @@
               "value"
             ]
           }
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -746,6 +849,9 @@
         "description": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -826,6 +932,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -904,6 +1013,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -982,6 +1094,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1060,6 +1175,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1135,6 +1253,9 @@
           "type": "integer",
           "minimum": 5,
           "maximum": 50
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1178,6 +1299,9 @@
         "max": {
           "type": "number",
           "minimum": 1
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1231,6 +1355,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1288,6 +1415,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1357,6 +1487,9 @@
               "label"
             ]
           }
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1397,6 +1530,9 @@
         "bind": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1448,6 +1584,9 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 2000
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1495,6 +1634,9 @@
           ]
         },
         "disabled": {
+          "type": "boolean"
+        },
+        "visible": {
           "type": "boolean"
         }
       },
@@ -1562,6 +1704,9 @@
               "label"
             ]
           }
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1641,6 +1786,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1721,6 +1869,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1801,6 +1952,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1881,6 +2035,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -1943,13 +2100,28 @@
             "type": "string",
             "maxLength": 8192
           }
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "matrix",
+            "columns"
+          ]
         }
       },
       "required": [],
       "defaults": {
         "status": "ready",
         "items": [],
-        "dimensions": []
+        "dimensions": [],
+        "format": "matrix"
       },
       "children": false,
       "tier": "P1",
@@ -2025,6 +2197,9 @@
               "to"
             ]
           }
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -2132,6 +2307,9 @@
         "submitLabel": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [],
@@ -2175,6 +2353,9 @@
         "caption": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2235,6 +2416,9 @@
             "blossom",
             "rest"
           ]
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2279,6 +2463,9 @@
         "caption": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2348,6 +2535,9 @@
         "unit": {
           "type": "string",
           "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2367,6 +2557,310 @@
       "children": false,
       "tier": "P1",
       "a11y": "受限表达式确定性采样；坐标和单位；等价表格；参数交互不发网络请求"
+    },
+    "Section": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "gap": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "surface": {
+          "type": "string",
+          "enum": [
+            "plain",
+            "soft",
+            "outline"
+          ]
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "eyebrow": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 4
+        }
+      },
+      "required": [],
+      "defaults": {
+        "status": "ready",
+        "gap": "md",
+        "surface": "plain"
+      },
+      "children": true,
+      "tier": "P0",
+      "a11y": "使用语义结构和可见焦点"
+    },
+    "Collection": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "gap": {
+          "type": "string",
+          "enum": [
+            "sm",
+            "md",
+            "lg"
+          ]
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "controls"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "type": "object"
+          }
+        },
+        "keyField": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "emptyText": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "ratios": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 12
+          }
+        },
+        "minWidth": {
+          "type": "integer",
+          "minimum": 120,
+          "maximum": 480
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end",
+            "stretch"
+          ]
+        },
+        "bind": {
+          "type": "string",
+          "maxLength": 200
+        }
+      },
+      "required": [],
+      "defaults": {
+        "status": "ready",
+        "gap": "md",
+        "columns": 2,
+        "items": [],
+        "emptyText": "没有符合条件的内容。"
+      },
+      "children": true,
+      "tier": "P0",
+      "a11y": "集合子节点逐项组合；item 是当前项、itemIndex 是位置；控件可键盘操作"
+    },
+    "Prose": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "variant": {
+          "type": "string",
+          "enum": [
+            "body",
+            "lead",
+            "caption",
+            "eyebrow",
+            "quote"
+          ]
+        },
+        "attribution": {
+          "type": "string",
+          "maxLength": 8192
+        }
+      },
+      "required": [],
+      "defaults": {
+        "status": "ready",
+        "text": "",
+        "variant": "body"
+      },
+      "children": false,
+      "tier": "P0",
+      "a11y": "语义段落与引文，链接和引用可访问"
+    },
+    "Choice": {
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "loading",
+            "empty",
+            "error"
+          ]
+        },
+        "fallback": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "error": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "bind": {
+          "type": "string",
+          "maxLength": 8192
+        },
+        "options": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 8192
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 8192
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "label"
+            ]
+          }
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "inline",
+            "list"
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "bind"
+      ],
+      "defaults": {
+        "status": "ready",
+        "options": [],
+        "layout": "inline"
+      },
+      "children": false,
+      "tier": "P0",
+      "a11y": "单选组，方向键切换，保留44像素点击范围；选择只更新本地状态"
     }
   },
   "actions": {
