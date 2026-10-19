@@ -114,6 +114,19 @@ CREATE TABLE IF NOT EXISTS arrangements(
  request_id TEXT NOT NULL, data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1,
  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE(user_id,request_id));
 CREATE INDEX IF NOT EXISTS arrangements_owner ON arrangements(user_id);
+-- Retain only creation identity after deletion, never deleted arrangement text.
+CREATE TABLE IF NOT EXISTS arrangement_receipts(
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ request_id TEXT NOT NULL, arrangement_id TEXT NOT NULL, created_at INTEGER NOT NULL,
+ PRIMARY KEY(user_id,request_id));
+INSERT OR IGNORE INTO arrangement_receipts(user_id,request_id,arrangement_id,created_at)
+ SELECT user_id,request_id,id,created_at FROM arrangements;
+CREATE TRIGGER IF NOT EXISTS arrangements_remember_creation AFTER INSERT ON arrangements
+ BEGIN
+ INSERT INTO arrangement_receipts(user_id,request_id,arrangement_id,created_at)
+ VALUES(NEW.user_id,NEW.request_id,NEW.id,NEW.created_at);
+ END;
+INSERT OR IGNORE INTO meta VALUES('arrangement_receipt_schema_version','1');
 CREATE TABLE IF NOT EXISTS conversation_ai_consents(
  conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
  granted_at INTEGER NOT NULL);
@@ -154,6 +167,25 @@ CREATE TABLE IF NOT EXISTS genui_interactions(
 INSERT OR IGNORE INTO meta VALUES('genui_schema_version','1');
 """
 
+# Additive domain extension: old databases and backups acquire it on open.
+WORKFLOW_SCHEMA = """
+CREATE TABLE IF NOT EXISTS task_workflows(
+ task_id TEXT PRIMARY KEY REFERENCES tasks(id) ON DELETE CASCADE,
+ data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, updated_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS notice_changes(
+ id TEXT PRIMARY KEY, notice_id TEXT NOT NULL REFERENCES notices(id) ON DELETE CASCADE,
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ data TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('pending','applied','dismissed')),
+ version INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS notice_changes_owner ON notice_changes(user_id,state,created_at);
+CREATE TABLE IF NOT EXISTS calendar_checks(
+ task_id TEXT PRIMARY KEY REFERENCES tasks(id) ON DELETE CASCADE,
+ task_version INTEGER NOT NULL, device TEXT NOT NULL, result TEXT NOT NULL,
+ note TEXT NOT NULL, checked_at INTEGER NOT NULL);
+INSERT OR IGNORE INTO meta VALUES('workflow_schema_version','2');
+UPDATE meta SET value='2' WHERE key='workflow_schema_version' AND value='1';
+"""
+
 
 class Database:
     def __init__(self, path: Path):
@@ -167,10 +199,36 @@ class Database:
                 version=conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
                 if version is None or version[0] not in {'1','2','3','4'}:
                     raise RuntimeError('数据库版本不兼容，禁止直接降级')
+                workflow_version = conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
+                if workflow_version and workflow_version[0] not in {'1','2'}:
+                    raise RuntimeError('办理工作流版本不兼容，禁止直接降级')
+                memory_version=conn.execute("SELECT value FROM meta WHERE key='memory_schema_version'").fetchone()
+                if memory_version and memory_version[0] not in {'1','2'}:
+                    raise RuntimeError('个人记忆版本不兼容，禁止直接降级')
+                if memory_version and memory_version[0]=='2' and 'memory_policies' not in tables:
+                    raise RuntimeError('个人记忆策略表缺失，未修改数据库')
+                execution_version=conn.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
+                if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):
+                    raise RuntimeError('执行记录版本不兼容或数据表缺失，禁止直接降级')
+                review_version=conn.execute("SELECT value FROM meta WHERE key='action_review_schema_version'").fetchone()
+                if review_version and (review_version[0]!='1' or 'task_reviews' not in tables):
+                    raise RuntimeError('办理复核版本不兼容或数据表缺失，禁止直接降级')
+                receipt_version=conn.execute("SELECT value FROM meta WHERE key='arrangement_receipt_schema_version'").fetchone()
+                if receipt_version and (receipt_version[0]!='1' or 'arrangement_receipts' not in tables):
+                    raise RuntimeError('安排提交记录版本不兼容或数据表缺失，禁止直接降级')
             conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(SCHEMA)
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
             conn.executescript('BEGIN IMMEDIATE;'+GENUI_SCHEMA+'COMMIT;')
+            conn.executescript('BEGIN IMMEDIATE;'+WORKFLOW_SCHEMA+'COMMIT;')
+            from .memory import SCHEMA as MEMORY_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+MEMORY_SCHEMA+'COMMIT;')
+            from .memory_policy import SCHEMA as MEMORY_POLICY_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+MEMORY_POLICY_SCHEMA+'COMMIT;')
+            from .execution import SCHEMA as EXECUTION_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+EXECUTION_SCHEMA+'COMMIT;')
+            from .action_review import SCHEMA as REVIEW_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+REVIEW_SCHEMA+'COMMIT;')
 
     @contextmanager
     def connect(self, write=False):

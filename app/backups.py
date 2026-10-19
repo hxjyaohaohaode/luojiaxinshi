@@ -51,6 +51,22 @@ def restore_database(source:Path,destination:Path):
                 raise ValueError('备份缺少渠道接入记录表')
             if version[0]=='4' and 'arrangements' not in tables:
                 raise ValueError('备份缺少个人安排表')
+            workflow_version = original.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
+            if workflow_version and (workflow_version[0] not in {'1','2'} or not {'task_workflows','notice_changes','calendar_checks'}.issubset(tables)):
+                raise ValueError('备份缺少办理工作流数据或版本不兼容')
+            memory_version=original.execute("SELECT value FROM meta WHERE key='memory_schema_version'").fetchone()
+            if memory_version and (memory_version[0] not in {'1','2'} or not {'memory_projects','personal_memories','conversation_context'}.issubset(tables)
+                or memory_version[0]=='2' and 'memory_policies' not in tables):
+                raise ValueError('备份缺少个人记忆数据或版本不兼容')
+            execution_version=original.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
+            if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):
+                raise ValueError('备份缺少执行记录或版本不兼容')
+            review_version=original.execute("SELECT value FROM meta WHERE key='action_review_schema_version'").fetchone()
+            if review_version and (review_version[0]!='1' or 'task_reviews' not in tables):
+                raise ValueError('备份缺少办理复核记录或版本不兼容')
+            receipt_version=original.execute("SELECT value FROM meta WHERE key='arrangement_receipt_schema_version'").fetchone()
+            if receipt_version and (receipt_version[0]!='1' or 'arrangement_receipts' not in tables):
+                raise ValueError('备份缺少安排提交记录或版本不兼容')
             if original.execute('PRAGMA foreign_key_check').fetchone():
                 raise ValueError('备份的数据关联不完整，未恢复任何数据')
             destination.parent.mkdir(parents=True,exist_ok=True)
@@ -72,6 +88,9 @@ def restore_database(source:Path,destination:Path):
                 if 'conversations' in tables:
                     target.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL')
                     target.execute("UPDATE conversation_messages SET status='failed',error='服务恢复后请重试本条消息' WHERE status='processing'")
+                if 'executions' in tables:
+                    target.execute("UPDATE executions SET status='interrupted',stop_reason='backup_restored',finished_at=?,updated_at=? WHERE status='running'",(int(time.time()),int(time.time())))
+                    target.execute('UPDATE execution_owners SET expires_at=0')
                 target.commit()
                 if target.execute('PRAGMA integrity_check').fetchone()[0]!='ok' or target.execute('PRAGMA foreign_key_check').fetchone():
                     raise ValueError('恢复结果未通过完整性校验，未启用该文件')

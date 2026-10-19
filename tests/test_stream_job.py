@@ -11,6 +11,20 @@ from test_workspace import conversation
 from test_genui_transport import payload
 
 
+def test_cancel_before_worker_starts_finalizes_and_unblocks_subscriber():
+    async def run():
+        entered=[];finalized=[];workers=set()
+        async def source():
+            entered.append(True)
+            yield 'never'
+        job=StreamJob(source(),workers,on_finish=lambda task:finalized.append(task.cancelled()))
+        job.task.cancel()
+        await asyncio.gather(job.task,return_exceptions=True)
+        assert [packet async for packet in job.subscribe()]==[]
+        assert not entered and finalized==[True] and not workers
+    asyncio.run(run())
+
+
 def test_disconnect_continues_work_without_unbounded_queue():
     async def run():
         produced=[];closed=[];workers=set()

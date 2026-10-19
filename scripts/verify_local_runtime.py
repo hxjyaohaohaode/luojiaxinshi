@@ -68,7 +68,17 @@ def main():
     def stop():
         nonlocal worker,log
         if worker is not None:
-            worker.terminate()
+            if worker.poll() is None:
+                if os.name=='nt':
+                    # A Windows venv launcher can own a second Python process.
+                    # Stop only this still-running Popen process and its children.
+                    stopped=subprocess.run(['taskkill','/PID',str(worker.pid),'/T','/F'],
+                                           capture_output=True,timeout=10,
+                                           creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                    if stopped.returncode and worker.poll() is None:
+                        raise RuntimeError('Could not stop the owned isolated process tree')
+                else:
+                    worker.terminate()
             try:
                 worker.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -82,8 +92,11 @@ def main():
     def start(data_dir):
         nonlocal worker,log
         log=open(temporary/'server.log','ab')
-        environment={**os.environ,'PYTHONUTF8':'1','DATA_DIR':str(data_dir),'APP_ENV':'local',
-                     'APP_HOST':'127.0.0.1','APP_PORT':str(port),'APP_ORIGIN':origin,'MIMO_API_KEY':''}
+        # Test mode preserves the deliberately empty injected credential; local
+        # desktop mode instead prefers the user's maintained .env credential.
+        environment={**os.environ,'PYTHONUTF8':'1','DATA_DIR':str(data_dir),'APP_ENV':'test',
+                     'APP_HOST':'127.0.0.1','APP_PORT':str(port),'APP_ORIGIN':origin,'MIMO_API_KEY':'',
+                     'QQ_BOT_SECRET':'','WECHAT_PUBLISHER_SECRET':'','REGISTRATION_MODE':'invite'}
         worker=subprocess.Popen([sys.executable,str(ROOT/'manage.py'),'serve'],cwd=ROOT,
                                 env=environment,stdin=subprocess.DEVNULL,stdout=log,stderr=log,
                                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))

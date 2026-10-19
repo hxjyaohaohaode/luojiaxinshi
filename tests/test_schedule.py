@@ -1,5 +1,6 @@
 """Engineering fixtures for persistent schedules, ownership and civil time exports."""
 import uuid
+import pytest
 
 from icalendar import Calendar
 from test_workflow import env, account
@@ -90,3 +91,85 @@ def test_semester_configuration_preserves_explicit_dates_without_moving_courses(
     assert c.get('/api/session').json()['user']['profile']['semester_start']=='2026-09-07'
     assert c.get('/api/arrangements').json()[0]['data']==a['data']
     assert c.put('/api/profile',json={'semester_start':'2026-02-30'}).status_code==422
+
+
+def test_creation_receipt_survives_edits_and_deletion_without_recreating(env):
+    c=account(env);other=account(env,'bob');request=payload()
+    route='/api/arrangements/requests/'+request['request_id']
+    assert c.get(route).json()=={'state':'missing','arrangement':None}
+    saved=c.post('/api/arrangements',json=request).json()
+    assert c.get(route).json()=={'state':'saved','arrangement':saved}
+    assert other.get(route).json()=={'state':'missing','arrangement':None}
+    changed=c.put('/api/arrangements/'+saved['id'],json={'version':1,'data':{**saved['data'],'title':'后来已经修改'}}).json()
+    assert c.get(route).json()['arrangement']==changed
+    assert c.request('DELETE','/api/arrangements/'+saved['id'],json={'version':2}).status_code==200
+    assert c.get(route).json()=={'state':'deleted','arrangement':None}
+    replay=c.post('/api/arrangements',json=request)
+    assert replay.status_code==409
+    assert '删除' in replay.json()['detail']
+    assert c.get('/api/arrangements').json()==[]
+    # The key is scoped to one account; a different owner can use the same key.
+    assert other.post('/api/arrangements',json=request).status_code==200
+    assert c.get(route).json()['state']=='deleted'
+
+
+def test_deleted_arrangement_request_cannot_be_replayed(env):
+    c=account(env);request=payload();saved=c.post('/api/arrangements',json=request).json()
+    assert c.request('DELETE','/api/arrangements/'+saved['id'],json={'version':1}).status_code==200
+    assert c.post('/api/arrangements',json=request).status_code==409
+    assert c.get('/api/arrangements').json()==[]
+
+
+def test_receipts_migrate_existing_arrangements_and_cover_imported_rows(env):
+    from app.db import Database, dumps, ident
+    c=account(env);request=payload();saved=c.post('/api/arrangements',json=request).json()
+    db=env[0].state.db
+    with db.connect(write=True) as conn:
+        conn.execute('DROP TRIGGER arrangements_remember_creation')
+        conn.execute('DROP TABLE arrangement_receipts')
+        conn.execute("DELETE FROM meta WHERE key='arrangement_receipt_schema_version'")
+    Database(db.path);Database(db.path)
+    assert c.get('/api/arrangements/requests/'+request['request_id']).json()['arrangement']['id']==saved['id']
+    with db.connect(write=True) as conn:
+        row=conn.execute('SELECT * FROM arrangements WHERE id=?',(saved['id'],)).fetchone()
+        imported=ident();key='import_'+uuid.uuid4().hex
+        conn.execute('INSERT INTO arrangements(id,user_id,request_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)',(imported,row['user_id'],key,dumps(saved['data']),1,1))
+        assert conn.execute('SELECT count(*) FROM arrangement_receipts').fetchone()[0]==2
+    assert c.get('/api/arrangements/requests/'+key).json()['arrangement']['id']==imported
+
+
+def test_receipt_tombstones_survive_backup_and_contain_no_deleted_text(env,tmp_path):
+    from app.backups import restore_database
+    from app.db import Database
+    c=account(env);request=payload(notes='删除后的私人备注');saved=c.post('/api/arrangements',json=request).json()
+    c.request('DELETE','/api/arrangements/'+saved['id'],json={'version':1})
+    backup=tmp_path/'backup.sqlite3';env[0].state.db.backup(backup)
+    restored=tmp_path/'restored.sqlite3';restore_database(backup,restored)
+    with Database(restored).connect() as conn:
+        receipt=dict(conn.execute('SELECT * FROM arrangement_receipts').fetchone())
+        assert set(receipt)=={'user_id','request_id','arrangement_id','created_at'}
+        assert receipt['request_id']==request['request_id']
+        assert conn.execute('SELECT count(*) FROM arrangements').fetchone()[0]==0
+        conn.execute('DELETE FROM users WHERE id=?',(receipt['user_id'],))
+        assert conn.execute('SELECT count(*) FROM arrangement_receipts').fetchone()[0]==0
+
+
+@pytest.mark.parametrize('damage',['future','missing'])
+def test_incompatible_receipts_block_open_and_restore(tmp_path,damage):
+    from app.backups import restore_database
+    from app.db import Database
+    import sqlite3
+    path=tmp_path/'source.sqlite3';Database(path)
+    with sqlite3.connect(path) as conn:
+        if damage=='future':conn.execute("UPDATE meta SET value='999' WHERE key='arrangement_receipt_schema_version'")
+        else:conn.execute('DROP TABLE arrangement_receipts')
+    with pytest.raises(RuntimeError,match='安排提交记录'):Database(path)
+    destination=tmp_path/'restored.sqlite3'
+    with pytest.raises(ValueError,match='安排提交记录'):restore_database(path,destination)
+    assert not destination.exists()
+
+
+def test_receipt_request_id_validation(env):
+    c=account(env)
+    for key in ['short','a'*81,'a'*16+'!']:
+        assert c.get('/api/arrangements/requests/'+key).status_code==422

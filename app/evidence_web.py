@@ -66,6 +66,18 @@ def public_query(value, profile=None):
 
 
 async def completion(settings, payload, max_bytes=1200000):
+    from .harness import start_call,finish_call
+    call=start_call(payload)
+    try:
+        result,usage=await _completion(settings,payload,max_bytes)
+    except BaseException as exc:
+        finish_call(call,getattr(exc,'usage',None),exc)
+        raise
+    finish_call(call,usage)
+    return result,usage
+
+
+async def _completion(settings, payload, max_bytes=1200000):
     """One bounded request. Never include credentials/provider bodies in errors."""
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(settings.ai_timeout, connect=10), follow_redirects=False, trust_env=False) as client:

@@ -69,3 +69,11 @@ body:has(>.gu-gallery){margin:0;font-family:Inter,-apple-system,BlinkMacSystemFo
 
 /* Long evidence labels need the full reading width inside a narrow answer. */
 @container(max-width:420px){.gu-kv{gap:14px}.gu-kv>div{grid-template-columns:minmax(0,1fr);gap:4px}.gu-kv dd{line-height:1.7}}
+
+/* Shared light/dark answer surfaces, also used by the standalone gallery. */
+.genui:not([data-theme=dark]),.gu-message,.gu-gallery{--gu-bg:#fff;--gu-surface:#fff;--gu-ink:#242424;--gu-muted:#616161;--gu-line:#dedede;--gu-radius:12px}
+[data-genui-theme=dark] .genui,[data-genui-theme=dark] .gu-message,[data-genui-theme=dark].gu-gallery,.genui[data-theme=dark]{--gu-bg:#202020;--gu-surface:#292929;--gu-ink:#eee;--gu-muted:#bbb;--gu-line:#505050}
+.gu-message a,.message-content a{color:#185b45;text-decoration:underline;text-decoration-color:#8da99f;text-underline-offset:3px;overflow-wrap:anywhere}.gu-message a:hover,.message-content a:hover{text-decoration-thickness:2px}
+.genui .gu-node,.gu-markdown{font-weight:400}.gu-heading,.gu-stat-value,.source-result-title{font-weight:600}
+.genui .gu-tab-list{border:1px solid #e5e5e5;background:#fff;width:fit-content;max-width:100%;flex-wrap:wrap}.genui .gu-tab-list .gu-tab{background:#fff;color:#555;border-color:transparent}.genui .gu-tab-list .gu-tab[aria-selected=true]{background:#f1f1f1;color:#222;border-color:#e3e3e3}
+[data-genui-theme=dark] .genui .gu-tab-list{background:var(--gu-bg);border-color:var(--gu-line)}[data-genui-theme=dark] .genui .gu-tab-list .gu-tab{background:var(--gu-bg);color:var(--gu-muted)}[data-genui-theme=dark] .genui .gu-tab-list .gu-tab[aria-selected=true]{background:var(--gu-surface);color:var(--gu-ink);border-color:var(--gu-line)}

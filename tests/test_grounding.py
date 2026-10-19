@@ -393,12 +393,13 @@ def test_current_message_scope_excludes_library_profile_old_messages_and_keeps_s
 
 
 def test_scoped_workflow_removes_personal_facts_from_generation_inputs(env,monkeypatch):
+    client=account(env);chat=conversation(client);owner=client.get('/api/session').json()['user']['id']
     mocks(monkeypatch);env[1].ai_api_key='synthetic-only';seen=[]
     monkeypatch.setattr(grounding,'save_report',lambda *args:None)
     async def stream(settings,sources,messages,profile,tier):
         seen.append((messages,profile));yield {'type':'complete','result':answer(),'usage':{}}
     monkeypatch.setattr(genui_ai,'stream_reply',stream)
     messages=[{'role':'user','content':'不要用的旧消息'}, {'role':'user','content':'只依据本条提供的材料说明，其他信息不引用。'}]
-    async def run():return [e async for e in grounding.events(env[1],None,'u','c','m',[],messages,{'school':'SECRET-PROFILE','response_style':'direct'},1)]
+    async def run():return [e async for e in grounding.events(env[1],env[0].state.db,owner,chat['id'],'m',[],messages,{'school':'SECRET-PROFILE','response_style':'direct'},1)]
     packets=asyncio.run(run());assert packets[-1]['type']=='complete'
     assert len(seen[0][0])==1 and 'school' not in seen[0][1] and seen[0][1]['response_style']=='direct'

@@ -181,6 +181,11 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
             async def replay():yield packet('done',{'conversation':existing,'replayed':True},1)
             return StreamingResponse(replay(),media_type='text/event-stream')
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
+        released=False
+        def release_slot():
+            nonlocal released
+            if not released:
+                released=True;heavy_lock.release()
         tier=feature['tier'] if feature['enabled'] else 3
         from .chat_media import resource_index
         trusted={'materials':[{'id':s['id'],'name':s['name'],'status':s['status']} for s in sources],'resources':resource_index(sources)}
@@ -189,7 +194,12 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 conn.execute('INSERT INTO genui_messages(message_id,trusted_data,tier,ai_label,updated_at) VALUES(?,?,?,?,?)',(mid,dumps(trusted),tier,settings.genui_ai_label,int(time.time())))
                 initial=detail(conn,cid,current['id'],settings)
         except BaseException:
-            heavy_lock.release()
+            try:
+                with db.connect(write=True) as conn:
+                    conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL,version=version+1 WHERE id=? AND processing_token=?',(cid,token))
+                    conn.execute("UPDATE conversation_messages SET status='failed',error='本次处理未能启动，问题已保存，请重试。' WHERE id=? AND status='processing'",(mid,))
+                    app.state.execution.finish(conn,mid,'failed','initialization_failed')
+            finally:release_slot()
             raise
 
         async def generate():
@@ -205,6 +215,8 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(stream_events):
                     async for event in stream_events:
                         if event['type']=='phase':
+                            from .execution import stage
+                            with db.connect(write=True) as conn:stage(conn,mid,event['phase'])
                             if event.get('data'):
                                 trusted.update(event['data'])
                                 with db.connect(write=True) as conn:conn.execute('UPDATE genui_messages SET trusted_data=? WHERE message_id=?',(dumps(trusted),mid))
@@ -241,6 +253,9 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                     with db.connect(write=True) as conn:
                         live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
                         if live and live['processing_token']==token:
+                            from .context_snapshot import publication_current,STALE_MESSAGE
+                            if status=='complete' and not publication_current(conn,mid,current['id'],cid):
+                                status='failed';error=STALE_MESSAGE;raw='';result=None
                             parts=message_parts(raw,tier,status=='complete',settings.genui_limits,trusted)
                             if status!='complete':
                                 for part in parts:
@@ -252,6 +267,10 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             from .conversation_tools import select_reply
                             select_reply(conn,mid)
                             conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
+                            report_row=conn.execute('SELECT report FROM reply_grounding WHERE message_id=?',(mid,)).fetchone()
+                            report=json.loads(report_row['report']) if report_row else {}
+                            reason=(report.get('harness') or {}).get('stop_reason') or ('complete' if status=='complete' else 'request_failed')
+                            app.state.execution.finish(conn,mid,'succeeded' if status=='complete' else status,reason)
                         elif live:
                             # An explicit cancel wins. Recover the last delivered checkpoint only.
                             stored=conn.execute('SELECT raw FROM genui_messages WHERE message_id=?',(mid,)).fetchone()
@@ -259,15 +278,24 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             if stored and message and message['status']=='cancelled':
                                 parts=message_parts(stored['raw'],tier,False,settings.genui_limits,trusted)
                                 conn.execute('UPDATE conversation_messages SET content=? WHERE id=?',(readable(parts),mid))
+                            app.state.execution.finish(conn,mid,'cancelled' if message and message['status']=='cancelled' else 'discarded','superseded')
                 finally:
                     if active.get(cid,(None,None))[1] is task:active.pop(cid,None)
-                    heavy_lock.release()
+                    release_slot()
             with db.connect() as conn:
                 if conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(cid,current['id'])).fetchone():
                     final=detail(conn,cid,current['id'],settings)
                     seq+=1;yield packet('done',{'conversation':final},seq)
         from .stream_job import StreamJob
-        job=StreamJob(generate(),workers)
+        def finalize_task(task):
+            try:
+                with db.connect(write=True) as conn:
+                    abandoned=conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL,version=version+1 WHERE id=? AND processing_token=?',(cid,token)).rowcount
+                    if abandoned:
+                        conn.execute("UPDATE conversation_messages SET status='failed',error='本次处理已中断，问题与材料已保存，请重试。' WHERE id=? AND status='processing'",(mid,))
+                        app.state.execution.finish(conn,mid,'cancelled' if task.cancelled() else 'failed','interrupted_request')
+            finally:release_slot()
+        job=StreamJob(generate(),workers,on_finish=finalize_task)
         return StreamingResponse(job.subscribe(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no','Cache-Control':'no-cache'})
 
     app.post('/api/conversations/{cid}/messages/stream')(stream)

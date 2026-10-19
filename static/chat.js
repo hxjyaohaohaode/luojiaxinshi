@@ -10,7 +10,7 @@ const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 const imageKinds=new Set(['png','jpg','jpeg','webp']);
 const videoKinds=new Set(['mp4','webm']);
 
-export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route}){
+export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI}){
   let current=null,historyItems=[],pollTimer,files=[],sending=false,materialRenderKey='',feedbackTimer;
   let presenter=null,streaming=null,paintFrame=0,hostArrangements=[],hostTasks=[];
   let submission=0,accepting=false;
@@ -57,7 +57,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       <form class="chat-composer" id="chat-composer" data-workspace-form="chat" data-cache-key="${key()}">
         <button type="button" class="icon-button composer-plus" data-chat-action="composer-menu" aria-label="添加附件与更多选项" aria-expanded="false" aria-controls="composer-menu">${icon('plus')}</button>
         <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button type="button" class="icon-button composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')}</button><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
-        <div class="composer-actions" id="composer-menu" hidden><span class="composer-menu-title">本次对话</span>${call(icon('upload')+' 文件、图片与视频','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('模型处理与资料范围','model-consent','','small plain')}</div>
+        <div class="composer-actions" id="composer-menu" hidden><span class="composer-menu-title">本次对话</span>${call(icon('upload')+' 文件、图片与视频','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}${call('模型处理与资料范围','model-consent','','small plain')}</div>
         <span id="chat-shortcuts" class="sr-only">Enter 发送，Shift 加 Enter 换行。中文输入法选词时不会发送。</span>
         <div class="composer-status sr-only"><span class="autosave-status" role="status"></span><span id="chat-count">${current?.sources.length||0} 份材料 · 仅本人可见</span></div>
       </form>
@@ -81,7 +81,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     const threadElement=$('#chat-thread'),nearBottom=threadElement.scrollHeight-threadElement.scrollTop-threadElement.clientHeight<110;
     if(!current?.messages.length){presenter?.dispose();presenter=null;threadElement.innerHTML=thread();threadElement.scrollTop=0;}else{drawMessages();if(nearBottom)threadElement.scrollTop=threadElement.scrollHeight;}updateJump();
     $('#conversation-title').textContent=current?.title||'和小信使聊聊';
-    $('#conversation-title').classList.toggle('sr-only',!current);
+    $('#conversation-title').classList.remove('sr-only');
     if(current&&!$('.chat-heading [data-chat-action="new"]'))$('.chat-heading .row').insertAdjacentHTML('afterbegin',call(icon('plus')+'<span>新对话</span>','new','','small'));
     if(current&&!$('.conversation-tools'))$('#chat-materials').insertAdjacentHTML('beforeend',`<div class="conversation-tools">${call('重命名','rename','','small plain')}${call('删除对话','delete','','small plain danger')}</div>`);
     $('#chat-workspace').classList.toggle('has-conversation',!!current);
@@ -159,7 +159,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       cid=current.id;cacheKey=key();clearTimeout(pollTimer);
       let allowExternal=false;
       if(state.session.ai.configured){
-        allowExternal=!!current.model_consent||await ask('允许模型处理本次对话','为回答问题，本次对话的消息、材料，以及按问题检索到的本账号资料、日程和必要个人条件，可能发送给已配置的 MiMo 模型服务。登录密码与联系方式不加入模型上下文。你可以在问题中限定资料范围，并在输入框的更多选项中撤回本对话授权。取消会保留当前草稿。','允许本次对话');
+        allowExternal=!!current.model_consent||await ask('允许模型处理本次对话','为回答问题，本次对话的消息、材料，以及按问题检索到的本账号资料、日程和必要个人条件，以及你启用的相关记忆，可能发送给已配置的 MiMo 模型服务。登录密码与联系方式不加入模型上下文。你可以在问题中限定资料范围，并在输入框的更多选项中撤回本对话授权。取消会保留当前草稿。','允许本次对话');
         if(!allowExternal)return;
       }
       const payload={version:current.version,content:retryId||regenerateId?'':text,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,allow_external_processing:allowExternal};
@@ -286,6 +286,8 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         if(current?.model_consent){if(await ask('撤回本对话模型授权','将停止当前回复，之后发送时重新确认。已经发给模型服务的内容无法撤回；已保存的对话与材料仍可查看。','撤回授权')){const revoked=await api(`/conversations/${current.id}/model-consent`,{method:'DELETE',json:{version:current.version}});submission++;streaming?.controller.abort();clearTimeout(pollTimer);current=revoked;sending=false;accepting=false;update();toast('本对话模型授权已撤回。');}}
         else showDialog('模型处理与资料范围','<div class="stack"><p>消息发给模型前会确认本对话授权。授权后可继续追问，刷新仍保留；你也可以从此处撤回。</p><p>你可以明确要求“只用本次附件”“不读取资料库或日程”或“只查公开网页”，系统按本轮范围取证。公开搜索词不包含账号联系方式、登录凭证或私人日程。</p></div>');
       }
+      else if(action==='context-settings'){const routeId=state.renderId;await ensureConversation(routeId);if(routeId!==state.renderId)return;const cid=current.id;await memoryUI.context(cid,async()=>{const result=await api('/conversations/'+cid);if(routeId===state.renderId&&active(cid)){current=result;update();}});}
+      else if(action==='remember'){const routeId=state.renderId;await ensureConversation(routeId);if(routeId===state.renderId)await memoryUI.remember(current);}
       else if(action==='promote')await promote();
       else if(action==='rename')showDialog('给对话取个名字',`<form class="stack" data-workspace-form="rename">${field('对话名称','title',current.title,'text','required maxlength="100"')}<div class="form-footer"><button type="submit" class="button primary">保存名称</button></div></form>`);
       else if(action==='delete'){if(await ask('删除这段对话','将删除这段对话、材料和未发送草稿。已经转为通知的独立原件与待办仍保留，可在通知资料中另行管理。','删除对话')){await api('/conversations/'+current.id,{method:'DELETE',json:{version:current.version}});location.hash='chat';}}

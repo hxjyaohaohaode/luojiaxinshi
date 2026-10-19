@@ -4,7 +4,7 @@ import json
 import time as clock
 from typing import Literal
 
-from fastapi import Depends, HTTPException, Response
+from fastapi import Depends, HTTPException, Response, Path as ApiPath
 from icalendar import Calendar, Event
 from pydantic import Field, field_validator, model_validator
 
@@ -132,6 +132,15 @@ def install_schedule(app, db, user):
         with db.connect() as conn:
             return [serialize(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=? ORDER BY created_at,id', (current['id'],))]
 
+    @app.get('/api/arrangements/requests/{request_id}')
+    def request_status(request_id: str = ApiPath(min_length=16, max_length=80, pattern=r'^[a-zA-Z0-9_-]+$'), current=Depends(user)):
+        with db.connect() as conn:
+            receipt=conn.execute('SELECT arrangement_id FROM arrangement_receipts WHERE user_id=? AND request_id=?', (current['id'],request_id)).fetchone()
+            if not receipt:
+                return {'state':'missing','arrangement':None}
+            record=conn.execute('SELECT * FROM arrangements WHERE id=? AND user_id=?', (receipt['arrangement_id'],current['id'])).fetchone()
+            return {'state':'saved' if record else 'deleted','arrangement':serialize(record) if record else None}
+
     @app.post('/api/arrangements')
     def create(payload: CreateArrangement, current=Depends(user)):
         with db.connect(write=True) as conn:
@@ -140,6 +149,8 @@ def install_schedule(app, db, user):
                 if json.loads(prior['data']) != payload.data.model_dump():
                     raise HTTPException(409, '这项安排已经保存，但内容与当前草稿不同。请先在日历中打开已保存安排核对，再继续修改；当前草稿已保留。')
                 return serialize(prior)
+            if conn.execute('SELECT 1 FROM arrangement_receipts WHERE user_id=? AND request_id=?', (current['id'],payload.request_id)).fetchone():
+                raise HTTPException(409, '这项安排曾经保存，随后已删除。请先核对保存状态；需要另建时使用新的草稿。')
             if conn.execute('SELECT count(*) FROM arrangements WHERE user_id=?', (current['id'],)).fetchone()[0] >= 1000:
                 raise HTTPException(422, '已保存 1000 项安排，请先整理不再需要的安排')
             eid, now = ident(), int(clock.time())

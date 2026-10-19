@@ -4,6 +4,7 @@ const storageKey='campus.motion.enabled',hintKey='campus.hints.dismissed';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let sequence=0,enabled=true,installed=false,activeRouteFeedback=null;
 let dismissed=new Set();
+try{enabled=localStorage.getItem(storageKey)!=='false';}catch{/* Preferences are optional. */}
 try{dismissed=new Set(JSON.parse(localStorage.getItem(hintKey)||'[]'));}catch{/* Preferences are optional. */}
 
 // Prefix EVERY SVG ID and fragment reference, including repeated copies of a pose.
@@ -34,7 +35,7 @@ export function contextHint(key,title,text,action=''){
 }
 
 export function motionSetting(){
-  return `<p class="small muted">界面动效默认循环播放。离开屏幕或切到后台时暂停，回到界面后继续；跟随设备的减少动态效果设置。</p><button type="button" class="button small plain" data-restore-hints>重新显示已收起的小提示</button>`;
+  return `<label class="check"><input type="checkbox" id="interface-motion-enabled" ${enabled?'checked':''}><span>播放插画与等待动效</span></label><p class="small muted">跟随设备的“减少动态效果”设置。关闭后保留必要的操作反馈；离开屏幕或切到后台时自动暂停。</p><button type="button" class="button small plain" data-restore-hints>重新显示已收起的小提示</button>`;
 }
 
 export function motionToggle(){
@@ -93,6 +94,7 @@ export function initializeMotion(){
   const dialog=document.querySelector('#dialog');if(dialog)foregroundChanges.observe(dialog,{attributes:true,attributeFilter:['open']});
   document.addEventListener('visibilitychange',choose);reduced.addEventListener('change',synchronize);
   window.addEventListener('storage',event=>{
+    if(event.key===storageKey||event.key===null){enabled=event.key===null?true:event.newValue!=='false';synchronize();}
     if(event.key===hintKey){try{dismissed=new Set(JSON.parse(event.newValue||'[]'));}catch{return;}document.querySelectorAll('[data-context-hint]').forEach(hint=>{if(dismissed.has(hint.dataset.contextHint))hint.remove();});}
   });
   document.addEventListener('change',event=>{if(event.target.id==='interface-motion-enabled')setEnabled(event.target.checked);});

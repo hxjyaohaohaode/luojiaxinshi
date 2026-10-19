@@ -6,6 +6,7 @@ import sqlite3
 import time
 
 from fastapi.testclient import TestClient
+from icalendar import Calendar
 import httpx
 import pytest
 from pypdf import PdfWriter
@@ -147,6 +148,24 @@ def test_no_date_task_can_use_explicit_personal_plan(env):
     c=account(env);n=manual(c,notice(c));tid=confirm(c,n,task(n,due_date=None,due_time=None,deadline_confirmed=False,
         planned_at='2027-10-18T10:00:00+08:00',reminder_at='2027-10-18T09:00:00+08:00'))
     assert c.post('/api/calendar/export',json={'task_ids':[tid],'versions':{tid:1}}).status_code==200
+
+
+def test_missing_material_still_allows_an_explicit_information_check_reminder(env):
+    client=account(env)
+    n=manual(client,notice(client,text='虚构通知：提交要求和期限见尚未提供的附件。',complete=False))
+    step=TaskData(title='向学院核实本人期限与缺失附件',planned_at='2030-10-18T10:00:00+08:00',
+                  reminder_at='2030-10-18T09:00:00+08:00',
+                  resolution_note='这是本人设置的核实计划，尚未确认正式期限；缺失附件仍需补充。').model_dump()
+    tid=confirm(client,n,step)
+    response=client.post('/api/calendar/export',json={'task_ids':[tid],'versions':{tid:1}})
+    assert response.status_code==200
+    event=Calendar.from_ical(response.content).walk('VEVENT')[0]
+    assert event.decoded('DTSTART').isoformat()=='2030-10-18T02:00:00+00:00'
+    assert '正式期限：原文未明确' in str(event['DESCRIPTION'])
+    saved=client.get('/api/notices/'+n['id']).json()
+    assert not saved['materials_complete'] and saved['blockers']
+    assert saved['tasks'][0]['data']['due_date'] is None
+    assert not saved['tasks'][0]['data']['deadline_confirmed']
 
 
 def test_production_refuses_non_https_origin(monkeypatch,tmp_path):

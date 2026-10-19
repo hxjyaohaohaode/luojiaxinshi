@@ -118,6 +118,8 @@ def conversation_detail(conn,cid,uid,settings):
             item['version_index']=next(i for i,v in enumerate(versions) if v['id']==item['id'])
         result['messages'].append(item)
     result['character_count']=total_chars(result['sources'])
+    from .memory import context_for
+    result['context']=context_for(conn,cid)
     return result
 
 
@@ -272,7 +274,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
             rate_limit(db,'ai:'+current['id']+':'+day,settings.ai_daily_limit,86400,check_only=True)
         with db.connect() as conn:
             history=[m for m in logical_messages(conn,cid) if m['status']=='complete']
-            if len(history)+1>80 or sum(len(m['content']) for m in history)+len(payload.content)>80000:
+            if len(history)+1>2000 or sum(len(m['content']) for m in history)+len(payload.content)>4000000:
                 raise HTTPException(413,'本会话内容已较长，请新建对话继续；原回复未中断，你的补充草稿仍保留。')
 
     def prepare_send(cid,payload,current):
@@ -324,7 +326,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
                         if interaction:item['interaction']=json.loads(interaction['context'])
                         messages.append(item)
                     if m['id']==parent:break
-                if len(messages)>80 or sum(len(m['content']) for m in messages)>80000:
+                if len(messages)>2000 or sum(len(m['content']) for m in messages)>4000000:
                     raise HTTPException(413,'本会话内容已较长，请新建对话继续；历史和材料仍保留在这里')
                 from .retrieval_scope import account_access
                 access=account_access(messages)
@@ -335,20 +337,30 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 if access['library']:
                     accessible.update(r['id'] for r in conn.execute('SELECT s.id FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(current['id'],)))
                     accessible.update(r['id'] for r in conn.execute('SELECT s.id FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=? AND s.active=1',(current['id'],)))
+                from .memory import eligible_versions,memory_access
+                from .grounding import message_scope_start
+                memory_versions=eligible_versions(conn,current['id'],cid,access['profile'] and memory_access(messages) and message_scope_start(messages) is None)
                 contextual=[]
                 for m in messages:
                     if m['role']=='user':contextual.append(m);continue
                     report=conn.execute('SELECT sources FROM reply_grounding WHERE message_id=?',(m['id'],)).fetchone()
+                    report_sources=json.loads(report['sources']) if report else []
+                    memory_sources=[s for s in report_sources if s.get('evidence_kind')=='memory']
+                    # Preferences can affect prose without an inline citation. Revoke
+                    # that whole old answer when any injected memory is no longer current.
+                    if any(s.get('memory_version') is None or memory_versions.get(s['id'])!=s['memory_version'] for s in memory_sources):continue
                     allowed={'web_page','web_summary','user_input'}
                     if access['profile']:allowed.add('profile')
                     if access['schedule']:allowed.update(('task','arrangement'))
-                    web_ids={s['id'] for s in json.loads(report['sources']) if s.get('evidence_kind') in allowed} if report else set()
+                    web_ids={s['id'] for s in report_sources if s.get('evidence_kind') in allowed}
+                    web_ids.update(s['id'] for s in memory_sources)
                     if all(e['source_id'] in accessible|web_ids for e in json.loads(m['citations'])):contextual.append(m)
                 messages=contextual
                 if settings.ai_api_key and payload.allow_external_processing:
                     conn.execute('INSERT OR IGNORE INTO conversation_ai_consents VALUES(?,?)',(cid,now))
                 conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,status,request_id,parent_id,model,created_at) VALUES(?,?,'assistant','processing',?,?,?,?)",(mid,cid,payload.request_id,parent,settings.ai_model,now))
                 conn.execute('UPDATE conversations SET processing_token=?,processing_at=? WHERE id=?',(token,now,cid));changed(conn,cid)
+                app.state.execution.start(conn,mid,current['id'],'conversation',cid,token)
             return {'token':token,'mid':mid,'sources':sources,'messages':messages},None
         except BaseException:
             heavy_lock.release()
@@ -370,6 +382,9 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     pipeline=work_stream(settings,db,mid,events(settings,db,current['id'],cid,mid,sources,messages,json.loads(current['profile']),3))
                     async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(pipeline):
                         async for event in pipeline:
+                            if event['type']=='phase':
+                                from .execution import stage
+                                with db.connect(write=True) as conn:stage(conn,mid,event['phase'])
                             if event['type']=='complete':result=event['result'];usage=event.get('usage',{})
                     if result is None:raise AIError('核验未完成，未发布回答。')
                 else:
@@ -382,15 +397,26 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 if not live:
                     raise HTTPException(404,'对话已删除，回复未写入')
                 if live['processing_token']!=token:
+                    app.state.execution.finish(conn,mid,'discarded','superseded')
                     return conversation_detail(conn,cid,current['id'],settings)
+                from .context_snapshot import publication_current,STALE_MESSAGE
+                if status=='complete' and not publication_current(conn,mid,current['id'],cid):
+                    status='failed';error=STALE_MESSAGE;result={'answer':'','citations':[],'image_sources':[]}
                 citations=display_citations(result)
                 conn.execute('UPDATE conversation_messages SET content=?,status=?,error=?,citations=?,input_tokens=?,output_tokens=? WHERE id=?',
                              (result['answer'],status,error,dumps(citations),usage.get('input_tokens'),usage.get('output_tokens'),mid))
                 select_reply(conn,mid)
                 conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
+                app.state.execution.finish(conn,mid,'succeeded' if status=='complete' else 'failed','verified' if status=='complete' and settings.ai_grounding else 'complete' if status=='complete' else 'request_failed')
                 return conversation_detail(conn,cid,current['id'],settings)
         finally:
-            heavy_lock.release()
+            try:
+                with db.connect(write=True) as conn:
+                    changed_rows=conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL,version=version+1 WHERE id=? AND processing_token=?',(cid,token)).rowcount
+                    if changed_rows:
+                        conn.execute("UPDATE conversation_messages SET status='failed',error='处理已中断，问题已保存，请重试。' WHERE id=? AND status='processing'",(mid,))
+                        app.state.execution.finish(conn,mid,'failed','interrupted_request')
+            finally:heavy_lock.release()
 
     cancel_genui=install_genui(app,db,settings,user,heavy_lock,prepare_send,own,changed,conversation_detail,SendMessage,preflight_steer)
     install_tools(app,db,settings,user,own,changed,conversation_detail,sources_for,heavy_lock)

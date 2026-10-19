@@ -59,6 +59,7 @@ def test_message_only_stage_never_claims_library_or_schedule_search(env,monkeypa
 
 
 def test_late_summary_updates_correct_id_and_never_reorders_stages(env,monkeypatch):
+    env[1].ai_stage_summaries=True
     db,mid=stored_message(env)
     async def brief(settings,record):
         await asyncio.sleep(.02)
@@ -79,6 +80,7 @@ def test_late_summary_updates_correct_id_and_never_reorders_stages(env,monkeypat
 
 
 def test_cancellation_closes_provider_and_full_queue_without_deadlock(env,monkeypatch):
+    env[1].ai_stage_summaries=True
     db,mid=stored_message(env);closed=[];cancelled=[]
     async def brief(*args):
         try:await asyncio.sleep(10)

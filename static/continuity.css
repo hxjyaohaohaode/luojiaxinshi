@@ -17,11 +17,8 @@ html{scrollbar-gutter:stable}
 .evidence button{min-height:28px}
 dialog[open]{display:flex;flex-direction:column;overflow:hidden}
 .dialog-head{flex-shrink:0}
-.dialog-body{overscroll-behavior:contain;scrollbar-gutter:stable;min-width:0;min-height:0;max-height:none;overflow:auto;flex:1}
 .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .form-grid>*,.field{min-width:0}
-.dialog-body .form-footer{position:sticky;bottom:-2px;background:white;padding:14px 0 2px;border-top:1px solid var(--line);z-index:2}
-.dialog-body form{padding-bottom:2px}
 .notice-row .spacer,.fact,.source-content{min-width:0;overflow-wrap:anywhere}
 .source-pane{scrollbar-gutter:stable}
 button:disabled{cursor:not-allowed}
@@ -48,7 +45,6 @@ input::placeholder,textarea::placeholder{color:#667974;opacity:1}
   .task-title{text-align:left}
   .task-meta .link-button{min-height:32px;text-align:left}
   .evidence button,summary{min-height:44px;display:flex;align-items:center}
-  .dialog-body{max-height:none}
   dialog{max-height:90dvh;width:calc(100% - 20px);padding:16px}
   .form-footer{gap:8px}
   .filters{gap:8px}

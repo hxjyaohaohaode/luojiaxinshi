@@ -52,7 +52,7 @@ def total_chars(sources):
 
 def blockers(notice, sources):
     result=[]
-    if not any(source['sections'] for source in sources):
+    if not any(source['sections'] or source['kind'] in {'png','jpg','jpeg','webp'} and source['status']!='failed' for source in sources):
         result.append('当前没有可核对的有效材料，请补充正文或可解析附件')
     if not notice['materials_complete']:
         result.append('尚未确认通知及关键附件完整')

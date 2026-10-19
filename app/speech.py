@@ -116,12 +116,17 @@ def synthesize(settings,payload):
 def install_speech(app,db,settings,user,heavy_lock):
     @app.get('/api/speech/config')
     def config(current=Depends(user)):
-        return {'configured':bool(settings.ai_api_key),'provider':'Xiaomi MiMo',
+        from .model_catalog import public_configuration
+        provider=public_configuration(settings)
+        return {'configured':provider['speech_available'],'provider':'Xiaomi MiMo',
+                'unavailable_reason':'当前语音适配器需要普通按量 API 凭证，不能混用 Token Plan 通道。' if provider['billing_channel']=='token_plan' else '',
                 'models':{'asr':settings.asr_model,'default':settings.tts_model,'design':settings.voice_design_model,'clone':settings.voice_clone_model},
                 'voice':settings.tts_voice,'max_recording_seconds':60,'max_clone_seconds':30,'max_text_chars':MAX_SPEECH_TEXT}
 
     def invoke(current,payload,operation):
         if not settings.ai_api_key:raise HTTPException(503,'请在服务端填写 MIMO_API_KEY 并重启后使用语音')
+        from .model_catalog import channel
+        if channel(settings.ai_base_url)=='token_plan':raise HTTPException(503,'当前语音适配器需要普通按量 API 凭证，未向订阅通道发送录音或文字')
         if not heavy_lock.acquire(False):raise HTTPException(429,'正在处理其他材料，请稍后重试')
         try:
             day=datetime.now(timezone(timedelta(hours=8))).date().isoformat()

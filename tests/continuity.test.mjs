@@ -83,3 +83,89 @@ test('read failure remains retryable and does not replace user text',async()=>{
   store.stage('new-notice',{title:'继续编辑'});await store.flush('new-notice');
   assert.equal(backend.read().payload.title,'继续编辑');store.clear();
 });
+
+test('a new editor opened before the old save finishes keeps its draft',async()=>{
+  const backend=server(),store=createDraftStore(backend.api);
+  try{
+    await store.load('new-notice');store.activate('new-notice');store.stage('new-notice',{title:'已提交的第一份'});await store.flush('new-notice');
+    const submitted=store.checkpoint?.('new-notice');
+    store.activate('new-notice');store.stage('new-notice',{title:'后来编辑的第二份'});
+    await store.retire('new-notice',submitted);await store.flush('new-notice');
+    assert.equal(backend.read().payload?.title,'后来编辑的第二份');
+    assert.equal(store.peek('new-notice').retired,false);
+  }finally{store.clear();}
+});
+
+test('a reopened editor survives an old cache deletion already in flight',async()=>{
+  const backend=server();let release,observe;
+  const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>observe=resolve);
+  const store=createDraftStore(async(p,o)=>{if(o?.json.payload===null){observe();await gate;}return backend.api(p,o);});
+  try{
+    await store.load('new-notice');store.activate('new-notice');store.stage('new-notice',{title:'原提交'});await store.flush('new-notice');
+    const submitted=store.checkpoint?.('new-notice'),clearing=store.retire('new-notice',submitted);await started;
+    store.activate('new-notice');store.stage('new-notice',{title:'删除请求期间的新输入'});
+    const saving=store.flush('new-notice');release();await Promise.all([clearing,saving]);
+    assert.equal(backend.read().payload?.title,'删除请求期间的新输入');
+    assert.equal(store.pending(),false);
+    const reloaded=createDraftStore(backend.api);assert.equal((await reloaded.load('new-notice')).payload?.title,'删除请求期间的新输入');reloaded.clear();
+  }finally{release();store.clear();}
+});
+
+test('a lost deletion response reconciles before saving a new editor',async()=>{
+  const backend=server();let release,observe;
+  const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>observe=resolve);
+  const store=createDraftStore(async(p,o)=>{if(o?.json.payload===null){observe();await gate;await backend.api(p,o);throw new Error('lost deletion response');}return backend.api(p,o);});
+  try{
+    await store.load('new-notice');store.activate('new-notice');store.stage('new-notice',{title:'已提交'});await store.flush('new-notice');
+    const clearing=store.retire('new-notice',store.checkpoint('new-notice'));await started;
+    store.activate('new-notice');store.stage('new-notice',{title:'新内容'});const saving=store.flush('new-notice');
+    release();const [oldResult,newResult]=await Promise.allSettled([clearing,saving]);
+    assert.equal(oldResult.status,'rejected');assert.equal(newResult.status,'fulfilled');
+    assert.equal(backend.read().payload.title,'新内容');assert.equal(store.peek('new-notice').retired,false);assert.equal(store.pending(),false);
+  }finally{release();store.clear();}
+});
+
+test('a failed deletion cannot retire or overwrite a newer editor',async()=>{
+  const backend=server();let release,observe;
+  const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>observe=resolve);
+  const store=createDraftStore(async(p,o)=>{if(o?.json.payload===null){observe();await gate;throw new Error('offline');}return backend.api(p,o);});
+  try{
+    await store.load('new-notice');store.activate('new-notice');store.stage('new-notice',{title:'原提交'});await store.flush('new-notice');
+    const clearing=store.retire('new-notice');await started;store.activate('new-notice');store.stage('new-notice',{title:'离线期间的新输入'});
+    const saving=store.flush('new-notice');release();const results=await Promise.allSettled([clearing,saving]);
+    assert.equal(results[0].status,'rejected');assert.equal(results[1].status,'fulfilled');
+    assert.equal(backend.read().payload.title,'离线期间的新输入');assert.equal(store.peek('new-notice').retired,false);
+  }finally{release();store.clear();}
+});
+
+test('a deletion conflict leaves another tab intact and keeps this tab recoverable',async()=>{
+  const backend=server(),a=createDraftStore(backend.api),b=createDraftStore(backend.api);
+  try{
+    await a.load('new-notice');a.activate('new-notice');a.stage('new-notice',{title:'原提交'});await a.flush('new-notice');
+    const submitted=a.checkpoint('new-notice');await b.load('new-notice');b.stage('new-notice',{title:'另一窗口的新内容'});await b.flush('new-notice');
+    await assert.rejects(a.retire('new-notice',submitted),/conflict/);
+    a.activate('new-notice');a.stage('new-notice',{title:'本窗口新内容'});await assert.rejects(a.flush('new-notice'),/另一页面/);
+    assert.equal(backend.read().payload.title,'另一窗口的新内容');assert.equal(a.peek('new-notice').payload.title,'本窗口新内容');assert.equal(a.pending(),true);
+  }finally{a.clear();b.clear();}
+});
+
+test('a stale checkpoint from a cleared store cannot delete a new session draft',async()=>{
+  const backend=server(),store=createDraftStore(backend.api);
+  try{
+    await store.load('new-notice');store.stage('new-notice',{title:'第一会话'});await store.flush('new-notice');const ticket=store.checkpoint('new-notice');
+    store.clear();await store.load('new-notice');store.activate('new-notice');store.stage('new-notice',{title:'新会话'});await store.flush('new-notice');
+    assert.equal(await store.retire('new-notice',ticket),false);assert.equal(backend.read().payload.title,'新会话');
+  }finally{store.clear();}
+});
+
+test('navigation flush does not wait for cleanup of already saved content',async()=>{
+  const backend=server();let release,observe;
+  const gate=new Promise(resolve=>release=resolve),started=new Promise(resolve=>observe=resolve);
+  const store=createDraftStore(async(p,o)=>{if(o?.json.payload===null){observe();await gate;}return backend.api(p,o);});
+  try{
+    await store.load('new-notice');store.stage('new-notice',{title:'已正式保存'});await store.flush('new-notice');
+    const clearing=store.retire('new-notice');await started;
+    let flushed=false;const navigation=store.flushAll().then(()=>flushed=true);await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(flushed,true);release();await Promise.all([clearing,navigation]);
+  }finally{release();store.clear();}
+});

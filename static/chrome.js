@@ -1,7 +1,7 @@
 // Workspace chrome responds to intentional reading, never to streamed auto-scroll.
 const $=selector=>document.querySelector(selector);
 const mobile=()=>matchMedia('(max-width:850px)').matches;
-let installed=false,drag=null,idleTimer,lastGesture=0;
+let installed=false,drag=null,idleTimer,lastGesture=-Infinity;
 const positions=new WeakMap();
 const storage={get(key,fallback){try{return localStorage.getItem(key)??fallback;}catch{return fallback;}},set(key,value){try{localStorage.setItem(key,String(value));}catch{}}};
 function widthLimit(){return Math.max(180,Math.min(460,innerWidth*.48));}
@@ -11,13 +11,13 @@ export function syncChrome(page){document.documentElement.dataset.route=page;rev
 function updateToggle(){const shell=$('.shell'),collapsed=shell?.classList.contains('sidebar-collapsed');document.querySelectorAll('[data-shell-toggle]').forEach(b=>{b.setAttribute('aria-label',mobile()?'打开导航菜单':collapsed?'展开侧栏':'收起侧栏');b.setAttribute('aria-expanded',String(mobile()?!!shell?.classList.contains('menu-open'):!collapsed));});}
 export function installChrome({setMenu}){
  if(installed)return;installed=true;
- function toggle(){if(mobile()){setMenu(true);return;}const shell=$('.shell');if(!shell)return;shell.classList.toggle('sidebar-collapsed');storage.set('campus.sidebar.collapsed',shell.classList.contains('sidebar-collapsed'));updateToggle();}
- document.addEventListener('click',e=>{if(e.target.closest('[data-shell-toggle]'))toggle();});
+ function toggle(opener=null){if(mobile()){setMenu(true,true,opener);return;}const shell=$('.shell');if(!shell)return;shell.classList.toggle('sidebar-collapsed');storage.set('campus.sidebar.collapsed',shell.classList.contains('sidebar-collapsed'));updateToggle();}
+ document.addEventListener('click',e=>{const opener=e.target.closest('[data-shell-toggle]');if(opener)toggle(opener);});
  document.addEventListener('pointerdown',e=>{const grip=e.target.closest('.sidebar-resize');if(!grip||mobile()||e.button!==0)return;e.preventDefault();drag={grip,start:e.clientX,width:$('.sidebar').getBoundingClientRect().width};grip.setPointerCapture(e.pointerId);document.documentElement.classList.add('resizing-sidebar');});
  document.addEventListener('pointermove',e=>{if(drag)setWidth(drag.width+e.clientX-drag.start);});
  function endDrag(){if(!drag)return;setWidth($('.sidebar').getBoundingClientRect().width,true);drag=null;document.documentElement.classList.remove('resizing-sidebar');}
  document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
- document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='\\'){e.preventDefault();toggle();}if(e.target.matches('.sidebar-resize')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const width=$('.sidebar').getBoundingClientRect().width;setWidth(e.key==='Home'?180:e.key==='End'?widthLimit():width+(e.key==='ArrowRight'?16:-16),true);}if(['ArrowDown','ArrowUp','PageDown','PageUp',' '].includes(e.key)&&!e.target.closest('input,textarea,select,[contenteditable]'))lastGesture=performance.now();});
+ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='\\'){e.preventDefault();toggle();}if(e.target.matches('.sidebar-resize')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const width=$('.sidebar').getBoundingClientRect().width;setWidth(e.key==='Home'?180:e.key==='End'?widthLimit():width+(e.key==='ArrowRight'?16:-16),true);}if(!e.defaultPrevented&&['ArrowDown','ArrowUp','PageDown','PageUp',' '].includes(e.key)&&!e.target.closest('input,textarea,select,[contenteditable]'))lastGesture=performance.now();});
  let touch=null;
  const ignore=e=>!$('.shell')||e.target.closest?.('dialog,input,textarea,select,.sidebar,.chat-turn-rail,.chat-materials')||$('.shell.menu-open');
  function reading(delta){if(Math.abs(delta)<12)return;lastGesture=performance.now();if(delta<0||document.activeElement?.closest('input,textarea,select'))revealChrome();else document.documentElement.classList.add('reading-content');clearTimeout(idleTimer);idleTimer=setTimeout(revealChrome,1800);}

@@ -252,6 +252,9 @@ def validation_failure(reason,raw):
 
 def payload(settings, sources, messages, profile, tier):
     from .chat_media import resource_index
+    if not profile.get('_grounding_context'):
+        from .context_engine import pack_history
+        messages,_,_=pack_history(messages)
     context = {'personal_conditions': {k: v for k, v in profile.items() if k in PERSONAL_KEYS},
                'materials': [{k:v for k,v in s.items() if k not in ('content','sha256')} for s in sources], 'resources':resource_index(sources)}
     if profile.get('_grounding_context'):
@@ -281,10 +284,11 @@ def payload(settings, sources, messages, profile, tier):
     # designs a graph and state transitions, so it keeps thinking enabled.
     model=settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model
     composition_only=bool(profile.get('_grounding_context'))
+    focused=profile.get('_grounding_context',{}).get('route')=='focused_text'
     if composition_only:
         request_role='\n本调用是展示编排阶段。依据 Pro 提供的 coverage_check、evidence_index 与原文组织正文和控件，不重新检索或补造事实。直接输出有效 JSON；事实、未知和建议仍须清楚区分。稿件随后由 Pro 独立核验，未通过不会发布。'
-        prompt+=request_role
-    thinking = not composition_only or tier == 1
+        prompt+=('\n本轮把证据覆盖检查与文字组织合并：逐项识别当前问题、所给证据、个人条件、冲突和缺项，依据完整原文组织回答；不得补造未知。只完成当前用户要求，保持必要条件与准确引用。仍会由另一独立调用核验全部回答后发布。' if focused else request_role)
+    thinking = not composition_only or tier == 1 or focused
     request = {'model':model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
                'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled' if thinking else 'disabled'},'max_completion_tokens':settings.ai_output_tokens}
     if not thinking:request['temperature']=0.2
@@ -294,6 +298,21 @@ def payload(settings, sources, messages, profile, tier):
 
 
 async def stream_reply(settings, sources, messages, profile, tier):
+    from .harness import start_call,finish_call
+    call=start_call({'model':settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model,
+        'thinking':{'type':'enabled' if not profile.get('_grounding_context') or tier==1 or profile.get('_grounding_context',{}).get('route')=='focused_text' else 'disabled'},'max_completion_tokens':settings.ai_output_tokens})
+    usage={}
+    try:
+        async for event in _stream_reply(settings,sources,messages,profile,tier):
+            if event['type']=='complete':usage=event.get('provider_usage',event.get('usage',{}))
+            yield event
+    except BaseException as exc:
+        finish_call(call,usage,exc)
+        raise
+    else:finish_call(call,usage)
+
+
+async def _stream_reply(settings, sources, messages, profile, tier):
     if not settings.ai_api_key:
         raise AIError('问题和材料已保存。AI 尚未配置，填写 API 后可点击重试。')
     request = payload(settings, sources, messages, profile, tier)
@@ -380,7 +399,7 @@ async def stream_reply(settings, sources, messages, profile, tier):
         # not the compiled JSONL string produced for the renderer. It is private
         # to this in-memory repair loop and never returned by the chat endpoint.
         repair_draft=raw if settings.ai_supports_json and len(raw.encode('utf-8'))<=131072 else None
-        yield {'type':'complete','result':result,'repair_draft':repair_draft,'usage':{'input_tokens':usage.get('prompt_tokens'),'output_tokens':usage.get('completion_tokens')}}
+        yield {'type':'complete','result':result,'repair_draft':repair_draft,'provider_usage':usage,'usage':{'input_tokens':usage.get('prompt_tokens'),'output_tokens':usage.get('completion_tokens')}}
     except (httpx.TimeoutException,httpx.NetworkError):
         raise AIError('连接模型超时或中断。已保留收到的内容，本次可能已计费；请自行选择重试。') from None
     except ValidationError as exc:

@@ -1,3 +1,6 @@
+import {captureUiContext,beginFormFeedback} from './ui-request.js';
+import {bindProfileForm,saveProfileForm,patchProfile,applyProfileForm} from './profile-editor.js';
+import {taskIsPending} from './action-plans.js';
 import {dayKey,addDays,weekStart,sundayStart,monthDays,shiftMonth,calendarEntries,layoutTimed,PERIOD_TIMES,periodPosition,minute,dayDistance} from './calendar-model.js';
 
 const $=(s,root=document)=>root.querySelector(s);
@@ -9,6 +12,9 @@ const monthLabel=day=>`${Number(day.slice(0,4))} 年 ${Number(day.slice(5,7))} �
 
 export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts}){
   let selected=dayKey(),view='month',owner=null,records=[],query='',showDone=false,visible=new Set(Object.keys(kinds)),entries=[],editRecord=null;
+  const pendingCreates=new Set();
+  let monthElement=null;
+  const monthResize=new ResizeObserver(fitMonthEvents);
   let formRequest='',listPage=1,weekStartsOn=1,pickerMonth='',pickerMode='day';
   const startWeek=day=>(weekStartsOn===0?sundayStart:weekStart)(day);
   const gridDays=day=>Array.from({length:42},(_,i)=>addDays(startWeek(day.slice(0,7)+'-01'),i));
@@ -18,7 +24,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   const belongs=()=>location.hash==='#calendar'&&$('#calendar-body');
   const range=()=>view==='day'?[selected,selected]:view==='week'?[startWeek(selected),addDays(startWeek(selected),6)]:[selected.slice(0,7)+'-01',addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1)];
   function filter(list){return list.filter(e=>visible.has(e.kind)&&(!query||(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));}
-  function reset(){owner=state.session.user.id;selected=dayKey();view=phone.matches?'week':'month';query='';showDone=false;visible=new Set(Object.keys(kinds));records=[];weekStartsOn=state.session.user.profile.week_starts_on??1;}
+  function reset(){owner=state.session.user.id;selected=dayKey();view=phone.matches?'list':'month';query='';showDone=false;visible=new Set(Object.keys(kinds));records=[];weekStartsOn=state.session.user.profile.week_starts_on??1;}
   async function render(renderId=state.renderId){
     if(owner!==state.session.user.id)reset();
     const items=await api('/arrangements');if(renderId!==state.renderId)return;records=items;
@@ -30,16 +36,26 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   }
   function refresh(){
     if(!belongs())return;
+    monthResize.disconnect();monthElement=null;
+    const positionKey=view+':'+selected,previousScroll=$('.time-calendar-scroll');
+    const previousPosition=previousScroll?.dataset.positionKey===positionKey?{left:previousScroll.scrollLeft,top:previousScroll.scrollTop}:null;
     const [from,to]=range(),days=gridDays(selected),all=calendarEntries(records,state.tasks,days[0]<from?days[0]:from,days[41]>to?days[41]:to,{showDone});entries=filter(all);
     const term=state.session.user.profile,week=term.semester_start?Math.floor(dayDistance(weekStart(term.semester_start),weekStart(selected))/7)+1:0;
     $('#calendar-title').textContent=view==='day'?pretty(selected):view==='week'?(phone.matches?(week>0&&week<=40?`${term.semester||'本学期'} 第 ${week} 周`:`${Number(from.slice(5,7))}月${Number(from.slice(8))}日 — ${from.slice(5,7)===to.slice(5,7)?'':Number(to.slice(5,7))+'月'}${Number(to.slice(8))}日`):`${pretty(from)} — ${to.slice(5).replace('-','月')}日`):monthLabel(selected);
     if(phone.matches&&view==='week'&&week>0&&week<=40)$('#calendar-title').innerHTML=`<span class="calendar-term">${esc(term.semester||'本学期')}</span><small class="calendar-term-week">第 ${week} 周</small>`;
+    $('#calendar-title').setAttribute('aria-label',$('#calendar-title').textContent+'，点选日期、周或月份');
 
     document.querySelectorAll('[data-calendar-view]').forEach(b=>{const active=b.dataset.calendarView===view;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;});moveSelection($('.calendar-view-tabs'));
     const count=entries.filter(e=>e.day>=from&&e.day<=to).length;$('#calendar-count').textContent=`北京时间 · ${count} 项${query?'匹配安排':'安排'}${visible.size===0?' · 尚未选择显示分类':''}`;
-    const undated=state.tasks.filter(t=>t.status==='pending'&&t.data.scope==='personal'&&!t.data.due_date&&!t.data.planned_at);$('#calendar-undated').hidden=!undated.length;$('#calendar-undated').textContent=`${undated.length} 项待办尚无日期`;
+    const undated=state.tasks.filter(t=>taskIsPending(t)&&t.data.scope==='personal'&&!t.data.due_date&&!t.data.planned_at);$('#calendar-undated').hidden=!undated.length;$('#calendar-undated').textContent=`${undated.length} 项待办尚无日期`;
     $('#calendar-mini').innerHTML=`<div class="mini-title"><strong>${monthLabel(selected)}</strong></div><div class="mini-week">${weekLabels().map(x=>`<span>${x}</span>`).join('')}</div><div class="mini-grid">${days.map(day=>`<button type="button" data-calendar-day="${day}" class="${dateClasses(day)}" aria-label="${pretty(day)}" ${day===selected?'aria-pressed="true"':'aria-pressed="false"'}>${Number(day.slice(-2))}</button>`).join('')}</div>`;
     $('#calendar-body').innerHTML=view==='month'?monthGrid(days):view==='list'?agenda(entries.filter(e=>e.day>=from&&e.day<=to)):timeGrid(view==='day'?[selected]:Array.from({length:7},(_,i)=>addDays(from,i)));
+    $('#calendar-body').dataset.view=view;
+    if(view==='month'){
+      monthElement=$('.month-grid');
+      monthElement.style.setProperty('--month-rows',String(monthElement.childElementCount/7));
+      fitMonthEvents();monthResize.observe(monthElement);
+    }
     // CSP disallows HTML style attributes. Apply bounded layout measurements via CSSOM.
     for(const node of document.querySelectorAll('#calendar-body [data-columns]'))node.style.setProperty('--day-count',String(Number(node.dataset.columns)));
     for(const node of document.querySelectorAll('#calendar-body [data-height]'))node.style.height=Number(node.dataset.height)+'px';
@@ -47,6 +63,17 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     for(const node of document.querySelectorAll('#calendar-body [data-geometry]'))if(node.dataset.geometry){const [top,height,left,width]=node.dataset.geometry.split(',').map(Number);Object.assign(node.style,{top:top+'px',height:height+'px',left:`calc(${left}% + 3px)`,width:`calc(${width}% - 6px)`});}
     for(const node of document.querySelectorAll('#calendar-body [data-period-layout]')){const [top,height,left,width]=node.dataset.periodLayout.split(',').map(Number);Object.assign(node.style,{top:`calc(${top}% + 1px)`,height:`calc(${height}% - 2px)`,left:`calc(${left}% + 1px)`,width:`calc(${width}% - 2px)`});}
     for(const node of document.querySelectorAll('[data-hour-height]'))node.style.setProperty('--hour-height',node.dataset.hourHeight+'px');
+    const scroll=$('.time-calendar-scroll');
+    if(scroll){
+      scroll.dataset.positionKey=positionKey;
+      if(previousPosition){scroll.scrollLeft=previousPosition.left;scroll.scrollTop=previousPosition.top;}
+      else{
+        const focusDay=scroll.querySelector(`[data-calendar-day="${selected}"]`);
+        if(focusDay&&scroll.scrollWidth>scroll.clientWidth)scroll.scrollLeft=focusDay.getBoundingClientRect().left-scroll.getBoundingClientRect().left-scroll.clientWidth/2+focusDay.clientWidth/2;
+        const firstHour=Math.min(8,...entries.filter(e=>!e.allDay&&e.day>=from&&e.day<=to).map(e=>Math.floor(minute(e.start)/60)));
+        scroll.scrollTop=firstHour*Number(scroll.querySelector('[data-hour-height]')?.dataset.hourHeight||0);
+      }
+    }
     $('#calendar-selection').hidden=view!=='month';
     if(view==='month'){
       const selectedEntries=entries.filter(e=>e.day===selected);
@@ -54,12 +81,46 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     }
   }
   function dateClasses(day){return [day.slice(0,7)!==selected.slice(0,7)?'outside':'',day===dayKey()?'today':'',day===selected?'selected':''].filter(Boolean).join(' ');}
+  function fitMonthEvents(){
+    if(!monthElement?.isConnected||!belongs()){monthResize.disconnect();monthElement=null;return;}
+    // A month can have four, five or six rows. Reserve the remainder button
+    // before showing previews, so resizing never hides an uncounted entry.
+    const layouts=[...monthElement.querySelectorAll('.month-events')].filter(list=>Number(list.dataset.total)>0).map(list=>{
+      const total=Number(list.dataset.total),buttons=[...list.querySelectorAll('.calendar-event')],more=list.querySelector('.calendar-more');
+      const style=getComputedStyle(list),gap=parseFloat(style.rowGap)||0;
+      const eventHeight=parseFloat(style.getPropertyValue('--month-event-height')),moreHeight=parseFloat(style.getPropertyValue('--month-more-height'));
+      let shown=Math.min(total,buttons.length,Math.floor((list.clientHeight+gap)/(eventHeight+gap)));
+      if(shown<total)shown=Math.min(shown,Math.max(0,Math.floor((list.clientHeight-moreHeight)/(eventHeight+gap))));
+      return {list,total,buttons,more,shown,compact:list.clientWidth<64};
+    });
+    // Read all geometry first; keep sidebar dragging to one layout calculation.
+    let focusTarget=null;
+    for(const {list,total,buttons,more,shown,compact} of layouts){
+      const active=document.activeElement;
+      buttons.forEach((button,index)=>{button.hidden=index>=shown;});
+      more.hidden=shown===total;
+      more.textContent=compact?`+${total-shown} 项`:`还有 ${total-shown} 项`;
+      more.setAttribute('aria-label',`${pretty(more.dataset.day)}，另有 ${total-shown} 项，查看当天全部 ${total} 项安排`);
+      if(buttons.some(button=>button===active&&button.hidden)||(more===active&&more.hidden)){
+        focusTarget=more.hidden?list.parentElement.querySelector('.month-date'):more;
+      }
+    }
+    if(focusTarget)focusMonthControl(focusTarget);
+  }
+  function focusMonthControl(node){
+    if(!node)return;
+    node.focus({preventScroll:true});
+    const body=$('#calendar-body'),bounds=body.getBoundingClientRect(),box=node.getBoundingClientRect();
+    const top=bounds.top+($('.month-week')?.getBoundingClientRect().height||0)+4;
+    if(box.bottom>bounds.bottom-4)body.scrollTop+=box.bottom-bounds.bottom+4;
+    else if(box.top<top)body.scrollTop-=top-box.top;
+  }
   function eventButton(e,extraClass='',style=''){
     const clock=e.allDay?'全天':(e.continuesBefore?'← ': '')+e.start+(e.continuesAfter?' →':'');
     return `<button type="button" class="calendar-event ${e.kind} ${tone(e)} ${e.done?'is-done':''} ${extraClass}" data-calendar-event="${esc(e.key)}" data-geometry="${style}" title="${esc(clock+' '+e.title+' · '+kinds[e.kind]+(e.location?' · '+e.location:''))}" aria-label="${esc(pretty(e.day)+' '+clock+' '+e.title+'，'+kinds[e.kind]+(e.verified===false?'，期限待核实':''))}"><span class="calendar-event-time">${esc(clock)}</span><strong>${esc(e.title)}</strong>${extraClass==='timed-event'&&e.location?`<small>${esc(e.location)}</small>`:''}${e.verified===false?'<span class="unverified-marker" aria-label="期限待核实">?</span>':''}</button>`;
   }
-  function monthGrid(days){const last=addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1);days=days.slice(0,Math.ceil((days.indexOf(last)+1)/7)*7);return `<div class="month-week">${weekdays.map(x=>`<span>周${x}</span>`).join('')}</div><div class="month-grid" aria-label="月视图，日期可使用方向键切换">${days.map(day=>{
-    const items=entries.filter(e=>e.day===day);return `<div class="month-cell ${dateClasses(day)}" data-calendar-cell="${day}"><button class="month-date" type="button" data-calendar-day="${day}" aria-label="${pretty(day)}，${items.length} 项安排" tabindex="${day===selected?0:-1}" ${day===dayKey()?'aria-current="date"':''}>${Number(day.slice(-2))}</button><div class="month-events">${items.slice(0,3).map(e=>eventButton(e)).join('')}${items.length>3?`<button type="button" class="calendar-more" data-calendar-action="open-day" data-day="${day}">还有 ${items.length-3} 项</button>`:''}</div></div>`;
+  function monthGrid(days){const last=addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1);days=days.slice(0,Math.ceil((days.indexOf(last)+1)/7)*7);return `<div class="month-week">${weekLabels().map(x=>`<span>周${x}</span>`).join('')}</div><div class="month-grid" aria-label="月视图，日期可使用方向键切换">${days.map(day=>{
+    const items=entries.filter(e=>e.day===day);return `<div class="month-cell ${dateClasses(day)}" data-calendar-cell="${day}"><button class="month-date" type="button" data-calendar-day="${day}" aria-label="${pretty(day)}，${items.length} 项安排" tabindex="${day===selected?0:-1}" ${day===dayKey()?'aria-current="date"':''}>${Number(day.slice(-2))}</button><div class="month-events" data-total="${items.length}">${items.slice(0,3).map(e=>eventButton(e)).join('')}<button type="button" class="calendar-more" data-calendar-action="open-day" data-day="${day}" hidden></button></div></div>`;
   }).join('')}</div>`;}
   function agendaRow(e,withDay=true){return `<button type="button" class="agenda-row ${e.done?'is-done':''}" data-calendar-event="${esc(e.key)}"><i class="calendar-dot ${e.kind}" aria-hidden="true"></i><span class="agenda-time">${withDay?'<span>'+esc(e.day.slice(5))+'</span>':''}${e.allDay?'全天':esc(e.start+(e.end?'–'+e.end:''))}</span><span class="agenda-title"><strong>${esc(e.title)}</strong><small>${esc(kinds[e.kind]+(e.location?' · '+e.location:'')+(e.verified===false?' · 期限待核实':''))}</small></span>${icon('arrow')}</button>`;}
   function agenda(list){if(!list.length)return `<div class="calendar-empty">${companion('planning','calendar-empty-companion')}<h3>${query||visible.size<5?'没有匹配的安排':'这个月，留白也很好'}</h3><p>${query||visible.size<5?'可以换个关键词，或调整显示分类。':'有要记下的事，随时添进来。'}</p>${control('新建安排','new','','small')}</div>`;const pages=Math.max(1,Math.ceil(list.length/12));listPage=Math.min(Math.max(1,listPage),pages);return `<div class="calendar-agenda">${list.slice((listPage-1)*12,listPage*12).map(e=>agendaRow(e)).join('')}</div><div class="calendar-pagination">${control(icon('back'),'list-prev',listPage===1?'disabled':'','small')}<span>本月 ${list.length} 项 · ${listPage} / ${pages}</span>${control(icon('arrow'),'list-next',listPage===pages?'disabled':'','small')}</div>`;}
@@ -82,20 +143,68 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     const timed=dayEntries.filter(e=>!e.allDay);
     const startHour=0,endHour=24,scale=phone.matches?36:44,height=24*scale;
     const allDay=dayEntries.filter(e=>e.allDay);
-    return `${allDay.length?`<div class="calendar-allday-events" aria-label="全天安排">${allDay.map(e=>eventButton(e)).join('')}</div>`:''}<div class="time-calendar-scroll" tabindex="0" aria-label="${view==='week'?'周课表，可左右和上下滚动':'当日时间安排，可上下滚动'}"><div class="time-calendar ${view==='day'?'single-day':''}" data-columns="${days.length}"><div class="time-grid-header"><span>时间</span>${days.map(day=>`<button type="button" class="${dateClasses(day)}" data-calendar-day="${day}"><small>周${weekdays[(new Date(day+'T00:00:00Z').getUTCDay()+6)%7]}</small><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div><div class="time-grid-body" data-height="${height}" data-hour-height="${scale}"><div class="time-labels">${Array.from({length:endHour-startHour+1},(_,i)=>`<span data-top="${i*scale}">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>${days.map(day=>`<div class="time-day" data-day="${day}" data-height="${height}">${layoutTimed(dayEntries.filter(e=>e.day===day)).map(e=>eventButton(e,'timed-event',`${(e.begin/60-startHour)*scale+1},${Math.min(height-(e.begin/60-startHour)*scale-1,Math.max(18,(e.finish-e.begin)/60*scale-2))},${e.lane/e.lanes*100},${100/e.lanes}`)).join('')}</div>`).join('')}</div></div></div>${dayEntries.length?'':`<div class="calendar-day-empty"><span>这段时间没有安排。</span>${control('新建安排','new','','small plain')}</div>`}`;
+    return `${allDay.length?`<div class="calendar-allday-events" aria-label="全天安排">${allDay.map(e=>eventButton(e)).join('')}</div>`:''}${view==='week'?'<p class="calendar-scroll-hint">左右滑动查看整周，上下滑动查看时段</p>':''}<div class="time-calendar-scroll" tabindex="0" aria-label="${view==='week'?'周课表，可左右和上下滚动':'当日时间安排，可上下滚动'}"><div class="time-calendar ${view==='day'?'single-day':''}" data-columns="${days.length}"><div class="time-grid-header"><span>时间</span>${days.map(day=>`<button type="button" class="${dateClasses(day)}" data-calendar-day="${day}"><small>周${weekdays[(new Date(day+'T00:00:00Z').getUTCDay()+6)%7]}</small><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div><div class="time-grid-body" data-height="${height}" data-hour-height="${scale}"><div class="time-labels">${Array.from({length:endHour-startHour+1},(_,i)=>`<span data-top="${i*scale}">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>${days.map(day=>`<div class="time-day" data-day="${day}" data-height="${height}">${layoutTimed(dayEntries.filter(e=>e.day===day)).map(e=>eventButton(e,'timed-event',`${(e.begin/60-startHour)*scale+1},${Math.min(height-(e.begin/60-startHour)*scale-1,Math.max(18,(e.finish-e.begin)/60*scale-2))},${e.lane/e.lanes*100},${100/e.lanes}`)).join('')}</div>`).join('')}</div></div></div>${dayEntries.length?'':`<div class="calendar-day-empty"><span>这段时间没有安排。</span>${control('新建安排','new','','small plain')}</div>`}`;
   }
   function detail(key){
     const event=entries.find(e=>e.key===key);if(!event)return;
     const record=event.source==='arrangement'?records.find(r=>r.id===event.id):state.tasks.find(t=>t.id===event.id),d=record.data;
     showDialog(event.title,`<div class="event-detail"><div class="calendar-detail-hero"><span class="event-category ${event.kind}"><i class="calendar-dot ${event.kind}"></i>${kinds[event.kind]}${event.done?' · 已完成':''}</span><div class="event-when">${event.allDay?'全天':esc(event.start+(event.end?' — '+event.end:''))}</div><span class="muted">${pretty(event.day)}</span></div><dl class="calendar-detail-meta">${event.location?'<dt>地点</dt><dd>'+esc(event.location)+'</dd>':''}${event.recurring?'<dt>重复</dt><dd>'+({weekly:'每周',biweekly:'每两周'}[d.repeat])+'，至 '+esc(d.repeat_until)+'</dd>':''}${event.notes?'<dt>备注</dt><dd class="preserve-lines">'+esc(event.notes)+'</dd>':''}</dl>${event.verified===false?'<p class="alert">这个期限尚未核实，请先对照原通知确认。</p>':''}${event.source==='task'?`<div class="form-footer"><button type="button" class="button" data-calendar-action="source" data-id="${record.notice_id}">查看原通知</button>${control('查看与编辑待办','edit-task',`data-id="${record.id}"`,'primary')}</div>`:`<div class="form-footer">${control('删除'+(event.recurring?'整组安排':''),'delete',`data-id="${record.id}"`,'danger')}${control('编辑'+(event.recurring?'重复安排':''),'edit',`data-id="${record.id}"`,'primary')}</div>`}</div>`);
   }
+  const emptyArrangement=()=>({title:'',category:'personal',start_date:selected,end_date:selected,start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:null,location:'',notes:''});
+  async function creationStatus(requestId){
+    try{return await api('/arrangements/requests/'+encodeURIComponent(requestId));}
+    catch(error){
+      // Static files can update before an older local process is restarted.
+      // Only a confirmed pre-receipt server may use the original editable flow.
+      if(error.status===404){
+        const health=await api('/health'),version=/^(\d+)\.(\d+)\.(\d+)$/.exec(health.version||'');
+        if(health.status==='ok'&&version&&Number(version[1])===1&&(Number(version[2])<14||(Number(version[2])===14&&Number(version[3])===0)))return {state:'legacy'};
+      }
+      throw error;
+    }
+  }
+  function recoverySummary(data={}){
+    return `<dl class="calendar-detail-meta"><dt>名称</dt><dd>${esc(data.title||'未命名安排')}</dd><dt>分类</dt><dd>${esc(kinds[data.category]||'个人安排')}</dd><dt>日期</dt><dd>${esc(data.start_date)}${data.end_date!==data.start_date?' 至 '+esc(data.end_date):''}</dd><dt>时间</dt><dd>${data.start_time?esc(data.start_time+' — '+data.end_time):'全天'}</dd>${data.repeat&&data.repeat!=='none'?'<dt>重复</dt><dd>'+esc((data.repeat==='weekly'?'每周':'每两周')+'，至 '+data.repeat_until)+'</dd>':''}${data.location?'<dt>地点</dt><dd>'+esc(data.location)+'</dd>':''}${data.notes?'<dt>备注</dt><dd class="preserve-lines">'+esc(data.notes)+'</dd>':''}</dl>`;
+  }
+  function recoverCreation(key,payload,receipt=null){
+    const saved=receipt?.arrangement,deleted=receipt?.state==='deleted';
+    showDialog(receipt?'核对上次保存':'暂时无法核对保存结果',`<section id="arrangement-recovery" class="stack"><p class="alert">${!receipt?'暂时无法连接核对上次是否保存成功。草稿已保留，请恢复连接后重试。':deleted?'这份草稿对应的安排曾经保存，随后已删除。系统不会自动重新创建。':'这份草稿对应的安排已经保存。可以查看当前记录，或明确开始另一项安排。'}</p>${saved?'<details class="recovery-record" open><summary>当前已保存的安排</summary>'+recoverySummary(saved.data)+'</details>':''}<details class="recovery-record" ${!saved?'open':''}><summary>保留的草稿内容</summary>${recoverySummary(payload.data)}</details><p class="small muted recovery-note">${receipt?'另建会保留原安排；查看记录会继续保留这份草稿。':'核对完成前，不会重复提交或丢弃草稿。'}</p><div class="form-footer recovery-actions">${!receipt?'<button type="button" class="button primary" data-arrangement-recovery="retry">重试核对</button>':`${saved?'<button type="button" class="button primary" data-arrangement-recovery="view">查看已保存安排</button>':''}<button type="button" class="button" data-arrangement-recovery="copy">用这些内容另建</button><button type="button" class="button" data-arrangement-recovery="blank">清空草稿后新建</button>`}</div></section>`);
+    const root=$('#arrangement-recovery'),context=captureUiContext(state,root);
+    for(const button of root.querySelectorAll('[data-arrangement-recovery]'))button.addEventListener('click',async()=>{
+      if(!context.sameDialog()||!context.sameRoute())return;
+      const action=button.dataset.arrangementRecovery;
+      if(action==='retry'){await editor();return;}
+      if(action==='view'){
+        selected=saved.data.start_date;view='day';query='';visible.add(saved.data.category);
+        records=records.filter(r=>r.id!==saved.id);records.push(saved);refresh();detail(saved.id+':'+selected);return;
+      }
+      root.inert=true;button.classList.add('request-pending');button.setAttribute('aria-busy','true');
+      try{
+        drafts.activate(key);drafts.stage(key,{request_id:crypto.randomUUID(),data:action==='copy'?payload.data:emptyArrangement()});
+        await drafts.flush(key);
+        if(context.sameDialog()&&context.sameRoute())await editor();
+      }catch(error){
+        if(!context.sameDialog())return;
+        let message=$('.form-error',root);if(!message){message=document.createElement('p');message.className='alert error form-error';message.setAttribute('role','alert');root.prepend(message);}message.textContent='新草稿尚未暂存：'+error.message;
+      }finally{root.inert=false;button.classList.remove('request-pending');button.removeAttribute('aria-busy');}
+    });
+  }
   async function editor(record=null){
     const renderId=state.renderId,uid=owner,request=++state.dialogRequest,key=record?'arrangement:'+record.id+':'+record.version:'arrangement-new';
-    const cached=await drafts.load(key);if(renderId!==state.renderId||uid!==state.session?.user.id||request!==state.dialogRequest)return;
-    editRecord=record;const restore=cached.payload?.data;drafts.activate(key);
-    const d=restore||record?.data||{title:'',category:'personal',start_date:selected,end_date:selected,start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:'',location:'',notes:''};
-    formRequest=cached.payload?.request_id||crypto.randomUUID();
+    const cached=await drafts.load(key);if(renderId!==state.renderId||uid!==state.session?.user.id||request!==state.dialogRequest)return;let legacyStatus=false;
+    if(!record&&!cached.retired&&cached.payload?.request_id&&!pendingCreates.has(cached.payload.request_id)){
+      const payload=structuredClone(cached.payload);let receipt;
+      try{receipt=await creationStatus(payload.request_id);}
+      catch{if(renderId===state.renderId&&uid===state.session?.user.id&&request===state.dialogRequest)recoverCreation(key,payload);return;}
+      if(renderId!==state.renderId||uid!==state.session?.user.id||request!==state.dialogRequest)return;
+      legacyStatus=receipt.state==='legacy';
+      if(!legacyStatus&&receipt.state!=='missing'){recoverCreation(key,payload,receipt);return;}
+    }
+    editRecord=record;const creatingAnother=!record&&pendingCreates.has(cached.payload?.request_id);const retired=cached.retired;drafts.activate(key);const restore=creatingAnother||retired?null:cached.payload?.data;
+    const d=restore||record?.data||emptyArrangement();
+    formRequest=(!creatingAnother&&!retired&&cached.payload?.request_id)||crypto.randomUUID();
     showDialog(record?'编辑安排':'新建安排',`<form id="arrangement-form" data-workspace-form="calendar" data-cache-key="${key}" data-request-id="${formRequest}" class="stack">${field('安排名称','title',d.title,'text','required maxlength="160" autofocus placeholder="例如：课程、办理材料、和朋友的约定"')}<div class="form-grid"><label class="field">分类<select name="category" aria-label="分类">${['course','activity','personal'].map(k=>`<option value="${k}" ${d.category===k?'selected':''}>${kinds[k]}</option>`).join('')}</select></label><label class="check calendar-all-day"><input type="checkbox" name="all_day" ${d.start_time?'':'checked'}>全天安排</label>${field('开始日期','start_date',d.start_date,'date','required min="2000-01-01" max="2100-12-31"')}${field('结束日期','end_date',d.end_date,'date','required min="2000-01-01" max="2100-12-31"')}<div data-schedule-time ${d.start_time?'':'hidden'}>${field('开始时间','start_time',d.start_time||'09:00','time','required')}</div><div data-schedule-time ${d.start_time?'':'hidden'}>${field('结束时间','end_time',d.end_time||'10:00','time','required')}</div></div><details class="schedule-options" ${d.location||d.notes||d.repeat!=='none'?'open':''}><summary>地点、重复和备注</summary><div class="stack">${field('地点（选填）','location',d.location,'text','maxlength="300" placeholder="校区、教学楼或办理地点"')}<div class="form-grid"><label class="field">重复<select name="repeat" aria-label="重复"><option value="none" ${d.repeat==='none'?'selected':''}>不重复</option><option value="weekly" ${d.repeat==='weekly'?'selected':''}>每周</option><option value="biweekly" ${d.repeat==='biweekly'?'selected':''}>每两周（隔周）</option></select></label><div id="repeat-until-field" ${d.repeat==='none'?'hidden':''}>${field('最后重复日期','repeat_until',d.repeat_until||'','date','min="2000-01-01" max="2100-12-31"')}</div></div>${area('备注（选填）','notes',d.notes,3,'maxlength="3000" placeholder="要带的材料、课程周次或留给自己的话"')}</div></details>${record&&d.repeat!=='none'?'<p class="small muted">保存将更新整组重复安排。</p>':''}<div class="form-footer"><span class="small muted spacer">北京时间<span class="autosave-status" role="status"></span></span><button type="submit" class="button primary">保存安排</button></div></form>`);
+    if(legacyStatus){const note=document.createElement('p');note.className='alert';note.dataset.creationStatus='legacy';note.textContent='上次保存结果需要到日历中自行核对。已有安排请直接打开编辑，避免重复新建。';$('#arrangement-form').prepend(note);}
     syncForm();
   }
   function readForm(form){const f=new FormData(form),all=f.get('all_day')==='on',repeat=f.get('repeat');return {title:f.get('title'),category:f.get('category'),start_date:f.get('start_date'),end_date:f.get('end_date'),start_time:all?null:f.get('start_time'),end_time:all?null:f.get('end_time'),repeat,repeat_until:repeat==='none'?null:f.get('repeat_until')||null,location:f.get('location'),notes:f.get('notes')};}
@@ -103,7 +212,11 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   function stash(){const f=$('#arrangement-form');if(f){const key=f.dataset.cacheKey;if(drafts.peek(key).retired)return;const snapshot={data:readForm(f),request_id:f.dataset.requestId};if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(key).payload))drafts.stage(key,snapshot);}}
   document.addEventListener('input',e=>{if(e.target.id==='calendar-query'||e.target.id==='calendar-option-query'){query=e.target.value;refresh();}if(e.target.closest('#arrangement-form'))stash();});
   document.addEventListener('change',e=>{
-    const el=e.target;if(el.id==='calendar-week-start'){weekStartsOn=Number(el.value);const profile={...state.session.user.profile,week_starts_on:weekStartsOn};api('/profile',{method:'PUT',json:profile}).then(()=>{state.session.user.profile=profile;toast('一周开始日期已保存');}).catch(error=>toast(error.message,true));refresh();}
+    const el=e.target;if(el.id==='calendar-week-start'){
+      const view=captureUiContext(state,el),base=structuredClone(state.session.user.profile),value=Number(el.value);el.disabled=true;
+      patchProfile(api,base,{week_starts_on:value}).then(profile=>{if(!view.sameUser())return;state.session.user.profile.week_starts_on=profile.week_starts_on;weekStartsOn=profile.week_starts_on;refresh();toast('一周开始日期已保存');})
+        .catch(error=>{if(!view.sameUser())return;if(error.detail?.profile)state.session.user.profile=error.detail.profile;weekStartsOn=state.session.user.profile.week_starts_on;el.value=weekStartsOn;refresh();toast(error.message,true);}).finally(()=>{el.disabled=false;});
+    }
     if(el.id==='picker-year'||el.id==='picker-month'){pickerMonth=$('#picker-year').value+'-'+$('#picker-month').value+'-01';datePicker();}
     if(el.dataset.calendarKind){el.checked?visible.add(el.dataset.calendarKind):visible.delete(el.dataset.calendarKind);for(const input of document.querySelectorAll('[data-calendar-kind]'))input.checked=visible.has(input.dataset.calendarKind);refresh();}
     if(el.id==='calendar-show-done'||el.id==='calendar-option-done'){showDone=el.checked;for(const input of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))input.checked=showDone;refresh();}
@@ -111,10 +224,21 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     if(el.closest('#arrangement-form')){if(el.name==='start_date'&&el.value&&el.form.elements.end_date.value<el.value)el.form.elements.end_date.value=el.value;syncForm();stash();}
   });
   document.addEventListener('submit',async e=>{
-    const form=e.target;if(form.id==='semester-form'){e.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;try{const profile={...state.session.user.profile,semester:form.elements.semester.value,semester_start:form.elements.semester_start.value};await api('/profile',{method:'PUT',json:profile});state.session.user.profile=profile;$('#dialog').close();refresh();toast('学期与周次已保存');}catch(error){toast(error.message,true);}finally{button.disabled=false;}return;}if(form.id!=='arrangement-form')return;e.preventDefault();const submit=$('[type=submit]',form);submit.disabled=true;stash();form.inert=true;const key=form.dataset.cacheKey;const old=editRecord,uid=owner,request=formRequest;
-    try{await drafts.flush(key);const saved=await api('/arrangements'+(old?'/'+old.id:''),{method:old?'PUT':'POST',json:old?{data:readForm(form),version:old.version}:{data:readForm(form),request_id:request}});if(uid!==state.session?.user.id)return;records=records.filter(r=>r.id!==saved.id);records.push(saved);try{await drafts.retire(key);}catch{drafts.peek(key).retired=true;}formRequest='';if($('#arrangement-form')===form)$('#dialog').close();toast('安排已保存');refresh();document.dispatchEvent(new CustomEvent('campus:milestone',{detail:'arrangement-saved'}));}
-    catch(error){let p=$('.form-error',form);if(!p){p=document.createElement('p');p.className='alert error form-error';p.setAttribute('role','alert');form.prepend(p);}p.textContent=error.message;p.scrollIntoView({block:'nearest'});}
-    finally{submit.disabled=false;form.inert=false;}
+    const form=e.target;if(form.id==='semester-form'){
+      e.preventDefault();const view=captureUiContext(state,form),finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;
+      const values=Object.fromEntries(new FormData(form));form.inert=true;
+      try{const profile=await saveProfileForm(api,form,values);if(!view.sameUser())return;applyProfileForm(state,form,profile,values);if(view.sameDialog())$('#dialog').close();if(view.sameRoute())refresh();toast('学期与周次已保存');}
+      catch(error){if(view.sameUser()&&!error.formHandled)toast(error.message,true);}finally{form.inert=false;finishFeedback();}return;
+    }if(form.id!=='arrangement-form')return;e.preventDefault();const finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;stash();form.inert=true;const key=form.dataset.cacheKey;const submissionContext=captureUiContext(state,form),old=editRecord,uid=owner,request=form.dataset.requestId,submittedCache=drafts.checkpoint(key),submittedData=readForm(form);if(!old)pendingCreates.add(request);
+    try{await drafts.flush(key);const saved=await api('/arrangements'+(old?'/'+old.id:''),{method:old?'PUT':'POST',json:old?{data:submittedData,version:old.version}:{data:submittedData,request_id:request}});if(uid!==state.session?.user.id)return;records=records.filter(r=>r.id!==saved.id);records.push(saved);let cacheWarning='';try{await drafts.retire(key,submittedCache);}catch{cacheWarning='；旧草稿清理未完成，请核对暂存状态';}if(formRequest===request)formRequest='';if($('#arrangement-form')===form)$('#dialog').close();toast('安排已保存'+cacheWarning,!!cacheWarning);refresh();document.dispatchEvent(new CustomEvent('campus:milestone',{detail:'arrangement-saved'}));}
+    catch(error){
+      if(uid!==state.session?.user.id)return;
+      if(!old&&submissionContext.sameDialog()&&submissionContext.sameRoute()){
+        try{const receipt=await creationStatus(request);if(submissionContext.sameDialog()&&submissionContext.sameRoute()&&receipt.state!=='missing'&&receipt.state!=='legacy'){recoverCreation(key,{request_id:request,data:submittedData},receipt);return;}}catch{/* Keep the original error and the editable draft when status is unavailable. */}
+      }
+      let p=$('.form-error',form);if(!p){p=document.createElement('p');p.className='alert error form-error';p.setAttribute('role','alert');form.prepend(p);}p.textContent=error.message;p.scrollIntoView({block:'nearest'});
+    }
+    finally{pendingCreates.delete(request);form.inert=false;finishFeedback();}
   });
   document.addEventListener('click',async e=>{
     const tab=e.target.closest('[data-calendar-view]'),date=e.target.closest('[data-calendar-day]'),item=e.target.closest('[data-calendar-event]'),button=e.target.closest('[data-calendar-action]');
@@ -134,20 +258,20 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
       else if(action==='picker-prev'||action==='picker-next'){const candidate=shiftMonth(pickerMonth,action==='picker-next'?1:-1);if(candidate>='2000-01-01'&&candidate<='2100-12-31'){pickerMonth=candidate;datePicker();}}
       else if(action==='picker-mode'){pickerMode=button.dataset.mode;datePicker();}
       else if(action==='picker-date'||action==='picker-month'){selected=action==='picker-month'?pickerMonth:button.dataset.day;view=pickerMode;$('#dialog').close();refresh();}
-      else if(action==='semester'){const p=state.session.user.profile;showDialog('学期与周次',`<form id="semester-form" data-workspace-form="calendar" class="stack">${field('学期名称','semester',p.semester||'','text','maxlength="40" placeholder="例如：2026—2027 第一学期"')}${field('第一周内的任意一天','semester_start',p.semester_start||'','date','min="2000-01-01" max="2100-12-31"')}<p class="small muted">请按学校校历填写。留空时只显示日期；更改周次不会移动已保存的课程。</p><div class="form-footer"><button type="submit" class="button primary">保存</button></div></form>`);}
+      else if(action==='semester'){const p=state.session.user.profile;showDialog('学期与周次',`<form id="semester-form" data-workspace-form="calendar" class="stack">${field('学期名称','semester',p.semester||'','text','maxlength="40" placeholder="例如：2026—2027 第一学期"')}${field('第一周内的任意一天','semester_start',p.semester_start||'','date','min="2000-01-01" max="2100-12-31"')}<p class="small muted">请按学校校历填写。留空时只显示日期；更改周次不会移动已保存的课程。</p><div class="form-footer"><button type="submit" class="button primary">保存</button></div></form>`);bindProfileForm($('#semester-form'),p);}
       else if(action==='day-collisions'){showDialog(pretty(button.dataset.day)+'的安排',entries.filter(e=>e.day===button.dataset.day).map(e=>agendaRow(e,false)).join(''));}
       else if(action==='outside-times'){const [from,to]=range();showDialog('全天与其他时段',entries.filter(e=>e.day>=from&&e.day<=to&&(e.allDay||minute(e.start)<480||minute(e.start)>=1320||(e.end&&minute(e.end)>1320))).map(e=>agendaRow(e)).join(''));}
       else if(action==='edit')await editor(records.find(r=>r.id===id));
       else if(action==='source'){$('#dialog').close();location.hash='notice/'+id;}
       else if(action==='edit-task'){await editTask(id);}
       else if(action==='delete'){const record=records.find(r=>r.id===id);if(!record)return;const repeated=record.data.repeat!=='none';if(await ask(repeated?'删除整组重复安排？':'删除这项安排？',`“${record.data.title}”${repeated?'的所有重复日期':'的记录'}将被删除。已导入其他日历的副本需在那里删除。`,'删除')){await api('/arrangements/'+id,{method:'DELETE',json:{version:record.version}});records=records.filter(r=>r.id!==id);toast('安排已删除');refresh();}}
-      else if(action==='undated'){showDialog('尚未安排日期的待办',`<p class="small muted">正式期限还不明确时，可以先设一个自己的准备时间。</p>${state.tasks.filter(t=>t.status==='pending'&&t.data.scope==='personal'&&!t.data.due_date&&!t.data.planned_at).map(taskRow).join('')}`);}
+      else if(action==='undated'){showDialog('尚未安排日期的待办',`<p class="small muted">正式期限还不明确时，可以先设一个自己的准备时间。</p>${state.tasks.filter(t=>taskIsPending(t)&&t.data.scope==='personal'&&!t.data.due_date&&!t.data.planned_at).map(taskRow).join('')}`);}
       else if(action==='exports'){showDialog('导出与提醒',`<div class="stack"><p>日历文件可导入手机或电脑日历。导入后，请在自己的设备上核对时间、重复规则与提醒。</p><div class="row wrap">${control('导出课程与个人安排','export-arrangements','','primary')}<button type="button" class="button" data-action="export-all">导出已核实待办</button></div><p class="small muted">导出后改期或删除安排，请同步处理外部日历中的副本。此页面不承担锁屏推送。</p>${calendarHelp()}</div>`);}
       else if(action==='export-arrangements'){if(!records.length){toast('还没有可导出的课程或个人安排');return;}const blob=await api('/arrangements/export',{method:'POST',json:{ids:records.map(r=>r.id),versions:Object.fromEntries(records.map(r=>[r.id,r.version]))},blob:true});download(blob,'我的校园安排.ics');toast('文件已导出，请在目标日历导入并核对');}
     }catch(error){toast(error.message,true);}finally{button.disabled=false;if(document.activeElement===document.body&&button.isConnected&&!$('#dialog').open)button.focus({preventScroll:true});}
   });
-  document.addEventListener('keydown',e=>{const cell=e.target.closest('.month-date');if(!cell)return;const n={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(n){e.preventDefault();selected=addDays(cell.dataset.calendarDay,n);refresh();$(`.month-date[data-calendar-day="${selected}"]`)?.focus({preventScroll:true});}});
-  window.addEventListener('hashchange',stash);
+  document.addEventListener('keydown',e=>{const cell=e.target.closest('.month-date');if(!cell)return;const n={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(n){e.preventDefault();selected=addDays(cell.dataset.calendarDay,n);refresh();focusMonthControl($(`.month-date[data-calendar-day="${selected}"]`));}});
+  window.addEventListener('hashchange',()=>{stash();if(!belongs()){monthResize.disconnect();monthElement=null;}});
   phone.addEventListener('change',()=>{if(belongs())refresh();});
   return {render,refresh,persist:stash};
 }

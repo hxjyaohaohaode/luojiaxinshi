@@ -1,18 +1,31 @@
 """A bounded SSE subscriber; browser disconnects do not cancel persisted work."""
 import asyncio
 from contextlib import aclosing
+import logging
 
 
 class StreamJob:
-    def __init__(self, source, workers, heartbeat=15):
+    def __init__(self, source, workers, heartbeat=15, on_finish=None):
         self.source=source
         self.queue=asyncio.Queue(maxsize=32)
         self.connected=True
         self.finished=False
         self.heartbeat=heartbeat
+        self.on_finish=on_finish
         self.task=asyncio.create_task(self.run())
         workers.add(self.task)
         self.task.add_done_callback(workers.discard)
+        self.task.add_done_callback(self.finalize)
+
+    def finalize(self,task):
+        # A Task cancelled before its first instruction never enters run() or
+        # the async generator's finally block. Release ownership in that case too.
+        self.finished=True
+        if not task.cancelled():task.exception()
+        if self.connected and self.queue.empty():self.queue.put_nowait(None)
+        if self.on_finish:
+            try:self.on_finish(task)
+            except Exception:logging.getLogger('campus').error('stream_finalization_failed: check storage and permissions')
 
     async def run(self):
         try:

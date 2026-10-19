@@ -31,7 +31,7 @@ PASSWORD='Test-Only-Password-2026'
 def env(tmp_path):
     # These fixtures test workflows with recorded answers, never a real provider.
     # Evidence-pipeline tests explicitly enable grounding and mock its boundaries.
-    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False)
+    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False,notice_semantic_review=False)
     app=create_app(cfg)
     return app,cfg
 
@@ -89,7 +89,8 @@ def test_health_and_authentication(env):
     headers=a.get('/').headers
     assert "frame-ancestors 'none'" in headers['content-security-policy']
     assert headers['x-content-type-options']=='nosniff'
-    assert a.get('/api/session').json()['ai']=={'configured':False,'model':'mimo-v2.6-pro'}
+    service=a.get('/api/session').json()['ai']
+    assert service['configured'] is False and service['model']=='mimo-v2.6-pro' and service['billing_channel']=='pay_as_you_go'
 
 
 def test_invite_single_use_and_password_policy(env):

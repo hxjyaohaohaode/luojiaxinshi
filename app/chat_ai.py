@@ -46,6 +46,8 @@ PROMPT='''你是珞珈信使，服务武汉大学师生，温和、清楚、具�
 def reply(settings,sources,messages,profile):
     if not settings.ai_api_key:
         raise AIError('问题和材料已保存。AI 尚未配置，填写 API 后可点击重试。')
+    from .context_engine import pack_history
+    messages,_,_=pack_history(messages)
     context={'personal_conditions':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
              'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections']} for s in sources]}
     materials=[{'type':'text','text':json.dumps(context,ensure_ascii=False)}]

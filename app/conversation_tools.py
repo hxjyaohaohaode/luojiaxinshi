@@ -133,6 +133,9 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                     output.append(remap(line,'content'))
                 return ''.join(output)
             conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(new,current['id'],(origin['title'][:90]+' · 分支'),now,now))
+            saved_context=conn.execute('SELECT * FROM conversation_context WHERE conversation_id=?',(cid,)).fetchone()
+            if saved_context:
+                conn.execute('INSERT INTO conversation_context VALUES(?,?,?,?,1)',(new,saved_context['project_id'],saved_context['topics'],saved_context['memory_enabled']))
             for s in sources:
                 conn.execute('INSERT INTO conversation_sources VALUES(?,?,?,?,?,?,?,?,?,?)',(mapping[s['id']],new,s['name'],s['kind'],s['content'],s['sha256'],s['status'],dumps(s['sections']),s['warning'],now))
                 full=conn.execute('SELECT * FROM material_library WHERE source_id=?',(s['id'],)).fetchone()

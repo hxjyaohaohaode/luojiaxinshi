@@ -4,10 +4,22 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
+
+
+def load_environment(path):
+    values=dotenv_values(path)
+    load_dotenv(path)
+    # Desktop launchers can inherit an old key from their parent process. The
+    # explicitly maintained local .env owns this credential. Production keeps
+    # injected environment precedence; other settings retain their old behavior.
+    if os.getenv('APP_ENV','local')=='local' and 'MIMO_API_KEY' in values:
+        os.environ['MIMO_API_KEY']=values['MIMO_API_KEY'] or ''
+
+
+load_environment(ROOT / ".env")
 
 
 @dataclass
@@ -42,6 +54,12 @@ class Settings:
     ai_composition_model: str = 'mimo-v2.6-pro'
     ai_output_tokens: int = 32768
     ai_workflow_timeout: int = 1800
+    registration_mode: str = 'public'
+    notice_input_tokens: int = 65536
+    ai_stage_summaries: bool = False
+    notice_semantic_review: bool = True
+    notice_review_model: str = 'mimo-v2.6-flash'
+    notice_fast_enabled: bool = False
 
     @classmethod
     def from_env(cls):
@@ -53,15 +71,22 @@ class Settings:
                      os.getenv("MIMO_BASE_URL", cls.ai_base_url).strip().rstrip("/"),
                      os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
                      int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
+        result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
+        if result.registration_mode not in {'public','invite'}:
+            raise ValueError('REGISTRATION_MODE 须为 public 或 invite')
+        result.notice_input_tokens=int(os.getenv('NOTICE_INPUT_TOKENS','65536'))
+        result.notice_semantic_review=os.getenv('NOTICE_SEMANTIC_REVIEW','true').lower() in {'true','1','yes'}
+        result.notice_review_model=os.getenv('MIMO_NOTICE_REVIEW_MODEL',cls.notice_review_model).strip()
+        fast_option=os.getenv('NOTICE_FAST_ENABLED','false').strip().lower()
+        if fast_option not in {'true','false','1','0','yes','no'}:raise ValueError('NOTICE_FAST_ENABLED 须为 true 或 false')
+        result.notice_fast_enabled=fast_option in {'true','1','yes'}
+        if not 4096 <= result.notice_input_tokens <= 900000:
+            raise ValueError('NOTICE_INPUT_TOKENS 须为 4096—900000')
         parsed = urlparse(result.origin)
         for attr, key in [('asr_model','MIMO_ASR_MODEL'),('tts_model','MIMO_TTS_MODEL'),
                           ('voice_design_model','MIMO_VOICE_DESIGN_MODEL'),('voice_clone_model','MIMO_VOICE_CLONE_MODEL'),
                           ('tts_voice','MIMO_TTS_VOICE')]:
             setattr(result,attr,os.getenv(key,getattr(cls,attr)).strip())
-        expected = {'ai_model':'mimo-v2.6-pro','asr_model':'mimo-v2.5-asr','tts_model':'mimo-v2.5-tts',
-                    'voice_design_model':'mimo-v2.5-tts-voicedesign','voice_clone_model':'mimo-v2.5-tts-voiceclone'}
-        if any(getattr(result,k)!=v for k,v in expected.items()):
-            raise ValueError('MiMo 模型配置与当前适配器不匹配，请使用 .env.example 中的五个模型 ID')
         if result.tts_voice not in {'mimo_default','冰糖','茉莉','苏打','白桦','Mia','Chloe','Milo','Dean'}:
             raise ValueError('MIMO_TTS_VOICE 必须是小米官方预置音色')
         result.qq_bot_app_id=os.getenv('QQ_BOT_APP_ID','').strip()
@@ -75,12 +100,9 @@ class Settings:
         result.ai_supports_json=os.getenv('AI_SUPPORTS_JSON','true').lower() in {'true','1','yes'}
         result.ai_supports_tools=os.getenv('AI_SUPPORTS_TOOLS','false').lower() in {'true','1','yes'}
         result.ai_grounding=os.getenv('AI_GROUNDING','true').lower() in {'true','1','yes'}
+        result.ai_stage_summaries=os.getenv('AI_STAGE_SUMMARIES','false').lower() in {'true','1','yes'}
         result.ai_summary_model=os.getenv('MIMO_SUMMARY_MODEL',cls.ai_summary_model).strip()
-        if result.ai_summary_model!='mimo-v2.6-flash':
-            raise ValueError('MIMO_SUMMARY_MODEL 须为 mimo-v2.6-flash')
         result.ai_composition_model=os.getenv('MIMO_COMPOSITION_MODEL',cls.ai_composition_model).strip()
-        if result.ai_composition_model not in {'mimo-v2.6-flash','mimo-v2.6-pro'}:
-            raise ValueError('MIMO_COMPOSITION_MODEL 须为 mimo-v2.6-flash 或 mimo-v2.6-pro')
         result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS','32768'))
         result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS','32768'))
         result.ai_workflow_timeout=int(os.getenv('AI_WORKFLOW_TIMEOUT_SECONDS','1800'))
@@ -98,10 +120,8 @@ class Settings:
             raise ValueError("生产模式要求 HTTPS APP_ORIGIN")
         if not result.production and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
             raise ValueError("对外提供服务须使用 production 模式及 HTTPS")
-        ai_url=urlparse(result.ai_base_url)
-        if (ai_url.scheme != "https" or ai_url.hostname != 'api.xiaomimimo.com' or ai_url.port not in {None,443}
-                or ai_url.path != '/v1' or ai_url.username or ai_url.password or ai_url.query or ai_url.fragment):
-            raise ValueError("MIMO_BASE_URL 须为小米按量 API 端点 https://api.xiaomimimo.com/v1")
+        from .model_catalog import validate
+        validate(result)
         if not 10 <= result.ai_timeout <= 180 or not 1 <= result.ai_daily_limit <= 1000:
             raise ValueError('AI 超时须为 10—180 秒，每账号每日上限须为 1—1000 次')
         return result

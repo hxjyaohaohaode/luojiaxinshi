@@ -26,7 +26,7 @@ from .calendar_export import build_calendar, eligible
 from .config import ROOT, Settings
 from .db import Database, audit, dumps, ident
 from .documents import MAX_CHARS, MAX_FILE, blockers, file_source, text_source, total_chars
-from .models import (CalendarRequest, Confirm, EditCache, Generate, Login, PasswordChange, Profile, Register, Recover,
+from .models import (CalendarRequest, Confirm, EditCache, Generate, Login, PasswordChange, Profile, ProfilePatch, Register, Recover,
                      TaskData, TaskUpdate, Version, safe_url)
 from .security import DUMMY_PASSWORD, hash_password, new_invite, rate_limit, token_hash, verify_password
 from .workspace import install_workspace, conversation_detail
@@ -34,6 +34,8 @@ from .genui_api import feature_settings
 from .integrations import install_integrations
 from .speech import install_speech
 from .schedule import install_schedule, serialize as serialize_arrangement, own as own_arrangement
+from .workflow import install_workflow, enrich_tasks, notice_changes, require_dependency_ready, reconcile_materials
+from .execution import notice_processing
 
 MAX_BODY = 26*1024*1024
 CST = timezone(timedelta(hours=8))
@@ -97,9 +99,17 @@ class RequestGuard:
 def create_app(settings=None):
     settings=settings or Settings.from_env()
     db=Database(settings.data_dir/'campus.sqlite3')
+    from .execution import Runtime,HEARTBEAT_SECONDS
+    runtime=Runtime(db)
 
     @asynccontextmanager
     async def lifespan(application):
+        await run_in_threadpool(runtime.tick)
+        async def heartbeat():
+            while True:
+                await asyncio.sleep(HEARTBEAT_SECONDS)
+                try:await run_in_threadpool(runtime.tick)
+                except Exception:logging.getLogger('campus').error('execution_heartbeat_failed: check storage and permissions')
         async def maintain():
             while True:
                 try:
@@ -109,6 +119,7 @@ def create_app(settings=None):
                     logging.getLogger('campus').error('daily_backup_failed: check storage and permissions')
                 await asyncio.sleep(3600)
         worker=asyncio.create_task(maintain())
+        lease_worker=asyncio.create_task(heartbeat())
         try:
             yield
         finally:
@@ -120,9 +131,13 @@ def create_app(settings=None):
                 await worker
             except asyncio.CancelledError:
                 pass
+            lease_worker.cancel()
+            await asyncio.gather(lease_worker,return_exceptions=True)
+            await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
     app.state.db, app.state.settings = db, settings
+    app.state.execution=runtime
     app.add_middleware(RequestGuard,origin=settings.origin,production=settings.production)
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=[urlparse(settings.origin).hostname])
     heavy_lock=threading.BoundedSemaphore(2)
@@ -152,6 +167,9 @@ def create_app(settings=None):
             raise HTTPException(403,'仅管理员可使用')
         return current
 
+    from .execution import install as install_execution
+    install_execution(app,db,user)
+
     def own_notice(conn, notice_id, uid):
         row=conn.execute('SELECT * FROM notices WHERE id=? AND user_id=?',(notice_id,uid)).fetchone()
         if row is None:
@@ -168,9 +186,10 @@ def create_app(settings=None):
         if record['version']!=version:
             raise HTTPException(409,'内容已在其他页面更新，请刷新后核对；本次修改未覆盖新版本')
 
-    def get_sources(conn, nid, active_only=False):
+    def get_sources(conn, nid, active_only=False, include_content=False):
         records=[]
-        for row in conn.execute('SELECT id,name,kind,sha256,status,sections,warning,active,created_at FROM sources WHERE notice_id=? ORDER BY created_at,rowid',(nid,)):
+        columns='id,name,kind,sha256,status,sections,warning,active,created_at'+(',content' if include_content else '')
+        for row in conn.execute('SELECT '+columns+' FROM sources WHERE notice_id=? ORDER BY created_at,rowid',(nid,)):
             source=dict(row)
             source['sections']=json.loads(source['sections'])
             if not active_only or source['active']:
@@ -205,8 +224,9 @@ def create_app(settings=None):
 
     def detailed_notice(conn,nid,uid):
         record=own_notice(conn,nid,uid)
+        active=notice_processing(conn,record,settings.ai_timeout)
         record.pop('processing_token',None)
-        if record['status']=='processing' and (record['processing_at'] or 0)<time.time()-settings.ai_timeout-30:
+        if record['status']=='processing' and not active:
             record['status']='failed'
             record['error']='上次处理已中断，可以重试'
         record['draft']=json.loads(record['draft']) if record['draft'] else None
@@ -214,7 +234,21 @@ def create_app(settings=None):
         record['blockers']=blockers(record,[s for s in record['sources'] if s['active']])
         record['character_count']=total_chars([s for s in record['sources'] if s['active']])
         record['tasks']=[serialize_task(t) for t in conn.execute('SELECT * FROM tasks WHERE notice_id=? ORDER BY created_at,rowid',(nid,))]
-        record['calls']=[dict(c) for c in conn.execute('SELECT model,status,input_tokens,output_tokens,created_at FROM ai_calls WHERE notice_id=? ORDER BY created_at DESC LIMIT 10',(nid,))]
+        enrich_tasks(conn, record['tasks'])
+        record['changes'] = notice_changes(conn, nid, uid)
+        from .notice_progress import decode
+        record['calls']=[]
+        for call in conn.execute('''SELECT a.model,a.status,a.input_tokens,a.output_tokens,a.created_at,m.metrics
+            FROM ai_calls a LEFT JOIN execution_metrics m ON m.execution_id=a.id
+            WHERE a.notice_id=? ORDER BY a.created_at DESC,a.rowid DESC LIMIT 10''',(nid,)):
+            value=dict(call);value['metrics']=decode(value['metrics']);record['calls'].append(value)
+        run=conn.execute('''SELECT status,stage,started_at FROM executions WHERE notice_id=?
+            ORDER BY started_at DESC,rowid DESC LIMIT 1''',(nid,)).fetchone()
+        record['execution']=dict(run) if run else None
+        from .notice_resolution import receipt
+        record['quality_resolution_contract']=1
+        record['review_observation_contract']=1
+        record['quality_receipt']=receipt(conn,nid) if record['status']=='confirmed' else None
         return record
 
     def session_response(uid, extra=None):
@@ -236,11 +270,12 @@ def create_app(settings=None):
 
     @app.get('/api/session')
     def session(current=Depends(user)):
+        from .model_catalog import public_configuration
         with db.connect() as conn:
             genui=feature_settings(conn,current['id'],settings)
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
                         'role':current['role'],'profile':json.loads(current['profile'])},'csrf':current['csrf'],
-                'ai':{'configured':bool(settings.ai_api_key),'model':settings.ai_model},'genui':genui,
+                'ai':public_configuration(settings),'genui':genui,
                 'environment':'production' if settings.production else 'local'}
 
     @app.post('/api/auth/login')
@@ -255,8 +290,14 @@ def create_app(settings=None):
             raise HTTPException(401,'用户名或密码错误')
         return session_response(record['id'])
 
+    @app.get('/api/auth/policy')
+    def registration_policy():
+        return {'registration_mode': settings.registration_mode}
+
     @app.post('/api/auth/register')
     def register(payload: Register, request: Request):
+        if settings.registration_mode == 'invite' and not payload.invite:
+            raise HTTPException(403,'当前仅开放受邀试点，请使用维护者提供的一次性邀请链接')
         rate_limit(db,'register:'+(request.client.host if request.client else 'unknown'),15,900)
         password=hash_password(payload.password)
         uid=ident()
@@ -322,6 +363,23 @@ def create_app(settings=None):
             conn.execute('UPDATE users SET profile=? WHERE id=?',(payload.model_dump_json(),current['id']))
         return {'ok':True}
 
+    @app.patch('/api/profile')
+    def patch_profile(payload:ProfilePatch,current=Depends(user)):
+        changes=payload.changes.model_dump(exclude_unset=True)
+        expected=payload.expected.model_dump(exclude_unset=True)
+        with db.connect(write=True) as conn:
+            row=conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()
+            if row is None:
+                raise HTTPException(401,'请重新登录')
+            saved=Profile.model_validate_json(row['profile']).model_dump()
+            conflicts=[key for key,value in changes.items() if saved[key]!=expected[key] and saved[key]!=value]
+            if conflicts:
+                raise HTTPException(409,{'code':'profile_conflict','message':'这些资料已在另一处修改。本次填写已保留，请先核对最新值。',
+                                         'fields':conflicts,'profile':saved})
+            updated=Profile.model_validate({**saved,**changes})
+            conn.execute('UPDATE users SET profile=? WHERE id=?',(updated.model_dump_json(),current['id']))
+        return {'profile':updated.model_dump()}
+
     @app.post('/api/admin/invites')
     def invite(current=Depends(admin)):
         rate_limit(db,'invite:'+current['id'],30,86400)
@@ -335,17 +393,26 @@ def create_app(settings=None):
             if not conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(key[5:],uid)).fetchone():
                 raise HTTPException(404,'对话不存在或无权访问')
             return None
-        matched=re.fullmatch(r'(notice|task|arrangement):([a-f0-9]{32}):([1-9][0-9]{0,8})',key)
+        workflow_key = re.fullmatch(r'(workflow|review):([a-f0-9]{32}):([1-9][0-9]{0,8}):([0-9]{1,9})',key)
+        if workflow_key:
+            kind,tid, task_version, workflow_version = workflow_key.groups()
+            record = own_task(conn, tid, uid)
+            if check_version:
+                expect_version(record, int(task_version))
+                saved = conn.execute('SELECT version FROM '+('task_reviews' if kind=='review' else 'task_workflows')+' WHERE task_id=?', (tid,)).fetchone()
+                expect_version({'version': saved['version'] if saved else 0}, int(workflow_version))
+            return record['notice_id']
+        matched=re.fullmatch(r'(notice|change|task|arrangement):([a-f0-9]{32}):([1-9][0-9]{0,8})',key)
         if matched is None:
             raise HTTPException(422,'编辑草稿标识不合法')
         kind,rid,version=matched.groups()
         if kind=='arrangement':
             own_arrangement(conn,rid,uid,int(version) if check_version else None)
             return None
-        record=own_notice(conn,rid,uid) if kind=='notice' else own_task(conn,rid,uid)
+        record=own_notice(conn,rid,uid) if kind in {'notice','change'} else own_task(conn,rid,uid)
         if check_version:
             expect_version(record,int(version))
-        return rid if kind=='notice' else record['notice_id']
+        return rid if kind in {'notice','change'} else record['notice_id']
 
     @app.get('/api/edit-cache/{key}')
     def read_cache(key:str,current=Depends(user)):
@@ -548,48 +615,110 @@ def create_app(settings=None):
             conn.execute("UPDATE notices SET draft=?,version=version+1,draft_version=version+1,status='draft',error=NULL,processing_token=NULL,updated_at=? WHERE id=?",(dumps(draft),int(time.time()),nid))
             return detailed_notice(conn,nid,current['id'])
 
+    @app.get('/api/notices/{nid}/processing')
+    def notice_status(nid:str,current=Depends(user)):
+        with db.connect() as conn:
+            record=own_notice(conn,nid,current['id'])
+            active=notice_processing(conn,record,settings.ai_timeout)
+            run=conn.execute('''SELECT status,stage,started_at FROM executions WHERE notice_id=?
+                ORDER BY started_at DESC,rowid DESC LIMIT 1''',(nid,)).fetchone()
+            return {'status':'failed' if record['status']=='processing' and not active else record['status'],
+                'execution':dict(run) if run else None,
+                'elapsed_seconds':max(0,int(time.time())-run['started_at']) if run and active else None}
+
     @app.post('/api/notices/{nid}/generate')
     def generate(nid:str,payload:Generate,current=Depends(user)):
         if not settings.ai_api_key:
             raise HTTPException(503,'尚未配置 AI API Key。可先使用手工整理，配置完成后重试')
+        from .model_catalog import notice_settings
+        try:run_settings=notice_settings(settings,payload.processing_mode)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from None
         if not heavy_lock.acquire(blocking=False):
             raise HTTPException(429,'当前处理繁忙，请稍后重试')
         call_id=ident()
         job=ident()
         try:
-            rate_limit(db,'ai:'+current['id']+':'+datetime.now(CST).date().isoformat(),settings.ai_daily_limit,86400)
-            with db.connect(write=True) as conn:
+            with db.connect() as conn:
                 record=own_notice(conn,nid,current['id'])
                 expect_version(record,payload.version)
-                if record['processing_token'] and record['processing_at']>time.time()-settings.ai_timeout-30:
+                if notice_processing(conn,record,settings.ai_timeout):
                     raise HTTPException(409,'该通知正在生成，请等待当前请求完成')
-                sources=get_sources(conn,nid,True)
-                if not sources or total_chars(sources)==0 or total_chars(sources)>MAX_CHARS:
+                sources=get_sources(conn,nid,True,include_content=True)
+                images=[s for s in sources if s['kind'] in {'png','jpg','jpeg','webp'} and s['status']!='failed']
+                if len(images)>4:
+                    raise HTTPException(422,'一次最多识别 4 张图片，请先整理当前材料；未静默忽略图片')
+                if not sources or (total_chars(sources)==0 and not images) or total_chars(sources)>MAX_CHARS:
                     raise HTTPException(422,'当前材料没有可处理文字或合计超过 10000 字')
+                try:
+                    ai.prepare_notice_input(run_settings,record,sources,json.loads(current['profile']))
+                except ai.AIError as exc:
+                    raise HTTPException(422,str(exc)) from None
+            # Local rejection must not consume a model attempt or erase a valid draft.
+            rate_limit(db,'ai:'+current['id']+':'+datetime.now(CST).date().isoformat(),settings.ai_daily_limit,86400)
+            with db.connect(write=True) as conn:
+                latest=own_notice(conn,nid,current['id'])
+                expect_version(latest,payload.version)
+                if notice_processing(conn,latest,settings.ai_timeout):
+                    raise HTTPException(409,'该通知正在生成，请等待当前请求完成')
                 conn.execute("UPDATE notices SET status='processing',processing_token=?,processing_at=?,error=NULL WHERE id=?",(job,int(time.time()),nid))
-                conn.execute('INSERT INTO ai_calls(id,user_id,notice_id,model,status,created_at) VALUES(?,?,?,?,?,?)',(call_id,current['id'],nid,settings.ai_model,'processing',int(time.time())))
-                audit(conn,current['id'],nid,'ai_processing_consent',after={'model':settings.ai_model,'source_ids':[s['id'] for s in sources],'profile':json.loads(current['profile'])})
+                conn.execute('INSERT INTO ai_calls(id,user_id,notice_id,model,status,created_at) VALUES(?,?,?,?,?,?)',(call_id,current['id'],nid,run_settings.ai_model,'processing',int(time.time())))
+                runtime.start(conn,call_id,current['id'],'notice',nid,job)
+                from .execution import stage
+                stage(conn,call_id,'extracting')
+                audit(conn,current['id'],nid,'ai_processing_consent',after={'model':run_settings.ai_model,
+                    'review_model':run_settings.notice_review_model if run_settings.notice_semantic_review else None,
+                    'processing_mode':payload.processing_mode,'maximum_requests':2 if run_settings.notice_semantic_review else 1,
+                    'source_ids':[s['id'] for s in sources],'profile':json.loads(current['profile'])})
             try:
-                draft,usage=ai.generate(settings,record,sources,json.loads(current['profile']))
+                from .notice_progress import CURRENT,Trace,save
+                def progress(name):
+                    with db.connect(write=True) as conn:
+                        live=conn.execute('SELECT n.version,n.processing_token,u.profile FROM notices n JOIN users u ON u.id=n.user_id WHERE n.id=? AND n.user_id=?',(nid,current['id'])).fetchone()
+                        if (not live or live['version']!=payload.version or live['processing_token']!=job
+                            or json.loads(live['profile'])!=json.loads(current['profile'])
+                            or not notice_processing(conn,{'id':nid,'processing_token':job},settings.ai_timeout)):
+                            raise ai.AIContextChanged('材料、个人条件或本次执行状态已变化，已停止旧结果处理；请核对当前内容后重新整理。')
+                        stage(conn,call_id,name)
+                        save(conn,call_id,trace)
+                trace=Trace(progress);trace_token=CURRENT.set(trace)
+                try:
+                    draft,usage=ai.generate(run_settings,record,sources,json.loads(current['profile']))
+                finally:
+                    CURRENT.reset(trace_token)
+                    with db.connect(write=True) as conn:save(conn,call_id,trace)
             except ai.AIError as exc:
+                changed=isinstance(exc,ai.AIContextChanged)
                 with db.connect(write=True) as conn:
-                    conn.execute("UPDATE ai_calls SET status='failed' WHERE id=?",(call_id,))
+                    returned_usage=exc.usage or {}
+                    conn.execute("UPDATE ai_calls SET status=CASE WHEN status='processing' THEN ? ELSE status END,input_tokens=?,output_tokens=? WHERE id=?",('discarded' if changed else 'failed',returned_usage.get('input_tokens'),returned_usage.get('output_tokens'),call_id))
                     conn.execute("UPDATE notices SET status='failed',error=?,processing_token=NULL WHERE id=? AND processing_token=?",(str(exc),nid,job))
-                raise HTTPException(502,str(exc)) from None
+                    runtime.finish(conn,call_id,'discarded' if changed else 'failed','context_changed' if changed else 'provider_or_validation')
+                raise HTTPException(409 if changed else 502,str(exc)) from None
             with db.connect(write=True) as conn:
                 conn.execute("UPDATE ai_calls SET status='succeeded',input_tokens=?,output_tokens=? WHERE id=?",(usage['input_tokens'],usage['output_tokens'],call_id))
+                profile_row=conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()
+                if profile_row and json.loads(profile_row['profile'])!=json.loads(current['profile']):
+                    conn.execute("UPDATE notices SET version=version+1,status='failed',error='生成期间个人条件已变化，请核对后重新整理。',processing_token=NULL WHERE id=? AND processing_token=?",(nid,job))
                 cursor=conn.execute("UPDATE notices SET draft=?,draft_version=version+1,version=version+1,status='draft',processing_token=NULL,updated_at=? WHERE id=? AND user_id=? AND version=? AND processing_token=?",
                                     (dumps(draft),int(time.time()),nid,current['id'],payload.version,job))
                 if cursor.rowcount!=1:
                     conn.execute("UPDATE ai_calls SET status='discarded' WHERE id=?",(call_id,))
                     result=None
+                    runtime.finish(conn,call_id,'discarded','context_changed')
                 else:
+                    runtime.finish(conn,call_id,'succeeded','draft_ready')
                     result=detailed_notice(conn,nid,current['id'])
             if result is None:
                 raise HTTPException(409,'生成期间材料已改变，本次旧草稿已丢弃，请刷新后重新生成')
             return result
         finally:
-            heavy_lock.release()
+            try:
+                with db.connect(write=True) as conn:
+                    abandoned=conn.execute("UPDATE notices SET status='failed',error='处理已中断，请核对后重新整理。',processing_token=NULL,processing_at=NULL WHERE id=? AND processing_token=?",(nid,job)).rowcount
+                    if abandoned:
+                        conn.execute("UPDATE ai_calls SET status='failed' WHERE id=? AND status='processing'",(call_id,))
+                        runtime.finish(conn,call_id,'failed','interrupted_request')
+            finally:heavy_lock.release()
 
     def validate_task(data,sources,global_blockers,enforce_future=True):
         ai.check_evidence(data.evidence+data.deadline_evidence,sources)
@@ -617,6 +746,8 @@ def create_app(settings=None):
             expect_version(record,payload.version)
             if record['draft_version']!=payload.version or not record['draft']:
                 raise HTTPException(409,'请先生成或手工建立当前版本的草稿')
+            from .notice_resolution import require_confirmation
+            quality_result=require_confirmation(json.loads(record['draft']),payload)
             sources=get_sources(conn,nid)
             problems=blockers(record,[s for s in sources if s['active']])
             if len(set(payload.replacements.values()))!=len(payload.replacements):
@@ -636,17 +767,25 @@ def create_app(settings=None):
                     if old['notice_id']!=nid:
                         raise HTTPException(422,'只可更新同一通知下的待办')
                     expect_version(old,payload.target_versions.get(tid))
-                    value['notes']=json.loads(old['data'])['notes']
+                    previous_data=json.loads(old['data'])
+                    for personal_field in ('notes','planned_at','reminder_at'):
+                        value[personal_field]=previous_data.get(personal_field)
                     conn.execute('UPDATE tasks SET data=?,version=version+1,updated_at=? WHERE id=?',(dumps(value),now,tid))
+                    reconcile_materials(conn, tid, value['materials'])
+                    from .action_review import record_change
+                    record_change(conn,current['id'],tid,previous_data,value,old['status'],old['status'])
                     audit(conn,current['id'],nid,'confirm_revision',before=json.loads(old['data']),after=value,task_id=tid)
                 else:
                     tid=ident()
                     conn.execute('INSERT INTO tasks(id,user_id,notice_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)',(tid,current['id'],nid,dumps(value),now,now))
                     audit(conn,current['id'],nid,'confirm_task',after=value,task_id=tid)
                 ids.append(tid)
+            if payload.plans:
+                from .action_plans import apply_confirmed_plans
+                apply_confirmed_plans(conn,current['id'],nid,ids,payload.plans,payload.replacements,int(time.time()))
             conn.execute('INSERT INTO confirmations VALUES(?,?,?)',(nid,payload.version,dumps(ids)))
             conn.execute("UPDATE notices SET status='confirmed',updated_at=? WHERE id=?",(int(time.time()),nid))
-            audit(conn,current['id'],nid,'confirm_draft',before=json.loads(record['draft']),after={'task_ids':ids,'replacements':payload.replacements})
+            audit(conn,current['id'],nid,'confirm_draft',before=json.loads(record['draft']),after={'task_ids':ids,'replacements':payload.replacements,'quality_resolution':payload.quality_resolution,'source_indices':payload.source_indices,'quality_result':quality_result})
         return {'task_ids':ids,'replayed':False}
 
     @app.get('/api/tasks')
@@ -657,13 +796,17 @@ def create_app(settings=None):
             for row in conn.execute("SELECT s.id,s.notice_id,s.name,s.kind,s.status,length(s.content) AS size FROM sources s JOIN notices n ON s.notice_id=n.id WHERE n.user_id=? AND s.active=1 AND s.content IS NOT NULL ORDER BY s.created_at",(current['id'],)):
                 attachments.setdefault(row['notice_id'],[]).append(dict(row))
             for item in items:item['attachments']=attachments.get(item['notice_id'],[])
-            return items
+            return enrich_tasks(conn, items)
 
     @app.put('/api/tasks/{tid}')
     def update_task(tid:str,payload:TaskUpdate,current=Depends(user)):
         with db.connect(write=True) as conn:
             old=own_task(conn,tid,current['id'])
             expect_version(old,payload.version)
+            if payload.status == 'done' and old['status'] != 'done':
+                from .action_review import require_reviewed
+                require_reviewed(conn,tid)
+                require_dependency_ready(conn, tid, current['id'])
             record=own_notice(conn,old['notice_id'],current['id'])
             sources=get_sources(conn,record['id'])
             try:
@@ -677,9 +820,12 @@ def create_app(settings=None):
             except ValueError as exc:
                 raise HTTPException(422,str(exc)) from None
             conn.execute('UPDATE tasks SET data=?,status=?,version=version+1,updated_at=? WHERE id=?',(dumps(value),payload.status,int(time.time()),tid))
+            reconcile_materials(conn, tid, value['materials'])
+            from .action_review import record_change
+            record_change(conn,current['id'],tid,previous,value,old['status'],payload.status)
             audit(conn,current['id'],old['notice_id'],'update_task',before={'data':json.loads(old['data']),'status':old['status']},
                   after={'data':value,'status':payload.status,'reason':payload.reason},task_id=tid)
-            return serialize_task(own_task(conn,tid,current['id']))
+            return enrich_tasks(conn, [serialize_task(own_task(conn,tid,current['id']))])[0]
 
     @app.get('/api/notices/{nid}/history')
     def history(nid:str,current=Depends(user)):
@@ -695,6 +841,12 @@ def create_app(settings=None):
                 row=own_task(conn,tid,current['id'])
                 expect_version(row,payload.versions.get(tid))
                 task=serialize_task(row)
+                if task['status']=='pending':
+                    from .action_review import require_reviewed
+                    require_reviewed(conn,tid)
+                if task['status']!='cancelled':
+                    from .action_plans import require_task_gates
+                    require_task_gates(conn,tid)
                 record=own_notice(conn,row['notice_id'],current['id'])
                 problems=blockers(record,get_sources(conn,row['notice_id'],True))
                 if problems and not task['data']['resolution_note']:
@@ -717,8 +869,11 @@ def create_app(settings=None):
             chats=[conversation_detail(conn,r['id'],current['id'],settings) for r in conn.execute('SELECT id FROM conversations WHERE user_id=?',(current['id'],)).fetchall()]
             catalog=[json.loads(r['data']) for r in conn.execute('SELECT data FROM source_catalog WHERE user_id=?',(current['id'],))]
             arrangements=[serialize_arrangement(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=?',(current['id'],))]
+            memory_projects=[dict(r) for r in conn.execute('SELECT * FROM memory_projects WHERE user_id=?',(current['id'],))]
+            from .memory_policy import rows_for
+            memories=rows_for(conn,current['id'])
         result={'format_version':1,'exported_at':datetime.now(CST).isoformat(),'profile':json.loads(current['profile']),
-                'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'note':'含原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
+                'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'note':'含记忆、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
         return Response(dumps(result),media_type='application/json',headers={'Content-Disposition':'attachment; filename="campus-data.json"'})
 
     @app.delete('/api/notices/{nid}')
@@ -726,6 +881,8 @@ def create_app(settings=None):
         with db.connect(write=True) as conn:
             record=own_notice(conn,nid,current['id'])
             expect_version(record,payload.version)
+            from .action_review import record_deletion
+            record_deletion(conn,current['id'],nid)
             conn.execute('DELETE FROM notices WHERE id=?',(nid,))
         with db.connect() as conn:
             conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
@@ -734,9 +891,13 @@ def create_app(settings=None):
     from .data_transfer import install_data_transfer
     install_data_transfer(app,db,user)
     install_workspace(app,db,settings,user,heavy_lock)
+    from .memory import install_memory
+    install_memory(app,db,user)
     install_integrations(app,db,settings,user,admin)
     install_speech(app,db,settings,user,heavy_lock)
     install_schedule(app,db,user)
+    install_workflow(app, db, user, own_notice, own_task, expect_version, serialize_task,
+                     get_sources, store_source, invalidate, validate_task)
     app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 
     @app.get('/')

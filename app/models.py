@@ -1,5 +1,5 @@
 from datetime import date, datetime, time
-from typing import Literal
+from typing import Annotated, Literal
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -62,6 +62,17 @@ class Profile(Strict):
         return value
 
 
+class ProfilePatch(Strict):
+    changes: Profile
+    expected: Profile
+
+    @model_validator(mode='after')
+    def same_fields(self):
+        if self.changes.model_fields_set != self.expected.model_fields_set:
+            raise ValueError('每项资料修改都需要对应的原值，请重新打开表单')
+        return self
+
+
 class Recover(Login):
     recovery_code: str = Field(min_length=20,max_length=100)
 
@@ -82,6 +93,42 @@ class Evidence(Strict):
 class Fact(Strict):
     value: str = Field(default='', max_length=2000)
     evidence: list[Evidence] = Field(default_factory=list, max_length=20)
+
+
+class DraftPlan(Strict):
+    action_kind: Literal['unclassified','required','optional','verification'] = 'unclassified'
+    depends_on: list[int] = Field(default_factory=list,max_length=30)
+    conditions: list[str] = Field(default_factory=list,max_length=8)
+
+    @field_validator('depends_on',mode='before')
+    @classmethod
+    def valid_indexes(cls,value):
+        if not isinstance(value,list) or any(type(i) is not int or not 0<=i<30 for i in value):
+            raise ValueError('前置步骤须为有效的步骤序号')
+        return list(dict.fromkeys(value))
+
+    @field_validator('conditions')
+    @classmethod
+    def bounded_conditions(cls,value):
+        if any(not 2<=len(item.strip())<=400 for item in value):raise ValueError('每项外部条件须为 2 至 400 字')
+        return list(dict.fromkeys(item.strip() for item in value))
+
+
+class ConfirmPlan(DraftPlan):
+    participation: Literal['undecided','joined','declined'] = 'undecided'
+    workflow_version: int | None = Field(default=None,ge=0)
+
+
+class ActionCondition(Strict):
+    id: str = Field(min_length=1,max_length=60,pattern=r'^[a-zA-Z0-9_.:-]+$')
+    text: str = Field(min_length=2,max_length=400)
+    state: Literal['unknown','met','not_met'] = 'unknown'
+    note: str = Field(default='',max_length=1500)
+
+    @model_validator(mode='after')
+    def needs_verification_note(self):
+        if self.state!='unknown' and len(self.note)<2:raise ValueError('核实条件时请记录实际依据')
+        return self
 
 
 class TaskData(Strict):
@@ -151,6 +198,30 @@ class Extraction(Strict):
     facts: dict[str, Fact]
     tasks: list[TaskData] = Field(max_length=30)
     warnings: list[str] = Field(default_factory=list, max_length=30)
+    plans: dict[int,DraftPlan] = Field(default_factory=dict,max_length=30)
+
+
+DraftIndex = Annotated[int, Field(strict=True, ge=0, le=29)]
+
+
+class IssueResolution(Strict):
+    issue_index: int = Field(strict=True, ge=0, le=23)
+    action: Literal['changed','excluded','acknowledged','disagreed']
+    note: str = Field(default='',max_length=700)
+    task_indices: list[DraftIndex] = Field(default_factory=list,max_length=30)
+
+
+class ReviewObservation(Strict):
+    """Untrusted browser observation, never an end-to-end or verified study time."""
+    method: Literal['visible_idle_60s_v1']
+    active_ms: int = Field(strict=True,ge=0,le=28_800_000)
+    editing_ms: int = Field(strict=True,ge=0,le=28_800_000)
+
+    @model_validator(mode='after')
+    def editing_is_part_of_review(self):
+        if self.editing_ms>self.active_ms:
+            raise ValueError('编辑区活跃时间不能超过页面活跃时间')
+        return self
 
 
 class Confirm(Strict):
@@ -159,6 +230,12 @@ class Confirm(Strict):
     reviewed: Literal[True]
     replacements: dict[int, str] = Field(default_factory=dict)
     target_versions: dict[str, int] = Field(default_factory=dict)
+    plans: dict[int,ConfirmPlan] = Field(default_factory=dict,max_length=30)
+    quality_resolution: str = Field(default='',max_length=2000)
+    source_indices: list[DraftIndex | None] = Field(default_factory=list,max_length=30)
+    issue_resolutions: list[IssueResolution] = Field(default_factory=list,max_length=24)
+    manual_quality_reviewed: bool = Field(default=False,strict=True)
+    review_observation: ReviewObservation | None = None
 
 
 class Version(Strict):
@@ -167,6 +244,7 @@ class Version(Strict):
 
 class Generate(Version):
     allow_external_processing: Literal[True]
+    processing_mode: Literal['configured','fast'] = 'configured'
 
 
 class TaskUpdate(Version):

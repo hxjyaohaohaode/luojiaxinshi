@@ -30,7 +30,7 @@ export function calendarEntries(arrangements,tasks,from,to,{showDone=false}={}){
     }
   }
   for(const task of tasks){
-    if(task.status==='cancelled'||(!showDone&&task.status==='done')||task.data.scope!=='personal')continue;
+    if(task.status==='cancelled'||(task.action_excluded&&task.status==='pending')||(!showDone&&task.status==='done')||task.data.scope!=='personal')continue;
     const d=task.data,base={id:task.id,source:'task',title:d.title,location:d.location,notes:d.details,done:task.status==='done',version:task.version};
     if(d.due_date&&d.due_date>=from&&d.due_date<=to)entries.push({...base,key:task.id+':due',kind:'deadline',day:d.due_date,start:d.due_time,end:null,allDay:!d.due_time,verified:d.deadline_confirmed});
     if(d.planned_at){const day=dayKey(d.planned_at),start=localTime(d.planned_at);if(day>=from&&day<=to)entries.push({...base,key:task.id+':plan',kind:'plan',day,start,end:null,allDay:false,verified:true});}

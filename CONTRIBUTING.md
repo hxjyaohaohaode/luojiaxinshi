@@ -46,17 +46,18 @@ npm audit --omit=dev
 
 ## 分支与协作
 
-从最新 `main` 建立自己的分支，例如 `feat/calendar-filter` 或 `fix/mobile-alignment`。小步提交并发起 Pull Request，描述实际问题、修改后的行为、验证结果与未验证项。不要直接把其他人的本机数据库同步进仓库。
+当前仓库统一保留 `main` 分支，维护者按项目要求直接更新 `main`。开始修改前先同步远端，提交前完成相关检查，并在提交说明中记录实际问题、修改后的行为、验证结果与未验证项。不要直接把其他人的本机数据库同步进仓库。
 
 ```sh
 git switch main
-git pull --ff-only
-git switch -c feat/your-change
+git pull --ff-only origin main
 # 完成修改与检查后
 git add 具体修改的文件
 git commit -m "描述问题和修改"
-git push -u origin feat/your-change
+git push origin main
 ```
+
+如果远端在本地修改期间新增提交，先获取并审阅差异，再合并和验证；不要通过强制推送覆盖他人的修改。清理其他分支前，必须确认其中的独有提交已保留在 `main` 中。
 
 不要使用 force push、破坏性数据库迁移或提交真实用户导出文件。`data/`、`.env*`、备份、日志、验收数据、数据库文件和私钥都已排除；`.env.example` 是可以提交的空配置示例。上传测试附件时使用合成内容。历史资料与代码不一致时，以当前代码、README 和明确标注的验收记录为准。
 

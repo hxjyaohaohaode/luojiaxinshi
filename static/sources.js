@@ -1,3 +1,4 @@
+import {captureUiContext,beginFormFeedback} from './ui-request.js';
 import {brandMotion} from './motion.js';
 import {searchControls,WorkspaceSearch} from './workspace-search.js';
 const $=(s)=>document.querySelector(s);
@@ -80,9 +81,9 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     }catch(error){toast(error.message,true);}finally{b.disabled=false;}
   });
   document.addEventListener('submit',async e=>{
-    const form=e.target;if(form.dataset.workspaceForm!=='source-catalog')return;e.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;submit.disabled=true;const routeId=state.renderId,selected=editing;
-    try{const fd=new FormData(form),payload=Object.fromEntries(fd);payload.followed=payload.platform==='wechat_public'&&fd.get('followed')==='on';if(selected)payload.version=selected.version;await api('/source-catalog'+(selected?'/'+selected.id:''),{method:selected?'PUT':'POST',json:payload});if(routeId===state.renderId){$('#dialog').close();await render(routeId);}toast('来源已保存，以后提交时可以直接选用。');}
-    catch(error){toast(error.message,true);}finally{submit.disabled=false;}
+    const form=e.target;if(form.dataset.workspaceForm!=='source-catalog')return;e.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;const view=captureUiContext(state,form),finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;form.inert=true;const routeId=state.renderId,selected=editing;
+    try{const fd=new FormData(form),payload=Object.fromEntries(fd);payload.followed=payload.platform==='wechat_public'&&fd.get('followed')==='on';if(selected)payload.version=selected.version;await api('/source-catalog'+(selected?'/'+selected.id:''),{method:selected?'PUT':'POST',json:payload});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await render(routeId);toast('来源已保存，以后提交时可以直接选用。');}
+    catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;finishFeedback();}
   });
   return {render};
 }
