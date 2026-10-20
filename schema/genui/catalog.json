@@ -2922,7 +2922,8 @@
             "open_sources",
             "review_material",
             "export_csv",
-            "export_json"
+            "export_json",
+            "upload_material"
           ]
         },
         "params": {
@@ -3000,6 +3001,11 @@
       "properties": {
         "data": {}
       },
+      "additionalProperties": false
+    },
+    "upload_material": {
+      "type": "object",
+      "properties": {},
       "additionalProperties": false
     }
   },

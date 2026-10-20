@@ -26,8 +26,11 @@ def capture(conn, uid, cid, access):
         profile=json.loads(person['profile']) if person else {}
         values['profile']={k:v for k,v in profile.items() if k in PERSONAL_KEYS}
     if access.get('memory'):
+        from .memory_store import settings_for
         values['context']=context_for(conn,cid)
         values['memory']=eligible_versions(conn,uid,cid,True)
+        values['memory_settings']=settings_for(conn,uid)
+        values['working_memory']=records('SELECT version FROM memory_working WHERE conversation_id=?',(cid,))
     if access.get('library'):
         values['library']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,l.full_sections
             FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id

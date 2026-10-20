@@ -3,6 +3,17 @@ import {safeUrl} from './security.js';
 let openView=null;
 const kinds={web_page:'已读取网页正文',web_summary:'搜索摘要 · 未读取正文',image:'图片观察 · 请对照原图',material:'资料原文',notice:'通知原文',task:'待办快照',arrangement:'个人日程',profile:'自填条件',user_input:'用户提供'};
 const external=source=>typeof source?.url==='string'&&/^https?:\/\//.test(source.url)?safeUrl(source.url,{hosts:null}):null;
+export function readableSnapshot(text,kind){
+  if(!['task','arrangement','profile','memory'].includes(kind))return text;
+  let record;try{record=JSON.parse(text);}catch{return /^\s*[\[{]/.test(text)?'保存时的记录快照，可展开核对原始内容。':text;}
+  const values=record.values||record.data||record;
+  const labels={due_date:'正式期限',due_time:'截止时刻',start_date:'日期',start_time:'开始',end_time:'结束',location:'地点',submission:'提交至',materials:'材料',next_step:'下一步',status:'状态',college:'学院',grade:'年级',semester:'学期',content:'内容'};
+  const states={pending:'待完成',done:'已完成',cancelled:'已取消',preparing:'准备中',submitted:'已提交',blocked:'办理受阻'};
+  const parts=[];
+  for(const [key,label] of Object.entries(labels)){let value=values[key]??record[key];if(value==null||value===''||Array.isArray(value)&&!value.length)continue;if(typeof value==='object'&&!Array.isArray(value))continue;value=Array.isArray(value)?value.join('、'):states[value]||String(value);parts.push(`${label}：${value}`);}
+  if(values.deadline_confirmed===false)parts.push('期限待核实');
+  return parts.join(' · ')||'保存时的记录快照，可展开核对原始内容。';
+}
 
 export function citationEntries(message,sources=[]){
   const byId=new Map([...(sources||[]),...(message.evidence_sources||[])].map(s=>[s.id,s])),entries=new Map();
@@ -51,7 +62,7 @@ export class CitationView{
     if(source.published_at)meta.append(el('time','',source.published_at.slice(0,10).replaceAll('-','/')));
     const nums=el('span','source-result-numbers');for(const quote of quotes)nums.append(el('span','',String(quote.number)));meta.append(nums);article.append(meta);
     const title=el(url?'a':'strong','source-result-title',source.name);if(url){title.href=url;title.target='_blank';title.rel='noopener noreferrer';}article.append(title);
-    const preview=citationPreview(entry,focusNumber);if(preview)article.append(el('p','source-result-preview',compact?preview.slice(0,220):preview));
+    const preview=readableSnapshot(citationPreview(entry,focusNumber),source.evidence_kind);if(preview)article.append(el('p','source-result-preview',compact?preview.slice(0,220):preview));
     if(!compact){
       article.append(el('p','source-result-kind',kinds[source.evidence_kind]||'原材料'));
       if(quotes.length){const detail=el('details','source-quote-details');detail.open=quotes.some(q=>q.number===focusNumber);detail.append(el('summary','',`${source.evidence_kind==='image'?'查看图片依据说明':'查看引用原文'} · ${quotes.length} 处`));for(const quote of quotes){const block=el('blockquote','source-quote');block.dataset.citationNumber=String(quote.number);if(quote.number===focusNumber)block.classList.add('selected');block.append(el('span','source-quote-label',`[${quote.number}] ${quote.locator}`),document.createTextNode(quote.quote));detail.append(block);}article.append(detail);}

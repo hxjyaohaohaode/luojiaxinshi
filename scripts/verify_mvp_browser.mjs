@@ -32,7 +32,7 @@ for(const name of selected){
     await page.setViewportSize({width,height});
     for(const route of routes){
       await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});
-      await page.waitForFunction(route=>{const c=document.querySelector('#content');return c?.dataset.page===route&&!c.hasAttribute('aria-busy');},route,{timeout:25000});
+      await page.waitForFunction(()=>{const c=document.querySelector('#content');return c?.dataset.page===location.hash.slice(1)&&!c.hasAttribute('aria-busy');},null,{timeout:25000});
       await page.waitForFunction(()=>document.fonts.status==='loaded',null,{timeout:5000});
       const metrics=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,
         error:document.querySelector('#content')?.textContent.includes('暂时未能打开'),

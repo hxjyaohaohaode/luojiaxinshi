@@ -120,6 +120,13 @@ def create_app(settings=None):
                 await asyncio.sleep(3600)
         worker=asyncio.create_task(maintain())
         lease_worker=asyncio.create_task(heartbeat())
+        async def memory_maintenance():
+            from .memory_learning import drain_jobs
+            while True:
+                await asyncio.sleep(10)
+                try:await run_in_threadpool(drain_jobs,db)
+                except Exception:logging.getLogger('campus').error('memory_maintenance_failed: check storage and permissions')
+        memory_worker=asyncio.create_task(memory_maintenance())
         try:
             yield
         finally:
@@ -132,7 +139,8 @@ def create_app(settings=None):
             except asyncio.CancelledError:
                 pass
             lease_worker.cancel()
-            await asyncio.gather(lease_worker,return_exceptions=True)
+            memory_worker.cancel()
+            await asyncio.gather(lease_worker,memory_worker,return_exceptions=True)
             await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
@@ -870,10 +878,11 @@ def create_app(settings=None):
             catalog=[json.loads(r['data']) for r in conn.execute('SELECT data FROM source_catalog WHERE user_id=?',(current['id'],))]
             arrangements=[serialize_arrangement(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=?',(current['id'],))]
             memory_projects=[dict(r) for r in conn.execute('SELECT * FROM memory_projects WHERE user_id=?',(current['id'],))]
-            from .memory_policy import rows_for
-            memories=rows_for(conn,current['id'])
+            from .memory_store import export_archive
+            memory_archive=export_archive(conn,current['id'])
+            memories=memory_archive['memories']
         result={'format_version':1,'exported_at':datetime.now(CST).isoformat(),'profile':json.loads(current['profile']),
-                'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'note':'含记忆、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
+                'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'memory_archive':memory_archive,'note':'含记忆来源与历史、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
         return Response(dumps(result),media_type='application/json',headers={'Content-Disposition':'attachment; filename="campus-data.json"'})
 
     @app.delete('/api/notices/{nid}')

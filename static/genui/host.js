@@ -1,7 +1,7 @@
 import {calendarEntries,dayKey,addDays} from '../calendar-model.js';
 import {el,button} from './dom.js';
 const poses=new Set(['welcome','reading','planning','blossom','rest']);
-export function hostRegistry({sources=[],arrangements=[],tasks=[],preview,openCalendar,openSources}){
+export function hostRegistry({sources=[],arrangements=[],tasks=[],preview,openCalendar,openSources,uploadMaterial}){
   const hostViews={
     campus_schedule:()=>{
       const panel=el('section','gu-host-panel'),today=dayKey(),entries=calendarEntries(arrangements,tasks,today,addDays(today,6));panel.append(el('h4','','未来七天 · 工作台当前记录'));
@@ -16,5 +16,5 @@ export function hostRegistry({sources=[],arrangements=[],tasks=[],preview,openCa
       img.src='/static/assets/luojia-messenger-'+(poses.has(p.pose)?p.pose:'reading')+'.png';img.alt='珞珈小信使';b.setAttribute('aria-label','和小信使打个招呼');b.append(img);b.addEventListener('click',()=>{taps++;clearTimeout(timer);if(taps===3){img.src='/static/assets/luojia-messenger-blossom.png';words.textContent='忙完这一件，也记得去珞珈山下走走。';taps=0;}timer=setTimeout(()=>{taps=0;},1000);});panel.append(b,words);return panel;
     }
   };
-  return {hostViews,hostActions:{open_calendar:{run:openCalendar},open_sources:{run:openSources},review_material:{run:({source_id})=>{if(!sources.some(s=>s.id===source_id))throw Error('这份材料不在本次对话中。');preview(source_id);}}}};
+  return {hostViews,hostActions:{open_calendar:{run:openCalendar},open_sources:{run:openSources},upload_material:{run:()=>{if(!uploadMaterial)throw Error('请回到对话后添加材料。');uploadMaterial();}},review_material:{run:({source_id})=>{if(!sources.some(s=>s.id===source_id))throw Error('这份材料不在本次对话中。');preview(source_id);}}}};
 }

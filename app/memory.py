@@ -1,11 +1,11 @@
-"""Explicit user-owned memory with global, project and topic scopes."""
+"""User-owned memory with scoped retrieval and reversible lifecycle controls."""
 import json
 import hashlib
 import re
 import time
 from typing import Literal
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Query
 from pydantic import Field, model_validator
 
 from .db import dumps, ident
@@ -49,7 +49,7 @@ class Memory(Strict):
     scope: Literal['global','project','topic'] = 'global'
     project_id: str | None = Field(default=None,max_length=40)
     topic: str = Field(default='',max_length=60)
-    kind: Literal['preference','constraint','decision','fact'] = 'preference'
+    kind: Literal['preference','constraint','decision','fact','episode','skill','intention','summary'] = 'preference'
     content: str = Field(min_length=1,max_length=2000)
     source_conversation_id: str | None = Field(default=None,max_length=40)
     active: bool = True
@@ -57,10 +57,17 @@ class Memory(Strict):
     semantic_key: str = Field(default='',max_length=80)
     valid_from: int | None = Field(default=None,ge=0,le=253402300799)
     expires_at: int | None = Field(default=None,ge=0,le=253402300799)
+    locked: bool = True
+    labels: list[str] = Field(default_factory=list,max_length=8)
 
     @model_validator(mode='after')
     def valid_scope(self):
         self.semantic_key=normalized(self.semantic_key)
+        self.content=self.content.strip()
+        self.topic=self.topic.strip()
+        self.labels=list(dict.fromkeys(label.strip() for label in self.labels if label.strip()))
+        if not self.content or any(len(label)>40 for label in self.labels):
+            raise ValueError('记忆内容不能为空，标签不能超过 40 字')
         if self.valid_from is not None and self.expires_at is not None and self.expires_at<=self.valid_from:
             raise ValueError('失效时间必须晚于生效时间')
         if (self.scope=='project') != bool(self.project_id):
@@ -120,11 +127,13 @@ def memory_access(messages):
 
 
 def eligible_versions(conn,uid,cid,allowed):
+    from .memory_store import settings_for,usable_derived
     own(conn,'conversations',cid,uid)
     context=context_for(conn,cid)
-    if not allowed or not context['memory_enabled']:return {}
+    if not allowed or not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':return {}
     versions={}
     items,_=effective(rows_for(conn,uid),context)
+    items,_=usable_derived(conn,items)
     for row in items:versions['memory-'+row['id']]=row['version']
     if context['project_id']:
         project=own(conn,'memory_projects',context['project_id'],uid)
@@ -132,23 +141,23 @@ def eligible_versions(conn,uid,cid,allowed):
     return versions
 
 
-def recall(db,uid,cid,question,access):
-    """Only explicitly saved, current, in-scope memory; no cross-user search."""
+def recall(db,uid,cid,question,access,queries=None):
+    """Current accepted memories only; retrieval never widens the trusted scope."""
+    from .memory_store import settings_for,decorate,usable_derived
+    from .memory_search import ranked
     allowed=access.get('memory',not re.search(r'(?:不要|不用|禁止|不使用).{0,8}(?:记忆|以前的偏好|历史记忆)',question))
     if not access.get('profile') or not allowed:
         return [],{'enabled':False,'selected':0}
     with db.connect() as conn:
         own(conn,'conversations',cid,uid)
         context=context_for(conn,cid)
-        if not context['memory_enabled']:
+        if not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':
             return [],{'enabled':False,'selected':0}
-        candidates=[]
-        query=terms(question)
         items,excluded=effective(rows_for(conn,uid),context)
-        for item in items:
-            score=len(query & terms(item['content']))
-            if item['pinned'] or item['kind'] in ('preference','constraint') or score:
-                candidates.append((int(item['pinned'])*100+int(item['kind']=='constraint')*20+score,item))
+        items,invalid=usable_derived(conn,items)
+        excluded.extend({'id':mid,'reason':'source_changed'} for mid in sorted(invalid))
+        items=decorate(conn,items)
+        items=[item for item in items if item.get('review_status')=='accepted']
         selected=[];used=0
         if context['project_id']:
             project=dict(own(conn,'memory_projects',context['project_id'],uid))
@@ -156,26 +165,39 @@ def recall(db,uid,cid,question,access):
             selected.append({'id':hashlib.sha256(('project:'+project['id']).encode()).hexdigest()[:32],
                 'scope':'project','project_id':project['id'],'topic':'','kind':'fact','content':content,
                 'version':project['version'],'updated_at':project['updated_at'],'project_context':True})
-            used=len(content.encode('utf-8'))+240
-        for _,item in sorted(candidates,key=lambda x:x[0],reverse=True):
-            cost=len(item['content'].encode('utf-8'))+240
-            if len(selected)>=12 or used+cost>8000:
-                continue
-            selected.append({k:item[k] for k in ('id','scope','project_id','topic','kind','content','version','updated_at')});used+=cost
+            used=len(dumps(selected[0]).encode('utf-8'))+1
+        ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected),byte_budget=8000-used)
+        for item in ranked_items:
+            selected.append({k:item[k] for k in ('id','scope','project_id','topic','kind','content','version','updated_at',
+                'origin','locked','labels','recall_score','recall_reasons')})
         count=sum(not item.get('project_context') for item in selected)
-        return selected,{'enabled':True,'selected':count,'eligible':len(candidates),'omitted':len(candidates)-count,'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
-            'excluded':excluded,'policy_version':'memory-policy-v1'}
+        return selected,{'enabled':True,'selected':count,'eligible':ranking['matched'],'omitted':ranking['matched']-count,'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
+            'excluded':excluded,'policy_version':'memory-policy-v2',**ranking,'context_bytes':used+ranking['context_bytes']}
 
 
 def install_memory(app,db,user):
+    from .memory_store import decorate,insert_memory,record_revision,invalidate_dependents,settings_for,MAX_MEMORIES
     def saved_item(conn,mid,uid):
-        return next(item for item in catalog(rows_for(conn,uid)) if item['id']==mid)
+        return next(item for item in decorate(conn,catalog(rows_for(conn,uid))) if item['id']==mid)
 
     @app.get('/api/memory')
-    def list_memory(current=Depends(user)):
+    def list_memory(q:str=Query(default='',max_length=1000),scope:str=Query(default='all',pattern='^(all|global|project|topic)$'),
+                    limit:int=Query(default=200,ge=1,le=500),offset:int=Query(default=0,ge=0),current=Depends(user)):
         with db.connect() as conn:
-            return {'projects':[dict(r) for r in conn.execute('SELECT * FROM memory_projects WHERE user_id=? ORDER BY updated_at DESC,id',(current['id'],))],
-                'memories':catalog(rows_for(conn,current['id']))}
+            items=decorate(conn,catalog(rows_for(conn,current['id'])))
+            from .memory_store import usable_derived
+            _,invalid=usable_derived(conn,[item for item in items if item['state']=='active'])
+            for item in items:
+                if item['id'] in invalid and item['state']=='active':item['state']='source_changed'
+            counts={key:sum(item['scope']==key for item in items) for key in ('global','project','topic')}
+            projects=[dict(r) for r in conn.execute('SELECT * FROM memory_projects WHERE user_id=? ORDER BY updated_at DESC,id',(current['id'],))]
+            names={p['id']:p['name'] for p in projects}
+            filtered=[item for item in items if (scope=='all' or item['scope']==scope) and
+                      (not q or normalized(q) in normalized(item['content']+' '+item['topic']+' '+names.get(item['project_id'],'')+' '+' '.join(item['labels'])))]
+            return {'projects':projects,'memories':filtered[offset:offset+limit],'total':len(items),
+                'matched':len(filtered),'offset':offset,'limit':limit,'counts':counts,
+                'pending':sum(item['review_status']=='pending' for item in items),'settings':settings_for(conn,current['id']),
+                'topics':sorted({item['topic'] for item in items if item['topic']})}
 
     @app.post('/api/memory/projects')
     def create_project(payload:Project,current=Depends(user)):
@@ -213,11 +235,9 @@ def install_memory(app,db,user):
             validate_links(conn,payload,current['id'])
             existing=duplicate(rows_for(conn,current['id']),payload)
             if existing:return saved_item(conn,existing['id'],current['id'])
-            if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=500:
-                raise HTTPException(422,'记忆数量已达 500，请先整理重复或过期内容')
-            key=ident();now=int(time.time())
-            conn.execute('INSERT INTO personal_memories VALUES(?,?,?,?,?,?,?,?,?,?,1,?,?)',(key,current['id'],payload.scope,payload.project_id,payload.topic,payload.kind,payload.content,payload.source_conversation_id,int(payload.active),int(payload.pinned),now,now))
-            save_policy(conn,key,payload.model_dump())
+            if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=MAX_MEMORIES:
+                raise HTTPException(422,'记忆数量已达上限，请先整理或导出')
+            key=insert_memory(conn,current['id'],payload.model_dump(),locked=payload.locked,labels=payload.labels)
             return saved_item(conn,key,current['id'])
 
     @app.put('/api/memory/items/{mid}')
@@ -228,9 +248,13 @@ def install_memory(app,db,user):
             validate_links(conn,payload,current['id'])
             if duplicate(rows_for(conn,current['id']),payload,excluding=mid):
                 raise HTTPException(409,'已有完全相同的记忆，请保留已有记录并删除重复项')
+            invalidate_dependents(conn,mid)
             conn.execute('UPDATE personal_memories SET scope=?,project_id=?,topic=?,kind=?,content=?,source_conversation_id=?,active=?,pinned=?,version=version+1,updated_at=? WHERE id=?',
                 (payload.scope,payload.project_id,payload.topic,payload.kind,payload.content,payload.source_conversation_id,int(payload.active),int(payload.pinned),int(time.time()),mid))
             save_policy(conn,mid,payload.model_dump())
+            conn.execute("UPDATE memory_details SET locked=?,labels=?,review_status='accepted' WHERE memory_id=?",
+                (int(payload.locked),dumps(payload.labels),mid))
+            record_revision(conn,mid,'user')
             return saved_item(conn,mid,current['id'])
 
     @app.post('/api/memory/items/{mid}/resolve')
@@ -245,8 +269,11 @@ def install_memory(app,db,user):
                 raise HTTPException(409,'冲突内容或版本已变化，请刷新后重新选择')
             now=int(time.time())
             for item in peers:
-                if item['id']!=mid:conn.execute('UPDATE personal_memories SET active=0,version=version+1,updated_at=? WHERE id=?',(now,item['id']))
+                if item['id']!=mid:
+                    conn.execute('UPDATE personal_memories SET active=0,version=version+1,updated_at=? WHERE id=?',(now,item['id']))
+                    record_revision(conn,item['id'],'user-resolved')
             conn.execute('UPDATE personal_memories SET version=version+1,updated_at=? WHERE id=?',(now,mid))
+            record_revision(conn,mid,'user-resolved')
             return {'kept':saved_item(conn,mid,current['id']),'deactivated':[item['id'] for item in peers if item['id']!=mid]}
 
     @app.delete('/api/memory/items/{mid}')
@@ -254,7 +281,8 @@ def install_memory(app,db,user):
         with db.connect(write=True) as conn:
             row=own(conn,'personal_memories',mid,current['id'])
             if row['version']!=payload.version:raise HTTPException(409,'记忆已修改，请刷新后核对')
-            conn.execute('DELETE FROM personal_memories WHERE id=?',(mid,))
+            from .memory_store import forget_memory
+            forget_memory(conn,current['id'],dict(row))
             return {'deleted':True}
 
     @app.get('/api/conversations/{cid}/context')
@@ -269,9 +297,13 @@ def install_memory(app,db,user):
             own(conn,'conversations',cid,current['id'])
             context=context_for(conn,cid)
             items,excluded=effective(rows_for(conn,current['id']),context)
-            return {'context_version':context['version'],'enabled':context['memory_enabled'],
-                'eligible':[{'id':item['id'],'content':item['content'],'scope':item['scope'],'semantic_key':item['semantic_key']} for item in items] if context['memory_enabled'] else [],
-                'excluded':excluded if context['memory_enabled'] else [],'note':'当前已保存范围；实际回答会再按问题相关性和长度预算选择。'}
+            from .memory_store import usable_derived
+            items,invalid=usable_derived(conn,items)
+            excluded.extend({'id':mid,'reason':'source_changed'} for mid in invalid)
+            enabled=context['memory_enabled'] and settings_for(conn,current['id'])['mode']!='off'
+            return {'context_version':context['version'],'enabled':bool(enabled),
+                'eligible':[{'id':item['id'],'content':item['content'],'scope':item['scope'],'semantic_key':item['semantic_key']} for item in items] if enabled else [],
+                'excluded':excluded if enabled else [],'note':'当前已保存范围；实际回答会再按问题相关性和长度预算选择。'}
 
     @app.put('/api/conversations/{cid}/context')
     def set_context(cid:str,payload:Context,current=Depends(user)):
@@ -284,3 +316,6 @@ def install_memory(app,db,user):
             conn.execute('INSERT INTO conversation_context VALUES(?,?,?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET project_id=excluded.project_id,topics=excluded.topics,memory_enabled=excluded.memory_enabled,version=excluded.version',
                 (cid,payload.project_id,dumps(payload.topics),int(payload.memory_enabled),payload.version+1))
             return context_for(conn,cid)
+
+    from .memory_api import install
+    install(app,db,user)

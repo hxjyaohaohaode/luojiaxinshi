@@ -58,10 +58,12 @@ def test_message_only_stage_never_claims_library_or_schedule_search(env,monkeypa
     assert step['summary_origin']=='server' and '本账号资料' not in step['summary']
 
 
-def test_late_summary_updates_correct_id_and_never_reorders_stages(env,monkeypatch):
+def test_status_updates_use_real_events_without_extra_model_calls(env,monkeypatch):
     env[1].ai_stage_summaries=True
     db,mid=stored_message(env)
+    called=[]
     async def brief(settings,record):
+        called.append(True)
         await asyncio.sleep(.02)
         assert set(record)<= {'stage','title','state','tools','detail'}
         return '正在按当前任务记录核对范围并整理简短的阶段说明。',{'prompt_tokens':2,'completion_tokens':3}
@@ -74,7 +76,8 @@ def test_late_summary_updates_correct_id_and_never_reorders_stages(env,monkeypat
         yield {'type':'complete','result':{}}
     async def run():return [e async for e in work_summary.stream(env[1],db,mid,source())]
     events=asyncio.run(run());updates=[e for e in events if e['type']=='work']
-    assert updates and updates[-1]['steps'][0]['summary_origin']=='flash'
+    assert updates and updates[-1]['steps'][0]['summary_origin']=='server'
+    assert not called
     assert [s['stage'] for s in updates[-1]['steps']]==['planning','coverage']
     assert events[0]['steps'][0]['state']=='running'  # earlier packet is an immutable snapshot
 
@@ -96,6 +99,6 @@ def test_cancellation_closes_provider_and_full_queue_without_deadlock(env,monkey
         await asyncio.sleep(.04)
         await asyncio.wait_for(stream.aclose(),1)
     asyncio.run(run())
-    assert closed and cancelled
+    assert closed and not cancelled
     with db.connect() as conn:report=json.loads(conn.execute('SELECT report FROM reply_grounding WHERE message_id=?',(mid,)).fetchone()['report'])
     assert report['steps'][-1]['state']=='interrupted'

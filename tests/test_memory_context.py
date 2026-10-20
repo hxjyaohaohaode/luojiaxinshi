@@ -159,12 +159,13 @@ def test_missing_memory_project_rolls_back_entire_import(env):
     c=account(env);dest=account(env,'dest');p=project(c);memory(c);memory(c,scope='project',project_id=p['id'])
     data=c.get('/api/export').json();data['memory_projects']=[]
     assert import_export(dest,data).status_code==422
-    assert dest.get('/api/memory').json()=={'projects':[],'memories':[]}
+    result=dest.get('/api/memory').json()
+    assert result['projects']==[] and result['memories']==[] and result['total']==0
     with env[0].state.db.connect() as conn:
         assert conn.execute('SELECT count(*) FROM import_receipts WHERE user_id=?',(uid(dest),)).fetchone()[0]==0
 
 
-@pytest.mark.parametrize('kind,limit',[('project',100),('memory',500)])
+@pytest.mark.parametrize('kind,limit',[('project',100),('memory',10000)])
 def test_import_respects_existing_account_memory_capacity(env,kind,limit):
     c=account(env);dest=account(env,'dest');project(c);memory(c);owner=uid(dest);now=int(time.time())
     with env[0].state.db.connect(write=True) as conn:
@@ -174,7 +175,8 @@ def test_import_respects_existing_account_memory_capacity(env,kind,limit):
     r=import_export(dest,c.get('/api/export').json());assert r.status_code==422,r.text
     catalog=dest.get('/api/memory').json()
     assert len(catalog['projects'])==(limit if kind=='project' else 0)
-    assert len(catalog['memories'])==(limit if kind=='memory' else 0)
+    assert catalog['total']==(limit if kind=='memory' else 0)
+    assert len(catalog['memories'])==min(catalog['total'],200)
 
 
 def test_branch_preserves_project_topics_and_disabled_memory_independently(env):

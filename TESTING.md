@@ -1,5 +1,70 @@
 # 验证记录
 
+## 2026-10-20：第二轮深度融合与完整交互升级
+
+在第一轮 9 类适配基础上新增 20 类，合计 **29 类手册参考模式**。本轮将来信主卡、重点便笺切换、数字滚动、七日期限、完成圆环、待办看板、通知卡片、收件预览、图片缩略图、来源快速入口、记忆范围、阅读位置与统一反馈接入现有业务。参考定位、版本、页面覆盖和边界见 [适配记录](docs/FRONTEND_HANDBOOK_ADAPTATION.md)。
+
+| 验证 | 本轮重新运行结果 |
+| --- | --- |
+| `node --test tests/*.test.mjs` | **110 项通过**；新增状态分组、跨年七日期限及计数/圆环边界 |
+| `verify_upgrade_interactions.mjs` | **366 项检查通过**；Chromium、Firefox、WebKit，各覆盖 1440、390、320 宽度 |
+| `verify_handbook_frontend.mjs` | **111 个场景通过**；原有搜索、来源、表单、附件、账号与空状态回归 |
+| `verify_mvp_browser.mjs` | **100 次页面渲染、10 次办理弹窗通过**；页面错误、重叠、横向溢出检查无失败 |
+| `verify_handbook_visual.mjs` | **127 项检查通过**；页面边线、内容列宽、标题、设置卡片与认证页面 |
+| `verify_draft_continuity.mjs` | **30 个场景通过**；提交等待时继续编辑、清理等待、失败重试与草稿恢复 |
+| `verify_navigation_focus.mjs` 专项 | **18 个场景、66 项断言通过**；三引擎、两种动效偏好 |
+
+新增交互验证包括：重点事项切换不重建统计，七日期限打开原办理记录，看板/清单共用记录和筛选，完成后撤回还原同一条记录，通知卡片打开原文，长原文实际滚动位置，输入与收件预览同步，本地有效/损坏图片处理，非法附件不进入暂存，提示框悬停暂停、移出恢复、键盘与鼠标关闭，以及减少运动、保存个人动效偏好和来源/记忆键盘操作。长原文位置检查在浏览器内使用明确的虚构长文本，不修改保存的原文。
+
+本轮细查并修复：旧网格规则造成看板标题与操作区重叠；窄屏筛选标签互挤；空分组占据整列；旧规则隐藏移动上传图标；提示框继承禁止鼠标事件的旧样式；撤回入口仍引用旧计时器。文件选择会先发出 `input` 再发出 `change`，现仅让校验后的队列进入暂存，避免非法文件名提前污染草稿。图片先解码再替换类型图标，损坏图片保留可读占位。
+
+验证过程中，旧脚本仍查找已替换的 HTML 进度条，导致其后依赖表单的场景连锁失败；现更新为核对圆环的真实 `0 / 0` 与“待开始”，重跑 111 场景全部通过。新增脚本也修正了路由就绪等待，确保内容实际完成后再判断默认视图；图片预览使用仓库内有效 PNG，另保留损坏图片场景。没有放宽应用认证限流或修改真实数据。
+
+视觉范围包括工作台、待办、通知资料、提交通知、对话、日历、来源、设置、记忆、原文与办理详情、登录/注册/恢复。Chromium 覆盖 320、390、768、844 横屏、1440、1920 宽度；Firefox/WebKit 额外覆盖主要桌面与手机尺寸。逐页检查并调整了文字大小、卡片主次、标题/控件边线、按钮位置与小屏重排。
+
+本轮证据保存在 `artifacts/handbook-upgrade/`：
+
+- `node-tests.log`、`upgrade-interactions.json`、`handbook-interactions.json`
+- `browser-report.json`、`handbook-visual-alignment.json`
+- `draft-regression/draft-continuity-report.json`、`focus/navigation-focus-report.json`
+- `preview-dashboard.png`、`preview-tasks.png`、`preview-notices.png`、`preview-intake.png`、`preview-login.png` 与手机视口预览
+
+本轮为本地前端改动。所有写操作使用隔离服务的虚构账号与材料，未调用模型；本节没有沿用或声称重跑后端 643 项测试。浏览器引擎和视口模拟仍不替代真机、系统文件选择器/剪贴板、真实模型及真实用户验收。
+
+## 2026-10-20：组件手册适配、全站视觉对齐与交互细节
+
+按本地 `frontend-component-handbook.md` 选择九类适合校园办理场景的组件结构，使用现有原生模块实现。保留珞珈绿、原标识和小信使插画，优化工作台配重、两步通知提交、附件队列、分组搜索、来源展开、材料清单、记录时间线及空状态。选型版本、对应代码和设计边界见 [组件手册适配记录](docs/FRONTEND_HANDBOOK_ADAPTATION.md)。
+
+| 验证 | 本轮结果 |
+| --- | --- |
+| `node --test tests/*.test.mjs` | **107 项通过**，含总览计算、文件队列、检索排序/转义和实际处理阶段 |
+| `python -m pytest -q` | **643 项通过**，退出码 0；有 1 条现有 Starlette TestClient 弃用提示 |
+| `scripts/genui_catalog.py --check` | 组件目录与生成文件一致 |
+| `verify_mvp_browser.mjs` | **100 次页面渲染 + 10 次办理弹窗**通过；页面错误、横向溢出、隐藏区可见和控件重叠检查均无失败 |
+| `verify_handbook_visual.mjs` | **127 项检查通过**；含标题/主框边线、内容列宽、设置卡片行高和登录/注册/恢复页 |
+| `verify_handbook_frontend.mjs` | **111 个交互场景通过**；三个引擎，桌面与手机尺寸 |
+| `verify_draft_continuity.mjs` | **30 个场景通过**；旧提交等待、草稿清理等待、继续编辑及重复通知失败重试 |
+| `verify_navigation_focus.mjs` 专项 | **18 个场景、66 项断言通过**；三引擎、两种动效偏好，菜单返回/弹窗 Esc/延迟聚焦 |
+
+页面渲染覆盖工作台、待办、通知资料、通知提交、聊天、日历、来源、设置、记忆和通知详情。Chromium 检查 1440×900、390×844、320×740、768×1024、844×390、1920×1080；Firefox/WebKit 检查 390×844 和 1440×900。独立对齐检查额外比较 1920、1440、768、390、320 宽度下六个常规页面的标题与主框边线。1440 宽度下六页标题与主框的左边界均为 270px，标题均为 28px；聊天与日历保留专用工具栏。
+
+交互覆盖：空账号、真实记录统计、步骤原生校验、附件追加/去重/数量及体积限制/非法批次回退/逐项移除/焦点恢复、合成文件粘贴、切页恢复、刷新后缺失提示、实际表单保存、退出清理内存附件、明确放弃缺失附件的持久化、记忆空状态与清空、来源键盘展开、分组检索与快捷入口/高亮/按需展开/失败重试/过期结果隔离、宽窄侧栏、真实等待骨架，以及用户关闭动效和系统减少动效。
+
+本轮发现并修复：桌面辅助栏继承旧网格导致溢出；来源展开箭头与旧“收起”伪元素叠加；部分浏览器的搜索输入框在 Esc 时只清空文字；文件移除与放弃缺失附件未可靠写回草稿；退出登录后的内存附件未清理。Firefox 丢弃 `ClipboardEvent` 构造参数中的文件属于测试事件构造差异，改用明确注入 `clipboardData` 的合成事件；该测试不声称验证了系统剪贴板。
+
+重复运行注册场景曾触发隔离服务的正常限流，之后使用新的 `artifacts/frontend-handbook/data-final/` 测试目录完成全量交互回归；没有放宽应用限流。截图逐页复核了主要页面、桌面和移动表单、搜索、来源展开及办理弹窗，并调整次要文字的字号和浅绿表面上的文字对比。
+
+本轮本地证据：
+
+- `artifacts/frontend-handbook/browser-report.json`
+- `artifacts/frontend-handbook/handbook-visual-alignment.json`
+- `artifacts/frontend-handbook/handbook-interactions.json`
+- `artifacts/frontend-handbook/draft-regression/draft-continuity-report.json`
+- `artifacts/frontend-handbook/focus/navigation-focus-report.json`
+- 同目录 `preview-dashboard.png`、`preview-intake.png`、`preview-search.png` 及逐页各尺寸截图。
+
+所有浏览器保存操作都使用本地隔离的虚构账号与材料，服务未配置模型密钥。三种浏览器引擎与视口模拟不替代手机软键盘、系统文件选择器/剪贴板、真实模型和真实用户的验收。本轮修改为本地前端实现与验证，不代表服务器发布。
+
 ## 2026-10-19：1.14.2 合入 main 前的整体验证
 
 同步远端后确认已有功能分支的全部提交均已包含在远端 `main`，上游代码内容与本地原提交一致。本轮重新执行全量后端 **643 项**（0 失败／错误／跳过）、前端 **97 项**、组件目录一致性和 **40 项离线合成组件评测**，全部通过。不是沿用上一轮成绩。
@@ -586,3 +651,38 @@ node --test tests/continuity.test.mjs
 最终本机全套：150 项 Python 测试、37 项 Node 测试通过；组件画廊在桌面亮色和 320px 暗色各 222 项通过；真实 HTTP / SQLite 的合成端到端 6 项通过；离线领域夹具 40 项通过。5 用户并发、100 份通知、200 个待办的 765 次请求及重启/备份恢复检查通过。依赖审计未发现已知漏洞。
 
 最新细分结果、测量数值、复现方法、共享的去账号化 JSON 证据以及未验证项统一见 docs/genui/TESTING.md。旧记录保留其当时的版本和范围，不把累计测试数冒充本次单次结果。
+
+## 2026-10-20 浏览器反馈与全站响应式复验
+
+针对本轮 17 条浏览器标注，使用隔离合成账号完成以下实际运行；未修改 `data/` 中体验账号的通知、待办或聊天内容。
+
+| 验证 | 本次结果 | 证据 |
+| --- | --- | --- |
+| 后端完整 pytest | 686 通过；1 条既有 Starlette/httpx 弃用提示 | `artifacts/browser-feedback/pytest-final.log` |
+| 前端 Node 逻辑 | 115 通过 | `artifacts/browser-feedback/node-tests-final.log` |
+| 反馈专项端到端 | 480 / 480 通过，Chromium、Firefox、WebKit，1440 / 476 / 390 / 320 像素 | `artifacts/browser-feedback/feedback-report.json` |
+| 整站渲染与办理面板 | 100 个页面/尺寸组合、10 个办理弹窗通过，无文档溢出、隐藏内容误显示、点击目标重叠或页面异常 | `artifacts/browser-feedback/routes/browser-report.json` |
+| 登录与页面视觉对齐 | 128 / 128 通过，含 320 / 390 / 768 / 1440 / 1920 宽度和短横屏登录 | `artifacts/browser-feedback/visual/handbook-visual-alignment.json` |
+| 生成式组件契约 | 目录生成物一致，新增上传宿主动作拒绝任意路径等参数 | `scripts/genui_catalog.py --check`、`tests/test_browser_feedback.py` |
+
+新增后端回归使用真实适配器读取模拟 HTTP 分块流，断言供应方尚未结束时已经产生正文预览；同时确认预览不提前写成最终回答，独立引用/内容校验仍先于正式发布。模型选择合并覆盖检查时不会强行增加额外阶段，模型选择的工具范围也不能重新开启用户已经明确禁止的资料类别。
+
+浏览器专项通过实际接口保存办理记录，并比对隐藏标签中的原字段；检验日历设置即时影响显示并在刷新后保留；验证流式正文在结束前增长、生成式筛选真实改变结果、上传按钮打开实际表单、朗读直接使用回复、评价不重建邻近控件或打断语音控制、助手入口恢复会话，以及来源快照的可读展示。发现并修复的小屏勾选点击区域与标题重叠已在整站复验中清零。
+
+追加覆盖无本地偏好时从服务端接回最近会话，以及明确新建后的草稿离开/返回仍保留。正式本地服务已验证健康状态、原体验账号登录和原对话恢复，390 像素实际账号页面无横向溢出或脚本错误；只读取原通知和待办，截图与机器结果保存为 `artifacts/browser-feedback/live-*.png`、`live-smoke.json`。
+
+`scripts/feedback_preview_server.py` 使用 `artifacts/` 下的独立数据库、模拟模型流与合成 WAV 音频。三个浏览器引擎的测试包含播放器状态及无法解码时的保留/下载入口；没有声称所有引擎都完成音频解码或真实声卡播放。本轮没有新增付费模型请求。移动端检查为浏览器视口验收，仍需用户设备确认软键盘、系统音频与触摸手感。
+
+## 2026-10-20 记忆引擎升级验收
+
+本次完整后端回归 690 项通过，1 条既有 Starlette/httpx 弃用提示；前端 Node 逻辑 115 项通过。证据为 `artifacts/memory-engine-pytest-final.txt` 和 `artifacts/memory-engine-node-tests.txt`。前序专项运行 127 项通过、1 项暂不纳入，随后完整回归已全部通过；不把专项数量与全量数量相加。
+
+新增记忆测试覆盖所有者与范围、FTS 候选截断前隔离、版本冲突、人工锁定、有效期、来源与派生失效、删除防再学习、审核与恢复、JSON/Markdown 往返、持久队列、任务来源变更、容量满时保留消息、失败/取消回答不提交模型提议、工作记录、旧 schema 迁移和分批概览续跑。
+
+`scripts/verify_memory_engine.mjs` 在 8786 隔离服务、合成账号和模拟模型中，完成 Chromium、Firefox、WebKit 的 63 项检查。涵盖实际增改、历史恢复、模式切换、待核对导入与接受、Markdown 下载与回写、整理、手动工作记录及聊天回执；在 1440 / 390 / 320 像素核对页面、弹窗和长提示的可读性。机器结果及画面位于 `artifacts/memory-engine-browser/`。
+
+应用脚本/策略错误为 0。单独保留 6 条 WebKit 截图工具告警：Playwright 的截图同步代码临时插入 `<style>body {}</style>`，被应用 CSP 拦截。诊断记录确认它们仅发生于截图调用内；没有放宽 CSP，非截图期间的同类告警仍令测试失败。画面核对修复了小屏长提示自动宽度过窄，截图等待弹窗入场结束。
+
+`scripts/benchmark_memory_engine.py` 创建独立合成 SQLite 数据库，插入 10,000 条，按范围限定 5,000 条候选，再进行 16 次查询。本次中位耗时 177.61 ms，P95 220.72 ms，最大 236.28 ms；最多返回 12 条，包含元数据的长期记忆预算不超过 8,000 字节。基准无外部模型调用，不能据此声称真实模型语义准确率或公网并发性能。证据为 `artifacts/memory-engine-benchmark/report.json`。
+
+正式本地服务在无正在执行的通知或聊天任务时，通过 SQLite backup API 生成升级前备份，再重载当前代码。重载后健康检查、数据库完整性、外键、schema v2、未登录记忆接口返回 401，以及原用户/通知/对话/消息/任务数量核对通过。记录位于 `artifacts/memory-engine-activation.json`；数据库备份保留在 `backups/`，不包含在普通交付证据副本中。

@@ -49,7 +49,7 @@ export function beginRouteFeedback(content,title='正在打开你的空间'){
   const timer=setTimeout(()=>{
     if(!content.isConnected)return;
     host=document.createElement('div');host.className='route-feedback';
-    host.innerHTML=loadingState(title,'正在读取已保存的内容。');content.before(host);
+    host.innerHTML=loadingState(title,'正在读取已保存的内容。')+'<div class="route-skeleton" aria-hidden="true"><span></span><span></span><span></span></div>';content.before(host);
     slowTimer=setTimeout(()=>{
       if(!host?.isConnected)return;
       host.querySelector('p').textContent='连接有些慢。已保存的资料仍在，可以稍候或重新加载。';

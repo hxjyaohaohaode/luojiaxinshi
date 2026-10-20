@@ -10,6 +10,7 @@ from typing import Literal
 from .ai import AIError, check_evidence
 from .models import Strict, Evidence
 from .genui_state import context_text
+from .memory_learning import MemoryAction, AGENT_POLICY
 
 IMAGE_MIME={'png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp'}
 MAX_CITATIONS = 120  # Matches the bounded server evidence index for long, sourced answers.
@@ -26,6 +27,7 @@ class ChatAnswer(Strict):
     citations: list[Evidence] = Field(default_factory=list,max_length=MAX_CITATIONS)
     image_sources: list[str] = Field(default_factory=list,max_length=4)
     claims: list[GroundingClaim] = Field(default_factory=list,max_length=60)
+    memory_actions: list[MemoryAction] = Field(default_factory=list,max_length=8)
 
 
 DIRECT_CITATIONS='对通知事实使用逐字连续原句，citations 中的 source_id、locator 必须对应所提供的段落；回答中可用 [1] 等引用编号。'
@@ -49,13 +51,15 @@ def reply(settings,sources,messages,profile):
     from .context_engine import pack_history
     messages,_,_=pack_history(messages)
     context={'personal_conditions':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
+             'memories':profile.get('_memory_entries',[]),'memory_control':profile.get('_memory_control',{}),
+             'working_memory':profile.get('_working_memory',''),
              'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections']} for s in sources]}
     materials=[{'type':'text','text':json.dumps(context,ensure_ascii=False)}]
     for source in sources:
         if source['kind'] in IMAGE_MIME and source['content'] and source['status']!='failed':
             materials.extend([{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
                               {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}])
-    payload={'model':settings.ai_model,'messages':[{'role':'system','content':PROMPT+presentation_prompt(profile)+json.dumps(ChatAnswer.model_json_schema(),ensure_ascii=False)},
+    payload={'model':settings.ai_model,'messages':[{'role':'system','content':PROMPT+AGENT_POLICY+presentation_prompt(profile)+json.dumps(ChatAnswer.model_json_schema(),ensure_ascii=False)},
              {'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
              'response_format':{'type':'json_object'},'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens}
     try:

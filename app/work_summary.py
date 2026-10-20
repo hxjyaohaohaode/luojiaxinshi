@@ -73,7 +73,7 @@ async def stream(settings, db, mid, source_events):
             row = conn.execute('SELECT report FROM reply_grounding WHERE message_id=?', (mid,)).fetchone()
             report = json.loads(row['report']) if row else {'status':'checking','started_at':int(time.time())}
             report['steps'] = steps
-            report['summary_model'] = settings.ai_summary_model if settings.ai_stage_summaries else None
+            report['summary_model'] = None
             report['summary_usage'] = summary_usage
             conn.execute("INSERT INTO reply_grounding(message_id,report) VALUES(?,?) ON CONFLICT(message_id) DO UPDATE SET report=excluded.report", (mid,json.dumps(report,ensure_ascii=False)))
 
@@ -117,9 +117,8 @@ async def stream(settings, db, mid, source_events):
                     steps.append(record)
                     persist()
                     event = {**event, 'steps':deepcopy(steps)}
-                    job = asyncio.create_task(brief(record))
-                    jobs.add(job)
-                    job.add_done_callback(jobs.discard)
+                    # Real tool events are sufficient; do not spend a model call
+                    # choosing between equivalent canned status descriptions.
                 if event['type'] == 'complete':
                     published = True
                     if steps:

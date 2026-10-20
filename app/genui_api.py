@@ -209,8 +209,12 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 seq+=1;yield packet('start',{'message_id':mid,'conversation':initial,'tier':tier,'data':trusted,'limits':feature['limits']},seq)
                 from .grounding import events as grounded_events
                 from .work_summary import stream as work_stream
+                profile=json.loads(current['profile'])
+                if not settings.ai_grounding:
+                    from .memory_context import basic_profile
+                    profile=basic_profile(db,current['id'],cid,mid,messages,profile)
                 stream_events=(work_stream(settings,db,mid,grounded_events(settings,db,current['id'],cid,mid,sources,messages,json.loads(current['profile']),tier))
-                               if settings.ai_grounding else genui_ai.stream_reply(settings,sources,messages,json.loads(current['profile']),tier))
+                               if settings.ai_grounding else genui_ai.stream_reply(settings,sources,messages,profile,tier))
                 from contextlib import aclosing
                 async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(stream_events):
                     async for event in stream_events:
@@ -224,6 +228,11 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             continue
                         if event['type']=='work':
                             seq+=1;yield packet('work',{'message_id':mid,'steps':event['steps']},seq)
+                            continue
+                        if event['type']=='preview':
+                            # This is transient text, never a saved, validated UI graph.
+                            # Transport it as it arrives, not as a timed replay.
+                            seq+=1;yield packet('preview',{'message_id':mid,'text':event['text'],'reset':bool(event.get('reset'))},seq)
                             continue
                         if event['type']=='delta':
                             if len((raw+event['text']).encode())>feature['limits']['messageBytes']:raise AIError('回复已达大小上限，已保留收到的部分。')
@@ -271,6 +280,8 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             report=json.loads(report_row['report']) if report_row else {}
                             reason=(report.get('harness') or {}).get('stop_reason') or ('complete' if status=='complete' else 'request_failed')
                             app.state.execution.finish(conn,mid,'succeeded' if status=='complete' else status,reason)
+                            from .memory_learning import completed_turn
+                            completed_turn(conn,current['id'],cid,mid,result,status)
                         elif live:
                             # An explicit cancel wins. Recover the last delivered checkpoint only.
                             stored=conn.execute('SELECT raw FROM genui_messages WHERE message_id=?',(mid,)).fetchone()

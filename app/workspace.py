@@ -40,7 +40,7 @@ class SendMessage(Version):
     retry_message_id: str | None = Field(default=None,max_length=40)
     regenerate_message_id: str | None = Field(default=None,max_length=40)
     steer_message_id: str | None = Field(default=None,max_length=40)
-    allow_external_processing: bool = False
+    allow_external_processing: bool = True
     ui_context: Interaction | None = None
 
 
@@ -329,6 +329,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 if len(messages)>2000 or sum(len(m['content']) for m in messages)>4000000:
                     raise HTTPException(413,'本会话内容已较长，请新建对话继续；历史和材料仍保留在这里')
                 from .retrieval_scope import account_access
+                from .memory_learning import ingest_message
+                ingest_message(conn,current['id'],cid,parent,messages)
                 access=account_access(messages)
                 sources=model_sources(conn,sources_for(conn,cid,True),messages[-1]['content'] if messages else payload.content) if access['attachments'] else []
                 # Exclude assistant text tied to materials the user removed from current context.
@@ -388,7 +390,9 @@ def install_workspace(app,db,settings,user,heavy_lock):
                             if event['type']=='complete':result=event['result'];usage=event.get('usage',{})
                     if result is None:raise AIError('核验未完成，未发布回答。')
                 else:
-                    result,usage=await run_in_threadpool(chat_ai.reply,settings,sources,messages,json.loads(current['profile']))
+                    from .memory_context import basic_profile
+                    profile=basic_profile(db,current['id'],cid,mid,messages,json.loads(current['profile']))
+                    result,usage=await run_in_threadpool(chat_ai.reply,settings,sources,messages,profile)
                 status='complete';error=''
             except (AIError,TimeoutError) as exc:
                 result={'answer':'','citations':[],'image_sources':[]};usage={};status='failed';error=str(exc)
@@ -408,6 +412,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 select_reply(conn,mid)
                 conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
                 app.state.execution.finish(conn,mid,'succeeded' if status=='complete' else 'failed','verified' if status=='complete' and settings.ai_grounding else 'complete' if status=='complete' else 'request_failed')
+                from .memory_learning import completed_turn
+                completed_turn(conn,current['id'],cid,mid,result,status)
                 return conversation_detail(conn,cid,current['id'],settings)
         finally:
             try:

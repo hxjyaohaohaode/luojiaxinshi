@@ -207,6 +207,10 @@ class Database:
                     raise RuntimeError('个人记忆版本不兼容，禁止直接降级')
                 if memory_version and memory_version[0]=='2' and 'memory_policies' not in tables:
                     raise RuntimeError('个人记忆策略表缺失，未修改数据库')
+                engine_version=conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()
+                from .memory_store import REQUIRED_TABLES,V1_TABLES
+                if engine_version and (engine_version[0] not in {'1','2'} or not (REQUIRED_TABLES if engine_version[0]=='2' else V1_TABLES).issubset(tables)):
+                    raise RuntimeError('记忆引擎版本不兼容或数据表缺失，未修改数据库')
                 execution_version=conn.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
                 if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):
                     raise RuntimeError('执行记录版本不兼容或数据表缺失，禁止直接降级')
@@ -225,6 +229,10 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+MEMORY_SCHEMA+'COMMIT;')
             from .memory_policy import SCHEMA as MEMORY_POLICY_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+MEMORY_POLICY_SCHEMA+'COMMIT;')
+            from .memory_store import SCHEMA as MEMORY_ENGINE_SCHEMA,all_revisions_initialized
+            conn.executescript('BEGIN IMMEDIATE;'+MEMORY_ENGINE_SCHEMA+'COMMIT;')
+            all_revisions_initialized(conn)
+            conn.commit()
             from .execution import SCHEMA as EXECUTION_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+EXECUTION_SCHEMA+'COMMIT;')
             from .action_review import SCHEMA as REVIEW_SCHEMA
@@ -234,6 +242,9 @@ class Database:
     def connect(self, write=False):
         conn = sqlite3.connect(self.path, timeout=15)
         conn.row_factory = sqlite3.Row
+        from .memory_store import tokens,digest
+        conn.create_function('memory_tokens',1,tokens,deterministic=True)
+        conn.create_function('memory_digest',1,digest,deterministic=True)
         conn.execute("PRAGMA foreign_keys=ON")
         conn.execute("PRAGMA busy_timeout=15000")
         conn.execute("PRAGMA secure_delete=ON")

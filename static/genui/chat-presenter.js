@@ -6,10 +6,11 @@ import {hostRegistry} from './host.js';
 import {WorkSummaryView} from './work-view.js';
 import {CitationView} from './citations.js';
 import {submittedMessageText as userMessageText} from './interaction.js';
+import {memoryOperationSummary} from './memory-notice.js';
 
 export {userMessageText};
 function stamp(value,full=false){if(!value)return '';return new Date(value*1000).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',...(full?{year:'numeric',second:'2-digit'}:{})});}
-const replyPaths={copy:'M9 9h11v12H9z M15 9V3H3v12h6',like:'M8 10v11H3V10z M8 10l4-8h2v7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H8',dislike:'M8 14V3H3v11z M8 14l4 8h2v-7h6a2 2 0 0 0 2-2l-2-8a2 2 0 0 0-2-2H8',branch:'M6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M18 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 7v10 M6 13h6a6 6 0 0 0 6-6',regenerate:'M20 7a9 9 0 1 0 1 8 M20 2v5h-5',share:'M12 16V3 M7 8l5-5 5 5 M5 12v9h14v-9',previous:'m14 6-6 6 6 6',next:'m10 6 6 6-6 6',save:'M5 3h14v19l-7-4-7 4z'};
+const replyPaths={speak:'M4 9v6h4l5 4V5L8 9z M16 8a6 6 0 0 1 0 8 M19 5a10 10 0 0 1 0 14',copy:'M9 9h11v12H9z M15 9V3H3v12h6',like:'M8 10v11H3V10z M8 10l4-8h2v7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H8',dislike:'M8 14V3H3v11z M8 14l4 8h2v-7h6a2 2 0 0 0 2-2l-2-8a2 2 0 0 0-2-2H8',branch:'M6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M18 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 7v10 M6 13h6a6 6 0 0 0 6-6',regenerate:'M20 7a9 9 0 1 0 1 8 M20 2v5h-5',share:'M12 16V3 M7 8l5-5 5 5 M5 12v9h14v-9',previous:'m14 6-6 6 6 6',next:'m10 6 6 6-6 6',save:'M5 3h14v19l-7-4-7 4z'};
 function replyAction(action,label){const b=button('',null,'button small plain reply-action');b.setAttribute('aria-label',label);b.title=label;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.6');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');path.setAttribute('d',replyPaths[action]);svg.append(path);b.append(svg);return b;}
 function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
 export class ConversationView{
@@ -23,6 +24,7 @@ export class ConversationView{
   markContextSubmitted(context,saved=false){if(context){this.submittedContexts??=new Map();this.submittedContexts.set(context.message_id,JSON.stringify(context.blocks));if(saved){const record=this.records.get(context.message_id);if(record?.saveFeedback)record.saveFeedback.textContent='本次提交的选择已保存';}}}
   dispose(){for(const r of this.records.values()){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();}this.records.clear();}
   parts(message){
+    if(message._preview!==undefined&&!message._liveParts)return [{kind:'text',text:message._preview.replace(/\[E\d+\]/g,'')}];
     if(message._liveParts)return message._liveParts;
     if(message.genui?.v===1){
       const g=message.genui;
@@ -72,10 +74,11 @@ export class ConversationView{
       if(active&&(message._work?.length||message.grounding?.steps?.length))r.status.textContent='处理中';
       const pose=active?(message._phase==='writing'?'writing':message._phase==='verifying'||message._phase==='searching'||message._phase==='retrieving'?'search':(message.genui?.raw||message.content)?'writing':this.options.sources?.length?'search':'thinking'):message.status==='complete'?'complete':'rest';
       if(r.pose!==pose){r.pose=pose;const avatar=r.label.querySelector('img');avatar.src='/static/assets/luojia-messenger-'+pose+'.png';avatar.dataset.replyPose=pose;}
-      const contentKey=JSON.stringify([message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled]);
+      r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',active&&!!message._preview&&!message._liveParts);
+      const contentKey=JSON.stringify([message._preview,message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled]);
       if(r.contentKey!==contentKey){
         r.contentKey=contentKey;const parts=this.parts(message);r.parts=parts;
-        if(feature.enabled){
+        if(feature.enabled&&!(active&&message._preview!==undefined&&!message._liveParts)){
           if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
             imageResources:this.options.imageResources||[],askModel:event=>this.options.askModel({...event,message_id:message.id}),
             onChange:()=>{this.interactionOrigin=message.id;if(r.save){r.save.textContent='保存互动进度';r.saveFeedback.textContent='';}},
@@ -84,21 +87,28 @@ export class ConversationView{
             onSave:message.genui?async(index,snapshot)=>{const snapshots=r.renderer.snapshots();snapshots[index]=snapshot;await this.options.save(message.id,snapshots);}:null});}
           r.renderer.update(parts);
         }else{
-          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.content.replaceChildren(markdown(message.genui?this.copy(message):message.content||'',{enhance:false}));
+          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.content.replaceChildren(markdown(active&&message._preview!==undefined&&!message._liveParts?message._preview.replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{enhance:false}));
         }
       }
-      const waiting=message.status==='processing'&&!((message.genui?.raw||message.content||'').length)&&!(message._work?.length||message.grounding?.steps?.length);
+      const waiting=message.status==='processing'&&!((message._preview||message.genui?.raw||message.content||'').length)&&!(message._work?.length||message.grounding?.steps?.length);
       if(waiting&&!r.waiting){r.waiting=el('div','thinking');const visual=el('span');visual.innerHTML=brandMotion('mesh','',{priority:3});r.waiting.append(visual,el('span','','正在结合材料整理回复…'));r.article.insertBefore(r.waiting,r.citations);}else if(!waiting&&r.waiting){r.waiting.remove();r.waiting=null;}if(r.waiting)r.waiting.lastChild.textContent=message._phaseLabel||'正在结合材料整理回复…';
       if(!r.citationView)r.citationView=new CitationView(r.content,r.citations,this.options);r.citationView.update(message,this.options);
       r.citations.hidden=!r.citations.childNodes.length;
+      if(!r.memoryNotice){r.memoryNotice=el('div','memory-receipt small muted');r.memoryNotice.setAttribute('role','status');r.article.insertBefore(r.memoryNotice,r.footer);}
+      const receipt=message.status==='complete'?memoryOperationSummary(message.grounding?.memory_operations):'';
+      r.memoryNotice.hidden=!receipt;r.memoryNotice.replaceChildren();
+      if(receipt){const link=el('a','','管理记忆');link.href='#memory';r.memoryNotice.append(el('span','',receipt),link);}
       const errorKey=JSON.stringify([message.status,message.error,lastAssistant]);if(r.errorKey!==errorKey){r.errorKey=errorKey;r.error.replaceChildren();r.error.hidden=redirected||['complete','processing'].includes(message.status);if(!r.error.hidden){r.error.append(el('p','',message.error||'回复未完成，已收到的内容仍保留。'));if(message.id===lastAssistant){const retry=button('重试这条回复',null,'button small');retry.dataset.chatAction='retry';retry.dataset.id=message.id;r.error.append(retry);}}}
       if(!r.time){r.time=el('time','message-time',stamp(message.created_at));if(message.created_at)r.time.dateTime=new Date(message.created_at*1000).toISOString();r.footer.append(r.time);}
       if(!r.copy){r.copy=replyAction('copy','复制回复');r.copy.dataset.chatAction='copy';r.copy.dataset.id=message.id;r.footer.append(r.copy);}
+      r.copy.disabled=message.status!=='complete';
       const toolsKey=JSON.stringify([message.id,message.status,message.reaction,message.versions?.map(v=>v.id),message.version_index]);
-      if(r.toolsKey!==toolsKey){r.toolsKey=toolsKey;r.tools?.remove();r.tools=el('div','reply-tools');
-        for(const [action,label,pressed]of [['like','这条回答有帮助',message.reaction===1],['dislike','这条回答没有帮助',message.reaction===-1],['branch','从这条回复开启分支',false],['regenerate','重新生成回复',false],['share','分享回复',false]]){const b=replyAction(action,label);b.dataset.chatAction=action;b.dataset.id=message.id;b.disabled=message.status!=='complete';if(['like','dislike'].includes(action))b.setAttribute('aria-pressed',String(pressed));r.tools.append(b);}
-        if(message.versions?.length>1){const index=message.version_index??message.versions.findIndex(v=>v.id===message.id),pager=el('span','reply-versions');for(const [step,label]of [[-1,'‹'],[1,'›']]){const b=replyAction(step<0?'previous':'next',step<0?'上一版回复':'下一版回复');b.dataset.chatAction='version';b.dataset.id=message.id;b.dataset.index=index+step;b.setAttribute('aria-label',step<0?'上一版回复':'下一版回复');b.disabled=active||index+step<0||index+step>=message.versions.length;pager.append(b);if(step===-1)pager.append(el('span','',`${index+1} / ${message.versions.length}`));}r.tools.append(pager);}
-        r.footer.append(r.tools);
+      if(r.toolsKey!==toolsKey){r.toolsKey=toolsKey;
+        if(!r.tools){r.tools=el('div','reply-tools');r.footer.append(r.tools);}
+        const controls=[];
+        for(const [action,label,pressed]of [['speak','朗读这条回复',false],['like','这条回答有帮助',message.reaction===1],['dislike','这条回答没有帮助',message.reaction===-1],['branch','从这条回复开启分支',false],['regenerate','重新生成回复',false],['share','分享回复',false]]){const b=[...r.tools.children].find(n=>n.dataset.chatAction===action)||replyAction(action,label);b.dataset.chatAction=action;b.dataset.id=message.id;b.disabled=message.status!=='complete';if(['like','dislike'].includes(action))b.setAttribute('aria-pressed',String(pressed));controls.push(b);}
+        if(message.versions?.length>1){const index=message.version_index??message.versions.findIndex(v=>v.id===message.id),pager=el('span','reply-versions');for(const [step,label]of [[-1,'‹'],[1,'›']]){const b=replyAction(step<0?'previous':'next',step<0?'上一版回复':'下一版回复');b.dataset.chatAction='version';b.dataset.id=message.id;b.dataset.index=index+step;b.setAttribute('aria-label',step<0?'上一版回复':'下一版回复');b.disabled=active||index+step<0||index+step>=message.versions.length;pager.append(b);if(step===-1)pager.append(el('span','',`${index+1} / ${message.versions.length}`));}controls.push(pager);}
+        replaceInOrder(r.tools,controls);
       }
       if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer)return;r.save.disabled=true;r.saveFeedback.textContent='';try{await this.options.save(message.id,r.renderer.snapshots());r.renderer.markSaved();r.save.textContent='进度已保存';r.saveFeedback.textContent='';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.disabled=false;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
       r.save.hidden=!(feature.enabled&&message.genui&&r.parts?.some(p=>p.kind==='ui'&&Object.values(p.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart'))));r.save.disabled=message.status==='processing';

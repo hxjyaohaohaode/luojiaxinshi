@@ -16,12 +16,12 @@ export class WorkSummaryView{
   update(message){
     const steps=message._work||message.grounding?.steps||[],report=message.grounding||{},running=message.status==='processing';
     this.root.hidden=!steps.length&&!report.status;
-    if(this.running===undefined)this.root.open=running;
+    if(this.running===undefined)this.root.open=false;
     if(this.running&&!running)this.root.open=false;
     this.running=running;this.root.dataset.state=running?'running':message.status==='complete'?'complete':'interrupted';
     this.start=report.started_at||steps[0]?.started_at;this.end=report.checked_at||report.finished_at||steps.at(-1)?.finished_at;
-    this.title.textContent=running?'工作进行中':message.status==='complete'?'工作摘要':message.error?.includes('按更新后的问题继续')?'工作已转向':'工作记录 · 未完成';
-    const clock=()=>{this.time.textContent=(steps.length?`${steps.length} 个阶段 · `:'')+(this.start?elapsedLabel(this.start,running?null:this.end):'');};clock();
+    this.title.textContent=running?(steps.at(-1)?.title||'正在处理'):message.status==='complete'?'工作摘要':message.error?.includes('按更新后的问题继续')?'工作已转向':'工作记录 · 未完成';
+    const clock=()=>{this.time.textContent=(this.start?elapsedLabel(this.start,running?null:this.end):'');};clock();
     clearInterval(this.timer);if(running)this.timer=setInterval(clock,1000);
     const key=JSON.stringify([steps,report,message.evidence_sources]);if(key===this.key)return;this.key=key;this.body.replaceChildren();
     const list=el('ol','work-steps');

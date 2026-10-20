@@ -6,7 +6,7 @@
   --green: #165c43;
   --green-light: #eaf3ed;
   --line: #dfe7e1;
-  --bg: #f6f8f6;
+  --bg: #f7f8f4;
   --white: #fff;
   --orange: #966014;
   --red: #aa3d36;
@@ -22,9 +22,11 @@
   --text-base: 15px;
   --ease-out: cubic-bezier(.2, .7, .2, 1);
   --duration: 160ms;
+  --font-ui: "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
 }
 
-body { font-size: 15px; line-height: 1.65; background: var(--bg); }
+body { font-family: var(--font-ui); font-size: 15px; line-height: 1.65; background: var(--bg); }
+button, input, textarea, select { font-family: var(--font-ui); }
 h1 { font-size: clamp(23px, 2.2vw, 28px); line-height: 1.4; letter-spacing: -.4px; font-weight: 650; }
 h2 { font-size: 19px; line-height: 1.5; font-weight: 600; }
 h3 { font-size: 16px; line-height: 1.5; }

@@ -9,10 +9,10 @@ export class SSEDecoder{
     if(line===''){
       if(!this.frame.length)return;const fields=Object.create(null);for(const row of this.frame){const colon=row.indexOf(':');if(colon<0||row.startsWith(':'))continue;const key=row.slice(0,colon),value=row.slice(colon+1).replace(/^ /,'');if(['id','event','data'].includes(key))fields[key]=key==='data'&&fields.data?fields.data+'\n'+value:value;}
       this.frame=[];this.frameSize=0;if(!fields.data)return;const seq=Number(fields.id);if(!Number.isSafeInteger(seq)||seq<1)throw Error('回复序号无效。');if(seq<=this.last)return;if(seq!==this.last+1)throw Error('回复流缺失一段内容，已保留收到的部分。');this.last=seq;
-      if(!['start','phase','work','delta','done'].includes(fields.event))throw Error('回复事件暂不支持。');let data;try{data=JSON.parse(fields.data);}catch{throw Error('回复数据未通过解析，已保留收到的内容。');}
+      if(!['start','phase','work','preview','delta','done'].includes(fields.event))throw Error('回复事件暂不支持。');let data;try{data=JSON.parse(fields.data);}catch{throw Error('回复数据未通过解析，已保留收到的内容。');}
       if(fields.event==='phase'&&(!['planning','retrieving','searching','coverage','writing','verifying'].includes(data?.phase)||typeof data?.label!=='string'||data.label.length>160))throw Error('回复阶段无效。');
       if((fields.event==='work'||data?.steps!==undefined)&&(!Array.isArray(data.steps)||data.steps.length>16||data.steps.some(s=>!s||typeof s.id!=='string'||typeof s.title!=='string'||s.title.length>80||typeof s.summary!=='string'||s.summary.length>160||!['running','complete','interrupted'].includes(s.state))))throw Error('工作摘要无效。');
-      if(fields.event==='delta'&&(typeof data?.text!=='string'||data.text.length>1048576))throw Error('回复增量无效。');
+      if(['delta','preview'].includes(fields.event)&&(typeof data?.text!=='string'||data.text.length>1048576))throw Error('回复增量无效。');
       if(fields.event==='done')this.done=true;this.onEvent(fields.event,data);return;
     }
     this.frameSize+=new TextEncoder().encode(line).length+1;if(this.frameSize>this.eventBytes)throw Error('回复区段过长，已停止读取。');this.frame.push(line);

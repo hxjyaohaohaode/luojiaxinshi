@@ -19,15 +19,15 @@ class ImportRequest(Strict):
     apply_profile: bool = False
 
 
-def bounded(value,depth=0,counter=None):
+def bounded(value,depth=0,counter=None,max_nodes=150000):
     if counter is None:counter=[0]
     counter[0]+=1
-    if depth>24 or counter[0]>150000:raise ValueError('导入结构过深或内容过多')
+    if depth>24 or counter[0]>max_nodes:raise ValueError('导入结构过深或内容过多')
     if isinstance(value,dict):
         if any(k in {'__proto__','constructor','prototype'} for k in value):raise ValueError('导入数据包含不允许的键')
-        for item in value.values():bounded(item,depth+1,counter)
+        for item in value.values():bounded(item,depth+1,counter,max_nodes)
     elif isinstance(value,list):
-        for item in value:bounded(item,depth+1,counter)
+        for item in value:bounded(item,depth+1,counter,max_nodes)
     elif isinstance(value,str) and len(value)>1048576:raise ValueError('导入单项文字过长')
 
 
@@ -169,7 +169,8 @@ def validate(data):
         old_id=text(item.get('id'),40)
         if not old_id:raise ValueError('项目缺少原始标识')
         projects.append({'key':key('memory_project',item),'old_id':old_id,'data':Project.model_validate({k:item[k] for k in Project.model_fields if k in item}).model_dump()})
-    for item in collection(data,'memories',500):
+    from .memory_store import MAX_MEMORIES
+    for item in collection(data,'memories',MAX_MEMORIES):
         value={k:item[k] for k in Memory.model_fields if k in item}
         value.update(active=False,source_conversation_id=None)
         memories.append({'key':key('memory',item),'data':Memory.model_validate(value).model_dump()})
@@ -224,13 +225,16 @@ def install_data_transfer(app,db,user):
                             raise HTTPException(422,'导入后项目将超过 100 个，请先整理已有项目')
                         conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',(rid,current['id'],value['name'],value['description'],now,now))
                     elif kind=='memories':
-                        if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=500:
-                            raise HTTPException(422,'导入后记忆将超过 500 条，请先整理已有记忆')
+                        from .memory_store import MAX_MEMORIES,record_revision
+                        if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=MAX_MEMORIES:
+                            raise HTTPException(422,f'导入后记忆将超过 {MAX_MEMORIES} 条，请先整理已有记忆')
                         value=item['data'];pid=require_project(value['project_id'])
                         conn.execute('INSERT INTO personal_memories VALUES(?,?,?,?,?,?,?,NULL,0,?,1,?,?)',
                             (rid,current['id'],value['scope'],pid,value['topic'],value['kind'],value['content'],int(value['pinned']),now,now))
                         from .memory_policy import save_policy
                         save_policy(conn,rid,value)
+                        conn.execute("UPDATE memory_details SET origin='import',labels=? WHERE memory_id=?",(dumps(value['labels']),rid))
+                        record_revision(conn,rid,'import')
                     elif kind=='notices':
                         conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,materials_complete,fingerprint,status,created_at,updated_at) VALUES(?,?,?,?,?,0,?,?,?,?)',
                                      (rid,current['id'],item['title'],item['source_label'],item['source_url'],item['key'],'confirmed' if item['tasks'] else 'received',now,now))

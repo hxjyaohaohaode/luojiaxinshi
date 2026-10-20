@@ -60,6 +60,56 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
       const small=$(`#workflow-form [name=dependency][value="${c.id}"]`)?.closest('label')?.querySelector('small');
       if(small)small.textContent+=(c.review_required?' · 办理影响待复核':'')+(c.conditions_blocked?' · 办理条件未满足':'');
     }
+    arrangeWorkflow(t,d);
+  }
+
+  function arrangeWorkflow(task,data){
+    const form=$('#workflow-form');
+    const nodes=[...form.children],head=form.querySelector('.workflow-task-head'),save=form.querySelector('.workflow-save');
+    const tabs=document.createElement('div');tabs.className='workflow-tabs';tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','办理内容');
+    const panels={};
+    for(const [id,label] of [['record','办理记录'],['requirements','要求与前置'],['history','历史记录']]){
+      const tab=document.createElement('button');tab.type='button';tab.id='workflow-tab-'+id;tab.dataset.workflowTab=id;tab.setAttribute('role','tab');tab.setAttribute('aria-controls','workflow-panel-'+id);tab.textContent=label;tabs.append(tab);
+      const panel=document.createElement('section');panel.className='workflow-page';panel.id='workflow-panel-'+id;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',tab.id);panels[id]=panel;
+    }
+    const grid=form.querySelector('.form-grid');
+    // Preserve every original field and draft binding while grouping by intent.
+    const stage=grid.querySelector('[name=stage]').closest('label'),kind=grid.querySelector('[name=action_kind]').closest('label');
+    panels.record.append(stage);panels.requirements.append(kind);
+    for(const node of nodes){
+      if([head,save,grid].includes(node))continue;
+      if(node.matches('.workflow-tools')){panels.history.append(node);continue;}
+      if(node.matches('[data-optional-choice]')||node.querySelector('[data-condition-list]')||node.querySelector('[name=dependency]')||node.textContent.includes('办理前提与外部条件')){panels.requirements.append(node);continue;}
+      if(node.matches('details')&&node.textContent.includes('办理时间线')){node.open=true;panels.history.prepend(node);continue;}
+      if(node.querySelector('[name=receipt]')){
+        const section=document.createElement('details');section.className='workflow-section workflow-receipt';
+        section.open=data.stage!=='preparing'||!!data.receipt||!!data.outcome;
+        section.innerHTML='<summary>提交与结果 <span class="small muted">回执、补件或受阻原因</span></summary>';
+        for(const child of [...node.children])if(child.tagName!=='LEGEND')section.append(child);
+        panels.record.append(section);continue;
+      }
+      if(node.querySelector('[name=next_step]')){
+        const section=document.createElement('details');section.className='workflow-section workflow-followup';section.open=!!data.next_step||!!data.followup_at;
+        section.innerHTML='<summary>下一次跟进 <span class="small muted">事项与提醒时间</span></summary>';
+        for(const child of [...node.children])if(child.tagName!=='LEGEND')section.append(child);
+        panels.record.append(section);continue;
+      }
+      panels.record.append(node);
+    }
+    const hint=document.createElement('p');hint.className='workflow-scope-note';hint.textContent='先更新进度，需要时再补充回执和跟进。';
+    const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.action='close-dialog';cancel.textContent='返回';
+    save.querySelector('span').textContent='修改会暂存，保存后更新办理记录';save.insertBefore(cancel,save.querySelector('[type=submit]'));
+    form.replaceChildren(head,tabs,hint,...Object.values(panels),save);
+    const choose=(id,focus=false)=>{
+      for(const button of tabs.children){const active=button.dataset.workflowTab===id;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;if(active&&focus)button.focus();}
+      for(const [key,panel] of Object.entries(panels))panel.hidden=key!==id;
+      hint.hidden=id!=='record';
+    };
+    tabs.addEventListener('click',event=>{const tab=event.target.closest('[data-workflow-tab]');if(tab)choose(tab.dataset.workflowTab);});
+    tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.children],index=buttons.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowRight'?1:2))%3;choose(buttons[next].dataset.workflowTab,true);});
+    form.addEventListener('change',event=>{if(event.target.name==='stage'&&event.target.value!=='preparing')form.querySelector('.workflow-receipt').open=true;});
+    form.addEventListener('invalid',event=>{const panel=event.target.closest('.workflow-page');if(panel)choose(Object.keys(panels).find(key=>panels[key]===panel));for(let node=event.target.parentElement;node&&node!==form;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;},true);
+    choose('record');
   }
 
   function readWorkflow(form){

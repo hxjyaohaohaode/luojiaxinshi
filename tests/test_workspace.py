@@ -146,12 +146,11 @@ def test_model_cancel_rejects_late_reply(env,monkeypatch):
     assert result['messages'][-1]['status']=='cancelled' and not result['messages'][-1]['content']
 
 
-def test_retry_does_not_repeat_user_message_and_consent_is_required(env,monkeypatch):
+def test_retry_defaults_to_enabled_processing_and_honors_explicit_refusal(env,monkeypatch):
     c=account(env);chat=material(c,conversation(c));failed,_=send(c,chat)
     env[1].ai_api_key='engineering-fixture';monkeypatch.setattr(chat_ai,'reply',fixture_answer)
     retry={'version':failed['version'],'content':'','request_id':uuid.uuid4().hex,'retry_message_id':failed['messages'][-1]['id']}
-    assert c.post('/api/conversations/'+chat['id']+'/messages',json=retry).status_code==422
-    retry['allow_external_processing']=True
+    assert c.post('/api/conversations/'+chat['id']+'/messages',json={**retry,'allow_external_processing':False}).status_code==422
     result=c.post('/api/conversations/'+chat['id']+'/messages',json=retry).json()
     assert len([m for m in result['messages'] if m['role']=='user'])==1
     assert result['messages'][-1]['status']=='complete'

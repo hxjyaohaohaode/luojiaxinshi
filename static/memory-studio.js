@@ -1,0 +1,99 @@
+import {captureUiContext} from './ui-request.js';
+
+const modes={auto:'自动记忆',review:'先核对再保存',manual:'仅手动保存',off:'暂停全部记忆'};
+const origins={manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',task:'办理记录',import:'文件导入'};
+const stamp=value=>value?new Date(value*1000).toLocaleString():'—';
+
+export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh}){
+  const $=selector=>document.querySelector(selector);
+  const button=(label,action,id='')=>`<button type="button" class="button small" data-memory-studio="${action}" data-id="${esc(id)}">${label}</button>`;
+  let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
+  function panel(data){
+    settings=data.settings||settings;
+    return `<section class="memory-studio" aria-label="记忆工作台"><div class="memory-studio-heading"><div><h2>持续积累，也随时由你调整</h2><p class="small muted">记住明确的个人偏好与项目决定，保留原话和修改历史。推断与需要更正的锁定内容会先等你核对。</p></div><span class="pill">${esc(modes[settings.mode])}</span></div>
+      <div class="memory-studio-stats"><span><strong>${data.total??data.memories.length}</strong> 条记忆</span><span><strong>${data.pending||0}</strong> 条待核对</span><span>原始记录与整理概览分别保留</span></div>
+      <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}</div>
+      <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
+    </section>`;
+  }
+  function meta(item){
+    return `<div class="memory-provenance"><span>${esc(origins[item.origin]||'本人保存')}</span>${item.locked?'<span>本人锁定</span>':''}${(item.labels||[]).map(label=>`<span>${esc(label)}</span>`).join('')}</div>`;
+  }
+  function controls(item){
+    return `<div class="memory-studio-actions">${button('来源与历史','detail',item.id)}${button('导出 Markdown','markdown',item.id)}${item.review_status==='pending'?button('确认采用','accept',item.id)+button('不记这条','reject',item.id):''}</div>`;
+  }
+  function download(content,name,type){
+    const url=URL.createObjectURL(new Blob([content],{type})),anchor=document.createElement('a');
+    anchor.href=url;anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  async function detail(id){
+    const user=state.session?.user?.id,generation=state.renderId,request=state.dialogRequest;
+    const item=await api('/memory/items/'+id);
+    if(user!==state.session?.user?.id||generation!==state.renderId||request!==state.dialogRequest)return;
+    showDialog('记忆来源与版本',`<div class="memory-detail"><p class="memory-content">${esc(item.content)}</p>${meta(item)}
+      <h3>从哪里得出</h3>${item.evidence.length?item.evidence.map(e=>`<blockquote><p>${esc(e.quote)}</p><footer>${esc(e.source_kind==='message'?'本人对话原话':'本人办理记录')} · ${esc(stamp(e.created_at))}${e.source_kind==='message'&&item.source_conversation_id?` · <a href="#chat/${encodeURIComponent(item.source_conversation_id)}" data-memory-studio="source">回到对话</a>`:''}</footer></blockquote>`).join(''):'<p class="muted">本人手动保存的内容，没有自动推断的外部来源。</p>'}
+      ${item.links.length?`<h3>关联依据</h3>${item.links.map(link=>`<div class="memory-link"><span>${link.relation==='supersedes'?'拟替换':'来源'} · 第 ${link.parent_version} 版</span><p>${esc(link.content)}</p></div>`).join('')}`:''}
+      ${item.imported_provenance?`<details class="memory-policy"><summary>导入文件中的历史来源（待核对）</summary><pre class="memory-import-history">${esc(JSON.stringify(item.imported_provenance,null,2).slice(0,12000))}</pre><p class="small muted">这里保留导入时的来源声明，不将其作为当前账号的真实对话或办理关联；完整内容随 JSON 导出。</p></details>`:''}<h3>修改历史</h3>${item.revisions.map(rev=>`<details class="memory-policy"><summary>第 ${rev.version} 版 · ${esc(stamp(rev.created_at))} · ${esc(rev.actor.startsWith('user')?'本人操作':origins[rev.actor]||rev.actor)}</summary><p class="memory-content">${esc(rev.snapshot.content)}</p>${rev.version!==item.version?`<button type="button" class="button small" data-memory-restore="${rev.version}" data-id="${esc(item.id)}" data-version="${item.version}">恢复这一版</button>`:'<p class="small muted">当前版本</p>'}</details>`).join('')}
+      <p class="small muted">恢复会新增版本。永久删除会同时清理这条记忆的历史与派生概览；原对话需要单独删除。</p></div>`);
+  }
+  function settingsDialog(){
+    showDialog('记忆设置',`<form class="stack" id="memory-settings-form"><label class="field">记忆方式<select name="mode">${Object.entries(modes).map(([key,label])=>`<option value="${key}" ${key===settings.mode?'selected':''}>${label}</option>`).join('')}</select></label><p class="small muted">自动记忆保存有原话依据的明确陈述；不明确的提议先核对。仅手动保存仍可调用已有记忆；暂停全部记忆会同时停止调用与自动积累。</p><label class="check"><input type="checkbox" name="auto_organize" ${settings.auto_organize?'checked':''}><span>后台整理分类概览，保留每条原始记忆</span></label><label class="check"><input type="checkbox" name="learn_tasks" ${settings.learn_tasks?'checked':''}><span>将本人办理进度积累为待办与经历记忆</span></label><p class="small muted">记忆整理在本机进行。Agent 随已授权的回答提出记忆操作，不为后台整理额外调用付费模型。</p><div class="form-footer"><button type="submit" class="button primary">保存设置</button></div></form>`);
+    const form=$('#memory-settings-form'),version=settings.version;
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();const fd=new FormData(form),view=captureUiContext(state,form);form.inert=true;
+      try{await api('/memory/settings',{method:'PUT',json:{version,mode:fd.get('mode'),auto_organize:fd.has('auto_organize'),learn_tasks:fd.has('learn_tasks')}});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await refresh();toast('记忆设置已保存。');}catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
+    });
+  }
+  async function working(cid){
+    const user=state.session?.user?.id,generation=state.renderId,request=state.dialogRequest;
+    const item=await api(`/conversations/${cid}/working-memory`);
+    if(user!==state.session?.user?.id||generation!==state.renderId||request!==state.dialogRequest)return;
+    showDialog('本次对话的工作记忆',`<form class="stack" id="memory-working-form"><p class="small muted">保留当前目标、计划和待解决的问题。锁定后，自动更新会保留你的修改。</p><label class="field">当前目标与进度<textarea name="content" rows="10" maxlength="4000">${esc(item.content)}</textarea></label><label class="check"><input type="checkbox" name="locked" ${item.locked?'checked':''}><span>保留我的编辑，不让自动状态覆盖</span></label><div class="form-footer"><button class="button primary" type="submit">保存工作记忆</button></div></form>`);
+    const form=$('#memory-working-form');
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();const fd=new FormData(form),view=captureUiContext(state,form);form.inert=true;
+      try{await api(`/conversations/${cid}/working-memory`,{method:'PUT',json:{version:item.version,content:fd.get('content'),locked:fd.has('locked')}});if(view.sameUser()){if(view.sameDialog())$('#dialog').close();toast('工作记忆已保存。');}}catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
+    });
+  }
+  document.addEventListener('click',async event=>{
+    const target=event.target.closest('[data-memory-studio],[data-memory-restore]');if(!target||target.disabled)return;
+    const action=target.dataset.memoryStudio,id=target.dataset.id,view=captureUiContext(state,target);target.disabled=true;
+    try{
+      if(target.dataset.memoryRestore){
+        if(!await ask('恢复历史版本','将这版内容保存为新的当前版本，之后仍可查看修改记录。','恢复版本'))return;
+        await api(`/memory/items/${id}/restore`,{method:'POST',json:{version:Number(target.dataset.version),revision:Number(target.dataset.memoryRestore)}});if(view.sameUser()){if(view.sameRoute())await refresh();toast('已恢复为新的当前版本。');}
+      }else if(action==='settings')settingsDialog();
+      else if(action==='detail')await detail(id);
+      else if(action==='source')$('#dialog').close();
+      else if(action==='working')await working(id);
+      else if(action==='import')$('#memory-import-file').click();
+      else if(action==='export'){const data=await api('/memory/export');if(view.sameUser())download(JSON.stringify(data,null,2),'我的记忆.json','application/json');}
+      else if(action==='markdown'){
+        const item=await api('/memory/items/'+id);
+        if(!view.sameUser())return;
+        const header=Object.fromEntries(['id','version','scope','project_id','topic','kind','semantic_key','valid_from','expires_at','labels'].map(key=>[key,item[key]]));
+        download('---\n'+JSON.stringify({format:'campus-memory-v1',...header})+'\n---\n'+item.content,`记忆-${id}.md`,'text/markdown');
+      }else if(action==='accept'||action==='reject'){
+        const item=await api('/memory/items/'+id);if(!view.sameUser())return;
+        await api(`/memory/items/${id}/review`,{method:'POST',json:{version:item.version,accept:action==='accept'}});
+        if(view.sameUser()){if(view.sameRoute())await refresh();toast(action==='accept'?'已采用，并保护你的确认内容。':'已移除这条提议。');}
+      }else if(action==='organize'||action==='backfill'){
+        if(action==='backfill')await api('/memory/backfill',{method:'POST'});
+        const result=await api('/memory/organize',{method:'POST'});
+        if(view.sameUser()){if(view.sameRoute())await refresh();toast(`已处理 ${result.processed} 条记录，新增 ${result.created.length} 份概览。其余排队记录由后台继续整理。`);}
+      }else if(action==='retry'){const result=await api('/memory/jobs/retry',{method:'POST'});if(view.sameUser()){if(view.sameDialog())$('#dialog').close();toast(`已将 ${result.queued} 条记录重新加入整理队列。`);}}
+      else if(action==='jobs'){
+        const jobs=await api('/memory/jobs');if(!view.sameDialog())return;
+        const names={queued:'待整理',done:'已处理',failed:'需处理'};
+        showDialog('记忆整理状态',`<div class="stack">${Object.entries(jobs.counts).map(([key,count])=>`<p>${esc(names[key]||key)}：<strong>${count}</strong></p>`).join('')||'<p>没有待处理的记录。</p>'}<p class="small muted">后台在空闲时分批处理。失败记录保留状态，不会被当作已成功整理。</p>${jobs.counts.failed?button('重试失败记录','retry'):''}${jobs.recent.map(job=>`<p class="small">${esc(job.source_kind==='message'?'对话':'办理记录')} · ${esc(names[job.state]||job.state)} · ${esc(stamp(job.created_at))}</p>`).join('')}</div>`);
+      }
+    }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
+  });
+  document.addEventListener('change',async event=>{
+    if(event.target.id!=='memory-import-file')return;
+    const file=event.target.files?.[0];if(!file)return;
+    const view=captureUiContext(state,event.target);
+    try{if(file.size>20000000)throw new Error('记忆文件不能超过 20 MB。');const text=await file.text();if(!view.sameUser())return;const result=await api('/memory/import',{method:'POST',json:{text,format:file.name.toLowerCase().endsWith('.md')?'markdown':'json'}});if(view.sameUser()){if(view.sameRoute())await refresh();toast(`已处理 ${result.count} 条记忆。${result.note}`);}}catch(error){if(view.sameUser())toast(error.message,true);}finally{event.target.value='';}
+  });
+  return {panel,meta,controls,workingButton:cid=>button('查看与编辑工作记忆','working',cid)};
+}

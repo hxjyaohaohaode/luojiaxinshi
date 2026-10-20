@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createNoticeProgress,metricLines} from '../static/notice-progress.js';
+import {createNoticeProgress,metricLines,processingStages} from '../static/notice-progress.js';
+
+test('processing stages reflect the reported phase without claiming previous completion',()=>{
+  const current=processingStages('receiving');
+  assert.equal((current.match(/aria-current="step"/g)||[]).length,1);
+  assert.match(current,/aria-current="step"><span aria-hidden="true">2/);
+  assert.equal(processingStages('unknown').includes('aria-current'),false);
+  assert.equal(current.includes('已完成'),false);
+});
 
 function harness(api){
   const state={renderId:1,session:{user:{id:'one'}}},fields={},queue=[];

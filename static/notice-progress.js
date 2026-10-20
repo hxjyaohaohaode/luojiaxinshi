@@ -1,8 +1,13 @@
 const labels={extracting:'正在结合原文整理',receiving:'正在接收整理结果',verifying:'正在校验结构与原文依据',reviewing:'正在复核动作与原文是否一致'};
 
+export function processingStages(stage){
+  return [['extracting','整理原文'],['receiving','接收结果'],['verifying','校验依据'],['reviewing','复核行动']]
+    .map(([key,label],index)=>`<li${key===stage?' aria-current="step"':''}><span aria-hidden="true">${index+1}</span><strong>${label}</strong>${key===stage?'<span class="sr-only">当前阶段</span>':''}</li>`).join('');
+}
+
 export function noticeProgressPanel(n,{esc,brandMotion,button}){
-  const title=labels[n.execution?.stage]||labels.extracting;
-  return `<div class="panel busy-panel" data-notice-progress="${esc(n.id)}" role="status" aria-live="polite">${brandMotion('routing','',{priority:3})}<h3 data-notice-phase>${title}</h3><p>材料已保存。接收和复核结束后会自动显示草稿及核对意见，请逐项确认。</p><p class="footnote" data-notice-elapsed>正在处理，离开页面后可返回查看。</p>${button('刷新状态','refresh-notice','small')}</div>`;
+  const title=labels[n.execution?.stage]||'正在等待处理状态';
+  return `<div class="panel busy-panel" data-notice-progress="${esc(n.id)}" role="status" aria-live="polite">${brandMotion('routing','',{priority:3})}<h3 data-notice-phase>${title}</h3><p>材料已保存。接收和复核结束后会自动显示草稿及核对意见，请逐项确认。</p><ol class="processing-stages" data-processing-stages aria-label="整理流程，当前阶段以服务返回为准">${processingStages(n.execution?.stage)}</ol><p class="footnote" data-notice-elapsed>正在处理，离开页面后可返回查看。</p>${button('刷新状态','refresh-notice','small')}</div>`;
 }
 
 export function createNoticeProgress({state,api,refresh,root=document,schedule=setTimeout,unschedule=clearTimeout}){
@@ -23,7 +28,10 @@ export function createNoticeProgress({state,api,refresh,root=document,schedule=s
         if(result.status==='processing')observed=true;
         else if(observed){stop();await refresh();return;}
         const panel=root.querySelector('[data-notice-progress]');
-        panel.querySelector('[data-notice-phase]').textContent=labels[result.execution?.stage]||labels.extracting;
+        panel.querySelector('[data-notice-phase]').textContent=labels[result.execution?.stage]||'正在等待处理状态';
+        const stages=panel.querySelector('[data-processing-stages]');
+        const steps=processingStages(result.execution?.stage);
+        if(stages&&stages.innerHTML!==steps)stages.innerHTML=steps;
         const seconds=result.elapsed_seconds;
         panel.querySelector('[data-notice-elapsed]').textContent=Number.isFinite(seconds)?`已处理 ${Math.max(0,Math.floor(seconds))} 秒。离开页面后可返回查看。`:'正在处理，离开页面后可返回查看。';
       }catch{

@@ -256,7 +256,11 @@ def payload(settings, sources, messages, profile, tier):
         from .context_engine import pack_history
         messages,_,_=pack_history(messages)
     context = {'personal_conditions': {k: v for k, v in profile.items() if k in PERSONAL_KEYS},
+               'memory_control':profile.get('_memory_control',{}),'working_memory':profile.get('_working_memory',''),
+               'memory_registry':[{k:item[k] for k in ('id','version','kind','locked','scope') if k in item} for item in profile.get('_memory_entries',[])],
                'materials': [{k:v for k,v in s.items() if k not in ('content','sha256')} for s in sources], 'resources':resource_index(sources)}
+    if not profile.get('_grounding_context'):
+        context['memories']=profile.get('_memory_entries',[])
     if profile.get('_grounding_context'):
         context['grounding_context']=profile['_grounding_context']
         context['evidence_index']=evidence_index(sources)
@@ -275,6 +279,8 @@ def payload(settings, sources, messages, profile, tier):
         output_schema['properties']['citation_refs']['items']['enum']=[item['ref'] for item in context['evidence_index']]
         output_schema['$defs']['IndexedClaim']['properties']['evidence_refs']['items']['enum']=[item['ref'] for item in context['evidence_index']]
     prompt = system_prompt(tier,output_schema,settings.ai_supports_json,indexed_evidence=bool(profile.get('_grounding_context')))+presentation_prompt(profile)
+    from .memory_learning import AGENT_POLICY
+    prompt+='\n'+AGENT_POLICY
     if profile.get('_grounding_context'):
         from .grounding import POLICY
         prompt+='\n'+POLICY
@@ -360,8 +366,10 @@ async def _stream_reply(settings, sources, messages, profile, tier):
                         if raw_bytes > settings.genui_limits.get('messageBytes',LIMITS['messageBytes']):
                             raise AIError('回复过长，已停止读取；请缩小问题后重试。')
                         text=answer.push(delta) if settings.ai_supports_json else delta
-                        if text and not buffered_answer:
-                            yield {'type':'delta','text':text}
+                        if text:
+                            # The actual provider stream is visible immediately. A preview
+                            # cannot mount controls or acquire validated citation status.
+                            yield {'type':'preview' if buffered_answer else 'delta','text':text}
         if buffer.strip() or decoder.decode(b'',final=True):
             raise AIError('模型数据流未完整结束，已保留收到的内容。')
         if finish!='stop':

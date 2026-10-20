@@ -1,3 +1,4 @@
+import {createReplySpeech} from './speech.js';
 import {brandMotion} from './motion.js';
 import {searchControls,WorkspaceSearch,materialTree,materialFormats} from './workspace-search.js';
 import {attachmentPreview} from './attachments.js';
@@ -11,6 +12,9 @@ const imageKinds=new Set(['png','jpg','jpeg','webp']);
 const videoKinds=new Set(['mp4','webm']);
 
 export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI}){
+  const replySpeech=createReplySpeech({api,toast});
+  const lastKey=()=>`luojia:last-chat:${state.session.user.id}`;
+  const remember=id=>{try{if(id)localStorage.setItem(lastKey(),id);else localStorage.removeItem(lastKey());}catch{}};
   let current=null,historyItems=[],pollTimer,files=[],sending=false,materialRenderKey='',feedbackTimer;
   let presenter=null,streaming=null,paintFrame=0,hostArrangements=[],hostTasks=[];
   let submission=0,accepting=false;
@@ -44,20 +48,35 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
 
   async function render(id,renderId){
     setMaterials(false,false);
+    replySpeech.stop();
+    let restored=null,catalog=null;
+    if(id==='new'){remember('new');id=null;}
+    else if(!id){
+      let recent;try{recent=localStorage.getItem(lastKey());}catch{}
+      if(!recent){
+        [catalog]=await Promise.all([api('/conversations'),drafts.load('chat-new')]);if(renderId!==state.renderId)return;
+        if(!drafts.peek('chat-new').payload?.content)recent=catalog[0]?.id;
+      }
+      if(recent&&recent!=='new'){
+        try{restored=await api('/conversations/'+encodeURIComponent(recent));if(renderId!==state.renderId)return;id=recent;history.replaceState(null,'','#chat/'+id);}
+        catch(error){if(error.status!==404)throw error;remember(null);}
+      }
+    }
+    if(id)remember(id);
     submission++;accepting=false;
     streaming?.controller.abort();streaming=null;cancelAnimationFrame(paintFrame);paintFrame=0;presenter?.dispose();presenter=null;
     clearTimeout(pollTimer);clearTimeout(feedbackTimer);files=[];sending=false;materialQuery="";materialRenderKey='';materialMatches=null;materialSearch?.dispose();historySearch?.dispose();
-    const results=await Promise.all([api('/conversations'),id?api('/conversations/'+encodeURIComponent(id)):Promise.resolve(null),drafts.load(id?'chat:'+id:'chat-new'),state.session.genui?.enabled?api('/arrangements'):Promise.resolve([]),state.session.genui?.enabled?api('/tasks'):Promise.resolve([])]);
+    const results=await Promise.all([catalog||api('/conversations'),id?(restored||api('/conversations/'+encodeURIComponent(id))):Promise.resolve(null),drafts.load(id?'chat:'+id:'chat-new'),state.session.genui?.enabled?api('/arrangements'):Promise.resolve([]),state.session.genui?.enabled?api('/tasks'):Promise.resolve([])]);
     if(renderId!==state.renderId)return;
     historyItems=results[0];current=results[1];hostArrangements=results[3];hostTasks=results[4];drafts.activate(key());
     $('#content').innerHTML=`<div id="chat-workspace" class="chat-workspace ${current?'has-conversation':''}">
-      <div class="chat-main"><header class="chat-heading"><div><h1 id="conversation-title">${esc(current?.title||'和小信使聊聊')}</h1></div><div class="row compact-row">${call(icon('history')+'<span>历史对话</span>','history','','small')}${current?call(icon('plus')+'<span>新对话</span>','new','','small'):''}${call(icon('doc')+'<span>材料</span>','toggle-materials','aria-expanded="false" aria-controls="chat-materials"','small materials-toggle')}</div></header>
+      <div class="chat-main"><header class="chat-heading"><div><h1 id="conversation-title">${esc(current?.title||'和小信使聊聊')}</h1></div><div class="row compact-row">${call(icon('history')+'<span>历史对话</span>','history','','small')}${call(icon('plus')+'<span>新对话</span>','new','','small')}${call(icon('doc')+'<span>材料</span>','toggle-materials','aria-expanded="false" aria-controls="chat-materials"','small materials-toggle')}</div></header>
       <div class="chat-reading-area"><section class="chat-thread" id="chat-thread" aria-label="与校园助手的对话" tabindex="0">${thread()}</section><nav id="chat-turn-rail" class="chat-turn-rail" aria-label="按轮次跳转对话" hidden></nav></div>
       <div class="chat-jump-row"><button type="button" id="chat-jump-latest" class="button small" hidden>回到最新 ↓</button></div>
       <form class="chat-composer" id="chat-composer" data-workspace-form="chat" data-cache-key="${key()}">
         <button type="button" class="icon-button composer-plus" data-chat-action="composer-menu" aria-label="添加附件与更多选项" aria-expanded="false" aria-controls="composer-menu">${icon('plus')}</button>
         <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button type="button" class="icon-button composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')}</button><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
-        <div class="composer-actions" id="composer-menu" hidden><span class="composer-menu-title">本次对话</span>${call(icon('upload')+' 文件、图片与视频','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}${call('模型处理与资料范围','model-consent','','small plain')}</div>
+        <div class="composer-actions" id="composer-menu" hidden><span class="composer-menu-title">本次对话</span>${call(icon('upload')+' 文件、图片与视频','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
         <span id="chat-shortcuts" class="sr-only">Enter 发送，Shift 加 Enter 换行。中文输入法选词时不会发送。</span>
         <div class="composer-status sr-only"><span class="autosave-status" role="status"></span><span id="chat-count">${current?.sources.length||0} 份材料 · 仅本人可见</span></div>
       </form>
@@ -69,7 +88,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     fitComposer();update();if(current?.processing)schedulePoll(current.id,state.renderId);
   }
   function thread(){
-    if(!current?.messages.length)return `<div class="chat-welcome"><div class="welcome-mascot">${companion('organize','chat-companion')}</div><h2>${greeting()}，${esc(state.session.user.profile.preferred_name||state.session.user.display_name)}。</h2><p>长长的通知，慢慢读。<br class="mobile-only">重要的下一步，我们一起找。</p><div class="welcome-signature">${brandMotion('greeting','',{once:true})}<span>从一份材料、一句问题开始就好</span></div><div class="scene-choices">${[
+    if(!current?.messages.length)return `<div class="chat-welcome"><div class="welcome-mascot" data-orbit><span class="welcome-orbit orbit-one" aria-hidden="true"></span><span class="welcome-orbit orbit-two" aria-hidden="true"></span><span class="welcome-note note-one" aria-hidden="true">${icon('doc')}</span><span class="welcome-note note-two" aria-hidden="true">${icon('check')}</span>${companion('organize','chat-companion')}</div><h2>${greeting()}，${esc(state.session.user.profile.preferred_name||state.session.user.display_name)}。</h2><p>长长的通知，慢慢读。<br class="mobile-only">重要的下一步，我们一起找。</p><div class="welcome-signature">${brandMotion('greeting','',{once:true})}<span>从一份材料、一句问题开始就好</span></div><div class="scene-choices">${[
       ['doc','读懂一则通知','对象、材料、时间，一个都不漏','请帮我读懂这则通知，指出哪些条件还需要我核实。'],
       ['tasks','理清我的下一步','把要做的事，拆成小小的行动','请根据我上传的材料，帮我列出可以先开始的准备步骤。'],
       ['calendar','一起安排时间','分清正式期限和个人计划','请帮我区分材料中的正式截止时间和可以自己安排的时间。']
@@ -87,9 +106,9 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     $('#chat-workspace').classList.toggle('has-conversation',!!current);
     $('#material-total').textContent=(current?.sources.length||0)+' 份';
     $('#chat-count').textContent=(current?.sources.length||0)+' 份材料 · 仅本人可见';
-    const consentControl=$('[data-chat-action="model-consent"]');if(consentControl)consentControl.textContent=current?.model_consent?'撤回本对话模型授权':'模型处理与资料范围';
     drawMaterials();
     fitComposer();const busy=current?.processing||sending;
+    $('#chat-composer').classList.toggle('is-processing',!!busy);
     $('#chat-composer textarea').disabled=false;$('#chat-composer textarea').placeholder=busy?'补充条件，或调整方向…':'写下问题…';
     const submit=$('#chat-composer .send-button');submit.disabled=accepting;submit.dataset.chatAction='';submit.type='submit';submit.setAttribute('aria-label',busy?'发送补充消息':'发送消息');submit.title=busy?'发送补充，按新要求继续处理':'Enter 发送 · Shift + Enter 换行';submit.innerHTML=icon('arrow');
     let stop=$('#chat-composer .composer-stop');if(!stop){stop=document.createElement('button');stop.type='button';stop.className='icon-button composer-stop';stop.dataset.chatAction='cancel';stop.setAttribute('aria-label','停止本次回复');stop.title='停止本次回复';stop.innerHTML='<span class="stop-square" aria-hidden="true"></span>';submit.before(stop);}stop.hidden=!busy;stop.disabled=accepting&&!current?.processing;
@@ -110,7 +129,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   function drawMessages(){
     if(!$('#chat-thread')||!current)return;
     const cid=current.id,options={feature:state.session.genui||{},sources:current.sources,arrangements:hostArrangements,tasks:hostTasks,preview,
-      openCalendar:()=>{location.hash='calendar';},openSources:()=>{location.hash='sources';},
+      openCalendar:()=>{location.hash='calendar';},openSources:()=>{location.hash='sources';},uploadMaterial:()=>uploadDialog(),
       mediaResources:current.sources.filter(s=>videoKinds.has(s.kind)&&s.status!=='failed').map(s=>`/api/conversations/${cid}/sources/${s.id}/download?preview=true`),
       imageResources:[...current.sources.filter(s=>imageKinds.has(s.kind)&&s.status!=='failed').map(s=>`/api/conversations/${cid}/sources/${s.id}/download?preview=true`),...['welcome','reading','planning','blossom','rest'].map(p=>'/static/assets/luojia-messenger-'+p+'.png')],
       beforeRender:nearBottom,afterRender:follow=>{const thread=$('#chat-thread');if(follow&&thread)thread.scrollTop=thread.scrollHeight;updateJump();},
@@ -128,7 +147,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if(renderId!==state.renderId)return result;
     await drafts.load('chat:'+result.id);
     if(renderId!==state.renderId)return result;
-    current=result;history.replaceState(null,'','#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
+    current=result;remember(result.id);history.replaceState(null,'','#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
     drafts.activate('chat:'+result.id);
     if(snapshot)drafts.stage('chat:'+result.id,snapshot);
     if(JSON.stringify(drafts.peek('chat-new').payload)===JSON.stringify(snapshot))drafts.stage('chat-new',{content:''});
@@ -157,11 +176,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     try{
       persist();await drafts.flush(key());await ensureConversation(renderId);if(renderId!==state.renderId||turn!==submission)return;
       cid=current.id;cacheKey=key();clearTimeout(pollTimer);
-      let allowExternal=false;
-      if(state.session.ai.configured){
-        allowExternal=!!current.model_consent||await ask('允许模型处理本次对话','为回答问题，本次对话的消息、材料，以及按问题检索到的本账号资料、日程和必要个人条件，以及你启用的相关记忆，可能发送给已配置的 MiMo 模型服务。登录密码与联系方式不加入模型上下文。你可以在问题中限定资料范围，并在输入框的更多选项中撤回本对话授权。取消会保留当前草稿。','允许本次对话');
-        if(!allowExternal)return;
-      }
+      const allowExternal=true;
       const payload={version:current.version,content:retryId||regenerateId?'':text,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,allow_external_processing:allowExternal};
       let result;
       pending={controller:new AbortController(),cid,renderId,raw:'',parser:null,mid:null,tier:1,expanded:false};streaming=pending;
@@ -174,6 +189,10 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._phase=data.phase;m._phaseLabel=data.label;m._work=data.steps;if(data.data&&!pending.raw){m.genui.data=data.data;pending.parser=new StreamParser({limits:state.session.genui?.limits,data:data.data});}paintMessages();}
         }else if(type==='work'){
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._work=data.steps;paintMessages();}
+        }else if(type==='preview'){
+          if(data.message_id!==pending.mid)return;
+          const m=current.messages.find(m=>m.id===pending.mid);
+          if(m){m._preview=data.reset?'':(m._preview||'')+data.text;paintMessages();}
         }else if(type==='delta'){
           if(!pending.parser||data.message_id!==pending.mid)throw Error('回复与当前消息不一致，已停止接收。');pending.raw+=data.text;pending.expanded||=!!data.expanded_template;pending.parser.push(data.text);
           const m=current.messages.find(m=>m.id===pending.mid);if(m){m.genui.raw=pending.raw;if(pending.tier===3)m.content=pending.raw;m._liveParts=pending.tier===1||pending.expanded?pending.parser.snapshot():[{kind:'text',text:pending.raw}];paintMessages();}
@@ -257,10 +276,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   document.addEventListener('click',async event=>{
     const control=event.target.closest('[data-chat-action]');if(!control||control.disabled)return;
     const action=control.dataset.chatAction,id=control.dataset.id;control.disabled=true;
+    if(['copy','like','dislike','branch','regenerate','version','share-link'].includes(action)){control.classList.add('request-pending');control.setAttribute('aria-busy','true');}
     try{
       if(action==='composer-menu'){setComposerMenu($('#composer-menu').hidden);}
       else if(action==='dictate'){await dictate($('#chat-input'),control,{api,toast,ask});}
-      else if(action==='new'){persist();await drafts.flushAll();location.hash='chat';}
+      else if(action==='new'){persist();await drafts.flushAll();remember('new');if(location.hash==='#chat/new')$('#chat-input')?.focus();else location.hash='chat/new';}
       else if(action==='history'){historyItems=await api('/conversations');historyDialog();}
       else if(action==='prompt'){$('#chat-input').value=control.dataset.prompt;persist();$('#chat-input').focus();}
       else if(action==='upload'||action==='paste-text'){setComposerMenu(false);uploadDialog(action==='paste-text');}
@@ -270,8 +290,9 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       else if(action==='retry')await send(id);
       else if(action==='clear-material-search'){materialSearch.clear();}
       else if(action==='cancel'){submission++;accepting=false;current=await api('/conversations/'+current.id);current=await api('/conversations/'+current.id+'/cancel',{method:'POST',json:{version:current.version}});streaming?.controller.abort();sending=false;update();}
-      else if(action==='copy'){const m=current.messages.find(m=>m.id===id),text=presenter?.copy(m)||m.content,html=presenter?.copyHTML(m);try{if(html&&window.ClipboardItem)await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]);else await navigator.clipboard.writeText(text);toast('已复制回复与当前互动值，可粘贴为文本或保留格式。');}catch{try{await navigator.clipboard.writeText(text);toast('已复制为文本，包含当前互动值。');}catch{toast('浏览器未允许复制，请选中回复手动复制。',true);}}}
-      else if(action==='like'||action==='dislike'){const message=current.messages.find(m=>m.id===id),value=action==='like'?1:-1;const result=await api(`/conversations/${current.id}/messages/${id}/reaction`,{method:'POST',json:{value:message.reaction===value?0:value}});message.reaction=result.value;drawMessages();}
+      else if(action==='speak'){const m=current.messages.find(m=>m.id===id);await replySpeech.toggle(id,presenter?.copy(m)||m.content,control);}
+      else if(action==='copy'){const m=current.messages.find(m=>m.id===id),text=presenter?.copy(m)||m.content,html=presenter?.copyHTML(m);try{if(html&&window.ClipboardItem)await navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]);else await navigator.clipboard.writeText(text);control.dataset.feedback='copied';control.setAttribute('aria-label','已复制回复');setTimeout(()=>{if(control.isConnected){delete control.dataset.feedback;control.setAttribute('aria-label','复制回复');}},1800);}catch{try{await navigator.clipboard.writeText(text);toast('已复制为文本，包含当前互动值。');}catch{toast('浏览器未允许复制，请选中回复手动复制。',true);}}}
+      else if(action==='like'||action==='dislike'){const message=current.messages.find(m=>m.id===id),value=action==='like'?1:-1;const result=await api(`/conversations/${current.id}/messages/${id}/reaction`,{method:'POST',json:{value:message.reaction===value?0:value}});message.reaction=result.value;drawMessages();toast(result.value===1?'已标记为有帮助':result.value===-1?'已标记为需要改进':'已取消评价');}
       else if(action==='regenerate'){await send(null,null,id);}
       else if(action==='branch'){const result=await api(`/conversations/${current.id}/messages/${id}/branch`,{method:'POST',json:{version:current.version}});location.hash='chat/'+result.id;toast('分支已保存，可从这条回答继续。');}
       else if(action==='version'){const message=current.messages.find(m=>m.id===id),index=Number(control.dataset.index),version=message?.versions?.[index];if(!version||current.processing)return;if(version.status==='complete'){current=await api(`/conversations/${current.id}/messages/${version.id}/select`,{method:'POST',json:{version:current.version}});}else current.messages=current.messages.map(m=>m.id===id?{...version,versions:message.versions,version_index:index}:m);drawMessages();}
@@ -282,16 +303,12 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       else if(action==='revoke-share'){await api(`/conversations/${current.id}/shares/${control.dataset.token}`,{method:'DELETE'});$('#reply-share-result').textContent='分享链接已撤回。';}
       else if(action==='history-prev'||action==='history-next'){historyPage+=action==='history-prev'?-1:1;historyResults();}
       else if(action==='remove-source'){if(await ask('移除这份材料','此材料将从当前对话移除，之后不再发送给模型。旧回复中的文字仍保留；需要完整清除时请删除对话。','移除材料')){current=await api(`/conversations/${current.id}/sources/${id}`,{method:'DELETE',json:{version:current.version}});update();materialSearch?.run();toast('材料已移除。');}}
-      else if(action==='model-consent'){
-        if(current?.model_consent){if(await ask('撤回本对话模型授权','将停止当前回复，之后发送时重新确认。已经发给模型服务的内容无法撤回；已保存的对话与材料仍可查看。','撤回授权')){const revoked=await api(`/conversations/${current.id}/model-consent`,{method:'DELETE',json:{version:current.version}});submission++;streaming?.controller.abort();clearTimeout(pollTimer);current=revoked;sending=false;accepting=false;update();toast('本对话模型授权已撤回。');}}
-        else showDialog('模型处理与资料范围','<div class="stack"><p>消息发给模型前会确认本对话授权。授权后可继续追问，刷新仍保留；你也可以从此处撤回。</p><p>你可以明确要求“只用本次附件”“不读取资料库或日程”或“只查公开网页”，系统按本轮范围取证。公开搜索词不包含账号联系方式、登录凭证或私人日程。</p></div>');
-      }
       else if(action==='context-settings'){const routeId=state.renderId;await ensureConversation(routeId);if(routeId!==state.renderId)return;const cid=current.id;await memoryUI.context(cid,async()=>{const result=await api('/conversations/'+cid);if(routeId===state.renderId&&active(cid)){current=result;update();}});}
       else if(action==='remember'){const routeId=state.renderId;await ensureConversation(routeId);if(routeId===state.renderId)await memoryUI.remember(current);}
       else if(action==='promote')await promote();
       else if(action==='rename')showDialog('给对话取个名字',`<form class="stack" data-workspace-form="rename">${field('对话名称','title',current.title,'text','required maxlength="100"')}<div class="form-footer"><button type="submit" class="button primary">保存名称</button></div></form>`);
-      else if(action==='delete'){if(await ask('删除这段对话','将删除这段对话、材料和未发送草稿。已经转为通知的独立原件与待办仍保留，可在通知资料中另行管理。','删除对话')){await api('/conversations/'+current.id,{method:'DELETE',json:{version:current.version}});location.hash='chat';}}
-    }catch(error){toast(error.message,true);}finally{control.disabled=false;}
+      else if(action==='delete'){if(await ask('删除这段对话','将删除这段对话、材料和未发送草稿。已经转为通知的独立原件与待办仍保留，可在通知资料中另行管理。','删除对话')){await api('/conversations/'+current.id,{method:'DELETE',json:{version:current.version}});remember('new');location.hash='chat/new';}}
+    }catch(error){toast(error.message,true);}finally{control.disabled=false;control.classList.remove('request-pending');control.removeAttribute('aria-busy');}
   });
   document.addEventListener('submit',async event=>{
     const form=event.target,type=form.dataset.workspaceForm;if(!type||!['chat','upload','promote','rename'].includes(type))return;
