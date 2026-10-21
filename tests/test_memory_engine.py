@@ -429,7 +429,7 @@ def test_engine_v1_migrates_transactional_index_and_preserves_records(env):
         conn.execute('DROP TABLE memory_maintenance')
     db=Database(env[0].state.db.path)
     with db.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='2'
+        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='3'
         assert conn.execute('SELECT content FROM personal_memories WHERE id=?',(saved['id'],)).fetchone()[0]==saved['content']
         assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==1
 

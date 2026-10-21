@@ -96,8 +96,10 @@ export class ConversationView{
       r.citations.hidden=!r.citations.childNodes.length;
       if(!r.memoryNotice){r.memoryNotice=el('div','memory-receipt small muted');r.memoryNotice.setAttribute('role','status');r.article.insertBefore(r.memoryNotice,r.footer);}
       const receipt=message.status==='complete'?memoryOperationSummary(message.grounding?.memory_operations):'';
-      r.memoryNotice.hidden=!receipt;r.memoryNotice.replaceChildren();
+      const recallCount=message.grounding?.memory?.selected||0;
+      r.memoryNotice.hidden=!receipt&&!recallCount;r.memoryNotice.replaceChildren();
       if(receipt){const link=el('a','','管理记忆');link.href='#memory';r.memoryNotice.append(el('span','',receipt),link);}
+      if(message.status==='complete'&&recallCount&&message.conversation_id){const trace=button('这次用了哪些记忆',null,'button small plain');trace.dataset.memoryLife='trace';trace.dataset.id=message.id;trace.dataset.cid=message.conversation_id;r.memoryNotice.append(trace);}
       const errorKey=JSON.stringify([message.status,message.error,lastAssistant]);if(r.errorKey!==errorKey){r.errorKey=errorKey;r.error.replaceChildren();r.error.hidden=redirected||['complete','processing'].includes(message.status);if(!r.error.hidden){r.error.append(el('p','',message.error||'回复未完成，已收到的内容仍保留。'));if(message.id===lastAssistant){const retry=button('重试这条回复',null,'button small');retry.dataset.chatAction='retry';retry.dataset.id=message.id;r.error.append(retry);}}}
       if(!r.time){r.time=el('time','message-time',stamp(message.created_at));if(message.created_at)r.time.dateTime=new Date(message.created_at*1000).toISOString();r.footer.append(r.time);}
       if(!r.copy){r.copy=replyAction('copy','复制回复');r.copy.dataset.chatAction='copy';r.copy.dataset.id=message.id;r.footer.append(r.copy);}

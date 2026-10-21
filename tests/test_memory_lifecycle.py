@@ -147,9 +147,9 @@ def test_profile_changed_before_initial_snapshot_is_not_used(env,monkeypatch):
     mocks(monkeypatch);env[1].ai_grounding=True;env[1].ai_api_key='synthetic'
     c=account(env);chat=conversation(c)
     original=context_snapshot.capture
-    def change_before_snapshot(conn,owner,cid,access):
+    def change_before_snapshot(conn,owner,cid,access,memory_ids=None):
         conn.execute('UPDATE users SET profile=? WHERE id=?',(json.dumps({'college':'新学院'}),owner))
-        return original(conn,owner,cid,access)
+        return original(conn,owner,cid,access,memory_ids)
     monkeypatch.setattr(context_snapshot,'capture',change_before_snapshot)
     async def forbidden(*args):raise AssertionError('Stale profile must be rejected before a model call')
     monkeypatch.setattr(grounding,'plan',forbidden)

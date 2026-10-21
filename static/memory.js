@@ -3,7 +3,7 @@ import {moveSelection} from './continuity.js';
 import {createMemoryStudio} from './memory-studio.js';
 const scopes={global:'跨项目通用',project:'仅此项目',topic:'仅选定专题'};
 const kinds={preference:'表达与做事偏好',constraint:'约束与边界',decision:'已确认决定',fact:'本人提供的信息',episode:'经历与办理记录',skill:'技能与方法',intention:'待办与计划',summary:'分类概览'};
-const states={inactive:'已停用',expired:'已过期',scheduled:'尚未生效',conflict:'冲突待处理',pending:'等待本人核对',source_changed:'来源已变化，暂不调用'};
+const states={inactive:'已停用',expired:'已过期',scheduled:'尚未生效',conflict:'冲突待处理',pending:'等待本人核对',source_changed:'来源已变化，暂不调用',cooling:'已冷却，暂停调用',needs_review:'需要重新确认',archived:'已归档，暂停调用'};
 const exclusion={...states,shadowed:'由更具体范围覆盖',duplicate:'重复内容已合并',source_changed:'来源已变化，概览待更新'};
 const dateValue=value=>{if(value==null)return '';const d=new Date(value*1000),pad=v=>String(v).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const timestamp=value=>value?Math.floor(new Date(value).getTime()/1000):null;

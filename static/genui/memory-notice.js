@@ -1,6 +1,6 @@
 // Only server receipts may announce memory changes, never model-authored prose.
 export function memoryOperationSummary(operations=[]){
-  const labels={accepted:'条记忆已保存',updated:'条记忆已更新',archived:'条记忆已停用',pending:'条记忆等你核对',rejected:'条记忆建议未保存',forgotten_blocked:'条已遗忘内容未重新保存'};
+  const labels={accepted:'条记忆已保存',updated:'条记忆已更新',archived:'条记忆已停用',pending:'条记忆等你核对',rejected:'条记忆建议未保存',forgotten_blocked:'条已遗忘内容未重新保存',session_saved:'条条件仅保留在本会话',checkpointed:'次工作记忆已更新',forgotten:'条记忆已遗忘',all_forgotten:'次记忆已全部清空',used:'条记忆被 Agent 报告采用'};
   const counts=new Map();
   for(const item of Array.isArray(operations)?operations:[]){
     if(!item||!Object.hasOwn(labels,item.status))continue;

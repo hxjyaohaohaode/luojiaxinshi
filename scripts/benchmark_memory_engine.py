@@ -1,5 +1,6 @@
 """Reproducible local capacity/latency check using synthetic records only."""
 import json
+import argparse
 from pathlib import Path
 import statistics
 import sys
@@ -11,7 +12,10 @@ sys.path.insert(0,str(ROOT))
 from app.db import Database
 from app.memory import recall
 
-folder=ROOT/'artifacts'/'memory-engine-benchmark'
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--output',type=Path,default=ROOT/'artifacts'/'memory-engine-benchmark')
+folder=parser.parse_args().output.resolve()
+if not folder.is_relative_to((ROOT/'artifacts').resolve()):raise ValueError('Synthetic benchmarks must stay in artifacts/')
 folder.mkdir(parents=True,exist_ok=True)
 db=Database(folder/('synthetic-'+uuid.uuid4().hex+'.sqlite3'))
 now=int(time.time());owner='synthetic-owner';chat='synthetic-chat';project='other-project'
@@ -34,11 +38,12 @@ for query in ['课程申请的材料和提交回执','我习惯怎样核对通�
     latencies.append((time.perf_counter()-start)*1000)
     assert len(selected)<=12 and report['context_bytes']<=8000
     assert all(item['scope']=='global' for item in selected)
-    results.append({'query':query,'count':len(selected),'context_bytes':report['context_bytes']})
+    results.append({'query':query,'count':len(selected),'context_bytes':report['context_bytes'],'latency_ms':round(latencies[-1],2)})
 with db.connect() as conn:
     assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==10000
     assert conn.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
 output={'synthetic':True,'database':str(db.path),'stored':10000,'eligible_scope':5000,
+    'algorithm':report.get('algorithm'),'memory_schema':3,
     'insertion_ms':round(insert_ms,2),'queries':len(latencies),'latency_ms':{
         'median':round(statistics.median(latencies),2),'p95':round(sorted(latencies)[int(.95*(len(latencies)-1))],2),
         'max':round(max(latencies),2)},'results':results,

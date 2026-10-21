@@ -19,6 +19,7 @@ REQUIRED_TABLES = {'memory_details', 'memory_revisions', 'memory_evidence', 'mem
                    'memory_import_provenance', 'memory_maintenance'}
 V1_TABLES = {'memory_details','memory_revisions','memory_jobs','memory_links',
              'memory_evidence','memory_settings','memory_working'}
+V2_TABLES = set(REQUIRED_TABLES)
 
 
 def tokens(text):
@@ -111,7 +112,7 @@ CREATE TRIGGER memory_forget BEFORE DELETE ON personal_memories BEGIN
  AND NOT EXISTS(SELECT 1 FROM memory_links WHERE child_id=OLD.id AND relation='derived_from');
  INSERT OR IGNORE INTO memory_blocked_sources
  SELECT OLD.user_id,source_kind,source_id,unixepoch() FROM memory_evidence
- WHERE memory_id=OLD.id AND EXISTS(SELECT 1 FROM users WHERE id=OLD.user_id);
+ WHERE memory_id=OLD.id AND source_kind<>'message' AND EXISTS(SELECT 1 FROM users WHERE id=OLD.user_id);
  DELETE FROM personal_memories WHERE id IN (
   WITH RECURSIVE descendants(id) AS (
    SELECT child_id FROM memory_links WHERE parent_id=OLD.id AND relation='derived_from'
@@ -218,6 +219,11 @@ def decorate(conn, items):
         if entry.get('review_status') == 'pending':
             entry['state'] = 'pending'
         result.append(entry)
+    from .memory_lifecycle import semantics
+    result = semantics(conn, result)
+    for entry in result:
+        if entry.get('state') == 'active' and entry.get('status') in ('cooling','needs_review','archived'):
+            entry['state'] = entry['status']
     return result
 
 
@@ -232,6 +238,8 @@ def record_revision(conn, mid, actor='user'):
     value['labels'] = json.loads(value.get('labels', '[]'))
     value['evidence'] = [dict(r) for r in conn.execute('SELECT * FROM memory_evidence WHERE memory_id=?',(mid,))]
     value['links'] = [dict(r) for r in conn.execute('SELECT * FROM memory_links WHERE child_id=?',(mid,))]
+    life = conn.execute('SELECT * FROM memory_semantics WHERE memory_id=?',(mid,)).fetchone()
+    value['lifecycle'] = dict(life) if life else None
     conn.execute('''INSERT INTO memory_revisions VALUES(?,?,?,?,?) ON CONFLICT(memory_id,version)
         DO UPDATE SET snapshot=excluded.snapshot,actor=excluded.actor''',
         (mid, row['version'], dumps(value), actor, int(time.time())))
@@ -249,6 +257,8 @@ def tombstoned(conn, uid, value):
 
 def forget_memory(conn, uid, item):
     """Explicit user forgetting also blocks regeneration of derived overviews."""
+    from .memory_lifecycle import before_forget
+    before_forget(conn, uid, item)
     conn.execute('INSERT OR IGNORE INTO memory_tombstones VALUES(?,?,?,?)',
         (uid, digest(item['content']), dumps(scope_key(item)), int(time.time())))
     conn.execute('DELETE FROM personal_memories WHERE id=? AND user_id=?', (item['id'],uid))
@@ -259,6 +269,10 @@ def insert_memory(conn, uid, value, *, origin='manual', review='accepted', locke
     """Called only with a server-derived owner and previously validated scope."""
     if origin != 'manual' and tombstoned(conn, uid, value):
         return None
+    if origin != 'manual':
+        from .memory_lifecycle import blocked_fragment
+        if any(item['source_kind']=='message' and blocked_fragment(conn,uid,item['source_id'],item.get('quote','')) for item in evidence or []):
+            return None
     if origin != 'manual' and any(conn.execute('''SELECT 1 FROM memory_blocked_sources
             WHERE user_id=? AND source_kind=? AND source_id=?''',
             (uid, item['source_kind'], item['source_id'])).fetchone() for item in evidence or []):
@@ -278,6 +292,9 @@ def insert_memory(conn, uid, value, *, origin='manual', review='accepted', locke
             (key, item['source_kind'], item['source_id'], item.get('source_version', 1), item.get('quote', ''), now))
     for parent in parents or []:
         conn.execute("INSERT INTO memory_links VALUES(?,?,'derived_from',?)", (key, parent['id'], parent['version']))
+    from .memory_lifecycle import set_semantics,event
+    set_semantics(conn, key, admission='manual' if origin=='manual' else 'task' if origin=='task' else 'derived' if parents else 'explicit')
+    event(conn,uid,key,'created','来源：'+origin+'；'+('待本人核对' if review=='pending' else '已保存'))
     record_revision(conn, key, origin)
     return key
 
@@ -303,6 +320,11 @@ def usable_derived(conn, items, now=None):
     links = list(conn.execute('''SELECT l.* FROM memory_links l JOIN personal_memories m
         ON m.id=l.child_id WHERE m.user_id=? AND l.relation='derived_from' ''',
         (items[0]['user_id'],))) if items else []
+    if items:
+        at=int(time.time()) if now is None else now
+        invalid.update(row['memory_id'] for row in conn.execute('''SELECT s.memory_id FROM memory_semantics s
+            JOIN personal_memories m ON m.id=s.memory_id JOIN memory_details d ON d.memory_id=m.id
+            WHERE m.user_id=? AND (s.status<>'active' OR (s.review_after<=? AND d.locked=0))''',(items[0]['user_id'],at)))
     for _ in range(len(links)+1):
         changed = False
         for link in links:
@@ -315,3 +337,11 @@ def usable_derived(conn, items, now=None):
         if not changed:
             break
     return [item for item in items if item['id'] not in invalid], invalid
+
+
+from .memory_lifecycle import SCHEMA as LIFECYCLE_SCHEMA, TABLES as LIFECYCLE_TABLES
+REQUIRED_TABLES |= LIFECYCLE_TABLES
+SCHEMA += LIFECYCLE_SCHEMA
+from .memory_reflection_schema import SCHEMA as REFLECTION_SCHEMA, TABLES as REFLECTION_TABLES
+REQUIRED_TABLES |= REFLECTION_TABLES
+SCHEMA += REFLECTION_SCHEMA

@@ -118,21 +118,28 @@ def context_for(conn,cid):
 def memory_access(messages):
     from .retrieval_scope import user_request
     allowed=True
-    for message in messages:
-        if message.get('role')!='user':continue
-        for clause in re.split(r'[。；，,;\n]',user_request(message)):
+    users=[m for m in messages if m.get('role')=='user']
+    for index,message in enumerate(users):
+        request=user_request(message)
+        if index<len(users)-1 and re.search(r'仅本次|只在本次|仅本轮|本轮|这轮|这次',request) and not re.search(r'以后|今后|始终|永久|每次',request):continue
+        for clause in re.split(r'[。；，,;\n]',request):
             if re.search(r'(?:不要|不用|禁止|不使用|关闭).{0,8}(?:记忆|以前的偏好)',clause):allowed=False
             elif re.search(r'(?:允许|可以|启用|恢复使用).{0,8}(?:记忆|以前的偏好)',clause):allowed=True
     return allowed
 
 
-def eligible_versions(conn,uid,cid,allowed):
+def eligible_versions(conn,uid,cid,allowed,access=None):
     from .memory_store import settings_for,usable_derived
     own(conn,'conversations',cid,uid)
     context=context_for(conn,cid)
     if not allowed or not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':return {}
     versions={}
     items,_=effective(rows_for(conn,uid),context)
+    from .memory_lifecycle import source_access
+    items,_=source_access(conn,uid,items,access or {})
+    items,_=usable_derived(conn,items)
+    from .memory_lifecycle import recall_gate
+    items,_=recall_gate(conn,uid,cid,items)
     items,_=usable_derived(conn,items)
     for row in items:versions['memory-'+row['id']]=row['version']
     if context['project_id']:
@@ -154,10 +161,22 @@ def recall(db,uid,cid,question,access,queries=None):
         if not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':
             return [],{'enabled':False,'selected':0}
         items,excluded=effective(rows_for(conn,uid),context)
+        from .memory_lifecycle import source_access
+        items,source_excluded=source_access(conn,uid,items,access)
+        excluded.extend(source_excluded)
         items,invalid=usable_derived(conn,items)
         excluded.extend({'id':mid,'reason':'source_changed'} for mid in sorted(invalid))
         items=decorate(conn,items)
         items=[item for item in items if item.get('review_status')=='accepted']
+        from .memory_lifecycle import recall_gate
+        items,lifecycle_excluded=recall_gate(conn,uid,cid,items)
+        excluded.extend(lifecycle_excluded)
+        items,invalid_after_gate=usable_derived(conn,items)
+        excluded.extend({'id':mid,'reason':'source_changed'} for mid in sorted(invalid_after_gate-invalid))
+        if len(question)<45 and re.search(r'继续|然后呢|按刚才|接着|下一步|那怎么办',question):
+            from .memory_lifecycle import session_state
+            session=session_state(conn,uid,cid)
+            queries=[*(queries or []),session['goal'],*(r['text'] for r in session['recent_requests'][:-1])][-4:]
         selected=[];used=0
         if context['project_id']:
             project=dict(own(conn,'memory_projects',context['project_id'],uid))
@@ -166,13 +185,13 @@ def recall(db,uid,cid,question,access,queries=None):
                 'scope':'project','project_id':project['id'],'topic':'','kind':'fact','content':content,
                 'version':project['version'],'updated_at':project['updated_at'],'project_context':True})
             used=len(dumps(selected[0]).encode('utf-8'))+1
-        ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected),byte_budget=8000-used)
+        ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected),byte_budget=8000-used,prompt_only=True)
         for item in ranked_items:
             selected.append({k:item[k] for k in ('id','scope','project_id','topic','kind','content','version','updated_at',
-                'origin','locked','labels','recall_score','recall_reasons')})
+                'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at')})
         count=sum(not item.get('project_context') for item in selected)
         return selected,{'enabled':True,'selected':count,'eligible':ranking['matched'],'omitted':ranking['matched']-count,'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
-            'excluded':excluded,'policy_version':'memory-policy-v2',**ranking,'context_bytes':used+ranking['context_bytes']}
+            'excluded':excluded,'policy_version':'memory-lifecycle-v3',**ranking,'context_bytes':used+ranking['context_bytes']}
 
 
 def install_memory(app,db,user):
@@ -197,7 +216,9 @@ def install_memory(app,db,user):
             return {'projects':projects,'memories':filtered[offset:offset+limit],'total':len(items),
                 'matched':len(filtered),'offset':offset,'limit':limit,'counts':counts,
                 'pending':sum(item['review_status']=='pending' for item in items),'settings':settings_for(conn,current['id']),
-                'topics':sorted({item['topic'] for item in items if item['topic']})}
+                'topics':sorted({item['topic'] for item in items if item['topic']}),
+                'lifecycle_counts':{key:sum(item.get('tier')==key for item in items) for key in ('long_term','episodic')},
+                'session_count':conn.execute('SELECT count(*) FROM memory_session_items WHERE user_id=? AND expires_at>?',(current['id'],int(time.time()))).fetchone()[0]}
 
     @app.post('/api/memory/projects')
     def create_project(payload:Project,current=Depends(user)):
@@ -254,6 +275,8 @@ def install_memory(app,db,user):
             save_policy(conn,mid,payload.model_dump())
             conn.execute("UPDATE memory_details SET locked=?,labels=?,review_status='accepted' WHERE memory_id=?",
                 (int(payload.locked),dumps(payload.labels),mid))
+            from .memory_lifecycle import set_semantics
+            set_semantics(conn,mid,admission='manual')
             record_revision(conn,mid,'user')
             return saved_item(conn,mid,current['id'])
 
@@ -300,6 +323,9 @@ def install_memory(app,db,user):
             from .memory_store import usable_derived
             items,invalid=usable_derived(conn,items)
             excluded.extend({'id':mid,'reason':'source_changed'} for mid in invalid)
+            from .memory_lifecycle import recall_gate
+            items,life_excluded=recall_gate(conn,current['id'],cid,decorate(conn,items))
+            excluded.extend(life_excluded)
             enabled=context['memory_enabled'] and settings_for(conn,current['id'])['mode']!='off'
             return {'context_version':context['version'],'enabled':bool(enabled),
                 'eligible':[{'id':item['id'],'content':item['content'],'scope':item['scope'],'semantic_key':item['semantic_key']} for item in items] if enabled else [],

@@ -341,7 +341,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     accessible.update(r['id'] for r in conn.execute('SELECT s.id FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=? AND s.active=1',(current['id'],)))
                 from .memory import eligible_versions,memory_access
                 from .grounding import message_scope_start
-                memory_versions=eligible_versions(conn,current['id'],cid,access['profile'] and memory_access(messages) and message_scope_start(messages) is None)
+                memory_versions=eligible_versions(conn,current['id'],cid,access['profile'] and memory_access(messages) and message_scope_start(messages) is None,access)
                 contextual=[]
                 for m in messages:
                     if m['role']=='user':contextual.append(m);continue
@@ -358,6 +358,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     web_ids.update(s['id'] for s in memory_sources)
                     if all(e['source_id'] in accessible|web_ids for e in json.loads(m['citations'])):contextual.append(m)
                 messages=contextual
+                from .memory_lifecycle import filter_history
+                messages=filter_history(conn,current['id'],messages)
                 if settings.ai_api_key and payload.allow_external_processing:
                     conn.execute('INSERT OR IGNORE INTO conversation_ai_consents VALUES(?,?)',(cid,now))
                 conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,status,request_id,parent_id,model,created_at) VALUES(?,?,'assistant','processing',?,?,?,?)",(mid,cid,payload.request_id,parent,settings.ai_model,now))

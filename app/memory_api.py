@@ -57,6 +57,8 @@ def item_for(conn, uid, mid):
 
 
 def install(app, db, user):
+    from .memory_lifecycle_api import install as install_lifecycle
+    install_lifecycle(app,db,user)
     @app.get('/api/memory/settings')
     def get_settings(current=Depends(user)):
         with db.connect() as conn:
@@ -117,6 +119,8 @@ def install(app, db, user):
             conn.execute("UPDATE memory_details SET review_status='accepted',locked=1 WHERE memory_id=?", (mid,))
             conn.execute('UPDATE personal_memories SET active=1,version=version+1,updated_at=? WHERE id=?',
                          (int(time.time()), mid))
+            from .memory_lifecycle import set_semantics
+            set_semantics(conn,mid,admission='manual')
             record_revision(conn, mid, 'user-approved')
             return item_for(conn, current['id'], mid)
 
@@ -153,6 +157,11 @@ def install(app, db, user):
                     own(conn,'personal_memories',link['parent_id'],current['id'])
                     conn.execute('INSERT INTO memory_links VALUES(?,?,?,?)',
                         (mid,link['parent_id'],link['relation'],link['parent_version']))
+            from .memory_lifecycle import set_semantics
+            life=old.get('lifecycle') or {}
+            cues=life.get('applies_to')
+            if isinstance(cues,str):cues=json.loads(cues)
+            set_semantics(conn,mid,admission='manual',tier=life.get('tier'),shared=life.get('shared'),applies_to=cues)
             record_revision(conn, mid, 'user-restored')
             return item_for(conn, current['id'], mid)
 
@@ -186,9 +195,11 @@ def install(app, db, user):
                 SELECT 'message:'||m.id,c.user_id,'message',m.id,m.created_at
                 FROM conversation_messages m JOIN conversations c ON c.id=m.conversation_id
                 WHERE c.user_id=? AND m.role='user' AND m.status='complete' ORDER BY m.rowid LIMIT 10000
-                ON CONFLICT(id) DO UPDATE SET state='queued',error_code='',finished_at=NULL
+                ON CONFLICT(id) DO UPDATE SET state='queued',error_code='',finished_at=NULL,source_version=0
                 WHERE memory_jobs.state<>'queued' ''', (current['id'],))
-            return {'queued': conn.total_changes-before, 'note': '仅整理本人明确陈述，不从旧助手回答生成事实；每批有界执行，可在整理状态查看进度。'}
+            conn.execute("UPDATE memory_jobs SET source_version=0 WHERE user_id=? AND source_kind='message' AND state='queued'",(current['id'],))
+            queued=conn.execute("SELECT count(*) FROM memory_jobs WHERE user_id=? AND source_kind='message' AND state='queued'",(current['id'],)).fetchone()[0]
+            return {'queued': queued, 'note': '按消息形成时的范围整理；缺少原范围的旧片段先暂存，明确范围后再晋升。不会从旧助手回答生成事实。'}
 
     @app.get('/api/memory/jobs')
     def jobs(current=Depends(user)):
@@ -209,8 +220,8 @@ def install(app, db, user):
     def get_working(cid: str, current=Depends(user)):
         with db.connect() as conn:
             own(conn, 'conversations', cid, current['id'])
-            row = conn.execute('SELECT * FROM memory_working WHERE conversation_id=?', (cid,)).fetchone()
-            return dict(row) if row else {'content': '', 'version': 0, 'locked': False}
+            from .memory_lifecycle import working_for
+            return working_for(conn,cid)
 
     @app.put('/api/conversations/{cid}/working-memory')
     def set_working(cid: str, payload: WorkingUpdate, current=Depends(user)):
@@ -218,13 +229,12 @@ def install(app, db, user):
             chat = own(conn, 'conversations', cid, current['id'])
             if chat['processing_token']:
                 raise HTTPException(409, '请等待当前回复结束再修改工作记忆')
-            old = conn.execute('SELECT version FROM memory_working WHERE conversation_id=?', (cid,)).fetchone()
-            if (old['version'] if old else 0) != payload.version:
+            from .memory_lifecycle import working_for,put_working
+            old = working_for(conn,cid)
+            if old['version'] != payload.version:
                 raise HTTPException(409, '工作记忆已变化，请刷新后核对')
-            conn.execute('''INSERT INTO memory_working VALUES(?,?,?,?,?) ON CONFLICT(conversation_id)
-                DO UPDATE SET content=excluded.content,version=excluded.version,locked=excluded.locked,updated_at=excluded.updated_at''',
-                (cid, payload.content, payload.version+1, int(payload.locked), int(time.time())))
-            return {'saved': True, 'version': payload.version+1}
+            version=put_working(conn,cid,payload.content,payload.locked)
+            return {'saved': True, 'version': version}
 
     @app.get('/api/conversations/{cid}/memory-tools')
     def tools_contract(cid: str, current=Depends(user)):
@@ -232,7 +242,7 @@ def install(app, db, user):
             own(conn, 'conversations', cid, current['id'])
             return {'schema': MemoryAction.model_json_schema(), 'settings': settings_for(conn, current['id']),
                     'context': context_for(conn, cid), 'owner_source': 'authenticated_session',
-                    'operations': ['remember', 'update', 'archive', 'derive'],
+                    'operations': ['remember', 'update', 'archive', 'derive', 'checkpoint', 'use', 'forget'],
                     'read': '/api/memory/search', 'detail': '/api/memory/items/{id}',
                     'note': '权限由服务器绑定；修改需要来源原句和当前版本，本人锁定内容进入待核对。'}
 

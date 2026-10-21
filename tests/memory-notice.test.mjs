@@ -11,3 +11,7 @@ test('malformed or model-defined receipt statuses cannot become UI text',()=>{
   assert.equal(memoryOperationSummary([{status:'<img src=x>'},null,{status:'__proto__'}]),'');
   assert.equal(memoryOperationSummary(null),'');
 });
+test('lifecycle receipts distinguish temporary context, checkpoints, actual use and clearing',()=>{
+  assert.equal(memoryOperationSummary([{status:'session_saved'},{status:'checkpointed'},{status:'used'},{status:'all_forgotten'}]),
+    '1 条条件仅保留在本会话；1 次工作记忆已更新；1 条记忆被 Agent 报告采用；1 次记忆已全部清空');
+});

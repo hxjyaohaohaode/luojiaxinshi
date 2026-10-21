@@ -124,7 +124,10 @@ def create_app(settings=None):
             from .memory_learning import drain_jobs
             while True:
                 await asyncio.sleep(10)
-                try:await run_in_threadpool(drain_jobs,db)
+                try:
+                    await run_in_threadpool(drain_jobs,db)
+                    from .memory_reflection import run_one
+                    await run_in_threadpool(run_one,db,settings)
                 except Exception:logging.getLogger('campus').error('memory_maintenance_failed: check storage and permissions')
         memory_worker=asyncio.create_task(memory_maintenance())
         try:

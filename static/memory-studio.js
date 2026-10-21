@@ -1,10 +1,12 @@
 import {captureUiContext} from './ui-request.js';
+import {createLifecycleUI} from './memory-lifecycle.js';
 
 const modes={auto:'自动记忆',review:'先核对再保存',manual:'仅手动保存',off:'暂停全部记忆'};
-const origins={manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',task:'办理记录',import:'文件导入'};
+const origins={manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',reflection:'语义复盘提议',task:'办理记录',import:'文件导入'};
 const stamp=value=>value?new Date(value*1000).toLocaleString():'—';
 
 export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh}){
+  const lifecycle=createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh});
   const $=selector=>document.querySelector(selector);
   const button=(label,action,id='')=>`<button type="button" class="button small" data-memory-studio="${action}" data-id="${esc(id)}">${label}</button>`;
   let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
@@ -13,14 +15,14 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     return `<section class="memory-studio" aria-label="记忆工作台"><div class="memory-studio-heading"><div><h2>持续积累，也随时由你调整</h2><p class="small muted">记住明确的个人偏好与项目决定，保留原话和修改历史。推断与需要更正的锁定内容会先等你核对。</p></div><span class="pill">${esc(modes[settings.mode])}</span></div>
       <div class="memory-studio-stats"><span><strong>${data.total??data.memories.length}</strong> 条记忆</span><span><strong>${data.pending||0}</strong> 条待核对</span><span>原始记录与整理概览分别保留</span></div>
       <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}</div>
-      <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
+      ${lifecycle.panel(data)}<input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
     </section>`;
   }
   function meta(item){
     return `<div class="memory-provenance"><span>${esc(origins[item.origin]||'本人保存')}</span>${item.locked?'<span>本人锁定</span>':''}${(item.labels||[]).map(label=>`<span>${esc(label)}</span>`).join('')}</div>`;
   }
   function controls(item){
-    return `<div class="memory-studio-actions">${button('来源与历史','detail',item.id)}${button('导出 Markdown','markdown',item.id)}${item.review_status==='pending'?button('确认采用','accept',item.id)+button('不记这条','reject',item.id):''}</div>`;
+    return `<div class="memory-studio-actions">${button('来源与历史','detail',item.id)}${button('导出 Markdown','markdown',item.id)}${lifecycle.controls(item)}${item.review_status==='pending'?button('确认采用','accept',item.id)+button('不记这条','reject',item.id):''}</div>`;
   }
   function download(content,name,type){
     const url=URL.createObjectURL(new Blob([content],{type})),anchor=document.createElement('a');

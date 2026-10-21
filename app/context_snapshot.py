@@ -15,7 +15,7 @@ from .preferences import PERSONAL_KEYS
 STALE_MESSAGE='生成期间相关资料、日程或记忆已变化，本次旧回答未采纳。请核对最新内容后重试。'
 
 
-def capture(conn, uid, cid, access):
+def capture(conn, uid, cid, access, memory_ids=None):
     if not conn.in_transaction:conn.execute('BEGIN')
     chat=conn.execute('SELECT version FROM conversations WHERE id=? AND user_id=?',(cid,uid)).fetchone()
     if not chat:raise AIError(STALE_MESSAGE)
@@ -28,9 +28,14 @@ def capture(conn, uid, cid, access):
     if access.get('memory'):
         from .memory_store import settings_for
         values['context']=context_for(conn,cid)
-        values['memory']=eligible_versions(conn,uid,cid,True)
+        values['memory']=eligible_versions(conn,uid,cid,True,access)
+        if memory_ids is not None:
+            values['memory']={key:value for key,value in values['memory'].items() if key in memory_ids}
         values['memory_settings']=settings_for(conn,uid)
-        values['working_memory']=records('SELECT version FROM memory_working WHERE conversation_id=?',(cid,))
+        from .memory_lifecycle import config,current_key
+        values['memory_lifecycle']=config(conn,uid)
+        values['working_memory']=records('SELECT version FROM memory_working_frames WHERE conversation_id=? AND context_key=?',(cid,current_key(conn,cid)))
+        values['session_memory']=records('SELECT id,expires_at,promoted_id FROM memory_session_items WHERE conversation_id=? ORDER BY id',(cid,))
     if access.get('library'):
         values['library']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,l.full_sections
             FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id
@@ -48,12 +53,23 @@ def capture(conn, uid, cid, access):
         values['arrangements']=records('SELECT id,version FROM arrangements WHERE user_id=? ORDER BY id',(uid,))
         values['pending_changes']=records("SELECT id,version FROM notice_changes WHERE user_id=? AND state='pending' ORDER BY id",(uid,))
     return {'version':'context-snapshot-v1','access':access,
-            'digest':hashlib.sha256(dumps(values).encode()).hexdigest()}
+            'digest':hashlib.sha256(dumps(values).encode()).hexdigest(),
+            **({'memory_ids':sorted(memory_ids)} if memory_ids is not None else {})}
 
 
 def assert_current(conn, uid, cid, snapshot):
-    if snapshot and capture(conn,uid,cid,snapshot['access'])['digest']!=snapshot['digest']:
+    if snapshot and capture(conn,uid,cid,snapshot['access'],snapshot.get('memory_ids'))['digest']!=snapshot['digest']:
         raise AIError(STALE_MESSAGE)
+
+
+def bind_memories(conn,uid,cid,snapshot,memories):
+    """Bind every memory actually exposed across stages; unrelated edits may proceed."""
+    assert_current(conn,uid,cid,snapshot)
+    versions=eligible_versions(conn,uid,cid,True,snapshot['access']) if snapshot['access'].get('memory') else {}
+    expected={'memory-'+item['id']:item['version'] for item in memories}
+    if any(versions.get(key)!=version for key,version in expected.items()):raise AIError(STALE_MESSAGE)
+    ids=set(snapshot.get('memory_ids',[]))|set(expected)
+    return capture(conn,uid,cid,snapshot['access'],ids)
 
 
 def publication_current(conn, mid, uid, cid):

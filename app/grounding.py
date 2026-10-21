@@ -572,6 +572,9 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         with db.connect() as conn:assert_current(conn,uid,cid,context_snapshot)
     packed,excerpts,compaction=pack_history(messages)
     memories,memory_report=recall(db,uid,cid,question,{**access,'profile':access['profile'] and scope_start is None,'memory':memory_access(messages)})
+    from .context_snapshot import bind_memories
+    with db.connect() as conn:
+        context_snapshot=bind_memories(conn,uid,cid,context_snapshot,memories)
     profile={**profile,'_history_excerpts':excerpts,'_memory_entries':memories}
     from .memory_context import runtime_fields
     with db.connect() as conn:
@@ -609,6 +612,8 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         yield {'type': 'phase', 'phase': 'retrieving', 'label': '正在核对你限定消息中的材料…' if scope_start is not None else scope_description(selected_access), 'local_scope':local_scope}
         if memory_allowed and planned['local_queries']:
             memories,memory_report=recall(db,uid,cid,question,{**access,'memory':True},queries=planned['local_queries'])
+            with db.connect() as conn:
+                context_snapshot=bind_memories(conn,uid,cid,context_snapshot,memories)
             profile['_memory_entries']=memories
             report['memory']=memory_report
         sources, coverage = await asyncio.to_thread(retrieve, db, uid, cid, initial_sources, messages, profile, [question] + planned['local_queries'])

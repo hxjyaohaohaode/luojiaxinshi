@@ -686,3 +686,28 @@ node --test tests/continuity.test.mjs
 `scripts/benchmark_memory_engine.py` 创建独立合成 SQLite 数据库，插入 10,000 条，按范围限定 5,000 条候选，再进行 16 次查询。本次中位耗时 177.61 ms，P95 220.72 ms，最大 236.28 ms；最多返回 12 条，包含元数据的长期记忆预算不超过 8,000 字节。基准无外部模型调用，不能据此声称真实模型语义准确率或公网并发性能。证据为 `artifacts/memory-engine-benchmark/report.json`。
 
 正式本地服务在无正在执行的通知或聊天任务时，通过 SQLite backup API 生成升级前备份，再重载当前代码。重载后健康检查、数据库完整性、外键、schema v2、未登录记忆接口返回 401，以及原用户/通知/对话/消息/任务数量核对通过。记录位于 `artifacts/memory-engine-activation.json`；数据库备份保留在 `backups/`，不包含在普通交付证据副本中。
+
+## 2026-10-21 记忆生命周期 v3 深化验收
+
+本轮针对临时要求永久化、跨会话范围、工作目标被最后一句覆盖、任务经历误用、遗忘后历史回流，以及后台自我整理缺少反馈和预算进行改造。机制与边界见 [生命周期说明](docs/MEMORY_LIFECYCLE_V3.md)，13 个固定快照的融合映射见 [源码审查](docs/MEMORY_SOURCE_REVIEW.md)。下表均为本轮最终运行结果，未与历史数量相加。
+
+| 验证 | 最终结果 | 本地原始证据 |
+| --- | --- | --- |
+| 完整 Python 回归 | 730 通过，0 失败，1 条既有 Starlette 测试客户端弃用提示 | `artifacts/memory-v3-pytest-full.txt` / `.xml` |
+| Node 前端逻辑 | 116 通过，0 失败 | `artifacts/memory-v3-node-tests.txt` |
+| 生命周期浏览器流程 | Chromium / Firefox / WebKit 共 63 项通过，应用错误 0 | `artifacts/memory-v3-browser/report.json` |
+| 原有记忆工作台回归 | 三浏览器共 63 项通过，应用错误 0 | `artifacts/memory-engine-browser/report.json` |
+| 一万条本地检索 | 5,000 条允许范围候选、16 次查询；中位 317.08 ms，P95 476.99 ms，最大 479.83 ms | `artifacts/memory-v3-benchmark/report.json` |
+| 真实模型协议 | 两个合成案例最终通过，共 3 次外部尝试 | `artifacts/memory-v3-provider-smoke.json` |
+
+新增场景覆盖仅本轮要求、短期保留和过期不复活；项目/专题原范围与未知旧范围；多个独立会话晋升、同会话不刷依据；人工锁定/停用不被重复证据推翻；工作栏目增量合并及过时版本；缺少用户依据的已完成声明；实际曝光/采用/反馈区分与幂等；旧任务概览继承权限及调用意图；实际选中记忆与无关编辑的一致性；源删除；单条、短期和全量遗忘；未摄取旧历史的代次边界；旧遗忘命令不重放；后台复盘的开关、授权、来源版本、预算、失败不重复请求、快照清理及 schema 迁移。
+
+浏览器实际操作保存生命周期设置、暂存片段手动晋升、编辑后明确选项目、人工锁定、单条共享限制、逐回答反馈、过时暂停、片段与派生遗忘和形成记录。1440 / 390 / 320 像素核对设置弹窗，无页面横向溢出。单独保留生命周期 4 条、原流程 6 条 WebKit 截图工具样式告警，均发生在截图同步期间；应用脚本及非截图 CSP 错误为 0，未放宽应用策略。截图使用合成账号，不是真机或真实用户质量验收。
+
+性能检查先发现新版 P95 约 2.3 秒：业务中的顺序表达被误归为回答风格，重复/超过类型或剩余预算的候选仍参与 MMR。收紧语义槽，提前排除不能入选的候选，并把重排限制为最多 512 个后，获得表中最终数据。所有 16 次查询均保留范围前置、来源与生命周期检查，最多 12 条，含元数据的长期记忆不超过 8,000 字节。基准是单机合成词法检索，不能等同完整回答耗时、向量语义准确率或公网并发容量。
+
+真实 MiMo Pro 案例确认“仅本轮英文，不作为长期偏好”的结果仍路由到仅本轮；Flash 案例返回引用合法合成来源 ID 的摘要/方法。第一次复盘请求发现流式读取器追踪参数适配错误，修正后重测通过，原失败尝试在证据中保留。没有发送真实用户记忆或通知；两例协议检查不能证明长期自然语言记忆质量，复盘产生的推断仍先由本人核对。日常后台模型复盘默认关闭。
+
+复现使用原有 `.venv` 运行完整 pytest、`npm test`、`scripts/genui_catalog.py --check`；性能脚本为 `scripts/benchmark_memory_engine.py --output artifacts/memory-v3-benchmark`。浏览器先以 `MVP_PORT=8786`、独立 `MVP_DATA_DIR` 启动 `scripts/memory_engine_preview_server.py`，再运行两个浏览器验证脚本；可用 `PLAYWRIGHT_PATH` 指向已安装模块。原始证据和隔离数据在被 Git 忽略的 `artifacts/`，仓库提供不含账号数据的 [机器结果汇总](docs/verification/memory-lifecycle-v3.json)。
+
+本地启用前确认没有执行中的通知或聊天任务，通过 SQLite backup API 创建并核验升级前备份。启用后 schema v3、服务健康、完整性 `ok`、外键错误 0；原用户/通知/会话/消息/任务数量一致，人工维护记录正文一致，新增未登录接口均返回 401。正式账号没有开启模型复盘。记录在 `artifacts/memory-v3-activation.json`，原始备份留在被 Git 忽略的 `backups/`；不将私有数据库或真实账号内容放入公开结果。
