@@ -257,6 +257,7 @@ def payload(settings, sources, messages, profile, tier):
         messages,_,_=pack_history(messages)
     context = {'personal_conditions': {k: v for k, v in profile.items() if k in PERSONAL_KEYS},
                'memory_control':profile.get('_memory_control',{}),'working_memory':profile.get('_working_memory',''),
+               'session_memory':profile.get('_session_memory',{}),
                'memory_registry':[{k:item[k] for k in ('id','version','kind','locked','scope') if k in item} for item in profile.get('_memory_entries',[])],
                'materials': [{k:v for k,v in s.items() if k not in ('content','sha256')} for s in sources], 'resources':resource_index(sources)}
     if not profile.get('_grounding_context'):

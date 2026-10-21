@@ -311,25 +311,28 @@ def usable_derived(conn, items, now=None):
     """A summary never outlives a source's expiry, conflict or manual revocation."""
     from .memory_policy import temporal_state
     by_id = {item['id']: item for item in items}
+    ids=dumps(list(by_id))
     invalid = {row['memory_id'] for row in conn.execute('''SELECT e.memory_id
-        FROM memory_evidence e JOIN personal_memories m ON m.id=e.memory_id
+        FROM json_each(?) selected CROSS JOIN memory_evidence e ON e.memory_id=selected.value CROSS JOIN personal_memories m ON m.id=e.memory_id
         LEFT JOIN tasks t ON t.id=e.source_id AND t.user_id=m.user_id
         WHERE m.user_id=? AND e.source_kind='task'
         AND (t.id IS NULL OR t.version<>e.source_version)''',
-        (items[0]['user_id'],))} if items else set()
-    links = list(conn.execute('''SELECT l.* FROM memory_links l JOIN personal_memories m
+        (ids,items[0]['user_id']))} if items else set()
+    links = list(conn.execute('''SELECT l.* FROM json_each(?) selected CROSS JOIN memory_links l ON l.child_id=selected.value CROSS JOIN personal_memories m
         ON m.id=l.child_id WHERE m.user_id=? AND l.relation='derived_from' ''',
-        (items[0]['user_id'],))) if items else []
+        (ids,items[0]['user_id']))) if items else []
     if items:
         at=int(time.time()) if now is None else now
-        invalid.update(row['memory_id'] for row in conn.execute('''SELECT s.memory_id FROM memory_semantics s
-            JOIN personal_memories m ON m.id=s.memory_id JOIN memory_details d ON d.memory_id=m.id
-            WHERE m.user_id=? AND (s.status<>'active' OR (s.review_after<=? AND d.locked=0))''',(items[0]['user_id'],at)))
+        invalid.update(row['memory_id'] for row in conn.execute('''SELECT s.memory_id FROM json_each(?) selected CROSS JOIN memory_semantics s ON s.memory_id=selected.value
+            CROSS JOIN personal_memories m ON m.id=s.memory_id CROSS JOIN memory_details d ON d.memory_id=m.id
+            WHERE m.user_id=? AND (s.status<>'active' OR (s.review_after<=? AND d.locked=0))''',(ids,items[0]['user_id'],at)))
+    from .memory_reliability import source_current
+    source_cache={}
     for _ in range(len(links)+1):
         changed = False
         for link in links:
             parent = by_id.get(link['parent_id'])
-            if (not parent or parent['id'] in invalid or parent['version'] != link['parent_version']
+            if (not parent or parent['id'] in invalid or not source_current(conn,parent,link['parent_version'],source_cache)
                     or temporal_state(parent, now) != 'active'):
                 if link['child_id'] not in invalid:
                     invalid.add(link['child_id'])
@@ -345,3 +348,7 @@ SCHEMA += LIFECYCLE_SCHEMA
 from .memory_reflection_schema import SCHEMA as REFLECTION_SCHEMA, TABLES as REFLECTION_TABLES
 REQUIRED_TABLES |= REFLECTION_TABLES
 SCHEMA += REFLECTION_SCHEMA
+V3_TABLES = set(REQUIRED_TABLES)
+from .memory_reliability_schema import SCHEMA as RELIABILITY_SCHEMA, TABLES as RELIABILITY_TABLES
+REQUIRED_TABLES |= RELIABILITY_TABLES
+SCHEMA += RELIABILITY_SCHEMA

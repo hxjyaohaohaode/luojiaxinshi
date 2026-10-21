@@ -53,6 +53,7 @@ def reply(settings,sources,messages,profile):
     context={'personal_conditions':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
              'memories':profile.get('_memory_entries',[]),'memory_control':profile.get('_memory_control',{}),
              'working_memory':profile.get('_working_memory',''),
+             'session_memory':profile.get('_session_memory',{}),
              'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections']} for s in sources]}
     materials=[{'type':'text','text':json.dumps(context,ensure_ascii=False)}]
     for source in sources:

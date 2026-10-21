@@ -5,7 +5,7 @@ import re
 import time
 from typing import Literal
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, HTTPException, Query, Header
 from pydantic import Field, model_validator
 
 from .db import dumps, ident
@@ -80,11 +80,11 @@ class Memory(Strict):
 
 
 class MemoryUpdate(Memory,Version):
-    pass
+    reactivate: bool = False
 
 
 class ResolveMemory(Strict):
-    versions: dict[str,int] = Field(min_length=2,max_length=500)
+    versions: dict[str,int] = Field(min_length=2,max_length=10000)
 
 
 class Context(Strict):
@@ -128,20 +128,17 @@ def memory_access(messages):
     return allowed
 
 
-def eligible_versions(conn,uid,cid,allowed,access=None):
-    from .memory_store import settings_for,usable_derived
+def eligible_versions(conn,uid,cid,allowed,access=None,memory_ids=None):
+    from .memory_store import settings_for,usable_derived,decorate
     own(conn,'conversations',cid,uid)
     context=context_for(conn,cid)
     if not allowed or not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':return {}
     versions={}
-    items,_=effective(rows_for(conn,uid),context)
-    from .memory_lifecycle import source_access
-    items,_=source_access(conn,uid,items,access or {})
-    items,_=usable_derived(conn,items)
-    from .memory_lifecycle import recall_gate
-    items,_=recall_gate(conn,uid,cid,items)
-    items,_=usable_derived(conn,items)
-    for row in items:versions['memory-'+row['id']]=row['version']
+    ids={key.removeprefix('memory-') for key in memory_ids} if memory_ids is not None else None
+    from .memory_reliability import candidates
+    items,_=candidates(conn,uid,cid,access or {},ids=ids)
+    for row in items:
+        if memory_ids is None or 'memory-'+row['id'] in memory_ids:versions['memory-'+row['id']]=row['version']
     if context['project_id']:
         project=own(conn,'memory_projects',context['project_id'],uid)
         versions['memory-'+hashlib.sha256(('project:'+project['id']).encode()).hexdigest()[:32]]=project['version']
@@ -160,23 +157,12 @@ def recall(db,uid,cid,question,access,queries=None):
         context=context_for(conn,cid)
         if not context['memory_enabled'] or settings_for(conn,uid)['mode']=='off':
             return [],{'enabled':False,'selected':0}
-        items,excluded=effective(rows_for(conn,uid),context)
-        from .memory_lifecycle import source_access
-        items,source_excluded=source_access(conn,uid,items,access)
-        excluded.extend(source_excluded)
-        items,invalid=usable_derived(conn,items)
-        excluded.extend({'id':mid,'reason':'source_changed'} for mid in sorted(invalid))
-        items=decorate(conn,items)
-        items=[item for item in items if item.get('review_status')=='accepted']
-        from .memory_lifecycle import recall_gate
-        items,lifecycle_excluded=recall_gate(conn,uid,cid,items)
-        excluded.extend(lifecycle_excluded)
-        items,invalid_after_gate=usable_derived(conn,items)
-        excluded.extend({'id':mid,'reason':'source_changed'} for mid in sorted(invalid_after_gate-invalid))
         if len(question)<45 and re.search(r'继续|然后呢|按刚才|接着|下一步|那怎么办',question):
             from .memory_lifecycle import session_state
             session=session_state(conn,uid,cid)
             queries=[*(queries or []),session['goal'],*(r['text'] for r in session['recent_requests'][:-1])][-4:]
+        from .memory_reliability import candidates
+        items,excluded=candidates(conn,uid,cid,access,question+' '+' '.join(queries or []))
         selected=[];used=0
         if context['project_id']:
             project=dict(own(conn,'memory_projects',context['project_id'],uid))
@@ -197,24 +183,30 @@ def recall(db,uid,cid,question,access,queries=None):
 def install_memory(app,db,user):
     from .memory_store import decorate,insert_memory,record_revision,invalidate_dependents,settings_for,MAX_MEMORIES
     def saved_item(conn,mid,uid):
-        return next(item for item in decorate(conn,catalog(rows_for(conn,uid))) if item['id']==mid)
+        return next(item for item in catalog(decorate(conn,rows_for(conn,uid,[mid]))) if item['id']==mid)
 
     @app.get('/api/memory')
     def list_memory(q:str=Query(default='',max_length=1000),scope:str=Query(default='all',pattern='^(all|global|project|topic)$'),
+                    status:str=Query(default='all',pattern='^(all|active|pending|attention|archived|cooling|needs_review|source_changed|expired|inactive|conflict|scheduled)$'),
+                    kind:str=Query(default='all',pattern='^(all|preference|constraint|decision|fact|episode|skill|intention|summary)$'),
+                    tier:str=Query(default='all',pattern='^(all|long_term|episodic)$'),project_id:str|None=Query(default=None,max_length=40),
                     limit:int=Query(default=200,ge=1,le=500),offset:int=Query(default=0,ge=0),current=Depends(user)):
         with db.connect() as conn:
-            items=decorate(conn,catalog(rows_for(conn,current['id'])))
-            from .memory_store import usable_derived
-            _,invalid=usable_derived(conn,[item for item in items if item['state']=='active'])
-            for item in items:
-                if item['id'] in invalid and item['state']=='active':item['state']='source_changed'
+            from .memory_reliability import memory_catalog
+            if project_id:own(conn,'memory_projects',project_id,current['id'])
+            items=memory_catalog(conn,current['id'])
+            state_counts={}
+            for item in items:state_counts[item['state']]=state_counts.get(item['state'],0)+1
             counts={key:sum(item['scope']==key for item in items) for key in ('global','project','topic')}
             projects=[dict(r) for r in conn.execute('SELECT * FROM memory_projects WHERE user_id=? ORDER BY updated_at DESC,id',(current['id'],))]
             names={p['id']:p['name'] for p in projects}
             filtered=[item for item in items if (scope=='all' or item['scope']==scope) and
+                      (kind=='all' or item['kind']==kind) and (tier=='all' or item['tier']==tier) and (not project_id or item['project_id']==project_id) and
+                      (status=='all' or item['state']==status or status=='attention' and item['state'] in ('conflict','source_changed','needs_review','cooling','expired')) and
                       (not q or normalized(q) in normalized(item['content']+' '+item['topic']+' '+names.get(item['project_id'],'')+' '+' '.join(item['labels'])))]
             return {'projects':projects,'memories':filtered[offset:offset+limit],'total':len(items),
                 'matched':len(filtered),'offset':offset,'limit':limit,'counts':counts,
+                'state_counts':state_counts,
                 'pending':sum(item['review_status']=='pending' for item in items),'settings':settings_for(conn,current['id']),
                 'topics':sorted({item['topic'] for item in items if item['topic']}),
                 'lifecycle_counts':{key:sum(item.get('tier')==key for item in items) for key in ('long_term','episodic')},
@@ -251,43 +243,60 @@ def install_memory(app,db,user):
         if payload.source_conversation_id:own(conn,'conversations',payload.source_conversation_id,uid)
 
     @app.post('/api/memory/items')
-    def create_memory(payload:Memory,current=Depends(user)):
+    def create_memory(payload:Memory,current=Depends(user),idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=80)):
         with db.connect(write=True) as conn:
+            from .memory_reliability import mutation_lookup,mutation_record,mutation_item
+            receipt=mutation_lookup(conn,current['id'],idempotency_key,'create',payload.model_dump())
+            if receipt:return mutation_item(conn,current['id'],receipt,saved_item)
             validate_links(conn,payload,current['id'])
             existing=duplicate(rows_for(conn,current['id']),payload)
-            if existing:return saved_item(conn,existing['id'],current['id'])
+            if existing:
+                mutation_record(conn,current['id'],idempotency_key,'create',payload.model_dump(),{'id':existing['id'],'version':existing['version']})
+                return saved_item(conn,existing['id'],current['id'])
             if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=MAX_MEMORIES:
                 raise HTTPException(422,'记忆数量已达上限，请先整理或导出')
             key=insert_memory(conn,current['id'],payload.model_dump(),locked=payload.locked,labels=payload.labels)
+            mutation_record(conn,current['id'],idempotency_key,'create',payload.model_dump(),{'id':key,'version':1})
             return saved_item(conn,key,current['id'])
 
     @app.put('/api/memory/items/{mid}')
-    def update_memory(mid:str,payload:MemoryUpdate,current=Depends(user)):
+    def update_memory(mid:str,payload:MemoryUpdate,current=Depends(user),idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=80)):
         with db.connect(write=True) as conn:
+            from .memory_reliability import mutation_lookup,mutation_record,mutation_item
+            receipt=mutation_lookup(conn,current['id'],idempotency_key,'update:'+mid,payload.model_dump())
+            if receipt:return mutation_item(conn,current['id'],receipt,saved_item)
             row=own(conn,'personal_memories',mid,current['id'])
             if row['version']!=payload.version:raise HTTPException(409,'记忆已修改，请刷新后核对')
             validate_links(conn,payload,current['id'])
             if duplicate(rows_for(conn,current['id']),payload,excluding=mid):
                 raise HTTPException(409,'已有完全相同的记忆，请保留已有记录并删除重复项')
-            invalidate_dependents(conn,mid)
+            old_life=conn.execute('SELECT tier,status FROM memory_semantics WHERE memory_id=?',(mid,)).fetchone()
+            from .memory_reliability import SOURCE_FIELDS
+            old_policy=conn.execute('SELECT semantic_key,valid_from,expires_at FROM memory_policies WHERE memory_id=?',(mid,)).fetchone()
+            original={**dict(row),**(dict(old_policy) if old_policy else {})}
+            if any(original.get(field)!=payload.model_dump().get(field) for field in SOURCE_FIELDS):invalidate_dependents(conn,mid)
             conn.execute('UPDATE personal_memories SET scope=?,project_id=?,topic=?,kind=?,content=?,source_conversation_id=?,active=?,pinned=?,version=version+1,updated_at=? WHERE id=?',
                 (payload.scope,payload.project_id,payload.topic,payload.kind,payload.content,payload.source_conversation_id,int(payload.active),int(payload.pinned),int(time.time()),mid))
             save_policy(conn,mid,payload.model_dump())
             conn.execute("UPDATE memory_details SET locked=?,labels=?,review_status='accepted' WHERE memory_id=?",
                 (int(payload.locked),dumps(payload.labels),mid))
             from .memory_lifecycle import set_semantics
-            set_semantics(conn,mid,admission='manual')
+            set_semantics(conn,mid,admission='manual',tier=old_life['tier'] if old_life and row['kind']==payload.kind else None)
+            if old_life and not payload.reactivate:
+                conn.execute('UPDATE memory_semantics SET status=? WHERE memory_id=?',(old_life['status'],mid))
             record_revision(conn,mid,'user')
+            mutation_record(conn,current['id'],idempotency_key,'update:'+mid,payload.model_dump(),{'id':mid,'version':row['version']+1})
             return saved_item(conn,mid,current['id'])
 
     @app.post('/api/memory/items/{mid}/resolve')
     def resolve(mid:str,payload:ResolveMemory,current=Depends(user)):
         with db.connect(write=True) as conn:
             own(conn,'personal_memories',mid,current['id'])
-            items=rows_for(conn,current['id']);chosen=next(item for item in items if item['id']==mid)
-            if not chosen['semantic_key'] or temporal_state(chosen)!='active':
+            from .memory_reliability import memory_catalog
+            items=memory_catalog(conn,current['id']);chosen=next(item for item in items if item['id']==mid)
+            if not chosen['semantic_key'] or chosen['state']!='conflict':
                 raise HTTPException(409,'请先启用一条当前有效且具有同类键的记忆')
-            peers=[item for item in items if scope_key(item)==scope_key(chosen) and item['semantic_key']==chosen['semantic_key'] and temporal_state(item)=='active']
+            peers=[item for item in items if scope_key(item)==scope_key(chosen) and item['semantic_key']==chosen['semantic_key'] and item['state']=='conflict']
             if len({normalized(item['content']) for item in peers})<2 or {item['id']:item['version'] for item in peers}!=payload.versions:
                 raise HTTPException(409,'冲突内容或版本已变化，请刷新后重新选择')
             now=int(time.time())
@@ -300,12 +309,16 @@ def install_memory(app,db,user):
             return {'kept':saved_item(conn,mid,current['id']),'deactivated':[item['id'] for item in peers if item['id']!=mid]}
 
     @app.delete('/api/memory/items/{mid}')
-    def delete_memory(mid:str,payload:Version,current=Depends(user)):
+    def delete_memory(mid:str,payload:Version,current=Depends(user),idempotency_key:str|None=Header(default=None,alias='Idempotency-Key',max_length=80)):
         with db.connect(write=True) as conn:
+            from .memory_reliability import mutation_lookup,mutation_record
+            receipt=mutation_lookup(conn,current['id'],idempotency_key,'forget:'+mid,payload.model_dump())
+            if receipt:return {**receipt,'replayed':True}
             row=own(conn,'personal_memories',mid,current['id'])
             if row['version']!=payload.version:raise HTTPException(409,'记忆已修改，请刷新后核对')
             from .memory_store import forget_memory
             forget_memory(conn,current['id'],dict(row))
+            mutation_record(conn,current['id'],idempotency_key,'forget:'+mid,payload.model_dump(),{'deleted':True})
             return {'deleted':True}
 
     @app.get('/api/conversations/{cid}/context')
@@ -319,13 +332,10 @@ def install_memory(app,db,user):
         with db.connect() as conn:
             own(conn,'conversations',cid,current['id'])
             context=context_for(conn,cid)
-            items,excluded=effective(rows_for(conn,current['id']),context)
-            from .memory_store import usable_derived
-            items,invalid=usable_derived(conn,items)
-            excluded.extend({'id':mid,'reason':'source_changed'} for mid in invalid)
-            from .memory_lifecycle import recall_gate
-            items,life_excluded=recall_gate(conn,current['id'],cid,decorate(conn,items))
-            excluded.extend(life_excluded)
+            from .memory_reliability import candidates
+            from .retrieval_scope import account_access
+            history=[dict(r) for r in conn.execute('SELECT role,content FROM conversation_messages WHERE conversation_id=? ORDER BY rowid',(cid,))]
+            items,excluded=candidates(conn,current['id'],cid,account_access(history))
             enabled=context['memory_enabled'] and settings_for(conn,current['id'])['mode']!='off'
             return {'context_version':context['version'],'enabled':bool(enabled),
                 'eligible':[{'id':item['id'],'content':item['content'],'scope':item['scope'],'semantic_key':item['semantic_key']} for item in items] if enabled else [],

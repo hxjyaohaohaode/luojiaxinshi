@@ -1,6 +1,6 @@
 # 珞珈信使记忆功能升级说明
 
-本次升级把长期、经历、会话短期、仅本轮条件、工作记忆、Agent 提议、人工校订、来源追踪和后台整理接入现有 FastAPI / SQLite 系统。主要设计参考 EverOS，并吸收 Hindsight、MemOS、LangMem、Graphiti 等项目中适合现有系统的机制。默认整理在本地执行；另提供默认关闭、有授权和每日预算的语义复盘。完整形成/使用/遗忘路径见 [生命周期 v3](MEMORY_LIFECYCLE_V3.md)。没有新增云端记忆服务。
+本次升级把长期、经历、会话短期、仅本轮条件、工作记忆、Agent 提议、人工校订、来源追踪和后台整理接入现有 FastAPI / SQLite 系统。主要设计参考 EverOS，并吸收 Hindsight、MemOS、LangMem、Graphiti 等项目中适合现有系统的机制。默认整理在本地执行；另提供默认关闭、有授权和每日预算的语义复盘。版本、可靠性与新管理页见 [可靠性 v4](MEMORY_RELIABILITY_V4.md)，完整形成/使用/遗忘基础路径见 [生命周期 v3](MEMORY_LIFECYCLE_V3.md)。没有新增云端记忆服务。
 
 ## 1. 已实现的功能
 
@@ -30,7 +30,9 @@
 
 待核对记录可以接受或拒绝。接受前会重新检查依据版本；如果原始信息已经改变，需要重新整理。人工接受后会锁定记录。拒绝会删除提议，并阻止相同来源被后台反复自动学习；需要重新加入时可以人工新建。
 
-点击记忆的详情可以查看来源、派生关系和修改历史。恢复历史版本会产生新的当前版本，并保留来源链。恢复旧版本不绕过来源有效性检查：办理记录已经变化时，旧记忆仍可能处于“来源已变化”状态而不参与召回。
+在管理页按状态、项目、类型或层级筛选，搜索覆盖完整账号目录，每页 50 条。会话暂存可以直接编辑条件并保留形成时原话；待核对与需要更新各有独立视图。批量管理先检查全部版本，有冲突时整批回滚。
+
+点击记忆的详情可以查看来源、派生关系、实际影响计数和修改历史。恢复历史版本会产生新的当前版本，并保留来源链。恢复旧版本不绕过来源有效性检查：办理记录已经变化时，旧记忆仍可能处于“来源已变化”状态而不参与召回。
 
 对话中的工作记录适合保存“当前目标、已经做到哪里、下一步”。手动编辑并锁定后，自动流程不会覆盖。它属于当前对话，不会自动变成全局事实。
 
@@ -76,7 +78,7 @@ JSON 用于归档和迁移。Markdown 用于熟悉的文本编辑：保留文件
 
 | 文件 | 责任 |
 | --- | --- |
-| app/memory_store.py | 记忆 schema v3 集成、事务触发器、历史、来源链、遗忘标记、完整导出 |
+| app/memory_store.py | 记忆 schema v4 集成、事务触发器、历史、来源链、遗忘标记、完整导出 |
 | app/memory_lifecycle.py | 分层、会话范围、增量工作栏目、晋升/冷却、反馈、历史代次与遗忘 |
 | app/memory_lifecycle_api.py | 层级、保留、共享、会话晋升、调用反馈与审计接口 |
 | app/memory_reflection.py | 可选模型复盘、输入指纹、持久状态、授权/预算和提交复核 |
@@ -102,7 +104,7 @@ JSON 用于归档和迁移。Markdown 用于熟悉的文本编辑：保留文件
 
 ## 8. 运维与复现
 
-修改代码后按现有启动方式重启本地服务。数据库初始化会从既有结构或记忆 schema v1/v2 迁移到 v3；升级前保留 SQLite 一致性备份。不要直接复制仍在写入的数据库文件来代替 SQLite backup API。
+修改代码后按现有启动方式重启本地服务。数据库初始化会从既有结构或记忆 schema v1/v2/v3 迁移到 v4；升级前保留 SQLite 一致性备份。不要直接复制仍在写入的数据库文件来代替 SQLite backup API。
 
 后端测试：`.venv\Scripts\python.exe -m pytest --override-ini addopts= -q`。
 
@@ -110,6 +112,6 @@ JSON 用于归档和迁移。Markdown 用于熟悉的文本编辑：保留文件
 
 容量基准：`.venv\Scripts\python.exe scripts/benchmark_memory_engine.py`。该脚本创建独立合成数据库，不读取真实账号内容。
 
-浏览器验收：先用 `scripts/memory_engine_preview_server.py` 启动 8786 端口的隔离夹具，再运行 `scripts/verify_memory_engine.mjs` 与 `scripts/verify_memory_lifecycle.mjs`。如 Playwright 未安装在当前 node_modules，可通过 PLAYWRIGHT_PATH 指向已安装模块。夹具使用明确标注的模拟模型回复，不能当成真实模型效果实测。
+浏览器验收：先用 `scripts/memory_engine_preview_server.py` 启动 8786 端口的隔离夹具，再运行 `scripts/verify_memory_reliability.mjs`、`scripts/verify_memory_engine.mjs` 与 `scripts/verify_memory_lifecycle.mjs`。如 Playwright 未安装在当前 node_modules，可通过 PLAYWRIGHT_PATH 指向已安装模块。夹具使用明确标注的模拟模型回复，不能当成真实模型效果实测。
 
-最新实际测试结果见 [TESTING.md](../TESTING.md) 和去账号化的 [v3 验证汇总](verification/memory-lifecycle-v3.json)。此前交付目录保留原轮次的源码清单、报告及渲染记录；不把不同日期或不同范围的累计测试数相加。
+最新实际测试结果见 [TESTING.md](../TESTING.md) 和去账号化的 [v4 验证汇总](verification/memory-reliability-v4.json)。此前交付目录保留原轮次的源码清单、报告及渲染记录；不把不同日期或不同范围的累计测试数相加。

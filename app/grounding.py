@@ -564,7 +564,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     if scope_start is not None:
         snapshot_access.update(library=False,schedule=False,profile=False,memory=False)
     with db.connect() as conn:
-        context_snapshot=capture(conn,uid,cid,snapshot_access)
+        context_snapshot=capture(conn,uid,cid,snapshot_access,set())
         fresh_person=conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone() if snapshot_access['profile'] else None
         fresh_profile=json.loads(fresh_person['profile']) if fresh_person else {}
         profile_stale=snapshot_access['profile'] and any(profile.get(k)!=fresh_profile.get(k) for k in PERSONAL_KEYS)
@@ -579,6 +579,8 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     from .memory_context import runtime_fields
     with db.connect() as conn:
         profile.update(runtime_fields(conn,uid,cid,messages))
+    from .context_snapshot import bind_sessions
+    context_snapshot=bind_sessions(context_snapshot,profile)
     sources = []
     report = {'version': VERSION, 'status': 'checking', 'started_at': int(time.time()), 'limitations': ['检索与模型复核不能保证零错误；重要时限、资格和手续仍须核对原发布方。']}
     report['models']={'analysis':settings.ai_model,'composition':settings.ai_composition_model if writing_tier==1 else settings.ai_model,'verification':settings.ai_model}

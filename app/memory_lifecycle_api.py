@@ -38,6 +38,7 @@ class Promotion(Strict):
     project_id: str | None = Field(default=None,max_length=40)
     topic: str = Field(default='',max_length=60)
     content: str | None = Field(default=None,max_length=2000)
+    session_version: int | None = Field(default=None,ge=0)
 
 
 class Feedback(Version):
@@ -57,7 +58,7 @@ def install(app,db,user):
                 WHERE m.user_id=? AND s.status IN ('needs_review','cooling')''',(uid,)).fetchone()[0]
             run=conn.execute('SELECT * FROM memory_lifecycle_runs WHERE user_id=?',(uid,)).fetchone()
             return {'settings':config(conn,uid),'counts':counts,
-                'reflection_jobs':[dict(r) for r in conn.execute('SELECT id,state,error_code,proposal_count,created_at,finished_at FROM memory_reflection_jobs WHERE user_id=? ORDER BY created_at DESC LIMIT 12',(uid,))],
+                'reflection_jobs':[dict(r) for r in conn.execute('SELECT j.id,j.state,j.error_code,j.proposal_count,j.created_at,j.finished_at,coalesce(l.not_before,0) not_before,coalesce(l.attempts,0) attempts FROM memory_reflection_jobs j LEFT JOIN memory_reflection_leases l ON l.job_id=j.id WHERE j.user_id=? ORDER BY j.created_at DESC,j.id LIMIT 12',(uid,))],
                 'last_maintenance':{'at':run['ran_at'],'report':json.loads(run['report'])} if run else None,
                 'events':[dict(r) for r in conn.execute('SELECT memory_id,event,reason,created_at FROM memory_events WHERE user_id=? ORDER BY created_at DESC,rowid DESC LIMIT 40',(uid,))]}
 
@@ -99,16 +100,21 @@ def install(app,db,user):
             conn.execute('UPDATE personal_memories SET version=version+1,updated_at=? WHERE id=?',(int(time.time()),mid))
             record_revision(conn,mid,'user-lifecycle')
             event(conn,current['id'],mid,'configured','本人调整层级、共享或使用状态')
-            return next(i for i in decorate(conn,catalog(rows_for(conn,current['id']))) if i['id']==mid)
+            from .memory_api import item_for
+            return item_for(conn,current['id'],mid)
 
     @app.get('/api/memory/session-items')
-    def short_term(conversation_id:str|None=None,limit:int=Query(default=100,ge=1,le=200),current=Depends(user)):
+    def short_term(conversation_id:str|None=None,limit:int=Query(default=100,ge=1,le=200),offset:int=Query(default=0,ge=0),q:str=Query(default='',max_length=1000),current=Depends(user)):
         with db.connect() as conn:
             if conversation_id:own(conn,'conversations',conversation_id,current['id'])
-            return {'items':[dict(r) for r in conn.execute('''SELECT s.*,c.title FROM memory_session_items s
-                JOIN conversations c ON c.id=s.conversation_id WHERE s.user_id=? AND s.expires_at>?
-                AND (? IS NULL OR s.conversation_id=?) ORDER BY s.created_at DESC,s.rowid DESC LIMIT ?''',
-                (current['id'],int(time.time()),conversation_id,conversation_id,limit))]}
+            from .memory_reliability import overlay_sessions
+            where=''' FROM memory_session_items s JOIN conversations c ON c.id=s.conversation_id
+                LEFT JOIN memory_session_edits e ON e.session_id=s.id WHERE s.user_id=? AND s.expires_at>?
+                AND (? IS NULL OR s.conversation_id=?) AND (?='' OR instr(lower(coalesce(e.content,s.content)||' '||c.title),lower(?))>0)'''
+            args=(current['id'],int(time.time()),conversation_id,conversation_id,q,q)
+            items=[dict(r) for r in conn.execute('SELECT s.*,c.title'+where+' ORDER BY s.created_at DESC,s.rowid DESC LIMIT ? OFFSET ?',(*args,limit,offset))]
+            total=conn.execute('SELECT count(*)'+where,args).fetchone()[0]
+            return {'items':overlay_sessions(conn,items),'matched':total,'offset':offset,'limit':limit}
 
     @app.get('/api/conversations/{cid}/memory-state')
     def state(cid:str,current=Depends(user)):
@@ -125,7 +131,13 @@ def install(app,db,user):
             row=conn.execute('SELECT * FROM memory_session_items WHERE id=? AND user_id=?',(sid,current['id'])).fetchone()
             if not row:raise HTTPException(404,'会话记忆不存在或无权访问')
             if row['expires_at']<=int(time.time()):raise HTTPException(409,'会话片段已过期，请从原对话重新确认')
+            edited=conn.execute('SELECT content,version FROM memory_session_edits WHERE session_id=?',(sid,)).fetchone()
+            if payload.session_version is not None and payload.session_version!=(edited['version'] if edited else 0):
+                raise HTTPException(409,'会话条件已被修订，请重新打开并确认长期保存内容')
             if row['promoted_id'] and conn.execute('SELECT 1 FROM personal_memories WHERE id=?',(row['promoted_id'],)).fetchone():
+                existing=conn.execute('SELECT content FROM personal_memories WHERE id=?',(row['promoted_id'],)).fetchone()
+                if payload.content is not None and payload.content.strip()!=existing['content']:
+                    raise HTTPException(409,'这段内容已经晋升，修改请进入已保存的长期记忆')
                 return {'id':row['promoted_id'],'already_promoted':True}
             if not row['context_key'] and payload.scope=='current':raise HTTPException(422,'旧片段缺少原始范围，请明确选择长期使用的项目、专题或通用范围')
             source_context=json.loads(row['context_key']) if row['context_key'] else ['',[]]
@@ -142,7 +154,7 @@ def install(app,db,user):
                 own(conn,'memory_projects',project_id,current['id'])
             if scope=='topic' and not topic.strip():raise HTTPException(422,'请选择专题')
             from .memory_learning import classify,semantic_key
-            content=payload.content if payload.content is not None else row['content']
+            content=payload.content if payload.content is not None else edited['content'] if edited else row['content']
             try:
                 value=Memory.model_validate({'scope':scope,'project_id':project_id if scope=='project' else None,
                     'topic':topic if scope=='topic' else '', 'kind':classify(content),
@@ -161,6 +173,7 @@ def install(app,db,user):
         with db.connect(write=True) as conn:
             row=conn.execute('SELECT * FROM memory_session_items WHERE id=? AND user_id=?',(sid,current['id'])).fetchone()
             if not row:raise HTTPException(404,'会话片段不存在或无权访问')
+            edited=conn.execute('SELECT content FROM memory_session_edits WHERE session_id=?',(sid,)).fetchone()
             source=conn.execute('SELECT content FROM conversation_messages WHERE id=?',(row['source_message_id'],)).fetchone()
             if source and row['content'] in source['content']:
                 start=source['content'].find(row['content'])
@@ -174,9 +187,12 @@ def install(app,db,user):
             conn.execute('DELETE FROM memory_checkpoints WHERE conversation_id=?',(row['conversation_id'],))
             working=conn.execute('SELECT content FROM memory_working WHERE conversation_id=?',(row['conversation_id'],)).fetchone()
             if working:
+                cleaned=working['content'].replace(row['content'],'[已遗忘的会话片段]')
+                if edited:cleaned=cleaned.replace(edited['content'],'[已遗忘的会话修订]')
                 conn.execute('UPDATE memory_working SET content=?,version=version+1 WHERE conversation_id=?',
-                    (working['content'].replace(row['content'],'[已遗忘的会话片段]'),row['conversation_id']))
+                    (cleaned,row['conversation_id']))
             conn.execute("UPDATE memory_working_frames SET content=replace(content,?,'[已遗忘的会话片段]'),version=version+1 WHERE conversation_id=? AND instr(content,?)>0",(row['content'],row['conversation_id'],row['content']))
+            if edited:conn.execute("UPDATE memory_working_frames SET content=replace(content,?,'[已遗忘的会话修订]'),version=version+1 WHERE conversation_id=? AND instr(content,?)>0",(edited['content'],row['conversation_id'],edited['content']))
             event(conn,current['id'],None,'forgotten_session','本人撤销短期片段及其派生记忆')
             return {'forgotten':True,'derived_deleted':len(derived)}
 
@@ -202,5 +218,10 @@ def install(app,db,user):
                 FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
                 LEFT JOIN memory_feedback f ON f.message_id=u.message_id AND f.memory_id=u.memory_id
                 WHERE u.message_id=? AND m.user_id=? ORDER BY u.memory_id''',(aid,current['id']))]
+            for item in items:
+                item['can_feedback']=item['memory_version']==item['version']
+                if not item['can_feedback']:
+                    revision=conn.execute('SELECT snapshot FROM memory_revisions WHERE memory_id=? AND version=?',(item['memory_id'],item['memory_version'])).fetchone()
+                    item['content']=json.loads(revision['snapshot'])['content'] if revision else '[当时的记忆版本已不可用]'
             return {'items':items,'retrieval':data.get('memory',{}),
                 'operations':data.get('memory_operations',[]),'note':'提供给回答不等于实际采用；Agent 报告的使用情况与本人反馈分别记录。'}

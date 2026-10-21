@@ -11,6 +11,7 @@ ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from app.db import Database
 from app.memory import recall
+from app.context_snapshot import capture,assert_current
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output',type=Path,default=ROOT/'artifacts'/'memory-engine-benchmark')
@@ -31,22 +32,27 @@ with db.connect(write=True) as conn:
             'preference' if index%500==1 else 'fact',text,None,1,0,1,now,now))
     conn.executemany('INSERT INTO personal_memories VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',records)
 insert_ms=(time.perf_counter()-start)*1000
-latencies=[];results=[]
+latencies=[];snapshot_latencies=[];results=[]
 for query in ['课程申请的材料和提交回执','我习惯怎样核对通知','准备项目说明与计划','课程 17 的办理方法']*4:
     start=time.perf_counter()
     selected,report=recall(db,owner,chat,query,{'profile':True,'memory':True})
     latencies.append((time.perf_counter()-start)*1000)
     assert len(selected)<=12 and report['context_bytes']<=8000
     assert all(item['scope']=='global' for item in selected)
-    results.append({'query':query,'count':len(selected),'context_bytes':report['context_bytes'],'latency_ms':round(latencies[-1],2)})
+    start=time.perf_counter()
+    with db.connect() as conn:snapshot=capture(conn,owner,chat,{'profile':True,'memory':True},{'memory-'+item['id'] for item in selected})
+    for _ in range(3):
+        with db.connect() as conn:assert_current(conn,owner,chat,snapshot)
+    snapshot_latencies.append((time.perf_counter()-start)*1000)
+    results.append({'query':query,'count':len(selected),'context_bytes':report['context_bytes'],'latency_ms':round(latencies[-1],2),'snapshot_and_three_checks_ms':round(snapshot_latencies[-1],2)})
 with db.connect() as conn:
     assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==10000
     assert conn.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
 output={'synthetic':True,'database':str(db.path),'stored':10000,'eligible_scope':5000,
-    'algorithm':report.get('algorithm'),'memory_schema':3,
+    'algorithm':report.get('algorithm'),'memory_schema':4,
     'insertion_ms':round(insert_ms,2),'queries':len(latencies),'latency_ms':{
         'median':round(statistics.median(latencies),2),'p95':round(sorted(latencies)[int(.95*(len(latencies)-1))],2),
-        'max':round(max(latencies),2)},'results':results,
+        'max':round(max(latencies),2)},'snapshot_and_three_checks_ms':{'median':round(statistics.median(snapshot_latencies),2),'p95':round(sorted(snapshot_latencies)[int(.95*(len(snapshot_latencies)-1))],2),'max':round(max(snapshot_latencies),2)},'results':results,
     'provider_calls':0,'limits':'Local lexical retrieval benchmark, not a dense semantic recall or external-model quality benchmark.'}
 (folder/'report.json').write_text(json.dumps(output,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps({key:value for key,value in output.items() if key not in ('results','database')},ensure_ascii=False))

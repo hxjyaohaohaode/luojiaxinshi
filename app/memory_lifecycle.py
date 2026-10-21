@@ -131,16 +131,27 @@ PERSONAL_CONTEXT = re.compile(r'(?:我的|我目前|我现在|我正在|我计�
 
 def facet(text, key=''):
     value = key + ' ' + text
-    return next((name for name, pattern in FACETS if re.search(pattern, value, re.I)), key if key.startswith('task:') else '')
+    for name,pattern in FACETS:
+        if not re.search(pattern,value,re.I):continue
+        if name in ('style.language','style.length') and not re.search(r'回答|回复|写作|输出|表达|措辞|篇幅|字数|风格|摘要|语言|reply|response|writing|concise|brief|detailed',value,re.I):
+            if not re.search(r'(?:我(?:希望|喜欢|偏好|习惯)|以后|每次|始终).{0,12}(?:用(?:中|英)文|使用(?:中|英)文|简短|简洁|详细)\s*[。.!！]?$',text):continue
+        return name
+    return key if key.startswith('task:') else ''
 
 
 def canonical(text, key=''):
     name = facet(text, key)
     value = normalized(text).strip('。！.! ')
     if name == 'style.language':
-        if re.search(r'中英对照|双语|bilingual',value):return 'bilingual'
-        if re.search(r'英文|english',value) and not re.search(r'不用英文|不要英文',value):return 'en'
-        if re.search(r'中文|chinese',value):return 'zh'
+        if re.search(r'中英对照|双语|bilingual',value) and not re.search(r'(?:不要|不用|禁止|避免).{0,5}(?:中英对照|双语|bilingual)',value):return 'bilingual'
+        positive=set();negative=set()
+        for match in re.finditer(r'英文|英语|english|中文|汉语|chinese',value,re.I):
+            language='en' if re.search(r'英文|英语|english',match[0],re.I) else 'zh'
+            prefix=re.split(r'[，,。.;；]',value[:match.start()])[-1][-12:]
+            if re.search(r'(?:不要|不用|不再|不使用|别|禁止|避免|勿|not).{0,5}$',prefix):negative.add(language)
+            else:positive.add(language)
+        if len(positive)==1:return next(iter(positive))
+        if not positive and negative:return 'avoid_'+'_'.join(sorted(negative))
         return value
     if name == 'style.length':
         return 'detailed' if re.search(r'详细|detailed|不要简短|不再简短', value) else 'concise'
@@ -320,6 +331,8 @@ def session_state(conn, uid, cid, now=None):
     entries = [dict(r) for r in conn.execute('''SELECT s.* FROM memory_session_items s JOIN conversations c ON c.id=s.conversation_id
         WHERE s.user_id=? AND s.conversation_id=? AND c.user_id=? AND s.expires_at>? AND s.context_key=? ORDER BY s.created_at,s.rowid''', (uid, cid, uid, now,current_key(conn,cid)))
         if r['lifetime'] != 'turn' or r['source_message_id'] == last_id]
+    from .memory_reliability import overlay_sessions
+    entries=overlay_sessions(conn,entries)
     # Newer values for a session slot supersede older ones, without deleting history.
     slots = {e['slot']: e['id'] for e in entries if e['slot']}
     entries = [e for e in entries if not e['slot'] or slots[e['slot']] == e['id']]
@@ -332,10 +345,14 @@ def session_state(conn, uid, cid, now=None):
     data = json.loads(checkpoint['data']) if checkpoint else {}
     if not entries:
         data = {}
-    return {'goal': goal, 'current_request': latest_request,
+    sources={'goal':(goals or requests)[0]['id'] if goals or requests else None,
+             'current_request':requests[-1]['id'] if requests else None}
+    inherited=data.get('_sources',{})
+    checkpoint_ids=list(dict.fromkeys([*data.get('_checkpoint_sources',[]),*inherited.values(),*[e.get('id') for e in data.get('facts',[])]]))
+    return {'goal': goal, 'current_request': latest_request,'_sources':sources,'_checkpoint_sources':[key for key in checkpoint_ids if isinstance(key,str)],
             'recent_requests': [{'text':e['content'], 'source_message_id':e['source_message_id']} for e in requests[-4:]],
             'facts': [{'id':e['id'],'kind':e['kind'],'content':e['content'],'source_message_id':e['source_message_id'],
-                       'lifetime':e['lifetime'],'expires_at':e['expires_at']} for e in facts],
+                       'lifetime':e['lifetime'],'expires_at':e['expires_at'],'edited_by_user':e['edited_by_user'],'edit_version':e['edit_version']} for e in facts],
             'decisions':data.get('decisions', []), 'open_questions':data.get('open_questions', []),
             'completed_steps':data.get('completed_steps', []), 'next_steps':data.get('next_steps', [])}
 
@@ -423,14 +440,15 @@ def remember_exposure(conn, uid, assistant_id, report, used_ids=None):
 
 
 def feedback(conn, uid, assistant_id, mid, outcome, version):
-    row = conn.execute('''SELECT m.version FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
+    row = conn.execute('''SELECT m.version,u.memory_version FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
         JOIN conversation_messages a ON a.id=u.message_id JOIN conversations c ON c.id=a.conversation_id
         WHERE u.message_id=? AND u.memory_id=? AND c.user_id=? AND m.user_id=?''', (assistant_id, mid, uid, uid)).fetchone()
-    if not row or row['version'] != version:
+    if not row or row['version'] != version or row['memory_version']!=version:
         raise ValueError('该记忆不在这次回答的实际召回中，或内容版本已变化')
     conn.execute('INSERT INTO memory_feedback VALUES(?,?,?,?) ON CONFLICT(message_id,memory_id) DO UPDATE SET outcome=excluded.outcome,created_at=excluded.created_at', (assistant_id, mid, outcome, int(time.time())))
-    positive = conn.execute("SELECT count(*) FROM memory_feedback WHERE memory_id=? AND outcome='helpful'", (mid,)).fetchone()[0]
-    negative = conn.execute("SELECT count(*) FROM memory_feedback WHERE memory_id=? AND outcome IN ('irrelevant','outdated')", (mid,)).fetchone()[0]
+    conn.execute('INSERT OR REPLACE INTO memory_feedback_versions VALUES(?,?,?)',(assistant_id,mid,version))
+    positive = conn.execute("SELECT count(*) FROM memory_feedback f JOIN memory_feedback_versions v USING(message_id,memory_id) WHERE f.memory_id=? AND v.memory_version=? AND f.outcome='helpful'", (mid,version)).fetchone()[0]
+    negative = conn.execute("SELECT count(*) FROM memory_feedback f JOIN memory_feedback_versions v USING(message_id,memory_id) WHERE f.memory_id=? AND v.memory_version=? AND f.outcome IN ('irrelevant','outdated')", (mid,version)).fetchone()[0]
     conn.execute('''UPDATE memory_semantics SET positive=?,negative=?,
         status=CASE WHEN ?='outdated' THEN 'needs_review' ELSE status END,version=version+1 WHERE memory_id=?''', (positive, negative, outcome, mid))
     event(conn, uid, mid, 'feedback', outcome)
@@ -479,6 +497,9 @@ def filter_history(conn, uid, messages):
     withdrawn_answers={r['id'] for r in conn.execute('''SELECT m.id FROM conversation_messages m JOIN conversations c ON c.id=m.conversation_id
         WHERE c.user_id=? AND m.role='assistant' AND m.id IN (SELECT value FROM json_each(?))
         AND EXISTS(SELECT 1 FROM memory_forgotten_spans f WHERE f.user_id=? AND f.source_id=m.parent_id)''',(uid,ids,uid))}
+    withdrawn_answers.update(r['message_id'] for r in conn.execute('SELECT message_id FROM memory_withdrawn_answers WHERE user_id=? AND message_id IN (SELECT value FROM json_each(?))',(uid,ids)))
+    withdrawn_answers.update(r['message_id'] for r in conn.execute('''SELECT u.message_id FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
+        WHERE m.user_id=? AND u.message_id IN (SELECT value FROM json_each(?)) AND u.memory_version<>m.version''',(uid,ids)))
     result = []
     for item in messages:
         value = dict(item)
@@ -517,11 +538,16 @@ def natural_forget(conn, uid, cid, mid, text):
     if not all_items and not re.search(r'全部|所有|跨项目', target):
         context=context_for(conn,cid)
         entries=[e for e in entries if e['scope']=='global' or e['scope']=='project' and e['project_id']==context['project_id'] or e['scope']=='topic' and e['topic'] in context['topics']]
-    selected = entries if all_items else [e for e in entries if normalized(e['content']) in normalized(target)
+    def statement(value):
+        value=re.sub(r'^(?:请|帮我|麻烦|\s)*(?:记住|记一下|记下来|remember)\s*[，,:：]?\s*','',value,flags=re.I)
+        return re.sub(r'\s+','',normalized(value)).strip('。！.!，,;； ')
+    selected = entries if all_items else [e for e in entries if statement(e['content'])==statement(target)
         or e.get('semantic_key') and e['semantic_key'] in target
         or facet(target) and facet(target) == facet(e['content'], e.get('semantic_key', ''))]
     if not all_items and len(selected) > 6:
         return [{'status':'rejected','reason':'匹配多条记忆，请在记忆工作台确认删除范围'}]
+    if not all_items and not selected:
+        return [{'status':'rejected','reason':'没有找到明确对应的记忆，请在工作台按条目选择，或说明要忘记的原内容。'}]
     results = []
     for entry in selected:
         forget_memory(conn, uid, entry)
@@ -550,6 +576,7 @@ def maintain(conn, uid, now=None):
     if conn.execute('SELECT 1 FROM conversations WHERE user_id=? AND processing_token IS NOT NULL', (uid,)).fetchone():
         return {'deferred': True, 'promoted': 0, 'cooled': 0, 'expired_session': 0}
     settings, options = settings_for(conn, uid), config(conn, uid)
+    conn.execute("UPDATE memory_reflection_jobs SET snapshot='{}' WHERE user_id=? AND state IN ('done','failed','cancelled') AND finished_at<? AND snapshot<>'{}'",(uid,now-30*86400))
     expired = conn.execute('DELETE FROM memory_session_items WHERE user_id=? AND expires_at<=?', (uid, now)).rowcount
     cooled = 0
     if options['auto_cooldown'] and settings['mode'] in ('auto', 'review'):
@@ -566,6 +593,7 @@ def maintain(conn, uid, now=None):
         # within one conversation and exposure counters are deliberately excluded.
         candidates = [dict(r) for r in conn.execute('''SELECT s.* FROM memory_session_items s
             WHERE s.user_id=? AND s.expires_at>? AND s.promoted_id IS NULL AND s.lifetime='session'
+            AND NOT EXISTS(SELECT 1 FROM memory_session_edits e WHERE e.session_id=s.id)
             AND s.kind IN ('preference','constraint','fact') ORDER BY s.created_at,s.id LIMIT 800''', (uid, now))]
         groups = {}
         for entry in candidates:

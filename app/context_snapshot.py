@@ -28,7 +28,7 @@ def capture(conn, uid, cid, access, memory_ids=None):
     if access.get('memory'):
         from .memory_store import settings_for
         values['context']=context_for(conn,cid)
-        values['memory']=eligible_versions(conn,uid,cid,True,access)
+        values['memory']=eligible_versions(conn,uid,cid,True,access,memory_ids)
         if memory_ids is not None:
             values['memory']={key:value for key,value in values['memory'].items() if key in memory_ids}
         values['memory_settings']=settings_for(conn,uid)
@@ -36,6 +36,7 @@ def capture(conn, uid, cid, access, memory_ids=None):
         values['memory_lifecycle']=config(conn,uid)
         values['working_memory']=records('SELECT version FROM memory_working_frames WHERE conversation_id=? AND context_key=?',(cid,current_key(conn,cid)))
         values['session_memory']=records('SELECT id,expires_at,promoted_id FROM memory_session_items WHERE conversation_id=? ORDER BY id',(cid,))
+        values['session_edits']=records('SELECT e.session_id,e.version FROM memory_session_edits e JOIN memory_session_items s ON s.id=e.session_id WHERE s.conversation_id=? ORDER BY e.session_id',(cid,))
     if access.get('library'):
         values['library']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,l.full_sections
             FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id
@@ -65,11 +66,18 @@ def assert_current(conn, uid, cid, snapshot):
 def bind_memories(conn,uid,cid,snapshot,memories):
     """Bind every memory actually exposed across stages; unrelated edits may proceed."""
     assert_current(conn,uid,cid,snapshot)
-    versions=eligible_versions(conn,uid,cid,True,snapshot['access']) if snapshot['access'].get('memory') else {}
     expected={'memory-'+item['id']:item['version'] for item in memories}
+    versions=eligible_versions(conn,uid,cid,True,snapshot['access'],set(expected)) if snapshot['access'].get('memory') else {}
     if any(versions.get(key)!=version for key,version in expected.items()):raise AIError(STALE_MESSAGE)
     ids=set(snapshot.get('memory_ids',[]))|set(expected)
-    return capture(conn,uid,cid,snapshot['access'],ids)
+    result=capture(conn,uid,cid,snapshot['access'],ids)
+    if 'session_ids' in snapshot:result['session_ids']=snapshot['session_ids']
+    return result
+
+
+def bind_sessions(snapshot,fields):
+    ids=[*fields.get('_session_source_ids',[]),*[item['id'] for item in fields.get('_session_memory',{}).get('facts',[]) if item.get('id')]]
+    return {**snapshot,'session_ids':list(dict.fromkeys(ids))}
 
 
 def publication_current(conn, mid, uid, cid):

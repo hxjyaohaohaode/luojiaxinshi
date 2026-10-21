@@ -42,6 +42,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
         report.toolWarnings.push({...entry,source:'Playwright WebKit screenshot synchronization'});
       else report.errors.push(entry);
     });
+    const clickMemory=async selector=>{const target=page.locator(selector);await target.waitFor({state:'attached'});const parents=target.locator('xpath=ancestor::details');for(let i=await parents.count()-1;i>=0;i--){const parent=parents.nth(i);if(!await parent.evaluate(n=>n.open))await parent.locator(':scope > summary').click();}await target.click();};
     const screenshot=async options=>{
       screenshotInProgress=true;
       try { await page.screenshot({...options,caret:'initial',animations:'disabled'}); }
@@ -69,8 +70,8 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
     await page.locator('#dialog').waitFor({state:'hidden'});
     await page.locator(`[data-memory-studio="detail"][data-id="${item.id}"]`).click();
     await page.getByText('修改历史',{exact:true}).waitFor();
-    check(engine+' history displays both versions',await page.locator('.memory-detail details').count()===2);
-    await page.locator('.memory-detail details').last().locator('summary').click();
+    check(engine+' history displays both versions',await page.locator('.memory-revision-list > li').count()===2);
+    await page.locator('.memory-revision-list > li').last().locator(':scope > details > summary').click();
     await page.locator('[data-memory-restore="1"]').click();
     await page.getByRole('button',{name:'恢复版本',exact:true}).click();
     await page.locator('#dialog').waitFor({state:'hidden'});
@@ -95,7 +96,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
 
     const [download]=await Promise.all([
       page.waitForEvent('download'),
-      page.locator(`[data-memory-studio="markdown"][data-id="${item.id}"]`).click()
+      clickMemory(`[data-memory-studio="markdown"][data-id="${item.id}"]`)
     ]);
     check(engine+' exports Markdown as a download',download.suggestedFilename().endsWith('.md'));
     const markdown=await (await context.request.get(origin+'/api/memory/items/'+item.id+'/markdown')).text();

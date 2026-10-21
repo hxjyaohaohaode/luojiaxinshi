@@ -12,17 +12,16 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
   function panel(data){
     settings=data.settings||settings;
-    return `<section class="memory-studio" aria-label="记忆工作台"><div class="memory-studio-heading"><div><h2>持续积累，也随时由你调整</h2><p class="small muted">记住明确的个人偏好与项目决定，保留原话和修改历史。推断与需要更正的锁定内容会先等你核对。</p></div><span class="pill">${esc(modes[settings.mode])}</span></div>
-      <div class="memory-studio-stats"><span><strong>${data.total??data.memories.length}</strong> 条记忆</span><span><strong>${data.pending||0}</strong> 条待核对</span><span>原始记录与整理概览分别保留</span></div>
-      <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}</div>
-      ${lifecycle.panel(data)}<input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
+    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">由你确认、修订与保留</span></div>
+      <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}<details class="memory-tools"><summary>更多管理</summary><div class="memory-tools-content">${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}${lifecycle.panel(data)}</div></details></div>
+      <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
     </section>`;
   }
   function meta(item){
     return `<div class="memory-provenance"><span>${esc(origins[item.origin]||'本人保存')}</span>${item.locked?'<span>本人锁定</span>':''}${(item.labels||[]).map(label=>`<span>${esc(label)}</span>`).join('')}</div>`;
   }
   function controls(item){
-    return `<div class="memory-studio-actions">${button('来源与历史','detail',item.id)}${button('导出 Markdown','markdown',item.id)}${lifecycle.controls(item)}${item.review_status==='pending'?button('确认采用','accept',item.id)+button('不记这条','reject',item.id):''}</div>`;
+    return `${item.review_status==='pending'?'<div class="memory-review-actions">'+button('确认采用','accept',item.id)+button('不记这条','reject',item.id)+'</div>':''}<details class="memory-record-tools"><summary>层级、范围与导出</summary><div class="memory-studio-actions">${lifecycle.controls(item)}${button('导出 Markdown','markdown',item.id)}</div></details>`;
   }
   function download(content,name,type){
     const url=URL.createObjectURL(new Blob([content],{type})),anchor=document.createElement('a');
@@ -30,12 +29,12 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   }
   async function detail(id){
     const user=state.session?.user?.id,generation=state.renderId,request=state.dialogRequest;
-    const item=await api('/memory/items/'+id);
+    const [item,impact]=await Promise.all([api('/memory/items/'+id),api('/memory/items/'+id+'/impact')]);
     if(user!==state.session?.user?.id||generation!==state.renderId||request!==state.dialogRequest)return;
-    showDialog('记忆来源与版本',`<div class="memory-detail"><p class="memory-content">${esc(item.content)}</p>${meta(item)}
-      <h3>从哪里得出</h3>${item.evidence.length?item.evidence.map(e=>`<blockquote><p>${esc(e.quote)}</p><footer>${esc(e.source_kind==='message'?'本人对话原话':'本人办理记录')} · ${esc(stamp(e.created_at))}${e.source_kind==='message'&&item.source_conversation_id?` · <a href="#chat/${encodeURIComponent(item.source_conversation_id)}" data-memory-studio="source">回到对话</a>`:''}</footer></blockquote>`).join(''):'<p class="muted">本人手动保存的内容，没有自动推断的外部来源。</p>'}
-      ${item.links.length?`<h3>关联依据</h3>${item.links.map(link=>`<div class="memory-link"><span>${link.relation==='supersedes'?'拟替换':'来源'} · 第 ${link.parent_version} 版</span><p>${esc(link.content)}</p></div>`).join('')}`:''}
-      ${item.imported_provenance?`<details class="memory-policy"><summary>导入文件中的历史来源（待核对）</summary><pre class="memory-import-history">${esc(JSON.stringify(item.imported_provenance,null,2).slice(0,12000))}</pre><p class="small muted">这里保留导入时的来源声明，不将其作为当前账号的真实对话或办理关联；完整内容随 JSON 导出。</p></details>`:''}<h3>修改历史</h3>${item.revisions.map(rev=>`<details class="memory-policy"><summary>第 ${rev.version} 版 · ${esc(stamp(rev.created_at))} · ${esc(rev.actor.startsWith('user')?'本人操作':origins[rev.actor]||rev.actor)}</summary><p class="memory-content">${esc(rev.snapshot.content)}</p>${rev.version!==item.version?`<button type="button" class="button small" data-memory-restore="${rev.version}" data-id="${esc(item.id)}" data-version="${item.version}">恢复这一版</button>`:'<p class="small muted">当前版本</p>'}</details>`).join('')}
+    showDialog('记忆来源与版本',`<div class="memory-detail"><p class="memory-detail-version">当前第 ${item.version} 版 · ${esc(stamp(item.updated_at))}</p><p class="memory-content memory-detail-current">${esc(item.content)}</p>${meta(item)}<div class="memory-impact-facts"><span>派生记录 <strong>${impact.derived_count}</strong></span><span>曾提供给回答 <strong>${impact.answer_count}</strong></span><span>依据检查：${esc({current:'仍可核对',changed:'需要重新核对',not_checked:'当前状态暂停调用'}[impact.source_check]||'待检查')}</span></div>
+      <h3>从哪里得出</h3>${item.evidence.length?item.evidence.map(e=>`<blockquote><p>${esc(e.quote)}</p><footer>${esc(e.source_kind==='message'?'本人对话原话':'本人办理记录')} · ${esc(stamp(e.created_at))} · ${esc({available:'来源可核对',changed:'来源版本已变化',missing:'来源已不可用'}[e.source_status]||'待核对')}${e.source_kind==='message'&&e.conversation_id?` · <a href="#chat/${encodeURIComponent(e.conversation_id)}" data-memory-studio="source">回到这条来源对话</a>`:''}</footer></blockquote>`).join(''):'<p class="muted">没有自动关联的原始记录；请按本人保存的内容核对。</p>'}
+      ${item.links.length?`<h3>关联依据</h3>${item.links.map(link=>`<div class="memory-link"><span>${link.relation==='supersedes'?'拟替换':'形成时的来源'} · 第 ${link.parent_version} 版 · ${link.source_current?'事实依据仍一致':'依据已变化，需核对'}</span><p>${esc(link.content)}</p>${link.current_version!==link.parent_version?`<small>来源当前已到第 ${link.current_version} 版</small>`:''}</div>`).join('')}`:''}
+      ${item.imported_provenance?`<details class="memory-policy"><summary>导入文件中的历史来源（待核对）</summary><pre class="memory-import-history">${esc(JSON.stringify(item.imported_provenance,null,2).slice(0,12000))}</pre><p class="small muted">这里保留导入时的来源声明，不将其作为当前账号的真实对话或办理关联；完整内容随 JSON 导出。</p></details>`:''}<h3>修改历史</h3><ol class="memory-revision-list">${item.revisions.map((rev,index)=>`<li><details class="memory-policy" ${index===0?'open':''}><summary>第 ${rev.version} 版 · ${esc(stamp(rev.created_at))} · ${esc(rev.actor.startsWith('user')?'本人操作':origins[rev.actor]||rev.actor)}</summary><p class="memory-content">${esc(rev.snapshot.content)}</p>${item.revisions[index+1]&&rev.snapshot.content!==item.revisions[index+1].snapshot.content?`<details class="memory-revision-comparison"><summary>与上一版比较正文</summary><div><strong>修改前</strong><p class="memory-content">${esc(item.revisions[index+1].snapshot.content)}</p><strong>修改后</strong><p class="memory-content">${esc(rev.snapshot.content)}</p></div></details>`:''}${rev.version!==item.version?`<button type="button" class="button small" data-memory-restore="${rev.version}" data-id="${esc(item.id)}" data-version="${item.version}">恢复这一版</button>`:'<p class="small muted">当前版本</p>'}</details></li>`).join('')}</ol>
       <p class="small muted">恢复会新增版本。永久删除会同时清理这条记忆的历史与派生概览；原对话需要单独删除。</p></div>`);
   }
   function settingsDialog(){
@@ -62,7 +61,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     const action=target.dataset.memoryStudio,id=target.dataset.id,view=captureUiContext(state,target);target.disabled=true;
     try{
       if(target.dataset.memoryRestore){
-        if(!await ask('恢复历史版本','将这版内容保存为新的当前版本，之后仍可查看修改记录。','恢复版本'))return;
+        if(!await ask('恢复历史版本','将这版内容保存为新的当前版本，保留当前启用或暂停状态，之后仍可查看修改记录。','恢复版本'))return;
         await api(`/memory/items/${id}/restore`,{method:'POST',json:{version:Number(target.dataset.version),revision:Number(target.dataset.memoryRestore)}});if(view.sameUser()){if(view.sameRoute())await refresh();toast('已恢复为新的当前版本。');}
       }else if(action==='settings')settingsDialog();
       else if(action==='detail')await detail(id);

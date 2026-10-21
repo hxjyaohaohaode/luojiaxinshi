@@ -48,7 +48,7 @@ class ImportMemory(Strict):
 
 def item_for(conn, uid, mid):
     own(conn, 'personal_memories', mid, uid)
-    items = decorate(conn, catalog(rows_for(conn, uid)))
+    items = catalog(decorate(conn,rows_for(conn,uid,[mid])))
     _, invalid = usable_derived(conn, [item for item in items if item['state'] == 'active'])
     item = next(item for item in items if item['id'] == mid)
     if item['id'] in invalid and item['state'] == 'active':
@@ -59,6 +59,8 @@ def item_for(conn, uid, mid):
 def install(app, db, user):
     from .memory_lifecycle_api import install as install_lifecycle
     install_lifecycle(app,db,user)
+    from .memory_reliability_api import install as install_reliability
+    install_reliability(app,db,user)
     @app.get('/api/memory/settings')
     def get_settings(current=Depends(user)):
         with db.connect() as conn:
@@ -80,11 +82,26 @@ def install(app, db, user):
     def detail(mid: str, current=Depends(user)):
         with db.connect() as conn:
             item = item_for(conn, current['id'], mid)
-            item['evidence'] = [dict(r) for r in conn.execute('SELECT * FROM memory_evidence WHERE memory_id=?', (mid,))]
+            item['evidence'] = [dict(r) for r in conn.execute('''SELECT e.*,
+                CASE WHEN c.user_id=? THEN msg.conversation_id END AS conversation_id,
+                CASE WHEN e.source_kind='message' THEN CASE WHEN c.user_id=? THEN 'available' ELSE 'missing' END
+                     WHEN task.id IS NULL THEN 'missing' WHEN task.version<>e.source_version THEN 'changed' ELSE 'available' END source_status
+                FROM memory_evidence e LEFT JOIN conversation_messages msg ON e.source_kind='message' AND msg.id=e.source_id
+                LEFT JOIN conversations c ON c.id=msg.conversation_id
+                LEFT JOIN tasks task ON e.source_kind='task' AND task.id=e.source_id AND task.user_id=?
+                WHERE e.memory_id=? ORDER BY e.created_at,e.source_kind,e.source_id''',(current['id'],current['id'],current['id'],mid))]
             item['revisions'] = [{**dict(r), 'snapshot': json.loads(r['snapshot'])} for r in conn.execute(
                 'SELECT version,snapshot,actor,created_at FROM memory_revisions WHERE memory_id=? ORDER BY version DESC', (mid,))]
             item['links'] = [dict(r) for r in conn.execute('''SELECT l.*,m.content,m.kind FROM memory_links l
                 JOIN personal_memories m ON m.id=l.parent_id WHERE l.child_id=? AND m.user_id=?''', (mid, current['id']))]
+            from .memory_reliability import source_current
+            parents={row['id']:row for row in rows_for(conn,current['id'],[link['parent_id'] for link in item['links']])}
+            for link in item['links']:
+                parent=parents[link['parent_id']]
+                link['current_version']=parent['version'];link['source_current']=source_current(conn,parent,link['parent_version'])
+                revision=conn.execute('SELECT snapshot FROM memory_revisions WHERE memory_id=? AND version=?',(link['parent_id'],link['parent_version'])).fetchone()
+                if revision:link['content']=json.loads(revision['snapshot'])['content']
+                elif parent['version']!=link['parent_version']:link['content']='[当时的来源版本已不可用]'
             imported = conn.execute('SELECT payload FROM memory_import_provenance WHERE memory_id=?', (mid,)).fetchone()
             item['imported_provenance'] = json.loads(imported['payload']) if imported else None
             return item
@@ -104,7 +121,8 @@ def install(app, db, user):
             active_ids = {row['id'] for row in active_items}
             for link in conn.execute('SELECT * FROM memory_links WHERE child_id=?', (mid,)).fetchall():
                 parent = own(conn, 'personal_memories', link['parent_id'], current['id'])
-                if (parent['version'] != link['parent_version'] or not parent['active']
+                from .memory_reliability import source_current
+                if (not source_current(conn,parent,link['parent_version']) or not parent['active']
                         or link['relation'] == 'derived_from' and parent['id'] not in active_ids):
                     raise HTTPException(409, '提议依据已变化，请重新整理后核对')
                 if link['relation'] == 'supersedes':
@@ -139,10 +157,11 @@ def install(app, db, user):
             if old.get('project_id'):
                 own(conn, 'memory_projects', old['project_id'], current['id'])
             value = Memory.model_validate({key: old[key] for key in Memory.model_fields if key in old})
-            invalidate_dependents(conn, mid)
+            from .memory_reliability import SOURCE_FIELDS
+            if any(item.get(field)!=value.model_dump().get(field) for field in SOURCE_FIELDS):invalidate_dependents(conn,mid)
             conn.execute('''UPDATE personal_memories SET scope=?,project_id=?,topic=?,kind=?,content=?,active=?,
                 pinned=?,version=version+1,updated_at=? WHERE id=?''',
-                (value.scope, value.project_id, value.topic, value.kind, value.content, int(value.active),
+                (value.scope, value.project_id, value.topic, value.kind, value.content, int(item['active']),
                  int(value.pinned), int(time.time()), mid))
             conn.execute("UPDATE memory_details SET locked=1,review_status='accepted',labels=? WHERE memory_id=?", (dumps(value.labels), mid))
             save_policy(conn, mid, value.model_dump())
@@ -162,6 +181,7 @@ def install(app, db, user):
             cues=life.get('applies_to')
             if isinstance(cues,str):cues=json.loads(cues)
             set_semantics(conn,mid,admission='manual',tier=life.get('tier'),shared=life.get('shared'),applies_to=cues)
+            conn.execute('UPDATE memory_semantics SET status=? WHERE memory_id=?',(item['status'],mid))
             record_revision(conn, mid, 'user-restored')
             return item_for(conn, current['id'], mid)
 
@@ -324,13 +344,18 @@ def install(app, db, user):
                         old = own(conn, 'personal_memories', entry['id'], current['id'])
                         if old['version'] != entry.get('version'):
                             raise HTTPException(409, '导出后记忆已被修改，请下载最新版本再编辑')
-                        invalidate_dependents(conn, old['id'])
+                        from .memory_reliability import SOURCE_FIELDS
+                        previous=item_for(conn,current['id'],old['id'])
+                        if any(previous.get(field)!=value.model_dump().get(field) for field in SOURCE_FIELDS):invalidate_dependents(conn,old['id'])
                         conn.execute('''UPDATE personal_memories SET content=?,kind=?,scope=?,project_id=?,topic=?,
                             version=version+1,updated_at=? WHERE id=?''', (value.content, value.kind, value.scope,
                             value.project_id, value.topic, int(time.time()), old['id']))
                         # Editing a pending proposal does not silently approve it.
                         conn.execute("UPDATE memory_details SET locked=1,labels=? WHERE memory_id=?", (dumps(value.labels), old['id']))
                         save_policy(conn, old['id'], value.model_dump())
+                        from .memory_lifecycle import set_semantics
+                        set_semantics(conn,old['id'],admission='manual',tier=previous['tier'] if previous['kind']==value.kind else None)
+                        conn.execute('UPDATE memory_semantics SET status=? WHERE memory_id=?',(previous['status'],old['id']))
                         record_revision(conn, old['id'], 'markdown-edit')
                         saved.append(old['id'])
                     else:

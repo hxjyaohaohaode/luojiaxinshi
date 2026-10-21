@@ -60,8 +60,8 @@ def restore_database(source:Path,destination:Path):
                 raise ValueError('备份缺少个人记忆数据或版本不兼容')
             execution_version=original.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
             engine_version=original.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()
-            from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES
-            if engine_version and (engine_version[0] not in {'1','2','3'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
+            from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES,V3_TABLES
+            if engine_version and (engine_version[0] not in {'1','2','3','4'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':V3_TABLES,'4':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
                 raise ValueError('备份缺少记忆引擎数据或版本不兼容')
             if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):
                 raise ValueError('备份缺少执行记录或版本不兼容')

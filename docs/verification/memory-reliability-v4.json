@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-21",
+  "memory_schema": 4,
+  "backend": {
+    "passed": 763,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 267.826,
+    "warnings": 1
+  },
+  "frontend": {
+    "passed": 117,
+    "failed": 0
+  },
+  "reliability_browser": {
+    "checks": 72,
+    "passed": 72,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 3,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "legacy_browser": {
+    "checks": 63,
+    "passed": 63,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 6,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "lifecycle_browser": {
+    "checks": 63,
+    "passed": 63,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 4,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "benchmark": {
+    "synthetic": true,
+    "stored": 10000,
+    "eligible_scope": 5000,
+    "queries": 16,
+    "algorithm": "zh-bm25-facet-temporal-feedback-rrf-mmr-v3",
+    "latency_ms": {
+      "median": 240.29,
+      "p95": 281.88,
+      "max": 282.33
+    },
+    "snapshot_and_three_checks_ms": {
+      "median": 12.08,
+      "p95": 16.17,
+      "max": 16.32
+    },
+    "provider_calls": 0
+  },
+  "before_sql_optimization": {
+    "snapshot_and_three_checks_ms": {
+      "median": 436.14,
+      "p95": 516.01,
+      "max": 745.96
+    }
+  },
+  "activation": {
+    "before_schema": "3",
+    "after_schema": "4",
+    "backup_integrity": "ok",
+    "integrity": "ok",
+    "foreign_key_errors": 0,
+    "business_counts_preserved": true,
+    "manual_records_preserved": true,
+    "health": "ok",
+    "unauthenticated_statuses": {
+      "/api/memory/lifecycle": 401,
+      "/api/memory/health": 401,
+      "/api/memory/events": 401,
+      "/api/memory/session-items/unowned": 401,
+      "/api/conversations/unowned/memory-state": 401
+    }
+  },
+  "real_provider_calls_this_revision": 0,
+  "limits": [
+    "Synthetic browser workflows use a simulated provider and isolated SQLite.",
+    "Latency measures local lexical retrieval and publication consistency checks, not full-answer or public-concurrency latency.",
+    "No new external-model or long-horizon semantic-quality benchmark was performed.",
+    "WebKit screenshot stylesheet warnings are kept separate from application policy errors.",
+    "A 640 CSS-pixel reflow check does not establish real-device or native browser-zoom behavior."
+  ]
+}

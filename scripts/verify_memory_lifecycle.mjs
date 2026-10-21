@@ -13,6 +13,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
  const page=await context.newPage();page.setDefaultTimeout(14000);
+ const clickMemory=async selector=>{const target=page.locator(selector);await target.waitFor({state:'attached'});const parents=target.locator('xpath=ancestor::details');for(let i=await parents.count()-1;i>=0;i--){const parent=parents.nth(i);if(!await parent.evaluate(n=>n.open))await parent.locator(':scope > summary').click();}await target.click();};
  let capturing=false;
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  page.on('console',message=>{
@@ -40,15 +41,16 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   check(engine+' temporary plan stored as session item',short&&!short.promoted_id);
   await page.goto(origin+'/?lifecycle-test='+Date.now()+'#memory');
   await page.getByRole('heading',{name:'我的记忆',exact:true}).waitFor();
+  await page.locator('[data-memory-life="sessions"]').waitFor({state:'attached'});
   check(engine+' lifecycle entry points',await page.locator('[data-memory-life="sessions"]').count()===1);
-  await page.locator('[data-memory-life="settings"]').click();
+  await clickMemory('[data-memory-life="settings"]');
   await page.locator('#memory-lifecycle-form').waitFor();
   check(engine+' semantic reflection defaults off',!await page.locator('#memory-lifecycle-form [name="semantic_reflection"]').isChecked());
   await page.locator('#memory-lifecycle-form [name="session_days"]').fill('3');
   await page.locator('#memory-lifecycle-form button[type="submit"]').click();
   await page.locator('#dialog').waitFor({state:'hidden'});
   check(engine+' lifecycle configuration persists',(await api('/memory/lifecycle')).settings.session_days===3);
-  await page.locator('[data-memory-life="sessions"]').click();
+  await clickMemory('[data-memory-life="sessions"]');
   await page.locator('[data-memory-life="promote"][data-id="'+short.id+'"]').click();
   await page.locator('#memory-promotion-form').waitFor();
   await page.locator('#memory-promotion-form button[type="submit"]').click();
@@ -57,14 +59,14 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   check(engine+' UI promotes with manual confirmation',!!promoted?.promoted_id);
   const item=await api('/memory/items/'+promoted.promoted_id);
   check(engine+' promoted record locks user decision',item.locked&&item.admission==='manual');
-  await page.locator('[data-memory-life="item"][data-id="'+item.id+'"]').click();
+  await clickMemory('[data-memory-life="item"][data-id="'+item.id+'"]');
   await page.locator('#memory-item-lifecycle [name="shared"]').uncheck();
   await page.locator('#memory-item-lifecycle button[type="submit"]').click();
   await page.locator('#dialog').waitFor({state:'hidden'});
   check(engine+' per-memory sharing is editable',!(await api('/memory/items/'+item.id)).shared);
   for(const width of [1440,390,320]){
    await page.setViewportSize({width,height:1000});
-   await page.locator('[data-memory-life="settings"]').click();
+   await clickMemory('[data-memory-life="settings"]');
    await page.locator('#memory-lifecycle-form').waitFor();
    await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#dialog')).opacity)===1);
    check(engine+' '+width+' settings dialog fits',await page.locator('#dialog').evaluate(d=>{
@@ -101,7 +103,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   await shot(engine+'-recall-feedback');
   await page.keyboard.press('Escape');
   await page.goto(origin+'/#memory');
-  await page.locator('[data-memory-life="sessions"]').click();
+  await clickMemory('[data-memory-life="sessions"]');
   await page.locator('[data-memory-life="forget-session"][data-id="'+short.id+'"]').click();
   await page.getByRole('button',{name:'确认遗忘',exact:true}).click();
   await page.locator('#dialog').waitFor({state:'hidden'});
@@ -112,7 +114,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   await api('/conversations/'+scopedChat.id+'/context','PUT',{...scopedContext,topics:['原始课程专题']});
   await api('/conversations/'+scopedChat.id+'/messages','POST',{version:scopedChat.version,content:'我计划今天核对 '+tag+' 的课程材料。',request_id:randomUUID(),allow_external_processing:true});
   const scopedShort=(await api('/memory/session-items')).items.find(i=>i.conversation_id===scopedChat.id&&i.kind==='intention');
-  await page.reload();await page.locator('[data-memory-life="sessions"]').click();
+  await page.reload();await clickMemory('[data-memory-life="sessions"]');
   await page.locator('[data-memory-life="promote"][data-id="'+scopedShort.id+'"]').click();
   await page.locator('#memory-promotion-form [name="scope"]').selectOption('project');
   check(engine+' explicit project selector is visible',await page.locator('#memory-promotion-form [name="project_id"]').isVisible());
@@ -123,7 +125,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   const explicitlyPromoted=(await api('/memory/session-items')).items.find(i=>i.id===scopedShort.id);
   const explicitItem=await api('/memory/items/'+explicitlyPromoted.promoted_id);
   check(engine+' manual promotion honors edited content and chosen project',explicitItem.project_id===project.id&&explicitItem.kind==='preference'&&explicitItem.locked);
-  await page.locator('[data-memory-life="audit"]').click();
+  await clickMemory('[data-memory-life="audit"]');
   await page.getByRole('heading',{name:'记忆形成与整理记录',exact:true}).waitFor();
   check(engine+' lifecycle audit is visible',await page.locator('#dialog').innerText().then(t=>t.includes('主动遗忘')||t.includes('会话遗忘')));
  }catch(error){report.errors.push({engine,error:error.stack});await shot(engine+'-failure').catch(()=>{});}

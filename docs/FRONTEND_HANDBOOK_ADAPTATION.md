@@ -162,3 +162,10 @@ node scripts/verify_draft_continuity.mjs
 本轮验收服务为 `scripts/feedback_preview_server.py`，在 `artifacts/browser-feedback/data` 中独立运行。其模型和 WAV 音频均为明确的合成夹具，不读取正式账号数据或模型凭证。新增验收脚本 `scripts/verify_browser_feedback.mjs` 覆盖四种宽度与三种引擎的真实保存、流式片段、偏好持久化、生成式筛选和上传、回复反馈、音频控制、会话恢复及来源面板。
 
 本轮最终完成 480 项交互检查、100 个页面/尺寸组合、10 个办理弹窗和 128 项视觉对齐检查，均通过。后端完整运行 686 项通过，前端逻辑最终运行 115 项通过。测试结果和截图位于 `artifacts/browser-feedback/`；这些检查证明工程行为与响应式布局，不代表真实模型回答质量、语音音质或手机软键盘已经实机验收。
+
+
+## 2026-10-21：记忆管理页 v4
+
+本轮重新读取并按实际实现适配手册的 Velora Animated Tabs（`component-velora-animated-tabs`，约 222547 行）和 Velora Timeline（`component-velora-timeline`，约 298785 行），两者对应 `a07bcc129b45eeed3fc070357a6a74b876d96159`。另读取用户本地 `18_列表选择.md` 中的 ReactBits AnimatedList 与 CSS，采用明确的选择状态和列表反馈，键盘行为改为作用于当前工作区，保留全局正常 Tab 导航。
+
+落地为五个记忆视图、实际状态计数、范围与项目导航、服务端搜索/分页、版本校验的批量操作、会话条件编辑、来源历史和真实整理时间线。异步刷新保留展开及操作焦点，失败保留重试与草稿，减少运动模式关闭选中底板过渡。没有引入 React 或新动效框架，也没有把 Carousel、LaserFlow 着色器按中文文件名误用为 Tabs 或布局组件。完整路径、读到的代码和能力边界见 [可靠性 v4](MEMORY_RELIABILITY_V4.md#5-前端的实际参考与业务适配)。本节不把新模式数量与前两轮 29 类相加，因为时间线与列表部分复用了原来的设计原则。

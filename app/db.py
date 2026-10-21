@@ -208,8 +208,8 @@ class Database:
                 if memory_version and memory_version[0]=='2' and 'memory_policies' not in tables:
                     raise RuntimeError('个人记忆策略表缺失，未修改数据库')
                 engine_version=conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()
-                from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES
-                if engine_version and (engine_version[0] not in {'1','2','3'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
+                from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES,V3_TABLES
+                if engine_version and (engine_version[0] not in {'1','2','3','4'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':V3_TABLES,'4':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
                     raise RuntimeError('记忆引擎版本不兼容或数据表缺失，未修改数据库')
                 execution_version=conn.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
                 if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):

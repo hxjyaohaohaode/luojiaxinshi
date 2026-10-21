@@ -64,6 +64,7 @@ memory_control.recent_operations 是此前真实执行结果；pending 仅为待
 临时要求 lifetime=turn（仅本轮）或 session（当前会话），不得把“今天/暂时/这次”自动升级为跨会话习惯。
 稳定且有长期意图的信息才选 long_term；没有明确长期意图时用 auto，由服务器判定晋升条件。
 工作记忆保留会话目标、决定、待澄清和下一步。checkpoint 使用 working_sections 按栏目增量更新，省略栏目表示保留，不得每轮清空。expected_version 使用 memory_control.working_version。
+session_memory 是独立的当前会话条件；本人锁定工作记录不代表这些条件不可用。本轮明确条件优先于旧偏好，人工修订的会话内容以最新修订为准，原话仅作溯源。
 decisions/completed_steps 必须有提供过的用户原话依据；next_steps 只是建议，不是工具已执行或真实办理已完成。
 use 标记真正用于本回答的记忆 target_id/expected_version；仅仅看到了候选不要标成使用，更不能当作用户认可。
 forget 仅针对用户明确撤销的条目；不要从历史重新推断或再保存已遗忘的内容。范围含糊时让本人核对。
@@ -88,6 +89,7 @@ def learning_allowed(conn, uid, cid, messages=None):
     from .memory_lifecycle import message_scope,generation
     latest_id=next((m.get('id') for m in reversed(messages) if m['role']=='user'),None)
     if latest_id and message_scope(conn,latest_id)['generation']<generation(conn,uid):return False
+    if latest_id and conn.execute("SELECT 1 FROM memory_action_receipts WHERE message_id=? AND action_hash='natural-forget'",(latest_id,)).fetchone():return False
     latest = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
     if re.search(r'不要记住|不用记住|不要保存|别记住|别记录|不要自动记忆', latest):
         return False
@@ -204,6 +206,7 @@ def ingest_message(conn, uid, cid, mid, messages=None,explicit_backfill=False):
         conn.execute('INSERT OR IGNORE INTO memory_action_receipts VALUES(?,?,?,?)',
             (mid,'natural-forget',dumps({'status':'forget_result','operations':forgotten}),int(time.time())))
     allowed = learning_allowed(conn, uid, cid, messages)
+    if forgotten:allowed=False
     allowed = allowed and (source_scope['learning_allowed'] or explicit_backfill)
     from .memory_lifecycle import generation
     allowed = allowed and source_scope['generation']>=generation(conn,uid)
@@ -321,13 +324,10 @@ def _apply_action(conn, uid, cid, message, context, action):
     if any(len(label) > 40 for label in action.labels):
         raise ValueError('记忆标签过长')
     if any(len(cue)>80 for cue in action.applies_to):raise ValueError('适用场景过长')
-    available, _ = effective(rows_for(conn, uid), context)
-    available, _ = usable_derived(conn, available)
-    available, _ = recall_gate(conn,uid,cid,decorate(conn,available))
-    from .memory_lifecycle import source_access
     from .retrieval_scope import account_access
     history=[dict(r) for r in conn.execute('SELECT role,content FROM conversation_messages WHERE conversation_id=? ORDER BY rowid',(cid,))]
-    available, _ = source_access(conn,uid,available,account_access(history))
+    from .memory_reliability import candidates
+    available, _ = candidates(conn,uid,cid,account_access(history),scenario=source)
     by_id = {item['id']: item for item in decorate(conn, available)}
     target = by_id.get(action.target_id)
     if action.operation in ('update', 'archive', 'forget', 'use'):
@@ -451,6 +451,9 @@ def completed_turn(conn, uid, cid, assistant_id, result, status):
         if status == 'complete':
             from .memory_lifecycle import remember_exposure
             remember_exposure(conn,uid,assistant_id,json.loads(report_row['sources']),[r['id'] for r in results if r.get('status')=='used'])
+            for session_id in json.loads(report_row['report']).get('context_snapshot',{}).get('session_ids',[]):
+                if conn.execute('SELECT 1 FROM memory_session_items WHERE id=? AND user_id=? AND conversation_id=?',(session_id,uid,cid)).fetchone():
+                    conn.execute('INSERT OR IGNORE INTO memory_session_usage VALUES(?,?)',(session_id,assistant_id))
             for item in json.loads(report_row['sources']):
                 if item.get('evidence_kind') == 'memory':
                     conn.execute('''UPDATE memory_details SET last_used_at=?,use_count=use_count+1
@@ -481,6 +484,11 @@ def ingest_task(conn, uid, tid):
     now = int(time.time())
     if old:
         if old['source_version'] == task['version']:
+            return old['id']
+        if old['content']==content:
+            conn.execute('UPDATE memory_evidence SET source_version=? WHERE memory_id=? AND source_kind=? AND source_id=?',(task['version'],old['id'],'task',tid))
+            conn.execute('UPDATE personal_memories SET version=version+1,updated_at=? WHERE id=?',(now,old['id']))
+            record_revision(conn,old['id'],'task-source-refreshed')
             return old['id']
         if old['locked']:
             proposal = conn.execute('''SELECT m.id FROM personal_memories m JOIN memory_evidence e ON e.memory_id=m.id

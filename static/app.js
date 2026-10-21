@@ -371,7 +371,17 @@ const authUI=createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,d
 const memoryUI=createMemoryUI({state,api,esc,icon,showDialog,toast,ask});
 const chatUI=createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI});
 const sourcesUI=createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route});
-$('#dialog').addEventListener('close',()=>{const target=dialogReturnTarget;requestAnimationFrame(()=>{const restored=target?.isConnected?target:target?.dataset.action?.startsWith('settings-')?document.querySelector(`[data-action="${target.dataset.action}"]`):null;if(!$('#dialog').open&&restored&&!restored.disabled)restored.focus({preventScroll:true});});});
+$('#dialog').addEventListener('close',()=>{
+  const target=dialogReturnTarget,closingFocus=document.activeElement;
+  // Native close may already return focus. Do not override a keyboard action
+  // or click the user makes before the next animation frame.
+  if(closingFocus&&closingFocus!==document.body&&!$('#dialog').contains(closingFocus)&&closingFocus!==target)return;
+  requestAnimationFrame(()=>{
+    if(document.activeElement!==closingFocus&&document.activeElement!==document.body)return;
+    const restored=target?.isConnected?target:target?.dataset.action?.startsWith('settings-')?document.querySelector(`[data-action="${target.dataset.action}"]`):null;
+    if(!$('#dialog').open&&restored&&!restored.disabled)restored.focus({preventScroll:true});
+  });
+});
 document.addEventListener('invalid',event=>{const group=event.target.closest('[data-profile-group]');if(group?.hidden)document.querySelector(`[data-action="profile-section"][data-section="${group.dataset.profileGroup}"]`)?.click();},true);
 const libraryUI=createLibraryUI({state,esc,icon,noticeRow,empty,moveSelection});
 const workflowUI=createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area,timeInput,toTime,drafts,route,displayTaskUpdate,exportTasks});

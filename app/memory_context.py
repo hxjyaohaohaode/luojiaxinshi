@@ -32,7 +32,11 @@ def runtime_fields(conn, uid, cid, messages):
         for row in conn.execute('''SELECT g.report FROM reply_grounding g JOIN conversation_messages m ON m.id=g.message_id
                 WHERE m.conversation_id=? AND m.status='complete' ORDER BY m.rowid DESC LIMIT 2''', (cid,)):
             receipts.extend(json.loads(row['report']).get('memory_operations', []))
-    return {'_working_memory': content,
+    from .memory_reliability import session_payload
+    payload=session_payload(short)
+    source_ids=[value for key,value in short.get('_sources',{}).items() if key in payload and value]
+    if any(payload.get(key) for key in ('decisions','open_questions','completed_steps','next_steps')):source_ids.extend(short.get('_checkpoint_sources',[]))
+    return {'_working_memory': content,'_session_memory':payload,'_session_source_ids':source_ids,
             '_memory_control': {**settings, 'may_propose': allowed and learning_allowed(conn, uid, cid, messages),
                                 'context':context_for(conn,cid),'recent_operations': receipts[:16],
                                 'lifecycle':options,'working_version':working['version'] if working else 0,
@@ -43,19 +47,20 @@ def runtime_fields(conn, uid, cid, messages):
 def basic_profile(db, uid, cid, mid, messages, profile):
     """No model calls. Store version evidence so later edits revoke old answers."""
     from .grounding import message_scope_start
-    from .context_snapshot import capture, assert_current,bind_memories
+    from .context_snapshot import capture, assert_current,bind_memories,bind_sessions
     access = account_access(messages)
     if message_scope_start(messages) is not None:
         access = {key: False for key in access}
     access = {**access, 'memory': access['profile'] and memory_access(messages)}
     with db.connect() as conn:
-        snapshot = capture(conn, uid, cid, access)
+        snapshot = capture(conn, uid, cid, access,set())
         fields = runtime_fields(conn, uid, cid, messages)
     question = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
     memories, report = recall(db, uid, cid, question, access)
     with db.connect(write=True) as conn:
         assert_current(conn, uid, cid, snapshot)
         snapshot=bind_memories(conn,uid,cid,snapshot,memories)
+        snapshot=bind_sessions(snapshot,fields)
         sources = [{'id': 'memory-'+item['id'], 'evidence_kind': 'memory',
                     'memory_version': item['version'], 'memory_id': item['id'],
                     'name': '可用记忆', 'sections': []} for item in memories]

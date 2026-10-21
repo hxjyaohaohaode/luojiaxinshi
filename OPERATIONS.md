@@ -2,7 +2,9 @@
 
 ## Windows 本机
 
-当前本机 8765 运行 **1.12.0**，核验日期 2026-10-18。升级前备份 `data/backups/pre-mvp-1.12.0-20261018-181356.sqlite3`，升级一致性报告 `artifacts/mvp-acceptance/local-upgrade-1.12.0.json`。业务计数与结构版本不变，完整性 `ok`、外键错误 0。没有新增配置、依赖或模型请求。
+当前本机 8765 运行 **1.14.2**，记忆引擎 **schema 4**，核验日期 **2026-10-21**。记忆升级前使用 SQLite backup API 建立并验证一致性备份，私有备份在被 Git 忽略的 `backups/`；报告在 `artifacts/memory-v4-activation.json`。升级后业务记录数量和人工记忆正文保持一致，完整性 `ok`、外键错误 0、服务健康，语义复盘未自动开启。机制、回退条件及复现见 [可靠性 v4](docs/MEMORY_RELIABILITY_V4.md)，公开验证只包含 [汇总计数](docs/verification/memory-reliability-v4.json)。
+
+2026-10-18 的 **1.12.0** 为历史升级记录：备份 `data/backups/pre-mvp-1.12.0-20261018-181356.sqlite3`，报告 `artifacts/mvp-acceptance/local-upgrade-1.12.0.json`。该轮业务计数与结构版本不变，完整性 `ok`、外键错误 0，没有新增配置、依赖或模型请求。
 
 本版核对用时为可选浏览器观测，保存进现有确认审计与个人导出；旧客户端缺少此字段仍可确认，旧导出仍可导入。页面暂停、刷新和历史数据的统计边界见 [ADR-009](docs/ADR-009-review-time-observation.md)。工程能力与真实试点的剩余条件见 [原 MVP 映射](docs/MVP_COMPLETION_AUDIT.md)。
 

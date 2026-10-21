@@ -19,10 +19,24 @@ def normalized(value):
     return ' '.join(unicodedata.normalize('NFKC', value).casefold().split())
 
 
-def rows_for(conn, uid):
-    return [dict(r) for r in conn.execute('''SELECT m.*,COALESCE(p.semantic_key,'') AS semantic_key,
-        p.valid_from,p.expires_at FROM personal_memories m LEFT JOIN memory_policies p ON p.memory_id=m.id
-        WHERE m.user_id=? ORDER BY m.pinned DESC,m.updated_at DESC,m.id''', (uid,))]
+def rows_for(conn, uid, ids=None):
+    prefix=''
+    parameters=[uid]
+    source='personal_memories m'
+    if ids is not None:
+        import json
+        prefix='''WITH RECURSIVE wanted(id) AS (
+            SELECT value FROM json_each(?)
+            UNION SELECT l.parent_id FROM wanted w CROSS JOIN memory_links l ON w.id=l.child_id
+                CROSS JOIN personal_memories p ON p.id=l.parent_id WHERE l.relation='derived_from' AND p.user_id=?
+            UNION SELECT peer.memory_id FROM wanted w CROSS JOIN memory_policies source ON w.id=source.memory_id
+                CROSS JOIN memory_policies peer INDEXED BY memory_semantic_keys ON peer.semantic_key=source.semantic_key
+                CROSS JOIN personal_memories p ON p.id=peer.memory_id WHERE source.semantic_key<>'' AND p.user_id=?) '''
+        parameters=[json.dumps(list(ids)),uid,uid,uid]
+        source='wanted w CROSS JOIN personal_memories m ON m.id=w.id'
+    return [dict(r) for r in conn.execute(prefix+'''SELECT m.*,COALESCE(p.semantic_key,'') AS semantic_key,
+        p.valid_from,p.expires_at FROM '''+source+''' LEFT JOIN memory_policies p ON p.memory_id=m.id
+        WHERE m.user_id=? ORDER BY m.pinned DESC,m.updated_at DESC,m.id''',parameters)]
 
 
 def save_policy(conn, mid, value):
@@ -75,13 +89,26 @@ def catalog(items):
     groups={}
     for item in items:
         key=normalized(item.get('semantic_key',''))
-        if key and temporal_state(item)=='active':groups.setdefault((*scope_key(item),key),[]).append(item)
-    conflicts={}
+        if (key and temporal_state(item)=='active' and item.get('status','active')=='active'
+            and item.get('review_status','accepted')=='accepted'
+            and (not item.get('review_after') or item['review_after']>int(time.time()) or item.get('locked'))):
+            groups.setdefault((*scope_key(item),key),[]).append(item)
+    conflicts={};conflict_counts={}
     for group in groups.values():
         if len({normalized(item['content']) for item in group})>1:
-            for item in group:conflicts[item['id']]=[peer['id'] for peer in group if peer['id']!=item['id']]
-    return [{**item,'state':'conflict' if item['id'] in conflicts else temporal_state(item),
-             'conflicts':conflicts.get(item['id'],[])} for item in items]
+            preview=[peer['id'] for peer in group[:21]]
+            for item in group:
+                conflicts[item['id']]=[key for key in preview if key!=item['id']][:20]
+                conflict_counts[item['id']]=len(group)-1
+    def state(item):
+        if item.get('review_status')=='pending':return 'pending'
+        temporal=temporal_state(item)
+        if temporal!='active':return temporal
+        if item.get('status','active')!='active':return item['status']
+        if item.get('review_after') and item['review_after']<=int(time.time()) and not item.get('locked'):return 'needs_review'
+        return 'conflict' if item['id'] in conflicts else 'active'
+    return [{**item,'state':state(item),
+             'conflicts':conflicts.get(item['id'],[]),'conflict_count':conflict_counts.get(item['id'],0)} for item in items]
 
 
 def duplicate(items, payload, excluding=None):
