@@ -12,7 +12,7 @@ const report={fixture:'Synthetic local data only; measurements do not replace vi
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  console.log('Visual review: '+engine);
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
- const page=await browser.newPage({viewport:{width:1413,height:871}});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
+ const page=await browser.newPage({viewport:{width:1413,height:871},locale:'en-US',timezoneId:'America/Los_Angeles'});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const settle=()=>page.evaluate(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
  const resize=async(width,height=871)=>{await page.setViewportSize({width,height});await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<2,{width,height});await settle();};
@@ -57,6 +57,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     assert.equal(await page.locator('#memory-detail-pane').isVisible(),false);const row=page.locator('[data-tree-record]').first();await row.click();await page.locator('#memory-detail-pane:not([hidden])').waitFor();await settle();assert.ok((await page.locator('.memory-detail-text').innerText()).length>0);await page.locator('[data-tree-action=close-detail]').click();await settle();assert.equal(await page.locator('#memory-detail-pane').isVisible(),false);if([1413,390].includes(width))await capture('memory-'+width);
    });
   }
+  await check('memory dates stay readable in an English browser outside the campus timezone',async()=>{
+   const rows=await page.locator('.memory-row-time').evaluateAll(nodes=>nodes.map(n=>({day:n.textContent,full:n.title})));
+   assert.ok(rows.length>0);for(const row of rows){assert.match(row.day,/^\d{4}\/\d{2}\/\d{2}$/);assert.ok(row.full.startsWith(row.day+' '));}
+  });
   await resize(1413);await nav('sources');
   await check('source actions align with search without a separate empty heading row',async()=>{
    const b=await page.locator('.source-toolbar').evaluate(n=>{const search=n.querySelector('.record-search-line').getBoundingClientRect(),add=n.querySelector('[data-source-action=add]').getBoundingClientRect();return {search:search.toJSON(),add:add.toJSON()};});assert.ok(Math.abs(b.search.top-b.add.top)<2,JSON.stringify(b));await capture('sources-1413');

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {memoryListText} from '../static/memory-list-text.js';
+import {memoryListText,memoryTimestamp} from '../static/memory-list-text.js';
 
 test('memory list separates a complete opening sentence from its continuation',()=>{
  const content='办理记录：核对课程材料。当前状态：待办理。本人办理进度：准备中。';
@@ -23,4 +23,17 @@ test('excerpt boundaries preserve supplementary unicode and short content',()=>{
  assert.equal(excerpt.preview,'😀'.repeat(60));
  assert.deepEqual(memoryListText('  下午回复  '),{title:'下午回复',preview:''});
  assert.deepEqual(memoryListText(null),{title:'',preview:''});
+});
+
+test('memory dates use the campus day across the UTC midnight boundary',()=>{
+ assert.equal(memoryTimestamp(Date.parse('2026-10-22T15:59:59Z')/1000),'2026/10/22');
+ assert.equal(memoryTimestamp(Date.parse('2026-10-22T16:00:00Z')/1000),'2026/10/23');
+ assert.equal(memoryTimestamp(Date.parse('2026-10-22T16:30:00Z')/1000,true),'2026/10/23 00:30:00');
+});
+test('memory dates never expose invalid timestamps as visible text',()=>{
+ for(const value of [null,undefined,'',false,true,NaN,Infinity,'unknown',1e30])assert.equal(memoryTimestamp(value),'');
+});
+test('memory dates accept epoch seconds and do not treat zero as missing',()=>{
+ assert.equal(memoryTimestamp(0),'1970/01/01');
+ assert.equal(memoryTimestamp(String(Date.parse('2026-10-22T16:30:00Z')/1000)),'2026/10/23');
 });
