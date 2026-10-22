@@ -34,7 +34,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     finally{clearTimeout(timeout);pendingWrites--;}
   }
   function frame(){return `<div id="memory-shell" class="memory-tree-page">
-    <header class="memory-tree-head"><button class="button memory-nav-toggle" data-tree-action="toggle-nav" aria-expanded="false" aria-controls="memory-tree-sidebar">${icon('folder')} 目录</button><div class="memory-auto-line"><span class="memory-mode-dot"></span><strong id="memory-auto-mode">AI 自动维护</strong><span id="memory-tree-counts"></span><button class="icon-button" data-tree-action="refresh" aria-label="刷新记忆" title="刷新记忆">${icon('history')}</button></div><button class="button primary" data-memory-action="new">${icon('plus')} 添加记忆</button><details class="memory-tree-settings"><summary aria-label="自动维护与设置" title="自动维护与设置"><span class="memory-settings-title">自动维护与设置</span>${icon('settings')}</summary><div id="memory-management"></div></details></header>
+    <header class="memory-tree-head"><button class="button memory-nav-toggle" data-tree-action="toggle-nav" aria-expanded="false" aria-controls="memory-tree-sidebar">${icon('folder')} 目录</button><div class="memory-auto-line"><span class="memory-mode-dot"></span><strong id="memory-auto-mode">AI 自动维护</strong><span id="memory-tree-counts"></span><button class="icon-button" data-tree-action="refresh" aria-label="刷新记忆" title="刷新记忆">${icon('history')}</button></div><button class="button primary" data-memory-action="new">${icon('plus')} 添加记忆</button><button type="button" class="icon-button memory-manage-button" data-tree-action="manage" aria-label="记忆管理" title="记忆管理">${icon('settings')}</button></header>
     <div id="memory-update-message" class="memory-update-message" role="status" hidden></div>
     <div class="memory-tree-layout"><aside class="memory-tree-nav" id="memory-tree-sidebar"><div class="memory-tree-nav-title"><strong>记忆目录</strong><button class="icon-button" data-tree-action="folder-edit" aria-label="编辑当前目录">⋯</button><button class="icon-button" data-tree-action="folder" aria-label="新建子目录">${icon('plus')}</button></div><div id="memory-tree-nav" role="tree" aria-label="记忆目录"></div><button class="memory-session-nav" data-tree-action="sessions">${icon('history')} 会话与工作记忆 <span id="memory-short-count"></span></button></aside>
     <section class="memory-tree-main" aria-label="当前目录的记忆"><nav id="memory-breadcrumbs" class="memory-breadcrumbs" aria-label="记忆路径"></nav>
@@ -100,7 +100,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     if(!pane)return;
     pane.setAttribute('role',modal?'dialog':'complementary');if(modal)pane.setAttribute('aria-modal','true');else pane.removeAttribute('aria-modal');
     const backdrop=$('.memory-detail-backdrop');if(backdrop)backdrop.hidden=!modal;
-    for(const el of document.querySelectorAll('.memory-tree-main,.memory-tree-nav,.memory-tree-head,.memory-auto-line,.memory-tree-settings'))el.inert=modal;
+    for(const el of document.querySelectorAll('.memory-tree-main,.memory-tree-nav,.memory-tree-head,.memory-auto-line,.memory-manage-button'))el.inert=modal;
   }
   function closeMobileNavigation(){
     if(!matchMedia('(max-width:650px)').matches)return;
@@ -150,8 +150,8 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       else for(const n of start.nodes)tree.set(n.id,n);
       rows={...(mode==='tree'?data:{...data,settings:start.settings,memories:[],passages:[],projects:rows.projects||[]}),lifecycle_counts:start.lifecycle_counts,session_count:start.session_count};
       if(mode==='tree')for(const b of data.breadcrumbs||[])if(b.id!==root)tree.set(b.id,{children:0,item_count:0,...tree.get(b.id),...b});
-      if(mode==='tree'){onCatalog(rows);$('#memory-breadcrumbs').innerHTML=(data.breadcrumbs||[]).map((b,i,a)=>`${i?'<span aria-hidden="true">›</span>':''}<button data-tree-node="${esc(b.id)}" ${i===a.length-1?'aria-current="location"':''} title="${esc(b.title)}">${esc(b.title)}</button>`).join('');$('#memory-management').innerHTML=studio.panel(rows);}
-      else {$('#memory-breadcrumbs').innerHTML='<span aria-current="location">会话与工作记忆</span>';$('#memory-management').innerHTML=studio.panel(rows);}
+      if(mode==='tree'){onCatalog(rows);$('#memory-breadcrumbs').innerHTML=(data.breadcrumbs||[]).map((b,i,a)=>`${i?'<span aria-hidden="true">›</span>':''}<button data-tree-node="${esc(b.id)}" ${i===a.length-1?'aria-current="location"':''} title="${esc(b.title)}">${esc(b.title)}</button>`).join('');studio.configure(rows);}
+      else {$('#memory-breadcrumbs').innerHTML='<span aria-current="location">会话与工作记忆</span>';studio.configure(rows);}
       checked=new Set([...checked].filter(id=>rows.memories.some(m=>m.id===id)));nav();list();
       if(mode==='tree'&&(summary.jobs.queued||summary.jobs.running)&&$('#memory-items .memory-tree-empty')){
         $('#memory-items .memory-tree-empty h2').textContent='正在自动整理记忆';
@@ -264,7 +264,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     try{
       const data=await api('/memory/tree/status');if(user!==current()||!context.sameRoute())return;
       if(lastToken&&lastToken!==data.token){
-        const interacting=selected||$('#memory-inline-editor')||$('dialog[open]')||checked.size||$('.memory-tools[open]')||document.activeElement?.closest('#memory-tree-nav,.memory-tree-settings')||document.activeElement?.matches('#memory-search,[data-tree-check]');
+        const interacting=selected||$('#memory-inline-editor')||$('dialog[open]')||checked.size||$('.memory-tools[open]')||document.activeElement?.closest('#memory-tree-nav,.memory-manage-button')||document.activeElement?.matches('#memory-search,[data-tree-check]');
         navDirty=true;if(interacting){pendingUpdate=true;updateNotice('记忆已有新变化，编辑和选择会保留；完成后可更新列表。',true);}else await render({navigation:true,quiet:true});
       }else if(!lastToken)lastToken=data.token;
     }catch{}finally{polling=false;}
@@ -280,7 +280,6 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     page=0;checked.clear();clearDetail();render();
   });
   document.addEventListener('keydown',async e=>{
-    const settings=$('.memory-tree-settings');if(e.key==='Escape'&&settings?.open&&!document.querySelector('#dialog[open]')){e.preventDefault();settings.open=false;settings.querySelector('summary').focus();return;}
     if(location.hash.split('/')[0]!=='#memory'||$('dialog[open]'))return;
     const pane=$('#memory-detail-pane');
     if(selected&&narrow()&&pane?.classList.contains('is-visible')){
@@ -301,7 +300,6 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   });
   document.addEventListener('focusin',e=>{if(!e.target.matches('#memory-tree-nav [data-tree-node]'))return;for(const b of document.querySelectorAll('#memory-tree-nav [data-tree-node]'))b.tabIndex=b===e.target?0:-1;});
   document.addEventListener('click',async e=>{
-    const settings=$('.memory-tree-settings');if(settings?.open&&!e.target.closest('.memory-tree-settings'))settings.open=false;
     if(!e.target.closest('.memory-tree-page'))return;
     const target=e.target.closest('[data-tree-node],[data-tree-expand],[data-tree-record],[data-tree-action],[data-tree-more]');if(!target||target.disabled)return;
     const context=captureUiContext(state,target);target.disabled=true;
@@ -311,6 +309,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       else if(target.dataset.treeExpand){const id=target.dataset.treeExpand;if(expanded.has(id)){expanded.delete(id);nav();}else await children(id);}
       else if(target.dataset.treeRecord)detail(target.dataset.treeRecord);
       else switch(target.dataset.treeAction){
+        case 'manage':studio.management(rows);break;
         case 'refresh':await render({navigation:true});break;
         case 'previous':page=Math.max(0,page-1);checked.clear();clearDetail();await render();break;
         case 'next':page++;checked.clear();clearDetail();await render();break;

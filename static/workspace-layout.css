@@ -54,9 +54,30 @@ body:has(.shell) #app{height:var(--visual-height,100dvh)}
 .time-grid-header strong{display:grid;place-items:center;line-height:1;width:26px;height:26px;font-size:14px}
 
 /* Memory detail consumes space only after a record is selected. */
-.memory-tree-page{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;position:relative;gap:10px;overflow:hidden}
+.memory-tree-page{flex:1;width:100%;max-width:none;margin:0;align-self:stretch;min-height:0;min-width:0;display:flex;flex-direction:column;position:relative;gap:10px;overflow:hidden}
 .memory-tree-head{flex:0 0 auto;min-height:38px;margin:0;gap:10px;align-items:center}
 .memory-tree-head>.button{min-height:36px;font-size:12px;padding:7px 12px}
+.memory-manage-button{flex:none;min-width:36px;min-height:36px;border:1px solid var(--line);border-radius:8px;background:var(--white,#fff)}
+.memory-management-hub{display:flex;flex-direction:column;gap:20px;min-width:0}
+.memory-hub-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.memory-hub-status>.button{margin-left:auto}
+.memory-management-hub section{min-width:0}
+.memory-management-hub h3{font-size:13px;margin:0 0 10px}
+.memory-hub-actions,.memory-management-hub .memory-studio-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px}
+.memory-management-hub .button{min-height:42px;white-space:normal;justify-content:center;margin:0}
+.memory-management-hub .memory-layer-summary{margin:10px 0;font-size:11px;display:flex;flex-wrap:wrap;gap:12px}
+.memory-use-icon[hidden],.memory-change-icon[hidden]{display:none}
+.message-footer>.memory-use-icon,.message-footer>.memory-change-icon{flex:none;width:30px;height:30px;min-width:30px;min-height:30px;padding:6px;display:inline-grid;place-items:center;color:var(--green,#12634b)}
+.chat-thread{overflow-anchor:none;scroll-behavior:auto}
+.chat-workspace>.chat-main{font-size:15px}
+.message-assistant>.reply-audio{display:flex;align-items:center;gap:9px;width:min(100%,500px);max-width:100%;min-height:44px;margin:10px 0;padding:5px 8px;border:1px solid var(--line);border-radius:10px;background:var(--memory-soft,#f5f8f5)}
+.reply-audio>.icon-button{flex:none;width:32px;height:32px;min-height:32px;padding:7px;font-size:14px}
+.reply-audio>.icon-button svg{width:18px;height:18px}
+.reply-audio>input[type=range]{flex:1;min-width:40px;width:auto;height:24px;min-height:24px;margin:0;padding:0;accent-color:var(--green,#12634b);border:0;background:transparent}
+.reply-audio>.reply-audio-time{flex:none;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+.reply-audio>.reply-audio-part{font-size:10px;color:var(--muted)}
+.reply-audio>.reply-audio-download{font-size:11px;min-height:30px}
+.reply-audio>audio[hidden],.reply-audio>.reply-audio-part[hidden]{display:none}
 .memory-tree-head>.memory-auto-line{margin:0;margin-right:auto;flex:1;gap:8px;min-width:0;min-height:0;flex-wrap:wrap;font-size:11px;padding:0;border:0}
 .memory-auto-line strong{font-size:12px}
 .memory-auto-line .icon-button{width:32px;min-width:32px;min-height:32px;height:32px}
@@ -83,14 +104,6 @@ body:has(.shell) #app{height:var(--visual-height,100dvh)}
 .memory-tree-detail form .field:has(textarea){flex:1;min-height:180px;display:flex;flex-direction:column}
 .memory-tree-detail form textarea{flex:1;min-height:180px;max-height:none;resize:vertical}
 .memory-tree-detail .memory-detail-buttons{flex-shrink:0}
-.memory-tree-settings{flex:0 0 auto;margin:0;font-size:11px}
-.memory-tree-settings>summary{padding:8px;min-height:36px;display:flex;align-items:center;justify-content:flex-end;gap:8px;list-style:none;border:1px solid var(--line);border-radius:8px;background:#fff}
-.memory-tree-settings>summary::-webkit-details-marker{display:none}
-.memory-tree-settings>summary .icon{width:16px;height:16px}
-.memory-settings-title{display:none}
-.memory-tree-settings[open] .memory-settings-title{display:inline;margin-right:auto;font-size:13px;font-weight:600;color:var(--ink)}
-.memory-tree-settings:not([open])>#memory-management{display:none}
-.memory-tree-settings[open]{position:absolute;z-index:10;top:0;right:0;width:min(700px,100%);max-height:100%;overflow:auto;padding:10px;background:var(--white,#fff);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px #18311d18}
 
 /* One compact search control, independent of the shell's quick-search button. */
 .record-search{width:100%;min-width:0;display:flex;flex-direction:column;gap:8px}

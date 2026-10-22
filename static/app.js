@@ -406,9 +406,9 @@ const chatUI=createChatUI({state,api,esc,icon,companion,greeting,toast,showDialo
 const sourcesUI=createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route});
 $('#dialog').addEventListener('close',()=>{
   const target=dialogReturnTarget,closingFocus=document.activeElement;
-  // Native close may already return focus. Do not override a keyboard action
-  // or click the user makes before the next animation frame.
-  if(closingFocus&&closingFocus!==document.body&&!$('#dialog').contains(closingFocus)&&closingFocus!==target)return;
+  // Safari may return native-dialog focus to the previously focused input,
+  // because mouse clicks do not focus buttons there. Restore the real opener.
+  // A new user focus change before the next frame still takes precedence.
   requestAnimationFrame(()=>{
     if(document.activeElement!==closingFocus&&document.activeElement!==document.body)return;
     const restored=target?.isConnected?target:target?.dataset.action?.startsWith('settings-')?document.querySelector(`[data-action="${target.dataset.action}"]`):null;

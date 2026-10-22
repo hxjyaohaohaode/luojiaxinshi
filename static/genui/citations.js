@@ -1,5 +1,6 @@
 import {el,button} from './dom.js';
 import {safeUrl} from './security.js';
+import {preserveChatViewport} from '../chat-viewport.js';
 let openView=null;
 const kinds={web_page:'已读取网页正文',web_summary:'搜索摘要 · 未读取正文',image:'图片观察 · 请对照原图',material:'资料原文',notice:'通知原文',task:'待办快照',arrangement:'个人日程',memory:'个人记忆',profile:'自填条件',user_input:'用户提供'};
 const external=source=>typeof source?.url==='string'&&/^https?:\/\//.test(source.url)?safeUrl(source.url,{hosts:null}):null;
@@ -61,7 +62,7 @@ export class CitationView{
       const marks=el('span','source-site-marks');marks.setAttribute('aria-hidden','true');for(const entry of this.entries.slice(0,3))marks.append(el('span','',this.initial(entry.source)));
       const privateCount=this.entries.length-web.length;pill.append(marks,el('span','',web.length?`${web.length} 个网页${privateCount?' · '+privateCount+' 项资料':''}`:`${this.entries.length} 项依据`),el('span','source-pill-arrow','›'));this.footer.append(pill);this.pill=pill;
     }
-    if(this.panel)this.close();this.decorate();
+    if(this.panel){const list=this.panel.querySelector('.reply-source-results'),top=list.scrollTop;list.replaceChildren(...this.entries.map(e=>this.card(e,this.focusNumber)));list.scrollTop=top;this.pill?.setAttribute('aria-expanded','true');if(!this.returnFocus?.isConnected)this.returnFocus=this.pill;}this.decorate();
   }
   initial(source){return source.evidence_kind==='user_input'?'你':source.evidence_kind==='profile'?'我':external(source)?(source.site_name||source.name||'网').replace(/\s/g,'').slice(0,1):'文';}
   decorate(){
@@ -103,17 +104,30 @@ export class CitationView{
   hidePreview(){clearTimeout(this.hideTimer);this.preview?.remove();this.preview=null;this.anchor?.removeAttribute('aria-describedby');this.anchor=null;}
   open(number=null){
     this.hidePreview();const returnFocus=this.panel?this.returnFocus:document.activeElement;if(openView&&openView!==this)openView.close();if(this.panel)this.close(false);
-    const reader=this.content.closest('#chat-thread'),anchor=returnFocus?.matches?.('.citation-mark')&&this.content.contains(returnFocus)?returnFocus:number?this.content.querySelector(`[data-citation="${number}"]`):null,anchorTop=anchor?.getBoundingClientRect().top;
+    const reader=this.content.closest('#chat-thread');
     openView=this;this.returnFocus=returnFocus;this.focusNumber=number;const mobile=matchMedia('(max-width:850px)').matches;
     const panel=el(mobile?'dialog':'aside','reply-sources-panel');this.panel=panel;panel.setAttribute('aria-label','回答来源');if(!mobile){panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','false');}
     const header=el('header'),title=el('h2','','回答来源'),close=button('×',()=>this.close(),'icon-button');close.setAttribute('aria-label','关闭回答来源');header.append(title,close);panel.append(header);
     const list=el('div','reply-source-results');for(const entry of this.entries)list.append(this.card(entry,number));panel.append(list);
+    preserveChatViewport(reader,()=>{
     if(mobile){document.body.append(panel);panel.addEventListener('cancel',()=>this.close());panel.addEventListener('click',event=>{if(event.target===panel){const r=panel.getBoundingClientRect();if(event.clientY<r.top||event.clientX<r.left||event.clientX>r.right)this.close();}});panel.showModal();}
     else{const workspace=document.querySelector('#chat-workspace');document.dispatchEvent(new CustomEvent('reply-sources-open'));if(workspace){workspace.classList.add('show-evidence');workspace.append(panel);}else{panel.classList.add('standalone');document.body.classList.add('gu-show-sources');document.body.append(panel);}}
+    });
     this.pill?.setAttribute('aria-expanded','true');close.focus({preventScroll:true});
-    if(!mobile&&reader&&anchorTop!==undefined)requestAnimationFrame(()=>requestAnimationFrame(()=>{if(this.panel&&anchor.isConnected)reader.scrollTop+=anchor.getBoundingClientRect().top-anchorTop;}));
-    if(number)requestAnimationFrame(()=>list.querySelector(`[data-citation-number="${number}"]`)?.scrollIntoView({block:'nearest'}));
+
+    if(number)requestAnimationFrame(()=>{const card=list.querySelector(`[data-citation-number="${number}"]`);if(card)list.scrollTop=Math.max(0,card.offsetTop-list.offsetTop-12);});
   }
-  close(restore=true){if(!this.panel)return;const anchor=this.returnFocus,reader=this.content.closest('#chat-thread'),top=anchor?.getBoundingClientRect().top;if(this.panel.tagName==='DIALOG'&&this.panel.open)this.panel.close();this.panel.remove();this.panel=null;document.querySelector('#chat-workspace')?.classList.remove('show-evidence');document.body.classList.remove('gu-show-sources');this.pill?.setAttribute('aria-expanded','false');if(openView===this)openView=null;if(restore&&anchor?.isConnected){anchor.focus({preventScroll:true});if(reader&&top!==undefined)requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!this.panel&&anchor.isConnected)reader.scrollTop+=anchor.getBoundingClientRect().top-top;}));}}
+  close(restore=true){
+    if(!this.panel)return;
+    const anchor=this.returnFocus,reader=this.content.closest('#chat-thread');
+    preserveChatViewport(reader,()=>{
+      if(this.panel.tagName==='DIALOG'&&this.panel.open)this.panel.close();
+      this.panel.remove();this.panel=null;
+      document.querySelector('#chat-workspace')?.classList.remove('show-evidence');
+      document.body.classList.remove('gu-show-sources');
+    });
+    this.pill?.setAttribute('aria-expanded','false');if(openView===this)openView=null;
+    if(restore&&anchor?.isConnected)anchor.focus({preventScroll:true});
+  }
   dispose(){this.hidePreview();this.close(false);document.removeEventListener('keydown',this.escape);document.removeEventListener('scroll',this.scroll,true);this.breakpoint.removeEventListener('change',this.resize);document.removeEventListener('reply-materials-open',this.materials);}
 }

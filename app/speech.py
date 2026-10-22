@@ -114,6 +114,8 @@ def synthesize(settings,payload):
 
 
 def install_speech(app,db,settings,user,heavy_lock):
+    from .speech_cache import SpeechCache
+    cache=SpeechCache(db)
     @app.get('/api/speech/config')
     def config(current=Depends(user)):
         from .model_catalog import public_configuration
@@ -155,10 +157,26 @@ def install_speech(app,db,settings,user,heavy_lock):
     @app.post('/api/speech/synthesize')
     async def speak(request:Request,current=Depends(user)):
         try:
-            async with request.form(max_files=1,max_fields=6) as form:
+            async with request.form(max_files=1,max_fields=7) as form:
                 if form.get('allow_external_processing')!='true':raise HTTPException(422,'请确认播报文字及所选录音可发送至小米 MiMo')
                 payload=tts_payload(settings,form.get('text',''),form.get('mode','default'),form.get('description',''),
                                     await read_audio(form,'reference'),form.get('clone_authorized')=='true')
+                message_id=form.get('message_id') or None
+                if message_id:
+                    with db.connect() as conn:
+                        owned=conn.execute('''SELECT 1 FROM conversation_messages m JOIN conversations c
+                          ON c.id=m.conversation_id WHERE m.id=? AND c.user_id=? AND m.status='complete' AND m.role='assistant' ''',
+                                           (message_id,current['id'])).fetchone()
+                    if not owned:raise HTTPException(404,'这条回复已不可用，请刷新对话')
         except ValueError as exc:raise HTTPException(422,str(exc)) from None
-        audio=await run_in_threadpool(invoke,current,payload,'tts')
-        return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store','X-Speech-Model':payload['model']})
+        if not settings.ai_api_key:raise HTTPException(503,'请在服务端填写 MIMO_API_KEY 并重启后使用语音')
+        from .model_catalog import channel
+        if channel(settings.ai_base_url)=='token_plan':raise HTTPException(503,'当前语音适配器需要普通按量 API 凭证')
+        # Reference recordings are deliberately excluded from persistent reuse.
+        if form.get('mode','default')=='clone':
+            audio=await run_in_threadpool(invoke,current,payload,'tts');cached=False
+        else:
+            audio,cached=await run_in_threadpool(cache.get_or_create,current['id'],message_id,settings,payload,
+                                                lambda:invoke(current,payload,'tts'))
+        return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store','X-Speech-Model':payload['model'],
+                                                            'X-Speech-Cache':'hit' if cached else 'miss'})

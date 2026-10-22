@@ -1,5 +1,20 @@
 # 验证记录
 
+## 2026-10-22：工作区稳定性与语音复用 v9
+
+应用 **1.19.0**，记忆 schema 继续为 6。五条最新浏览器反馈的实现与验证边界见 [v9 说明](docs/FRONTEND_REVIEW_V9.md)，源码摘要见 [机器汇总](docs/verification/frontend-review-v9.json)。
+
+| 验证 | 结果 | 本地证据 |
+| --- | --- | --- |
+| 新增稳定性回归 | Chromium、Firefox、WebKit **102 项通过，页面错误 0** | `artifacts/frontend-v9-browser/report.json` |
+| 原有界面批注回归 | 三种浏览器 **198 项通过，页面错误 0** | `artifacts/frontend-v8-browser/report.json`；本轮日志 `artifacts/frontend-v9-regression.log` |
+| 前端单元测试 | **131 项通过** | `artifacts/frontend-v9-node.log` |
+| 后端相关回归 | 语音、缓存、工作区、核心工作流 **58 项通过，失败和错误 0** | `artifacts/frontend-v9-python.xml` |
+| 真实语音合成与回读 | 合成文字，TTS 2.557 秒；24 kHz；9.44 秒；未检测到削波；日期、时间和事项回读正确。主观听感未人工验证 | `artifacts/frontend-v9-speech-smoke.json`、`artifacts/frontend-v9-speech-recognition.json` |
+| 本机启用与数据核对 | **1.19.0**；原账号可登录；真实记忆页填满容器；来源展开保持原消息与字号；业务记录和人工记忆指纹保留；SQLite 完整性 ok、外键问题 0 | `artifacts/frontend-v9-live.json`、`artifacts/frontend-v9-activation.json` |
+
+本轮运行了与变更相关的 Python 范围；下面 v8 的 881 项完整后端回归保留为历史结果，不将它计作 v9 重跑结果。测试服务仅使用 `127.0.0.1:8786` 的合成数据；真实账号、语音文件、数据库、备份和原始运行证据不进入 Git。
+
 ## 2026-10-21：界面批注与交互验收 v8
 
 应用 **1.18.0**，记忆引擎继续使用 schema 6。20 条浏览器批注与参考出处见 [界面验收 v8](docs/FRONTEND_REVIEW_V8.md)，精确结果与规范化源码哈希见 [机器汇总](docs/verification/frontend-review-v8.json)。下面 v1–v7 保留为历史。

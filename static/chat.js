@@ -1,3 +1,4 @@
+import {preserveChatViewport} from './chat-viewport.js';
 import {createReplySpeech} from './speech.js';
 import {brandMotion} from './motion.js';
 import {searchControls,WorkspaceSearch,materialTree,materialFormats} from './workspace-search.js';
@@ -13,7 +14,7 @@ const imageKinds=new Set(['png','jpg','jpeg','webp']);
 const videoKinds=new Set(['mp4','webm']);
 
 export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI}){
-  const replySpeech=createReplySpeech({api,toast});
+  const replySpeech=createReplySpeech({api,toast,owner:()=>state.session?.user?.id});
   const lastKey=()=>`luojia:last-chat:${state.session.user.id}`;
   const remember=id=>{try{if(id)localStorage.setItem(lastKey(),id);else localStorage.removeItem(lastKey());}catch{}};
   let current=null,historyItems=[],pollTimer,files=[],sending=false,materialRenderKey='',feedbackTimer;
@@ -26,11 +27,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     materialInert.forEach(([node,previous])=>{if(node.isConnected)node.inert=previous;});materialInert=[];
     document.body.classList.remove('materials-open');
     if(!workspace||!panel)return;
-    if(open)document.dispatchEvent(new CustomEvent('reply-materials-open'));workspace.classList.toggle('show-materials',open);$('.materials-toggle')?.setAttribute('aria-expanded',String(open));
+    if(open)document.dispatchEvent(new CustomEvent('reply-materials-open'));preserveChatViewport($('#chat-thread'),()=>workspace.classList.toggle('show-materials',open));$('.materials-toggle')?.setAttribute('aria-expanded',String(open));
     if(open){
       materialReturn=document.activeElement;
       if(matchMedia('(max-width:1000px)').matches){materialInert=$$('.chat-main,.topbar,.sidebar,.mobile-bottom-nav,.workspace-chrome-toggle').map(node=>[node,node.inert]);materialInert.forEach(([node])=>node.inert=true);document.body.classList.add('materials-open');panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');}else{panel.setAttribute('role','complementary');panel.removeAttribute('aria-modal');}
-      requestAnimationFrame(()=>$('.materials-close')?.focus());
+      requestAnimationFrame(()=>$('.materials-close')?.focus({preventScroll:true}));
     }else{panel.removeAttribute('role');panel.removeAttribute('aria-modal');if(restore&&materialReturn?.isConnected)materialReturn.focus();materialReturn=null;}
   }
   document.addEventListener('keydown',event=>{

@@ -6,7 +6,7 @@ import {hostRegistry} from './host.js';
 import {WorkSummaryView} from './work-view.js';
 import {CitationView} from './citations.js';
 import {submittedMessageText as userMessageText} from './interaction.js';
-import {memoryOperationSummary} from './memory-notice.js';
+import {memoryOperationSummary,memoryUseCount} from './memory-notice.js';
 
 export {userMessageText};
 function stamp(value,full=false){if(!value)return '';return new Date(value*1000).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',...(full?{year:'numeric',second:'2-digit'}:{})});}
@@ -94,12 +94,14 @@ export class ConversationView{
       if(waiting&&!r.waiting){r.waiting=el('div','thinking');const visual=el('span');visual.innerHTML=brandMotion('mesh','',{priority:3});r.waiting.append(visual,el('span','','正在结合材料整理回复…'));r.article.insertBefore(r.waiting,r.citations);}else if(!waiting&&r.waiting){r.waiting.remove();r.waiting=null;}if(r.waiting)r.waiting.lastChild.textContent=message._phaseLabel||'正在结合材料整理回复…';
       if(!r.citationView)r.citationView=new CitationView(r.content,r.citations,this.options);r.citationView.update(message,this.options);
       r.citations.hidden=!r.citations.childNodes.length;
-      if(!r.memoryNotice){r.memoryNotice=el('div','memory-receipt small muted');r.memoryNotice.setAttribute('role','status');r.article.insertBefore(r.memoryNotice,r.footer);}
+      r.memoryNotice?.remove();r.memoryNotice=null;
       const receipt=message.status==='complete'?memoryOperationSummary(message.grounding?.memory_operations):'';
-      const recallCount=message.grounding?.memory?.selected||0;
-      r.memoryNotice.hidden=!receipt&&!recallCount;r.memoryNotice.replaceChildren();
-      if(receipt){const link=el('a','','管理记忆');link.href='#memory';r.memoryNotice.append(el('span','',receipt),link);}
-      if(message.status==='complete'&&recallCount&&message.conversation_id){const trace=button('这次用了哪些记忆',null,'button small plain');trace.dataset.memoryLife='trace';trace.dataset.id=message.id;trace.dataset.cid=message.conversation_id;r.memoryNotice.append(trace);}
+      const recallCount=message.status==='complete'?memoryUseCount(message):0;
+      if(recallCount||receipt){
+        if(!r.memoryTool){r.memoryTool=button('',null,'reply-action memory-use-icon');r.memoryTool.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4a3 3 0 0 0-5 2.2A4 4 0 0 0 3 13a4 4 0 0 0 6 5M15 4a3 3 0 0 1 5 2.2A4 4 0 0 1 21 13a4 4 0 0 1-6 5M9 4v16m6-16v16M5 10h4m6 0h4M6 15h3m6 0h3M9 7h6m-6 10h6"/></svg>';r.footer.append(r.memoryTool);}
+        r.memoryTool.className='reply-action '+(recallCount?'memory-use-icon':'memory-change-icon');r.memoryTool.hidden=false;r.memoryTool.dataset.memoryLife='trace';r.memoryTool.dataset.id=message.id;r.memoryTool.dataset.cid=message.conversation_id||this.options.conversationId||'';
+        const label=[recallCount?`本次使用 ${recallCount} 条记忆`:'',receipt].filter(Boolean).join('；');r.memoryTool.setAttribute('aria-label',label+'，查看记忆记录');r.memoryTool.title=label;
+      }else if(r.memoryTool)r.memoryTool.hidden=true;
       const errorKey=JSON.stringify([message.status,message.error,lastAssistant]);if(r.errorKey!==errorKey){r.errorKey=errorKey;r.error.replaceChildren();r.error.hidden=redirected||['complete','processing'].includes(message.status);if(!r.error.hidden){r.error.append(el('p','',message.error||'回复未完成，已收到的内容仍保留。'));if(message.id===lastAssistant){const retry=button('重试这条回复',null,'button small');retry.dataset.chatAction='retry';retry.dataset.id=message.id;r.error.append(retry);}}}
       if(!r.time){r.time=el('time','message-time',stamp(message.created_at));if(message.created_at)r.time.dateTime=new Date(message.created_at*1000).toISOString();r.footer.append(r.time);}
       if(!r.copy){r.copy=replyAction('copy','复制回复');r.copy.dataset.chatAction='copy';r.copy.dataset.id=message.id;r.footer.append(r.copy);}

@@ -10,13 +10,17 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   const $=selector=>document.querySelector(selector);
   const button=(label,action,id='')=>`<button type="button" class="button small" data-memory-studio="${action}" data-id="${esc(id)}">${label}</button>`;
   let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
+  function configure(data){settings=data.settings||settings;lifecycle.panel(data);}
   function panel(data){
-    settings=data.settings||settings;
-    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">自动积累与维护，随时可修改</span><button class="button small" data-memory-action="project-manage">项目管理</button></div>
-      <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}<details class="memory-tools"><summary>更多管理</summary><div class="memory-tools-content">${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}${lifecycle.panel(data)}</div></details></div>
-      <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
+    configure(data);
+    return `<section class="memory-management-hub" aria-label="记忆管理">
+      <div class="memory-hub-status"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode]||'自动记忆')}</strong>${button('记忆设置','settings')}</div>
+      <section><h3>自动维护</h3><div class="memory-hub-actions">${button('现在整理','organize')}${button('整理旧对话','backfill')}${button('整理进度','jobs')}</div></section>
+      <section><h3>使用与保留</h3><div class="memory-hub-actions"><button type="button" class="button small" data-memory-action="project-manage">项目管理</button></div>${lifecycle.panel(data)}</section>
+      <section><h3>导入与导出</h3><div class="memory-hub-actions">${button('导出记忆','export')}${button('导入编辑文件','import')}</div><input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden></section>
     </section>`;
   }
+  function management(data){showDialog('记忆管理',panel(data));}
   function meta(item){
     return `<div class="memory-provenance"><span>${esc(origins[item.origin]||'本人保存')}</span>${item.locked?'<span>本人锁定</span>':''}${(item.labels||[]).map(label=>`<span>${esc(label)}</span>`).join('')}</div>`;
   }
@@ -97,5 +101,5 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     const view=captureUiContext(state,event.target);
     try{if(file.size>20000000)throw new Error('记忆文件不能超过 20 MB。');const text=await file.text();if(!view.sameUser())return;const result=await api('/memory/import',{method:'POST',json:{text,format:file.name.toLowerCase().endsWith('.md')?'markdown':'json'}});if(view.sameUser()){if(view.sameRoute())await refresh();toast(`已处理 ${result.count} 条记忆。${result.note}`);}}catch(error){if(view.sameUser())toast(error.message,true);}finally{event.target.value='';}
   });
-  return {panel,meta,controls,workingButton:cid=>button('查看与编辑工作记忆','working',cid)};
+  return {panel,configure,management,meta,controls,workingButton:cid=>button('查看与编辑工作记忆','working',cid)};
 }
