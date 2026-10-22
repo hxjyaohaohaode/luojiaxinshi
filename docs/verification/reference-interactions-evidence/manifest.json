@@ -1,0 +1,122 @@
+{
+  "application_source_commit": "8b903162fe1bcfb879a0b29c0b91b4ee69d463d3",
+  "verification_base_commit": "bf03a7afb93484bee9c4c85bf984a072a5365234",
+  "candidate_matches_source_commit": true,
+  "provenance": "Local isolated checkout of the verification base with only the listed source files applied. All three browser suites were rerun on this candidate. No actual account or production database was used.",
+  "not_cloud_ci": true,
+  "contains_real_user_data": false,
+  "scope": {
+    "browser-stability.json": {
+      "origin": "local synthetic fixture",
+      "tests": 120,
+      "failures": 0,
+      "page_errors": 0
+    },
+    "browser-regression.json": {
+      "origin": "local synthetic fixture",
+      "tests": 198,
+      "failures": 0,
+      "page_errors": 0
+    },
+    "browser-interactions.json": {
+      "origin": "local synthetic fixture",
+      "tests": 45,
+      "failures": 0,
+      "page_errors": 0
+    },
+    "node-unit.json": {
+      "origin": "local test process",
+      "tests": 132,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "verification-tools.json": {
+      "origin": "local test process",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "applied_source_sha256_lf": {
+    ".github/workflows/checks.yml": "3a8990754444cbb5f0931f48a4b9cd7765e9d8a100c31d531c2a286f220b44b6",
+    "scripts/memory_engine_preview_server.py": "e446cfa6780ee971032f4b420c05b738c3b2e373c962f730ddb8a41ea38128bf",
+    "scripts/run_browser_checks.py": "3c6e82ba8c8eec38a2590c50c758ed95f0fe8e5541d3a8d990849074fe1af30f",
+    "scripts/write_ci_summary.py": "715cf373a206dc61262bff872d26eda326644a0d427707cda74144729020be5d",
+    "scripts/verify_reference_interactions.mjs": "3c75e657d3a7dc6916ffc99734061fb2251edfb5f2ae3eda132ca27e6e068b65",
+    "static/reference-interactions.js": "882f4569bc27283ddd5e6c456d822f512f20879387f0df6d879150b019c7f4e8",
+    "static/notice-compose.js": "0e266e85e120a62412cb4b168346cb5bd00d316fb04cdaecf8640cad2ff0a967",
+    "static/workspace-search.js": "e91ba001b00f74a8faa457320f37843263a0d75f6caa8b5ac886012ecdad2a3b",
+    "static/genui/dom.js": "9d1a9e118d79bbf9b0ef821b06afd85233b0c1119bd04ca88b630614a38aea48",
+    "static/genui/renderer.js": "36fcef903d605eb30b7aafb74bbf3731b84c0319023ca8c01dbff421f541ecce",
+    "tests/reference-interactions.test.mjs": "a1229be1aea782759a15ad8482e7a89faf29c470a144c9dfaa2772304754a18d",
+    "tests/test_verification_evidence.py": "2705d664caceebb6592be8bf072c06bfd78a706e3d803a5fe789085385667dcf",
+    "docs/REFERENCE_INTERACTIONS.md": "44bf0a910d6877b6e66defa14434bc4e2ef26bc4fd0daa98349dc971cd0352e7"
+  },
+  "unchanged_styles_sha256_lf": {
+    "static/app.css": "8e70a1353c45e00799272aa8b5937cb07c3e4b0bfb5fa961bc3b2eaeeb85e98f",
+    "static/brand.css": "4e6bf7d0a79d1ffdeae834f5c64e8a819fa1df6b992946951bbab93d369f3e36",
+    "static/calendar-help.css": "46183e0ebb81eb49ff8dd1fa1a5eafefd2a3ff50f81b9063db7ae3265179cee4",
+    "static/calendar.css": "4e2e572b8c625ab834639f59ba1f96a26941a02edf80ded8551c07cbe7d1ead7",
+    "static/companion.css": "11c2462a18678df5bf7a3f90ea235a70056467bd3bac5cab368ba26625af9f61",
+    "static/continuity.css": "a3571f25b9933214a7b49e093ff895be5c2794b1bd95fa175954886210dfcc59",
+    "static/experience-system.css": "5fa1e14c9f825990f0d2573e9418c18780280fb9b6fff229a447845e4a74a83c",
+    "static/experience.css": "d60f86517c98741c7c92120d29812f606c9d808a50041567b95330822b48963d",
+    "static/feedback.css": "aa0876390425bf08f3b95da18586a7e8fd32397b2c9d3ae712a5320866111539",
+    "static/genui/citations.css": "ac430b0c122fdd208c1c57322b1ba7b98a0ad1344f02a896c1087313f060c663",
+    "static/genui/editorial.css": "228bf8b609d8f063427dd674f46b3b927372997bfbccf1309ab3a51ccfcb13ad",
+    "static/genui/genui.css": "84bf26447ddb144b81926fc225b5b2a26f8cdbd738d16797593d3770471051ba",
+    "static/interface.css": "cf89366d2be3d3bf976066b63e6b836f247092a1f556297cfda88c9e699551b2",
+    "static/layout.css": "71b7937d9bcdf79df53e2383779897cd481e0381f7c1f3c9fd33fd4e55c8461c",
+    "static/library.css": "700bfe6a8f9c87540e627f1fcf6772b9758dc2e287314a9f0030959b1d5dd34c",
+    "static/memory-tree.css": "e20ef6f25b11a7f6a5cb19543d8ed0d0172311bcf3d0f09aa6c5846ad4574e7a",
+    "static/memory.css": "4d15e57f5bc3c03c9077045b82a98a9ebca094cb02e346f6e42c9bca97daa30f",
+    "static/motion-source.css": "066264ed1d2559f9a019ae38a18403cb1fe2bbc8c2abf42499357e6e0ecab1af",
+    "static/motion.css": "648c1db4e80e8d0f23b953ae31a104ce5a5c2de70c0a9b98dc67c7f4e55171d3",
+    "static/refinements.css": "a1b43de92db217e840dda4937f5db69644877ca496bbccab7502dbf5f561ec3e",
+    "static/share.css": "6216a584dfafb68657a82ff90399e64a577e54aa3f063a050b28e9012ea4e597",
+    "static/workbench.css": "fdfd60bee0dc67a8639a557068b0bad559e6af3ca7bf77efdc3703ba799c1bf8",
+    "static/workflow.css": "64bdaab074f725d669b9c49cc96c57b3d17791e9b797d505cadfa3609ceac7c1",
+    "static/workspace-layout.css": "81e1abd010f46077c6726c0ca14a3ae9a30c6604cccd2bad3ab2600d549cc741",
+    "static/workspace.css": "f265671419d3a916db8348dcfec9d50318b18395402a9432b4fd06163543bfd8"
+  },
+  "files": {
+    "browser-stability.json": {
+      "sha256": "1a213d7dcf7c4b1032e16eba82841a538df6d2d2bba9e159efad4fd56b7b8801",
+      "bytes": 15876
+    },
+    "browser-regression.json": {
+      "sha256": "77eec20ef4734f78a1c91487c33d1108783fea5e73abade5209fa5a556133a6c",
+      "bytes": 22662
+    },
+    "browser-interactions.json": {
+      "sha256": "b1e26a50e8bfc3d6274f063856d855fefb899f0f3aecdeb3d690503af4b79ed0",
+      "bytes": 6743
+    },
+    "node-unit.json": {
+      "sha256": "bbafa3c3a807e2d3ed33a2a14d017de7b2b72ef305a56645e7bb9828e044f1c7",
+      "bytes": 24071
+    },
+    "verification-tools.json": {
+      "sha256": "b8287adceb8dcccf3945ec5e05182cf68a141ea0bcc3662c4ff9cd1c94d4dba7",
+      "bytes": 726
+    },
+    "screenshots/chromium-memory-1413.png": {
+      "sha256": "0dee55c9d3d1b8a98356a9cc4044b26c6fbdaad4d12dfce18d29f4e195536152",
+      "bytes": 116081
+    },
+    "screenshots/chromium-memory-390.png": {
+      "sha256": "1b89dcf6ea3531ff2bbbf078a0810f9f424885d9b5f8a8974ef32759d1d54be3",
+      "bytes": 53551
+    },
+    "screenshots/chromium-code-1413.png": {
+      "sha256": "56faefa9dd0732d26540c3e01400ab169f76e1325f402e3aa3b48f52713d50a0",
+      "bytes": 53815
+    },
+    "screenshots/chromium-code-390.png": {
+      "sha256": "4a681bc632594a084742c8bedb1b6dc29c4d32749ec0252d4e15eb5fe2df32ba",
+      "bytes": 29468
+    }
+  }
+}

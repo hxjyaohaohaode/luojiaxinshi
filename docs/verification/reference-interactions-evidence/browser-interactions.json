@@ -1,0 +1,233 @@
+{
+  "origin": "local synthetic fixture",
+  "tests": 45,
+  "failures": 0,
+  "page_errors": 0,
+  "cases": [
+    {
+      "engine": "chromium",
+      "name": "AnimatedList arrow keys move focus locally; Enter opens the existing record",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "list keyboard navigation keeps native Tab and stays inside the scroll container",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "original memory container geometry 1413x871",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "original memory container geometry 1024x768",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "original memory container geometry 390x844",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "original memory container geometry 320x640",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "disclosure rapid toggles settle into the latest requested state and release height",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "stepper cannot advance with missing content",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "stepper transitions use live fields and restore the first step without losing input",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "resizing during a step transition releases animation constraints",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "reduced motion switches steps immediately with the same saved field values",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "Files expands real uploaded folder paths and handles interrupted closing",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "CodeHeader copies the actual code without copying labels or changing the text",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "code copy reports a clipboard refusal and leaves the full code available",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "interaction adapters finish without unhandled page errors",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "AnimatedList arrow keys move focus locally; Enter opens the existing record",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "list keyboard navigation keeps native Tab and stays inside the scroll container",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "original memory container geometry 1413x871",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "original memory container geometry 1024x768",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "original memory container geometry 390x844",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "original memory container geometry 320x640",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "disclosure rapid toggles settle into the latest requested state and release height",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "stepper cannot advance with missing content",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "stepper transitions use live fields and restore the first step without losing input",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "resizing during a step transition releases animation constraints",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "reduced motion switches steps immediately with the same saved field values",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "Files expands real uploaded folder paths and handles interrupted closing",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "CodeHeader copies the actual code without copying labels or changing the text",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "code copy reports a clipboard refusal and leaves the full code available",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "interaction adapters finish without unhandled page errors",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "AnimatedList arrow keys move focus locally; Enter opens the existing record",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "list keyboard navigation keeps native Tab and stays inside the scroll container",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "original memory container geometry 1413x871",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "original memory container geometry 1024x768",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "original memory container geometry 390x844",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "original memory container geometry 320x640",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "disclosure rapid toggles settle into the latest requested state and release height",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "stepper cannot advance with missing content",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "stepper transitions use live fields and restore the first step without losing input",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "resizing during a step transition releases animation constraints",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "reduced motion switches steps immediately with the same saved field values",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "Files expands real uploaded folder paths and handles interrupted closing",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "CodeHeader copies the actual code without copying labels or changing the text",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "code copy reports a clipboard refusal and leaves the full code available",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "interaction adapters finish without unhandled page errors",
+      "passed": true
+    }
+  ]
+}
