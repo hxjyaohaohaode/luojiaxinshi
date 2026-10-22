@@ -218,6 +218,9 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 from contextlib import aclosing
                 async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(stream_events):
                     async for event in stream_events:
+                        if event['type']=='agent':
+                            seq+=1;yield packet('agent',{'message_id':mid,'kind':event['kind'],'data':event['data'],'state':event['state']},seq)
+                            continue
                         if event['type']=='phase':
                             from .execution import stage
                             with db.connect(write=True) as conn:stage(conn,mid,event['phase'])

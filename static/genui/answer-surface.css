@@ -1,0 +1,61 @@
+/* The existing chat owns the canvas. Generated content supplies hierarchy,
+   useful controls and evidence; nested containers do not create more panels. */
+#chat-thread .message-content.gu-message {--gu-space:18px;--gu-radius:8px;--gu-line:#e0e6e2;--gu-surface:#f6f8f6;line-height:1.75}
+#chat-thread .message-content .genui {width:100%;margin:18px 0 8px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+#chat-thread .genui .gu-node {animation:none}
+#chat-thread .genui .gu-card {height:auto;padding:18px 0;border:0;border-top:1px solid var(--gu-line);border-radius:0;background:transparent;box-shadow:none}
+#chat-thread .genui .gu-card .gu-card {padding:8px 0;border:0}
+#chat-thread .genui .gu-section[data-surface=soft] {border:0;border-radius:10px;padding:18px 20px;background:var(--gu-surface)}
+#chat-thread .genui .gu-section[data-surface=outline] {border:0;border-top:1px solid var(--gu-line);border-radius:0;padding:18px 0}
+#chat-thread .genui .gu-section .gu-section {background:transparent;border:0;padding:0}
+#chat-thread .genui .gu-heading {margin:0;line-height:1.45;letter-spacing:0;font-weight:650;text-wrap:pretty}
+#chat-thread .genui h2.gu-heading {font-size:22px}
+#chat-thread .genui h3.gu-heading {font-size:17px}
+#chat-thread .genui h4.gu-heading {font-size:15px}
+#chat-thread .genui .gu-section>div:not(:empty)+.gu-children:not(:empty),
+#chat-thread .genui .gu-card>div:not(:empty)+.gu-children:not(:empty) {margin-top:14px}
+#chat-thread .genui .gu-prose-content {max-width:none}
+#chat-thread .genui .gu-prose-content[data-variant=lead] .gu-markdown {font-size:18px;font-weight:500;line-height:1.65}
+#chat-thread .genui .gu-muted {font-size:13px;line-height:1.65;color:var(--gu-muted)}
+#chat-thread .genui .gu-stat {padding:0;border:0;background:transparent;min-height:0}
+#chat-thread .genui .gu-stat-value {font-size:27px;color:var(--gu-ink);letter-spacing:-.02em}
+#chat-thread .genui .gu-node.gu-callout {border:0;padding:0;background:transparent}
+#chat-thread .genui aside.gu-callout {border:0;border-left:3px solid var(--gu-accent);padding:12px 16px;border-radius:0;background:var(--gu-surface);color:var(--gu-ink)}
+#chat-thread .genui aside.gu-callout[data-tone=warning] {border-left-color:var(--gu-warning)}
+#chat-thread .genui aside.gu-callout[data-tone=danger] {border-left-color:var(--gu-error)}
+#chat-thread .genui .gu-kv>div {display:grid;grid-template-columns:minmax(70px,.35fr) minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--gu-line)}
+#chat-thread .genui .gu-kv dt {font-size:13px;color:var(--gu-muted);font-weight:400}
+#chat-thread .genui .gu-kv dd {margin:0;font-weight:550}
+#chat-thread .genui .gu-tab-list {display:flex;flex-wrap:wrap;gap:4px 20px;padding:0;border:0;border-bottom:1px solid var(--gu-line);border-radius:0;background:transparent}
+#chat-thread .genui .gu-tab-list>.gu-tab {padding:10px 0;min-height:44px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--gu-muted)}
+#chat-thread .genui .gu-tab-list>.gu-tab[aria-selected=true] {border-bottom-color:var(--gu-accent);color:var(--gu-accent);font-weight:650}
+#chat-thread .genui details.gu-accordion {border:0;border-top:1px solid var(--gu-line);border-radius:0;background:transparent;padding:0}
+#chat-thread .genui .gu-accordion>summary {padding:12px 0;font-size:14px;font-weight:550;min-height:44px}
+#chat-thread .genui .gu-group-panel {padding:14px 0 4px}
+#chat-thread .genui .gu-checklist-items>li {padding:10px 0;border:0;border-bottom:1px solid var(--gu-line);background:transparent}
+#chat-thread .genui .gu-check {align-items:start;gap:12px}
+#chat-thread .genui .gu-check input {margin-top:3px}
+#chat-thread .genui .gu-button {box-shadow:none;border-radius:7px;font-size:14px}
+#chat-thread .genui .gu-primary {font-weight:600}
+#chat-thread .genui textarea {max-height:none;resize:vertical}
+#chat-thread .genui .gu-grid>.gu-children,#chat-thread .genui .gu-row>.gu-children {gap:20px;align-items:start}
+#chat-thread .work-summary {width:100%;max-width:100%;margin:0 0 14px;color:var(--muted,#617169)}
+#chat-thread .work-summary>summary {width:max-content;max-width:100%;gap:8px;font-size:12px;line-height:1.55}
+#chat-thread .work-title {white-space:normal;overflow-wrap:anywhere;font-weight:400;min-width:0}
+#chat-thread .work-body {max-width:none;max-height:none;overflow:visible;margin-top:8px;padding:4px 0 4px 16px;border-left:1px solid var(--line,#dce4de)}
+#chat-thread .work-outcomes,#chat-thread .work-gaps,#chat-thread .work-highlights {padding-left:16px;margin:0 0 14px;line-height:1.8;overflow-wrap:anywhere}
+#chat-thread .work-highlights {color:var(--text,#243c33)}
+#chat-thread .work-audit>summary {cursor:pointer;min-height:36px;align-content:center;font-size:12px}
+#chat-thread .work-steps {margin:12px 0;gap:12px}
+#chat-thread .work-step-heading strong {font-size:12px;font-weight:500}
+#chat-thread .work-step>p {font-size:12px}
+@container(max-width:620px){
+  #chat-thread .genui .gu-grid>.gu-children {grid-template-columns:minmax(0,1fr)}
+  #chat-thread .genui .gu-section[data-surface=soft] {padding:15px}
+  #chat-thread .genui h2.gu-heading {font-size:20px}
+}
+@media(max-width:600px){
+  #chat-thread .work-time {font-size:11px}
+  #chat-thread .work-summary>summary {min-height:40px}
+  #chat-thread .genui .gu-markdown {font-size:15px;line-height:1.8}
+}

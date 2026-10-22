@@ -133,6 +133,7 @@ def create_app(settings=None):
         try:
             yield
         finally:
+            await application.state.agent_service.close()
             pending=list(getattr(application.state,'genui_workers',()))
             for task in pending:task.cancel()
             if pending:await asyncio.gather(*pending,return_exceptions=True)
@@ -180,6 +181,8 @@ def create_app(settings=None):
 
     from .execution import install as install_execution
     install_execution(app,db,user)
+    from .agent_runtime.api import install as install_agent_runtime
+    install_agent_runtime(app,db,settings,user,runtime.owner)
 
     def own_notice(conn, notice_id, uid):
         row=conn.execute('SELECT * FROM notices WHERE id=? AND user_id=?',(notice_id,uid)).fetchone()

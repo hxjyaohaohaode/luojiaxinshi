@@ -4,6 +4,7 @@ import {MessageRenderer} from './renderer.js';
 import {el,button,replaceInOrder,markdown} from './dom.js';
 import {hostRegistry} from './host.js';
 import {WorkSummaryView} from './work-view.js';
+import {AgentView} from './agent-view.js';
 import {CitationView} from './citations.js';
 import {submittedMessageText as userMessageText} from './interaction.js';
 import {memoryOperationSummary,memoryUseCount} from './memory-notice.js';
@@ -48,6 +49,8 @@ export class ConversationView{
   }
   draw(messages){
     this.messages=messages;
+    const messageIds=new Set(),latestAnswers=new Map();
+    for(const message of messages){messageIds.add(message.id);if(message.role==='assistant'&&message.parent_id)latestAnswers.set(message.parent_id,message);}
     const lastAssistant=messages.filter(m=>m.role==='assistant').at(-1)?.id,activeMessage=messages.find(m=>m.role==='assistant'&&m.status==='processing')?.id,feature=this.options.feature||{};
     const contextKey=JSON.stringify([this.options.sources?.map(s=>[s.id,s.status,s.name]),this.options.arrangements?.map(r=>[r.id,r.version]),this.options.tasks?.map(r=>[r.id,r.version])]);
     if(contextKey!==this.contextKey){this.contextKey=contextKey;this.host={...hostRegistry(this.options),imageResources:this.options.imageResources||[],mediaResources:this.options.mediaResources||[]};for(const r of this.records.values())r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
@@ -63,7 +66,7 @@ export class ConversationView{
         if(r.userKey!==key){r.userKey=key;r.content.replaceChildren(document.createTextNode(text));const selections=message.interaction?.selections;
           if(selections?.length){const details=el('details','message-selection-context'),summary=el('summary','','附带当前界面选择 · '+selections.length+' 项'),list=el('dl');for(const item of selections){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.display??(typeof item.value==='object'?JSON.stringify(item.value):String(item.value??'未选择'))));list.append(row);}details.append(summary,list);if(message.interaction.checkpoint?.status==='conflict')details.append(el('p','','这些选择已用于本次问题。旧界面在另一页面有较新进度，已保留那份进度。'));r.content.append(details);}
         }
-        r.citations.hidden=r.error.hidden=true;r.footer.hidden=false;const answer=messages.filter(m=>m.role==='assistant'&&m.parent_id===message.id).at(-1);const state=answer?.status==='complete'?'已回复':answer?.status==='processing'?'处理中':answer?'回复中断':'已保存';r.footer.textContent=`${stamp(message.created_at)} · ${state}`;r.footer.title=answer?`系统已接收 · ${stamp(answer.created_at,true)}`:`保存于 ${stamp(message.created_at,true)}`;return r.article;
+        r.citations.hidden=r.error.hidden=true;r.footer.hidden=false;const answer=latestAnswers.get(message.id);const state=answer?.status==='complete'?'已回复':answer?.status==='processing'?'处理中':answer?'回复中断':'已保存';r.footer.textContent=`${stamp(message.created_at)} · ${state}`;r.footer.title=answer?`系统已接收 · ${stamp(answer.created_at,true)}`:`保存于 ${stamp(message.created_at,true)}`;return r.article;
       }
       const links=message.status==='complete'&&message.genui?.validated?(message.evidence_sources||[]).map(source=>source.url).filter(url=>typeof url==='string'):[];
       if(JSON.stringify(links)!==JSON.stringify(r.linkResources)){r.linkResources=links;r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
@@ -71,13 +74,14 @@ export class ConversationView{
       r.status.textContent=message.status==='processing'?(message._phaseLabel||((message.genui?.raw||message.content)?'正在书写…':this.options.sources?.length?'正在对照材料…':'正在思考…')):message.status==='complete'?(keptPrevious?'新版本未完成，已保留上一版':''):redirected?'已按补充继续':'回复未完成';
       const active=message.status==='processing'&&message.id===activeMessage;
       if(!r.work)r.work=new WorkSummaryView(r.article,r.content);r.work.update(message);
+      if(!r.agent)r.agent=new AgentView(r.article,r.content);r.agent.update(message);
       if(active&&(message._work?.length||message.grounding?.steps?.length))r.status.textContent='处理中';
       const pose=active?(message._phase==='writing'?'writing':message._phase==='verifying'||message._phase==='searching'||message._phase==='retrieving'?'search':(message.genui?.raw||message.content)?'writing':this.options.sources?.length?'search':'thinking'):message.status==='complete'?'complete':'rest';
       if(r.pose!==pose){r.pose=pose;const avatar=r.label.querySelector('img');avatar.src='/static/assets/luojia-messenger-'+pose+'.png';avatar.dataset.replyPose=pose;}
       r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',active&&!!message._preview&&!message._liveParts);
-      const contentKey=JSON.stringify([message._preview,message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled]);
-      if(r.contentKey!==contentKey){
-        r.contentKey=contentKey;const parts=this.parts(message);r.parts=parts;
+      const contentState=[message._preview,message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled];
+      if(!r.contentState||contentState.some((value,index)=>value!==r.contentState[index])){
+        r.contentState=contentState;const parts=this.parts(message);r.parts=parts;
         if(feature.enabled&&!(active&&message._preview!==undefined&&!message._liveParts)){
           if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
             imageResources:this.options.imageResources||[],askModel:event=>this.options.askModel({...event,message_id:message.id}),
@@ -120,7 +124,7 @@ export class ConversationView{
       if(feature.debug&&message.genui){if(!r.debug){r.debug=el('details','gu-raw-debug');r.debug.append(el('summary','','查看原始回复'),el('pre'));r.article.append(r.debug);}r.debug.lastChild.textContent=message.genui.raw;}
       return r.article;
     });
-    for(const [id,r]of this.records)if(!messages.some(m=>m.id===id)){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();this.records.delete(id);}
+    for(const [id,r]of this.records)if(!messageIds.has(id)){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();this.records.delete(id);}
     replaceInOrder(this.container,children);
   }
 }

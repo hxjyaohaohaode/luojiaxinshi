@@ -5,7 +5,7 @@ from app.config import Settings
 
 
 @pytest.mark.parametrize('tier,choice,no_ui,expected',[
-    (1,'text',False,3),(1,'compact',False,2),(1,'interactive',False,1),
+    (1,'text',False,3),(1,'compact',False,1),(1,'interactive',False,1),
     (1,'auto',False,1),(2,'interactive',False,2),(3,'compact',False,3),
     (3,'interactive',False,3),(1,'interactive',True,3),(2,'compact',True,3),
 ])

@@ -69,7 +69,9 @@ def choose_tier(settings):
 def presentation_tier(tier,choice='auto',*,no_ui=False):
     """The planner can simplify a view, never exceed deployment capabilities."""
     if no_ui or choice=='text':return 3
-    return max(tier,2) if choice=='compact' else tier
+    # Compact describes information density, not the old four-template engine.
+    # Explicit deployment tier 2 stays compatible; capable models freely compose.
+    return tier
 
 
 def composition_thinking(profile,tier):
@@ -79,7 +81,8 @@ def composition_thinking(profile,tier):
 
 class AnswerDecoder:
     """Incrementally decode only the top-level answer JSON string, including escapes."""
-    def __init__(self):
+    def __init__(self, fields=('answer',)):
+        self.fields = fields
         self.raw = ''
         self.index = 0
         self.depth = 0
@@ -136,7 +139,7 @@ class AnswerDecoder:
                     self.escape = True
                 elif char == '"':
                     self.in_string = False
-                    if self.depth == 1 and json.loads(self.raw[self.string_start:self.index + 1]) == 'answer':
+                    if self.depth == 1 and json.loads(self.raw[self.string_start:self.index + 1]) in self.fields:
                         end = self.index + 1
                         while end < len(self.raw) and self.raw[end].isspace():
                             end += 1

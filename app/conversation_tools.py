@@ -41,6 +41,7 @@ def select_reply(conn,mid):
 
 def model_sources(conn,sources,question):
     """Retrieve whole paragraphs from full files, with a shared 10k text / 4 image budget."""
+    from .chat_media import VIDEO_MIME
     terms=keywords(question);candidates=[]
     for source in sources:
         full=conn.execute('SELECT full_sections FROM material_library WHERE source_id=?',(source['id'],)).fetchone()
@@ -59,7 +60,11 @@ def model_sources(conn,sources,question):
         if source['kind'] in chat_ai.IMAGE_MIME:
             images+=1
             if images>4:continue
-        if item['sections'] or item['kind'] in chat_ai.IMAGE_MIME:result.append(item)
+        if item['kind'] in VIDEO_MIME:
+            # Keep the private playback reference, never send video bytes to a
+            # text model or invent transcript evidence for a silent attachment.
+            item['content'] = b''
+        if item['sections'] or item['kind'] in chat_ai.IMAGE_MIME or item['kind'] in VIDEO_MIME:result.append(item)
     return result
 
 def keywords(text):

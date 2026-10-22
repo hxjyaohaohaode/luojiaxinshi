@@ -1,0 +1,920 @@
+{
+  "date": "2026-10-22",
+  "scope": "Known accessible campus project history, archived project plans, original 35-directory inventory, 13 memory repositories, Codex, frontend references.",
+  "boundaries": [
+    "Not all downloaded folders are user-requested runtime features.",
+    "Readme screening, source review, adaptation and live verification are distinct.",
+    "No claim that all upstream code or unrelated/inaccessible conversations were reviewed.",
+    "No new runtime dependency or copied framework source."
+  ],
+  "original_directories": [
+    {
+      "folder": "langchain-master",
+      "repo": "langchain-ai/langchain",
+      "url": "https://github.com/langchain-ai/langchain",
+      "status": "adapted",
+      "decision": "保护已加载工具协议；不把权限或 JSON 截成半段",
+      "landing": [
+        "app/agent_runtime/context.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\langchain-master\\langchain-master"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\langchain-master\\langchain-master\\README.md",
+          "sha256": "f206c01f2c84926691f481563f8af76ecaac9fb55e273f5f62b8562f2921a9fd",
+          "bytes": 5932,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "langfuse-main",
+      "repo": "langfuse/langfuse",
+      "url": "https://github.com/langfuse/langfuse",
+      "status": "adapted",
+      "decision": "阶段、调用、缓存与推理 token 分别计量；无外传遥测",
+      "landing": [
+        "app/harness.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\langfuse-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\langfuse-main\\README.cn.md",
+          "sha256": "ed2a0b03d1ea604cc093f62238a45583af32a28d7d70fd73fb5128f2896c1ff7",
+          "bytes": 32832,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "langgraph-main",
+      "repo": "langchain-ai/langgraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "status": "adapted",
+      "decision": "持久状态、命名空间、最终提交与恢复；未移植整个图执行框架",
+      "landing": [
+        "app/execution.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\langgraph-main\\langgraph-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\langgraph-main\\langgraph-main\\README.md",
+          "sha256": "3a13e257af1216962d53d72414a7f44ac1fc5cea34d994bdff60ea2a3b045933",
+          "bytes": 6395,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "motion-v14.1.0",
+      "repo": "motiondivision/motion",
+      "url": "https://github.com/motiondivision/motion",
+      "status": "not_imported",
+      "decision": "浏览器原生可中断动画覆盖当前需求；未引入第二套动画运行时",
+      "landing": [
+        "static/reference-interactions.js"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\motion-v14.1.0\\motion-14.1.0"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\motion-v14.1.0\\motion-14.1.0\\README.md",
+          "sha256": "08915bb5254a4bc1fd47e8d7ea8fff0dcb470461f6fd6b59fb6d2f0bef0400df",
+          "bytes": 7475,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "postiz-app-main",
+      "repo": "gitroomhq/postiz-app",
+      "url": "https://github.com/gitroomhq/postiz-app",
+      "status": "not_adopted",
+      "decision": "社交账号发布平台，当前未授权实现社交发布业务",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\postiz-app-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\postiz-app-main\\README.md",
+          "sha256": "9f78ae6fb224f6375e26a26998b70c4e3484625ccdbca9674838546d637ef6d4",
+          "bytes": 7033,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "UI组件资料-已核验部分与待复核目录",
+      "repo": null,
+      "url": null,
+      "status": "partial_catalog",
+      "decision": "五站目录含部分核验状态；许可证和实现覆盖不统一，不能宣称全量融合",
+      "landing": [
+        "docs/REFERENCE_INTERACTIONS.md"
+      ],
+      "local_roots": [],
+      "readme_provenance": []
+    },
+    {
+      "folder": "video-dedup-batch-skill-package-20260430-130354",
+      "repo": null,
+      "url": null,
+      "status": "not_adopted",
+      "decision": "本地视频处理工具包；当前目标是 Agent 与 UI 质量，不是视频去重",
+      "landing": [],
+      "local_roots": [],
+      "readme_provenance": []
+    },
+    {
+      "folder": "VideoProcessorApp-Windows-Installer-Ready",
+      "repo": null,
+      "url": null,
+      "status": "not_adopted",
+      "decision": "独立 Windows 视频处理应用，未把安装器嵌入校园助手",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\VideoProcessorApp-Windows-Installer-Ready\\VideoProcessorApp-Windows-Installer-Ready"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\VideoProcessorApp-Windows-Installer-Ready\\VideoProcessorApp-Windows-Installer-Ready\\README.md",
+          "sha256": "d35192d8b24c85f09e3615d56ab2258c5533958bbba210a4177c7ef3134cf057",
+          "bytes": 4250,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "WeChatDataAnalysis-main",
+      "repo": "LifeArchiveProject/WeChatDataAnalysis",
+      "url": "https://github.com/LifeArchiveProject/WeChatDataAnalysis",
+      "status": "not_adopted",
+      "decision": "聊天记录分析不是校园通知原文；未加入自动读取私人微信数据",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\WeChatDataAnalysis-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\WeChatDataAnalysis-main\\README.md",
+          "sha256": "2b7ec30f318588bfd1ab1c8b7cb9362c4e8dbd20746078912f9d88bb7ac24b9d",
+          "bytes": 14274,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "xiaohongshu-content-tools",
+      "repo": null,
+      "url": null,
+      "status": "not_adopted",
+      "decision": "本地内容工具合集，未确认为单一上游；业务不需要内容运营",
+      "landing": [],
+      "local_roots": [],
+      "readme_provenance": []
+    },
+    {
+      "folder": "上下文记忆压缩优化",
+      "repo": "mem0ai/mem0",
+      "url": "https://github.com/mem0ai/mem0",
+      "status": "adapted",
+      "decision": "所有者范围、来源、去重与真实回执，使用本系统已有记忆",
+      "landing": [
+        "app/memory_learning.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\上下文记忆压缩优化\\mem0-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\上下文记忆压缩优化\\mem0-main\\README.md",
+          "sha256": "fe5211cfd7c3d565b3d35ded3ff7f4ad4f9820dfcc27bbe2b54d6a63cb9f1eb9",
+          "bytes": 11679,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "代码质量的矫正器",
+      "repo": null,
+      "url": null,
+      "status": "identity_unverified",
+      "decision": "andrej-karpathy-skills 目录；未证实唯一上游身份，不按名称归功",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\代码质量的矫正器\\andrej-karpathy-skills-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\代码质量的矫正器\\andrej-karpathy-skills-main\\README.md",
+          "sha256": "daf314efb31894b86d68b67786c820bd8470bb2126e578ba9cd0e3e2667883f8",
+          "bytes": 6198,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "优质开源前端部件",
+      "repo": "juliangarnier/anime",
+      "url": "https://github.com/juliangarnier/anime",
+      "status": "not_imported",
+      "decision": "实际是动画库；当前原生动效无需重复依赖",
+      "landing": [
+        "static/reference-interactions.js"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\优质开源前端部件"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\优质开源前端部件\\README.md",
+          "sha256": "7dfc6973b30449714a4ee5acea6bf57b24f305d3de6c93a83c709361cc13ff7d",
+          "bytes": 5192,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "前端品味",
+      "repo": "Leonxlnx/taste-skill",
+      "url": "https://github.com/Leonxlnx/taste-skill",
+      "status": "design_reference",
+      "decision": "设计指导可供取舍；不称为运行时能力，不覆盖用户主题和容器要求",
+      "landing": [
+        "docs/REFERENCE_VISUAL_REVIEW.md"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\前端品味\\taste-skill-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\前端品味\\taste-skill-main\\README.md",
+          "sha256": "eed7814a93cec1d14c9f95bd24b3db972659fa66b5d09e79ff83b5f331964948",
+          "bytes": 13070,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "前端设计",
+      "repo": "pbakaus/impeccable",
+      "url": "https://github.com/pbakaus/impeccable",
+      "status": "design_reference",
+      "decision": "设计指导；未把演示主题、营销文案搬入现有产品",
+      "landing": [
+        "docs/REFERENCE_VISUAL_REVIEW.md"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\前端设计\\impeccable-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\前端设计\\impeccable-main\\README.md",
+          "sha256": "efba0c952cd30b60ef8a49695d4e5a79626fade7a307e102ec5151d3d1de801c",
+          "bytes": 12848,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "吉祥物动画",
+      "repo": "jeremy-prt/bloub",
+      "url": "https://github.com/jeremy-prt/bloub",
+      "status": "not_adopted",
+      "decision": "保留本项目原创角色与已有宿主状态，不复制第三方品牌资产",
+      "landing": [
+        "ASSETS.md"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\吉祥物动画"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\吉祥物动画\\README.md",
+          "sha256": "29f4819340f7abc3a0b7654fffdcbccb2597a2948012e2473204727b65056ffb",
+          "bytes": 4404,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "基于知识图谱的RAG系统",
+      "repo": "microsoft/graphrag",
+      "url": "https://github.com/microsoft/graphrag",
+      "status": "not_adopted",
+      "decision": "图索引与社区总结尚无本项目收益证据；保留逐字原文、来源版本与召回",
+      "landing": [
+        "app/grounding.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\基于知识图谱的RAG系统\\graphrag-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\基于知识图谱的RAG系统\\graphrag-main\\README.md",
+          "sha256": "7dae46d9ed7bfb1fd85dc96ffb76663e889ceb7b3d7389b781bf3ffad61e1209",
+          "bytes": 4574,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "多Agent舆情分析助手",
+      "repo": "666ghj/BettaFish",
+      "url": "https://github.com/666ghj/BettaFish",
+      "status": "compared",
+      "decision": "读论坛监视与协作实现；本项目使用结构化子任务事件，不采用日志轮询和固定舆情角色",
+      "landing": [
+        "app/agent_runtime/runtime.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\多Agent舆情分析助手\\BettaFish-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\多Agent舆情分析助手\\BettaFish-main\\README-EN.md",
+          "sha256": "6cb2b2a89bd1bde6505aa46205838af1e494970799c5583ec7ea20990a22ab6e",
+          "bytes": 42057,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "多模态知识图谱构建",
+      "repo": "safishamsi/graphify",
+      "url": "https://github.com/safishamsi/graphify",
+      "status": "not_adopted",
+      "decision": "知识图谱构建未证明优于当前受控原文检索；无整包接入",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\多模态知识图谱构建\\graphify-8"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\多模态知识图谱构建\\graphify-8\\README.md",
+          "sha256": "26d70c1b689c27fd841b139966439ec04f022f671f7054d02859e798d8c99791",
+          "bytes": 47643,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "小红书_MCP",
+      "repo": "xpzouying/xiaohongshu-mcp",
+      "url": "https://github.com/xpzouying/xiaohongshu-mcp",
+      "status": "not_adopted",
+      "decision": "不接社交账户工具；通用 MCP 走服务端白名单与逐次审批",
+      "landing": [
+        "app/agent_runtime/mcp.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\小红书_MCP"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\小红书_MCP\\README.md",
+          "sha256": "d81f5d43bdf4a711e2f9f0122e287c3e7852fdcc285628de0dbd0a9c7b1f6435",
+          "bytes": 45195,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "把你的 AI 产品从“聊天框”升级为“智能应用”",
+      "repo": "CopilotKit/CopilotKit",
+      "url": "https://github.com/CopilotKit/CopilotKit",
+      "status": "adapted",
+      "decision": "宿主真实数据进入 Agent；稳定媒体引用贯通发现、发布和回放，不伪造素材",
+      "landing": [
+        "app/agent_runtime/chat.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\把你的 AI 产品从“聊天框”升级为“智能应用”"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\把你的 AI 产品从“聊天框”升级为“智能应用”\\README.md",
+          "sha256": "fa125a8f8c75bfded57f33792a66b5e75d4c296ce8b7d83e041863b279ec046c",
+          "bytes": 11423,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "最适合补齐后台自动化与工作流",
+      "repo": "activepieces/activepieces",
+      "url": "https://github.com/activepieces/activepieces",
+      "status": "compared",
+      "decision": "读等待点、领取与恢复实现；本项目审批摘要、有效期、单次决定和恢复仍由原执行系统管理",
+      "landing": [
+        "app/agent_runtime/store.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\最适合补齐后台自动化与工作流"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\最适合补齐后台自动化与工作流\\README.md",
+          "sha256": "cd713ed6ae78214e2a54266541df2b8c1de6163312dd499a83d59a930065ed1b",
+          "bytes": 91205,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "极简主义的自主进化体",
+      "repo": "lsdefine/GenericAgent",
+      "url": "https://github.com/lsdefine/GenericAgent",
+      "status": "compared",
+      "decision": "读结果反馈、nextprompt 和停止循环；采用本项目按结果继续的有界循环，不赋予自改代码权限",
+      "landing": [
+        "app/agent_runtime/runtime.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\极简主义的自主进化体\\GenericAgent-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\极简主义的自主进化体\\GenericAgent-main\\README.md",
+          "sha256": "07ea9b4cc596fe57864d55dbc79772d49fcce526853aaf4aba04748a557b2839",
+          "bytes": 39498,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "构建AI产品的瑞士军刀",
+      "repo": "vercel/ai",
+      "url": "https://github.com/vercel/ai",
+      "status": "adapted",
+      "decision": "显式停止条件、流取消与资源释放；未移植 JS SDK API",
+      "landing": [
+        "app/execution.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\构建AI产品的瑞士军刀\\ai-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\构建AI产品的瑞士军刀\\ai-main\\README.md",
+          "sha256": "0f1402baf0226cc4912e33b421162bf30a38a80cc438c24bba601f495e73a64f",
+          "bytes": 22,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "消除幻觉的事实之源",
+      "repo": "upstash/context7",
+      "url": "https://github.com/upstash/context7",
+      "status": "not_adopted",
+      "decision": "用途是开发文档检索，不能替代校园原通知的事实核验",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\消除幻觉的事实之源\\context7-master"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\消除幻觉的事实之源\\context7-master\\README.md",
+          "sha256": "b654a4843ba95988d9949dd9dbdbaa4bc2a8e27e36ede9a40234df813f1e0736",
+          "bytes": 9887,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "社交平台数据爬取",
+      "repo": "NanmiCoder/MediaCrawler",
+      "url": "https://github.com/NanmiCoder/MediaCrawler",
+      "status": "not_adopted",
+      "decision": "未引入社交爬取业务或凭证；公开来源取证沿用既有链路",
+      "landing": [
+        "app/evidence_web.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\社交平台数据爬取"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\社交平台数据爬取\\README.md",
+          "sha256": "5d85ff2e3d4d30d1c383e5724357434444833c3aa54b91a1abb98969c9299ffd",
+          "bytes": 19430,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "社交平台视频上传",
+      "repo": "dreammis/social-auto-upload",
+      "url": "https://github.com/dreammis/social-auto-upload",
+      "status": "not_adopted",
+      "decision": "社交上传业务不在当前范围；与另一个目录属于重复仓库身份",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\社交平台视频上传"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\社交平台视频上传\\README.md",
+          "sha256": "c5a97d5ccb79730c99d0730cf9a9e3f6b65fa0742e4da17fcddcb0ce6f0ea020",
+          "bytes": 15418,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "科研数据可视化",
+      "repo": "Haojae/scipilot-figure-skill",
+      "url": "https://github.com/Haojae/scipilot-figure-skill",
+      "status": "not_adopted",
+      "decision": "面向科研出图；不把示例数据搬入通知 UI，已有可信数值 Plot 协议",
+      "landing": [
+        "docs/genui/DESIGN.md"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\科研数据可视化\\scipilot-figure-skill-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\科研数据可视化\\scipilot-figure-skill-main\\README.md",
+          "sha256": "c89494ce5f9c15b684f8549021e9e1069cc594faacda7bdfd6c47e5f2fcebc31",
+          "bytes": 14353,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "科研领域的自我进化革命",
+      "repo": "karpathy/autoresearch",
+      "url": "https://github.com/karpathy/autoresearch",
+      "status": "compared",
+      "decision": "读固定预算、冻结评估规则；采用有限回归与真实样本验收，不运行 GPU 自改训练",
+      "landing": [
+        "tests/test_agent_fusion.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\科研领域的自我进化革命\\autoresearch-master"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\科研领域的自我进化革命\\autoresearch-master\\README.md",
+          "sha256": "3958fd4195ac2f98ed35c4eaa4f3028a335165ee24945e96426c408d25793a41",
+          "bytes": 8039,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "自动化上传视频到社交媒体",
+      "repo": "dreammis/social-auto-upload",
+      "url": "https://github.com/dreammis/social-auto-upload",
+      "status": "not_adopted",
+      "decision": "与社交平台视频上传去重；不接社交发布账号",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\自动化上传视频到社交媒体\\social-auto-upload-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\自动化上传视频到社交媒体\\social-auto-upload-main\\README.md",
+          "sha256": "9813da87372a33eba8c51e6b60ad595d978660b6bee9ed1edc815278303af55d",
+          "bytes": 13131,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "自我进化的认知基石",
+      "repo": "Egonex-AI/Understand-Anything",
+      "url": "https://github.com/Egonex-AI/Understand-Anything",
+      "status": "not_adopted",
+      "decision": "代码知识图谱工具，用于代码理解；不是用户长期记忆的替代引擎",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\自我进化的认知基石\\Understand-Anything-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\自我进化的认知基石\\Understand-Anything-main\\README.md",
+          "sha256": "9af36b88f241cebff485bde0cdd77644af665455af67616e4ffb6182fe465aa4",
+          "bytes": 17269,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "视频剪辑",
+      "repo": "browser-use/video-use",
+      "url": "https://github.com/browser-use/video-use",
+      "status": "not_adopted",
+      "decision": "独立视频编辑能力未要求；本轮修复的是已有私有媒体展示链路",
+      "landing": [
+        "app/chat_media.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\视频剪辑\\video-use-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\视频剪辑\\video-use-main\\README.md",
+          "sha256": "987a0f91ccfcbebfbf3e1d5db34a24280884da7329518f39558380336c9c8684",
+          "bytes": 5518,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "超高级管理后台",
+      "repo": null,
+      "url": null,
+      "status": "identity_unverified",
+      "decision": "本地 Spring Boot/Vue 脚手架；无已证实唯一上游，未重写现有技术栈",
+      "landing": [],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\超高级管理后台"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\超高级管理后台\\README.md",
+          "sha256": "51f2d2b2fe37a8c05d120d632bad4c1aab59e242dad448540b5460ca65b57d88",
+          "bytes": 6291,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "降低token成本",
+      "repo": "JuliusBrussee/caveman",
+      "url": "https://github.com/JuliusBrussee/caveman",
+      "status": "not_adopted",
+      "decision": "极短表达不能代替上下文管理；不删事实条件换取表面 token 降低",
+      "landing": [
+        "app/agent_runtime/context.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\降低token成本\\caveman-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\降低token成本\\caveman-main\\README.md",
+          "sha256": "d29273cd6de48a41ad9c04ad9fc1dbf53bb41a02e6d2551ad57be4f6e44eb72a",
+          "bytes": 14233,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    },
+    {
+      "folder": "陪你共同成长的智能体",
+      "repo": "NousResearch/hermes-agent",
+      "url": "https://github.com/NousResearch/hermes-agent",
+      "status": "adapted",
+      "decision": "完整轮次、上下文快照与迟到结果边界；不引入全量网关",
+      "landing": [
+        "app/context_snapshot.py"
+      ],
+      "local_roots": [
+        "D:\\项目文件\\SKILL_extracted\\陪你共同成长的智能体\\hermes-agent-main"
+      ],
+      "readme_provenance": [
+        {
+          "path": "D:\\项目文件\\SKILL_extracted\\陪你共同成长的智能体\\hermes-agent-main\\README.es.md",
+          "sha256": "ef8ceea82271a8b72f9b9bc08e4d984a407b9259affd68230dc1a626c9e65875",
+          "bytes": 16820,
+          "review_scope": "identity/readme screening; not full source review"
+        }
+      ]
+    }
+  ],
+  "memory_references": [
+    {
+      "repo": "EverMind-AI/EverOS",
+      "url": "https://github.com/EverMind-AI/EverOS",
+      "commit_prefix": "0d5789eacc69",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "MemTensor/MemOS",
+      "url": "https://github.com/MemTensor/MemOS",
+      "commit_prefix": "a7367d07e55d",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "NevaMind-AI/memU",
+      "url": "https://github.com/NevaMind-AI/memU",
+      "commit_prefix": "42ef9fa3a803",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "agentscope-ai/ReMe",
+      "url": "https://github.com/agentscope-ai/ReMe",
+      "commit_prefix": "d6b02a20bacf",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "getzep/graphiti",
+      "url": "https://github.com/getzep/graphiti",
+      "commit_prefix": "3cc723cd292e",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "langchain-ai/langgraph",
+      "url": "https://github.com/langchain-ai/langgraph",
+      "commit_prefix": "1400d25b7b88",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "langchain-ai/langmem",
+      "url": "https://github.com/langchain-ai/langmem",
+      "commit_prefix": "48e3c11f5bb5",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "letta-ai/letta-code",
+      "url": "https://github.com/letta-ai/letta-code",
+      "commit_prefix": "e8073d4e475a",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "mem0ai/mem0",
+      "url": "https://github.com/mem0ai/mem0",
+      "commit_prefix": "0724291bd864",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "memodb-io/memobase",
+      "url": "https://github.com/memodb-io/memobase",
+      "commit_prefix": "358c16bbc6d6",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "topoteretes/cognee",
+      "url": "https://github.com/topoteretes/cognee",
+      "commit_prefix": "37f788bd2877",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "vectorize-io/hindsight",
+      "url": "https://github.com/vectorize-io/hindsight",
+      "commit_prefix": "c5f585f8f856",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    },
+    {
+      "repo": "volcengine/OpenViking",
+      "url": "https://github.com/volcengine/OpenViking",
+      "commit_prefix": "8640600f4a86",
+      "status": "adapted_principles_existing_memory",
+      "review": "docs/MEMORY_SOURCE_REVIEW.md",
+      "note": "Previously reviewed fixed source; existing memory implementation retained, not 13 installed engines."
+    }
+  ],
+  "codex_review": "docs/CODEX_RUNTIME.md",
+  "codex_hashes": "docs/CODEX_SOURCE_MANIFEST.json",
+  "selected_sources_reviewed_this_round": [
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\langchain-master\\langchain-master\\libs\\langchain_v1\\langchain\\agents\\middleware\\context_editing.py",
+      "sha256": "38c5c6683ef2bbee386d17c4904ad3b93db30dc17b4dc02e27420277c659da12",
+      "bytes": 9687,
+      "review_scope": "keep/exclude_tools and result reclamation"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\langchain-master\\langchain-master\\libs\\langchain_v1\\langchain\\agents\\middleware\\tool_retry.py",
+      "sha256": "30b8281abcfc12c5a6d9afa8304e6e65dbc83e893ff14294f79abe0c7af2dfc8",
+      "bytes": 14507,
+      "review_scope": "bounded retry filters; no automatic blanket retry adopted"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\把你的 AI 产品从“聊天框”升级为“智能应用”\\packages\\react-core\\src\\hooks\\use-copilot-readable.ts",
+      "sha256": "90b55714c63c18b0062a2ad72d30de4efa41f4d8e17f704259bbbc9eb89c5266",
+      "bytes": 3968,
+      "review_scope": "host state registration and cleanup"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\把你的 AI 产品从“聊天框”升级为“智能应用”\\packages\\react-core\\src\\hooks\\use-coagent-state-render-bridge.helpers.ts",
+      "sha256": "cfc4e9c4b60b0be2f63ba9b675afeaf5dbeea121200017c00e7c1ee3f0c43ce4",
+      "bytes": 9437,
+      "review_scope": "message/run claim and snapshot helpers"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\langmem-48e3c11f5bb5\\src\\langmem\\knowledge\\tools.py",
+      "sha256": "0118d3623a19c9b6c8c3d477aead51f08eeb44771c3ae3f51cd32d8a800b78d7",
+      "bytes": 19240,
+      "review_scope": "memory tool contract and namespace selection"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\极简主义的自主进化体\\GenericAgent-main\\agent_loop.py",
+      "sha256": "8ed907d542b1f0ed235b50332231e15939133ac4f6fb01b535c82e2407c02451",
+      "bytes": 6832,
+      "review_scope": "event loop, next prompt, completion and stop"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\最适合补齐后台自动化与工作流\\packages\\server\\api\\src\\app\\flows\\flow-run\\waitpoint\\resume-service.ts",
+      "sha256": "6b23c15cb431b43e27ef2d16400c4a80804602ecc1090f7e581d20c73efbebd7",
+      "bytes": 8211,
+      "review_scope": "waitpoint resume, stale/claimed state"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\最适合补齐后台自动化与工作流\\packages\\server\\engine\\src\\lib\\handler\\flow-executor.ts",
+      "sha256": "6f74a2f816fc07b176fe1fb3fa3e18433ed256e694b21da7d8ffc0119ee89607",
+      "bytes": 7709,
+      "review_scope": "execution and outcome dispatch"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\多Agent舆情分析助手\\BettaFish-main\\ForumEngine\\monitor.py",
+      "sha256": "02849a53c7f52caaf44d4c1be1f02848543cb6599b7916c5cfd35804fe447689",
+      "bytes": 37835,
+      "review_scope": "forum monitor and log coordination comparison"
+    },
+    {
+      "path": "D:\\项目文件\\SKILL_extracted\\科研领域的自我进化革命\\autoresearch-master\\program.md",
+      "sha256": "86cf987a5c381e46eefe0d0a82765223fd766d8d7acdc2afacfbbce15ecacece",
+      "bytes": 7039,
+      "review_scope": "fixed budget and frozen evaluation contract"
+    }
+  ],
+  "frontend_source_ranges": [
+    {
+      "path": "D:\\项目文件\\前端\\优质前端部件组_前端优化灵感源之一\\18_列表选择.md",
+      "sha256": "e273f3b4686649873ba06c65f2df4458720713e322c2df3a0c6b5375c693c8cb",
+      "bytes": 8222,
+      "review_scope": "lines 116-161"
+    },
+    {
+      "path": "D:\\项目文件\\前端\\优质前端部件组_前端优化灵感源之一\\37_信息填写框.md",
+      "sha256": "70e749c023dc2002cb0421920b77906ade3da09be4fb7f0183df5686cdc93675",
+      "bytes": 13405,
+      "review_scope": "lines 188-310"
+    },
+    {
+      "path": "D:\\项目文件\\前端\\优质前端部件组_前端优化灵感源之一\\45_线状文件夹展示.md",
+      "sha256": "2b30c1bffb56fbfcd4dbd0f7b59b3a3d92840541d49c8c52e1d959f7e9e06603",
+      "bytes": 3505,
+      "review_scope": "lines 19-66,117-119; API usage, not full implementation"
+    },
+    {
+      "path": "D:\\项目文件\\前端\\优质前端部件组_前端优化灵感源之一\\43_流失输出代码.md",
+      "sha256": "c612e40aa8cc8046d9360ba29274ff2b097b29b153a07c02b4014fcb98a9178e",
+      "bytes": 3010,
+      "review_scope": "lines 47-67"
+    },
+    {
+      "path": "D:\\项目文件\\前端\\frontend-component-handbook.md",
+      "sha256": "ab3e372b799815a8bacddf73b5825fbcadb0bd149c4692ddf04cd9326b32212a",
+      "bytes": 27408258,
+      "review_scope": "selected Tag/Tabs/Dropdown/Toolbar/Sidebar/Tree ranges; not all 819230 lines"
+    },
+    {
+      "path": "D:\\项目文件\\前端\\前端组件设计与实现手册.md",
+      "sha256": "f04298c342675a7548894575581ca94db13fdeca7f916ed6faa7ed06ba0c21ea",
+      "bytes": 202186,
+      "review_scope": "selected interaction and reduced-motion guidance"
+    }
+  ],
+  "frontend_catalog": {
+    "path": "D:\\项目文件\\SKILL_extracted\\UI组件资料-已核验部分与待复核目录\\data\\coverage.json",
+    "sites": [
+      "shadcn/ui",
+      "Transitions",
+      "RareUI",
+      "BeUI",
+      "BeautifulUI"
+    ],
+    "status": "partially_verified_catalog",
+    "note": "Demo links and dependencies in handbooks are not independently requested repositories."
+  },
+  "project_history_scope": {
+    "reviewed_project_threads": 9,
+    "note": "Local conversation identifiers and raw user messages are not published."
+  }
+}

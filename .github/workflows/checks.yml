@@ -73,6 +73,8 @@ jobs:
           await browser.close(); console.log(engine.name() + " ready"); }'
       - name: Run the browser suites against synthetic data
         run: python scripts/run_browser_checks.py
+      - name: Verify embedded Agent approvals, UI, media and incremental rendering
+        run: python scripts/run_agent_browser_checks.py
       - name: Write browser counts to the run summary
         if: always()
         run: python scripts/write_ci_summary.py --kind browser
@@ -97,6 +99,15 @@ jobs:
             artifacts/ci-browser/verify_reference_interactions.mjs.log
             artifacts/ci-browser/verify_workspace_interactions.mjs.log
             artifacts/ci-browser/verify_visual_review.mjs.log
+            artifacts/ci-agent-browser/*.log
+            artifacts/ci-agent-browser/results.json
+            artifacts/agent-chat-browser/results.json
+            artifacts/agent-chat-browser/*.png
+            artifacts/agent-adaptive-browser/results.json
+            artifacts/agent-adaptive-browser/*.png
+            artifacts/reference-fusion/browser/results.json
+            artifacts/reference-fusion/browser/*.png
+            artifacts/agent-quality-browser/performance.json
             artifacts/ci/summary.md
           retention-days: 14
           if-no-files-found: warn

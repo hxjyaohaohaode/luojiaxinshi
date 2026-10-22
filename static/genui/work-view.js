@@ -6,51 +6,70 @@ export function elapsedLabel(start,end){
   return seconds>=60?`${Math.floor(seconds/60)}分${seconds%60}秒`:`${seconds}秒`;
 }
 
-// All copy is server execution metadata. No hidden reasoning or model-generated HTML.
+// Render execution details only when opened. Streaming must not rebuild a hidden log.
+export function workHeadline(message){
+  const receipt=message.grounding?.work_summary;
+  if(message.status==='processing'){
+    const steps=message._work||message.grounding?.steps||[];
+    return [...steps].reverse().find(s=>s.state==='running')?.title||'正在处理';
+  }
+  if(message.status!=='complete')return '执行未完成';
+  if(!receipt)return '处理记录';
+  if(receipt.highlights?.[0])return receipt.highlights[0];
+  const facts=[];
+  if(receipt.cited_sources?.length)facts.push(`引用 ${receipt.cited_sources.length} 个来源`);
+  if(receipt.tool_calls)facts.push(`执行 ${receipt.tool_calls} 次工具`);
+  if(receipt.ui_components?.length)facts.push('生成互动内容');
+  if(receipt.failed_tools)facts.push(`${receipt.failed_tools} 次工具未成功`);
+  return facts.join(' · ')||(receipt.verified?'答复已核验':'处理记录');
+}
+
 export class WorkSummaryView{
   constructor(parent,before){
     this.root=el('details','work-summary');this.head=el('summary');this.dot=el('span','work-indicator');this.dot.setAttribute('aria-hidden','true');
     this.title=el('span','work-title');this.time=el('span','work-time');this.chevron=el('span','work-chevron','⌄');this.chevron.setAttribute('aria-hidden','true');
     this.head.append(this.dot,this.title,this.time,this.chevron);this.body=el('div','work-body');this.root.append(this.head,this.body);parent.insertBefore(this.root,before);
+    this.root.addEventListener('toggle',()=>{if(this.root.open)this.renderDetails();});
   }
   update(message){
+    this.message=message;
     const steps=message._work||message.grounding?.steps||[],report=message.grounding||{},running=message.status==='processing';
     this.root.hidden=!steps.length&&!report.status;
-    if(this.running===undefined)this.root.open=false;
     if(this.running&&!running)this.root.open=false;
-    this.running=running;this.root.dataset.state=running?'running':message.status==='complete'?'complete':'interrupted';
+    this.root.dataset.state=running?'running':message.status==='complete'?'complete':'interrupted';
     this.start=report.started_at||steps[0]?.started_at;this.end=report.checked_at||report.finished_at||steps.at(-1)?.finished_at;
-    this.title.textContent=running?(steps.at(-1)?.title||'正在处理'):message.status==='complete'?'工作摘要':message.error?.includes('按更新后的问题继续')?'工作已转向':'工作记录 · 未完成';
-    const clock=()=>{this.time.textContent=(this.start?elapsedLabel(this.start,running?null:this.end):'');};clock();
-    clearInterval(this.timer);if(running)this.timer=setInterval(clock,1000);
-    const key=JSON.stringify([steps,report,message.evidence_sources]);if(key===this.key)return;this.key=key;this.body.replaceChildren();
+    this.title.textContent=workHeadline(message);
+    const clock=()=>{this.time.textContent=this.start?elapsedLabel(this.start,this.running?null:this.end):'';};
+    if(this.running!==running){clearInterval(this.timer);this.running=running;if(running)this.timer=setInterval(clock,1000);}
+    clock();
+    if(this.root.open)this.renderDetails();
+  }
+  renderDetails(){
+    if(!this.message)return;
+    const message=this.message,report=message.grounding||{},steps=message._work||report.steps||[],receipt=report.work_summary;
+    const key=JSON.stringify([steps,receipt,report.harness?.call_count,message.evidence_sources]);if(key===this.key)return;this.key=key;
+    this.body.replaceChildren();
+    if(receipt){
+      if(receipt.highlights?.length){const highlights=el('ul','work-highlights');for(const text of receipt.highlights)highlights.append(el('li','',text));this.body.append(highlights);}
+      const outcomes=el('ul','work-outcomes');
+      for(const text of receipt.outcomes||[])outcomes.append(el('li','',text));
+      if(outcomes.childNodes.length)this.body.append(outcomes);
+      if(receipt.gaps?.length){const gaps=el('ul','work-gaps');for(const gap of receipt.gaps)gaps.append(el('li','',gap));this.body.append(el('strong','','尚缺的信息'),gaps);}
+      const sources=(message.evidence_sources||[]).filter(s=>receipt.cited_sources?.includes(s.id));
+      if(sources.length){const names=el('ul','work-source-list');for(const source of sources){const li=el('li'),url=source.url&&safeUrl(source.url,{hosts:null});if(url){const link=el('a','',source.name);link.href=url;link.target='_blank';link.rel='noopener noreferrer';li.append(link);}else li.textContent=source.name;names.append(li);}this.body.append(el('strong','','实际引用'),names);}
+    }
+    const detail=el('details','work-audit');detail.append(el('summary','',`执行记录 · ${steps.length} 项`));
     const list=el('ol','work-steps');
     for(const step of steps){
       const item=el('li','work-step');item.dataset.state=step.state;
-      const scoped=step.stage==='retrieving'&&report.retrieval?.local_scope==='message';
-      const head=el('div','work-step-heading'),state=el('span','work-step-state',step.state==='running'?'进行中':step.state==='complete'?'已结束':'已中断');
-      const summary=scoped?'核对限定消息中的材料与后续补充。':step.summary;
-      head.append(el('strong','',scoped?'核对限定消息材料':step.title),state);item.append(head,el('p','',step.state==='running'?summary:summary.replace(/^正在/,'').replace(/…+$/,'')));
-      if(step.tools?.length){const tools=el('div','work-tools');for(const name of scoped?['限定材料核对']:step.tools)tools.append(el('span','',name));item.append(tools);}
+      const head=el('div','work-step-heading');head.append(el('strong','',step.title),el('span','work-step-state',step.state==='running'?'进行中':step.state==='complete'?'结束':'未完成'));
+      item.append(head);
+      if(step.summary&&step.summary!==step.title)item.append(el('p','',step.summary));
+      if(step.detail)item.append(el('p','work-subtle',step.detail));
       list.append(item);
     }
-    if(steps.length)this.body.append(list);
-    if(report.retrieval){
-      const counts=report.retrieval.scanned||{},scope=el('div','work-evidence');
-      scope.append(el('p','',report.retrieval.local_scope==='message'?`本轮只核对限定消息中的材料与补充，选取 ${report.retrieval.selected_sources||0} 个来源。`:`检索范围：${counts.materials||0} 份资料、${counts.notices||0} 份通知、${counts.tasks||0} 项待办、${counts.arrangements||0} 项日程；选取 ${report.retrieval.selected_sources||0} 个本地来源。`));
-      const web=report.web||{};scope.append(el('p','',web.status==='searched'?`联网取得 ${web.source_count||0} 个来源，读取 ${web.pages_read||0} 个网页正文。`:web.status==='not_needed'?'本轮未联网：'+web.reason:'本轮联网未取得可核验结果。'));
-      if(web.queries?.length)scope.append(el('p','work-subtle','公开检索词：'+web.queries.join('；')));
-      if(web.followup?.status==='unavailable')scope.append(el('p','work-subtle','补充联网未取得结果，相关缺口仍需核实。'));
-      if(report.retrieval.context_limited||web.coverage?.context_limited)scope.append(el('p','work-subtle','按相关性选取段落，存在内容上限，未将全部资料逐字发送给模型。'));
-      const audit=el('details','work-audit');audit.open=!!this.auditExpanded;audit.append(el('summary','','查看覆盖与核验明细'));audit.addEventListener('toggle',()=>this.auditExpanded=audit.open);
-      if(report.coverage_check?.items?.length){const check=el('ul','work-coverage');for(const item of report.coverage_check.items){check.append(el('li','',`${item.requirement}：${{supported:'有相关证据',partial:'部分覆盖',missing:'证据不足'}[item.status]||'待检查'}${item.gap?'；'+item.gap:''}`));}audit.append(check);}
-      if(report.coverage_check?.personal_fit)audit.append(el('p','work-subtle','个人条件检查：'+report.coverage_check.personal_fit));
-      for(const conflict of report.coverage_check?.conflicts||[])audit.append(el('p','work-subtle','差异：'+conflict));
-      if(audit.childNodes.length>1)scope.append(audit);
-      const names=el('ul','work-source-list');for(const source of (message.evidence_sources||[]).filter(s=>!['user_input','profile'].includes(s.evidence_kind))){const li=el('li'),url=source.url&&safeUrl(source.url,{hosts:null});if(url){const link=el('a','',source.name);link.href=url;link.target='_blank';link.rel='noopener noreferrer';li.append(link);}else li.textContent=source.name;names.append(li);}if(names.childNodes.length)scope.append(el('p','work-subtle','本轮选取的来源'),names);
-      scope.append(el('p','work-subtle',report.status==='checked'?'已检查引文并独立复核正文与互动内容。检索和模型复核不能保证零错误，重要期限与资格请核对原发布方。':'回答尚未通过完整核验。'));
-      this.body.append(scope);
-    }
+    if(receipt){detail.append(list);this.body.append(detail);}else this.body.append(list);
+    const calls=report.harness?.call_count;if(calls)this.body.append(el('p','work-subtle',`模型调用 ${calls} 次`));
   }
   dispose(){clearInterval(this.timer);this.root.remove();}
 }

@@ -281,7 +281,7 @@ def test_stage_status_never_needs_optional_model_by_default(env,monkeypatch):
     c=account(env);chat=conversation(c);db=env[0].state.db;mid=ident()
     with db.connect(write=True) as conn:conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'assistant','','processing',?)",(mid,chat['id'],int(time.time())))
     async def forbidden(*args):raise AssertionError('stage label must not spend a model call')
-    monkeypatch.setattr(work_summary,'summarize',forbidden)
+    assert not hasattr(work_summary,'summarize')
     async def source():
         yield {'type':'phase','phase':'planning','label':'确认范围'}
         await asyncio.sleep(.01)

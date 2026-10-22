@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SSEDecoder} from '../static/genui/transport.js';
 const packet=(seq,type,data)=>`id: ${seq}\nevent: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
+test('original chat accepts actual agent status and bounded parallel tool steps',()=>{
+  const seen=[],decoder=new SSEDecoder((type,data)=>seen.push([type,data]));
+  const state={thread_id:'a'.repeat(32),turn_id:'b'.repeat(32),status:'waiting_approval',approvals:[],files:[]};
+  const steps=Array.from({length:48},(_,i)=>({id:'tool-'+i,title:'检索资料',summary:'核对原文',state:'complete'}));
+  decoder.push(new TextEncoder().encode(packet(1,'agent',{message_id:'m',kind:'tool.started',state})+packet(2,'work',{steps})+packet(3,'done',{})));decoder.finish();
+  assert.equal(seen[0][1].state.status,'waiting_approval');assert.equal(seen[1][1].steps.length,48);
+  assert.throws(()=>new SSEDecoder(()=>{}).push(new TextEncoder().encode(packet(1,'agent',{message_id:'m',kind:'tool.started',state:null}))),/状态无效/);
+});
 test('long Chinese answers survive hundreds of frames and a full history checkpoint',()=>{
   const answer='中文长回复🌸，引号与换行保持完整。\n'.repeat(3000)+'结尾',parts=[],seen=[];let seq=1;
   parts.push(packet(seq++,'start',{}));for(let i=0;i<answer.length;i+=233)parts.push(packet(seq++,'delta',{text:answer.slice(i,i+233)}));

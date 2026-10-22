@@ -138,8 +138,8 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     monkeypatch.setattr(grounding,'completion',complete)
     issues,_,_=asyncio.run(grounding.verify(settings,answer(),evidence(),'核对原文',{}))
     assert not issues and seen[0]['model']=='mimo-v2.6-pro'
-    assert seen[0]['thinking']=={'type':'enabled'}
-    assert seen[0]['max_completion_tokens']==settings.ai_output_tokens and 'temperature' not in seen[0]
+    assert seen[0]['thinking']=={'type':'disabled'}
+    assert seen[0]['max_completion_tokens']==min(settings.ai_output_tokens,2048) and seen[0]['temperature']==0.2
     assert json.loads(seen[0]['messages'][1]['content'])['program_checks']
     assert json.loads(seen[0]['messages'][1]['content'])['citation_display_map']==[{'display_number':1,**answer()['citations'][0]}]
     audited=json.loads(seen[0]['messages'][1]['content'])
@@ -261,7 +261,7 @@ def mocks(monkeypatch, fail=False, network=False):
     async def coverage(*args):return {'items':[{'requirement':'报名时间','status':'supported','source_ids':['document'],'gap':''}], 'personal_fit':'未提供额外个人条件','conflicts':[], 'followup_local':[], 'followup_public':[]},{}
     async def summary(*args):return '正在按实际检索结果整理当前阶段的工作摘要。',{}
     monkeypatch.setattr(grounding,'assess_coverage',coverage)
-    monkeypatch.setattr(work_summary,'summarize',summary)
+    assert not hasattr(work_summary,'summarize')
     monkeypatch.setattr(grounding,'plan',planning)
     monkeypatch.setattr(grounding,'retrieve',lambda *args:(evidence(),{'scanned':{},'selected_sources':1}))
     async def searching(*args):raise AIError('网络不可用')

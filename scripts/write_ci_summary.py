@@ -31,11 +31,15 @@ def main():
                 ('Browser regression', 'artifacts/frontend-v8-browser/report.json'),
                 ('Reference interactions', 'artifacts/reference-interactions-browser/report.json'),
                 ('Workspace interactions', 'artifacts/workspace-interactions-browser/report.json'),
-                ('Visual layout bounds', 'artifacts/visual-review-browser/report.json')]
+                ('Visual layout bounds', 'artifacts/visual-review-browser/report.json'),
+                ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
+                ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
+                ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),
+                ('Agent incremental rendering', 'artifacts/agent-quality-browser/performance.json')]
     for label, path in browsers if kind in {'browser', 'all'} else []:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))
-            rows.append([label, len(data['checks']), sum(not c['ok'] for c in data['checks']), len(data['errors']), 0])
+            rows.append([label, len(data['checks']), sum(not c['ok'] for c in data['checks'] if isinstance(c, dict)), len(data['errors']), 0])
         except (OSError, ValueError, KeyError, TypeError):
             rows.append([label, 'report unavailable', '-', '-', '-'])
     text = '## Verification results\n\nCommit: `'+os.getenv('GITHUB_SHA', 'local')+'`\n\n'

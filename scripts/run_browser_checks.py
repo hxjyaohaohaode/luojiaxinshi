@@ -1,4 +1,5 @@
 """Run browser suites against synthetic, loopback-only application data."""
+import argparse
 import os
 from pathlib import Path
 import socket
@@ -10,6 +11,11 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'artifacts' / 'ci-browser'
+SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
+          ('verify_frontend_review.mjs', 'frontend-v8-browser'),
+          ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
+          ('verify_workspace_interactions.mjs', 'workspace-interactions-browser'),
+          ('verify_visual_review.mjs', 'visual-review-browser')]
 
 
 def reset_fixture_limits(data):
@@ -26,6 +32,10 @@ def reset_fixture_limits(data):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--suite', choices=[name for name, _ in SUITES], action='append',
+                        help='Run only these suites; the default runs all suites.')
+    selected = parser.parse_args().suite
     # Never reuse or terminate another service. In particular, leave 8765 alone.
     with socket.socket() as probe:
         try:
@@ -58,12 +68,9 @@ def main():
                     raise RuntimeError('Synthetic fixture did not become ready within 45 seconds.')
                 time.sleep(.15)
             failed = False
-            suites = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
-                      ('verify_frontend_review.mjs', 'frontend-v8-browser'),
-                      ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
-                      ('verify_workspace_interactions.mjs', 'workspace-interactions-browser'),
-                      ('verify_visual_review.mjs', 'visual-review-browser')]
-            for script, folder in suites:
+            for script, folder in SUITES:
+                if selected and script not in selected:
+                    continue
                 reset_fixture_limits(data)
                 (ROOT/'artifacts'/folder/'report.json').unlink(missing_ok=True)
                 print('Running '+script, flush=True)

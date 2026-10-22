@@ -1,5 +1,7 @@
 # 珞珈信使
 
+**现有聊天 Agent 已接入工具循环**：普通聊天按结果继续检索、读取原文、召回记忆和协调只读子任务，再由原有回答生成与独立证据复核流程发布。操作审批、执行状态和生成文件都在当前回复中，没有新增独立任务页面。Python SDK 和 `python -m app.agent_runtime exec` 默认使用原聊天主链路；底层运行时另支持 JSON-RPC/SSE 与 `--oss` 本地模型。源码映射、配置和验证边界见 [Codex 架构适配](docs/CODEX_RUNTIME.md)。
+
 验证入口：[GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) · [逐项结果与合成截图](docs/verification/frontend-v9-evidence/README.md) · [验证范围与复现方法](TESTING.md)。
 
 本地优先的校园通知与行动助手（1.19.1）。从原始通知出发，核对本人行动，准备材料，记录提交、补件、结果和后续跟进。正式变更先核实再应用；变化传到后续步骤，保留历史进度并由本人复核是否仍有效，或重新办理。个人计划与办理记录保留，并使用日历安排课程和事项。支持 AI 自动选取、持续维护、本人可编辑且有来源与遗忘边界的分层记忆，以及保留原始记录的长对话压缩；模型任务中断与过时结果都有可查看的处理状态。

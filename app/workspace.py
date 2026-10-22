@@ -107,6 +107,8 @@ def conversation_detail(conn,cid,uid,settings):
             item.update(status='failed',error='上次回复已中断，消息已保留，可以重试。')
         item=load_message(conn,item,settings)
         item=load_report(conn,item)
+        from .agent_runtime.chat import message_state
+        item['agent'] = message_state(conn, uid, cid, item['id'])
         interaction=conn.execute('SELECT context FROM genui_interactions WHERE message_id=?',(item['id'],)).fetchone()
         if interaction:item['interaction']=json.loads(interaction['context'])
         reaction=conn.execute('SELECT value FROM reply_reactions WHERE message_id=?',(item['id'],)).fetchone();item['reaction']=reaction[0] if reaction else 0

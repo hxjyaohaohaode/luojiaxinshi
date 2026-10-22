@@ -215,10 +215,12 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._phase=data.phase;m._phaseLabel=data.label;m._work=data.steps;if(data.data&&!pending.raw){m.genui.data=data.data;pending.parser=new StreamParser({limits:state.session.genui?.limits,data:data.data});}paintMessages();}
         }else if(type==='work'){
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._work=data.steps;paintMessages();}
+        }else if(type==='agent'){
+          if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m.agent=data.state;paintMessages();}
         }else if(type==='preview'){
           if(data.message_id!==pending.mid)return;
           const m=current.messages.find(m=>m.id===pending.mid);
-          if(m){m._preview=data.reset?'':(m._preview||'')+data.text;paintMessages();}
+          if(m){m._preview=(data.reset?'':(m._preview||''))+data.text;paintMessages();}
         }else if(type==='delta'){
           if(!pending.parser||data.message_id!==pending.mid)throw Error('回复与当前消息不一致，已停止接收。');pending.raw+=data.text;pending.expanded||=!!data.expanded_template;pending.parser.push(data.text);
           const m=current.messages.find(m=>m.id===pending.mid);if(m){m.genui.raw=pending.raw;if(pending.tier===3)m.content=pending.raw;m._liveParts=pending.tier===1||pending.expanded?pending.parser.snapshot():[{kind:'text',text:pending.raw}];paintMessages();}
@@ -315,6 +317,10 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       else if(action==='toggle-materials'){setComposerMenu(false);setMaterials(!$('#chat-workspace').classList.contains('show-materials'));}
       else if(action==='preview')preview(id);
       else if(action==='retry')await send(id);
+      else if(action==='agent-approval'){
+        await api(`/conversations/${current.id}/agent/approvals/${control.dataset.approval}`,{method:'POST',json:{digest:control.dataset.digest,decision:control.dataset.decision}});
+        const message=current.messages.find(m=>m.id===id);if(message?.agent)message.agent.approvals=message.agent.approvals.filter(a=>a.id!==control.dataset.approval);drawMessages();
+      }
       else if(action==='clear-material-search'){materialSearch.clear();}
       else if(action==='cancel'){submission++;accepting=false;current=await api('/conversations/'+current.id);current=await api('/conversations/'+current.id+'/cancel',{method:'POST',json:{version:current.version}});streaming?.controller.abort();sending=false;update();}
       else if(action==='speak'){const m=current.messages.find(m=>m.id===id);await replySpeech.toggle(id,presenter?.copy(m)||m.content,control);}

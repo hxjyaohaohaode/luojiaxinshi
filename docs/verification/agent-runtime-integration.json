@@ -1,0 +1,206 @@
+{
+  "verified_at": "2026-10-22T14:22:08.698497+00:00",
+  "provenance": "local Windows verification; cloud verification belongs to the exact GitHub Actions commit",
+  "base_commit": "4f855dfe8811c9e943f9b89a0b5ad883b3785a3d",
+  "synthetic_data_only": true,
+  "live_model_calls": 0,
+  "python": {
+    "tests": 989,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "node": {
+    "tests": 142,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "browsers": [
+    {
+      "suite": "stability",
+      "checks": 120,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/frontend-v9-browser/report.json"
+    },
+    {
+      "suite": "original_interface",
+      "checks": 198,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/frontend-v8-browser/report.json"
+    },
+    {
+      "suite": "reference_interactions",
+      "checks": 45,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/reference-interactions-browser/report.json"
+    },
+    {
+      "suite": "workspace_interactions",
+      "checks": 54,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/workspace-interactions-browser/report.json"
+    },
+    {
+      "suite": "visual_bounds",
+      "checks": 63,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/visual-review-browser/report.json"
+    },
+    {
+      "suite": "agent_approvals_cancel",
+      "checks": 7,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/agent-chat-browser/results.json"
+    },
+    {
+      "suite": "agent_authored_ui",
+      "checks": 7,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/agent-adaptive-browser/results.json"
+    },
+    {
+      "suite": "agent_private_media",
+      "checks": 7,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/reference-fusion/browser/results.json"
+    },
+    {
+      "suite": "agent_incremental_rendering",
+      "checks": 5,
+      "failures": 0,
+      "page_errors": 0,
+      "local_report": "artifacts/agent-quality-browser/performance.json"
+    }
+  ],
+  "total_browser_checks": 506,
+  "http_runtime": {
+    "requests": 765,
+    "accounts": 5,
+    "notices": 100,
+    "tasks": 200,
+    "isolation": true,
+    "idempotency": true,
+    "stale_updates_rejected": true,
+    "restart": true,
+    "backup_restore": true
+  },
+  "dependency_audit": {
+    "python_known_vulnerabilities": 0,
+    "npm_production_known_vulnerabilities": 0
+  },
+  "genui": {
+    "catalog_matches": true,
+    "offline_fixtures": 40
+  },
+  "first_browser_attempt": {
+    "suite": "original_interface",
+    "checks_passed": 198,
+    "page_errors": 1,
+    "remedy": "Use application hash navigation and wait for the requested rendered route instead of repeated document navigation; rerun all three engines without suppressing page errors."
+  },
+  "commands": [
+    "python -m pytest -q",
+    "node --test tests/*.test.mjs",
+    "python scripts/run_browser_checks.py",
+    "python scripts/run_agent_browser_checks.py",
+    "python scripts/genui_catalog.py --check",
+    "python scripts/evaluate_genui.py",
+    "python -m pip_audit -r requirements.lock --strict",
+    "npm audit --omit=dev",
+    "python scripts/verify_local_runtime.py",
+    "python scripts/build_release.py"
+  ],
+  "limitations": [
+    "This is not a real-model accuracy or latency guarantee.",
+    "External MCP services, local OSS models and Docker command execution require their actual configured environments.",
+    "Local results do not stand in for the final GitHub Actions run."
+  ],
+  "sha256_lf": {
+    ".env.example": "72c83899e49cf44d57a5e601d04582f07a5fe315b66b502220a6e3a8859cec41",
+    ".github/workflows/checks.yml": "31d960a67e0fd17023f63d43ddb5db04df3391603742b90cc644de79a33bd05f",
+    "Dockerfile": "7a869aadd98a0a1dcf72335e1f45c032aad09a6b5aea810bc8e8c8e9fa10d720",
+    "README.md": "2795e3a9e49cc4190d407f1953a1770bfbc0f3077f6287b6dfbb4199c7f489d2",
+    "TESTING.md": "02980c2d4deb0a200b0c6ff19d9dc5c5629d74c9af3323bb9ed65100d5f4b1f0",
+    "THIRD_PARTY_NOTICES.md": "e56a297b981b41514c35b6edfde25d256a60513d9773d92e7459fe613c2db4f6",
+    "app/agent_runtime/__init__.py": "27e2c5ffd4f2fd85ce1d2b6120b58330e9d74a176b6dca7e16bbfb96ababa6b2",
+    "app/agent_runtime/__main__.py": "9503af8adce27e1e12527aafc747fb9f501ef69bf3f7db72c02eb3b9f7572f0e",
+    "app/agent_runtime/api.py": "f9fdc0744e6de464e0c6d15b3b22035ab51bca913120987c12bb151d061535ec",
+    "app/agent_runtime/authoring.py": "ef8da5cd8148db9c9817c12e326bd73d6c55c64d67ee5b4c457af62da0690ad5",
+    "app/agent_runtime/chat.py": "ce29960d4e8d24d6f138fc3dc77c6da28700b3b411738a334127d83b34e0705d",
+    "app/agent_runtime/context.py": "dfb281aa71cb3038ba5fc5ce436bed073550aad39b468bc3f02c9e98887ae4fa",
+    "app/agent_runtime/mcp.py": "b433d390945581444dde6047031d83a85a5372e849a10dbe03b10385156dc237",
+    "app/agent_runtime/providers.py": "0b789ed03ac1f6abb6fc99ad5fd5f993c39c53e7617c0f87ed4de3d89c2e1da8",
+    "app/agent_runtime/runtime.py": "c16d78e0b5d37c5f21f949733e20284fedb53e959437322cee5e946afcade5ed",
+    "app/agent_runtime/sandbox.py": "babf826e2e5fbaabedefc9d28c04469197a4ed1d2f1371954ccd344316f4abd3",
+    "app/agent_runtime/sdk.py": "ab84cbd5adb369a4c18d21cc5e8bc9a4370a6efaa7cac1524c01056678c2f660",
+    "app/agent_runtime/skills.py": "a0243d01ea9d618e8cd6ccbd1302d5889d4af4eb7f8e3480d6696a46af81294d",
+    "app/agent_runtime/store.py": "0b47c4689b3d29a88032fbb5bcefa07ecb300f6d2e0b37f53c1c2f9307db0462",
+    "app/agent_runtime/tools.py": "feb3380e49fe2c10777c5e8f6437dd77bdfdae7c8de5238754b615a51abeb3e3",
+    "app/agent_runtime/types.py": "d0f28a5d550577a8e92c636abed2c6edc5ba8d7f4bc90ed7cac80f602bcf3c09",
+    "app/backups.py": "994f5a645533e036ef3a4c137fec0153897efad3093e50416f7175f799c42833",
+    "app/config.py": "1befb57c032794928386f2cfa0adfa1561562055129370cbef53637f0088f28d",
+    "app/conversation_tools.py": "81b9c4965626b585c70bbcfd5ad327b85c237c1d28741adf688eb7e5744d6d83",
+    "app/db.py": "a860412bcd8de8fdaa65ddc0b888f0c7615132f64b81fa25cb9abd28b540c652",
+    "app/execution.py": "41390ccb4397c90ddd789d7a3941b2dae3413c5db1837e70076075af5542875f",
+    "app/genui_ai.py": "5e4bce0fa3aaa3118305d5ddb22a4ef2fb5a5c9d4a58af99ebca59bedf6ecab7",
+    "app/genui_api.py": "196ee93fb75a0d404bedb9008111d3dfbb78903e14a729be4b20c52e66d72c3a",
+    "app/genui_prompt.py": "2dc21498d54495b3e4bdedbc686793e408ceac3047f3d4ea40e552f3f5b213de",
+    "app/grounding.py": "05e165e0a44c41ba108a14d92493711929125997709a67f4e3b67596e3cdd105",
+    "app/main.py": "d9eed442a8560e1179d9060843d043a19af7dafc6f75319f9343cdf87be7d644",
+    "app/work_summary.py": "fdefbc454e10436ff8ab9694c1ccf2487cb4b1bd2c7495f853a91474f889f47d",
+    "app/workspace.py": "e0cb5e53ec010baf5e60f3c9271002f80e2d1b75ec1a258d90af8e2f2e211126",
+    "docs/CODEX_RUNTIME.md": "ec3ad81e28e6d6d03fb75307ef7def1cffd1bd2559c6b8b2e2211feaeff38706",
+    "docs/CODEX_SOURCE_MANIFEST.json": "70598b85e19a360491ab02befdf974bf1ba5bb865c11cb1d281f48aedc7ecbb9",
+    "docs/REFERENCE_FUSION_AUDIT.md": "8e1715f2cab8975449bce1866eca045f4669f5e9e7f33b8a941eb748aba5c33a",
+    "docs/REFERENCE_FUSION_MANIFEST.json": "9bc4f8e9a8c5703346d9e08e1d813a2378674ec836d7b987d61a125d4b632c14",
+    "docs/licenses/codex/LICENSE.txt": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+    "docs/licenses/codex/NOTICE.txt": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+    "scripts/agent_preview_server.py": "a80660d6396849544fba1bd4fbad46e3258a0753bdc10984558e2d958550f158",
+    "scripts/build_release.py": "8ff8de5b6514d94449fe970b8d83ffd28f17d4343bef763b26809ac19536d685",
+    "scripts/run_agent_browser_checks.py": "5473a042b26586e162daec545e068fb9e7d2efdd075d912bf116eea3f3721df6",
+    "scripts/run_browser_checks.py": "276145abf68293ce273936fd71de3faaf9489902a81c18521ac592ce01ab0b9c",
+    "scripts/verify_agent_adaptive_live.py": "04225efb1581766b1a35963e5f6cf182b42feb3dcb1cd047b83919ae4cc10b12",
+    "scripts/verify_agent_chat_live.py": "a87fda9ef313686b5270d065509b50844a2cbc7ed08073c46ff16fafbf7fc88c",
+    "scripts/verify_agent_live.py": "b9c6e0a4255cda81d71d8b61ba93e74d2f301bc716da0d9ab37c001e17fa6a3c",
+    "scripts/verify_agent_sandbox.py": "10cb668535d45ceb6c25b7f5998b703d6fccf006669a2a4df3a3e0cd73934779",
+    "scripts/verify_frontend_review.mjs": "d48ea2b6f5c945a234d5c149682fc80cdb615a3d5e07ca5588e5e74e15cccc77",
+    "scripts/write_ci_summary.py": "347bedfeab8fdd330026d3fc2a99c0c99214980e0350c39fefaabb06c7f63948",
+    "skills/material-checklist/SKILL.md": "92f1b2214a02e14dee04ba0c549c02e48b4697d356274047fea55efd8959221b",
+    "skills/notice-evidence/SKILL.md": "dff84c187e9e180af9151ae88d220d9780d64ea480f001b8190e5841de0d254b",
+    "static/chat.js": "72b5059f882a63dd11d0c4badefc8a511c5c8cdb14d139d8127437ccb5b762e6",
+    "static/genui/agent-view.css": "925fd76b40bc863cd86b438bbb978e77a0ca57cb6497646c8ad162da1066ab51",
+    "static/genui/agent-view.js": "b6c58c28dc2c24de2ef2686f6ab0d8003f40e893ad27c7d0958e5237f7997efe",
+    "static/genui/answer-surface.css": "0a1f09d04305c1bafb493e01167a3662ba84b9758a312618e5f5c1bfe0aba6b3",
+    "static/genui/chat-presenter.js": "95a3633cf7866c09efd793c5b3520b323d1077349bd002b1ea05338d24716d8f",
+    "static/genui/genui.css": "f197f19b35d49a7cf4c35f72e8db32ced40efb6493887d1422ccafefcec56c16",
+    "static/genui/transport.js": "9cc7367a28594fc979b1d8b1753483fb68e0c27c3a5820ba7670b528b1543068",
+    "static/genui/work-view.js": "a3ed2e982255ce34486de554654720128f48032178b1654c75d94eb707296882",
+    "static/index.html": "06d8a6f69984a9bf416420359996fd35bb75c74a9aa931f21aa7cf2a64bf7dd9",
+    "tests/agent-adaptive-browser.mjs": "fa596ead7acbd5143af0457bdf02407a6d3fe01373be44e6215bd51f4717ebd8",
+    "tests/agent-browser.mjs": "62f7c6fdea75da8b4b860ce5b26da1ace0b3c19212db3e6ef1a26d3f9b0e76ee",
+    "tests/agent-fusion-browser.mjs": "64a99c502ad293e4675342e357e61afe0fc48eac25df323b15f0eba35ac25d39",
+    "tests/agent-quality-browser.mjs": "6e4f34edc9c747dd3fa9ce520b6638adb84c247b586f92c2d991b27a04f49fde",
+    "tests/agent-work.test.mjs": "32def622ed13b3665340a58909eebfafe34a3cd7aa2ce7b94fd17dd09038b43c",
+    "tests/genui-transport.test.mjs": "ac3248445f7ff3fdf9188cad1f9ee07eb5321a6fbf4fd24a021903c0eb6d20ec",
+    "tests/test_agent_authoring.py": "5dc404e6a3ca255cfbc3a7487cb80ad67f197e720a3036ea51870c820694b686",
+    "tests/test_agent_chat.py": "05bb6931fb7239f1a9fab90fec9b3dd9465bfd10adc90d1a80a65a1f0d9caff7",
+    "tests/test_agent_fusion.py": "d827438c39b66b1f6c0453ed2c3520700f65209da28ae5f8be09f1726c789994",
+    "tests/test_agent_quality.py": "74db38e16ffe034e48024664dfe9e8ea58068e7a4969be1ad5d1f5f148fa12d3",
+    "tests/test_agent_runtime.py": "1ead12f8f1098da8cdeb95faf14d585fcc275a733f9fa3f113612264d0dbc29e",
+    "tests/test_grounding.py": "d0ea9f2e51b1b1736f06414f7f9a8cb093f0c27a07dc814010b6a681886f6003",
+    "tests/test_memory_context.py": "d937f33f2293f768747d7caddaa293bef6dad96732926a058e0327d873e8ea5b",
+    "tests/test_presentation_routing.py": "6c95d899500f92b4b4eaaa0c9f73769b1756fff325dc5e86ab5b4f57bd8b5000",
+    "tests/test_retrieval_scope.py": "b0c48538b66122bae20ab8383986c7e173fbd9f655721a3b779d5e7acc36eb4a",
+    "tests/test_work_summary.py": "bc541b0e99af2e75dc8ccd95f8b8ea7227f6300add1b0eafa367216a647db9f3",
+    "tests/test_workflow.py": "c2a7746eeb61f3f555c39716e4a62d8fea9056e8a57fe2460b629e31c35a152b"
+  }
+}

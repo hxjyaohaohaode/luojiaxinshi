@@ -220,6 +220,10 @@ class Database:
                 receipt_version=conn.execute("SELECT value FROM meta WHERE key='arrangement_receipt_schema_version'").fetchone()
                 if receipt_version and (receipt_version[0]!='1' or 'arrangement_receipts' not in tables):
                     raise RuntimeError('安排提交记录版本不兼容或数据表缺失，禁止直接降级')
+                agent_version=conn.execute("SELECT value FROM meta WHERE key='agent_schema_version'").fetchone()
+                from .agent_runtime.store import TABLES as AGENT_TABLES
+                if agent_version and (agent_version[0]!='1' or not AGENT_TABLES.issubset(tables)):
+                    raise RuntimeError('智能任务版本不兼容或数据表缺失，未修改数据库')
             conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(SCHEMA)
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
@@ -237,6 +241,8 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+EXECUTION_SCHEMA+'COMMIT;')
             from .action_review import SCHEMA as REVIEW_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+REVIEW_SCHEMA+'COMMIT;')
+            from .agent_runtime.store import SCHEMA as AGENT_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+AGENT_SCHEMA+'COMMIT;')
 
     @contextmanager
     def connect(self, write=False):

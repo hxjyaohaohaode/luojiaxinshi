@@ -58,13 +58,16 @@ class Runtime:
     def tick(self):
         with self.db.connect(write=True) as conn:
             now=int(time.time());self.register(conn,now)
-            return recover(conn,now)
+            from .agent_runtime.store import recover as recover_agents
+            return recover(conn,now)+recover_agents(conn,now)
 
     def close(self):
         with self.db.connect(write=True) as conn:
             now=int(time.time())
             conn.execute('UPDATE execution_owners SET expires_at=? WHERE id=?',(now,self.owner))
             recover(conn,now)
+            from .agent_runtime.store import recover as recover_agents
+            recover_agents(conn,now)
 
 
 def stage(conn,key,name):

@@ -60,6 +60,13 @@ class Settings:
     notice_semantic_review: bool = True
     notice_review_model: str = 'mimo-v2.6-flash'
     notice_fast_enabled: bool = False
+    agent_enabled: bool = True
+    agent_context_bytes: int = 96000
+    agent_oss_url: str = 'http://127.0.0.1:11434/v1'
+    agent_oss_model: str = ''
+    agent_oss_context_tokens: int = 32768
+    agent_sandbox_image: str = ''
+    agent_mcp_servers: dict = field(default_factory=dict)
 
     @classmethod
     def from_env(cls):
@@ -72,6 +79,19 @@ class Settings:
                      os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
                      int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
         result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
+        result.agent_enabled=os.getenv('AGENT_ENABLED','true').strip().lower() in {'true','1','yes'}
+        result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES','96000'))
+        if not 24000 <= result.agent_context_bytes <= 240000:
+            raise ValueError('AGENT_CONTEXT_BYTES 须为 24000—240000')
+        from .agent_runtime.providers import loopback_url
+        from .agent_runtime.mcp import validate_servers
+        result.agent_oss_url=loopback_url(os.getenv('AGENT_OSS_URL',cls.agent_oss_url).strip())
+        result.agent_oss_model=os.getenv('AGENT_OSS_MODEL','').strip()
+        result.agent_oss_context_tokens=int(os.getenv('AGENT_OSS_CONTEXT_TOKENS','32768'))
+        if not 8192 <= result.agent_oss_context_tokens <= 1000000:
+            raise ValueError('AGENT_OSS_CONTEXT_TOKENS 须为 8192—1000000，且不能超过本地服务实际配置')
+        result.agent_sandbox_image=os.getenv('AGENT_SANDBOX_IMAGE','').strip()
+        result.agent_mcp_servers=validate_servers(json.loads(os.getenv('AGENT_MCP_SERVERS_JSON','{}')))
         if result.registration_mode not in {'public','invite'}:
             raise ValueError('REGISTRATION_MODE 须为 public 或 invite')
         result.notice_input_tokens=int(os.getenv('NOTICE_INPUT_TOKENS','65536'))

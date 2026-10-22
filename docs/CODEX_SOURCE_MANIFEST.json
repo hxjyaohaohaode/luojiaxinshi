@@ -1,0 +1,113 @@
+{
+  "source_root": "D:\\项目文件\\SKILL_extracted\\codex-main",
+  "review_date": "2026-10-22",
+  "commit": null,
+  "provenance": "User-provided extracted source; architecture adapted into native Python, no upstream code copied",
+  "files": [
+    {
+      "path": "codex-rs/core/src/session/turn.rs",
+      "sha256": "42a290c7ff6563d7eee7728d62ca70ec599a33ff985b9fb132ac1c21109b3517",
+      "bytes": 138855
+    },
+    {
+      "path": "codex-rs/core/src/tools/orchestrator.rs",
+      "sha256": "8996f718b818804473c151a8a643747c2b5ab69b05f4630eee143fac7daa0bb5",
+      "bytes": 28899
+    },
+    {
+      "path": "codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs",
+      "sha256": "440d1558ccd53dcf49ae08979a35cb44db5e8c55a7068b5cb00ac5add20a4504",
+      "bytes": 8702
+    },
+    {
+      "path": "codex-rs/core/src/compact.rs",
+      "sha256": "8fdc85c3ccfb66cc41855622cd3219c43d3d55930c7a0e2595f29caaa74f895d",
+      "bytes": 33612
+    },
+    {
+      "path": "codex-rs/sandboxing/src/lib.rs",
+      "sha256": "ad4980e99953cab69cf1689c3b0d450160e1093071bf5ed0bf7199ecec5d34ca",
+      "bytes": 4325
+    },
+    {
+      "path": "codex-rs/skills/src/parser.rs",
+      "sha256": "f3532df1cc16f4da423b8e5c813269940c90317bcd211b6659cad449fd877e89",
+      "bytes": 7250
+    },
+    {
+      "path": "sdk/typescript/src/thread.ts",
+      "sha256": "21e5c7dc1c3047564750ecea5dfab8a47ab732488c5023e4e22adb01e874483f",
+      "bytes": 5029
+    },
+    {
+      "path": "codex-rs/app-server-protocol/src/protocol/common.rs",
+      "sha256": "bbc1bfee01178986dd4a7b59047ddb85bf4081c60fc36905da8fad61b79b472d",
+      "bytes": 174864
+    },
+    {
+      "path": "codex-rs/exec/src/cli.rs",
+      "sha256": "66643e8b3d5964b70cb8f231fb309312376272fb3ea87bcb6849f44cf112f8f6",
+      "bytes": 10751
+    },
+    {
+      "path": "codex-rs/ollama/src/lib.rs",
+      "sha256": "89d502416fcbd7039dadfd3cfeda8fde4ae0e2202b39b72a2890781bf7b4cd4d",
+      "bytes": 4790
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+      "bytes": 10926
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915",
+      "bytes": 242
+    },
+    {
+      "path": "codex-rs/core/src/tools/parallel.rs",
+      "sha256": "7b65d5c5538db2fee9e9367490e46f3b64f0190efb94c842e5718a1abd90e87c",
+      "bytes": 36446
+    },
+    {
+      "path": "codex-rs/memories/read/src/lib.rs",
+      "sha256": "08d65a132bcf11f439bf251620dedafcefbea713cf9e8569cfe4abcf6f23956a",
+      "bytes": 449
+    },
+    {
+      "path": "codex-rs/memories/read/src/usage.rs",
+      "sha256": "5010d10a5c10688ed7715ba7d937ed4e249d9ea7dae90675330ca17ca38705b0",
+      "bytes": 2373
+    },
+    {
+      "path": "codex-rs/state/src/runtime/memory_readiness.rs",
+      "sha256": "5b917dc78f9f3a47ebbb2fa928fec28314297eb7376618c83f7b3a97b58b3227",
+      "bytes": 601
+    },
+    {
+      "path": "codex-rs/core/src/agent/control.rs",
+      "sha256": "70b813a62fe2e6b8dc08f0b9380a8fa223114194945a54cba2b73b35c7a76e23",
+      "bytes": 27685
+    },
+    {
+      "path": "codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs",
+      "sha256": "6ea6b484878aa9ee812a860cdc4147124c0453c6f7bc3f9a43eb0b50e60d993e",
+      "bytes": 7343
+    },
+    {
+      "path": "codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs",
+      "sha256": "4c45adff32a96519dfaa3ff36c02ddc9ce300bfe0f9039b449f2ac9dd30f3e86",
+      "bytes": 1714
+    },
+    {
+      "path": "codex-rs/core/src/context_manager/history.rs",
+      "sha256": "efa4559b18671e775181360a988073dd8427cf91ff3c591046e81896289ce570",
+      "bytes": 59016
+    },
+    {
+      "path": "codex-rs/core/src/tools/handlers/tool_search.rs",
+      "sha256": "a2c7df97e4381cd66456cb9fea5efabe21cb1b591df33141ebc55e89736837bf",
+      "bytes": 24294
+    }
+  ]
+}

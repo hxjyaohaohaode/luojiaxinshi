@@ -17,22 +17,20 @@ def stored_message(env):
     return db,mid
 
 
-def test_summary_safety_and_bounded_status_only_request(env,monkeypatch):
-    calls=[]
-    async def complete(settings,payload,**kwargs):
-        calls.append(payload);return {'content':json.dumps({'summary':work_summary.BRIEFS['coverage'][0]})},{}
-    monkeypatch.setattr(work_summary,'completion',complete)
-    result,_=asyncio.run(work_summary.summarize(env[1],{'stage':'coverage','state':'running','title':'覆盖检查'}))
-    assert result and len(result)<100 and calls[0]['model']=='mimo-v2.6-flash'
-    assert calls[0]['thinking']=={'type':'disabled'}
-    for bad in ['已验证全部资料','正在检查 19 份文件','保证绝对正确','已修改你的日程','x'*97,'<script>x</script>','检索历史安排，为匹配会议主题做准备。']:
-        assert work_summary.safe_summary(bad,{}) is None
+def test_work_receipt_contains_only_completed_execution_and_actual_citations():
+    steps=[{'stage':'agent_tool','state':'complete','summary':'读取文件 申请表.txt','summary_origin':'execution'},
+           {'stage':'agent_tool','state':'interrupted','summary':'写入失败','summary_origin':'execution'},
+           {'stage':'writing','state':'complete','summary':'组织回答','summary_origin':'server'}]
+    receipt=work_summary.completed_work({'answer':'整理完毕','citations':[{'source_id':'source-a'},{'source_id':'source-a'}]}, {'status':'checked'}, steps)
+    assert receipt['outcomes']==['读取文件 申请表.txt']
+    assert receipt['cited_sources']==['source-a'] and receipt['tool_calls']==2 and receipt['failed_tools']==1
+    assert receipt['verified'] and not hasattr(work_summary,'BRIEFS')
 
 
 def test_optional_summary_failure_preserves_main_answer_and_stage_history(env,monkeypatch):
     db,mid=stored_message(env)
     async def fail(*args):raise AIError('temporary')
-    monkeypatch.setattr(work_summary,'summarize',fail)
+    monkeypatch.setattr(work_summary,'unused_summary',fail,raising=False)
     async def source():
         yield {'type':'phase','phase':'planning','label':'正在确认范围…'}
         await asyncio.sleep(.01)
@@ -46,8 +44,8 @@ def test_optional_summary_failure_preserves_main_answer_and_stage_history(env,mo
 
 def test_message_only_stage_never_claims_library_or_schedule_search(env,monkeypatch):
     db,mid=stored_message(env);calls=[]
-    async def summary(*args):calls.append(True);return work_summary.BRIEFS['retrieving'][0],{}
-    monkeypatch.setattr(work_summary,'summarize',summary)
+    async def summary(*args):calls.append(True);return 'unused',{}
+    monkeypatch.setattr(work_summary,'unused_summary',summary,raising=False)
     async def source():
         yield {'type':'phase','phase':'retrieving','label':'正在核对你限定消息中的材料…','local_scope':'message'}
         await asyncio.sleep(.02)
@@ -67,7 +65,7 @@ def test_status_updates_use_real_events_without_extra_model_calls(env,monkeypatc
         await asyncio.sleep(.02)
         assert set(record)<= {'stage','title','state','tools','detail'}
         return '正在按当前任务记录核对范围并整理简短的阶段说明。',{'prompt_tokens':2,'completion_tokens':3}
-    monkeypatch.setattr(work_summary,'summarize',brief)
+    monkeypatch.setattr(work_summary,'unused_summary',brief,raising=False)
     async def source():
         yield {'type':'phase','phase':'planning','label':'正在确认范围…'}
         await asyncio.sleep(.005)
@@ -88,7 +86,7 @@ def test_cancellation_closes_provider_and_full_queue_without_deadlock(env,monkey
     async def brief(*args):
         try:await asyncio.sleep(10)
         finally:cancelled.append(True)
-    monkeypatch.setattr(work_summary,'summarize',brief)
+    monkeypatch.setattr(work_summary,'unused_summary',brief,raising=False)
     async def source():
         try:
             for _ in range(50):yield {'type':'phase','phase':'writing','label':'正在组织回答…'}

@@ -154,10 +154,9 @@ def test_public_only_pipeline_still_searches_without_sending_private_profile(env
         assert 'PRIVATE_PROFILE' not in dumps(profile)+dumps(sources)
         yield {'type':'complete','result':{'answer':'这是官方网站公开内容。[1]','citations':[{'source_id':'web-test','locator':'第1段','quote':'这是官方网站公开内容。'}],'claims':[{'kind':'fact','text':'这是官方网站公开内容。','citation_indices':[1]}],'image_sources':[]},'usage':{}}
     async def verify(*args):return [],{},[]
-    async def brief(*args):return '',{}
     monkeypatch.setattr(grounding,'plan',plan);monkeypatch.setattr(grounding,'search',search)
     monkeypatch.setattr(grounding,'assess_coverage',coverage);monkeypatch.setattr(grounding,'verify',verify)
-    monkeypatch.setattr(genui_ai,'stream_reply',stream);monkeypatch.setattr(work_summary,'summarize',brief)
+    monkeypatch.setattr(genui_ai,'stream_reply',stream)
     content='联网查图书馆，只采用官网原文，不读本账号资料库和日程。'+('https://lib.whu.edu.cn/' if provided_link else '')
     result=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat,content=content)))[-1]['data']['conversation']['messages'][-1]
     assert result['status']=='complete' and calls==['search']

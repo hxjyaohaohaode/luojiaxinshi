@@ -31,7 +31,7 @@ PASSWORD='Test-Only-Password-2026'
 def env(tmp_path):
     # These fixtures test workflows with recorded answers, never a real provider.
     # Evidence-pipeline tests explicitly enable grounding and mock its boundaries.
-    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False,notice_semantic_review=False)
+    cfg=Settings(tmp_path/'data',origin=ORIGIN,ai_grounding=False,notice_semantic_review=False,agent_enabled=False)
     app=create_app(cfg)
     return app,cfg
 

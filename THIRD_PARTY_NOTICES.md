@@ -1,5 +1,9 @@
 # 第三方资源与新增依赖登记
 
+## Codex 智能任务运行时适配（2026-10-22）
+
+参考用户提供的 OpenAI Codex 源码目录（Apache-2.0，Copyright 2025 OpenAI），按现有 Python/FastAPI 项目独立重写执行循环、工具权限编排、子任务、上下文与 SDK/API 模式；未复制 Rust 实现、完整提示词或官方 SDK 源码。参考路径与文件 SHA256 见 `docs/CODEX_SOURCE_MANIFEST.json`，能力边界见 `docs/CODEX_RUNTIME.md`。上游 LICENSE 与 NOTICE 原文保留在 `docs/licenses/codex/`。没有新增 Python 或 npm 运行依赖；命令沙箱为维护者可选的已有 Docker 运行环境，所选镜像的分发许可另行遵守。
+
 ## genui 本次新增
 
 无新增 npm 或 Python 运行依赖。协议、校验、表达式、DOM/SVG 图表、组件画廊均独立实现；不复制第三方产品前端、样式、提示词或商标。
@@ -26,3 +30,7 @@ GitHub Actions 只在仓库检查环境中运行，不进入产品包。以下�
 | actions/setup-node | v4 / 49933ea5288caeca8642d1e84afbd3f7d6820020 | MIT | Node.js 22 测试环境 |
 
 参考资料中的原始文档和历史方案是用户明确指定共享的项目附件，不作为第三方 UI 库、字体或运行时依赖。两张第三方标识/建筑参考图片没有打包再分发。
+
+## 历次参考融合核查（2026-10-22）
+
+本轮重新阅读 LangChain 工具上下文、LangMem 记忆工具、CopilotKit 宿主状态，以及 Activepieces、GenericAgent、BettaFish 的相关实现和 autoresearch 评估说明。借鉴接口边界和执行原则，使用本项目原有 Python/SQLite/原生 DOM 独立适配；未复制上述框架源码、安装其运行依赖或引入品牌素材。具体文件、读取范围和 SHA-256 见 `docs/REFERENCE_FUSION_MANIFEST.json`；采用与未采用边界见 `docs/REFERENCE_FUSION_AUDIT.md`。前端目录中的混合许可、示例代码和依赖链接不构成统一的再分发授权。

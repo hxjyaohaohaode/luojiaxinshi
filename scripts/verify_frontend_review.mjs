@@ -13,10 +13,13 @@ const sizes=[[1651,871],[1280,720],[1024,768],[768,1024],[390,844],[320,640],[84
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
  const page=await browser.newPage({viewport:{width:1651,height:871}});page.setDefaultTimeout(12000);
- page.on('pageerror',e=>report.errors.push({engine,error:e.message}));
+ let activeCheck='startup';
+ page.on('pageerror',e=>report.errors.push({engine,check:activeCheck,url:page.url(),error:e.message,stack:e.stack}));
  page.on('response',async r=>{if(r.status()>=400&&/branch|edit-cache/.test(r.url()))console.log('HTTP',engine,r.status(),new URL(r.url()).pathname,(await r.text()).slice(0,220));});
- const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(e){report.checks.push({engine,name,ok:false,error:e.message.slice(0,1800)});console.log('FAIL',engine,name,e.message.slice(0,400));await page.screenshot({path:path.join(output,engine+'-failure-'+name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,70)+'.png')}).catch(()=>{});}};
- const nav=async(hash)=>{await page.goto(origin+'/#'+hash);await page.locator('#content:not([inert])').waitFor();await page.waitForTimeout(100);};
+ const check=async(name,fn)=>{activeCheck=name;try{await fn();report.checks.push({engine,name,ok:true});}catch(e){report.checks.push({engine,name,ok:false,error:e.message.slice(0,1800)});console.log('FAIL',engine,name,e.message.slice(0,400));await page.screenshot({path:path.join(output,engine+'-failure-'+name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,70)+'.png')}).catch(()=>{});}};
+ // Follow the application's hash navigation. A repeated page.goto reloads the
+ // document and can abort the draft save started by closing the previous editor.
+ const nav=async(hash)=>{await page.evaluate(hash=>{location.hash='#'+hash;},hash);await page.waitForFunction(hash=>document.querySelector('#content')?.dataset.page===hash&&!document.querySelector('#content').inert,hash);};
  const api=async(url,method='GET',json)=>await page.evaluate(async({url,method,json})=>{
   const session=await(await fetch('/api/session')).json();
   const headers={'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf};if(json!==undefined)headers['Content-Type']='application/json';

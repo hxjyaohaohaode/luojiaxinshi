@@ -71,6 +71,10 @@ def restore_database(source:Path,destination:Path):
             receipt_version=original.execute("SELECT value FROM meta WHERE key='arrangement_receipt_schema_version'").fetchone()
             if receipt_version and (receipt_version[0]!='1' or 'arrangement_receipts' not in tables):
                 raise ValueError('备份缺少安排提交记录或版本不兼容')
+            agent_version=original.execute("SELECT value FROM meta WHERE key='agent_schema_version'").fetchone()
+            from .agent_runtime.store import TABLES as AGENT_TABLES
+            if agent_version and (agent_version[0]!='1' or not AGENT_TABLES.issubset(tables)):
+                raise ValueError('备份缺少智能任务记录或版本不兼容')
             if original.execute('PRAGMA foreign_key_check').fetchone():
                 raise ValueError('备份的数据关联不完整，未恢复任何数据')
             destination.parent.mkdir(parents=True,exist_ok=True)
@@ -78,6 +82,7 @@ def restore_database(source:Path,destination:Path):
             os.close(fd)
             temporary=Path(name)
             with closing(sqlite3.connect(temporary)) as target:
+                target.row_factory=sqlite3.Row
                 original.backup(target)
                 target.execute('PRAGMA journal_mode=DELETE')
                 target.execute('PRAGMA secure_delete=ON')
@@ -95,6 +100,10 @@ def restore_database(source:Path,destination:Path):
                 if 'executions' in tables:
                     target.execute("UPDATE executions SET status='interrupted',stop_reason='backup_restored',finished_at=?,updated_at=? WHERE status='running'",(int(time.time()),int(time.time())))
                     target.execute('UPDATE execution_owners SET expires_at=0')
+                if 'agent_turns' in tables:
+                    from .agent_runtime.store import finish as finish_agent
+                    for run in target.execute("SELECT * FROM agent_turns WHERE status IN ('running','waiting_approval')").fetchall():
+                        finish_agent(target,dict(run),'interrupted',error='从备份恢复后请核对记录并手动重试')
                 target.commit()
                 if target.execute('PRAGMA integrity_check').fetchone()[0]!='ok' or target.execute('PRAGMA foreign_key_check').fetchone():
                     raise ValueError('恢复结果未通过完整性校验，未启用该文件')
