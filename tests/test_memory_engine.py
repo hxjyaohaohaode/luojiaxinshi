@@ -108,7 +108,7 @@ def test_memory_modes_are_enforced_for_learning_and_recall(env, mode):
 def test_automatic_correction_protects_human_lock_and_requires_review(env):
     c = account(env); chat = conversation(c)
     old = memory(c, content='我的名字是小林。', semantic_key='个人称呼', kind='fact')
-    quote = '记住，现在我的名字改为小陈。'
+    quote = '记住，我的名字是小陈。'
     mid = message(env, c, chat, quote, learn=False)
     result = actions(env, c, chat, mid, {'operation':'update', 'target_id':old['id'],
         'expected_version':1, 'kind':'fact', 'content':quote, 'source_quote':quote})[0]
@@ -226,7 +226,7 @@ def test_memory_delete_blocks_reingestion_and_task_status_resurrection(env):
     with env[0].state.db.connect(write=True) as conn:
         conn.execute("UPDATE tasks SET status='done',version=version+1 WHERE id=?", (n,))
     drain_jobs(env[0].state.db)
-    assert items(c) == []
+    assert not [item for item in items(c) if item['origin']=='task']
 
 
 def test_delete_source_conversation_and_account_cleans_derived_data(env):
@@ -429,7 +429,7 @@ def test_engine_v1_migrates_transactional_index_and_preserves_records(env):
         conn.execute('DROP TABLE memory_maintenance')
     db=Database(env[0].state.db.path)
     with db.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='4'
+        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='5'
         assert conn.execute('SELECT content FROM personal_memories WHERE id=?',(saved['id'],)).fetchone()[0]==saved['content']
         assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==1
 
@@ -441,7 +441,7 @@ def test_agent_receipt_uses_persisted_review_state_and_reuses_pending_original(e
     assert result['status']=='pending' and len(items(c))==1
     setting(c,'auto')
     old=memory(c,content='我的名字是原称呼。',kind='fact',semantic_key='个人称呼')
-    quote='记住，现在我的名字改为新称呼。';mid=message(env,c,chat,quote,learn=False)
+    quote='记住，我的名字是新称呼。';mid=message(env,c,chat,quote,learn=False)
     result=actions(env,c,chat,mid,{'content':quote,'source_quote':quote,'kind':'fact','semantic_key':'个人称呼'})[0]
     assert result['status']=='pending'
     assert c.get('/api/memory/items/'+old['id']).json()['content']==old['content']

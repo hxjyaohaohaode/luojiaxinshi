@@ -49,7 +49,7 @@ with db.connect() as conn:
     assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==10000
     assert conn.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
 output={'synthetic':True,'database':str(db.path),'stored':10000,'eligible_scope':5000,
-    'algorithm':report.get('algorithm'),'memory_schema':4,
+    'algorithm':report.get('algorithm'),'memory_schema':5,
     'insertion_ms':round(insert_ms,2),'queries':len(latencies),'latency_ms':{
         'median':round(statistics.median(latencies),2),'p95':round(sorted(latencies)[int(.95*(len(latencies)-1))],2),
         'max':round(max(latencies),2)},'snapshot_and_three_checks_ms':{'median':round(statistics.median(snapshot_latencies),2),'p95':round(sorted(snapshot_latencies)[int(.95*(len(snapshot_latencies)-1))],2),'max':round(max(snapshot_latencies),2)},'results':results,

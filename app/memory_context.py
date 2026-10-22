@@ -33,12 +33,21 @@ def runtime_fields(conn, uid, cid, messages):
                 WHERE m.conversation_id=? AND m.status='complete' ORDER BY m.rowid DESC LIMIT 2''', (cid,)):
             receipts.extend(json.loads(row['report']).get('memory_operations', []))
     from .memory_reliability import session_payload
+    from .memory_autonomy import catalog_for
+    catalog=catalog_for(conn,uid) if allowed else {'projects':[],'topics':[]}
+    question=next((m['content'] for m in reversed(messages) if m['role']=='user'),'')
+    from .context_engine import terms
+    words=set(terms(question))
+    catalog['projects']=sorted(catalog['projects'],key=lambda p:len(words&set(terms(p['name']+' '+p['description']))),reverse=True)[:12]
+    catalog['topics']=catalog['topics'][:20]
+    for item in catalog['projects']:item['description']=item['description'][:80]
+    while len(dumps(catalog).encode('utf-8'))>5000 and catalog['projects']:catalog['projects'].pop()
     payload=session_payload(short)
     source_ids=[value for key,value in short.get('_sources',{}).items() if key in payload and value]
     if any(payload.get(key) for key in ('decisions','open_questions','completed_steps','next_steps')):source_ids.extend(short.get('_checkpoint_sources',[]))
-    return {'_working_memory': content,'_session_memory':payload,'_session_source_ids':source_ids,
+    return {'_working_memory': content,'_session_memory':payload,'_session_source_ids':source_ids,'_memory_catalog':catalog,
             '_memory_control': {**settings, 'may_propose': allowed and learning_allowed(conn, uid, cid, messages),
-                                'context':context_for(conn,cid),'recent_operations': receipts[:16],
+                                'context':context_for(conn,cid),'available_scopes':catalog,'recent_operations': receipts[:16],
                                 'lifecycle':options,'working_version':working['version'] if working else 0,
                                 'session_items':[{key:e[key] for key in ('id','kind','source_message_id','lifetime')} for e in short.get('facts',[])],
                                 'policy':'临时条件仅用于本会话；长期信息按范围和当前相关性调用；遗忘优先于历史推断。'}}

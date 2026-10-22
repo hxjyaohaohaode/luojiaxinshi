@@ -43,7 +43,7 @@ def restore_database(source:Path,destination:Path):
             if not expected.issubset(tables):
                 raise ValueError('备份缺少必要的数据表，不是完整的工作台备份')
             version=original.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
-            if version is None or version[0] not in {'1','2','3','4'}:
+            if version is None or version[0] not in {'1','2','3','4','5'}:
                 raise ValueError('备份版本不兼容，未恢复任何数据')
             if version[0] in {'2','3','4'} and not {'account_recovery','conversations','conversation_sources','conversation_messages','conversation_promotions','source_catalog'}.issubset(tables):
                 raise ValueError('备份缺少工作空间数据表')
@@ -60,8 +60,8 @@ def restore_database(source:Path,destination:Path):
                 raise ValueError('备份缺少个人记忆数据或版本不兼容')
             execution_version=original.execute("SELECT value FROM meta WHERE key='execution_schema_version'").fetchone()
             engine_version=original.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()
-            from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES,V3_TABLES
-            if engine_version and (engine_version[0] not in {'1','2','3','4'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':V3_TABLES,'4':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
+            from .memory_store import REQUIRED_TABLES,V1_TABLES,V2_TABLES,V3_TABLES,V4_TABLES
+            if engine_version and (engine_version[0] not in {'1','2','3','4','5'} or not ({'1':V1_TABLES,'2':V2_TABLES,'3':V3_TABLES,'4':V4_TABLES,'5':REQUIRED_TABLES}[engine_version[0]]).issubset(tables)):
                 raise ValueError('备份缺少记忆引擎数据或版本不兼容')
             if execution_version and (execution_version[0] not in {'1','2'} or not {'executions','execution_owners'}.issubset(tables) or execution_version[0]=='2' and 'execution_metrics' not in tables):
                 raise ValueError('备份缺少执行记录或版本不兼容')

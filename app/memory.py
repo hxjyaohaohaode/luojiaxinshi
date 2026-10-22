@@ -92,6 +92,7 @@ class Context(Strict):
     topics: list[str] = Field(default_factory=list,max_length=8)
     memory_enabled: bool = True
     version: int = Field(ge=0)
+    selection_mode: Literal['auto','manual'] | None = None
 
     @model_validator(mode='after')
     def bounded_topics(self):
@@ -109,10 +110,12 @@ def own(conn,table,key,uid):
 
 
 def context_for(conn,cid):
+    from .memory_autonomy import mode_for
+    selection_mode=mode_for(conn,cid)
     row=conn.execute('SELECT * FROM conversation_context WHERE conversation_id=?',(cid,)).fetchone()
     if not row:
-        return {'project_id':None,'topics':[],'memory_enabled':True,'version':0}
-    return {'project_id':row['project_id'],'topics':json.loads(row['topics']),'memory_enabled':bool(row['memory_enabled']),'version':row['version']}
+        return {'project_id':None,'topics':[],'memory_enabled':True,'version':0,'selection_mode':selection_mode}
+    return {'project_id':row['project_id'],'topics':json.loads(row['topics']),'memory_enabled':bool(row['memory_enabled']),'version':row['version'],'selection_mode':selection_mode}
 
 
 def memory_access(messages):
@@ -163,6 +166,8 @@ def recall(db,uid,cid,question,access,queries=None):
             queries=[*(queries or []),session['goal'],*(r['text'] for r in session['recent_requests'][:-1])][-4:]
         from .memory_reliability import candidates
         items,excluded=candidates(conn,uid,cid,access,question+' '+' '.join(queries or []))
+        names={row['id']:row['name'] for row in conn.execute('SELECT id,name FROM memory_projects WHERE user_id=?',(uid,))}
+        for item in items:item['scope_name']=names.get(item['project_id'],'') if item['scope']=='project' else item['topic'] if item['scope']=='topic' else '通用'
         selected=[];used=0
         if context['project_id']:
             project=dict(own(conn,'memory_projects',context['project_id'],uid))
@@ -174,10 +179,10 @@ def recall(db,uid,cid,question,access,queries=None):
         ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected),byte_budget=8000-used,prompt_only=True)
         for item in ranked_items:
             selected.append({k:item[k] for k in ('id','scope','project_id','topic','kind','content','version','updated_at',
-                'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at')})
+                'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name')})
         count=sum(not item.get('project_context') for item in selected)
         return selected,{'enabled':True,'selected':count,'eligible':ranking['matched'],'omitted':ranking['matched']-count,'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
-            'excluded':excluded,'policy_version':'memory-lifecycle-v3',**ranking,'context_bytes':used+ranking['context_bytes']}
+            'excluded':excluded,'automatic_selection':context['selection_mode']=='auto','selected_project_ids':sorted({item['project_id'] for item in selected if item.get('project_id')}),'policy_version':'memory-autonomy-v5',**ranking,'context_bytes':used+ranking['context_bytes']}
 
 
 def install_memory(app,db,user):
@@ -351,6 +356,8 @@ def install_memory(app,db,user):
             if saved['version']!=payload.version:raise HTTPException(409,'对话记忆设置已修改，请刷新后核对')
             conn.execute('INSERT INTO conversation_context VALUES(?,?,?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET project_id=excluded.project_id,topics=excluded.topics,memory_enabled=excluded.memory_enabled,version=excluded.version',
                 (cid,payload.project_id,dumps(payload.topics),int(payload.memory_enabled),payload.version+1))
+            mode='manual' if payload.project_id or payload.topics else payload.selection_mode or 'manual'
+            conn.execute('INSERT INTO memory_selection_modes VALUES(?,?) ON CONFLICT(conversation_id) DO UPDATE SET mode=excluded.mode',(cid,mode))
             return context_for(conn,cid)
 
     from .memory_api import install

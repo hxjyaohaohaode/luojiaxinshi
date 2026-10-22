@@ -250,7 +250,7 @@ def test_v3_migration_preserves_data_and_requires_complete_v4_tables(env):
         for table in TABLES:conn.execute('DROP TABLE '+table)
     reopened=Database(env[0].state.db.path)
     with reopened.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='4'
+        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='5'
         assert conn.execute('SELECT content FROM personal_memories WHERE id=?',(saved['id'],)).fetchone()[0]=='迁移前本人资料'
     with reopened.connect(write=True) as conn:conn.execute('DROP TABLE memory_mutation_receipts')
     with pytest.raises(RuntimeError):Database(reopened.path)

@@ -158,7 +158,7 @@ def canonical(text, key=''):
     if name == 'style.structure':
         return 'conclusion_first' if re.search(r'先.{0,5}结论|结论在前', value) else value
     if name == 'identity.name':
-        value = re.sub(r'^.*?(?:叫我|我叫|我的名字(?:是|叫)|我的称呼(?:是|改为)|call me|name is)\s*', '', value)
+        value = re.sub(r'^.*?(?:叫我|我叫|我的名字(?:是|叫|改为|改成)|我的称呼(?:是|改为|改成)|call me|name is)\s*', '', value)
         value = re.sub(r'[，,；;].*$', '', value)
     return value
 
@@ -234,7 +234,9 @@ def admit(text, kind, requested='auto'):
     if requested in ('turn', 'session'):
         return requested
     if TEMPORARY.search(text):
+        if re.search(r'从(?:今天|明天)(?:起|开始)',text) and not TEMPORARY.search(re.sub(r'从(?:今天|明天)(?:起|开始)','',text)):return 'long_term'
         return 'turn' if re.search(r'本轮|只.*这轮|this turn|仅本次|只在本次', text, re.I) else 'session'
+    if requested=='long_term':return 'long_term'
     if re.search(r'本项目|这个项目|本次项目', text) or STABLE.search(text):
         return 'long_term'
     if kind in ('preference', 'constraint', 'decision') and re.search(r'我(?:偏好|习惯|喜欢)|我们(?:决定|采用)', text):
@@ -420,10 +422,19 @@ def task_memory_ids(conn,uid):
 
 
 def source_access(conn,uid,items,access):
-    """A materialized task memory cannot bypass a disabled schedule source."""
-    if access.get('schedule',True):return items,[]
-    blocked=task_memory_ids(conn,uid)
-    return [e for e in items if e['id'] not in blocked],[{'id':e['id'],'reason':'schedule_disabled'} for e in items if e['id'] in blocked]
+    """Derived indexes inherit every source permission, across all generations."""
+    blocked={key:'schedule_disabled' for key in task_memory_ids(conn,uid)} if not access.get('schedule',True) else {}
+    if not access.get('library',True):
+        for row in conn.execute('''SELECT r.memory_id,r.source_kind,s.conversation_id FROM memory_resource_sources r
+            JOIN personal_memories m ON m.id=r.memory_id LEFT JOIN conversation_sources s ON r.source_kind='resource_material' AND s.id=r.source_id
+            WHERE m.user_id=? AND r.source_kind IN ('resource_notice','resource_material')''',(uid,)):
+            if row['source_kind']=='resource_notice' or not (access.get('attachments',True) and row['conversation_id']==access.get('_memory_conversation_id')):
+                blocked[row['memory_id']]='source_disabled'
+    if blocked:
+        for row in conn.execute('''WITH RECURSIVE denied(id) AS (SELECT value FROM json_each(?)
+            UNION SELECT child_id FROM memory_links JOIN denied ON parent_id=denied.id WHERE relation='derived_from') SELECT id FROM denied''',(dumps(list(blocked)),)):
+            blocked.setdefault(row['id'],'source_disabled')
+    return [e for e in items if e['id'] not in blocked],[{'id':e['id'],'reason':blocked[e['id']]} for e in items if e['id'] in blocked]
 
 
 def remember_exposure(conn, uid, assistant_id, report, used_ids=None):
@@ -436,7 +447,7 @@ def remember_exposure(conn, uid, assistant_id, report, used_ids=None):
         if row:
             conn.execute('''INSERT INTO memory_usage VALUES(?,?,?,?,?) ON CONFLICT(message_id,memory_id)
                 DO UPDATE SET outcome=excluded.outcome''',
-                (assistant_id, mid, row['version'], 'used' if mid in used else 'exposed', int(time.time())))
+                (assistant_id, mid, source.get('memory_version',row['version']), 'used' if mid in used else 'exposed', int(time.time())))
 
 
 def feedback(conn, uid, assistant_id, mid, outcome, version):
@@ -553,6 +564,14 @@ def natural_forget(conn, uid, cid, mid, text):
         forget_memory(conn, uid, entry)
         results.append({'id': entry['id'], 'status': 'forgotten'})
     if all_items:
+        # Include existing sources whose durable jobs have not run yet. Clearing
+        # memory must not be undone ten seconds later by an old queued event.
+        for kind,sql in (
+            ('task','SELECT id FROM tasks WHERE user_id=?'),
+            ('resource_project','SELECT id FROM memory_projects WHERE user_id=?'),
+            ('resource_notice','SELECT s.id FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?'),
+            ('resource_material','SELECT s.id FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?')):
+            conn.execute('INSERT OR IGNORE INTO memory_blocked_sources SELECT ?,?,id,? FROM ('+sql+')', (uid,kind,int(time.time()),uid))
         # A generation boundary also covers old messages that were never selected
         # as memories. Future messages get the new generation even if rowids or
         # timestamps are reused, so deleting chats cannot poison future learning.

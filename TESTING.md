@@ -1,5 +1,30 @@
 # 验证记录
 
+## 2026-10-21：自主记忆与非对话来源 v5
+
+应用 1.15.0，记忆引擎 schema 5。新对话自动选择相关范围，普通对话主动维护；通知资料、上传全文、项目说明及办理进度/结果可独立形成或更新来源记忆。人工与 AI 局部编辑保留范围外内容、版本和暂停状态；遗忘覆盖尚未处理的旧来源队列。机制与实际能力边界见 [自主记忆 v5](docs/MEMORY_AUTONOMY_V5.md)，公开结果见 [机器汇总](docs/verification/memory-autonomy-v5.json)。
+
+| 验证 | 最终结果 | 本地原始证据 |
+| --- | --- | --- |
+| 完整 Python 回归 | **796 通过、0 失败、0 错误**；1 条既有 Starlette 弃用提示 | `artifacts/memory-v5-pytest-shipped.txt` / `memory-v5-pytest-shipped.xml` |
+| 实际协议提示修订后的定向复验 | **39 通过**，含新增的 JSON 实例/字段/类型/围栏拒绝及不重试检查；与完整回归中的用例重叠，不能相加 | `artifacts/memory-v5-protocol-focused.txt` / `memory-v5-protocol-focused.xml` |
+| Node 前端逻辑 | **118 通过、0 失败** | `artifacts/memory-v5-node-final.txt` |
+| 新增自主流程浏览器 | Chromium / Firefox / WebKit **45 项通过**，应用错误 0 | `artifacts/memory-v5-browser/report.json` |
+| 原可靠性与管理工作区 | 三引擎 **72 项通过**，应用错误 0 | `artifacts/memory-v4-browser/report.json`，本轮重跑 |
+| 原有记忆操作 | 三引擎 **63 项通过**，应用错误 0 | `artifacts/memory-engine-browser/report.json`，本轮重跑 |
+| 生命周期、晋升与反馈 | 三引擎 **63 项通过**，应用错误 0 | `artifacts/memory-v3-browser/report.json`，本轮在干净夹具中重跑 |
+| 10,000 条本地检索 | 5,000 条允许范围、16 次查询；中位 **268.38 ms**、P95 **305.34 ms**；快照及连续 3 次复核中位 **14.30 ms** | `artifacts/memory-v5-benchmark-idle/report.json` |
+| 实际模型片段编辑协议 | 共 **2 个合成请求**：初次未通过结构校验；明确 JSON 实例提示后，称呼替换复验通过，约 **1.742 s** | `artifacts/memory-v5-provider-probe*.json` |
+| 本机启用 | schema **4→5**；业务数量与人工正文保留；完整性 `ok`、外键错误 0、服务健康 | `artifacts/memory-v5-activation.json` |
+
+新增浏览器流程覆盖：无聊天的项目来源记忆、默认自动选择及可选手动限定、Unicode 局部编辑、范围外文字保留、历史恢复依据、响应丢失后同意图重放、普通对话自动记忆、移动宽度，以及人工资料修订后的一键恢复来源同步。Python 额外覆盖资料失效/删除/权限继承、办理结果变化、长期与临时更新隔离、同轮去重、锁定纠错、多句条目保护、旧队列遗忘边界和编辑并发。
+
+实际模型探针没有发送真实账号正文。一次成功的短片段协议验证不代表总体语义准确率，也不是完整回答延迟或长期自主学习评估。后台自动索引不新增模型调用；用户主动点 AI 编辑仍按已配置模型计费。完整回归之后仅调整了该编辑器的输出实例提示，并以相关 39 项和实际模型请求复核，没有将这两组测试加成一个虚构总数。
+
+浏览器验证继续将 Playwright WebKit 截图注入样式的已知 CSP 工具提示单列：可靠性 3 条、原操作 6 条、生命周期 4 条，均未放宽应用策略。连续重复夹具曾触发登录节流，旧累计夹具也出现 WebKit 元素稳定等待超时；最终在独立新夹具、服务就绪后重跑通过，未修改产品限额或强制点击。两个旧驱动补充就绪等待，避免测试先于服务启动。
+
+复现：完整 `pytest`、`npm test`、`scripts/genui_catalog.py --check`；性能运行 `scripts/benchmark_memory_engine.py --output artifacts/memory-v5-benchmark-idle`。浏览器使用 8786 及 `artifacts/` 内的全新 `MVP_DATA_DIR`，启动 `scripts/memory_engine_preview_server.py` 后运行 `verify_memory_autonomy.mjs`、`verify_memory_reliability.mjs`、`verify_memory_engine.mjs`、`verify_memory_lifecycle.mjs`。按套件使用独立夹具或重置仅该夹具的节流记录，不能改真实服务的限制。原数据库、邀请码、备份、合成原始响应和截图不提交 GitHub。
+
 ## 2026-10-21：记忆可靠性与管理界面 v4
 
 本轮完成版本反馈绑定、来源事实比较、失效覆盖项回退、原子批量管理、同意图写入重试、会话条件独立修订、遗忘回答隔离及复盘预算/执行保护。界面按五个工作区重构，实际参考来源与边界见 [可靠性 v4](docs/MEMORY_RELIABILITY_V4.md)。下列数据来自本轮最终代码，不与历史累计数量相加。

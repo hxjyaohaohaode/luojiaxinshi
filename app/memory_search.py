@@ -5,6 +5,7 @@ import time
 from collections import Counter
 
 from .memory_store import tokens
+from .memory_policy import scope_key
 from .memory_lifecycle import facet,task_memory_ids
 
 CONCEPTS = (
@@ -43,7 +44,7 @@ def requested_facets(question):
 
 
 PROMPT_FIELDS = ('id','scope','project_id','topic','kind','content','version','updated_at',
-    'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at')
+    'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name')
 
 
 def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt_only=False):
@@ -115,7 +116,7 @@ def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt
         if item.get('origin')=='organizer':scores[key]*=.5
     ordered=sorted((key for key in scores if scores[key]),key=lambda key:(-scores[key],-by_id[key]['updated_at'],key))[:512]
     reranked=len(ordered)
-    signatures={key:((by_id[key]['facet'],by_id[key]['canonical_value']) if by_id[key].get('facet') and by_id[key].get('canonical_value')
+    signatures={key:(scope_key(by_id[key]),(by_id[key]['facet'],by_id[key]['canonical_value']) if by_id[key].get('facet') and by_id[key].get('canonical_value')
         else re.sub(r'\s+','',by_id[key]['content']).casefold()) for key in ordered}
     prepared={key:{**by_id[key],'recall_score':round(scores[key],6),'recall_reasons':sorted(reasons[key])} for key in ordered}
     costs={key:len(json.dumps({k:item[k] for k in PROMPT_FIELDS if k in item} if prompt_only else item,
@@ -127,7 +128,7 @@ def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt
         # repeatedly scoring thousands of duplicates or already-full facets.
         ordered=[key for key in ordered if signatures[key] not in seen
             and used+costs[key]<=byte_budget
-            and (not by_id[key].get('facet') or facets[by_id[key]['facet']]<2)
+            and (not by_id[key].get('facet') or facets[(scope_key(by_id[key]),by_id[key]['facet'])]<2)
             and not (by_id[key].get('facet','').startswith('style.') and styles>=2 and by_id[key]['facet'] not in wanted)]
         if not ordered:break
         window=ordered[:32]
@@ -142,12 +143,12 @@ def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt
         signature=signatures[key]
         if signature in seen:continue
         if name.startswith('style.') and styles>=2 and name not in wanted:continue
-        if name and facets[name]>=2:continue
+        if name and facets[(scope_key(item),name)]>=2:continue
         result=prepared[key]
         cost=costs[key]
         if used+cost>byte_budget:continue
         selected.append(result);used+=cost;seen.add(signature);picked_words.append(word_cache[key])
-        if name:facets[name]+=1
+        if name:facets[(scope_key(item),name)]+=1
         if name.startswith('style.'):styles+=1
     return selected,{'algorithm':'zh-bm25-facet-temporal-feedback-rrf-mmr-v3','dense_embeddings':False,
         'query_count':len(searches),'matched':sum(bool(value) for value in scores.values()),

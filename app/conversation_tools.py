@@ -136,6 +136,8 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
             saved_context=conn.execute('SELECT * FROM conversation_context WHERE conversation_id=?',(cid,)).fetchone()
             if saved_context:
                 conn.execute('INSERT INTO conversation_context VALUES(?,?,?,?,1)',(new,saved_context['project_id'],saved_context['topics'],saved_context['memory_enabled']))
+            from .memory_autonomy import mode_for
+            conn.execute('INSERT INTO memory_selection_modes VALUES(?,?)',(new,mode_for(conn,cid)))
             for s in sources:
                 conn.execute('INSERT INTO conversation_sources VALUES(?,?,?,?,?,?,?,?,?,?)',(mapping[s['id']],new,s['name'],s['kind'],s['content'],s['sha256'],s['status'],dumps(s['sections']),s['warning'],now))
                 full=conn.execute('SELECT * FROM material_library WHERE source_id=?',(s['id'],)).fetchone()

@@ -2,7 +2,7 @@
 
 ## Windows 本机
 
-当前本机 8765 运行 **1.14.2**，记忆引擎 **schema 4**，核验日期 **2026-10-21**。记忆升级前使用 SQLite backup API 建立并验证一致性备份，私有备份在被 Git 忽略的 `backups/`；报告在 `artifacts/memory-v4-activation.json`。升级后业务记录数量和人工记忆正文保持一致，完整性 `ok`、外键错误 0、服务健康，语义复盘未自动开启。机制、回退条件及复现见 [可靠性 v4](docs/MEMORY_RELIABILITY_V4.md)，公开验证只包含 [汇总计数](docs/verification/memory-reliability-v4.json)。
+当前本机 8765 运行 **1.15.0**，记忆引擎 **schema 5**，核验日期 **2026-10-21**。记忆升级前使用 SQLite backup API 建立并验证一致性备份，私有备份在被 Git 忽略的 `backups/`；报告在 `artifacts/memory-v5-activation.json`。升级后业务记录数量和人工记忆正文保持一致，完整性 `ok`、外键错误 0、服务健康，语义复盘未自动开启。机制、回退条件及复现见 [自主记忆 v5](docs/MEMORY_AUTONOMY_V5.md)，公开验证只包含 [汇总计数](docs/verification/memory-autonomy-v5.json)。
 
 2026-10-18 的 **1.12.0** 为历史升级记录：备份 `data/backups/pre-mvp-1.12.0-20261018-181356.sqlite3`，报告 `artifacts/mvp-acceptance/local-upgrade-1.12.0.json`。该轮业务计数与结构版本不变，完整性 `ok`、外键错误 0，没有新增配置、依赖或模型请求。
 

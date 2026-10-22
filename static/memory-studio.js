@@ -2,7 +2,7 @@ import {captureUiContext} from './ui-request.js';
 import {createLifecycleUI} from './memory-lifecycle.js';
 
 const modes={auto:'自动记忆',review:'先核对再保存',manual:'仅手动保存',off:'暂停全部记忆'};
-const origins={manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',reflection:'语义复盘提议',task:'办理记录',import:'文件导入'};
+const origins={resource:'资料自动索引',manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',reflection:'语义复盘提议',task:'办理记录',import:'文件导入'};
 const stamp=value=>value?new Date(value*1000).toLocaleString():'—';
 
 export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh}){
@@ -12,7 +12,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
   function panel(data){
     settings=data.settings||settings;
-    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">由你确认、修订与保留</span></div>
+    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">自动积累与维护，随时可修改</span></div>
       <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}<details class="memory-tools"><summary>更多管理</summary><div class="memory-tools-content">${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}${lifecycle.panel(data)}</div></details></div>
       <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
     </section>`;
@@ -21,7 +21,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     return `<div class="memory-provenance"><span>${esc(origins[item.origin]||'本人保存')}</span>${item.locked?'<span>本人锁定</span>':''}${(item.labels||[]).map(label=>`<span>${esc(label)}</span>`).join('')}</div>`;
   }
   function controls(item){
-    return `${item.review_status==='pending'?'<div class="memory-review-actions">'+button('确认采用','accept',item.id)+button('不记这条','reject',item.id)+'</div>':''}<details class="memory-record-tools"><summary>层级、范围与导出</summary><div class="memory-studio-actions">${lifecycle.controls(item)}${button('导出 Markdown','markdown',item.id)}</div></details>`;
+    return `${item.origin==='resource'&&(item.state==='source_changed'||item.locked)?'<p class="small muted">此条保留了你的修订。可按当前原资料重建索引，并恢复自动跟随来源；历史版本仍保留。</p>'+button('按当前原资料重建索引','source-sync',item.id):''}${item.review_status==='pending'?'<div class="memory-review-actions">'+button('确认采用','accept',item.id)+button('不记这条','reject',item.id)+'</div>':''}<details class="memory-record-tools"><summary>层级、范围与导出</summary><div class="memory-studio-actions">${lifecycle.controls(item)}${button('导出 Markdown','markdown',item.id)}</div></details>`;
   }
   function download(content,name,type){
     const url=URL.createObjectURL(new Blob([content],{type})),anchor=document.createElement('a');
@@ -32,7 +32,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     const [item,impact]=await Promise.all([api('/memory/items/'+id),api('/memory/items/'+id+'/impact')]);
     if(user!==state.session?.user?.id||generation!==state.renderId||request!==state.dialogRequest)return;
     showDialog('记忆来源与版本',`<div class="memory-detail"><p class="memory-detail-version">当前第 ${item.version} 版 · ${esc(stamp(item.updated_at))}</p><p class="memory-content memory-detail-current">${esc(item.content)}</p>${meta(item)}<div class="memory-impact-facts"><span>派生记录 <strong>${impact.derived_count}</strong></span><span>曾提供给回答 <strong>${impact.answer_count}</strong></span><span>依据检查：${esc({current:'仍可核对',changed:'需要重新核对',not_checked:'当前状态暂停调用'}[impact.source_check]||'待检查')}</span></div>
-      <h3>从哪里得出</h3>${item.evidence.length?item.evidence.map(e=>`<blockquote><p>${esc(e.quote)}</p><footer>${esc(e.source_kind==='message'?'本人对话原话':'本人办理记录')} · ${esc(stamp(e.created_at))} · ${esc({available:'来源可核对',changed:'来源版本已变化',missing:'来源已不可用'}[e.source_status]||'待核对')}${e.source_kind==='message'&&e.conversation_id?` · <a href="#chat/${encodeURIComponent(e.conversation_id)}" data-memory-studio="source">回到这条来源对话</a>`:''}</footer></blockquote>`).join(''):'<p class="muted">没有自动关联的原始记录；请按本人保存的内容核对。</p>'}
+      <h3>从哪里得出</h3>${item.evidence.length?item.evidence.map(e=>`<blockquote><p>${esc(e.quote)}</p><footer>${esc(({message:'本人对话原话',task:'本人办理记录',resource_notice:'通知资料',resource_material:'上传资料',resource_project:'项目说明'}[e.source_kind]||'关联来源'))} · ${esc(stamp(e.created_at))} · ${esc({available:'来源可核对',changed:'来源版本已变化',missing:'来源已不可用'}[e.source_status]||'待核对')}${e.conversation_id?` · <a href="#chat/${encodeURIComponent(e.conversation_id)}" data-memory-studio="source">查看来源对话</a>`:''}${e.notice_id?` · <a href="#notice/${encodeURIComponent(e.notice_id)}" data-memory-studio="source">查看通知原文</a>`:''}</footer></blockquote>`).join(''):'<p class="muted">没有自动关联的原始记录；请按本人保存的内容核对。</p>'}
       ${item.links.length?`<h3>关联依据</h3>${item.links.map(link=>`<div class="memory-link"><span>${link.relation==='supersedes'?'拟替换':'形成时的来源'} · 第 ${link.parent_version} 版 · ${link.source_current?'事实依据仍一致':'依据已变化，需核对'}</span><p>${esc(link.content)}</p>${link.current_version!==link.parent_version?`<small>来源当前已到第 ${link.current_version} 版</small>`:''}</div>`).join('')}`:''}
       ${item.imported_provenance?`<details class="memory-policy"><summary>导入文件中的历史来源（待核对）</summary><pre class="memory-import-history">${esc(JSON.stringify(item.imported_provenance,null,2).slice(0,12000))}</pre><p class="small muted">这里保留导入时的来源声明，不将其作为当前账号的真实对话或办理关联；完整内容随 JSON 导出。</p></details>`:''}<h3>修改历史</h3><ol class="memory-revision-list">${item.revisions.map((rev,index)=>`<li><details class="memory-policy" ${index===0?'open':''}><summary>第 ${rev.version} 版 · ${esc(stamp(rev.created_at))} · ${esc(rev.actor.startsWith('user')?'本人操作':origins[rev.actor]||rev.actor)}</summary><p class="memory-content">${esc(rev.snapshot.content)}</p>${item.revisions[index+1]&&rev.snapshot.content!==item.revisions[index+1].snapshot.content?`<details class="memory-revision-comparison"><summary>与上一版比较正文</summary><div><strong>修改前</strong><p class="memory-content">${esc(item.revisions[index+1].snapshot.content)}</p><strong>修改后</strong><p class="memory-content">${esc(rev.snapshot.content)}</p></div></details>`:''}${rev.version!==item.version?`<button type="button" class="button small" data-memory-restore="${rev.version}" data-id="${esc(item.id)}" data-version="${item.version}">恢复这一版</button>`:'<p class="small muted">当前版本</p>'}</details></li>`).join('')}</ol>
       <p class="small muted">恢复会新增版本。永久删除会同时清理这条记忆的历史与派生概览；原对话需要单独删除。</p></div>`);
@@ -65,6 +65,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
         await api(`/memory/items/${id}/restore`,{method:'POST',json:{version:Number(target.dataset.version),revision:Number(target.dataset.memoryRestore)}});if(view.sameUser()){if(view.sameRoute())await refresh();toast('已恢复为新的当前版本。');}
       }else if(action==='settings')settingsDialog();
       else if(action==='detail')await detail(id);
+      else if(action==='source-sync'){const item=await api('/memory/items/'+id);await api('/memory/items/'+id+'/source-sync',{method:'POST',json:{version:item.version}});if(view.sameUser()){if(view.sameRoute())await refresh();toast('已按当前原资料重建索引，之后自动跟随来源变化。');}}
       else if(action==='source')$('#dialog').close();
       else if(action==='working')await working(id);
       else if(action==='import')$('#memory-import-file').click();
@@ -86,7 +87,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
       else if(action==='jobs'){
         const jobs=await api('/memory/jobs');if(!view.sameDialog())return;
         const names={queued:'待整理',done:'已处理',failed:'需处理'};
-        showDialog('记忆整理状态',`<div class="stack">${Object.entries(jobs.counts).map(([key,count])=>`<p>${esc(names[key]||key)}：<strong>${count}</strong></p>`).join('')||'<p>没有待处理的记录。</p>'}<p class="small muted">后台在空闲时分批处理。失败记录保留状态，不会被当作已成功整理。</p>${jobs.counts.failed?button('重试失败记录','retry'):''}${jobs.recent.map(job=>`<p class="small">${esc(job.source_kind==='message'?'对话':'办理记录')} · ${esc(names[job.state]||job.state)} · ${esc(stamp(job.created_at))}</p>`).join('')}</div>`);
+        showDialog('记忆整理状态',`<div class="stack">${Object.entries(jobs.counts).map(([key,count])=>`<p>${esc(names[key]||key)}：<strong>${count}</strong></p>`).join('')||'<p>没有待处理的记录。</p>'}<p class="small muted">后台在空闲时分批处理。失败记录保留状态，不会被当作已成功整理。</p>${jobs.counts.failed?button('重试失败记录','retry'):''}${jobs.recent.map(job=>`<p class="small">${esc(({message:'对话',task:'办理记录',resource_notice:'通知资料',resource_material:'上传资料',resource_project:'项目说明'}[job.source_kind]||'来源记录'))} · ${esc(names[job.state]||job.state)} · ${esc(stamp(job.created_at))}</p>`).join('')}</div>`);
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });

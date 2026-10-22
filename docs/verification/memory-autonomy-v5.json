@@ -1,0 +1,141 @@
+{
+  "date": "2026-10-21",
+  "application_version": "1.15.0",
+  "memory_schema": 5,
+  "backend_full_regression": {
+    "passed": 796,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 280.343,
+    "warnings": 1,
+    "scope": "Complete regression before the final provider-prompt clarification."
+  },
+  "backend_after_protocol_refinement": {
+    "passed": 39,
+    "failed": 0,
+    "errors": 0,
+    "seconds": 14.211,
+    "warnings": 1,
+    "scope": "Autonomy and provider protocol tests after the prompt-only refinement; overlaps the full regression."
+  },
+  "frontend": {
+    "passed": 118,
+    "failed": 0
+  },
+  "autonomy_browser": {
+    "checks": 45,
+    "passed": 45,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 0,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390
+    ]
+  },
+  "reliability_browser": {
+    "checks": 72,
+    "passed": 72,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 3,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "legacy_browser": {
+    "checks": 63,
+    "passed": 63,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 6,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "lifecycle_browser": {
+    "checks": 63,
+    "passed": 63,
+    "application_errors": 0,
+    "screenshot_tool_warnings": 4,
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewport_widths": [
+      1440,
+      390,
+      320
+    ]
+  },
+  "benchmark": {
+    "synthetic": true,
+    "stored": 10000,
+    "eligible_scope": 5000,
+    "queries": 16,
+    "algorithm": "zh-bm25-facet-temporal-feedback-rrf-mmr-v3",
+    "latency_ms": {
+      "median": 268.38,
+      "p95": 305.34,
+      "max": 306.35
+    },
+    "snapshot_and_three_checks_ms": {
+      "median": 14.3,
+      "p95": 16.12,
+      "max": 19.29
+    },
+    "provider_calls": 0
+  },
+  "real_provider_protocol": {
+    "synthetic": true,
+    "qa_requests_total": 2,
+    "initial_validation_passed": false,
+    "initial_error_class": "ValidationError",
+    "final_validation_passed": true,
+    "model": "mimo-v2.6-flash",
+    "final_seconds": 1.742,
+    "scope": "Literal partial-name replacement only; real user data was not sent."
+  },
+  "activation": {
+    "before_schema": "4",
+    "after_schema": "5",
+    "backup_integrity": "ok",
+    "integrity": "ok",
+    "foreign_key_errors": 0,
+    "business_counts_preserved": true,
+    "manual_records_preserved": true,
+    "health": "ok",
+    "unauthenticated_statuses": {
+      "/api/memory/lifecycle": 401,
+      "/api/memory/health": 401,
+      "/api/memory/events": 401,
+      "/api/memory/session-items/unowned": 401,
+      "/api/conversations/unowned/memory-state": 401
+    }
+  },
+  "limits": [
+    "Browser models are simulated; test databases are isolated from the real account.",
+    "The full regression and focused protocol test counts overlap and must not be added.",
+    "The single successful real-model protocol case does not measure overall semantic accuracy or long-term autonomous quality.",
+    "Benchmark timings cover local lexical recall and consistency checks, not full model-answer latency or public concurrency.",
+    "Resource memories are bounded source indexes, not full-document semantic summaries or authoritative official requirements.",
+    "Screenshot tool stylesheet warnings are recorded separately from application errors."
+  ]
+}

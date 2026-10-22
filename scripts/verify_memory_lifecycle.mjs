@@ -9,6 +9,12 @@ const output=path.resolve('artifacts/memory-v3-browser');
 await mkdir(output,{recursive:true});
 const report={checks:[],errors:[],toolWarnings:[]};
 function check(name,value){report.checks.push({name,passed:!!value});if(!value)throw Error(name);}
+let fixtureReady=false;
+for(let attempt=0;attempt<40;attempt++){
+  try{if((await fetch(origin+'/api/health',{signal:AbortSignal.timeout(1000)})).ok){fixtureReady=true;break;}}catch{}
+  await new Promise(resolve=>setTimeout(resolve,250));
+}
+if(!fixtureReady)throw Error('The isolated memory fixture is not ready on 8786');
 for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',')){
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
  const context=await browser.newContext({viewport:{width:1440,height:1000}});

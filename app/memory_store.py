@@ -294,6 +294,7 @@ def insert_memory(conn, uid, value, *, origin='manual', review='accepted', locke
         conn.execute("INSERT INTO memory_links VALUES(?,?,'derived_from',?)", (key, parent['id'], parent['version']))
     from .memory_lifecycle import set_semantics,event
     set_semantics(conn, key, admission='manual' if origin=='manual' else 'task' if origin=='task' else 'derived' if parents else 'explicit')
+    if origin=='resource':conn.execute('UPDATE memory_semantics SET review_after=NULL WHERE memory_id=?',(key,))
     event(conn,uid,key,'created','来源：'+origin+'；'+('待本人核对' if review=='pending' else '已保存'))
     record_revision(conn, key, origin)
     return key
@@ -327,6 +328,9 @@ def usable_derived(conn, items, now=None):
             CROSS JOIN personal_memories m ON m.id=s.memory_id CROSS JOIN memory_details d ON d.memory_id=m.id
             WHERE m.user_id=? AND (s.status<>'active' OR (s.review_after<=? AND d.locked=0))''',(ids,items[0]['user_id'],at)))
     from .memory_reliability import source_current
+    if items:
+        from .memory_resources import invalid_resources
+        invalid.update(invalid_resources(conn,items[0]['user_id'],by_id))
     source_cache={}
     for _ in range(len(links)+1):
         changed = False
@@ -352,3 +356,7 @@ V3_TABLES = set(REQUIRED_TABLES)
 from .memory_reliability_schema import SCHEMA as RELIABILITY_SCHEMA, TABLES as RELIABILITY_TABLES
 REQUIRED_TABLES |= RELIABILITY_TABLES
 SCHEMA += RELIABILITY_SCHEMA
+V4_TABLES=set(REQUIRED_TABLES)
+from .memory_autonomy_schema import SCHEMA as AUTONOMY_SCHEMA,TABLES as AUTONOMY_TABLES
+REQUIRED_TABLES |= AUTONOMY_TABLES
+SCHEMA += AUTONOMY_SCHEMA

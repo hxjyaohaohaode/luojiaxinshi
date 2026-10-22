@@ -187,7 +187,7 @@ def test_branch_preserves_project_topics_and_disabled_memory_independently(env):
         conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,parent_id,created_at) VALUES(?,?,'assistant','原对话回答','complete',?,?)",(mid,chat['id'],parent,int(time.time())))
     current=c.get('/api/conversations/'+chat['id']).json()
     r=c.post(f"/api/conversations/{chat['id']}/messages/{mid}/branch",json={'version':current['version']});assert r.status_code==200,r.text
-    branch=r.json();assert branch['context']=={'project_id':p['id'],'topics':['论文'],'memory_enabled':False,'version':1}
+    branch=r.json();assert branch['context']=={'project_id':p['id'],'topics':['论文'],'memory_enabled':False,'version':1,'selection_mode':'manual'}
     context(c,branch,project_id=None,topics=[],memory_enabled=True)
     original=c.get('/api/conversations/'+chat['id']).json()['context']
     assert original['project_id']==p['id'] and not original['memory_enabled'] and original['topics']==['论文']

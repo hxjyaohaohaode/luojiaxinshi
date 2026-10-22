@@ -45,18 +45,20 @@ def candidates(conn,uid,cid,access,scenario=None,ids=None):
     from .memory_policy import rows_for,effective
     from .memory_lifecycle import recall_gate,source_access
     context=context_for(conn,cid)
+    from .memory_autonomy import selected_scopes,resolve_candidates
+    contexts=selected_scopes(conn,uid,context,scenario,access)
     raw=rows_for(conn,uid,ids)
-    scoped=[item for item in raw if item['scope']=='global' or item['scope']=='project' and item['project_id']==context['project_id'] or item['scope']=='topic' and item['topic'] in context['topics']]
+    scoped=[item for item in raw if contexts is None or any(item['scope']=='global' or item['scope']=='project' and item['project_id']==scope['project_id'] or item['scope']=='topic' and item['topic'] in scope['topics'] for scope in contexts)]
     entries=decorate(conn,scoped);excluded=[]
     accepted=[item for item in entries if item['review_status']=='accepted']
     excluded.extend({'id':item['id'],'reason':'pending'} for item in entries if item['review_status']!='accepted')
-    accepted,blocked=source_access(conn,uid,accepted,access);excluded.extend(blocked)
+    accepted,blocked=source_access(conn,uid,accepted,{**access,'_memory_conversation_id':cid});excluded.extend(blocked)
     accepted,blocked=recall_gate(conn,uid,cid,accepted);excluded.extend(blocked)
     accepted,invalid=usable_derived(conn,accepted)
     excluded.extend({'id':key,'reason':'source_changed'} for key in invalid)
     if scenario is not None:
         accepted,blocked=scenario_gate(conn,accepted,scenario);excluded.extend(blocked)
-    accepted,blocked=effective(accepted,context);excluded.extend(blocked)
+    accepted,blocked=resolve_candidates(accepted,contexts);excluded.extend(blocked)
     accepted,invalid=usable_derived(conn,accepted)
     excluded.extend({'id':key,'reason':'source_changed'} for key in invalid)
     return accepted,excluded

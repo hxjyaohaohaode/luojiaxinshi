@@ -13,6 +13,12 @@ function check(name,passed,extra={}){
   report.checks.push({name,passed,...extra});
   if(!passed)throw Error(name);
 }
+let fixtureReady=false;
+for(let attempt=0;attempt<40;attempt++){
+  try{if((await fetch(origin+'/api/health',{signal:AbortSignal.timeout(1000)})).ok){fixtureReady=true;break;}}catch{}
+  await new Promise(resolve=>setTimeout(resolve,250));
+}
+if(!fixtureReady)throw Error('The isolated memory fixture is not ready on 8786');
 for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',')){
   const browser=await engines[engine].launch({headless:true,executablePath:engines[engine].executablePath()});
   try{

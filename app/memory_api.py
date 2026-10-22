@@ -61,6 +61,8 @@ def install(app, db, user):
     install_lifecycle(app,db,user)
     from .memory_reliability_api import install as install_reliability
     install_reliability(app,db,user)
+    from .memory_assist import install as install_assist
+    install_assist(app,db,user)
     @app.get('/api/memory/settings')
     def get_settings(current=Depends(user)):
         with db.connect() as conn:
@@ -76,6 +78,9 @@ def install(app, db, user):
                 DO UPDATE SET mode=excluded.mode,auto_organize=excluded.auto_organize,
                 learn_tasks=excluded.learn_tasks,version=excluded.version,updated_at=excluded.updated_at''',
                 (current['id'], payload.mode, int(payload.auto_organize), int(payload.learn_tasks), old['version']+1, int(time.time())))
+            if payload.mode in ('auto','review') and old['mode']!=payload.mode:
+                from .memory_resources import queue_existing
+                queue_existing(conn,current['id'])
             return settings_for(conn, current['id'])
 
     @app.get('/api/memory/items/{mid}')
@@ -90,6 +95,15 @@ def install(app, db, user):
                 LEFT JOIN conversations c ON c.id=msg.conversation_id
                 LEFT JOIN tasks task ON e.source_kind='task' AND task.id=e.source_id AND task.user_id=?
                 WHERE e.memory_id=? ORDER BY e.created_at,e.source_kind,e.source_id''',(current['id'],current['id'],current['id'],mid))]
+            from .memory_resources import source_for
+            binding=conn.execute('SELECT * FROM memory_resource_sources WHERE memory_id=?',(mid,)).fetchone()
+            for entry in item['evidence']:
+                if not entry['source_kind'].startswith('resource_'):continue
+                source=source_for(conn,current['id'],entry['source_kind'],entry['source_id'])
+                entry['source_status']='missing' if not source or not source['available'] else 'available' if binding and binding['fingerprint']==source['fingerprint'] else 'changed'
+                entry['source_title']=source['title'] if source else ''
+                entry['conversation_id']=source.get('conversation_id') if source else None
+                entry['notice_id']=source.get('notice_id') if source else None
             item['revisions'] = [{**dict(r), 'snapshot': json.loads(r['snapshot'])} for r in conn.execute(
                 'SELECT version,snapshot,actor,created_at FROM memory_revisions WHERE memory_id=? ORDER BY version DESC', (mid,))]
             item['links'] = [dict(r) for r in conn.execute('''SELECT l.*,m.content,m.kind FROM memory_links l
@@ -105,6 +119,24 @@ def install(app, db, user):
             imported = conn.execute('SELECT payload FROM memory_import_provenance WHERE memory_id=?', (mid,)).fetchone()
             item['imported_provenance'] = json.loads(imported['payload']) if imported else None
             return item
+
+    @app.post('/api/memory/items/{mid}/source-sync')
+    def sync_source(mid:str,payload:Version,current=Depends(user)):
+        from .memory_resources import source_for,excerpt
+        from .memory_autonomy import replace_content
+        with db.connect(write=True) as conn:
+            item=item_for(conn,current['id'],mid)
+            if item['version']!=payload.version:raise HTTPException(409,'记忆已变化，请重新载入后同步')
+            binding=conn.execute('SELECT * FROM memory_resource_sources WHERE memory_id=?',(mid,)).fetchone()
+            if not binding or binding['source_kind']=='resource_task':raise HTTPException(422,'这条记忆不是资料索引')
+            source=source_for(conn,current['id'],binding['source_kind'],binding['source_id'])
+            if not source or not source['available']:raise HTTPException(409,'原资料当前不可用，请先核对来源')
+            content=excerpt(source,binding['source_kind'])
+            conn.execute('UPDATE memory_details SET locked=0 WHERE memory_id=?',(mid,))
+            replace_content(conn,current['id'],item,content,'summary',None,'','source-sync')
+            conn.execute('UPDATE memory_resource_sources SET fingerprint=? WHERE memory_id=?',(source['fingerprint'],mid))
+            conn.execute('UPDATE memory_evidence SET quote=?,created_at=? WHERE memory_id=? AND source_kind=? AND source_id=?',(content,int(time.time()),mid,binding['source_kind'],binding['source_id']))
+            return item_for(conn,current['id'],mid)
 
     @app.post('/api/memory/items/{mid}/review')
     def review(mid: str, payload: ReviewAction, current=Depends(user)):

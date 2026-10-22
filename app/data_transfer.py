@@ -267,6 +267,7 @@ def install_data_transfer(app,db,user):
                         conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(rid,current['id'],item['title'],now,now))
                         context=item['context'];pid=require_project(context['project_id'])
                         conn.execute('INSERT INTO conversation_context VALUES(?,?,?,?,1)',(rid,pid,dumps(context['topics']),int(context['memory_enabled'])))
+                        conn.execute('INSERT INTO memory_selection_modes VALUES(?,?)',(rid,context.get('selection_mode') or 'manual'))
                         for source in item['sources']:
                             conn.execute("INSERT INTO conversation_sources(id,conversation_id,name,kind,sha256,status,sections,warning,created_at) VALUES(?,?,?,'text',?,'review',?,?,?)",(ident(),rid,source['name'],hashlib.sha256(dumps(source['sections']).encode()).hexdigest(),dumps(source['sections']),source['warning'],now))
                         parent=None
