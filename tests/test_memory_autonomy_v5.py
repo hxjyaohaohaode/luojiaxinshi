@@ -295,3 +295,11 @@ def test_provider_edit_protocol_accepts_only_the_instance_and_never_retries(env,
     else:
         with pytest.raises(ValidationError):asyncio.run(memory_assist.propose(env[1],'小林','改成小陈'))
     assert len(calls)==1
+
+
+@pytest.mark.parametrize('changed',['替换为 b','替换为  B'])
+def test_ai_edit_receipt_requires_exact_case_and_spacing_in_the_request(env,monkeypatch,changed):
+    c=account(env);old=memory(c,content='A');calls=enable_assist(env,monkeypatch,'B')
+    assert edit(c,old,instruction='替换为 B').status_code==200
+    assert edit(c,old,instruction=changed).status_code==409
+    assert len(calls)==1 and c.get('/api/memory/items/'+old['id']).json()['content']=='B'

@@ -1,5 +1,6 @@
 """One explicit user request edits one version and one exact character range."""
 import asyncio
+import hashlib
 import json
 import re
 import time
@@ -9,7 +10,6 @@ from pydantic import Field
 from .models import Strict
 from .db import ident,dumps
 from .memory import own
-from .memory_store import digest
 
 
 class EditRequest(Strict):
@@ -44,7 +44,7 @@ def install(app,db,user):
         if not re.fullmatch(r'[A-Za-z0-9_-]{8,80}',request_id):raise HTTPException(422,'编辑操作标识无效')
         if not settings.ai_api_key:raise HTTPException(503,'尚未配置模型，可以直接手动编辑')
         if not payload.instruction.strip() or SECRET.search(payload.instruction) or REJECT_INSTRUCTION.search(payload.instruction):raise HTTPException(422,'请填写具体修改要求，不要包含凭证或权限指令')
-        fingerprint=digest(dumps({'memory_id':mid,**payload.model_dump()}))
+        fingerprint=hashlib.sha256(dumps({'memory_id':mid,**payload.model_dump()}).encode('utf-8')).hexdigest()
         with db.connect(write=True) as conn:
             previous=conn.execute('SELECT * FROM memory_assist_jobs WHERE user_id=? AND request_id=?',(current['id'],request_id)).fetchone()
             if previous:

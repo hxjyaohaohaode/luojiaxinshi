@@ -8,15 +8,15 @@
     "errors": 0,
     "seconds": 280.343,
     "warnings": 1,
-    "scope": "Complete regression before the final provider-prompt clarification."
+    "scope": "Complete regression before the final provider-prompt and exact edit-fingerprint refinements."
   },
   "backend_after_protocol_refinement": {
-    "passed": 39,
+    "passed": 41,
     "failed": 0,
     "errors": 0,
-    "seconds": 14.211,
+    "seconds": 15.234,
     "warnings": 1,
-    "scope": "Autonomy and provider protocol tests after the prompt-only refinement; overlaps the full regression."
+    "scope": "Autonomy, provider protocol and exact request-fingerprint tests after the final refinements; overlaps the full regression."
   },
   "frontend": {
     "passed": 118,
