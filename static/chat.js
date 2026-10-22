@@ -90,7 +90,8 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       </form>
       ${state.session.ai.configured?'':'<div class="chat-footnote" role="status">AI 未配置 <a href="#settings">设置</a></div>'}
       </div><button type="button" class="materials-scrim" data-chat-action="toggle-materials" aria-label="关闭材料面板" tabindex="-1"></button><aside id="chat-materials" class="chat-materials" aria-label="本次对话的材料"><div class="materials-heading"><h2>本次材料</h2><span class="small muted" id="material-total">0</span><button type="button" class="icon-button materials-close" data-chat-action="toggle-materials" aria-label="收起材料">${icon('close')}</button></div>${searchControls({id:"material",esc,icon,kinds:[...new Set(current?.sources.map(s=>s.kind)||[])].map(k=>[k,k.toUpperCase()])})}<div id="material-list"></div><div class="material-actions">${call(icon('plus')+' 添加材料','upload','','small')}${call('转为通知 '+icon('arrow'),'promote','','small primary')}</div>${current?`<div class="conversation-tools">${call('重命名','rename','','small plain')}${call('删除对话','delete','','small plain danger')}</div>`:''}</aside></div>`;
-    $('#chat-thread').dataset.genuiTheme=state.session.genui?.theme||'light';
+    // The workspace is light. Legacy answer-only themes cannot override its surface.
+    $('#chat-thread').dataset.genuiTheme='light';
     $('#chat-thread').addEventListener('scroll',updateJump,{passive:true});$('#chat-jump-latest').addEventListener('click',()=>{const thread=$('#chat-thread');thread.scrollTop=thread.scrollHeight;updateJump();});
     materialSearch=new WorkspaceSearch($('[data-search-host="material"]'),{api,scope:"materials",conversationId:()=>current?.id,onResult:result=>{materialQuery=result.query||'';materialMatches=new Map(result.items.map(s=>[s.id,s]));materialRenderKey="";drawMaterials();},onError:message=>toast(message,true)});
     fitComposer();update();if(current?.processing)schedulePoll(current.id,state.renderId);

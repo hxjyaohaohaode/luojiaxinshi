@@ -38,6 +38,19 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await page.route('**/api/conversations/'+chat.id,async route=>{const response=await route.fetch(),data=await response.json(),m=data.messages.findLast(m=>m.role==='assistant');if(m){m.genui=null;m.content=Array.from({length:32},(_,i)=>`第 ${i+1} 段。稳定阅读内容与日期 2026-10-22 17:00，测试文字根据容器宽度自然换行。核对记录后继续处理任务。[1]`).join('\n\n');m.citations=[{source_id:sourceId,quote:'测试引用'}];m.evidence_sources=[{id:sourceId,name:'合成待办',evidence_kind:'task'}];m.grounding={memory:{selected:4},memory_operations:[]};}await route.fulfill({response,json:data});});
   await page.reload();await page.locator('.source-pill').last().waitFor();
   await check('unused memory candidates have no icon or receipt block',async()=>{assert.equal(await page.locator('.memory-use-icon:not([hidden]),.memory-receipt:not([hidden])').count(),0);});
+  for(const theme of ['light','dark','auto'])for(const colorScheme of ['light','dark'])await check(`chat surface and contrast remain consistent for saved ${theme} and OS ${colorScheme}`,async()=>{
+   const session=await api('/session');await api('/genui/preferences','PUT',{version:session.genui.version,enabled:session.genui.enabled,theme});
+   await page.emulateMedia({colorScheme});await page.reload();await page.locator('.source-pill').last().waitFor();
+   assert.equal(await page.locator('#chat-thread').getAttribute('data-genui-theme'),'light');
+   const result=await page.locator('.message-assistant .message-content').first().evaluate(n=>{
+    n.classList.add('gu-message');const style=getComputedStyle(n),p=n.querySelector('p')||n,fg=getComputedStyle(p).color;
+    let current=p,bg;while(current){const value=getComputedStyle(current).backgroundColor;if(value!=='transparent'&&value!=='rgba(0, 0, 0, 0)'){bg=value;break;}current=current.parentElement;}
+    const rgb=v=>(v.match(/[\d.]+/g)||[]).slice(0,3).map(Number),lum=v=>rgb(v).map(c=>{c/=255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}).reduce((a,c,i)=>a+c*[.2126,.7152,.0722][i],0),a=lum(fg),b=lum(bg||'rgb(255,255,255)');
+    return{scheme:style.colorScheme,bg:style.backgroundColor,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)};
+   });
+   assert.equal(result.scheme,'light');assert.ok(result.bg==='rgba(0, 0, 0, 0)'||result.bg==='rgb(255, 255, 255)',JSON.stringify(result));assert.ok(result.ratio>=4.5,JSON.stringify(result));
+  });
+  await page.emulateMedia({colorScheme:'light'});
   let synthesis=0;
   await page.route('**/api/speech/config',route=>route.fulfill({json:{configured:true,models:{default:'synthetic-voice'},voice:'synthetic'}}));
   await page.route('**/api/speech/synthesize',async route=>{synthesis++;await new Promise(r=>setTimeout(r,180));await route.fulfill({contentType:'audio/wav',body:wave});});

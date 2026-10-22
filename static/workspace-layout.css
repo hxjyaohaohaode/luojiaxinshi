@@ -70,6 +70,8 @@ body:has(.shell) #app{height:var(--visual-height,100dvh)}
 .message-footer>.memory-use-icon,.message-footer>.memory-change-icon{flex:none;width:30px;height:30px;min-width:30px;min-height:30px;padding:6px;display:inline-grid;place-items:center;color:var(--green,#12634b)}
 .chat-thread{overflow-anchor:none;scroll-behavior:auto}
 .chat-workspace>.chat-main{font-size:15px}
+#chat-thread .message-content.gu-message,#chat-thread .genui{--gu-bg:var(--white,#fff);--gu-surface:#f4f7f3;--gu-ink:var(--ink,#20372e);--gu-muted:var(--muted,#617169);--gu-line:var(--line,#dfe7e1);--gu-accent:var(--green,#165c43);color-scheme:light;color:var(--gu-ink)}
+#chat-thread .message-content.gu-message{background:transparent;padding:0;border-radius:0}
 .message-assistant>.reply-audio{display:flex;align-items:center;gap:9px;width:min(100%,500px);max-width:100%;min-height:44px;margin:10px 0;padding:5px 8px;border:1px solid var(--line);border-radius:10px;background:var(--memory-soft,#f5f8f5)}
 .reply-audio>.icon-button{flex:none;width:32px;height:32px;min-height:32px;padding:7px;font-size:14px}
 .reply-audio>.icon-button svg{width:18px;height:18px}
