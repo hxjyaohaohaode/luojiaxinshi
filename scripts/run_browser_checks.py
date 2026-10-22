@@ -71,6 +71,12 @@ def main():
                                             stdout=output, stderr=subprocess.STDOUT)
                 failed |= result.returncode != 0
                 print(script+': '+('passed' if result.returncode == 0 else 'FAILED'), flush=True)
+                if result.returncode:
+                    # These are owned synthetic fixture logs. Surface diagnostics
+                    # in the job itself so a failed run does not require downloading
+                    # every screenshot before its cause can be investigated.
+                    details = (OUT / (script+'.log')).read_text(encoding='utf-8', errors='replace')
+                    print('\n'.join(details.splitlines()[-40:])[-8000:], flush=True)
             return int(failed)
         finally:
             if fixture.poll() is None:
