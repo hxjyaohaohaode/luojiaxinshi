@@ -18,8 +18,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await nav('memory');await page.locator('#memory-shell').waitFor();await page.waitForFunction(()=>!document.querySelector('.memory-tree-main')?.matches('[aria-busy=true]'));
   for(const [width,height] of [[1413,871],[1651,871],[1920,1080],[1280,720],[1024,768],[850,700],[768,1024],[390,844],[320,640]]){
    await page.setViewportSize({width,height});
+   await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<1,{width,height});
+   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    for(const side of width>850?[180,234,380]:[234])await check(`memory fills container ${width}x${height} sidebar ${side}`,async()=>{
-    await page.locator('.shell').evaluate((n,w)=>n.style.setProperty('--sidebar-width',w+'px'),side);
+    await page.locator('.shell').evaluate((n,w)=>{localStorage.setItem('campus.sidebar.width',String(w));n.style.setProperty('--sidebar-width',w+'px');},side);
     const measure=()=>page.evaluate(()=>{const n=document.querySelector('#memory-shell'),p=n.parentElement,c=getComputedStyle(p),r=n.getBoundingClientRect(),b=p.getBoundingClientRect();return{w:r.width,available:p.clientWidth-parseFloat(c.paddingLeft)-parseFloat(c.paddingRight),right:r.right,parent:b.right,bottom:r.bottom,limit:b.bottom-parseFloat(c.paddingBottom),overflow:document.documentElement.scrollWidth>innerWidth+1};});
     await page.locator('.shell').evaluate(n=>{n.getBoundingClientRect();return Promise.all(n.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});const before=await measure();assert.ok(Math.abs(before.w-before.available)<2,JSON.stringify(before));assert.ok(Math.abs(before.bottom-before.limit)<2,JSON.stringify(before));assert.equal(before.overflow,false);
     await page.locator('#memory-search').fill('no-matches-v9-rare');await page.waitForTimeout(350);const empty=await measure();assert.ok(Math.abs(before.w-empty.w)<1,JSON.stringify({before,empty}));await page.locator('#memory-search').fill('');await page.waitForTimeout(300);

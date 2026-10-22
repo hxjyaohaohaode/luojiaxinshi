@@ -1,4 +1,5 @@
 import {preserveChatViewport} from './chat-viewport.js';
+import {MaterialTreeState} from './workspace-tree-state.js';
 import {createReplySpeech} from './speech.js';
 import {brandMotion} from './motion.js';
 import {searchControls,WorkspaceSearch,materialTree,materialFormats} from './workspace-search.js';
@@ -21,6 +22,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   let presenter=null,streaming=null,paintFrame=0,hostArrangements=[],hostTasks=[];
   let submission=0,accepting=false,branchDraft=null;
   let materialSearch=null,historySearch=null,materialMatches=null,historyMatches=[],historyPage=1;
+  const materialTreeState=new MaterialTreeState();
   let materialInert=[],materialReturn=null,materialQuery="";
   function setMaterials(open,restore=true){
     const workspace=$('#chat-workspace'),panel=$('#chat-materials');
@@ -129,9 +131,10 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     const renderKey=JSON.stringify([current?.id,all,materialMatches&&[...materialMatches],!!current?.processing]);if(materialRenderKey===renderKey)return;materialRenderKey=renderKey;
     const kindSelect=$('[data-search-host="material"] [data-search-kind]'),selectedKind=kindSelect?.value||'';
     if(kindSelect){const kinds=[...new Set(all.map(s=>s.kind))];if(selectedKind&&!kinds.includes(selectedKind))kinds.push(selectedKind);kindSelect.innerHTML='<option value="">全部类型</option>'+kinds.map(k=>`<option value="${esc(k)}">${esc(k.toUpperCase())}</option>`).join('');kindSelect.value=selectedKind;}
-    const folders=new Map($$('details[data-folder-path]',target).map(n=>[n.dataset.folderPath,n.open]));
+    materialTreeState.update(target,{scope:current?.id,filtered:!!materialSearch?.hasFilters()},()=>{
     target.innerHTML=matched.length?materialTree(matched,{esc,icon,sourceStatus,cid:current.id,processing:current.processing,matches:materialQuery?materialMatches:null}):all.length?`<div class="material-empty">${brandMotion('search')}<strong>没有匹配的材料</strong><p>换个关键词，或清空筛选再找。</p><button class="button small" data-chat-action="clear-material-search">清空检索</button></div>`:`<div class="material-empty">${companion('organize','material-companion')}<strong>从一份材料开始</strong><p>文件、文件夹、截图或一段原文<br>都可以放在这里。</p><small>文档 · 表格 · 幻灯片 · 图片 · 音视频</small></div>`;
-    for(const folder of $$('details[data-folder-path]',target))if(materialSearch?.hasFilters())folder.open=true;else if(folders.has(folder.dataset.folderPath))folder.open=folders.get(folder.dataset.folderPath);
+    for(const folder of $$('details[data-folder-path]',target))if(materialSearch?.hasFilters())folder.open=true;
+    });
   }
   function nearBottom(){const thread=$('#chat-thread');return thread&&thread.scrollHeight-thread.scrollTop-thread.clientHeight<110;}
   function updateJump(){updateTurnMarker();const jump=$('#chat-jump-latest');if(jump)jump.hidden=nearBottom()||!current?.messages.length;}

@@ -60,7 +60,8 @@ def main():
             failed = False
             suites = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
                       ('verify_frontend_review.mjs', 'frontend-v8-browser'),
-                      ('verify_reference_interactions.mjs', 'reference-interactions-browser')]
+                      ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
+                      ('verify_workspace_interactions.mjs', 'workspace-interactions-browser')]
             for script, folder in suites:
                 reset_fixture_limits(data)
                 (ROOT/'artifacts'/folder/'report.json').unlink(missing_ok=True)

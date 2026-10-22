@@ -77,9 +77,12 @@ jobs:
             artifacts/frontend-v8-browser/*.png
             artifacts/reference-interactions-browser/report.json
             artifacts/reference-interactions-browser/*.png
+            artifacts/workspace-interactions-browser/report.json
+            artifacts/workspace-interactions-browser/*.png
             artifacts/ci-browser/verify_frontend_stability.mjs.log
             artifacts/ci-browser/verify_frontend_review.mjs.log
             artifacts/ci-browser/verify_reference_interactions.mjs.log
+            artifacts/ci-browser/verify_workspace_interactions.mjs.log
             artifacts/ci/summary.md
           retention-days: 14
           if-no-files-found: warn

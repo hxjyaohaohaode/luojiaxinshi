@@ -14,6 +14,7 @@ export function searchRecords(tasks, notices, value = '') {
       search: [task.notice_title, ...(task.data?.materials || [])].join(' '),
       meta: [task.status === 'done' ? '已完成' : task.status === 'cancelled' ? '已取消' : '待办', task.notice_title].filter(Boolean).join(' · '),
       url: '#notice/' + encodeURIComponent(task.notice_id),
+      taskId: task.id,
     }))),
     notices: select(notices.map(notice => ({
       title: notice.title || '未命名通知',
@@ -48,14 +49,14 @@ export function createCommandSearch({ state, api, esc, icon, showDialog, loading
       if (!items.length) return '';
       return `<section class="command-group" aria-labelledby="command-${key}-heading">
         <h3 id="command-${key}-heading">${title}<span>${items.length}</span></h3>
-        ${items.slice(0, limit).map((item, index) => `<a class="command-result" data-command-item data-command-key="${key}-${index}" href="${esc(item.url)}">
-          <span class="command-symbol">${icon(symbol)}</span><span class="command-copy"><strong>${highlightMatch(item.title, query, esc)}</strong><small>${highlightMatch(item.meta, query, esc)}</small></span>${icon('arrow')}</a>`).join('')}
+        ${items.slice(0, limit).map((item, index) => `<${item.taskId?'button':'a'} class="command-result" data-command-item data-command-key="${key}-${index}" ${item.taskId?`type="button" data-workflow-task="${esc(item.taskId)}"`:`href="${esc(item.url)}"`}>
+          <span class="command-symbol">${icon(symbol)}</span><span class="command-copy"><strong>${highlightMatch(item.title, query, esc)}</strong><small>${highlightMatch(item.meta, query, esc)}</small></span>${icon('arrow')}</${item.taskId?'button':'a'}>`).join('')}
       </section>`;
     };
     const quick = query.trim() ? '' : `<section class="command-group command-shortcuts" aria-labelledby="command-actions-heading"><h3 id="command-actions-heading">快捷前往</h3>
       ${[['new', 'plus', '处理一则通知'], ['chat', 'spark', '和小信使聊聊'], ['calendar', 'calendar', '查看日历']].map(([route, symbol, title]) => `<a class="command-shortcut" data-command-item href="#${route}">${icon(symbol)}<span>${title}</span>${icon('arrow')}</a>`).join('')}</section>`;
     results.removeAttribute('aria-busy');
-    $('#command-count').textContent = query.trim() ? `找到 ${total} 条已存记录` : `${total} 条已存记录，可输入标题、来源或材料关键词`;
+    $('#command-count').textContent = `${total} 条记录`;
     results.innerHTML = quick + (total ? group('tasks', '行动与待办', 'tasks') + group('notices', '通知原文', 'doc') : empty(query.trim() ? '暂时没有匹配的内容' : '从第一则通知开始', query.trim() ? '换一个更短的标题、来源或材料关键词。' : '保存后的通知和行动，会一起出现在这里。', query.trim() ? '<button type="button" class="button small" data-clear-global-search>清空搜索</button>' : '', true, query.trim() ? 'search' : 'listening'))
       + (found.tasks.length > limit || found.notices.length > limit ? '<button type="button" class="button small command-more" data-command-more data-command-item>展开更多结果</button>' : '');
   }
@@ -87,8 +88,9 @@ export function createCommandSearch({ state, api, esc, icon, showDialog, loading
     load();
   }
   document.addEventListener('input', event => {
-    if (event.target.id === 'global-search') { limit = 6; render(); }
+    if (event.target.id === 'global-search'&&!event.isComposing) { limit = 6; render(); }
   });
+  document.addEventListener('compositionend',event=>{if(event.target.id==='global-search'){limit=6;render();}});
   document.addEventListener('click', event => {
     if (!$('#global-search')) return;
     if (event.target.closest('[data-clear-global-search]')) {

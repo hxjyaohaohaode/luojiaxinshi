@@ -36,6 +36,11 @@ export function animateStepChange(form,panel,before,direction){
   animate(panel,[{opacity:0,transform:`translateX(${direction*12}px)`},{opacity:1,transform:'translateX(0)'}],()=>{},200);
 }
 
+export function animateLocalPanel(panel,direction=0){
+ if(!panel)return;
+ animate(panel,[{opacity:.35,transform:`translate(${direction*6}px,${direction?0:4}px)`},{opacity:1,transform:'translate(0,0)'}],()=>{},160);
+}
+
 const markerNumbers=new WeakMap();
 export function syncStepMarkers(stepper){
   for(const button of stepper?.querySelectorAll('[data-notice-stage]')||[]){
@@ -54,15 +59,22 @@ export function listNavigationIndex(key,index,count){
   return key==='Home'?0:key==='End'?count-1:Math.max(0,Math.min(count-1,index+(key==='ArrowDown'?1:-1)));
 }
 
-const folderTargets=new WeakMap();
-function toggleFolder(folder){
-  const open=!(folderTargets.get(folder)??folder.open),before=folder.getBoundingClientRect().height;
+const folderTargets=new WeakMap(),detailInert=new WeakMap();
+export const detailsExpanded=folder=>folderTargets.get(folder)??folder.open;
+export function setDetailsExpanded(folder,requested){
+  if(!folder)return;
+  const current=detailsExpanded(folder),open=requested??!current;if(current===open)return;
+  const before=folder.getBoundingClientRect().height;
   folderTargets.set(folder,open);running.get(folder)?.animation?.cancel();
   folder.open=open;const after=folder.getBoundingClientRect().height;folder.open=true;
-  const summary=folder.querySelector(':scope > summary'),body=folder.querySelector(':scope > .material-folder-children');
-  summary?.setAttribute('aria-expanded',String(open));if(body)body.inert=!open;
+  const summary=folder.querySelector(':scope > summary'),body=[...folder.children].filter(node=>node!==summary);
+  // Native summary derives expansion from details.open, including direct
+  // updates during validation or search. Do not leave a stale ARIA override.
+  summary?.removeAttribute('aria-expanded');
+  if(!detailInert.has(folder))detailInert.set(folder,body.map(node=>[node,node.inert]));
+  for(const [node,previous] of detailInert.get(folder))node.inert=!open||previous;
   animate(folder,[{height:before+'px',overflow:'clip'},{height:after+'px',overflow:'clip'}],()=>{
-    folder.open=open;folderTargets.delete(folder);if(body)body.inert=false;
+    folder.open=open;folderTargets.delete(folder);for(const [node,previous] of detailInert.get(folder)||[])node.inert=previous;detailInert.delete(folder);
   });
 }
 
@@ -96,12 +108,44 @@ export function installReferenceInteractions(){
     event.preventDefault();items[next].focus({preventScroll:true});keepVisible(root,items[next]);
   });
   document.addEventListener('click',event=>{
-    const summary=event.target.closest('details.material-folder > summary');
-    if(summary&&!event.target.closest('button,a,input,select,textarea')){event.preventDefault();toggleFolder(summary.parentElement);}
+    const summary=event.target.closest('details.material-folder > summary,details.workflow-section > summary,details.catalog-card > summary');
+    if(summary&&!event.target.closest('button,a,input,select,textarea')){event.preventDefault();setDetailsExpanded(summary.parentElement);}
     const record=event.target.closest('[data-tree-record]');
     if(record){const id=record.dataset.treeRecord,route=location.hash;requestAnimationFrame(()=>{
       if(location.hash===route&&document.activeElement===document.body&&!document.body.classList.contains('memory-detail-open'))document.querySelector(`[data-tree-record="${CSS.escape(id)}"]`)?.focus({preventScroll:true});
     });}
+  });
+  // Existing notice and composer menus retain their markup and positions.
+  const menuItems=menu=>[...menu.querySelectorAll('button:not(:disabled),a[href]')].filter(item=>item.getClientRects().length&&!item.closest('[inert]'));
+  document.addEventListener('toggle',event=>{
+    const disclosure=event.target;if(!disclosure.matches?.('details.notice-actions')||!disclosure.open)return;
+    for(const other of document.querySelectorAll('details.notice-actions[open]'))if(other!==disclosure)other.open=false;
+    animateLocalPanel(disclosure.querySelector('.notice-actions-menu'));
+  },true);
+  document.addEventListener('pointerdown',event=>{for(const menu of document.querySelectorAll('details.notice-actions[open]'))if(!menu.contains(event.target))menu.open=false;});
+  document.addEventListener('focusin',event=>{for(const menu of document.querySelectorAll('details.notice-actions[open]'))if(!menu.contains(event.target))menu.open=false;});
+  document.addEventListener('click',event=>{if(event.target.closest('.composer-plus'))queueMicrotask(()=>{const menu=document.querySelector('#composer-menu');if(menu&&!menu.hidden)animateLocalPanel(menu);});});
+  document.addEventListener('keydown',event=>{
+    if(event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;
+    const trigger=event.target.closest('details.notice-actions > summary,.composer-plus');
+    let menu=event.target.closest('.notice-actions-menu,#composer-menu');
+    if(trigger&&['ArrowDown','ArrowUp'].includes(event.key)){
+      event.preventDefault();
+      if(trigger.matches('summary')){trigger.parentElement.open=true;menu=trigger.parentElement.querySelector('.notice-actions-menu');}
+      else{menu=document.querySelector('#composer-menu');if(menu?.hidden)trigger.click();}
+      const items=menu?menuItems(menu):[];(event.key==='ArrowUp'?items.at(-1):items[0])?.focus({preventScroll:true});return;
+    }
+    if(!menu||menu.hidden)return;
+    if(event.key==='Escape'){
+      event.preventDefault();event.stopImmediatePropagation();
+      const details=menu.closest('details');if(details){details.open=false;details.querySelector('summary').focus({preventScroll:true});}
+      else{document.querySelector('.composer-plus')?.click();document.querySelector('.composer-plus')?.focus({preventScroll:true});}
+      return;
+    }
+    if(!['ArrowDown','ArrowUp','Home','End'].includes(event.key))return;
+    const items=menuItems(menu),index=items.indexOf(event.target.closest('button,a'));if(index<0||!items.length)return;
+    event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?items.length-1:(index+(event.key==='ArrowDown'?1:items.length-1))%items.length;
+    items[next].focus({preventScroll:true});
   });
   document.addEventListener('visibilitychange',()=>{if(document.hidden)finishReferenceMotion();});
   window.addEventListener('resize',finishReferenceMotion);

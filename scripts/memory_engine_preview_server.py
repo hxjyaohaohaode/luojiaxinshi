@@ -26,6 +26,8 @@ def reply(settings, sources, messages, profile):
             'citations':[],'image_sources':[],'memory_actions':[]}
     if quote=='【合成验收】输出代码块':
         result['answer']='以下是合成代码，仅用于组件验收。\n\n```python\nprint("组件验收 <safe>")\n```'
+    elif quote=='【合成验收】长篇阅读':
+        result['answer']='\n\n'.join(f'第 {index} 段：这是合成阅读材料，用于核对侧面板展开和侧栏变化时的位置。保留正在阅读的文字，继续查看后面的记录。' for index in range(1,61))
     if quote.startswith('记住，我的测试称呼'):
         result['memory_actions']=[{'operation':'remember','content':quote,'source_quote':quote,'kind':'fact'}]
     elif quote.startswith('我以后希望每次回答先给结论'):

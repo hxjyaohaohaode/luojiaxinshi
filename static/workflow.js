@@ -1,4 +1,5 @@
 import {beginFormFeedback} from './ui-request.js';
+import {animateLocalPanel,setDetailsExpanded,finishReferenceMotion} from './reference-interactions.js';
 import {createActionReviewUI,reviewPending} from './action-review.js';
 import {conditionsEditor,readConditions,installConditionEditing,taskIsPending} from './action-plans.js';
 export const stageNames={preparing:'准备中',submitted:'已提交，待结果',supplement:'待补件',accepted:'已核实受理',rejected:'未通过',blocked:'办理受阻'};
@@ -70,7 +71,7 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     const panels={};
     for(const [id,label] of [['record','办理记录'],['requirements','要求与前置'],['history','历史记录']]){
       const tab=document.createElement('button');tab.type='button';tab.id='workflow-tab-'+id;tab.dataset.workflowTab=id;tab.setAttribute('role','tab');tab.setAttribute('aria-controls','workflow-panel-'+id);tab.textContent=label;tabs.append(tab);
-      const panel=document.createElement('section');panel.className='workflow-page';panel.id='workflow-panel-'+id;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',tab.id);panels[id]=panel;
+      const panel=document.createElement('section');panel.className='workflow-page';panel.id='workflow-panel-'+id;panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',tab.id);panel.tabIndex=0;panels[id]=panel;
     }
     const grid=form.querySelector('.form-grid');
     // Preserve every original field and draft binding while grouping by intent.
@@ -96,19 +97,30 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
       }
       panels.record.append(node);
     }
-    const hint=document.createElement('p');hint.className='workflow-scope-note';hint.textContent='先更新进度，需要时再补充回执和跟进。';
     const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.action='close-dialog';cancel.textContent='返回';
     save.querySelector('span').remove();save.insertBefore(cancel,save.querySelector('[type=submit]'));
-    form.replaceChildren(head,tabs,...Object.values(panels),save);
-    const choose=(id,focus=false)=>{
+    const content=document.createElement('div');content.className='workflow-editing';content.append(head,tabs,...Object.values(panels));
+    form.replaceChildren(content,save);
+    let active=null,invalidTarget=null;const positions=new Map();
+    const scroller=id=>getComputedStyle(content).overflowY==='auto'?content:panels[id];
+    const choose=(id,focus=false,motion=true)=>{
+      if(active===id){if(focus)tabs.querySelector(`[data-workflow-tab="${id}"]`).focus();return;}
+      if(active)positions.set(active,scroller(active).scrollTop);const direction=Object.keys(panels).indexOf(id)-Object.keys(panels).indexOf(active);
       for(const button of tabs.children){const active=button.dataset.workflowTab===id;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;if(active&&focus)button.focus();}
       for(const [key,panel] of Object.entries(panels))panel.hidden=key!==id;
-      hint.hidden=id!=='record';
+      scroller(id).scrollTop=positions.get(id)||0;if(active&&motion)animateLocalPanel(panels[id],Math.sign(direction));active=id;
     };
     tabs.addEventListener('click',event=>{const tab=event.target.closest('[data-workflow-tab]');if(tab)choose(tab.dataset.workflowTab);});
     tabs.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const buttons=[...tabs.children],index=buttons.indexOf(document.activeElement),next=event.key==='Home'?0:event.key==='End'?2:(index+(event.key==='ArrowRight'?1:2))%3;choose(buttons[next].dataset.workflowTab,true);});
-    form.addEventListener('change',event=>{if(event.target.name==='stage'&&event.target.value!=='preparing')form.querySelector('.workflow-receipt').open=true;});
-    form.addEventListener('invalid',event=>{const panel=event.target.closest('.workflow-page');if(panel)choose(Object.keys(panels).find(key=>panels[key]===panel));for(let node=event.target.parentElement;node&&node!==form;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;},true);
+    form.addEventListener('change',event=>{if(event.target.name==='stage'&&event.target.value!=='preparing')setDetailsExpanded(form.querySelector('.workflow-receipt'),true);});
+    form.addEventListener('invalid',event=>{
+      // Native validation emits invalid for every bad field. Keep the first
+      // field visible instead of switching to the last failing hidden tab.
+      if(invalidTarget)return;invalidTarget=event.target;finishReferenceMotion();const panel=event.target.closest('.workflow-page');if(panel)choose(Object.keys(panels).find(key=>panels[key]===panel),false,false);
+      for(let node=event.target.parentElement;node&&node!==form;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+      queueMicrotask(()=>{if(invalidTarget?.isConnected)invalidTarget.focus();});
+      setTimeout(()=>{invalidTarget=null;},0);
+    },true);
     choose('record');
   }
 
