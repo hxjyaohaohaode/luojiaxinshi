@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'C:/Users/LENOVO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/frontend-v9-browser');await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic UI and speech responses; no external provider calls',checks:[],errors:[]};
 const wave=Buffer.alloc(44+16000*2*5);wave.write('RIFF');wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(16000,24);wave.writeUInt32LE(32000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(wave.length-44,40);
@@ -60,6 +60,6 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('used memory appears as a small accessible SVG',async()=>{
    const result=await page.evaluate(async()=>{const {ConversationView}=await import('/static/genui/chat-presenter.js'),host=document.createElement('div');document.body.append(host);const view=new ConversationView(host,{feature:{enabled:false},sources:[]});view.draw([{id:'synthetic-memory-receipt',conversation_id:'test',role:'assistant',status:'complete',content:'合成测试',grounding:{memory_operations:[{status:'used',id:'m1'}]}}]);const icon=host.querySelector('.memory-use-icon'),rect=icon?.getBoundingClientRect(),answer={svg:icon?.querySelectorAll('svg').length,label:icon?.getAttribute('aria-label'),w:rect?.width,h:rect?.height};view.dispose();host.remove();return answer;});assert.equal(result.svg,1);assert.ok(result.label.includes('1 条记忆'));assert.ok(result.w<=32&&result.h<=32,JSON.stringify(result));
   });
- }finally{await browser.close();}
+ }catch(error){report.checks.push({engine,name:'fixture or critical flow',ok:false,error:error.message.slice(0,900)});console.log('FAIL',engine,error.message.slice(0,300));}finally{await browser.close();}
 }
 await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));const failed=report.checks.filter(x=>!x.ok);console.log(JSON.stringify({checks:report.checks.length,failed:failed.length,pageErrors:report.errors.length}));if(failed.length||report.errors.length)process.exitCode=1;

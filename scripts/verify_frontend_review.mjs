@@ -4,7 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
-const pw=require(process.env.PLAYWRIGHT_PATH||'C:/Users/LENOVO/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin=process.env.UI_ORIGIN||'http://127.0.0.1:8786';
 assert.equal(new URL(origin).hostname,'127.0.0.1');assert.equal(new URL(origin).port,'8786','Never run mutations on the real experience service');
 const output=path.resolve('artifacts/frontend-v8-browser');await fs.mkdir(output,{recursive:true});

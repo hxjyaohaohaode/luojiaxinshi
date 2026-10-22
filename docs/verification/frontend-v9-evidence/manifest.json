@@ -1,0 +1,83 @@
+{
+  "application_version": "1.19.0",
+  "application_source_commit": "cec1dd9bdfc86da8152d13ae3a82ea730691b820",
+  "provenance": "Local runs. Application code is unchanged from the stated commit; verification tooling is published with this snapshot.",
+  "scope": {
+    "browser-stability.json": {
+      "origin": "local synthetic fixture",
+      "tests": 102,
+      "failures": 0,
+      "page_errors": 0
+    },
+    "browser-regression.json": {
+      "origin": "local synthetic fixture",
+      "tests": 198,
+      "failures": 0,
+      "page_errors": 0
+    },
+    "python-related.json": {
+      "origin": "local test process",
+      "tests": 58,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "node-unit.json": {
+      "origin": "local test process",
+      "tests": 131,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "verification-tools.json": {
+      "origin": "local test process",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "not_cloud_ci": true,
+  "contains_real_user_data": false,
+  "files": {
+    "browser-stability.json": {
+      "sha256": "555204e9f8a9a593a3cbbc759ecc4009c02db265757d8c83f30141b570ca4c96",
+      "bytes": 13089
+    },
+    "browser-regression.json": {
+      "sha256": "77eec20ef4734f78a1c91487c33d1108783fea5e73abade5209fa5a556133a6c",
+      "bytes": 22662
+    },
+    "python-related.json": {
+      "sha256": "45ce791ec714c65c3e6363905a32a9b571614fbd1beb74ab9dca2365bdd79933",
+      "bytes": 10121
+    },
+    "node-unit.json": {
+      "sha256": "54b395ec30f87280a139a12ff6c9f3f511b7428eeb550515ac18ef8381269631",
+      "bytes": 23893
+    },
+    "verification-tools.json": {
+      "sha256": "8f8c5f5ad29fe5ab8ac5c73dace94bf186216dd855a47e5f44f0df542f5a73d6",
+      "bytes": 519
+    },
+    "screenshots/chromium-memory.png": {
+      "sha256": "d6c01dedae87f3c16e9903854895cd3e04d1bc3e51a6c8c07e3b344b7077b244",
+      "bytes": 128649
+    },
+    "screenshots/chromium-chat.png": {
+      "sha256": "173a07f71760709c14a5a068df8e5365571c4e06ac3588f33753ad83c75b0a81",
+      "bytes": 152116
+    }
+  },
+  "verification_source_sha256_lf": {
+    ".github/workflows/checks.yml": "7dc4ac9c8da81e42069d1fd16916dc9bbb7654d5df605d2732122555bd97fce0",
+    "package.json": "32047774a06dd199b3d4de5c6712daf24162aaff532375fbf82e8d247e303d67",
+    "package-lock.json": "da5011b404a50a97930ed882260e81aaf668d746c49d52d98a08d7759ce160a5",
+    "scripts/run_browser_checks.py": "f60ed575b52a6527948e1d9714b754840cfa039dc1c2216b7e08ec21c86bfb66",
+    "scripts/write_ci_summary.py": "b76de878ed3c6b7f0345010227bddfa3bb5f16b57afb3c96d8e4244c8b718b64",
+    "scripts/export_verification_evidence.py": "3930279608cde687ca2645082197e1eb639aca06b85f7502d45e0fa671cd7c8f",
+    "scripts/verify_frontend_stability.mjs": "79a41fbe3b782e9410caaad86d57be68865e533e3148813218a3f515be317f1c",
+    "scripts/verify_frontend_review.mjs": "da0c1955d3ee3111f5b5dbb9aac4454792af7f8bf2db182d7adcb344ecbf9f97",
+    "tests/test_verification_evidence.py": "338e30b78de9ffd3cfbc3cb5c0e86687053a4cadd6d3a335902feaa4c3ccd719"
+  }
+}

@@ -89,5 +89,7 @@
     "source_id": "SRC-917ADE486E20E7",
     "adaptation": "Native dialog interaction; React component not copied"
   },
-  "private_evidence_excluded": true
+  "private_evidence_excluded": true,
+  "validated_commit": "cec1dd9bdfc86da8152d13ae3a82ea730691b820",
+  "public_evidence": "frontend-v9-evidence/README.md"
 }

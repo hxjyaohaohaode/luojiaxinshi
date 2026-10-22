@@ -1,0 +1,998 @@
+{
+  "origin": "local synthetic fixture",
+  "tests": 198,
+  "failures": 0,
+  "page_errors": 0,
+  "cases": [
+    {
+      "engine": "chromium",
+      "name": "01 password eye changes visibility without losing the password",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "02 rejected password never displays a success check",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "02 login shrinks to a real success check before navigating",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1651x871 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1651x871 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1651x871 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1651x871 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1651x871 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1280x720 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1280x720 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1280x720 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1280x720 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1280x720 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1024x768 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1024x768 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1024x768 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1024x768 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 1024x768 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 768x1024 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 768x1024 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 768x1024 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 768x1024 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 768x1024 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 390x844 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 390x844 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 390x844 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 390x844 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 390x844 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 320x640 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 320x640 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 320x640 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 320x640 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 320x640 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 844x390 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 844x390 sources",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 844x390 tasks",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 844x390 calendar",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "layout 844x390 chat",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 1651 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 1651 notices",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 1651 new",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 1651 settings",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 390 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 390 notices",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 390 new",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "other page 390 settings",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "03 09 13 decorative page copy is absent",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "06 memory details occupy space only after selection and close cleanly",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "08 15 record search starts compact and discloses working filters",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "10 calendar weekday and date fit and align with their day columns",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "11 task completion changes immediately and rolls back a failed save",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "12 operation pane takes most of the workflow dialog and actions remain reachable",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "14 task state filters form a compact single row",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "18 19 record evidence is readable and its title opens the exact record",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 1651 workflow",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 1651 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 1651 source",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 1651 upload",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 1651 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 390 workflow",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 390 memory",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 390 source",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 390 upload",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "operation 390 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "07 mobile directory closes after selection without opening a keyboard",
+      "passed": true
+    },
+    {
+      "engine": "chromium",
+      "name": "20 leaving an unused branch never creates a conversation; sending creates one",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "01 password eye changes visibility without losing the password",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "02 rejected password never displays a success check",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "02 login shrinks to a real success check before navigating",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1651x871 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1651x871 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1651x871 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1651x871 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1651x871 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1280x720 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1280x720 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1280x720 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1280x720 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1280x720 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1024x768 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1024x768 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1024x768 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1024x768 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 1024x768 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 768x1024 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 768x1024 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 768x1024 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 768x1024 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 768x1024 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 390x844 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 390x844 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 390x844 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 390x844 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 390x844 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 320x640 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 320x640 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 320x640 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 320x640 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 320x640 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 844x390 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 844x390 sources",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 844x390 tasks",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 844x390 calendar",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "layout 844x390 chat",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 1651 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 1651 notices",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 1651 new",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 1651 settings",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 390 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 390 notices",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 390 new",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "other page 390 settings",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "03 09 13 decorative page copy is absent",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "06 memory details occupy space only after selection and close cleanly",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "08 15 record search starts compact and discloses working filters",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "10 calendar weekday and date fit and align with their day columns",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "11 task completion changes immediately and rolls back a failed save",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "12 operation pane takes most of the workflow dialog and actions remain reachable",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "14 task state filters form a compact single row",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "18 19 record evidence is readable and its title opens the exact record",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 1651 workflow",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 1651 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 1651 source",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 1651 upload",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 1651 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 390 workflow",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 390 memory",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 390 source",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 390 upload",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "operation 390 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "07 mobile directory closes after selection without opening a keyboard",
+      "passed": true
+    },
+    {
+      "engine": "firefox",
+      "name": "20 leaving an unused branch never creates a conversation; sending creates one",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "01 password eye changes visibility without losing the password",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "02 rejected password never displays a success check",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "02 login shrinks to a real success check before navigating",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1651x871 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1651x871 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1651x871 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1651x871 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1651x871 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1280x720 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1280x720 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1280x720 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1280x720 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1280x720 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1024x768 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1024x768 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1024x768 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1024x768 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 1024x768 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 768x1024 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 768x1024 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 768x1024 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 768x1024 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 768x1024 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 390x844 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 390x844 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 390x844 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 390x844 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 390x844 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 320x640 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 320x640 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 320x640 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 320x640 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 320x640 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 844x390 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 844x390 sources",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 844x390 tasks",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 844x390 calendar",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "layout 844x390 chat",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 1651 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 1651 notices",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 1651 new",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 1651 settings",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 390 dashboard",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 390 notices",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 390 new",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "other page 390 settings",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "03 09 13 decorative page copy is absent",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "06 memory details occupy space only after selection and close cleanly",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "08 15 record search starts compact and discloses working filters",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "10 calendar weekday and date fit and align with their day columns",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "11 task completion changes immediately and rolls back a failed save",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "12 operation pane takes most of the workflow dialog and actions remain reachable",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "14 task state filters form a compact single row",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "18 19 record evidence is readable and its title opens the exact record",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 1651 workflow",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 1651 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 1651 source",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 1651 upload",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 1651 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 390 workflow",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 390 memory",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 390 source",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 390 upload",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "operation 390 arrangement",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "07 mobile directory closes after selection without opening a keyboard",
+      "passed": true
+    },
+    {
+      "engine": "webkit",
+      "name": "20 leaving an unused branch never creates a conversation; sending creates one",
+      "passed": true
+    }
+  ]
+}

@@ -23,14 +23,63 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
-      - run: python -m pytest -q
-      - run: node --test tests/*.test.mjs
+      - run: npm ci --ignore-scripts
+      - run: python -m pytest -q --junitxml=artifacts/ci/python-tests.xml
+      - run: node --test --test-reporter=junit --test-reporter-destination=artifacts/ci/node-tests.xml tests/*.test.mjs
       - run: python scripts/genui_catalog.py --check
       - run: python scripts/evaluate_genui.py
       - run: npm audit --omit=dev
       - run: python -m pip_audit -r requirements.lock --strict
       - run: python scripts/verify_local_runtime.py
       - run: python scripts/build_release.py
+      - name: Write test counts to the run summary
+        if: always()
+        run: python scripts/write_ci_summary.py --kind unit
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: unit-reports-${{ matrix.os }}
+          path: |
+            artifacts/ci/python-tests.xml
+            artifacts/ci/node-tests.xml
+            artifacts/ci/summary.md
+          retention-days: 14
+          if-no-files-found: warn
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run the browser suites against synthetic data
+        run: python scripts/run_browser_checks.py
+      - name: Write browser counts to the run summary
+        if: always()
+        run: python scripts/write_ci_summary.py --kind browser
+      - name: Upload synthetic browser reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: synthetic-browser-reports
+          path: |
+            artifacts/frontend-v9-browser/report.json
+            artifacts/frontend-v9-browser/*.png
+            artifacts/frontend-v8-browser/report.json
+            artifacts/frontend-v8-browser/*.png
+            artifacts/ci-browser/verify_frontend_stability.mjs.log
+            artifacts/ci-browser/verify_frontend_review.mjs.log
+            artifacts/ci/summary.md
+          retention-days: 14
+          if-no-files-found: warn
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 15

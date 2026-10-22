@@ -1,0 +1,21 @@
+{
+  "origin": "local test process",
+  "tests": 2,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "cases": [
+    {
+      "suite": "tests.test_verification_evidence",
+      "name": "test_public_browser_snapshot_rejects_private_or_failed_runs",
+      "passed": true,
+      "seconds": 0.029
+    },
+    {
+      "suite": "tests.test_verification_evidence",
+      "name": "test_public_results_strip_captured_output_properties_and_extra_fields",
+      "passed": true,
+      "seconds": 0.037
+    }
+  ]
+}

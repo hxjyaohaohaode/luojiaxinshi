@@ -1,5 +1,13 @@
 # 验证记录
 
+## GitHub 上的验证入口
+
+- [逐项证据与合成界面截图](docs/verification/frontend-v9-evidence/README.md)：浏览器 300 项、相关后端 58 项、前端单元测试 131 项及证据导出保护 2 项；每项结果可展开核对，文件附 SHA-256。
+- [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml)：Windows/Linux 完整 Python 与 Node 检查、三种浏览器验收、容器检查。Summary 显示实际数量；Artifacts 保存 JUnit、浏览器 JSON 和合成截图，保留十四天。
+- 云端结果以对应运行的提交与状态为准；本地通过记录保留独立来源标记。涉及真实账号、用户数据和本机环境的原始材料留在本地。
+
+浏览器可从仓库根目录通过 `python scripts/run_browser_checks.py` 运行，依赖安装命令和隔离边界见上述证据说明。Playwright 已锁定在 `package-lock.json`，脚本默认从仓库依赖加载。新增两项导出保护检查已通过，统一浏览器入口重跑的 300 项也全部通过。
+
 ## 2026-10-22：工作区稳定性与语音复用 v9
 
 应用 **1.19.0**，记忆 schema 继续为 6。五条最新浏览器反馈的实现与验证边界见 [v9 说明](docs/FRONTEND_REVIEW_V9.md)，源码摘要见 [机器汇总](docs/verification/frontend-review-v9.json)。
