@@ -57,6 +57,18 @@ INSERT INTO memory_jobs(id,user_id,source_kind,source_id,created_at)
  AND coalesce((SELECT value FROM meta WHERE key='memory_tree_source_seed'),'0')<>'1'
  ON CONFLICT(id) DO UPDATE SET state='queued',error_code='',finished_at=NULL;
 INSERT OR IGNORE INTO meta VALUES('memory_tree_source_seed','1');
+-- Once on v7: rebuild old cached slices using whole-section credential spans.
+UPDATE memory_source_units SET fingerprint=-1
+ WHERE coalesce((SELECT value FROM meta WHERE key='memory_source_privacy_seed_v7'),'0')<>'1';
+INSERT INTO memory_jobs(id,user_id,source_kind,source_id,created_at)
+ SELECT 'resource:'||x.source_kind||':'||x.source_id,x.user_id,x.source_kind,x.source_id,unixepoch()
+ FROM (SELECT user_id,source_kind,source_id FROM memory_source_units
+       UNION SELECT m.user_id,b.source_kind,b.source_id FROM memory_resource_sources b
+       JOIN personal_memories m ON m.id=b.memory_id) x
+ WHERE x.source_kind IN ('resource_notice','resource_material','resource_project')
+ AND coalesce((SELECT value FROM meta WHERE key='memory_source_privacy_seed_v7'),'0')<>'1'
+ ON CONFLICT(id) DO UPDATE SET state='queued',error_code='',finished_at=NULL;
+INSERT OR IGNORE INTO meta VALUES('memory_source_privacy_seed_v7','1');
 INSERT INTO memory_maintenance(user_id,dirty,updated_at)
  SELECT DISTINCT m.user_id,1,unixepoch() FROM personal_memories m JOIN memory_details d ON d.memory_id=m.id
  WHERE d.review_status='pending' AND coalesce((SELECT value FROM meta WHERE key='memory_auto_triage_seed'),'0')<>'1'

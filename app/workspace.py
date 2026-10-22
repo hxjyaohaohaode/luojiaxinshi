@@ -354,7 +354,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     memory_sources=[s for s in report_sources if s.get('evidence_kind')=='memory']
                     # Preferences can affect prose without an inline citation. Revoke
                     # that whole old answer when any injected memory is no longer current.
-                    if any(s.get('memory_version') is None or memory_versions.get(s['id'])!=s['memory_version'] for s in memory_sources):continue
+                    from .memory_reliability import supplied_version_current
+                    if any(not supplied_version_current(conn,current['id'],s,memory_versions) for s in memory_sources):continue
                     allowed={'web_page','web_summary','user_input'}
                     if access['profile']:allowed.add('profile')
                     if access['schedule']:allowed.update(('task','arrangement'))

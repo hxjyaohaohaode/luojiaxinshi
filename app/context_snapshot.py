@@ -15,7 +15,7 @@ from .preferences import PERSONAL_KEYS
 STALE_MESSAGE='生成期间相关资料、日程或记忆已变化，本次旧回答未采纳。请核对最新内容后重试。'
 
 
-def capture(conn, uid, cid, access, memory_ids=None):
+def capture(conn, uid, cid, access, memory_ids=None, *, canonical=True):
     if not conn.in_transaction:conn.execute('BEGIN')
     chat=conn.execute('SELECT version FROM conversations WHERE id=? AND user_id=?',(cid,uid)).fetchone()
     if not chat:raise AIError(STALE_MESSAGE)
@@ -57,13 +57,17 @@ def capture(conn, uid, cid, access, memory_ids=None):
             WHERE t.user_id=? ORDER BY t.id''',(uid,))
         values['arrangements']=records('SELECT id,version FROM arrangements WHERE user_id=? ORDER BY id',(uid,))
         values['pending_changes']=records("SELECT id,version FROM notice_changes WHERE user_id=? AND state='pending' ORDER BY id",(uid,))
-    return {'version':'context-snapshot-v1','access':access,
-            'digest':hashlib.sha256(dumps(values).encode()).hexdigest(),
+    serialized=json.dumps(values,ensure_ascii=False,separators=(',',':'),sort_keys=True) if canonical else dumps(values)
+    return {'version':'context-snapshot-v2' if canonical else 'context-snapshot-v1','access':access,
+            'digest':hashlib.sha256(serialized.encode()).hexdigest(),
             **({'memory_ids':sorted(memory_ids)} if memory_ids is not None else {})}
 
 
 def assert_current(conn, uid, cid, snapshot):
-    if snapshot and capture(conn,uid,cid,snapshot['access'],snapshot.get('memory_ids'))['digest']!=snapshot['digest']:
+    if not snapshot:return
+    args=(conn,uid,cid,snapshot['access'],snapshot.get('memory_ids'))
+    current=capture(*args,canonical=False) if snapshot.get('version') in (None,'context-snapshot-v1') else capture(*args)
+    if current['digest']!=snapshot['digest']:
         raise AIError(STALE_MESSAGE)
 
 

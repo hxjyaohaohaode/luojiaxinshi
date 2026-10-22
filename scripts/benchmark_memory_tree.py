@@ -12,11 +12,12 @@ sys.path.insert(0,str(ROOT))
 from app.db import Database,dumps
 from app.memory import recall
 from app.memory_tree import reconcile,snapshot
+from app.memory_tree_queries import entries,status
 from app.memory_resources import ingest_resource
 from app.context_snapshot import capture,bind_memories,assert_current
 
 parser=argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--output',type=Path,default=ROOT/'artifacts/memory-v6-benchmark')
+parser.add_argument('--output',type=Path,default=ROOT/'artifacts/memory-v7-benchmark')
 folder=parser.parse_args().output.resolve()
 if not folder.is_relative_to((ROOT/'artifacts').resolve()):raise ValueError('Synthetic output must stay in artifacts/')
 folder.mkdir(parents=True,exist_ok=True)
@@ -41,7 +42,7 @@ with db.connect(write=True) as conn:
         ingest_resource(conn,uid,'resource_material',sid)
     reconcile(conn,uid)
 access={'profile':True,'memory':True,'library':True,'attachments':True,'schedule':True}
-latencies=[];snapshots=[];tree_latencies=[];results=[]
+latencies=[];snapshots=[];tree_latencies=[];browse_latencies=[];status_latencies=[];page_bytes=[];results=[]
 for question in ['课程申请材料与提交回执','氙灯观测协议 D17 的更换周期','D04 协议的提交地点','课程计划办理记录']*4:
     start=time.perf_counter();got,report=recall(db,uid,cid,question,access);latencies.append((time.perf_counter()-start)*1000)
     assert len(got)<=12 and report['context_bytes']<=8000 and all(m['scope']=='global' for m in got)
@@ -54,6 +55,17 @@ for question in ['课程申请材料与提交回执','氙灯观测协议 D17 的
     start=time.perf_counter()
     with db.connect(write=True) as conn:snapshot(conn,uid)
     tree_latencies.append((time.perf_counter()-start)*1000)
+    browse_query=['课程','氙灯','D17',''][len(results)%4]
+    start=time.perf_counter()
+    with db.connect(write=True) as conn:page=entries(conn,uid,q=browse_query,view='auto')
+    browse_latencies.append((time.perf_counter()-start)*1000)
+    assert len(page['memories'])+len(page['passages'])<=50
+    if browse_query=='D17':assert any('D17' in p['content'] for p in page['passages'])
+    page_bytes.append(len(dumps(page).encode('utf-8')))
+    start=time.perf_counter()
+    with db.connect() as conn:token=status(conn,uid)
+    status_latencies.append((time.perf_counter()-start)*1000)
+    assert len(token['token'])==64
     results.append({'query':question,'count':len(got),'context_bytes':report['context_bytes'],'source_passages':report['source_passages']})
 def stats(values):return {'median':round(statistics.median(values),2),'p95':round(sorted(values)[int(.95*(len(values)-1))],2),'max':round(max(values),2)}
 with db.connect() as conn:
@@ -62,6 +74,7 @@ with db.connect() as conn:
 result={'synthetic':True,'schema':6,'base_memories':10000,'eligible_base_scope':5000,'source_documents':20,
         'source_passages':count,'queries':len(latencies),'tree_initial_classification_ms':round(tree_build_ms,2),
         'recall_ms':stats(latencies),'snapshot_bind_and_three_checks_ms':stats(snapshots),'tree_read_ms':stats(tree_latencies),
+        'browse_page_ms':stats(browse_latencies),'change_token_ms':stats(status_latencies),'browse_page_max_bytes':max(page_bytes),
         'provider_calls':0,'results':results,'limits':'Local synthetic engineering benchmark; not external-model semantic accuracy or a production latency guarantee.'}
 (folder/'report.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps({k:v for k,v in result.items() if k!='results'},ensure_ascii=False))

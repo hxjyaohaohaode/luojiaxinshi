@@ -12,7 +12,7 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   let settings={mode:'auto',auto_organize:true,learn_tasks:true,version:0};
   function panel(data){
     settings=data.settings||settings;
-    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">自动积累与维护，随时可修改</span></div>
+    return `<section class="memory-studio memory-management-bar" aria-label="记忆管理"><div class="memory-management-mode"><span class="memory-mode-dot" aria-hidden="true"></span><strong>${esc(modes[settings.mode])}</strong><span class="small muted">自动积累与维护，随时可修改</span><button class="button small" data-memory-action="project-manage">项目管理</button></div>
       <div class="memory-studio-actions">${button('记忆设置','settings')}${button('整理记忆','organize')}<details class="memory-tools"><summary>更多管理</summary><div class="memory-tools-content">${button('整理旧对话','backfill')}${button('整理状态','jobs')}${button('导出记忆','export')}${button('导入编辑文件','import')}${lifecycle.panel(data)}</div></details></div>
       <input type="file" id="memory-import-file" accept=".json,.md,text/markdown,application/json" hidden>
     </section>`;

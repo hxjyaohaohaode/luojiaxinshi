@@ -41,6 +41,10 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
     showDialog(item.id?'修改项目':'新建项目',`<form class="stack" data-workspace-form="memory-project"><label class="field">项目名称<input name="name" required maxlength="80" value="${esc(item.name||'')}"></label><label class="field">项目说明<textarea name="description" rows="3" maxlength="1000">${esc(item.description||'')}</textarea></label><div class="form-footer"><button class="button primary" type="submit">保存项目</button></div></form>`);
     const form=$('[data-workspace-form="memory-project"]');if(item.id)form.querySelector('.form-footer').insertAdjacentHTML('afterbegin',`<button type="button" class="button danger" data-memory-action="project-delete" data-id="${esc(item.id)}">删除项目</button>`);form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form);await submit(form,()=>api('/memory/projects'+(item.id?'/'+item.id:''),{method:item.id?'PUT':'POST',json:{...Object.fromEntries(fd),...(item.id?{version:item.version}:{})}}),'项目已保存。');});
   }
+  async function projectManagement(){
+    const current=guard(),catalog=await api('/memory?limit=1');if(!current())return;data.projects=catalog.projects;
+    showDialog('记忆中的项目',`<div class="stack"><p class="small muted">AI 会按对话自动建立和选择项目；需要时，也可以在这里修改名称或说明。</p><button class="button primary" data-memory-action="project-new">新建项目</button>${data.projects.map(p=>`<article class="memory-session-entry"><strong>${esc(p.name)}</strong><p class="memory-content small muted">${esc(p.description||'暂无项目说明')}</p><button class="button small" data-memory-action="project-edit" data-id="${esc(p.id)}">修改项目</button></article>`).join('')||'<p class="muted">还没有项目，直接对话也可以由 AI 自动建立。</p>'}</div>`);
+  }
   async function submit(form,work,success=''){
     const view=captureUiContext(state,form),finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;form.inert=true;
     try{await work();if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash==='#memory')await render();if(success&&view.sameUser())toast(success);}
@@ -65,6 +69,7 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
       if(action==='new')await editor();
       else if(action==='edit')await editor(item||await api('/memory/items/'+encodeURIComponent(id)));
       else if(action==='project-new')await projectEditor();
+      else if(action==='project-manage')await projectManagement();
       else if(action==='project-edit')await projectEditor(project);
       else if(action==='open')$('#dialog').close();
       else if(action==='toggle'){
@@ -82,7 +87,7 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
         if(view.sameRoute())await render();
       }else if(action==='delete'){
         if(!item)throw Error('条目已变化，请重新载入。');
-        if(!await ask('遗忘这条记忆','将移除这条记忆及其派生内容，并撤销相关旧回答的后续记忆用途。原聊天和离线备份仍保留。','确认遗忘'))return;
+        if(!await ask('遗忘这条记忆','将移除这条记忆及其派生内容，并撤销相关旧回答的后续记忆用途。'+(['resource','source_claim','task'].includes(item.origin)?'关联资料或任务的自动记忆也会停止。':'')+'原资料、聊天和离线备份仍保留。','确认遗忘'))return;
         if(!view.sameUser())return;
         await workbench.write('/memory/items/'+id,{version:item.version},'DELETE');
         if(view.sameRoute())await render();
@@ -96,5 +101,5 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });
-  return {render,context,remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
+  return {render,context,clearPrivate:()=>{data={projects:[],memories:[]};workbench.clearPrivate();},remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
 }

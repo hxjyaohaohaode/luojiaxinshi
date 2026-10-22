@@ -1,5 +1,6 @@
 """Version-aware quality checks and bounded, independent session context."""
 import json
+import hashlib
 import re
 import time
 
@@ -38,6 +39,27 @@ def memory_catalog(conn,uid):
     return entries
 
 
+def placement_version_current(conn,parent,version):
+    """Only a complete chain of location-only revisions preserves old facts."""
+    parent=dict(parent)
+    if type(version) is not int or not 1<=version<=parent['version']:return False
+    if version==parent['version']:return True
+    revisions=list(conn.execute('''SELECT version,actor FROM memory_revisions WHERE memory_id=?
+        AND version>? AND version<=? ORDER BY version''',(parent['id'],version,parent['version'])))
+    if [r['version'] for r in revisions]!=list(range(version+1,parent['version']+1)):return False
+    if any(r['actor'] not in ('user-placement','user-folder-removed') for r in revisions):return False
+    return source_current(conn,parent,version)
+
+
+def supplied_version_current(conn,uid,source,versions):
+    expected=source.get('memory_version');current=versions.get(source.get('id'))
+    if expected is None or current is None:return False
+    if current==expected:return True
+    mid=str(source.get('id','')).removeprefix('memory-')
+    parent=conn.execute('SELECT * FROM personal_memories WHERE id=? AND user_id=?',(mid,uid)).fetchone()
+    return bool(parent and parent['version']==current and placement_version_current(conn,parent,expected))
+
+
 def candidates(conn,uid,cid,access,scenario=None,ids=None):
     """Discard unavailable overrides before choosing the most specific value."""
     from .memory import context_for
@@ -72,13 +94,12 @@ def overlay_sessions(conn,entries):
 
 
 def mutation_lookup(conn,uid,key,operation,payload):
-    from .memory_store import digest
     if key is None:return None
     if not re.fullmatch(r'[A-Za-z0-9_-]{8,80}',key):raise HTTPException(422,'操作标识无效，请重新打开编辑器')
     conn.execute('DELETE FROM memory_mutation_receipts WHERE user_id=? AND expires_at<=?',(uid,int(time.time())))
     row=conn.execute('SELECT * FROM memory_mutation_receipts WHERE user_id=? AND request_id=?',(uid,key)).fetchone()
     if row:
-        if row['operation']!=operation or row['payload_hash']!=digest(dumps(payload)):
+        if row['operation']!=operation or row['payload_hash']!=mutation_hash(payload):
             raise HTTPException(409,'同一个操作标识对应不同内容，请核对后重新提交')
         return json.loads(row['result'])
     if conn.execute('SELECT count(*) FROM memory_mutation_receipts WHERE user_id=?',(uid,)).fetchone()[0]>=10000:
@@ -86,11 +107,16 @@ def mutation_lookup(conn,uid,key,operation,payload):
     return None
 
 
+def mutation_hash(payload):
+    # Mutations distinguish case and every interior space. Fact-deduplication
+    # normalization must never identify two different write requests as one.
+    return 'exact-v1:'+hashlib.sha256(dumps(payload).encode('utf-8')).hexdigest()
+
+
 def mutation_record(conn,uid,key,operation,payload,result):
-    from .memory_store import digest
     if key is None:return
     now=int(time.time())
-    conn.execute('INSERT INTO memory_mutation_receipts VALUES(?,?,?,?,?,?,?)',(uid,key,operation,digest(dumps(payload)),dumps(result),now,now+7*86400))
+    conn.execute('INSERT INTO memory_mutation_receipts VALUES(?,?,?,?,?,?,?)',(uid,key,operation,mutation_hash(payload),dumps(result),now,now+7*86400))
 
 
 def mutation_item(conn,uid,receipt,reader):

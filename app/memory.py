@@ -169,12 +169,13 @@ def recall(db,uid,cid,question,access,queries=None):
             queries=[*(queries or []),session['goal'],*(r['text'] for r in session['recent_requests'][:-1])][-4:]
         from .memory_reliability import candidates
         items,excluded=candidates(conn,uid,cid,access,question+' '+' '.join(queries or []))
-        names={row['id']:row['name'] for row in conn.execute('SELECT id,name FROM memory_projects WHERE user_id=?',(uid,))}
+        from .memory_privacy import redact
+        names={row['id']:redact(row['name']) for row in conn.execute('SELECT id,name FROM memory_projects WHERE user_id=?',(uid,))}
         for item in items:item['scope_name']=names.get(item['project_id'],'') if item['scope']=='project' else item['topic'] if item['scope']=='topic' else '通用'
         selected=[];used=0
         if context['project_id']:
             project=dict(own(conn,'memory_projects',context['project_id'],uid))
-            content='你选择的项目名称：'+project['name']+('。项目说明：'+project['description'] if project['description'] else '')
+            content=redact('你选择的项目名称：'+project['name']+('。项目说明：'+project['description'] if project['description'] else ''))
             selected.append({'id':hashlib.sha256(('project:'+project['id']).encode()).hexdigest()[:32],
                 'scope':'project','project_id':project['id'],'topic':'','kind':'fact','content':content,
                 'version':project['version'],'updated_at':project['updated_at'],'project_context':True})

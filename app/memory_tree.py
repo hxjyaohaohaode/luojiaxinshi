@@ -15,7 +15,12 @@ LAYERS = (('long','长期记忆'),('episodes','经历与经验'),('resources','�
 
 
 def ensure_node(conn, uid, parent, title, key, system=True):
-    nid = hashlib.sha256((uid+'\0'+key).encode()).hexdigest()[:32]
+    existing=conn.execute('SELECT id FROM memory_nodes WHERE user_id=? AND node_key=?',(uid,key)).fetchone()
+    nid=existing['id'] if existing else hashlib.sha256((uid+'\0'+key).encode()).hexdigest()[:32]
+    # A renamed/moved folder keeps its public ID but releases its old path key.
+    if not existing and conn.execute('SELECT 1 FROM memory_nodes WHERE id=?',(nid,)).fetchone():
+        from .db import ident
+        nid=ident()
     now = int(time.time())
     conn.execute('''INSERT OR IGNORE INTO memory_nodes VALUES(?,?,?,?,?,?,1,?,?)''',
                  (nid,uid,parent,title,key,int(system),now,now))
@@ -38,9 +43,9 @@ def node_for(conn, uid, nid):
 
 def ancestry(conn, uid, nid):
     node_for(conn,uid,nid)
-    rows=list(conn.execute('''WITH RECURSIVE path(id,parent_id,title,depth) AS (
-      SELECT id,parent_id,title,0 FROM memory_nodes WHERE id=? AND user_id=?
-      UNION ALL SELECT n.id,n.parent_id,n.title,p.depth+1 FROM memory_nodes n JOIN path p ON n.id=p.parent_id
+    rows=list(conn.execute('''WITH RECURSIVE path(id,parent_id,title,system,version,node_key,depth) AS (
+      SELECT id,parent_id,title,system,version,node_key,0 FROM memory_nodes WHERE id=? AND user_id=?
+      UNION ALL SELECT n.id,n.parent_id,n.title,n.system,n.version,n.node_key,p.depth+1 FROM memory_nodes n JOIN path p ON n.id=p.parent_id
       WHERE n.user_id=? AND p.depth<12) SELECT * FROM path ORDER BY depth DESC''',(nid,uid,uid)))
     return [dict(row) for row in rows]
 
@@ -98,7 +103,8 @@ def place(conn, uid, mid, path, *, user=False, expected=None):
         current=node_for(conn,uid,current)['parent_id']
     for title in path:
         title=title.strip()
-        current=ensure_node(conn,uid,current,title,'folder:'+current+':'+title,system=False)
+        same=conn.execute('SELECT id FROM memory_nodes WHERE user_id=? AND parent_id=? AND title=? ORDER BY id LIMIT 1',(uid,current,title)).fetchone()
+        current=same['id'] if same else ensure_node(conn,uid,current,title,'folder:'+current+':'+title,system=False)
     conn.execute('UPDATE memory_node_items SET node_id=?,custom=? WHERE memory_id=?',(current,int(user),mid))
     return current
 
@@ -109,12 +115,50 @@ def memberships(conn, uid, ids):
        WHERE m.user_id=?''',(dumps(list(ids)),uid))}
 
 
-def catalog(conn, uid, limit=36):
+def catalog(conn, uid, limit=36, question=''):
     """L0/L1 routing hints only; facts are loaded after permission checks."""
-    return [dict(r) for r in conn.execute('''SELECT n.id,n.parent_id,n.title,
+    rows=[dict(r) for r in conn.execute('''SELECT n.id,n.parent_id,n.title,n.node_key,
       (SELECT count(*) FROM memory_node_items i WHERE i.node_id=n.id) item_count
       FROM memory_nodes n WHERE n.user_id=? AND n.parent_id IS NOT NULL
-      ORDER BY n.system DESC,n.updated_at DESC,n.id LIMIT ?''',(uid,limit))]
+      ORDER BY n.system DESC,n.updated_at DESC,n.id''',(uid,))]
+    nodes={r['id']:r for r in rows}
+    now=int(time.time())
+    live={r[0] for r in conn.execute('''SELECT i.node_id FROM memory_node_items i
+      JOIN personal_memories m ON m.id=i.memory_id JOIN memory_details d ON d.memory_id=m.id
+      JOIN memory_semantics s ON s.memory_id=m.id JOIN memory_policies p ON p.memory_id=m.id
+      LEFT JOIN memory_resource_sources b ON b.memory_id=m.id
+      LEFT JOIN memory_resource_versions v ON v.source_kind=b.source_kind AND v.source_id=b.source_id
+      WHERE m.user_id=? AND m.active=1 AND d.review_status='accepted' AND s.status='active'
+      AND (p.expires_at IS NULL OR p.expires_at>?) AND (p.valid_from IS NULL OR p.valid_from<=?)
+      AND (b.memory_id IS NULL OR (b.fingerprint=CAST(v.version AS TEXT) AND NOT EXISTS(
+        SELECT 1 FROM memory_blocked_sources x WHERE x.user_id=m.user_id AND x.source_kind=b.source_kind AND x.source_id=b.source_id)))
+      UNION SELECT u.node_id FROM memory_source_units u JOIN memory_resource_versions v USING(source_kind,source_id)
+      WHERE u.user_id=? AND u.fingerprint=v.version AND NOT EXISTS(SELECT 1 FROM memory_blocked_sources x
+        WHERE x.user_id=u.user_id AND x.source_kind=u.source_kind AND x.source_id=u.source_id)''',(uid,now,now,uid))}
+    for nid in list(live):
+        for _ in range(12):
+            parent=nodes.get(nid,{}).get('parent_id')
+            if not parent or parent in live:break
+            live.add(parent);nid=parent
+    forbidden={r[0] for r in conn.execute('''SELECT n.id FROM memory_nodes n WHERE n.user_id=?
+      AND n.node_key LIKE 'source:%' AND NOT EXISTS(SELECT 1 FROM memory_resource_versions v
+        WHERE n.node_key='source:'||v.source_kind||':'||v.source_id AND NOT EXISTS(
+          SELECT 1 FROM memory_blocked_sources x WHERE x.user_id=n.user_id AND x.source_kind=v.source_kind AND x.source_id=v.source_id))''',(uid,))}
+    from .context_engine import terms
+    words=set(terms(question))
+    visible=[]
+    for row in rows:
+        names=[row['title']];parent=row['parent_id']
+        denied=row['id'] in forbidden
+        for _ in range(12):
+            if parent not in nodes:break
+            denied=denied or parent in forbidden
+            names.append(nodes[parent]['title']);parent=nodes[parent]['parent_id']
+        row['path']=' / '.join(reversed(names))
+        if row['id'] in live and not denied:visible.append(row)
+    rows=visible
+    rows.sort(key=lambda n:(-len(words&set(terms(n['path']))),-bool(n['item_count']),n['path'],n['id']))
+    return rows[:limit]
 
 
 def snapshot(conn,uid,parent=None,offset=0,limit=100):
@@ -126,9 +170,21 @@ def snapshot(conn,uid,parent=None,offset=0,limit=100):
       coalesce(m.items,0)+coalesce(u.units,0) item_count FROM memory_nodes n
       LEFT JOIN (SELECT parent_id,count(*) children FROM memory_nodes WHERE user_id=? GROUP BY parent_id)c ON c.parent_id=n.id
       LEFT JOIN (SELECT i.node_id,count(*) items FROM memory_node_items i JOIN personal_memories p ON p.id=i.memory_id WHERE p.user_id=? GROUP BY i.node_id)m ON m.node_id=n.id
-      LEFT JOIN (SELECT node_id,count(*) units FROM memory_source_units WHERE user_id=? GROUP BY node_id)u ON u.node_id=n.id
+      LEFT JOIN (SELECT u.node_id,count(*) units FROM memory_source_units u JOIN memory_resource_versions v USING(source_kind,source_id)
+        WHERE u.user_id=? AND u.fingerprint=v.version AND NOT EXISTS(SELECT 1 FROM memory_blocked_sources b
+        WHERE b.user_id=u.user_id AND b.source_kind=u.source_kind AND b.source_id=u.source_id) GROUP BY u.node_id)u ON u.node_id=n.id
       WHERE n.user_id=? AND n.parent_id=? ORDER BY n.system DESC,n.title,n.id LIMIT ? OFFSET ?''',(uid,uid,uid,uid,parent,limit+1,offset))]
-    return {'root_id':root,'parent_id':parent,'nodes':nodes[:limit],'has_more':len(nodes)>limit,'offset':offset,'next_offset':offset+limit if len(nodes)>limit else None,
+    parents={r['id']:r['parent_id'] for r in conn.execute('SELECT id,parent_id FROM memory_nodes WHERE user_id=?',(uid,))};totals={}
+    for row in conn.execute('''SELECT i.node_id,count(*) n FROM memory_node_items i JOIN personal_memories m ON m.id=i.memory_id
+        WHERE m.user_id=? GROUP BY i.node_id UNION ALL SELECT u.node_id,count(*) FROM memory_source_units u
+        JOIN memory_resource_versions v USING(source_kind,source_id) WHERE u.user_id=? AND u.fingerprint=v.version
+        AND NOT EXISTS(SELECT 1 FROM memory_blocked_sources b WHERE b.user_id=u.user_id AND b.source_kind=u.source_kind AND b.source_id=u.source_id) GROUP BY u.node_id''',(uid,uid)):
+        nid=row['node_id']
+        for _ in range(13):
+            if nid is None:break
+            totals[nid]=totals.get(nid,0)+row['n'];nid=parents.get(nid)
+    for n in nodes:n['subtree_count']=totals.get(n['id'],0)
+    return {'root_id':root,'parent_id':parent,'nodes':nodes[:limit],'total_items':totals.get(root,0),'has_more':len(nodes)>limit,'offset':offset,'next_offset':offset+limit if len(nodes)>limit else None,
             'breadcrumbs':ancestry(conn,uid,parent),'layers':layers}
 
 

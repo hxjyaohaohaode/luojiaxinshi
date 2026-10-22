@@ -122,7 +122,8 @@ def invalid_resources(conn,uid,ids):
     return {row['memory_id'] for row in conn.execute('''SELECT r.memory_id FROM json_each(?) j
         CROSS JOIN memory_resource_sources r ON r.memory_id=j.value CROSS JOIN personal_memories m ON m.id=r.memory_id
         LEFT JOIN memory_resource_versions v ON v.source_kind=r.source_kind AND v.source_id=r.source_id
-        WHERE m.user_id=? AND (v.version IS NULL OR r.fingerprint<>CAST(v.version AS TEXT))''',(dumps(list(ids)),uid))}
+        WHERE m.user_id=? AND (v.version IS NULL OR r.fingerprint<>CAST(v.version AS TEXT)
+        OR EXISTS(SELECT 1 FROM memory_blocked_sources b WHERE b.user_id=m.user_id AND b.source_kind=r.source_kind AND b.source_id=r.source_id))''',(dumps(list(ids)),uid))}
 
 
 def queue_existing(conn,uid):

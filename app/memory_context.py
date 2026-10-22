@@ -41,19 +41,27 @@ def runtime_fields(conn, uid, cid, messages):
     catalog['projects']=sorted(catalog['projects'],key=lambda p:len(words&set(terms(p['name']+' '+p['description']))),reverse=True)[:12]
     catalog['topics']=catalog['topics'][:20]
     from .memory_tree import catalog as tree_catalog
-    catalog['branches']=tree_catalog(conn,uid,24) if allowed else []
+    catalog['branches']=tree_catalog(conn,uid,24,question) if allowed else []
+    from .memory_privacy import redact
+    catalog=redact(catalog)
     for item in catalog['projects']:item['description']=item['description'][:80]
-    while len(dumps(catalog).encode('utf-8'))>5000 and catalog['projects']:catalog['projects'].pop()
-    while len(dumps(catalog).encode('utf-8'))>5000 and catalog['branches']:catalog['branches'].pop()
+    # Deep paths must not evict every relevant project from the same budget.
+    while len(dumps(catalog).encode('utf-8'))>5000:
+        if len(catalog['branches'])>4:catalog['branches'].pop()
+        elif len(catalog['topics'])>4:catalog['topics'].pop()
+        elif len(catalog['projects'])>1:catalog['projects'].pop()
+        elif catalog['branches']:catalog['branches'].pop()
+        elif catalog['topics']:catalog['topics'].pop()
+        else:break
     payload=session_payload(short)
     source_ids=[value for key,value in short.get('_sources',{}).items() if key in payload and value]
     if any(payload.get(key) for key in ('decisions','open_questions','completed_steps','next_steps')):source_ids.extend(short.get('_checkpoint_sources',[]))
-    return {'_working_memory': content,'_session_memory':payload,'_session_source_ids':source_ids,'_memory_catalog':catalog,
+    return redact({'_working_memory': content,'_session_memory':payload,'_session_source_ids':source_ids,'_memory_catalog':catalog,
             '_memory_control': {**settings, 'may_propose': allowed and learning_allowed(conn, uid, cid, messages),
                                 'context':context_for(conn,cid),'available_scopes':catalog,'recent_operations': receipts[:16],
                                 'lifecycle':options,'working_version':working['version'] if working else 0,
                                 'session_items':[{key:e[key] for key in ('id','kind','source_message_id','lifetime')} for e in short.get('facts',[])],
-                                'policy':'临时条件仅用于本会话；长期信息按范围和当前相关性调用；遗忘优先于历史推断。'}}
+                                'policy':'临时条件仅用于本会话；长期信息按范围和当前相关性调用；遗忘优先于历史推断。'}})
 
 
 def basic_profile(db, uid, cid, mid, messages, profile,original_sources=None):

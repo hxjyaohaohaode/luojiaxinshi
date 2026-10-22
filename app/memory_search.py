@@ -121,6 +121,13 @@ def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt
     signatures={key:(scope_key(by_id[key]),(by_id[key]['facet'],by_id[key]['canonical_value']) if by_id[key].get('facet') and by_id[key].get('canonical_value')
         else re.sub(r'\s+','',by_id[key]['content']).casefold()) for key in ordered}
     prepared={key:{**by_id[key],'recall_score':round(scores[key],6),'recall_reasons':sorted(reasons[key])} for key in ordered}
+    if prompt_only:
+        from .memory_privacy import redact
+        # Scrub the bounded rerank window before measuring its actual prompt
+        # cost, rather than repeatedly scanning every stored memory.
+        for item in prepared.values():
+            for field in ('content','topic','labels','scope_name'):
+                if field in item:item[field]=redact(item[field])
     costs={key:len(json.dumps({k:item[k] for k in PROMPT_FIELDS if k in item} if prompt_only else item,
         ensure_ascii=False,separators=(',',':')).encode('utf-8'))+1 for key,item in prepared.items()}
     selected,used,seen,picked_words=[],2,set(),[]

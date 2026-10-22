@@ -7,7 +7,10 @@ function canonical(value){
 }
 export function createMemoryIntents(){
   let owner=null,generation=0;const entries=new Map();
-  return {async headers(user,operation,payload){
+  return {complete(user,key){
+    if(user!==owner)return;
+    for(const [signature,value] of entries)if(value===key)entries.delete(signature);
+  },async headers(user,operation,payload){
     if(user!==owner){owner=user;generation++;entries.clear();}
     const ticket=generation;
     const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(canonical(payload))));

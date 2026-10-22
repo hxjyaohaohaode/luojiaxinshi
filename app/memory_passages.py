@@ -29,12 +29,16 @@ def index_source(conn,uid,kind,key,source):
     for number,part in enumerate(sections(source,kind)):
         if not isinstance(part,dict):continue
         raw=str(part.get('text',part.get('content','')))
-        # Offsets refer to the original parsed section. Redaction is local to a
-        # slice so it cannot make downstream locators drift.
-        locator=str(part.get('locator') or part.get('location') or f'第{number+1}段')[:200]
+        # Detect on the complete original section, then mask every overlapping
+        # slice. A long token/PEM block must not leak a prefixless continuation.
+        private=[(match.start(),match.end()) for match in SECRET.finditer(raw)]
+        locator=SECRET.sub('[凭证已省略]',str(part.get('locator') or part.get('location') or f'第{number+1}段'))[:200]
         for start in range(0,len(raw),1200):
             if start and start+200>=len(raw):break
             text=raw[start:start+1400]
+            end=start+len(text)
+            for a,b in reversed(private):
+                if a<end and b>start:text=text[:max(a-start,0)]+'[凭证已省略]'+text[min(b-start,end-start):]
             text='\n'.join(line for line in text.splitlines() if not REJECT_INSTRUCTION.search(line))
             text=SECRET.sub('[凭证已省略]',text).strip()
             if not text:continue
@@ -124,6 +128,8 @@ def recall_passages(conn,uid,cid,question,access,queries=None,limit=4,byte_budge
               'tier':'long_term','facet':'','admission':'source','last_confirmed_at':row['created_at'],
               'scope_name':row['title'],'node_id':row['node_id'],'source_kind':row['source_kind'],
               'source_id':row['source_id'],'locator':row['locator'],'start_offset':row['start_offset']+start}
+        from .memory_privacy import redact
+        item=redact(item)
         cost=len(dumps(item).encode())+1
         if used+cost>byte_budget:continue
         selected.append(item);used+=cost;seen.add(signature)

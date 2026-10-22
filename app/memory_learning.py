@@ -18,7 +18,8 @@ from .memory_store import (decorate, digest, insert_memory, invalidate_dependent
                            record_revision, settings_for, usable_derived)
 
 UNCERTAIN = re.compile(r'如果|假如|假设|例如|举例|假装|引用|据说|也许|可能|想象|是不是|是否|[？?]|他说|她说|朋友说|同学说|老师说')
-SECRET = re.compile(r'\b(?:sk|tp|ttp)-[a-zA-Z0-9_-]{16,}|-----BEGIN .*PRIVATE KEY|'
+SECRET = re.compile(r'\b(?:sk|tp|ttp)-[a-zA-Z0-9_-]{16,}|'
+                    r'-----BEGIN[^\r\n]*PRIVATE KEY-----[\s\S]*?(?:-----END[^\r\n]*PRIVATE KEY-----|$)|-----BEGIN[^\r\n]*PRIVATE KEY|'
                     r'authorization\s*:\s*(?:bearer|basic)\s+\S+|'
                     r'(?:密码|口令|密钥|token|api[_ -]?key|password|passwd|pwd|client[_ -]?secret|access[_ -]?token)\s*[:：=]\s*\S+|'
                     r'\b(?:password|passwd|client[_ -]?secret)\s+is\s+\S+', re.I)

@@ -1,5 +1,41 @@
 # 验证记录
 
+## 2026-10-21：记忆交互、异常恢复与质量检查 v7
+
+应用 **1.17.0**，记忆引擎继续使用 **schema 6**。当前交互与源码取舍见 [交互契约 v7](docs/MEMORY_USABILITY_V7.md)，精确结果与规范化源码哈希见 [机器汇总](docs/verification/memory-usability-v7.json)。下面 v1–v6 段落保留为历史。
+
+| 验证 | 最终结果 | 本地原始证据 |
+|---|---|---|
+| 完整 Python 回归 | **868 通过，0 失败、错误或跳过** | `artifacts/memory-v7-complete.xml`、同名 `.log` |
+| 前端单元测试 | **124 通过，0 失败** | `artifacts/memory-v7-node.log` |
+| 三种浏览器 | **198 检查通过，0 页面异常**；既有流程 54、新增场景 144 | `artifacts/memory-v7-browser-baseline/report.json`、`memory-v7-browser/report.json` |
+| 实际业务副本演练 | 账号、通知、对话、消息、任务数量保留；人工正文／范围／生命周期保留；完整性 ok、外键错误 0 | `artifacts/memory-v7-rehearsal.json` |
+| 本地服务激活 | 1.17.0 / schema 6；原数据保留；新读取接口未登录均 401；旧分片自动重建，过时分片 0、失败作业 0 | `artifacts/memory-v7-activation.json`；备份和启动输出仅存本地 |
+
+新增浏览器场景覆盖：未展开的全路径选择、批量移动、Unicode 草稿刷新恢复、并发正文对照、保存回包丢失后重试一次、旧搜索迟到、后台变化不折叠详情或打断编辑、错误重试、125 条会话条件分页、手动修订、项目管理、资料逐级展开，以及 320／390／820／1280 像素的焦点、Tab 循环、Escape 返回与溢出检查。截图在 `artifacts/memory-v7-browser/desktop.png`、`mobile.png`，已查看实际渲染。
+
+后端追加覆盖来源同步的身份限制、来源阻断不通过标题重新进入 Agent 提示、已识别凭证在目录／标签／项目／旧正文与跨片长密钥／PEM 中的过滤、一次性旧分片重建、完整目录修订链保留对话、事实／范围／停用／遗忘仍撤销旧回答、快照对字典顺序不敏感且继续兼容 v1。
+
+同机合成容量：10000 条基础记忆、其中 5000 条在候选范围、20 份完整资料／120 个分片、16 次查询。召回中位 **227.14 ms**、P95 **285.76 ms**；绑定快照并连续核对三次中位 **16.2 ms**；目录读取中位 **25.59 ms**；浏览分页中位 **318.69 ms**；变更令牌中位 **3.16 ms**。单页最多 50 条，本次最大编码响应 54930 字节；召回保持 12 条／8000 字节内。见 `artifacts/memory-v7-benchmark/report.json`。
+
+以上不代表真实模型准确率、真实手机验收或外部模型整段回答耗时保证。本轮验证没有额外请求真实模型；AI 修改使用明确的工程夹具，v6 的真实模型单次验证保留为历史证据。
+
+复现浏览器环境：
+
+```powershell
+$env:MVP_PORT='8786'
+$env:MVP_DATA_DIR=(Join-Path (Get-Location) 'artifacts/memory-v7-preview/data')
+.venv/Scripts/python.exe scripts/memory_engine_preview_server.py
+# 另开终端，等待 /api/health 就绪，并确保 Playwright 可解析或设置 PLAYWRIGHT_PATH：
+.venv/Scripts/python.exe scripts/seed_memory_usability.py
+node scripts/verify_memory_tree.mjs
+.venv/Scripts/python.exe scripts/seed_memory_usability.py
+node scripts/verify_memory_usability.mjs
+.venv/Scripts/python.exe scripts/benchmark_memory_tree.py
+```
+
+限流重置只发生在隔离的单账号合成夹具中；正常账号和正式服务的限流保持原规则。复现前后端测试使用 `.venv/Scripts/python.exe -m pytest -q --disable-warnings` 与 `npm test`。
+
 ## 2026-10-21：自主知识树与多源记忆 v6
 
 应用 1.16.0，记忆引擎 schema 6。设计及明确能力边界见 [知识树 v6](docs/MEMORY_TREE_V6.md)；[验证汇总](docs/verification/memory-tree-v6.json)；[13 个固定版本的源码复核](docs/verification/memory-upstream-v6.json)。旧版验证段落保留为历史，当前界面没有旧审核工作区。

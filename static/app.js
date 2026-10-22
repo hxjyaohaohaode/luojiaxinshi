@@ -61,6 +61,7 @@ document.addEventListener('click',event=>{if(!$('#dialog')?.open)lastDialogTrigg
 const toast=createToastPresenter({esc,icon});
 async function api(path, options={}) {
   const {json,blob,...opts}=options;
+  const requestedSession=state.session;
   const headers = {'X-Requested-With':'campus-notice',...(opts.headers||{})};
   if(state.session)headers['X-CSRF-Token']=state.session.csrf;
   if(json!==undefined){headers['Content-Type']='application/json';opts.body=JSON.stringify(json);}
@@ -70,7 +71,9 @@ async function api(path, options={}) {
   try{response=await fetch('/api'+path,{...opts,...(readController?{signal:readController.signal}:{}),headers,credentials:'same-origin'});}
   catch(error){clearTimeout(readTimer);const e=new Error(error.name==='AbortError'?'读取超时，已保存的内容仍在。请稍后重新加载。':'连接暂时中断，请检查网络或确认工作台仍在运行，然后重试。');e.status=0;throw e;}
   try{if(!response.ok){let body;try{body=await response.json();}catch{body={detail:'服务暂时不可用，请稍后重试'};}
-    const d=body.detail;const message=typeof d==='string'?d:Array.isArray(d)?d.map(item=>String(item.msg||'请检查填写内容').replace(/^Value error, /,'')).join('；'):d?.message;const e=new Error(message||'操作未完成，请检查填写内容后重试');e.status=response.status;e.detail=d;throw e;}
+    const d=body.detail;const message=typeof d==='string'?d:Array.isArray(d)?d.map(item=>String(item.msg||'请检查填写内容').replace(/^Value error, /,'')).join('；'):d?.message;const e=new Error(message||'操作未完成，请检查填写内容后重试');e.status=response.status;e.detail=d;
+    if(response.status===401&&requestedSession?.user?.id&&state.session===requestedSession){state.session=null;drafts.clear();state.tasks=[];state.notices=[];state.notice=null;authPage();location.hash='#login';}
+    throw e;}
   return await (blob?response.blob():response.json());
   }catch(error){if(readController?.signal.aborted){const e=new Error('读取超时，已保存的内容仍在。请稍后重新加载。');e.status=0;throw e;}throw error;}
   finally{clearTimeout(readTimer);}
@@ -98,7 +101,7 @@ const empty=(title,text,action='',compact=false,visual='radar')=>`<div class="em
 const field=(label,name,value='',type='text',opts='')=>`<label class="field">${label}<input name="${name}" type="${type}" value="${esc(value)}" ${opts}></label>`;
 const area=(label,name,value='',rows=3,opts='')=>`<label class="field">${label}<textarea name="${name}" rows="${rows}" ${opts}>${esc(value)}</textarea></label>`;
 function formError(form,message){let error=$('.form-error',form);if(!error){error=document.createElement('div');error.className='alert error form-error';error.setAttribute('role','alert');form.prepend(error);}error.textContent=message;error.scrollIntoView({block:'nearest'});}
-function authPage(){noticeFiles=[];authUI.render();}
+function authPage(){noticeFiles=[];memoryUI.clearPrivate();authUI.render();}
 const navs=[['dashboard','grid','办理工作台'],['chat','spark','和小信使聊聊'],['tasks','tasks','待办'],['notices','doc','通知资料'],['calendar','calendar','日历'],['sources','history','通知来源'],['settings','settings','个人与账号']];
 function shell(page){
   if($('.shell')){updateShell(page);return;}

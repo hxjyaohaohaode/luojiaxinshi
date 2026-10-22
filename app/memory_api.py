@@ -131,14 +131,17 @@ def install(app, db, user):
             item=item_for(conn,current['id'],mid)
             if item['version']!=payload.version:raise HTTPException(409,'记忆已变化，请重新载入后同步')
             binding=conn.execute('SELECT * FROM memory_resource_sources WHERE memory_id=?',(mid,)).fetchone()
-            if not binding or binding['source_kind']=='resource_task':raise HTTPException(422,'这条记忆不是资料索引')
+            if not binding or item['origin']!='resource' or binding['source_kind']=='resource_task':raise HTTPException(422,'这条记忆不是资料索引，摘录和本人编辑请直接修订正文')
+            if conn.execute('SELECT 1 FROM memory_blocked_sources WHERE user_id=? AND source_kind=? AND source_id=?',(current['id'],binding['source_kind'],binding['source_id'])).fetchone():
+                raise HTTPException(409,'这份资料已停止自动记忆，来源同步不会撤销你的遗忘要求')
             source=source_for(conn,current['id'],binding['source_kind'],binding['source_id'])
             if not source or not source['available']:raise HTTPException(409,'原资料当前不可用，请先核对来源')
             content=excerpt(source,binding['source_kind'])
             conn.execute('UPDATE memory_details SET locked=0 WHERE memory_id=?',(mid,))
             replace_content(conn,current['id'],item,content,'summary',None,'','source-sync')
             conn.execute('UPDATE memory_resource_sources SET fingerprint=? WHERE memory_id=?',(source['fingerprint'],mid))
-            conn.execute('UPDATE memory_evidence SET quote=?,created_at=? WHERE memory_id=? AND source_kind=? AND source_id=?',(content,int(time.time()),mid,binding['source_kind'],binding['source_id']))
+            conn.execute('UPDATE memory_evidence SET quote=?,source_version=?,created_at=? WHERE memory_id=? AND source_kind=? AND source_id=?',(content,int(source['fingerprint']),int(time.time()),mid,binding['source_kind'],binding['source_id']))
+            record_revision(conn,mid,'source-sync')
             return item_for(conn,current['id'],mid)
 
     @app.post('/api/memory/items/{mid}/review')
@@ -217,6 +220,13 @@ def install(app, db, user):
             if isinstance(cues,str):cues=json.loads(cues)
             set_semantics(conn,mid,admission='manual',tier=life.get('tier'),shared=life.get('shared'),applies_to=cues)
             conn.execute('UPDATE memory_semantics SET status=? WHERE memory_id=?',(item['status'],mid))
+            # Restoring a layout revision must restore its still-owned location,
+            # without recreating folders that the user deliberately removed.
+            placement=old.get('placement')
+            if placement and conn.execute('SELECT 1 FROM memory_nodes WHERE id=? AND user_id=?',(placement.get('node_id'),current['id'])).fetchone():
+                conn.execute('INSERT INTO memory_node_items VALUES(?,?,?) ON CONFLICT(memory_id) DO UPDATE SET node_id=excluded.node_id,custom=excluded.custom',
+                    (mid,placement['node_id'],int(bool(placement.get('custom')))))
+                conn.execute('DELETE FROM memory_tree_dirty WHERE memory_id=?',(mid,))
             record_revision(conn, mid, 'user-restored')
             return item_for(conn, current['id'], mid)
 

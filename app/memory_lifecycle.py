@@ -511,8 +511,10 @@ def filter_history(conn, uid, messages):
         WHERE c.user_id=? AND m.role='assistant' AND m.id IN (SELECT value FROM json_each(?))
         AND EXISTS(SELECT 1 FROM memory_forgotten_spans f WHERE f.user_id=? AND f.source_id=m.parent_id)''',(uid,ids,uid))}
     withdrawn_answers.update(r['message_id'] for r in conn.execute('SELECT message_id FROM memory_withdrawn_answers WHERE user_id=? AND message_id IN (SELECT value FROM json_each(?))',(uid,ids)))
-    withdrawn_answers.update(r['message_id'] for r in conn.execute('''SELECT u.message_id FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
-        WHERE m.user_id=? AND u.message_id IN (SELECT value FROM json_each(?)) AND u.memory_version<>m.version''',(uid,ids)))
+    from .memory_reliability import placement_version_current
+    for row in conn.execute('''SELECT u.message_id,u.memory_version,m.* FROM memory_usage u JOIN personal_memories m ON m.id=u.memory_id
+        WHERE m.user_id=? AND u.message_id IN (SELECT value FROM json_each(?)) AND u.memory_version<>m.version''',(uid,ids)):
+        if not placement_version_current(conn,row,row['memory_version']):withdrawn_answers.add(row['message_id'])
     result = []
     for item in messages:
         value = dict(item)

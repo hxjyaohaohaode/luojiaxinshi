@@ -55,6 +55,8 @@ def install(app,db,user):
             target=item_for(conn,current['id'],mid)
             if target['version']!=payload.version:raise HTTPException(409,'这条记忆已变化，请重新打开后编辑')
             if not 0<=payload.start<=payload.end<=len(target['content']):raise HTTPException(422,'所选文字范围无效')
+            if payload.start==payload.end==len(target['content']) and len(target['content'])>=2000:
+                raise HTTPException(422,'这条记忆已满 2000 字符，可先精简正文或新建一条记忆；尚未请求 AI')
             day=datetime.now(timezone(timedelta(hours=8))).date().isoformat()
             now=int(time.time())
             for key,maximum,seconds in (('memory-assist:'+current['id'],30,3600),('ai:'+current['id']+':'+day,settings.ai_daily_limit,86400)):
