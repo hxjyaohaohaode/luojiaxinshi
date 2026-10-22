@@ -1,9 +1,10 @@
 import {captureUiContext} from './ui-request.js';
 import {createLifecycleUI} from './memory-lifecycle.js';
+import {memoryTimestamp} from './memory-list-text.js';
 
 const modes={auto:'自动记忆',manual:'仅手动保存',off:'暂停全部记忆'};
 const origins={resource:'资料自动索引',source_claim:'AI 资料提炼',manual:'本人保存',automatic:'对话原话',agent:'Agent 整理',organizer:'自动概览',reflection:'语义复盘提议',task:'办理记录',import:'文件导入'};
-const stamp=value=>value?new Date(value*1000).toLocaleString():'—';
+const stamp=value=>memoryTimestamp(value,true)||'—';
 
 export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh}){
   const lifecycle=createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh});

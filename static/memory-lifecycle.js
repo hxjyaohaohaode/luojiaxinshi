@@ -1,8 +1,9 @@
 import {captureUiContext} from './ui-request.js';
+import {memoryTimestamp} from './memory-list-text.js';
 
 const tiers={long_term:'长期记忆',episodic:'经历记录'};
 const statusNames={active:'正常调用',cooling:'冷却，暂停调用',needs_review:'需要重新确认',archived:'归档，暂停调用'};
-const stamps=value=>value?new Date(value*1000).toLocaleString():'—';
+const stamps=value=>memoryTimestamp(value,true)||'—';
 
 export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
   const $=selector=>document.querySelector(selector);
