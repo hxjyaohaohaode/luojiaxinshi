@@ -40,8 +40,11 @@ def runtime_fields(conn, uid, cid, messages):
     words=set(terms(question))
     catalog['projects']=sorted(catalog['projects'],key=lambda p:len(words&set(terms(p['name']+' '+p['description']))),reverse=True)[:12]
     catalog['topics']=catalog['topics'][:20]
+    from .memory_tree import catalog as tree_catalog
+    catalog['branches']=tree_catalog(conn,uid,24) if allowed else []
     for item in catalog['projects']:item['description']=item['description'][:80]
     while len(dumps(catalog).encode('utf-8'))>5000 and catalog['projects']:catalog['projects'].pop()
+    while len(dumps(catalog).encode('utf-8'))>5000 and catalog['branches']:catalog['branches'].pop()
     payload=session_payload(short)
     source_ids=[value for key,value in short.get('_sources',{}).items() if key in payload and value]
     if any(payload.get(key) for key in ('decisions','open_questions','completed_steps','next_steps')):source_ids.extend(short.get('_checkpoint_sources',[]))
@@ -53,7 +56,7 @@ def runtime_fields(conn, uid, cid, messages):
                                 'policy':'临时条件仅用于本会话；长期信息按范围和当前相关性调用；遗忘优先于历史推断。'}}
 
 
-def basic_profile(db, uid, cid, mid, messages, profile):
+def basic_profile(db, uid, cid, mid, messages, profile,original_sources=None):
     """No model calls. Store version evidence so later edits revoke old answers."""
     from .grounding import message_scope_start
     from .context_snapshot import capture, assert_current,bind_memories,bind_sessions
@@ -73,6 +76,9 @@ def basic_profile(db, uid, cid, mid, messages, profile):
         sources = [{'id': 'memory-'+item['id'], 'evidence_kind': 'memory',
                     'memory_version': item['version'], 'memory_id': item['id'],
                     'name': '可用记忆', 'sections': []} for item in memories]
+        if access.get('attachments'):
+            sources.extend({'id':s['id'],'name':s['name'],'evidence_kind':'material',
+                            'status':s['status'],'sections':s['sections']} for s in original_sources or [])
         conn.execute('INSERT OR REPLACE INTO reply_grounding VALUES(?,?,?)',
                      (mid, dumps(sources), dumps({'status': 'context_only', 'memory': report,
                        'context_snapshot': snapshot, 'prompt_version': 'memory-engine-v1'})))

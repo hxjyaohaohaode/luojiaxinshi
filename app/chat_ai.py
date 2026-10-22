@@ -54,7 +54,8 @@ def reply(settings,sources,messages,profile):
              'memories':profile.get('_memory_entries',[]),'memory_control':profile.get('_memory_control',{}),
              'working_memory':profile.get('_working_memory',''),
              'session_memory':profile.get('_session_memory',{}),
-             'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections']} for s in sources]}
+             'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections'],
+                           'evidence_kind':s.get('evidence_kind','material')} for s in sources]}
     materials=[{'type':'text','text':json.dumps(context,ensure_ascii=False)}]
     for source in sources:
         if source['kind'] in IMAGE_MIME and source['content'] and source['status']!='failed':

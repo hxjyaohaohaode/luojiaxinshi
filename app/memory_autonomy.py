@@ -34,6 +34,19 @@ def selected_scopes(conn,uid,context,scenario,access):
     requested={p['id'] for p in catalog['projects'] if p['id'] in request.get('project_ids',[])}
     project_ids=requested or {p['id'] for p in catalog['projects'] if mentions(p['name'],text)}
     requested_topics={topic for topic in catalog['topics'] if topic in request.get('topics',[])}
+    from .memory_tree import descendants
+    for nid in request.get('node_ids',[])[:4]:
+        if not conn.execute('SELECT 1 FROM memory_nodes WHERE user_id=? AND id=?',(uid,nid)).fetchone():continue
+        branch=descendants(conn,uid,nid)
+        routed=list(conn.execute('''SELECT DISTINCT m.project_id,m.topic FROM memory_node_items i
+          JOIN personal_memories m ON m.id=i.memory_id WHERE m.user_id=? AND i.node_id IN (SELECT value FROM json_each(?))''',(uid,dumps(branch))))
+        pids={r['project_id'] for r in routed if r['project_id']}
+        topics_in_branch={r['topic'] for r in routed if r['topic']}
+        pids.update(r[0] for r in conn.execute('''SELECT DISTINCT source_id FROM memory_source_units
+          WHERE user_id=? AND source_kind='resource_project' AND node_id IN (SELECT value FROM json_each(?))''',(uid,dumps(branch))))
+        # A broad root is not an instruction to bring unrelated projects in.
+        if len(pids)==1:project_ids.update(pids)
+        if len(topics_in_branch)==1:requested_topics.update(topics_in_branch)
     topics=requested_topics or {topic for topic in catalog['topics'] if mentions(topic,text)}
     if not project_ids and not topics:
         # Only local retrieval hints, never permission to another account.

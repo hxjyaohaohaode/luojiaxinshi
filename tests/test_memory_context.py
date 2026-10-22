@@ -125,7 +125,7 @@ def test_context_cannot_cross_owner_or_change_during_generation(env):
     assert c.put(f"/api/conversations/{chat['id']}/context",json={'version':0}).status_code==409
 
 
-def test_export_import_keeps_scopes_but_requires_memory_reactivation(env):
+def test_export_import_keeps_scopes_and_activation_without_review_inbox(env):
     c=account(env);dest=account(env,'dest');chat=conversation(c);p=project(c);context(c,chat,project_id=p['id'],topics=['论文'])
     memory(c,scope='project',project_id=p['id'],source_conversation_id=chat['id']);memory(c,scope='topic',topic='论文')
     exported=c.get('/api/export').json()
@@ -133,7 +133,7 @@ def test_export_import_keeps_scopes_but_requires_memory_reactivation(env):
     r=dest.post('/api/import',json={'data':exported,'digest':preview['digest'],'confirm':True});assert r.status_code==200,r.text
     imported=dest.get('/api/memory').json()
     assert len(imported['projects'])==1 and len(imported['memories'])==2
-    assert not any(m['active'] for m in imported['memories'])
+    assert all(m['active'] for m in imported['memories'])
     assert all(m['source_conversation_id'] is None for m in imported['memories'])
     assert next(m for m in imported['memories'] if m['scope']=='project')['project_id']==imported['projects'][0]['id']
     again=dest.post('/api/import',json={'data':exported,'digest':preview['digest'],'confirm':True}).json()

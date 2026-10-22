@@ -1,5 +1,43 @@
 # 验证记录
 
+## 2026-10-21：自主知识树与多源记忆 v6
+
+应用 1.16.0，记忆引擎 schema 6。设计及明确能力边界见 [知识树 v6](docs/MEMORY_TREE_V6.md)；[验证汇总](docs/verification/memory-tree-v6.json)；[13 个固定版本的源码复核](docs/verification/memory-upstream-v6.json)。旧版验证段落保留为历史，当前界面没有旧审核工作区。
+
+| 验证 | 结果 | 本地原始证据 |
+| --- | --- | --- |
+| 完整 Python 回归 | 826 通过，0 失败／错误 | `artifacts/memory-v6-pytest-final.xml` |
+| 末次查询、指纹修复后 | 254 项记忆与检索定向回归通过 | `artifacts/memory-v6-postfix.xml` |
+| 普通／流式回答来源适配后 | 170 项适配与记忆回归通过，含真实路由的附件来源学习 | `artifacts/memory-v6-adapters.xml` |
+| 最终来源与生命周期边界 | 30 项通过，覆盖跨会话开关、来源归属、英文凭证过滤及持久化 | `artifacts/memory-v6-final-boundaries.xml` |
+| Node | 118 通过 | `artifacts/memory-v6-node.log` |
+| 浏览器 | Chromium、Firefox、WebKit，共 48 检查通过，0 页面异常 | `artifacts/memory-v6-browser/report.json`、`desktop.png`、`mobile.png` |
+| 实际已配置模型 | 1 次合成输入调用；JSON schema、逐字来源及服务端 `source_saved` 落库均通过。输入 3566、输出 455 tokens，耗时 22.2 秒 | `artifacts/memory-v6-live-smoke.json`；原始输出只存本地，不含真实用户资料 |
+| 私有备份升级演练 | schema 5→6；业务数量、人工正文保留；完整性 ok、外键错误 0、失败作业 0 | `artifacts/memory-v6-rehearsal-report.json` |
+| 本地服务 | 1.16.0 / schema 6；原始业务数量及人工正文保留；新接口未登录均 401 | `artifacts/memory-v6-first-activation.json`、`memory-v6-activation.json` |
+
+Python 三组存在重叠，不相加。完整套件先通过，末次查询顺序、精确指纹及回答路径修补分别由后续定向套件复核。模型夹具测试协议，不代表真实模型整体准确率；实际模型的单次验证同样不构成准确率估计。
+
+一万条基础记忆（其中五千条处于候选范围）、20 份完整合成资料、120 个来源分片、16 次查询：本地召回中位 **276.86 ms**、P95 **317.52 ms**；绑定上下文并连续核对三次中位 **17.34 ms**；目录读取中位 **18.16 ms**；首次自动分类 **155.41 ms**。上下文均在 12 条／8000 字节内，测试模型调用 0。见 `artifacts/memory-v6-benchmark-optimized/report.json`。这不是模型整段回答的耗时保证。
+
+曾观测到目录成员关联的错误查询顺序使中位召回达到 2918.32 ms；按 ID 驱动索引查找后在相同生成内容上复测为上述结果。启动时修复 FTS 的相关子查询也改成一次集合扫描，避免大容量重启时反复扫描整个索引。原始前后报告均保留，不把慢结果隐藏。
+
+复现：
+
+```powershell
+.venv/Scripts/python.exe -m pytest -q --disable-warnings
+npm test
+.venv/Scripts/python.exe scripts/benchmark_memory_tree.py
+$env:MVP_PORT='8786'
+$env:MVP_DATA_DIR=(Join-Path (Get-Location) 'artifacts/memory-v6-preview/data')
+.venv/Scripts/python.exe scripts/memory_engine_preview_server.py
+# 在另一个终端，确保 playwright 模块可解析或设置 PLAYWRIGHT_PATH：
+node scripts/verify_memory_tree.mjs
+```
+
+预览服务使用隔离的合成数据库及明确模拟的模型。旧版 `verify_memory_engine`、`verify_memory_lifecycle`、`verify_memory_reliability` 的 UI 选择器对应历史工作区，不作为 v6 的界面验收入口；保留其历史记录，不把旧截图当成新界面证据。
+
+
 ## 2026-10-21：自主记忆与非对话来源 v5
 
 应用 1.15.0，记忆引擎 schema 5。新对话自动选择相关范围，普通对话主动维护；通知资料、上传全文、项目说明及办理进度/结果可独立形成或更新来源记忆。人工与 AI 局部编辑保留范围外内容、版本和暂停状态；遗忘覆盖尚未处理的旧来源队列。机制与实际能力边界见 [自主记忆 v5](docs/MEMORY_AUTONOMY_V5.md)，公开结果见 [机器汇总](docs/verification/memory-autonomy-v5.json)。

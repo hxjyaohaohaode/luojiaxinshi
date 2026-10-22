@@ -71,13 +71,13 @@ def test_cross_topic_conflicts_are_visible_and_cross_owner_resolve_is_denied(env
     assert c.post('/api/memory/items/'+a['id']+'/resolve',json={'versions':{a['id']:1,b['id']:1}}).status_code==409
 
 
-def test_lifecycle_metadata_survives_json_export_import_without_enabling_it(env):
+def test_lifecycle_metadata_and_exported_activation_survive_json_import(env):
     c=account(env);other=account(env,'other');now=int(time.time())
     memory(c,semantic_key='约束',valid_from=now,expires_at=now+3600)
     assert import_export(other,c.get('/api/export').json()).status_code==200
     imported=other.get('/api/memory').json()['memories'][0]
     assert imported['semantic_key']=='约束' and imported['valid_from']==now and imported['expires_at']==now+3600
-    assert imported['state']=='inactive'
+    assert imported['state']=='active'
 
 
 @pytest.mark.parametrize('value',[{'valid_from':10,'expires_at':10},{'valid_from':11,'expires_at':10},{'expires_at':-1}])

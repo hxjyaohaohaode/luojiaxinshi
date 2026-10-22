@@ -342,11 +342,15 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 from .memory import eligible_versions,memory_access
                 from .grounding import message_scope_start
                 memory_versions=eligible_versions(conn,current['id'],cid,access['profile'] and memory_access(messages) and message_scope_start(messages) is None,access)
+                reports={r['message_id']:json.loads(r['sources']) for r in conn.execute('''SELECT g.message_id,g.sources
+                    FROM reply_grounding g JOIN conversation_messages m ON m.id=g.message_id WHERE m.conversation_id=?''',(cid,))}
+                passage_ids={s['id'] for values in reports.values() for s in values if s.get('evidence_kind')=='memory' and s.get('id','').startswith('memory-unit-')}
+                if passage_ids:
+                    memory_versions.update(eligible_versions(conn,current['id'],cid,access['profile'] and memory_access(messages) and message_scope_start(messages) is None,access,passage_ids))
                 contextual=[]
                 for m in messages:
                     if m['role']=='user':contextual.append(m);continue
-                    report=conn.execute('SELECT sources FROM reply_grounding WHERE message_id=?',(m['id'],)).fetchone()
-                    report_sources=json.loads(report['sources']) if report else []
+                    report_sources=reports.get(m['id'],[])
                     memory_sources=[s for s in report_sources if s.get('evidence_kind')=='memory']
                     # Preferences can affect prose without an inline citation. Revoke
                     # that whole old answer when any injected memory is no longer current.
@@ -393,7 +397,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     if result is None:raise AIError('核验未完成，未发布回答。')
                 else:
                     from .memory_context import basic_profile
-                    profile=basic_profile(db,current['id'],cid,mid,messages,json.loads(current['profile']))
+                    profile=basic_profile(db,current['id'],cid,mid,messages,json.loads(current['profile']),sources)
                     result,usage=await run_in_threadpool(chat_ai.reply,settings,sources,messages,profile)
                 status='complete';error=''
             except (AIError,TimeoutError) as exc:

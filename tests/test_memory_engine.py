@@ -94,7 +94,8 @@ def test_memory_modes_are_enforced_for_learning_and_recall(env, mode):
     data = items(c)
     if mode == 'review':
         pending = next(item for item in data if item['id'] != saved['id'])
-        assert pending['review_status'] == 'pending' and not pending['active']
+        assert pending['review_status'] == 'accepted' and pending['active']
+        assert c.get('/api/memory/settings').json()['mode']=='auto'
     else:
         assert len(data) == 1
     recalled, _ = recall(env[0].state.db, uid(c), chat['id'], '回答', ACCESS)
@@ -276,7 +277,7 @@ def test_json_portability_retains_audit_without_cross_account_links(env):
     response=other.post('/api/memory/import',json={'format':'json','text':dumps(exported)})
     assert response.status_code == 200,response.text
     imported=items(other)[0]
-    assert imported['project_id'] != p['id'] and imported['review_status']=='pending' and not imported['active']
+    assert imported['project_id'] != p['id'] and imported['review_status']=='accepted' and imported['active']
     detail=other.get('/api/memory/items/'+imported['id']).json()
     assert detail['evidence']==[] and detail['imported_provenance']['evidence']
     assert other.post('/api/memory/import',json={'format':'json','text':dumps(exported)}).json()['count']==0
@@ -429,7 +430,7 @@ def test_engine_v1_migrates_transactional_index_and_preserves_records(env):
         conn.execute('DROP TABLE memory_maintenance')
     db=Database(env[0].state.db.path)
     with db.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='5'
+        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='6'
         assert conn.execute('SELECT content FROM personal_memories WHERE id=?',(saved['id'],)).fetchone()[0]==saved['content']
         assert conn.execute('SELECT count(*) FROM memory_fts').fetchone()[0]==1
 
@@ -438,7 +439,7 @@ def test_agent_receipt_uses_persisted_review_state_and_reuses_pending_original(e
     c=account(env);chat=conversation(c);setting(c,'review')
     quote='记住，我的测试称呼是小陈。';mid=message(env,c,chat,quote)
     result=actions(env,c,chat,mid,{'content':quote,'source_quote':quote,'kind':'fact'})[0]
-    assert result['status']=='pending' and len(items(c))==1
+    assert result['status']=='accepted' and len(items(c))==1
     setting(c,'auto')
     old=memory(c,content='我的名字是原称呼。',kind='fact',semantic_key='个人称呼')
     quote='记住，我的名字是新称呼。';mid=message(env,c,chat,quote,learn=False)

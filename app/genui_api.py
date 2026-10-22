@@ -212,7 +212,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 profile=json.loads(current['profile'])
                 if not settings.ai_grounding:
                     from .memory_context import basic_profile
-                    profile=basic_profile(db,current['id'],cid,mid,messages,profile)
+                    profile=basic_profile(db,current['id'],cid,mid,messages,profile,sources)
                 stream_events=(work_stream(settings,db,mid,grounded_events(settings,db,current['id'],cid,mid,sources,messages,json.loads(current['profile']),tier))
                                if settings.ai_grounding else genui_ai.stream_reply(settings,sources,messages,profile,tier))
                 from contextlib import aclosing

@@ -44,7 +44,7 @@ def requested_facets(question):
 
 
 PROMPT_FIELDS = ('id','scope','project_id','topic','kind','content','version','updated_at',
-    'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name')
+    'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name','node_id')
 
 
 def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt_only=False):
@@ -85,6 +85,8 @@ def ranked(conn,uid,items,question,queries=None,limit=12,byte_budget=8000,prompt
             style.append(key)
     style.sort(key=lambda key:(-by_id[key].get('locked',False),-by_id[key]['updated_at'],key))
     if style:arms.append((style[:3],.65,'适用于当前回答的表达偏好'))
+    branch_hits=[key for key,item in by_id.items() if item.get('_tree_selected')]
+    if branch_hits:arms.append((branch_hits[:80],.8,'相关记忆目录'))
     # Rank-space boosts avoid a flat constant that can swamp direct matches.
     for keys,boost,reason in arms:
         for rank,key in enumerate(keys,1):

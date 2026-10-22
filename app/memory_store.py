@@ -168,7 +168,7 @@ INSERT OR IGNORE INTO memory_details(memory_id,content_hash)
  SELECT id,memory_digest(content) FROM personal_memories;
 INSERT INTO memory_fts(memory_id,user_id,words)
  SELECT m.id,m.user_id,memory_tokens(m.content) FROM personal_memories m
- WHERE NOT EXISTS(SELECT 1 FROM memory_fts f WHERE f.memory_id=m.id);
+ WHERE m.id NOT IN (SELECT memory_id FROM memory_fts WHERE memory_id IS NOT NULL);
 INSERT OR IGNORE INTO memory_maintenance SELECT DISTINCT user_id,1,unixepoch() FROM personal_memories;
 INSERT OR IGNORE INTO meta VALUES('memory_engine_schema_version','2');
 UPDATE meta SET value='2' WHERE key='memory_engine_schema_version';
@@ -197,7 +197,10 @@ def export_archive(conn, uid):
     for row in conn.execute('''SELECT p.* FROM memory_import_provenance p
             JOIN personal_memories m ON m.id=p.memory_id WHERE m.user_id=?''', (uid,)):
         by_id[row['memory_id']]['imported_provenance'] = json.loads(row['payload'])
-    return {'format': 'campus-memory-v1', 'memories': items,
+    hierarchy={'nodes':[dict(r) for r in conn.execute('SELECT * FROM memory_nodes WHERE user_id=?',(uid,))],
+               'placements':[dict(r) for r in conn.execute('''SELECT i.* FROM memory_node_items i
+                 JOIN personal_memories m ON m.id=i.memory_id WHERE m.user_id=?''',(uid,))]}
+    return {'format': 'campus-memory-v1', 'memories': items,'hierarchy':hierarchy,
             'projects': [dict(row) for row in conn.execute('SELECT * FROM memory_projects WHERE user_id=?', (uid,))],
             'settings': settings_for(conn, uid), 'exported_at': int(time.time()),
             'note': 'JSON 为可迁移记忆档案。导入的历史来源仅供核对，不恢复其他账号的权限或实时关联；完整运行状态请使用数据库备份。'}
@@ -240,6 +243,8 @@ def record_revision(conn, mid, actor='user'):
     value['links'] = [dict(r) for r in conn.execute('SELECT * FROM memory_links WHERE child_id=?',(mid,))]
     life = conn.execute('SELECT * FROM memory_semantics WHERE memory_id=?',(mid,)).fetchone()
     value['lifecycle'] = dict(life) if life else None
+    placement=conn.execute('SELECT node_id,custom FROM memory_node_items WHERE memory_id=?',(mid,)).fetchone()
+    value['placement']=dict(placement) if placement else None
     conn.execute('''INSERT INTO memory_revisions VALUES(?,?,?,?,?) ON CONFLICT(memory_id,version)
         DO UPDATE SET snapshot=excluded.snapshot,actor=excluded.actor''',
         (mid, row['version'], dumps(value), actor, int(time.time())))
@@ -360,3 +365,7 @@ V4_TABLES=set(REQUIRED_TABLES)
 from .memory_autonomy_schema import SCHEMA as AUTONOMY_SCHEMA,TABLES as AUTONOMY_TABLES
 REQUIRED_TABLES |= AUTONOMY_TABLES
 SCHEMA += AUTONOMY_SCHEMA
+V5_TABLES=set(REQUIRED_TABLES)
+from .memory_tree_schema import SCHEMA as TREE_SCHEMA,TABLES as TREE_TABLES
+REQUIRED_TABLES |= TREE_TABLES
+SCHEMA += TREE_SCHEMA

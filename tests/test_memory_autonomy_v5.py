@@ -117,7 +117,7 @@ def test_resource_permissions_propagate_to_derived_memories(env):
 @pytest.mark.parametrize('mode',['manual','off','review'])
 def test_resource_learning_obeys_settings_and_resumes_automatically(env,mode):
     c=account(env);setting(c,mode);notice(c);db=env[0].state.db;drain_jobs(db,uid=uid(c))
-    if mode=='review':assert resource_rows(c)[0]['review_status']=='pending'
+    if mode=='review':assert resource_rows(c)[0]['review_status']=='accepted' and c.get('/api/memory/settings').json()['mode']=='auto'
     else:
         assert resource_rows(c)==[];setting(c,'auto');drain_jobs(db,uid=uid(c));assert resource_rows(c)[0]['active']
 

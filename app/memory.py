@@ -142,6 +142,9 @@ def eligible_versions(conn,uid,cid,allowed,access=None,memory_ids=None):
     items,_=candidates(conn,uid,cid,access or {},ids=ids)
     for row in items:
         if memory_ids is None or 'memory-'+row['id'] in memory_ids:versions['memory-'+row['id']]=row['version']
+    from .memory_passages import versions as passage_versions
+    unit_ids={key.removeprefix('memory-') for key in memory_ids or [] if key.startswith('memory-unit-')}
+    if unit_ids:versions.update(passage_versions(conn,uid,cid,unit_ids,access or {}))
     if context['project_id']:
         project=own(conn,'memory_projects',context['project_id'],uid)
         versions['memory-'+hashlib.sha256(('project:'+project['id']).encode()).hexdigest()[:32]]=project['version']
@@ -176,13 +179,24 @@ def recall(db,uid,cid,question,access,queries=None):
                 'scope':'project','project_id':project['id'],'topic':'','kind':'fact','content':content,
                 'version':project['version'],'updated_at':project['updated_at'],'project_context':True})
             used=len(dumps(selected[0]).encode('utf-8'))+1
-        ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected),byte_budget=8000-used,prompt_only=True)
+        from .memory_passages import recall_passages
+        passages,passage_bytes=recall_passages(conn,uid,cid,question,access,queries,limit=3,byte_budget=min(4300,8000-used))
+        from .memory_tree import memberships,descendants
+        membership=memberships(conn,uid,[item['id'] for item in items])
+        branch=set()
+        for nid in (access.get('_memory_selection') or {}).get('node_ids',[])[:4]:
+            if conn.execute('SELECT 1 FROM memory_nodes WHERE user_id=? AND id=?',(uid,nid)).fetchone():branch.update(descendants(conn,uid,nid))
+        for item in items:
+            item['node_id']=membership.get(item['id'])
+            item['_tree_selected']=item['node_id'] in branch
+        ranked_items,ranking=ranked(conn,uid,items,question,queries,limit=12-len(selected)-len(passages),byte_budget=8000-used-passage_bytes,prompt_only=True)
         for item in ranked_items:
             selected.append({k:item[k] for k in ('id','scope','project_id','topic','kind','content','version','updated_at',
-                'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name')})
+                'origin','locked','labels','recall_score','recall_reasons','tier','facet','admission','last_confirmed_at','scope_name','node_id')})
+        selected.extend(passages)
         count=sum(not item.get('project_context') for item in selected)
-        return selected,{'enabled':True,'selected':count,'eligible':ranking['matched'],'omitted':ranking['matched']-count,'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
-            'excluded':excluded,'automatic_selection':context['selection_mode']=='auto','selected_project_ids':sorted({item['project_id'] for item in selected if item.get('project_id')}),'policy_version':'memory-autonomy-v5',**ranking,'context_bytes':used+ranking['context_bytes']}
+        return selected,{'enabled':True,'selected':count,'eligible':ranking['matched']+len(passages),'omitted':max(0,ranking['matched']-len(ranked_items)),'project_id':context['project_id'],'topics':context['topics'],'project_context':bool(context['project_id']),
+            'excluded':excluded,'automatic_selection':context['selection_mode']=='auto','selected_project_ids':sorted({item['project_id'] for item in selected if item.get('project_id')}),'policy_version':'memory-tree-v6',**ranking,'source_passages':len(passages),'context_bytes':used+ranking['context_bytes']+passage_bytes}
 
 
 def install_memory(app,db,user):

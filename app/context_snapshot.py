@@ -38,14 +38,18 @@ def capture(conn, uid, cid, access, memory_ids=None):
         values['session_memory']=records('SELECT id,expires_at,promoted_id FROM memory_session_items WHERE conversation_id=? ORDER BY id',(cid,))
         values['session_edits']=records('SELECT e.session_id,e.version FROM memory_session_edits e JOIN memory_session_items s ON s.id=e.session_id WHERE s.conversation_id=? ORDER BY e.session_id',(cid,))
     if access.get('library'):
-        values['library']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,l.full_sections
+        values['library']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,v.version
             FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id
-            LEFT JOIN material_library l ON l.source_id=s.id WHERE c.user_id=? ORDER BY s.id''',(uid,))
-        values['notices']=records('''SELECT s.id,s.sha256,s.status,s.active,n.version FROM sources s
-            JOIN notices n ON n.id=s.notice_id WHERE n.user_id=? ORDER BY s.id''',(uid,))
+            LEFT JOIN material_library l ON l.source_id=s.id
+            LEFT JOIN memory_resource_versions v ON v.source_kind='resource_material' AND v.source_id=s.id
+            WHERE c.user_id=? ORDER BY s.id''',(uid,))
+        values['notices']=records('''SELECT s.id,s.sha256,s.status,s.active,n.version,v.version FROM sources s
+            JOIN notices n ON n.id=s.notice_id LEFT JOIN memory_resource_versions v
+            ON v.source_kind='resource_notice' AND v.source_id=s.id WHERE n.user_id=? ORDER BY s.id''',(uid,))
     elif access.get('attachments'):
-        values['attachments']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,l.full_sections
+        values['attachments']=records('''SELECT s.id,s.sha256,s.status,s.warning,l.path,v.version
             FROM conversation_sources s LEFT JOIN material_library l ON l.source_id=s.id
+            LEFT JOIN memory_resource_versions v ON v.source_kind='resource_material' AND v.source_id=s.id
             WHERE s.conversation_id=? ORDER BY s.id''',(cid,))
     if access.get('schedule'):
         values['tasks']=records('''SELECT t.id,t.version,t.status,w.version,r.version FROM tasks t

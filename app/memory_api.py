@@ -57,6 +57,8 @@ def item_for(conn, uid, mid):
 
 
 def install(app, db, user):
+    from .memory_tree_api import install as install_tree
+    install_tree(app,db,user)
     from .memory_lifecycle_api import install as install_lifecycle
     install_lifecycle(app,db,user)
     from .memory_reliability_api import install as install_reliability
@@ -70,6 +72,7 @@ def install(app, db, user):
 
     @app.put('/api/memory/settings')
     def set_settings(payload: SettingsUpdate, current=Depends(user)):
+        if payload.mode=='review':payload.mode='auto'
         with db.connect(write=True) as conn:
             old = settings_for(conn, current['id'])
             if old['version'] != payload.version:
@@ -294,9 +297,9 @@ def install(app, db, user):
             own(conn, 'conversations', cid, current['id'])
             return {'schema': MemoryAction.model_json_schema(), 'settings': settings_for(conn, current['id']),
                     'context': context_for(conn, cid), 'owner_source': 'authenticated_session',
-                    'operations': ['remember', 'update', 'archive', 'derive', 'checkpoint', 'use', 'forget'],
+                    'operations': ['remember', 'update', 'archive', 'derive', 'checkpoint', 'use', 'forget','source_remember','organize'],
                     'read': '/api/memory/search', 'detail': '/api/memory/items/{id}',
-                    'note': '权限由服务器绑定；修改需要来源原句和当前版本，本人锁定内容进入待核对。'}
+                    'note': '权限由服务器绑定；资料提炼核对实际来源，整理保留使用范围，依据不足时系统暂缓使用。'}
 
     @app.post('/api/conversations/{cid}/memory-actions')
     def agent_actions(cid: str, payload: AgentActions, current=Depends(user)):
@@ -345,6 +348,7 @@ def install(app, db, user):
                 entries = data['memories']
             with db.connect(write=True) as conn:
                 saved = []
+                memory_map={}
                 project_map = {}
                 if payload.format == 'json':
                     for raw in data.get('projects', []):
@@ -366,7 +370,7 @@ def install(app, db, user):
                         raise ValueError()
                     fields = {key: entry[key] for key in Memory.model_fields if key in entry}
                     fields['source_conversation_id'] = None
-                    fields['active'] = False
+                    fields['active'] = entry.get('active',True)
                     if payload.format == 'json' and fields.get('project_id'):
                         fields['project_id'] = project_map.get(fields['project_id'], fields['project_id'])
                     value = Memory.model_validate(fields)
@@ -382,8 +386,8 @@ def install(app, db, user):
                         conn.execute('''UPDATE personal_memories SET content=?,kind=?,scope=?,project_id=?,topic=?,
                             version=version+1,updated_at=? WHERE id=?''', (value.content, value.kind, value.scope,
                             value.project_id, value.topic, int(time.time()), old['id']))
-                        # Editing a pending proposal does not silently approve it.
-                        conn.execute("UPDATE memory_details SET locked=1,labels=? WHERE memory_id=?", (dumps(value.labels), old['id']))
+                        # An explicit manual file edit is an owned edit; preserve activation state.
+                        conn.execute("UPDATE memory_details SET locked=1,review_status='accepted',labels=? WHERE memory_id=?", (dumps(value.labels), old['id']))
                         save_policy(conn, old['id'], value.model_dump())
                         from .memory_lifecycle import set_semantics
                         set_semantics(conn,old['id'],admission='manual',tier=previous['tier'] if previous['kind']==value.kind else None)
@@ -393,14 +397,19 @@ def install(app, db, user):
                     else:
                         signature = (scope_key(value.model_dump()), digest(value.content))
                         if signature in existing:
+                            if isinstance(entry.get('id'),str):memory_map[entry['id']]=existing[signature]
                             continue
-                        key = insert_memory(conn, current['id'], value.model_dump(), origin='import', review='pending', locked=True, labels=value.labels)
+                        key = insert_memory(conn, current['id'], value.model_dump(), origin='import', review='accepted', locked=True, labels=value.labels)
                         if key:
                             saved.append(key)
+                            if isinstance(entry.get('id'),str):memory_map[entry['id']]=key
                             existing[signature] = key
                             archive = {field: entry[field] for field in ('evidence', 'revisions', 'links', 'imported_provenance') if field in entry}
                             if archive:
                                 conn.execute('INSERT INTO memory_import_provenance VALUES(?,?)', (key, dumps(archive)))
-                return {'saved': saved, 'count': len(saved), 'note': 'Markdown 更新保留原启用状态；JSON 新导入内容先核对再启用。'}
+                if payload.format=='json' and data.get('hierarchy') is not None:
+                    from .memory_tree import import_layout
+                    import_layout(conn,current['id'],data['hierarchy'],memory_map,project_map)
+                return {'saved': saved, 'count': len(saved), 'note': '导入按文件中的启用状态保存；目录映射到当前账号，历史来源仅作声明保留，不恢复原账号的访问权限。'}
         except (ValueError, TypeError, KeyError, RecursionError):
             raise HTTPException(422, '记忆文件格式、字段或数量不符合要求') from None

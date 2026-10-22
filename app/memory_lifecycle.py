@@ -257,7 +257,9 @@ def set_semantics(conn, mid, *, admission='explicit', tier=None, shared=None, ap
     conn.execute('''UPDATE memory_semantics SET tier=?,admission=?,shared=coalesce(?,shared),
         applies_to=coalesce(?,applies_to),last_confirmed_at=?,review_after=?,status='active',facet=?,canonical_value=?,version=version+1
         WHERE memory_id=?''', (tier, admission, int(shared) if shared is not None else None,
-        dumps(applies_to) if applies_to is not None else None, now, review_after,facet(row['content'],row['semantic_key']),canonical(row['content'],row['semantic_key']), mid))
+        dumps(applies_to) if applies_to is not None else None, now, review_after,
+        '' if row['origin'] in ('resource','source_claim') else facet(row['content'],row['semantic_key']),
+        '' if row['origin'] in ('resource','source_claim') else canonical(row['content'],row['semantic_key']), mid))
 
 
 def session_item(conn, uid, cid, mid, text, kind='fact', lifetime='session', slot=''):

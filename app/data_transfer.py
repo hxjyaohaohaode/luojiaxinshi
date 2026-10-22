@@ -172,7 +172,7 @@ def validate(data):
     from .memory_store import MAX_MEMORIES
     for item in collection(data,'memories',MAX_MEMORIES):
         value={k:item[k] for k in Memory.model_fields if k in item}
-        value.update(active=False,source_conversation_id=None)
+        value.update(source_conversation_id=None)
         memories.append({'key':key('memory',item),'data':Memory.model_validate(value).model_dump()})
     if len({p['old_id'] for p in projects})!=len(projects):raise ValueError('项目标识重复')
     return {'profile':profile,'notices':notices,'conversations':chats,'arrangements':arrangements,'source_catalog':catalog,'memory_projects':projects,'memories':memories}
@@ -198,7 +198,7 @@ def install_data_transfer(app,db,user):
         if any(n['quality_receipt'] for n in data['notices']):warnings.append('逐条核对记录作为导入历史保留，不视为当前版本已重新核实；缺失来源保留引句但不能跳转。')
         warnings.append('前置关系按同一账号的原始标识连接；分批导入可补齐先前缺失的关系，找不到的前置事项仍待核实；循环关系会拒绝导入。')
         if data['memories'] or data['memory_projects']:
-            warnings.append('项目与记忆一并恢复；记忆先停用，核对后在“我的记忆”逐条启用。原对话来源关联不迁移，避免绑定其他账号；项目缺失时拒绝该次导入。')
+            warnings.append('项目与记忆按导出文件中的启用状态恢复；原对话来源关联不迁移，历史声明不恢复其他账号权限；项目缺失时拒绝该次导入。')
         if not payload.confirm:return {'digest':digest,'counts':counts,'warnings':warnings}
         if payload.digest!=digest:raise HTTPException(409,'文件在预览后发生变化，请重新预览')
         now=int(time.time());added=0;skipped=0
@@ -229,8 +229,8 @@ def install_data_transfer(app,db,user):
                         if conn.execute('SELECT count(*) FROM personal_memories WHERE user_id=?',(current['id'],)).fetchone()[0]>=MAX_MEMORIES:
                             raise HTTPException(422,f'导入后记忆将超过 {MAX_MEMORIES} 条，请先整理已有记忆')
                         value=item['data'];pid=require_project(value['project_id'])
-                        conn.execute('INSERT INTO personal_memories VALUES(?,?,?,?,?,?,?,NULL,0,?,1,?,?)',
-                            (rid,current['id'],value['scope'],pid,value['topic'],value['kind'],value['content'],int(value['pinned']),now,now))
+                        conn.execute('INSERT INTO personal_memories VALUES(?,?,?,?,?,?,?,NULL,?,?,1,?,?)',
+                            (rid,current['id'],value['scope'],pid,value['topic'],value['kind'],value['content'],int(value['active']),int(value['pinned']),now,now))
                         from .memory_policy import save_policy
                         save_policy(conn,rid,value)
                         conn.execute("UPDATE memory_details SET origin='import',labels=? WHERE memory_id=?",(dumps(value['labels']),rid))

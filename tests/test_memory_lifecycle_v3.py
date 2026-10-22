@@ -376,7 +376,7 @@ def test_v2_schema_migrates_and_new_tables_are_required_for_v3(env):
         conn.execute('DROP TABLE memory_reflection_jobs')
     reopened=Database(env[0].state.db.path)
     with reopened.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='5'
+        assert conn.execute("SELECT value FROM meta WHERE key='memory_engine_schema_version'").fetchone()[0]=='6'
         assert conn.execute('SELECT content FROM personal_memories WHERE id=?',(saved['id'],)).fetchone()[0]=='旧版本人工维护的中文偏好'
     with reopened.connect(write=True) as conn:conn.execute('DROP TABLE memory_reflection_jobs')
     with pytest.raises(RuntimeError):Database(reopened.path)
