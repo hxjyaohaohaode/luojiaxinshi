@@ -2,7 +2,7 @@ import {encodeWav} from './audio-wav.js';
 import {SpeechSegments,appendTranscript} from './dictation-segments.js';
 let active=null;
 export async function finishDictation(input){if(active?.input===input)await active.finish();}
-export async function dictate(input,button,{api,toast,ask}){
+export async function dictate(input,button,{api,toast}){
   if(active){if(active.input===input)await (active.action?.()??active.finish());else active.cancel();return;}
   if(!navigator.mediaDevices?.getUserMedia||!(window.AudioContext||window.webkitAudioContext)){toast('此浏览器不支持录音，请使用文字输入。',true);return;}
   const session={input,cancelled:false,stopping:false};active=session;
@@ -47,8 +47,8 @@ export async function dictate(input,button,{api,toast,ask}){
   try{
     const config=await api('/speech/config');if(!config.configured)throw Error(config.unavailable_reason||'语音服务尚未配置。');
     if(session.cancelled||!input.isConnected){cleanup();return;}
-    if(!await ask('语音输入','录音会分段发送至小米 MiMo，边说边转写到输入框，最多 60 秒；由你核对后发送。','开始录音')){cleanup();return;}
-    if(session.cancelled||!input.isConnected){cleanup();return;}
+    // Clicking the microphone starts dictation. Browser microphone permission
+    // remains authoritative; do not repeat an application confirmation per use.
     stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     if(session.cancelled||!input.isConnected){cleanup();return;}
     context=new (window.AudioContext||window.webkitAudioContext)();

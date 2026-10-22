@@ -63,7 +63,7 @@ try{
   await page.evaluate(async()=>{
     const {dictate}=await import('/static/dictation.js');window.__speechCalls=[];window.__speechErrors=[];
     await dictate(document.querySelector('#chat-input'),document.querySelector('.composer-voice'),{
-      ask:async()=>true,toast:x=>window.__speechErrors.push(x),api:async(path,options)=>{
+      ask:async()=>{throw Error('录音不应重复请求应用确认');},toast:x=>window.__speechErrors.push(x),api:async(path,options)=>{
         if(path==='/speech/config')return {configured:true,max_recording_seconds:60};
         const blob=options.body.get('audio'),header=new Uint8Array(await blob.arrayBuffer());
         window.__speechCalls.push({size:blob.size,header:String.fromCharCode(...header.slice(0,4))});
@@ -89,7 +89,7 @@ try{
   await page.evaluate(async()=>{
     const {dictate}=await import('/static/dictation.js');let attempts=0;window.__retryNotices=[];
     await dictate(document.querySelector('#chat-input'),document.querySelector('.composer-voice'),{
-      ask:async()=>true,toast:text=>window.__retryNotices.push(text),api:async path=>{
+      ask:async()=>{throw Error('录音重试不应重复请求应用确认');},toast:text=>window.__retryNotices.push(text),api:async path=>{
         if(path==='/speech/config')return {configured:true,max_recording_seconds:60};
         if(++attempts===1)throw Error('合成转写故障');
         return {text:'重试后恢复的转写'};

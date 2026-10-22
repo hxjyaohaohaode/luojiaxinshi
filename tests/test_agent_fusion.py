@@ -78,18 +78,19 @@ def test_context_retains_complete_loaded_protocols_while_reclaiming_evidence():
         compact('规则', [], current, [], 1800, protected_tools={'memory_capabilities'})
 
 
-def test_large_initial_context_keeps_permissions_and_whole_evidence_with_explicit_omissions():
+@pytest.mark.parametrize('budget',[1500,3000])
+def test_large_initial_context_keeps_permissions_and_whole_evidence_with_explicit_omissions(budget):
     value = {'now': '2026-10-22', 'timezone': 'Asia/Shanghai', 'web_restricted': True,
         'memory_control': {'mode': 'auto', 'may_propose': True, 'working_version': 4},
         'working_memory': '工作记录' * 4000,
         'sources': [{'id': 'notice-1', 'name': '原通知'}], 'user_sources': [{'id': 'user-input'}],
         'evidence_index': [{'ref': 'E1', 'source_id': 'notice-1', 'quote': '太长的片段' * 2000},
                            {'ref': 'E2', 'source_id': 'notice-1', 'quote': '一条完整依据'}]}
-    result = initial_context(value, 3000)
+    result = initial_context(value, budget)
     assert result['web_restricted'] and result['memory_control']['working_version'] == 4
     assert result['evidence_index'] == [value['evidence_index'][1]]
     assert result['deferred']['evidence_index']['omitted'] == 1
-    assert 'working_memory' in result['deferred'] and size(result) <= 3000
+    assert 'working_memory' in result['deferred'] and size(result) <= budget
 
 
 def test_long_term_memory_cannot_inherit_a_neighbouring_temporary_instruction():

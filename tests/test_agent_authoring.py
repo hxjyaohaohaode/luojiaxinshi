@@ -174,6 +174,33 @@ def test_review_effort_tracks_derivation_not_presence_of_interface(env):
     assert grounding.review_options(env[1],simple,[source]*3)['thinking']['type']=='enabled'
 
 
+@pytest.mark.parametrize('expression,expected', [("due + '（' + dueNote + '）'",False), ('title',False), ("'人数：' + count",False), ("a + b + '元'",True), ('a / b * 100',True), ('sum(values)',True)])
+def test_label_formatting_does_not_trigger_long_reasoning(env, expression, expected):
+    draft={'answer':json.dumps({'$expr':expression}), 'claims':[]}
+    assert (grounding.review_options(env[1],draft,[])['thinking']['type']=='enabled') is expected
+
+
+def test_long_history_does_not_starve_current_ui_schema(env, monkeypatch):
+    from app.agent_runtime.chat import ChatRun
+    from app.agent_runtime.context import size
+    original = ChatRun.__init__
+    def with_history(self, *args, **kwargs):
+        original(self, *args, **kwargs)
+        self.history = [{'role':'user','content':'旧对话原文。'*10000}]
+    monkeypatch.setattr(ChatRun, '__init__', with_history)
+    c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
+    def finish(messages, tools):
+        result=json.loads(messages[-1]['content'])
+        assert 'error' not in result and 'Markdown' in result['components']
+        assert size(messages)+size(tools) <= env[1].agent_context_bytes
+        return answer('',[call('submit_answer',{'answer':'界面协议已读取。','claims':[{'kind':'interface','text':'界面协议已读取。'}]})])
+    model=Script([answer('',[call('ui_capabilities',{'components':['Markdown','KeyValue','Checklist']})]), finish])
+    env[0].state.agent_service.provider_factory=lambda *_:model
+    message=final(send(c,chat,'读取需要的界面协议'))
+    assert message['status']=='complete',message['error']
+    assert message['grounding']['agent_execution']['answer_in_loop']
+
+
 def test_committed_cancel_flag_wins_race_before_async_cancel_callback(env,monkeypatch):
     c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
     def stop_before_next_guard(messages,tools):

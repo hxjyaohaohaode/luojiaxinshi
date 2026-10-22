@@ -24,6 +24,15 @@ from test_workflow import env, account
 from test_workspace import conversation, material
 
 
+def test_tool_result_budget_includes_nested_json_escaping():
+    from app.agent_runtime.runtime import bounded_result
+    from app.db import dumps
+    result = {'records': [{'notes': '\\"\n\t\u0001中文' * 1000}]}
+    bounded = bounded_result(result, 1600)
+    assert bounded['truncated'] and size(dumps(bounded)) <= 1600
+    assert bounded['excerpt']
+
+
 @pytest.fixture(autouse=True)
 def enable_runtime(env):
     env[1].agent_enabled = True

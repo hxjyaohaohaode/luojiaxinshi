@@ -44,7 +44,33 @@ try{
   await page.getByRole('button',{name:'拒绝',exact:true}).waitFor({state:'hidden'});
   const state=await page.evaluate(async id=>(await fetch('/api/conversations/'+id)).json(),chatId);
   assert.equal(state.messages.at(-1).status,'cancelled');assert.equal(state.messages.at(-1).agent.files.length,0);
-  checks.push('原聊天停止按钮取消工具执行与审批');assert.deepEqual(errors,[]);
+  checks.push('原聊天停止按钮取消工具执行与审批');
+  await page.setViewportSize({width:1440,height:1000});
+  await ask('日历待办验收：创建 2027 年 10 月 23 日 9 点到 10 点的项目讨论，以及 10 月 22 日 16 点准备报告的待办。');
+  const receipt=page.locator('.message-assistant').last();
+  await receipt.locator('[data-chat-action="undo-operation"]').first().waitFor({timeout:20000});
+  assert.equal(await receipt.locator('.chat-operation').count(),2);
+  assert.match(await receipt.innerText(),/已添加到日历/);assert.match(await receipt.innerText(),/已创建待办/);
+  assert.equal(await receipt.locator('.chat-agent-approval').count(),0);
+  const saved=await page.evaluate(async()=>({calendar:await (await fetch('/api/arrangements')).json(),tasks:await (await fetch('/api/tasks')).json()}));
+  assert.ok(saved.calendar.some(x=>x.data.title==='工程测试：项目讨论'));
+  assert.ok(saved.tasks.some(x=>x.data.title==='工程测试：准备报告'));
+  await page.screenshot({path:out+'/operation-receipts.png',animations:'disabled'});
+  await receipt.locator('.chat-operation').filter({hasText:'工程测试：项目讨论'}).getByRole('button',{name:'撤销',exact:true}).click();
+  await receipt.locator('.chat-operation').filter({hasText:'工程测试：项目讨论'}).getByText('已撤销',{exact:true}).waitFor();
+  await page.reload();await page.getByText('已撤销',{exact:true}).waitFor();
+  const remaining=await page.evaluate(async()=> (await fetch('/api/arrangements')).json());
+  assert.ok(!remaining.some(x=>x.data.title==='工程测试：项目讨论'));
+  const fallback=await page.evaluate(async id=>{
+    const chat=await (await fetch('/api/conversations/'+id)).json(),latest=chat.messages.at(-1);
+    const {ConversationView}=await import('/static/genui/chat-presenter.js'),host=document.createElement('div');document.body.append(host);
+    const old={id:'old',role:'assistant',status:'complete',content:'上一版回答',versions:[{id:'old',status:'complete'},{...latest,status:'failed'}]};
+    const view=new ConversationView(host,{feature:{enabled:false}});view.draw([old]);
+    const result={receipts:host.querySelectorAll('.chat-operation').length,text:host.textContent};view.dispose();host.remove();return result;
+  },chatId);
+  assert.equal(fallback.receipts,2);assert.match(fallback.text,/操作结果见下方/);assert.match(fallback.text,/已撤销/);
+  checks.push('重试失败保留旧回答时，后来已提交的操作及撤销结果仍可见');
+  checks.push('日历和待办直接写入原业务数据，真实回执可见，无重复审批，撤销与刷新结果一致');assert.deepEqual(errors,[]);
   assert.deepEqual(await page.evaluate(()=>window.__agentToasts),[]);
   await writeFile(out+'/results.json',JSON.stringify({synthetic:true,checks,errors},null,2));console.log(JSON.stringify({checks,errors},null,2));
 }finally{

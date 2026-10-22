@@ -818,34 +818,41 @@ def create_app(settings=None):
             for item in items:item['attachments']=attachments.get(item['notice_id'],[])
             return enrich_tasks(conn, items)
 
+    def update_task_record(conn,uid,tid,payload):
+        old=own_task(conn,tid,uid)
+        expect_version(old,payload.version)
+        if payload.status == 'done' and old['status'] != 'done':
+            from .action_review import require_reviewed
+            require_reviewed(conn,tid)
+            require_dependency_ready(conn, tid, uid)
+        record=own_notice(conn,old['notice_id'],uid)
+        sources=get_sources(conn,record['id'])
+        try:
+            previous=json.loads(old['data'])
+            value=payload.data.model_dump()
+            ai.check_evidence(payload.data.evidence+payload.data.deadline_evidence,sources)
+            critical=('scope','due_date','due_time','deadline_confirmed','planned_at','reminder_at','uncertainties','resolution_note','deadline_evidence')
+            if any(value[k]!=previous[k] for k in critical):
+                value=validate_task(payload.data,sources,blockers(record,[s for s in sources if s['active']]),
+                                    enforce_future=payload.data.reminder_at!=previous.get('reminder_at'))
+        except ValueError as exc:
+            raise HTTPException(422,str(exc)) from None
+        conn.execute('UPDATE tasks SET data=?,status=?,version=version+1,updated_at=? WHERE id=?',(dumps(value),payload.status,int(time.time()),tid))
+        reconcile_materials(conn, tid, value['materials'])
+        from .action_review import record_change
+        record_change(conn,uid,tid,previous,value,old['status'],payload.status)
+        audit(conn,uid,old['notice_id'],'update_task',before={'data':json.loads(old['data']),'status':old['status']},
+              after={'data':value,'status':payload.status,'reason':payload.reason},task_id=tid)
+        return enrich_tasks(conn, [serialize_task(own_task(conn,tid,uid))])[0]
+
+
+    db.agent_update_task = update_task_record
+    db.agent_validate_task = validate_task
+
     @app.put('/api/tasks/{tid}')
     def update_task(tid:str,payload:TaskUpdate,current=Depends(user)):
         with db.connect(write=True) as conn:
-            old=own_task(conn,tid,current['id'])
-            expect_version(old,payload.version)
-            if payload.status == 'done' and old['status'] != 'done':
-                from .action_review import require_reviewed
-                require_reviewed(conn,tid)
-                require_dependency_ready(conn, tid, current['id'])
-            record=own_notice(conn,old['notice_id'],current['id'])
-            sources=get_sources(conn,record['id'])
-            try:
-                previous=json.loads(old['data'])
-                value=payload.data.model_dump()
-                ai.check_evidence(payload.data.evidence+payload.data.deadline_evidence,sources)
-                critical=('scope','due_date','due_time','deadline_confirmed','planned_at','reminder_at','uncertainties','resolution_note','deadline_evidence')
-                if any(value[k]!=previous[k] for k in critical):
-                    value=validate_task(payload.data,sources,blockers(record,[s for s in sources if s['active']]),
-                                        enforce_future=payload.data.reminder_at!=previous.get('reminder_at'))
-            except ValueError as exc:
-                raise HTTPException(422,str(exc)) from None
-            conn.execute('UPDATE tasks SET data=?,status=?,version=version+1,updated_at=? WHERE id=?',(dumps(value),payload.status,int(time.time()),tid))
-            reconcile_materials(conn, tid, value['materials'])
-            from .action_review import record_change
-            record_change(conn,current['id'],tid,previous,value,old['status'],payload.status)
-            audit(conn,current['id'],old['notice_id'],'update_task',before={'data':json.loads(old['data']),'status':old['status']},
-                  after={'data':value,'status':payload.status,'reason':payload.reason},task_id=tid)
-            return enrich_tasks(conn, [serialize_task(own_task(conn,tid,current['id']))])[0]
+            return update_task_record(conn,current['id'],tid,payload)
 
     @app.get('/api/notices/{nid}/history')
     def history(nid:str,current=Depends(user)):

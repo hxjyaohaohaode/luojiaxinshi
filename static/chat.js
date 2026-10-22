@@ -355,6 +355,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         await api(`/conversations/${current.id}/agent/approvals/${control.dataset.approval}`,{method:'POST',json:{digest:control.dataset.digest,decision:control.dataset.decision}});
         const message=current.messages.find(m=>m.id===id);if(message?.agent)message.agent.approvals=message.agent.approvals.filter(a=>a.id!==control.dataset.approval);drawMessages();
       }
+      else if(action==='undo-operation'){
+        control.disabled=true;
+        try{await api(`/conversations/${current.id}/agent/operations/${control.dataset.operation}/undo`,{method:'POST'});current=await api('/conversations/'+current.id);drawMessages();}
+        finally{if(control.isConnected)control.disabled=false;}
+      }
       else if(action==='clear-material-search'){materialSearch.clear();}
       else if(action==='cancel'){submission++;accepting=false;current=await api('/conversations/'+current.id);current=await api('/conversations/'+current.id+'/cancel',{method:'POST',json:{version:current.version}});streaming?.controller.abort();sending=false;update();}
       else if(action==='speak'){const m=current.messages.find(m=>m.id===id);await replySpeech.toggle(id,presenter?.copy(m)||m.content,control);}

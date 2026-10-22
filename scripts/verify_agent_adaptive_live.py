@@ -32,6 +32,7 @@ def check(case='files', output_name=None):
         'memory':'我长期用中文写报告，所有项目都习惯先看结论再看依据。请用纯文字简短回复，不联网。',
         'visual':'帮我看看这张作业图，我接下来应该做什么？这是工程测试，只用本次材料，不联网、不保存长期记忆。',
         'mixed':'帮我看这批工程测试材料，整理能马上开始的准备顺序。不要漏掉后面的图片、音频和视频；无法理解的内容如实说明。不联网、不保存长期记忆。',
+        'workspace':'这是隔离工程验收。先告诉我现在的完整日期和年份，再直接创建明天上午9点至10点的日历安排“工程测试项目讨论”，并创建明天下午4点“工程测试准备报告”的个人待办。不要联网，不读取资料库，不保存长期记忆。用简短文字报告实际执行结果。',
     }
     with tempfile.TemporaryDirectory(prefix='fixture-',dir=output) as folder:
         settings=replace(Settings.from_env(),data_dir=Path(folder),origin='http://127.0.0.1:8794',ai_daily_limit=12,
@@ -81,6 +82,21 @@ def check(case='files', output_name=None):
                     'memory_operations':grounding.get('memory_operations',[]),
                     'stream_has_agent_events':'event: agent\n' in response.text,'validated':final.get('genui',{}).get('validated')}
             report['case']=case
+            if case=='workspace':
+                from app.agent_runtime.clock import current_time
+                from datetime import date,timedelta
+                arrangements=client.get('/api/arrangements').json();tasks=client.get('/api/tasks').json()
+                report['operations']=final.get('agent',{}).get('operations',[])
+                report['actual_arrangements']=arrangements;report['actual_tasks']=tasks
+                report['clock']=current_time()
+                (output/'results.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+                tomorrow=(date.fromisoformat(report['clock']['date'])+timedelta(days=1)).isoformat()
+                assert len(arrangements)==1 and arrangements[0]['data']['start_date']==tomorrow
+                assert arrangements[0]['data']['start_time']=='09:00' and arrangements[0]['data']['end_time']=='10:00'
+                assert len(tasks)==1 and tasks[0]['data']['planned_at'].startswith(tomorrow+'T16:00')
+                assert len(report['operations'])==2 and all(x['status']=='committed' for x in report['operations'])
+                report['undo_statuses']=[client.post(f'/api/conversations/{chat["id"]}/agent/operations/{item["operation_id"]}/undo').status_code for item in report['operations']]
+                assert report['undo_statuses']==[200,200]
             report['tool_errors']=[json.loads(r['content'])['error'] for r in trace if r.get('role')=='tool' and isinstance(json.loads(r['content']),dict) and json.loads(r['content']).get('error')]
             submissions=[json.loads(c['function']['arguments']) for m in trace for c in m.get('tool_calls',[])
                          if c['function']['name'] in ('submit_answer','submit_interface')]
@@ -125,5 +141,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','review','conflict','clarify','memory','visual','mixed'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','review','conflict','clarify','memory','visual','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

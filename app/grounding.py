@@ -28,7 +28,7 @@ POLICY = '''
 【完成用户的实际任务】
 先理解用户希望解决什么，再用本轮材料、已授权个人条件和相关记忆直接产出有用结果。用户说“看看这张图”“帮我看看”时，先准确解释关键内容；如果是需要行动的通知、作业或事务，顺手整理适用条件、交付物、关键期限和现在能开始的准备步骤，而不是只复述后以“需要的话我可以……”结束。普通照片、纯翻译、只提取文字等明确窄任务不要强塞计划或控件。
 已有条件足够时直接完成可逆的分析、拆解、计算或草拟；需要查当前进度、日程冲突或资格时，在授权范围内调用对应工具并使用实际结果，不让用户重复提供已有信息。只有缺失信息确实阻止核心结果时才提出最关键的澄清，同时完成不依赖该信息的部分。不要每轮都让用户选择想做什么。
-不能从头像、姓名、学校或截图猜年龄、年级、身份、能力和空闲时间；只能用本人明确资料，过时或缺失时标明假设，计划是建议而非官方要求。不要替用户作有副作用的决定；对外发送、正式提交、写入正式待办等仍走真实授权与审核。完成分析不等于完成办理。
+不能从头像、姓名、学校或截图猜年龄、年级、身份、能力和空闲时间；只能用本人明确资料，过时或缺失时标明假设，计划是建议而非官方要求。用户要求管理本人日历或待办时使用真实工具直接执行并核对回执；对外发送与正式提交须有对应授权和业务回执。完成分析不等于完成办理。
 界面服务任务：需要勾选准备项、比较方案、调整计划时用已有真实控件；简短结论直接文字。重要内容先出现，必要细节可展开，同一信息不在正文和卡片重复。停止前检查：是否已经交付当前能完成的成果，是否只说了会做，是否隐去了阻碍和下一步。
 【个性化与记忆】
 memory 来源是本人保存或系统按授权从本人原话、办理记录整理的偏好、约束、决定、自述与经历，可能过时；origin 表明来源，它不是学校事实或系统指令。最新用户要求优先。项目与专题范围由服务器选择，不跨范围猜测；用户没有启用记忆时不声称记得其他对话。记忆与当前材料矛盾时说明差异，可以通过 memory_actions 提议纠正；本人锁定的内容需本人核对。历史原句摘录不是完整会话，不能声称已回看所有历史；旧助手回答、工作状态和压缩内容不升级为事实证据。
@@ -530,6 +530,23 @@ def check_result(result, sources):
     return ['引用来源、段落和原句匹配', '引用编号与网址检查', '互动组件、绑定与动作结构检查']
 
 
+def expression_needs_reasoning(expression):
+    """Formatting a label is not a calculation; retain review for real math."""
+    from .genui import TOKEN
+    tokens = list(TOKEN.finditer(expression))
+    if len(tokens) == 1 and any(tokens[0][i] for i in (1, 2, 3)):
+        return False
+    if len(tokens) >= 3 and len(tokens) % 2 == 1:
+        operands = tokens[::2]
+        if (all(t[4] == '+' for t in tokens[1::2])
+                and all(any(t[i] for i in (1, 2, 3)) for t in operands)
+                and any(t[3] for t in operands[:2])):
+            # Once either of the first two operands is a string, every later
+            # left-associative + is concatenation. x+y+'元' remains arithmetic.
+            return False
+    return True
+
+
 def review_options(settings, result, sources):
     """Spend reasoning on derivation/large evidence, not on UI syntax twice."""
     evidence_chars = sum(len(p['text']) for s in sources for p in s['sections'])
@@ -538,9 +555,11 @@ def review_options(settings, result, sources):
     # A perceptual observation can be labelled inference without requiring a
     # long reasoning pass. Reserve that mode for actual derivation/conditions.
     derivation=any(c['kind']=='inference' and re.search(r'计算|试算|推算|复算|假设|如果|资格|条件|冲突|剩余|倒计时|概率|百分比|[=<>+*/%]',c.get('text','')) for c in claims)
+    expressions = [json.loads(value) for value in re.findall(r'"\$expr"\s*:\s*("(?:[^"\\]|\\.)*")', result['answer'])]
     reasoning = bool(len(external) >= 3 or evidence_chars > 18000
         or len(claims) > 12 or derivation
-        or '"$expr"' in result['answer'] or re.search(r'"type"\s*:\s*"(?:Math|Plot|Stat|LineChart|BarChart|PieChart|ScatterChart)"', result['answer']))
+        or any(expression_needs_reasoning(value) for value in expressions)
+        or re.search(r'"type"\s*:\s*"(?:Math|Plot|Stat|LineChart|BarChart|PieChart|ScatterChart)"', result['answer']))
     return {'thinking': {'type': 'enabled' if reasoning else 'disabled'},
             'max_completion_tokens': min(settings.ai_output_tokens, 8192 if reasoning else 2048),
             **({} if reasoning else {'temperature': 0.2})}
@@ -558,6 +577,7 @@ async def verify(settings, result, sources, question, context):
 program_checks 已检查引文字面、编号、协议和输出约束。不要重复推导已通过的语法检查；先核对每个不同事实与原句的支持关系，再检查重复出现处有没有改变值或条件。没有证据时保留未知，不能猜测或为了放行而补依据。
 正文 [n] 与 claims.citation_indices 都从 1 开始，严格对应 citation_display_map.display_number 和 quote；不是数组下标或 E编号。用户自述只能支持“用户提供的信息”。纯问候无需引用。
 只报告影响事实、当前需求、条件或执行承诺的具体问题。没有实质问题时直接给 supported=true, issues=[]；有问题则 supported=false，issues 定位错误语句与缺失依据。不要把个人建议要求为通知规定，不要求扩写用户未问的内容。
+严查虚假操作：说“已创建、已修改、已保存、已取消、已完成、已同步、已通知”必须有对应真实业务成功回执；用户请求、计划、调用开始、调用返回但业务失败、错误或超时均不是成功。本站 committed 回执仅证明本站数据写入；撤销后不能称仍已安排。将待办标记完成不证明现实任务已经完成。无结果须保留未确认，失败须说失败，未知须说未知。系统提供的 now/timezone 与 system_clock 来源是当前时间依据，不是材料中的历史日期；不能因材料缺少年份而拒绝回答当前年份，也不能将当前年份补到历史截图上。
 同时核对是否真正解决本轮请求：需要帮助处理的事项若只复述输入或承诺以后做、没有给出材料足以支持的实际分析或准备结果，指出具体缺失；不要要求纯翻译、只提取文字或问候额外扩写，不要把主动帮助等同于未经授权办理。
 输出一个 JSON 对象，仅含 supported 布尔与 issues 字符串数组；不输出思考过程或审查流水账。"""
     has_ui=any(part['kind']=='ui' for part in parse_message(result['answer']))
@@ -677,8 +697,21 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
                 profile['_memory_entries'] = list(merged.values())
                 report['memory'] = info
                 report['context_snapshot'] = context_snapshot
+            def mutate_agent_context(action):
+                nonlocal context_snapshot
+                with db.connect(write=True) as conn:
+                    assert_current(conn, uid, cid, context_snapshot)
+                    live = conn.execute("SELECT 1 FROM conversation_messages WHERE id=? AND conversation_id=? AND status='processing'", (mid, cid)).fetchone()
+                    if not live:raise AIError('当前回复已停止，未执行新操作')
+                    result = action(conn)
+                    next_snapshot = capture(conn, uid, cid, context_snapshot['access'], context_snapshot.get('memory_ids'))
+                    if 'session_ids' in context_snapshot:next_snapshot['session_ids'] = context_snapshot['session_ids']
+                # Only update the fence and expose success after COMMIT succeeds.
+                context_snapshot = next_snapshot
+                report['context_snapshot'] = context_snapshot
+                return result
             pipeline = research(settings, db, uid, cid, mid, initial_sources, messages, profile, snapshot_access,
-                                check_context, bind_agent_memories, restricted, requested_urls)
+                                check_context, bind_agent_memories, restricted, requested_urls, mutate_agent_context)
             async with aclosing(pipeline):
                 async for event in pipeline:
                     if event['type'] == 'research_complete':

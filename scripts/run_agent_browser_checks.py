@@ -1,8 +1,10 @@
 """Run the embedded Agent browser checks with an owned, offline fixture."""
 import json
+from contextlib import closing
 import os
 from pathlib import Path
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -65,6 +67,16 @@ def main():
                     results.append({'suite': script, 'returncode': code})
                     print(script + ': ' + ('passed' if code == 0 else 'FAILED'), flush=True)
                     if code:
+                        # Preserve the synthetic runtime failure before the
+                        # fixture's temporary database is removed.
+                        with closing(sqlite3.connect(Path(data) / 'campus.sqlite3')) as conn:
+                            conn.row_factory = sqlite3.Row
+                            failed = []
+                            for row in conn.execute("SELECT * FROM agent_turns WHERE status='failed' ORDER BY created_at DESC LIMIT 3"):
+                                turn = dict(row)
+                                turn['messages'] = [json.loads(r[0]) for r in conn.execute('SELECT body FROM agent_messages WHERE turn_id=? ORDER BY seq',(turn['id'],))]
+                                failed.append(turn)
+                            (OUT / (script + '.failures.json')).write_text(json.dumps(failed,ensure_ascii=False,indent=2),encoding='utf-8')
                         details = (OUT / (script + '.log')).read_text(encoding='utf-8', errors='replace')
                         print('\n'.join(details.splitlines()[-35:])[-6000:], flush=True)
                 (OUT / 'results.json').write_text(json.dumps(results, indent=2), encoding='utf-8')

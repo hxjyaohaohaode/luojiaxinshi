@@ -126,6 +126,34 @@ def calendar_bytes(records):
     return calendar.to_ical()
 
 
+def create_arrangement(conn,uid,payload):
+    prior = conn.execute('SELECT * FROM arrangements WHERE user_id=? AND request_id=?', (uid, payload.request_id)).fetchone()
+    if prior:
+        if json.loads(prior['data']) != payload.data.model_dump():
+            raise HTTPException(409, '这项安排已经保存，但内容与当前草稿不同。请先在日历中打开已保存安排核对，再继续修改；当前草稿已保留。')
+        return serialize(prior)
+    if conn.execute('SELECT 1 FROM arrangement_receipts WHERE user_id=? AND request_id=?', (uid,payload.request_id)).fetchone():
+        raise HTTPException(409, '这项安排曾经保存，随后已删除。请先核对保存状态；需要另建时使用新的草稿。')
+    if conn.execute('SELECT count(*) FROM arrangements WHERE user_id=?', (uid,)).fetchone()[0] >= 1000:
+        raise HTTPException(422, '已保存 1000 项安排，请先整理不再需要的安排')
+    eid, now = ident(), int(clock.time())
+    conn.execute('INSERT INTO arrangements(id,user_id,request_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)', (eid, uid, payload.request_id, dumps(payload.data.model_dump()), now, now))
+    return serialize(own(conn, eid, uid))
+
+
+def update_arrangement(conn,uid,eid,payload):
+    own(conn, eid, uid, payload.version)
+    conn.execute('UPDATE arrangements SET data=?,version=version+1,updated_at=? WHERE id=?', (dumps(payload.data.model_dump()), int(clock.time()), eid))
+    return serialize(own(conn, eid, uid))
+
+
+def delete_arrangement(conn,uid,eid,payload):
+    own(conn, eid, uid, payload.version)
+    conn.execute('DELETE FROM arrangements WHERE id=?', (eid,))
+    conn.execute('DELETE FROM edit_caches WHERE user_id=? AND cache_key LIKE ?', (uid, 'arrangement:'+eid+':%'))
+    return {'ok': True}
+
+
 def install_schedule(app, db, user):
     @app.get('/api/arrangements')
     def listing(current=Depends(user)):
@@ -144,33 +172,17 @@ def install_schedule(app, db, user):
     @app.post('/api/arrangements')
     def create(payload: CreateArrangement, current=Depends(user)):
         with db.connect(write=True) as conn:
-            prior = conn.execute('SELECT * FROM arrangements WHERE user_id=? AND request_id=?', (current['id'], payload.request_id)).fetchone()
-            if prior:
-                if json.loads(prior['data']) != payload.data.model_dump():
-                    raise HTTPException(409, '这项安排已经保存，但内容与当前草稿不同。请先在日历中打开已保存安排核对，再继续修改；当前草稿已保留。')
-                return serialize(prior)
-            if conn.execute('SELECT 1 FROM arrangement_receipts WHERE user_id=? AND request_id=?', (current['id'],payload.request_id)).fetchone():
-                raise HTTPException(409, '这项安排曾经保存，随后已删除。请先核对保存状态；需要另建时使用新的草稿。')
-            if conn.execute('SELECT count(*) FROM arrangements WHERE user_id=?', (current['id'],)).fetchone()[0] >= 1000:
-                raise HTTPException(422, '已保存 1000 项安排，请先整理不再需要的安排')
-            eid, now = ident(), int(clock.time())
-            conn.execute('INSERT INTO arrangements(id,user_id,request_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)', (eid, current['id'], payload.request_id, dumps(payload.data.model_dump()), now, now))
-            return serialize(own(conn, eid, current['id']))
+            return create_arrangement(conn,current['id'],payload)
 
     @app.put('/api/arrangements/{eid}')
     def update(eid: str, payload: UpdateArrangement, current=Depends(user)):
         with db.connect(write=True) as conn:
-            own(conn, eid, current['id'], payload.version)
-            conn.execute('UPDATE arrangements SET data=?,version=version+1,updated_at=? WHERE id=?', (dumps(payload.data.model_dump()), int(clock.time()), eid))
-            return serialize(own(conn, eid, current['id']))
+            return update_arrangement(conn,current['id'],eid,payload)
 
     @app.delete('/api/arrangements/{eid}')
     def delete(eid: str, payload: Version, current=Depends(user)):
         with db.connect(write=True) as conn:
-            own(conn, eid, current['id'], payload.version)
-            conn.execute('DELETE FROM arrangements WHERE id=?', (eid,))
-            conn.execute('DELETE FROM edit_caches WHERE user_id=? AND cache_key LIKE ?', (current['id'], 'arrangement:'+eid+':%'))
-        return {'ok': True}
+            return delete_arrangement(conn,current['id'],eid,payload)
 
     @app.post('/api/arrangements/export')
     def export(payload: ExportArrangements, current=Depends(user)):

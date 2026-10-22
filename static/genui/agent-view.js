@@ -5,8 +5,18 @@ import {el,button} from './dom.js';
 export class AgentView{
   constructor(parent,before){this.root=el('section','chat-agent-actions');parent.insertBefore(this.root,before);}
   update(message){
-    const state=message.agent,key=JSON.stringify([message.status,state]);if(key===this.key)return;this.key=key;
-    this.root.replaceChildren();this.root.hidden=!state||!(state.approvals?.length||state.files?.length);if(!state)return;
+    // Regeneration may keep an older verified answer visible. Committed
+    // operations from every attempt remain real and must stay visible too.
+    const operations=[...new Map([...(message.versions||[]),message].flatMap(v=>v.agent?.operations||[]).map(o=>[o.operation_id,o])).values()];
+    const state={...message.agent,operations},key=JSON.stringify([message.status,state]);if(key===this.key)return;this.key=key;
+    this.root.replaceChildren();this.root.hidden=!state||!(state.approvals?.length||state.files?.length||state.operations?.length);if(!state)return;
+    for(const operation of state.operations||[]){
+      const row=el('div','chat-operation'),content=el('div'),label={'calendar.create':'已添加到日历','calendar.update':'已修改日历','calendar.delete':'已删除日历安排','tasks.create':'已创建待办','tasks.update':operation.record?.status==='done'?'已标记完成':operation.record?.status==='cancelled'?'已取消待办':'已修改待办'}[operation.operation]||'操作已保存';
+      content.append(el('strong','',operation.title),el('span','small muted',operation.status==='undone'?'已撤销':label));row.append(content);
+      const link=el('a','button small plain',operation.destination==='#calendar'?'查看日历':'查看待办');link.href=operation.destination==='#calendar'?'#calendar':'#tasks';row.append(link);
+      if(operation.undo_available&&message.status!=='processing'){const undo=button('撤销',null,'button small plain');undo.dataset.chatAction='undo-operation';undo.dataset.operation=operation.operation_id;row.append(undo);}
+      this.root.append(row);
+    }
     if(message.status==='processing')for(const approval of state.approvals||[]){
       const card=el('div','chat-agent-approval'),label={write_file:'保存文件',exec_command:'执行沙箱命令',mcp_call:'调用外部工具'}[approval.tool]||'执行操作';
       card.append(el('strong','',label+' · 等待确认'));

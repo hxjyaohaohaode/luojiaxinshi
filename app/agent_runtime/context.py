@@ -36,26 +36,28 @@ def initial_context(value, budget):
     fields or cut a citation in half. Large bodies remain retrievable by ID.
     """
     result = {key: value[key] for key in ('now', 'timezone', 'memory_control', 'web_restricted') if key in value}
-    result['deferred'] = {}
-    for key in ('personal_conditions', 'session_memory', 'working_memory', 'memory_catalog'):
+    memory_keys = ('personal_conditions', 'session_memory', 'working_memory', 'memory_catalog')
+    evidence_keys = ('attachment_inventory', 'sources', 'user_sources', 'evidence_index')
+    # Reserve omission notices up front; adding them after filling a small
+    # media-heavy context can itself exceed the remaining budget.
+    result['deferred'] = {key:'memory_capabilities(section=context)' for key in memory_keys if value.get(key)}
+    for key in evidence_keys:
+        result[key] = []
+        if value.get(key):result['deferred'][key] = {'omitted':len(value[key]), 'next':'read_source / campus_search'}
+    for key in memory_keys:
         data = value.get(key)
         if data:
-            candidate = {**result, key: data}
-            if size(data) <= max(600, budget // 3) and size(candidate) <= budget - 512:
+            candidate = {**result, key: data, 'deferred':{k:v for k,v in result['deferred'].items() if k!=key}}
+            if size(data) <= max(600, budget // 3) and size(candidate) <= budget:
                 result = candidate
-            else:
-                result['deferred'][key] = '按需用 memory_capabilities(section=context) 读取完整当前记录'
-    for key in ('attachment_inventory', 'sources', 'user_sources', 'evidence_index'):
-        result[key] = []
-        omitted = 0
+    for key in evidence_keys:
         for entry in value.get(key, []):
-            candidate = {**result, key: result[key] + [entry]}
-            if size(candidate) <= budget - 512:
+            candidate = {**result, key: result[key] + [entry], 'deferred':dict(result['deferred'])}
+            omitted = len(value[key])-len(candidate[key])
+            if omitted:candidate['deferred'][key] = {'omitted':omitted, 'next':'read_source / campus_search'}
+            else:candidate['deferred'].pop(key,None)
+            if size(candidate) <= budget:
                 result = candidate
-            else:
-                omitted += 1
-        if omitted:
-            result['deferred'][key] = {'omitted': omitted, 'next': '原文仍在本轮；用 read_source 按已知 ID 读取，或 campus_search 查找'}
     if size(result) > budget:
         raise AgentError('初始权限与上下文超过本轮预算，请缩小任务范围')
     return result

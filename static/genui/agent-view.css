@@ -1,5 +1,9 @@
 .chat-agent-actions{min-width:0;width:100%;margin-block:.75rem}
 .chat-agent-actions[hidden]{display:none}
+.chat-operation{display:flex;align-items:center;gap:.5rem;padding:.7rem .9rem;margin-block:.4rem;border:1px solid var(--line,#dce5df);border-radius:14px;background:var(--surface,#fff);min-width:0}
+.chat-operation>div{display:grid;gap:.2rem;flex:1;min-width:0;overflow-wrap:anywhere}
+.chat-operation .button{flex:none}
+@media(max-width:480px){.chat-operation{flex-wrap:wrap}.chat-operation>div{flex-basis:100%}}
 .chat-agent-approval{min-width:0;border:1px solid var(--line,#d9d7d1);border-radius:12px;padding:1rem;display:grid;gap:.75rem}
 .chat-agent-approval details{min-width:0}
 .chat-agent-approval summary{cursor:pointer}

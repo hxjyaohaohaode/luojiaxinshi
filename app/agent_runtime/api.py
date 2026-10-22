@@ -65,6 +65,12 @@ def install(app, db, settings, user, owner):
             raise HTTPException(409, '审批不属于当前正在执行的回复，未执行操作')
         return service.store.decide(current['id'], row['thread_id'], aid, payload)
 
+    @app.post('/api/conversations/{cid}/agent/operations/{oid}/undo')
+    def undo_operation(cid: str, oid: str, current=Depends(user)):
+        from .workspace import undo
+        with db.connect(write=True) as conn:
+            return undo(conn, db, current['id'], cid, oid)
+
     @app.get('/api/agent/config')
     def configuration(current=Depends(enabled)):
         return {'skills': service.skills.metadata(), 'providers': {'mimo': bool(settings.ai_api_key), 'oss': bool(settings.agent_oss_model)},

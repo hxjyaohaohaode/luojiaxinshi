@@ -9,7 +9,7 @@ import re
 
 CATEGORIES = {
     'library': r'资料库|文件库|文档库|材料库|通知库|资料|文件|文档|材料|通知|library|documents?|files?',
-    'schedule': r'日程|待办|行程|个人安排|计划库|calendar|schedule|tasks?',
+    'schedule': r'日历|日程|待办|行程|个人安排|计划库|calendar|schedule|tasks?',
     'profile': r'个人(?:资料|档案|条件|信息)|用户(?:资料|档案|信息)|身份信息|档案|profile',
 }
 PRIVATE = r'本地(?:数据|记录|资料|库)|私(?:有|人)(?:数据|记录|资料)|个人(?:数据|记录)|账号(?:数据|记录)|private data|local data'

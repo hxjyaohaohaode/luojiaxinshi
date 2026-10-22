@@ -81,7 +81,7 @@ export class ConversationView{
       const links=message.status==='complete'&&message.genui?.validated?(message.evidence_sources||[]).map(source=>source.url).filter(url=>typeof url==='string'):[];
       if(JSON.stringify(links)!==JSON.stringify(r.linkResources)){r.linkResources=links;r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
       const redirected=message.status==='cancelled'&&message.error?.includes('按更新后的问题继续'),lastVersion=message.versions?.at(-1),keptPrevious=message.status==='complete'&&lastVersion?.id!==message.id&&['failed','cancelled'].includes(lastVersion?.status);
-      r.status.textContent=message.status==='processing'?(message._phaseLabel||((message.genui?.raw||message.content)?'正在书写…':this.options.sources?.length?'正在对照材料…':'正在思考…')):message.status==='complete'?(keptPrevious?'新版本未完成，已保留上一版':''):redirected?'已按补充继续':'回复未完成';
+      r.status.textContent=message.status==='processing'?(message._phaseLabel||((message.genui?.raw||message.content)?'正在书写…':this.options.sources?.length?'正在对照材料…':'正在思考…')):message.status==='complete'?(keptPrevious?(lastVersion.agent?.operations?.length?'新回复未完成，操作结果见下方；正文为上一版':'新版本未完成，已保留上一版'):''):redirected?'已按补充继续':'回复未完成';
       const active=message.status==='processing'&&message.id===activeMessage;
       if(!r.work)r.work=new WorkSummaryView(r.article,r.content);r.work.update(message);
       if(!r.agent)r.agent=new AgentView(r.article,r.content);r.agent.update(message);

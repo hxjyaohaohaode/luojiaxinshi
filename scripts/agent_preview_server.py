@@ -32,6 +32,17 @@ class FixtureProvider:
         await asyncio.sleep(.12)
         user = next(m['content'] for m in reversed(messages) if m['role'] == 'user')
         if isinstance(user,list):user='\n'.join(p.get('text','') for p in user if p.get('type')=='text')
+        if '日历待办验收' in user:
+            used=[c['function']['name'] for m in messages for c in m.get('tool_calls',[])]
+            if 'workspace_capabilities' not in used:
+                calls=[('workspace_capabilities',{})]
+            elif 'calendar_write' not in used:
+                calls=[('calendar_write',{'operation':'create','data':{'title':'工程测试：项目讨论','start_date':'2027-10-23','end_date':'2027-10-23','start_time':'09:00','end_time':'10:00'}}),
+                       ('task_write',{'operation':'create','fields':{'title':'工程测试：准备报告','planned_at':'2027-10-22T16:00:00+08:00'}})]
+            else:
+                refs=[e['ref'] for m in messages if m['role']=='tool' for e in json.loads(m['content']).get('evidence_index',[]) if e.get('source_id','').startswith('workspace-')]
+                calls=[('submit_answer',{'answer':'已添加项目讨论，并创建报告准备待办。','claims':[{'kind':'fact','text':'已添加项目讨论，并创建报告准备待办。','evidence_refs':refs}]})]
+            return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':name,'arguments':json.dumps(args,ensure_ascii=False)}} for name,args in calls]},{}
         if '融合媒体验收' in user:
             if messages[-1]['role'] != 'tool':
                 name, arguments = 'ui_capabilities', {'components':['Video']}

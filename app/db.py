@@ -95,6 +95,21 @@ CREATE TABLE IF NOT EXISTS message_attachments(
  message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
  source_id TEXT NOT NULL REFERENCES conversation_sources(id) ON DELETE CASCADE,
  position INTEGER NOT NULL, PRIMARY KEY(message_id,source_id));
+CREATE TABLE IF NOT EXISTS assistant_personal_lists(
+ user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ notice_id TEXT NOT NULL REFERENCES notices(id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS assistant_operations(
+ id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+ message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ request_key TEXT NOT NULL, operation TEXT NOT NULL, target_id TEXT NOT NULL,
+ title TEXT NOT NULL, before_json TEXT, after_json TEXT NOT NULL,
+ created_at INTEGER NOT NULL, undone_at INTEGER,
+ UNIQUE(user_id,request_key));
+CREATE TABLE IF NOT EXISTS assistant_operation_messages(
+ operation_id TEXT NOT NULL REFERENCES assistant_operations(id) ON DELETE CASCADE,
+ message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ PRIMARY KEY(operation_id,message_id));
 CREATE TABLE IF NOT EXISTS conversation_promotions(
  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
  fingerprint TEXT NOT NULL, notice_id TEXT NOT NULL REFERENCES notices(id) ON DELETE CASCADE,

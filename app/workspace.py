@@ -120,6 +120,7 @@ def conversation_detail(conn,cid,uid,settings):
             item['versions']=[]
             for version in versions:
                 v={k:value for k,value in version.items() if k!='position'};v['citations']=json.loads(v['citations'])
+                v['agent'] = item['agent'] if v['id']==item['id'] else message_state(conn,uid,cid,v['id'])
                 item['versions'].append(load_report(conn,load_message(conn,v,settings)))
             item['version_index']=next(i for i,v in enumerate(versions) if v['id']==item['id'])
         result['messages'].append(item)
