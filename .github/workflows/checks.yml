@@ -72,8 +72,10 @@ jobs:
           const browser = await engine.launch({headless:true, executablePath:engine.executablePath()});
           await browser.close(); console.log(engine.name() + " ready"); }'
       - name: Run the browser suites against synthetic data
+        id: browser-suites
         run: python scripts/run_browser_checks.py
       - name: Verify embedded Agent approvals, UI, media and incremental rendering
+        if: ${{ !cancelled() && steps.browser-suites.outcome != 'skipped' }}
         run: python scripts/run_agent_browser_checks.py
       - name: Write browser counts to the run summary
         if: always()
