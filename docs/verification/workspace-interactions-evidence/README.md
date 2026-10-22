@@ -55,4 +55,4 @@ python scripts/run_browser_checks.py
 
 [首次云端检查](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/39768632664)的 Windows、Linux 单元检查和容器检查通过；浏览器任务在 `azure.archive.ubuntu.com` 下载系统依赖时反复超时，达到任务时限，尚未执行页面检查。
 
-浏览器任务因此改用 [Playwright 官方预装镜像](https://playwright.dev/docs/ci#via-containers)，版本与 `package-lock.json` 的 `1.62.1` 一致，并固定镜像摘要。启动时先确认三种浏览器的可执行文件与锁定包匹配，然后执行原有四组检查。测试范围、断言和 20 分钟任务时限保持不变。镜像只用于合成数据验收。
+浏览器任务因此改用 [Playwright 官方预装镜像](https://playwright.dev/docs/ci#via-containers)，版本与 `package-lock.json` 的 `1.62.1` 一致，并固定镜像摘要。容器使用官方 CI 示例的用户 `1001`，与 GitHub 挂载目录所属用户匹配，避免 Firefox 因 root 与用户目录不一致而拒绝启动。环境预检逐一启动三种浏览器，然后执行原有四组检查。测试范围、断言和 20 分钟任务时限保持不变。镜像只用于合成数据验收。
