@@ -1,0 +1,38 @@
+/* One composer surface: real attachments, editable text and a stable action row. */
+.chat-main>#chat-composer{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0;padding:10px 12px 8px;border:1px solid #e0e6e3;border-radius:24px;background:#fff;box-shadow:0 3px 18px #163d2810;position:relative;align-items:end}
+#chat-composer:focus-within{border-color:#afc4ba;box-shadow:0 3px 22px #163d2815}
+#chat-composer.dragging{outline:2px solid var(--green);outline-offset:3px;background:#f6faf7}
+#chat-composer .composer-entry{display:contents}
+#chat-composer #chat-input{grid-column:1/-1;grid-row:2;width:100%;min-width:0;margin:0 0 6px;padding:10px 8px 6px;min-height:44px;font-size:16px;line-height:1.65;resize:none;border:0;outline:0;background:transparent;box-shadow:none}
+#chat-composer .composer-plus{grid-column:1;grid-row:3;position:static;align-self:center}
+#chat-composer .composer-voice,#chat-composer .send-button,#chat-composer .composer-stop{grid-row:3;position:static;justify-self:end;align-self:center;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;margin:0;border:0}
+#chat-composer .send-button{grid-column:2;background:var(--green);color:white}
+#chat-composer .composer-voice{grid-column:2;margin-right:48px;background:transparent;color:#52655c}
+#chat-composer .composer-stop{grid-column:2;margin-right:94px;background:#eff3f0}
+#chat-composer .composer-voice:hover,#chat-composer .composer-plus:hover{background:#eff4f1}
+#chat-composer .composer-voice.listening{background:#e5f1ea;color:#135a3c}
+#chat-composer .composer-actions{position:absolute;left:8px;bottom:calc(100% + 8px);display:flex;flex-direction:column;align-items:stretch;min-width:210px;max-width:calc(100% - 16px);padding:8px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 8px 32px #153a2220;z-index:30;gap:2px}
+#chat-composer .composer-actions[hidden],#chat-composer [hidden]{display:none!important}
+#chat-composer .composer-actions .button{justify-content:flex-start;padding:9px 10px;min-height:40px}
+.composer-attachments{grid-column:1/-1;grid-row:1;display:flex;gap:10px;overflow-x:auto;padding:4px 4px 8px;align-items:flex-start;scrollbar-width:thin}
+.composer-attachment{position:relative;flex:0 0 156px;display:grid;grid-template-columns:38px minmax(0,1fr);grid-template-rows:1fr auto;gap:2px 9px;border:1px solid #e1e7e3;border-radius:12px;padding:10px;background:#fafcfb;min-height:72px}
+.composer-attachment .attachment-preview{grid-row:1/3;padding:0;border:0;border-radius:8px;background:#eaf0ec;overflow:hidden;display:grid;place-items:center;min-width:0}
+.attachment-kind{font-size:10px;font-weight:650;color:#507362}
+.attachment-name{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:center;padding-right:10px}
+.attachment-state{font-size:10px;color:#64776b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.composer-attachment.is-image{flex-basis:96px;padding:0;display:block;height:96px;overflow:visible;background:#f5f7f5}
+.is-image .attachment-preview,.is-image .attachment-preview img{width:100%;height:100%;display:block;object-fit:cover;border-radius:11px}
+.is-image .attachment-name{display:none}.is-image .attachment-state{position:absolute;bottom:0;left:0;right:0;background:#ffffffeb;padding:3px 5px;border-radius:0 0 10px 10px;text-align:center}
+.is-image.ready .attachment-state{display:none}
+.attachment-remove{position:absolute;right:-5px;top:-5px;display:grid;place-items:center;width:24px;height:24px;border:1px solid #dce4df;border-radius:50%;background:#fff;color:#40594c;font-size:18px;line-height:1;box-shadow:0 1px 4px #12331c14}
+.attachment-retry{grid-column:1/-1;border:0;background:transparent;color:#9e3930;font-size:12px;padding:3px}.is-image .attachment-retry{position:absolute;bottom:18px;left:0;right:0;background:#fff}
+.composer-attachment.error{border-color:#d5a29d}.composer-attachment.error .attachment-state{color:#9b423b}
+.message-attachments{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin:0 0 10px;max-width:100%}
+.message-attachment{display:flex;align-items:center;gap:10px;max-width:240px;min-width:0;border:1px solid #e0e6e3;border-radius:14px;background:#fff;overflow:hidden;padding:10px;font-size:12px;text-align:left}
+.message-attachment:has(img){width:112px;height:112px;padding:0}.message-attachment img{width:100%;height:100%;object-fit:cover}.message-attachment>span{overflow-wrap:anywhere}
+.dictation-panel{display:flex;align-items:center;gap:10px;grid-column:1/-1;grid-row:4;min-width:0;border-top:1px solid #e9eeeb;margin-top:8px;padding-top:8px}
+.dictation-panel canvas{flex:1;min-width:0;height:32px;color:#567d68}.dictation-panel button{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:0;background:#eff3f0;color:#365844;display:grid;place-items:center;font-size:18px}
+.dictation-time{font-size:12px;font-variant-numeric:tabular-nums;color:#6b7b73}.dictation-status{font-size:12px;color:#51715e;min-width:52px}
+#chat-composer .dictation-panel .composer-voice{margin:0;flex:0 0 36px;width:36px;height:36px;min-height:36px;background:#e5f1ea}
+@media(max-width:600px){.chat-main>#chat-composer{border-radius:20px;padding:6px 8px}#chat-composer #chat-input{font-size:16px;padding:7px 6px 4px;margin-bottom:2px}.composer-attachment.is-image{flex-basis:76px;height:76px}.composer-attachments{gap:9px;padding:4px 4px 5px}.message-attachment:has(img){width:90px;height:90px}}
+@media(max-height:500px){.composer-attachment.is-image{flex-basis:58px;height:58px}.composer-attachments{padding-bottom:3px}#chat-composer #chat-input{margin-bottom:0;padding-top:3px}.dictation-panel{padding-top:3px;margin-top:3px}}

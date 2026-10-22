@@ -42,6 +42,7 @@ class SendMessage(Version):
     steer_message_id: str | None = Field(default=None,max_length=40)
     allow_external_processing: bool = True
     ui_context: Interaction | None = None
+    source_ids: list[str] = Field(default_factory=list,max_length=100)
 
 
 class Promote(Version):
@@ -103,6 +104,9 @@ def conversation_detail(conn,cid,uid,settings):
     result['messages']=[]
     for message in logical_messages(conn,cid):
         item=dict(message);versions=item.pop('_versions',[]);item.pop('position',None);item['citations']=json.loads(item['citations'])
+        item['attachments']=[dict(s) for s in conn.execute('''SELECT s.id,s.name,s.kind,length(s.content) AS size
+            FROM message_attachments a JOIN conversation_sources s ON s.id=a.source_id
+            WHERE a.message_id=? AND s.conversation_id=? ORDER BY a.position''',(item['id'],cid))]
         if expired and item['status']=='processing':
             item.update(status='failed',error='上次回复已中断，消息已保留，可以重试。')
         item=load_message(conn,item,settings)
@@ -179,18 +183,19 @@ def install_workspace(app,db,settings,user,heavy_lock):
 
     @app.post('/api/conversations/{cid}/sources')
     async def upload(cid:str,request:Request,current=Depends(user)):
-        rate_limit(db,'upload:'+current['id'],40,3600)
+        rate_limit(db,'upload:'+current['id'],180,3600)
         with db.connect() as conn:
             own(conn,cid,current['id'])
         form=await request.form(max_files=5,max_fields=8,max_part_size=120000)
         try:
-            if set(form.keys())-{'version','body','label','files','paths'}:
+            if set(form.keys())-{'version','body','label','files','paths','append_only'}:
                 raise HTTPException(422,'含不支持的上传字段')
             try:
                 version=int(form.get('version','0'))
             except (TypeError,ValueError):
                 raise HTTPException(422,'请刷新后重新上传') from None
             body=str(form.get('body','')).strip();label=str(form.get('label','')).strip()
+            append_only=form.get('append_only')=='true'
             if len(body)>MAX_CHARS or len(label)>160:
                 raise HTTPException(422,'正文最多 10000 字，名称最多 160 字；未截断内容')
             materials=[text_source(body,label or '粘贴的材料')] if body else []
@@ -210,7 +215,9 @@ def install_workspace(app,db,settings,user,heavy_lock):
         finally:
             await form.close()
         with db.connect(write=True) as conn:
-            own(conn,cid,current['id'],version,idle=True)
+            # Parallel uploads only append. The transaction rechecks ownership,
+            # idle state, deduplication and quotas against all committed batches.
+            own(conn,cid,current['id'],None if append_only else version,idle=True)
             existing=sources_for(conn,cid,True)
             hashes={(s['sha256'],s['path']) for s in existing};unique=[]
             for source in materials:
@@ -232,6 +239,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 changed(conn,cid)
             result=conversation_detail(conn,cid,current['id'],settings)
             result['added_count']=len(unique);result['duplicate_count']=len(materials)-len(unique)
+            source_ids={(s['sha256'],s.get('path',s['name'])):s['id'] for s in combined}
+            result['uploaded_source_ids']=list(dict.fromkeys(source_ids[(s['sha256'],s.get('path',s['name']))] for s in materials))
             return result
 
     @app.delete('/api/conversations/{cid}/sources/{sid}')
@@ -315,6 +324,10 @@ def install_workspace(app,db,settings,user,heavy_lock):
                         try:interaction=submission_context(conn,cid,payload.ui_context)
                         except (ValueError,TypeError,KeyError):raise HTTPException(422,'当前界面选择未通过检查，消息尚未发送；请核对选择或重新打开这条回复') from None
                     conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'user',?,'complete',?)",(parent,cid,payload.content,now))
+                    for position,sid in enumerate(dict.fromkeys(payload.source_ids)):
+                        if not conn.execute('SELECT 1 FROM conversation_sources WHERE id=? AND conversation_id=?',(sid,cid)).fetchone():
+                            raise HTTPException(422,'附件已移除或不属于本次对话，请重新选择')
+                        conn.execute('INSERT INTO message_attachments VALUES(?,?,?)',(parent,sid,position))
                     if interaction:
                         interaction['checkpoint']=checkpoint(conn,payload.ui_context)
                         conn.execute('INSERT INTO genui_interactions VALUES(?,?,?)',(parent,payload.ui_context.message_id,dumps(interaction)))

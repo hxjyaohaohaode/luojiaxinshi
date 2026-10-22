@@ -16,6 +16,7 @@ SUITES = [
     ('agent-adaptive-browser.mjs', 'artifacts/agent-adaptive-browser/results.json'),
     ('agent-fusion-browser.mjs', 'artifacts/reference-fusion/browser/results.json'),
     ('agent-quality-browser.mjs', 'artifacts/agent-quality-browser/performance.json'),
+    ('composer-browser.mjs', 'artifacts/composer-browser/results.json'),
 ]
 
 
@@ -26,6 +27,7 @@ def main():
         except OSError:
             raise SystemExit('Port 8793 is occupied; no existing process was reused or stopped.') from None
     OUT.mkdir(parents=True, exist_ok=True)
+    subprocess.run([sys.executable,'tests/media_fixtures.py'],cwd=ROOT,check=True)
     env = dict(os.environ, PYTHONUNBUFFERED='1', AGENT_LIVE_UI='0')
     for key in ('MIMO_API_KEY', 'AI_API_KEY', 'OPENAI_API_KEY', 'AGENT_BROWSER_OUTPUT', 'AGENT_UI_REPLAY_DIR'):
         env.pop(key, None)

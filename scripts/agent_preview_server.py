@@ -31,6 +31,7 @@ class FixtureProvider:
     async def complete(self, messages, tools):
         await asyncio.sleep(.12)
         user = next(m['content'] for m in reversed(messages) if m['role'] == 'user')
+        if isinstance(user,list):user='\n'.join(p.get('text','') for p in user if p.get('type')=='text')
         if '融合媒体验收' in user:
             if messages[-1]['role'] != 'tool':
                 name, arguments = 'ui_capabilities', {'components':['Video']}

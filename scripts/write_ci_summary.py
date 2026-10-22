@@ -35,7 +35,8 @@ def main():
                 ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),
-                ('Agent incremental rendering', 'artifacts/agent-quality-browser/performance.json')]
+                ('Agent incremental rendering', 'artifacts/agent-quality-browser/performance.json'),
+                ('Composer attachments and dictation', 'artifacts/composer-browser/results.json')]
     for label, path in browsers if kind in {'browser', 'all'} else []:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))

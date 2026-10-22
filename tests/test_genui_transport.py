@@ -180,7 +180,7 @@ def test_real_adapter_decodes_recorded_sse_and_validates_evidence(env,monkeypatc
     client=httpx.AsyncClient;monkeypatch.setattr(genui_ai.httpx,'AsyncClient',lambda **kwargs:client(transport=httpx.MockTransport(transport),**kwargs))
     async def collect():return [event async for event in genui_ai.stream_reply(cfg,[],[{'role':'user','content':'安排学习'}],{'phone':'private-contact','campus_role':'student'},1)]
     output=asyncio.run(collect());assert ''.join(e['text'] for e in output if e['type']=='delta')==RAW
-    assert output[-1]['result']=={**result,'claims':[],'memory_actions':[]} and seen[0]['stream'];assert 'private-contact' not in json.dumps(seen)
+    assert output[-1]['result']=={**result,'claims':[],'media_sources':[],'memory_actions':[]} and seen[0]['stream'];assert 'private-contact' not in json.dumps(seen)
 
 
 def test_server_message_limit_preserves_last_delivered_chunk(env,monkeypatch):

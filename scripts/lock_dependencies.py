@@ -2,7 +2,8 @@ from importlib.metadata import distribution
 from pathlib import Path
 from packaging.requirements import Requirement
 
-roots=['fastapi','uvicorn','python-multipart','pypdf','defusedxml','httpx','python-dotenv','icalendar']
+roots=['fastapi','uvicorn','python-multipart','pypdf','defusedxml','httpx','python-dotenv','icalendar',
+       'Pillow','cryptography','opentelemetry-api','av']
 seen={}
 pending=list(roots)
 while pending:

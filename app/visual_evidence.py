@@ -42,37 +42,48 @@ def estimated_image_tokens(content):
 
 
 def image_sources(sources):
-    # Upload endpoints validate actual image bytes and limit attached images to 4.
+    # Do not silently drop the fifth image; the full turn has an explicit budget.
     return [s for s in sources if s.get('kind') in IMAGE_MIME
-            and s.get('status') != 'failed' and isinstance(s.get('content'), bytes) and s['content']][:4]
+            and s.get('status') != 'failed' and isinstance(s.get('content'), bytes) and s['content']]
 
 
 def register_images(sources):
+    from .media_input import media_sources,MEDIA_LOCATOR,MEDIA_NOTE
     images = {s['id'] for s in image_sources(sources)}
+    media = {s['id'] for s in media_sources(sources)}
     result = []
     for source in sources:
         if source['id'] in images:
             source = {**source, 'evidence_kind': 'image', 'visual_evidence': True,
                       'sections': [p for p in source.get('sections', []) if p['locator'] != IMAGE_LOCATOR]
                                   + [{'locator': IMAGE_LOCATOR, 'text': IMAGE_NOTE}]}
+        if source['id'] in media:
+            source={**source,'evidence_kind':'media','media_evidence':True,
+                    'sections':[p for p in source.get('sections',[]) if p['locator']!=MEDIA_LOCATOR]+[{'locator':MEDIA_LOCATOR,'text':MEDIA_NOTE}]}
         result.append(source)
     return result
 
 
 def review_content(text, sources):
+    from .media_input import media_sources,media_part
     images = image_sources(sources)
-    if not images:
+    media = media_sources(sources)
+    if not images and not media:
         return text
     content = [{'type': 'text', 'text': text}]
     for source in images:
         content.extend([{'type': 'text', 'text': '以下原图 source_id=' + source['id']},
                         {'type': 'image_url', 'image_url': {'url': 'data:' + IMAGE_MIME[source['kind']] + ';base64,'
                             + base64.b64encode(source['content']).decode('ascii')}}])
+    for source in media:
+        content.extend([{'type':'text','text':'以下音视频 source_id='+source['id']},media_part(source)])
     return content
 
 
 def display_citations(result):
+    from .media_input import MEDIA_LOCATOR,MEDIA_NOTE
     citations = list(result['citations'])
     cited = {item['source_id'] for item in citations}
     return citations + [{'source_id': sid, 'locator': IMAGE_LOCATOR, 'quote': IMAGE_NOTE}
-                        for sid in result['image_sources'] if sid not in cited]
+                        for sid in result['image_sources'] if sid not in cited]+[
+                        {'source_id':sid,'locator':MEDIA_LOCATOR,'quote':MEDIA_NOTE} for sid in result.get('media_sources',[]) if sid not in cited]

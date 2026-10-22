@@ -40,8 +40,7 @@ def select_reply(conn,mid):
         conn.execute('INSERT INTO reply_selection VALUES(?,?) ON CONFLICT(parent_id) DO UPDATE SET message_id=excluded.message_id',(row['parent_id'],mid))
 
 def model_sources(conn,sources,question):
-    """Retrieve whole paragraphs from full files, with a shared 10k text / 4 image budget."""
-    from .chat_media import VIDEO_MIME
+    """Bound text excerpts; retain every media item for explicit input budgeting."""
     terms=keywords(question);candidates=[]
     for source in sources:
         full=conn.execute('SELECT full_sections FROM material_library WHERE source_id=?',(source['id'],)).fetchone()
@@ -54,17 +53,17 @@ def model_sources(conn,sources,question):
         if remaining<=0:break
         item={**section,'text':section['text'][:remaining]}
         selected.setdefault(sid,[]).append((index,item));remaining-=len(item['text'])
-    images=0;result=[]
+    result=[]
     for source in sources:
         item={**source,'sections':[s for _,s in sorted(selected.get(source['id'],[]))]}
-        if source['kind'] in chat_ai.IMAGE_MIME:
-            images+=1
-            if images>4:continue
-        if item['kind'] in VIDEO_MIME:
-            # Keep the private playback reference, never send video bytes to a
-            # text model or invent transcript evidence for a silent attachment.
-            item['content'] = b''
-        if item['sections'] or item['kind'] in chat_ai.IMAGE_MIME or item['kind'] in VIDEO_MIME:result.append(item)
+        # Duration is transport metadata needed for the media budget, not a
+        # relevance-ranked text excerpt. Long documents must not evict it.
+        metadata=next((s for s in source['sections'] if s['locator']=='媒体信息'),None)
+        if metadata and not any(s['locator']=='媒体信息' for s in item['sections']):
+            item['sections'].append(metadata)
+        # Keep the inventory even for unsupported/failed files; a missing text
+        # excerpt must never disappear and masquerade as full coverage.
+        result.append(item)
     return result
 
 def keywords(text):
@@ -159,6 +158,8 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                 if full:conn.execute('INSERT INTO material_library VALUES(?,?,?,?)',(mapping[s['id']],full['path'],full['full_sections'],full['full_chars']))
             for m in selected[:index+1]:
                 conn.execute('INSERT INTO conversation_messages(id,conversation_id,role,content,status,error,parent_id,citations,created_at) VALUES(?,?,?,?,?,?,?,?,?)',(mapping[m['id']],new,m['role'],remap(m['content'],'content'),m['status'],m['error'],mapping.get(m['parent_id']),dumps(remap(m['citations'])),m['created_at']))
+                for attachment in m.get('attachments',[]):
+                    conn.execute('INSERT INTO message_attachments VALUES(?,?,?)',(mapping[m['id']],mapping[attachment['id']],m['attachments'].index(attachment)))
                 evidence=conn.execute('SELECT sources,report FROM reply_grounding WHERE message_id=?',(m['id'],)).fetchone()
                 if evidence:conn.execute('INSERT INTO reply_grounding VALUES(?,?,?)',(mapping[m['id']],dumps(remap(json.loads(evidence['sources']),original=True)),dumps(remap(json.loads(evidence['report'])))))
                 g=conn.execute('SELECT * FROM genui_messages WHERE message_id=?',(m['id'],)).fetchone()

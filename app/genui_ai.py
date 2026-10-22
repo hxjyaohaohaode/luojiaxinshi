@@ -283,11 +283,11 @@ def payload(settings, sources, messages, profile, tier):
             'method':'相关性排序、去除网页重复段落、按来源轮流保留；有上限，未登记片段不能据此引用。'}
         # The index holds the exact evidence text; do not duplicate paragraphs in the prompt.
         for source in context['materials']:source.pop('sections',None)
-    materials = [{'type': 'text', 'text': json.dumps(context, ensure_ascii=False)}]
-    for source in sources:
-        if source['kind'] in IMAGE_MIME and source['content'] and source['status'] != 'failed':
-            materials += [{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
-                          {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}]
+    from .visual_evidence import review_content
+    from .media_input import MEDIA_POLICY,input_budget
+    input_budget(sources,settings.ai_context_tokens,len(json.dumps(context,ensure_ascii=False).encode()))
+    materials = review_content(json.dumps(context,ensure_ascii=False),sources)
+    if isinstance(materials,str):materials=[{'type':'text','text':materials}]
     response_model=UIAnswer if tier==1 else TemplateAnswer if tier==2 else IndexedAnswer
     output_schema=response_model.model_json_schema()
     if context.get('evidence_index'):
@@ -299,7 +299,7 @@ def payload(settings, sources, messages, profile, tier):
     if profile.get('_grounding_context'):
         from .grounding import POLICY
         prompt+='\n'+POLICY
-        prompt+='\n'+IMAGE_POLICY
+        prompt+='\n'+IMAGE_POLICY+'\n'+MEDIA_POLICY
         prompt+='\n引用协议：evidence_index 是服务器登记的原文片段。正文和 ui 文本就近使用稳定标记 [E3]、[E8]（必须是本轮存在的 ref），不要手写 [1] 等显示序号。claims.evidence_refs 选择支撑该结论的 ref；不要输出 citations、citation_refs 或 citation_indices 字段，这些由服务器统一生成。服务器恢复准确来源、位置与逐字原句；同一 ref 反复使用仍指向同一原文，改稿不得靠猜测换 ref。只选真正支持结论的片段。引用可打开原文面板，正文无需重复罗列网址；若另列 Markdown 链接，须在同段引用该网页自身的 ref，用户提供链接的提问不能代替网页证据。'
     # Prepared evidence already has a retrieval plan and coverage audit. Keep
     # formatting quick; the independent factual/UI review still gates publication.

@@ -1,10 +1,11 @@
 import {preserveChatViewport} from './chat-viewport.js';
+import {ComposerAttachments,uploadAttachment} from './composer-attachments.js';
 import {MaterialTreeState} from './workspace-tree-state.js';
 import {createReplySpeech} from './speech.js';
 import {brandMotion} from './motion.js';
 import {searchControls,WorkspaceSearch,materialTree,materialFormats} from './workspace-search.js';
 import {attachmentPreview} from './attachments.js';
-import {dictate} from './dictation.js';
+import {dictate,finishDictation} from './dictation.js';
 import {ConversationView} from './genui/chat-presenter.js';
 import {StreamParser} from './genui/core.js';
 import {streamChat} from './genui/transport.js';
@@ -21,6 +22,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   let current=null,historyItems=[],pollTimer,files=[],sending=false,materialRenderKey='',feedbackTimer;
   let presenter=null,streaming=null,paintFrame=0,hostArrangements=[],hostTasks=[];
   let submission=0,accepting=false,branchDraft=null;
+  let attachments=null,creatingConversation=null;
   let materialSearch=null,historySearch=null,materialMatches=null,historyMatches=[],historyPage=1;
   const materialTreeState=new MaterialTreeState();
   let materialInert=[],materialReturn=null,materialQuery="";
@@ -47,7 +49,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   const call=(label,action,extra='',cls='')=>`<button type="button" class="button ${cls}" data-chat-action="${action}" ${{history:'aria-label="历史对话"',new:'aria-label="新对话"','toggle-materials':'aria-label="查看本次材料"'}[action]||''} ${extra}>${label}</button>`;
   const key=()=>branchDraft?'branch:'+branchDraft.originId+':'+branchDraft.messageId:current?'chat:'+current.id:'chat-new';
   const active=cid=>$('#chat-workspace')&&current?.id===cid;
-  const sourceStatus=s=>s.status==='failed'?'读取失败':videoKinds.has(s.kind)?'视频已收到 · 仅供播放':imageKinds.has(s.kind)?'图片已收到 · 待视觉核对':s.status==='review'?'已解析 · 需核对':'文字已读取';
+  const sourceStatus=s=>s.status==='failed'?'读取失败':['mp4','webm','mov','avi','wmv','mp3','wav','m4a','ogg','flac'].includes(s.kind)?'原件已收到 · 待理解':imageKinds.has(s.kind)?'图片已收到 · 待视觉核对':s.status==='review'?'已解析 · 需核对':'文字已读取';
   const date=n=>new Date(n*1000).toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'});
 
   async function render(id,renderId,branchMessage=null){
@@ -74,6 +76,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     }
     if(id)remember(id);
     submission++;accepting=false;
+    attachments?.dispose();attachments=null;creatingConversation=null;
     streaming?.controller.abort();streaming=null;cancelAnimationFrame(paintFrame);paintFrame=0;presenter?.dispose();presenter=null;
     clearTimeout(pollTimer);clearTimeout(feedbackTimer);files=[];sending=false;materialQuery="";materialRenderKey='';materialMatches=null;materialSearch?.dispose();historySearch?.dispose();
     const results=await Promise.all([catalog||api('/conversations'),preview?Promise.resolve(preview):id?(restored||api('/conversations/'+encodeURIComponent(id))):Promise.resolve(null),drafts.load(preview?'branch:'+branchDraft.originId+':'+branchDraft.messageId:id?'chat:'+id:'chat-new'),state.session.genui?.enabled?api('/arrangements'):Promise.resolve([]),state.session.genui?.enabled?api('/tasks'):Promise.resolve([])]);
@@ -84,9 +87,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       <div class="chat-reading-area"><section class="chat-thread" id="chat-thread" aria-label="与校园助手的对话" tabindex="0">${thread()}</section><nav id="chat-turn-rail" class="chat-turn-rail" aria-label="按轮次跳转对话" hidden></nav></div>
       <div class="chat-jump-row"><button type="button" id="chat-jump-latest" class="button small" hidden>回到最新 ↓</button></div>
       <form class="chat-composer" id="chat-composer" data-workspace-form="chat" data-cache-key="${key()}">
+        <div id="composer-attachments" class="composer-attachments" aria-label="待发送附件" hidden></div>
+        <input id="composer-file-input" type="file" multiple accept="${materialFormats}" hidden>
         <button type="button" class="icon-button composer-plus" data-chat-action="composer-menu" aria-label="添加附件与更多选项" aria-expanded="false" aria-controls="composer-menu">${icon('plus')}</button>
         <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button type="button" class="icon-button composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')}</button><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
-        <div class="composer-actions" id="composer-menu" hidden><span class="composer-menu-title">本次对话</span>${call(icon('upload')+' 文件、图片与视频','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
+        <div class="composer-actions" id="composer-menu" hidden>${call(icon('upload')+' 添加文件与图片','pick-attachments','','small plain')}${call(icon('folder')+' 添加文件夹','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
         <span id="chat-shortcuts" class="sr-only">Enter 发送，Shift 加 Enter 换行。中文输入法选词时不会发送。</span>
         <div class="composer-status sr-only"><span class="autosave-status" role="status"></span><span id="chat-count">${current?.sources.length||0} 份材料 · 仅本人可见</span></div>
       </form>
@@ -94,6 +99,20 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       </div><button type="button" class="materials-scrim" data-chat-action="toggle-materials" aria-label="关闭材料面板" tabindex="-1"></button><aside id="chat-materials" class="chat-materials" aria-label="本次对话的材料"><div class="materials-heading"><h2>本次材料</h2><span class="small muted" id="material-total">0</span><button type="button" class="icon-button materials-close" data-chat-action="toggle-materials" aria-label="收起材料">${icon('close')}</button></div>${searchControls({id:"material",esc,icon,kinds:[...new Set(current?.sources.map(s=>s.kind)||[])].map(k=>[k,k.toUpperCase()])})}<div id="material-list"></div><div class="material-actions">${call(icon('plus')+' 添加材料','upload','','small')}${call('转为通知 '+icon('arrow'),'promote','','small primary')}</div>${current?`<div class="conversation-tools">${call('重命名','rename','','small plain')}${call('删除对话','delete','','small plain danger')}</div>`:''}</aside></div>`;
     // The workspace is light. Legacy answer-only themes cannot override its surface.
     $('#chat-thread').dataset.genuiTheme='light';
+    const attachmentRender=state.renderId;
+    attachments=new ComposerAttachments($('#composer-attachments'),{
+      sources:current?.sources||[],ids:drafts.peek(key()).payload?.source_ids||[],
+      upload:async(file,onProgress,signal)=>{
+        if(!current||branchDraft){creatingConversation??=ensureConversation(attachmentRender).finally(()=>creatingConversation=null);await creatingConversation;}
+        if(attachmentRender!==state.renderId||signal.aborted)throw Error('已离开当前对话');
+        const cid=current.id,result=await uploadAttachment(cid,current.version,file,{csrf:state.session.csrf,signal,onProgress});
+        if(attachmentRender===state.renderId&&active(cid)&&result.version>=current.version){current=result;materialMatches=null;update();}
+        return {ids:result.uploaded_source_ids,sources:result.sources};
+      },
+      remove:async ids=>{for(const id of ids){if(current.messages.some(m=>m.attachments?.some(a=>a.id===id)))continue;current=await api(`/conversations/${current.id}/sources/${id}`,{method:'DELETE',json:{version:current.version}});}update();},
+      open:(source,urlOnly)=>urlOnly?`/api/conversations/${current.id}/sources/${source.id}/download?preview=true`:preview(source.id),
+      onChange:list=>{if(attachments===list){persist();updateComposerState();}}
+    });
     $('#chat-thread').addEventListener('scroll',updateJump,{passive:true});$('#chat-jump-latest').addEventListener('click',()=>{const thread=$('#chat-thread');thread.scrollTop=thread.scrollHeight;updateJump();});
     materialSearch=new WorkspaceSearch($('[data-search-host="material"]'),{api,scope:"materials",conversationId:()=>current?.id,onResult:result=>{materialQuery=result.query||'';materialMatches=new Map(result.items.map(s=>[s.id,s]));materialRenderKey="";drawMaterials();},onError:message=>toast(message,true)});
     fitComposer();update();if(current?.processing)schedulePoll(current.id,state.renderId);
@@ -121,9 +140,9 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     fitComposer();const busy=current?.processing||sending;
     $('#chat-composer').classList.toggle('is-processing',!!busy);
     $('#chat-composer textarea').disabled=false;$('#chat-composer textarea').placeholder=busy?'补充条件，或调整方向…':'写下问题…';
-    const submit=$('#chat-composer .send-button');submit.disabled=accepting;submit.dataset.chatAction='';submit.type='submit';submit.setAttribute('aria-label',busy?'发送补充消息':'发送消息');submit.title=busy?'发送补充，按新要求继续处理':'Enter 发送 · Shift + Enter 换行';submit.innerHTML=icon('arrow');
+     const submit=$('#chat-composer .send-button');submit.disabled=accepting||attachments?.busy||attachments?.failed;submit.dataset.chatAction='';submit.type='submit';submit.setAttribute('aria-label',busy?'发送补充消息':'发送消息');submit.title=busy?'发送补充，按新要求继续处理':'Enter 发送 · Shift + Enter 换行';submit.innerHTML='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg>';
     let stop=$('#chat-composer .composer-stop');if(!stop){stop=document.createElement('button');stop.type='button';stop.className='icon-button composer-stop';stop.dataset.chatAction='cancel';stop.setAttribute('aria-label','停止本次回复');stop.title='停止本次回复';stop.innerHTML='<span class="stop-square" aria-hidden="true"></span>';submit.before(stop);}stop.hidden=!busy;stop.disabled=accepting&&!current?.processing;
-    $$('[data-chat-action="upload"],[data-chat-action="paste-text"],[data-chat-action="promote"]').forEach(b=>b.disabled=busy);
+     $$('[data-chat-action="upload"],[data-chat-action="pick-attachments"],[data-chat-action="paste-text"],[data-chat-action="promote"]').forEach(b=>b.disabled=busy);
   }
   function drawMaterials(){
     const target=$('#material-list');if(!target)return;
@@ -140,7 +159,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   function updateJump(){updateTurnMarker();const jump=$('#chat-jump-latest');if(jump)jump.hidden=nearBottom()||!current?.messages.length;}
   function drawMessages(){
     if(!$('#chat-thread')||!current)return;
-    const cid=current.id,options={feature:state.session.genui||{},sources:current.sources,arrangements:hostArrangements,tasks:hostTasks,preview,
+    const cid=current.id,options={conversationId:cid,feature:state.session.genui||{},sources:current.sources,arrangements:hostArrangements,tasks:hostTasks,preview,
       openCalendar:()=>{location.hash='calendar';},openSources:()=>{location.hash='sources';},uploadMaterial:()=>uploadDialog(),
       mediaResources:current.sources.filter(s=>videoKinds.has(s.kind)&&s.status!=='failed').map(s=>`/api/conversations/${cid}/sources/${s.id}/download?preview=true`),
       imageResources:[...current.sources.filter(s=>imageKinds.has(s.kind)&&s.status!=='failed').map(s=>`/api/conversations/${cid}/sources/${s.id}/download?preview=true`),...['welcome','reading','planning','blossom','rest'].map(p=>'/static/assets/luojia-messenger-'+p+'.png')],
@@ -188,7 +207,12 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     },1400);
   }
   async function send(retryId,structuredText=null,regenerateId=null,structuredContext=null){
-    const input=$('#chat-input'),rawText=input.value,text=structuredText??rawText.trim();
+    const input=$('#chat-input'),inputView=state.renderId;
+    if(accepting)throw Error('上一条消息正在提交，稍后即可继续补充。');
+    if(!retryId&&!regenerateId)await finishDictation(input);
+    if(inputView!==state.renderId||input!==$('#chat-input'))return;
+    const rawText=input.value,sourceIds=retryId||regenerateId?[]:attachments?.ids||[],text=structuredText??(rawText.trim()||(sourceIds.length?'请帮我理解这些材料，并整理当前能开始的下一步。':''));
+    if(attachments?.busy||attachments?.failed)throw Error('请等待附件上传完成，或重试、移除失败的附件。');
     if(accepting)throw Error('上一条消息正在提交，稍后即可继续补充。');
     if((sending||current?.processing)&&(retryId||regenerateId))throw Error('处理中可直接发送补充，完成后再切换或重新生成。');
     if(!retryId&&!regenerateId&&!text){input.focus();return;}
@@ -197,13 +221,13 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     const turn=++submission,renderId=state.renderId,previous=streaming,requestId=crypto.randomUUID();
     let cid=current?.id,cacheKey=key(),pending=null;
     const live=()=>turn===submission&&renderId===state.renderId&&active(cid);
-    const acknowledge=()=>{const checkpoint=current?.messages.findLast(m=>m.role==='user'&&m.interaction?.message_id===uiContext?.message_id)?.interaction?.checkpoint;presenter?.markContextSubmitted(uiContext,checkpoint?.status==='saved');if(!retryId&&!regenerateId&&structuredText===null&&input.value===rawText){input.value='';drafts.stage(cacheKey,{content:''});fitComposer();}};
+    const acknowledge=()=>{const checkpoint=current?.messages.findLast(m=>m.role==='user'&&m.interaction?.message_id===uiContext?.message_id)?.interaction?.checkpoint;presenter?.markContextSubmitted(uiContext,checkpoint?.status==='saved');if(!retryId&&!regenerateId&&structuredText===null&&input.value===rawText){input.value='';attachments?.clear();drafts.stage(cacheKey,{content:'',source_ids:[]});fitComposer();}};
     accepting=true;sending=true;setComposerMenu(false);update();
     try{
       persist();await drafts.flush(key());await ensureConversation(renderId);if(renderId!==state.renderId||turn!==submission)return;
       cid=current.id;cacheKey=key();clearTimeout(pollTimer);
       const allowExternal=true;
-      const payload={version:current.version,content:retryId||regenerateId?'':text,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,allow_external_processing:allowExternal};
+      const payload={version:current.version,content:retryId||regenerateId?'':text,source_ids:sourceIds,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,allow_external_processing:allowExternal};
       let result;
       pending={controller:new AbortController(),cid,renderId,raw:'',parser:null,mid:null,tier:1,expanded:false};streaming=pending;
       await streamChat(cid,payload,{csrf:state.session.csrf,signal:pending.controller.signal,onEvent:(type,data)=>{
@@ -220,7 +244,15 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         }else if(type==='preview'){
           if(data.message_id!==pending.mid)return;
           const m=current.messages.find(m=>m.id===pending.mid);
-          if(m){m._preview=(data.reset?'':(m._preview||''))+data.text;paintMessages();}
+           if(m){
+             if(data.reset){pending.previewBuffer='';pending.holdPreview=!!m._preview;}
+             pending.previewBuffer=(pending.previewBuffer||'')+data.text;
+             // A rejected draft may restart from zero. Keep its visible text
+             // while the status shows correction, then swap once at completion.
+             if(!pending.holdPreview||pending.previewBuffer.startsWith(m._preview||'')){
+               m._preview=pending.previewBuffer;pending.holdPreview=false;paintMessages();
+             }
+           }
         }else if(type==='delta'){
           if(!pending.parser||data.message_id!==pending.mid)throw Error('回复与当前消息不一致，已停止接收。');pending.raw+=data.text;pending.expanded||=!!data.expanded_template;pending.parser.push(data.text);
           const m=current.messages.find(m=>m.id===pending.mid);if(m){m.genui.raw=pending.raw;if(pending.tier===3)m.content=pending.raw;m._liveParts=pending.tier===1||pending.expanded?pending.parser.snapshot():[{kind:'text',text:pending.raw}];paintMessages();}
@@ -269,9 +301,10 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   function updateTurnMarker(){const thread=$('#chat-thread'),rail=$('#chat-turn-rail');if(!thread||!rail)return;const top=thread.getBoundingClientRect().top+64,users=[...thread.children].filter(n=>n.classList.contains('message-user'));const active=users.filter(n=>n.getBoundingClientRect().top<=top).at(-1)||users[0];for(const marker of rail.children)marker.setAttribute('aria-current',String(marker.dataset.turnId===active?.dataset.messageId));}
   function fitComposer(){const input=$('#chat-input');if(!input)return;input.style.height='0px';const max=Math.min(144,Math.max(72,window.innerHeight*.18));input.style.height=Math.max(44,Math.min(input.scrollHeight,max))+'px';input.style.overflowY=input.scrollHeight>max?'auto':'hidden';}
   window.addEventListener('resize',fitComposer);
-  function persist(){const form=$('#chat-composer');if(!form)return;const cacheKey=form.dataset.cacheKey,content=$('#chat-input').value;const snapshot={content};if(cacheKey.startsWith('branch:')&&!content.trim()&&!String(drafts.peek(cacheKey).payload?.content||'').trim())return;if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(cacheKey).payload))drafts.stage(cacheKey,snapshot);}
+  function updateComposerState(){const submit=$('#chat-composer .send-button');if(submit)submit.disabled=accepting||!!attachments?.busy||!!attachments?.failed;}
+  function persist(){const form=$('#chat-composer');if(!form)return;const cacheKey=form.dataset.cacheKey,content=$('#chat-input').value;const snapshot={content,source_ids:attachments?.ids||[]};if(cacheKey.startsWith('branch:')&&!content.trim()&&!snapshot.source_ids.length&&!String(drafts.peek(cacheKey).payload?.content||'').trim())return;if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(cacheKey).payload))drafts.stage(cacheKey,snapshot);}
   function uploadDialog(textOnly=false){
-    files=[];showDialog(textOnly?'把原文放在这里':'添加文件与文件夹',`<form id="chat-upload-form" class="stack" data-workspace-form="upload">${textOnly?'':`<div class="upload-options"><label class="upload" id="chat-dropzone">${icon('upload')}<strong>选择文件，或拖入文件与文件夹</strong><span class="small muted">文档、表格、幻灯片、代码、图片、音视频与 ZIP<br>最多 100 份，每份 20 MB；保留原文件夹路径</span><input type="file" id="chat-files" multiple accept="${materialFormats}" aria-label="选择对话材料"></label><label class="button small folder-upload">${icon('folder')} 上传整个文件夹<input type="file" id="chat-folder" webkitdirectory directory multiple hidden></label></div><div id="chat-file-selection"></div>`}${field('材料名称（选填）','label','','text','maxlength="160" placeholder="例如：报名通知、我的课表"')}${area('原文或补充内容','body','',textOnly?9:4,'maxlength="10000" placeholder="粘贴原文，或写下材料中需要注意的地方。"')}<div id="upload-progress" class="upload-progress" role="status" aria-live="polite" hidden></div><p class="small muted">原件保存于本次对话。发送问题时，助手按问题选取相关文字与最多 4 张图片；其他原件仍可完整查看。</p><div class="form-footer"><button type="button" class="button" data-action="close-dialog">暂时不加</button><button type="submit" class="button primary">保存材料 ${icon('arrow')}</button></div></form>`);
+    files=[];showDialog(textOnly?'把原文放在这里':'添加文件与文件夹',`<form id="chat-upload-form" class="stack" data-workspace-form="upload">${textOnly?'':`<div class="upload-options"><label class="upload" id="chat-dropzone">${icon('upload')}<strong>选择文件，或拖入文件与文件夹</strong><span class="small muted">文档、表格、幻灯片、代码、图片、音视频与 ZIP<br>最多 100 份，每份 20 MB；保留原文件夹路径</span><input type="file" id="chat-files" multiple accept="${materialFormats}" aria-label="选择对话材料"></label><label class="button small folder-upload">${icon('folder')} 上传整个文件夹<input type="file" id="chat-folder" webkitdirectory directory multiple hidden></label></div><div id="chat-file-selection"></div>`}${field('材料名称（选填）','label','','text','maxlength="160" placeholder="例如：报名通知、我的课表"')}${area('原文或补充内容','body','',textOnly?9:4,'maxlength="10000" placeholder="粘贴原文，或写下材料中需要注意的地方。"')}<div id="upload-progress" class="upload-progress" role="status" aria-live="polite" hidden></div><p class="small muted">原件保存在本次对话。超出模型预算或读取失败时会明确提示。</p><div class="form-footer"><button type="button" class="button" data-action="close-dialog">暂时不加</button><button type="submit" class="button primary">保存材料 ${icon('arrow')}</button></div></form>`);
   }
   function fileSelection(){
     const list=$('#chat-file-selection');if(list)list.innerHTML=files.map((f,i)=>`<div class="file-chip"><span>${esc(f.webkitRelativePath||f._relativePath||f.name)} <small>${Math.ceil(f.size/1024)} KB</small></span><button type="button" class="icon-button" data-chat-action="unpick-file" data-index="${i}" aria-label="移除 ${esc(f.webkitRelativePath||f._relativePath||f.name)}">${icon('close')}</button></div>`).join('');
@@ -309,6 +342,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       if(branchDraft&&action==='remove-source')return;
       if(action==='composer-menu'){setComposerMenu($('#composer-menu').hidden);}
       else if(action==='dictate'){await dictate($('#chat-input'),control,{api,toast,ask});}
+      else if(action==='pick-attachments'){setComposerMenu(false);$('#composer-file-input').click();}
       else if(action==='new'){persist();await drafts.flushAll();remember('new');if(location.hash==='#chat/new')$('#chat-input')?.focus();else location.hash='chat/new';}
       else if(action==='history'){historyItems=await api('/conversations');historyDialog();}
       else if(action==='prompt'){$('#chat-input').value=control.dataset.prompt;persist();$('#chat-input').focus();}
@@ -353,12 +387,15 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       if(type==='upload'){
         if(!files.length&&!fd.get('body')?.trim())throw Error('选择文件、文件夹，或粘贴一段原文后再保存。');
         persist();await ensureConversation(routeId);if(routeId!==state.renderId)return;const cid=current.id;
-        const batches=[];let batch=[],size=0;for(const file of files){if(batch.length>=5||size+file.size>22*1024*1024){batches.push(batch);batch=[];size=0;}batch.push(file);size+=file.size;}if(batch.length||!batches.length)batches.push(batch);
-        let result=current,added=0,duplicates=0;const progress=$('#upload-progress');progress.hidden=false;progress.innerHTML=brandMotion('routing')+'<span></span>';
-        for(const [index,group]of batches.entries()){progress.querySelector(':scope > span:last-child').textContent=`正在保存与读取 ${index+1} / ${batches.length} 批 · ${group.map(f=>f.name).join('、')||'原文'}`;const data=new FormData();data.set('version',result.version);if(index===0){data.set('body',fd.get('body')||'');data.set('label',fd.get('label')||'');}group.forEach(f=>data.append('files',f));data.set('paths',JSON.stringify(group.map(f=>f.webkitRelativePath||f._relativePath||f.name)));result=await api('/conversations/'+cid+'/sources',{method:'POST',body:data});added+=result.added_count;duplicates+=result.duplicate_count;if(routeId===state.renderId&&active(cid)){current=result;materialMatches=null;update();}}
-        progress.innerHTML=brandMotion('seal')+`<span>已保存 ${added} 份材料，${duplicates} 份相同材料已合并。</span>`;
-        if(routeId===state.renderId&&active(cid)){current=result;materialMatches=null;update();$('#dialog').close();setMaterials(true);materialSearch?.run();}
-        toast(added?`已保存 ${added} 份材料。可在材料面板查看原件与读取结果。`:'相同路径和内容的材料已经保存，无需重复上传。');
+        if(attachments.items.length+files.length+(fd.get('body')?.trim()?1:0)>100)throw Error('每次最多添加 100 份附件。');
+        if(fd.get('body')?.trim()){
+          const data=new FormData();data.set('version',current.version);data.set('append_only','true');data.set('body',fd.get('body'));data.set('label',fd.get('label')||'');
+          const result=await api('/conversations/'+cid+'/sources',{method:'POST',body:data});
+          if(routeId!==state.renderId||!active(cid))return;
+          if(result.version>=current.version)current=result;
+          attachments.adopt(result.sources,result.uploaded_source_ids);materialMatches=null;update();
+        }
+        attachments.add(files);files=[];$('#dialog').close();$('#chat-input').focus();
         if(routeId===state.renderId)document.dispatchEvent(new CustomEvent('campus:milestone',{detail:'materials-saved'}));
       }else if(type==='promote'){
         const selected=fd.getAll('source_ids');if(!selected.length)throw new Error('请选择至少一份通知原文。');
@@ -373,8 +410,12 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     finally{form.inert=false;submit.disabled=!!current?.processing;if(type!=='chat')submit.disabled=false;}
   });
   document.addEventListener('input',e=>{if(e.target.id==='chat-input'){fitComposer();persist();}});
-  document.addEventListener('change',e=>{if(['chat-files','chat-folder'].includes(e.target.id)){addFiles([...e.target.files]);e.target.value='';}});
-  document.addEventListener('paste',e=>{if(!$('#chat-upload-form'))return;const incoming=[...(e.clipboardData?.files||[])];if(incoming.length){e.preventDefault();addFiles(incoming);}});
+  function attachFiles(incoming){if(current?.processing||sending){toast('请先停止当前回复，再添加材料。',true);return;}try{attachments?.add(incoming);}catch(error){toast(error.message,true);}}
+  document.addEventListener('change',e=>{if(e.target.id==='composer-file-input'){attachFiles([...e.target.files]);e.target.value='';}else if(['chat-files','chat-folder'].includes(e.target.id)){addFiles([...e.target.files]);e.target.value='';}});
+  document.addEventListener('paste',e=>{const incoming=[...(e.clipboardData?.files||[])];if(!incoming.length)return;if(e.target.closest('#chat-composer')){e.preventDefault();attachFiles(incoming);}else if($('#chat-upload-form')){e.preventDefault();addFiles(incoming);}});
+  document.addEventListener('dragover',e=>{if(e.target.closest('#chat-composer')&&e.dataTransfer?.types.includes('Files')){e.preventDefault();$('#chat-composer').classList.add('dragging');}});
+  document.addEventListener('dragleave',e=>{const form=$('#chat-composer');if(form&&e.target.closest('#chat-composer')&&!form.contains(e.relatedTarget))form.classList.remove('dragging');});
+  document.addEventListener('drop',e=>{if(e.target.closest('#chat-composer')){e.preventDefault();$('#chat-composer').classList.remove('dragging');attachFiles([...e.dataTransfer.files]);}});
   document.addEventListener('dragover',e=>{if(e.target.closest('#chat-dropzone')){e.preventDefault();$('#chat-dropzone').classList.add('dragging');}});
   document.addEventListener('dragleave',e=>{if(e.target.closest('#chat-dropzone'))$('#chat-dropzone').classList.remove('dragging');});
   document.addEventListener('drop',async e=>{if(!e.target.closest('#chat-dropzone'))return;e.preventDefault();$('#chat-dropzone').classList.remove('dragging');

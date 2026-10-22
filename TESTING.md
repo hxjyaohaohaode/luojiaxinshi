@@ -1,5 +1,28 @@
 # 验证记录
 
+## 2026-10-22：多附件、单按钮语音与 Agent 媒体理解 1.19.2
+
+这轮修改直接进入现有聊天与 Agent。上传队列允许 3 路并行，图片缩略图、上传状态和失败恢复在输入框内完成；附件关联到发送的消息，并随刷新和分支保留。语音录音条只保留一个控制按钮，结束与失败重试在同一位置切换。实际音量驱动波形，分段转写保留手工编辑；空分段不会清空已有文字或让整次录音失败。材料面板开合后，用户消息跟随聊天容器右侧；流式预览在最终结果到达时不清空重放。
+
+| 检查 | 本轮结果及证据 |
+| --- | --- |
+| 完整单元回归 | Python 999 项、Node 145 项通过；失败、错误与跳过均为 0。`artifacts/ci/python-tests.xml`、`artifacts/ci/node-tests.xml` |
+| 上传与原件 | PNG、JPG、Markdown、DOCX，包括中文名、空格、括号与大写扩展名，实际 multipart 上传和正文读取通过；9 份混合材料并行上传峰值为 3，全部保存 |
+| Agent 浏览器 | 5 组通过，页面错误 0；新输入框 9 项覆盖附件关联、侧栏开合、预览连续性、桌面／手机／键盘视口、录音唯一按钮、空转写及失败重试。`artifacts/composer-browser/results.json` 与对应截图 |
+| 长消息渲染 | 202 条消息、100 项勾选、40 次流式更新；中位更新 13.0 ms，P95 16.9 ms，历史正文变更 0，保留焦点与勾选。仅为本机合成场景。`artifacts/agent-quality-browser/performance.json` |
+| 真实模型混合材料 | MiMo v2.6 Pro，6 张合成图片 + 文字 + 2 秒音频 + 2 秒视频；39.02 秒完成，2 次模型调用，17,923 输入 token、1,784 输出 token，独立核验通过，未触发重写。`artifacts/composer-mixed-verified-final/results.json` |
+| 独立复核对抗样例 | 错误日期、将必做功能冒充评分标准均被拒绝；有依据的内容加明确个人建议被放行。3 项通过。`artifacts/composer-review-live/results.json` |
+| 协议与依赖 | 40 项 GenUI 离线样例、目录一致性、npm 生产依赖审计、Python 严格依赖审计通过；发布包构建通过 |
+| 本机启用 | 健康接口为 1.19.2；升级前做 SQLite 在线备份，用户、对话、消息和原件计数保留，完整性与外键检查通过。已在无录音、无草稿的页面刷新启用 |
+
+多模态输入在调用边界附加原件，Agent 与独立核验接收相同内容，不把 base64 写入持久历史或压缩结果。不再静默限制为前 4 张图片；图片、音视频和文本提示共同检查上下文预算，超限明确报错并保留全部原件。上传附件通过证据索引／`read_source` 读取，生成的工作文件使用 `list_files`／`read_file`，避免将空工作目录误认为附件缺失。简单图片观察不再触发额外深度思考；复杂推算、条件冲突和大证据集仍使用推理核验。核验规则区分原件定位说明与 OCR 引文，也区分谨慎保留未知与凭空补事实。
+
+之前同一混合样例曾耗时 195.77 秒，并有独立核验误拒有效图片引用、导致失败的记录。本轮修正后的一次 39.02 秒结果不代表固定耗时、生产 P95 或准确率保证，也不是与历史用户图片任务的严格对照实验。浏览器语音使用模拟麦克风和合成转写服务，验证真实 AudioWorklet、交互与恢复，不证明真实人声识别准确率；当前为 1.5–6 秒分段后请求，仍受语音服务延迟影响，未宣称逐字实时流。
+
+格式边界保持明确：旧 DOC／XLS／PPT 保存原件，需转换后读取正文；扫描 PDF 暂无 OCR；GIF／BMP／TIFF 原件可保留，视觉理解需转 PNG／JPG／WebP；`.gpg` 加密文件不属于 JPG 图片。音视频实际解码检查在受限解析子进程内进行，长视频的模型采样不等于逐帧审核。真实模型测试只使用临时数据库与合成材料，没有外发用户原件；原始证据、录音、数据库与备份不进入 Git。
+
+复现：`python -m pytest -q --junitxml=artifacts/ci/python-tests.xml`、`node --test tests/*.test.mjs`、`python scripts/run_agent_browser_checks.py`。真实模型检查需显式使用 `python scripts/verify_agent_adaptive_live.py --case mixed --allow-paid-synthetic-test` 或 `python scripts/verify_media_review_live.py --allow-paid-synthetic-test`，它们会调用付费模型，未放入 CI。
+
 ## 2026-10-22：现有 Agent 深度融合与 main 发布检查
 
 本轮在原聊天中接入工具循环、受限并行子任务、审批、Skills、上下文预算、持久事件、SDK/exec/OSS，并贯通现有记忆、独立证据核验、生成式 UI 与私有媒体。实现取舍见 [Agent 运行时](docs/CODEX_RUNTIME.md) 和 [历次参考融合核查](docs/REFERENCE_FUSION_AUDIT.md)；不将全部参考仓库视为已完整移植。

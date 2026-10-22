@@ -48,7 +48,7 @@ class RequestGuard:
         # No third-party CSS is copied or executed by this application.
         local_preview = not production and urlparse(origin).hostname in {'localhost','127.0.0.1','::1'}
         style_hash = " 'sha256-WO55anZ1V8A0G22bY2t72RV4dI79SLI4VnYLgsEeWUc='" if local_preview else ''
-        self.csp = ("default-src 'self'; script-src 'self'; style-src 'self'" + style_hash + "; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'").encode('ascii')
+        self.csp = ("default-src 'self'; script-src 'self'; style-src 'self'" + style_hash + "; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'").encode('ascii')
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':

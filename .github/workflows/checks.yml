@@ -108,6 +108,8 @@ jobs:
             artifacts/reference-fusion/browser/results.json
             artifacts/reference-fusion/browser/*.png
             artifacts/agent-quality-browser/performance.json
+            artifacts/composer-browser/results.json
+            artifacts/composer-browser/*.png
             artifacts/ci/summary.md
           retention-days: 14
           if-no-files-found: warn

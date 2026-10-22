@@ -25,7 +25,7 @@ export class ConversationView{
   markContextSubmitted(context,saved=false){if(context){this.submittedContexts??=new Map();this.submittedContexts.set(context.message_id,JSON.stringify(context.blocks));if(saved){const record=this.records.get(context.message_id);if(record?.saveFeedback)record.saveFeedback.textContent='本次提交的选择已保存';}}}
   dispose(){for(const r of this.records.values()){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();}this.records.clear();}
   parts(message){
-    if(message._preview!==undefined&&!message._liveParts)return [{kind:'text',text:message._preview.replace(/\[E\d+\]/g,'')}];
+    if(message.status==='processing'&&message._preview!==undefined)return [{kind:'text',text:message._preview.replace(/\[E\d+\]/g,'')}];
     if(message._liveParts)return message._liveParts;
     if(message.genui?.v===1){
       const g=message.genui;
@@ -62,6 +62,16 @@ export class ConversationView{
         article.append(label,content,citations,error,footer);r={article,label,status,content,citations,error,footer};this.records.set(message.id,r);
       }
       if(message.role==='user'){
+        const attachmentKey=JSON.stringify(message.attachments||[]);
+        if(r.attachmentKey!==attachmentKey){
+          r.attachmentKey=attachmentKey;r.attachments?.remove();
+          if(message.attachments?.length){r.attachments=el('div','message-attachments');
+            for(const source of message.attachments){const tile=button('',()=>this.options.preview?.(source.id),'message-attachment');tile.title=source.name;tile.setAttribute('aria-label','查看附件 '+source.name);
+              if(['png','jpg','jpeg','webp','gif','bmp'].includes(source.kind)){const img=el('img');img.src=`/api/conversations/${encodeURIComponent(this.options.conversationId)}/sources/${encodeURIComponent(source.id)}/download?preview=true`;img.alt=source.name;img.loading='lazy';tile.append(img);}
+              else{tile.append(el('span','attachment-kind',source.kind.toUpperCase()),el('span','',source.name));}r.attachments.append(tile);
+            }r.article.insertBefore(r.attachments,r.content);
+          }
+        }
         const text=userMessageText(message.content,message.interaction),key=JSON.stringify([text,message.interaction]);
         if(r.userKey!==key){r.userKey=key;r.content.replaceChildren(document.createTextNode(text));const selections=message.interaction?.selections;
           if(selections?.length){const details=el('details','message-selection-context'),summary=el('summary','','附带当前界面选择 · '+selections.length+' 项'),list=el('dl');for(const item of selections){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.display??(typeof item.value==='object'?JSON.stringify(item.value):String(item.value??'未选择'))));list.append(row);}details.append(summary,list);if(message.interaction.checkpoint?.status==='conflict')details.append(el('p','','这些选择已用于本次问题。旧界面在另一页面有较新进度，已保留那份进度。'));r.content.append(details);}
@@ -78,11 +88,13 @@ export class ConversationView{
       if(active&&(message._work?.length||message.grounding?.steps?.length))r.status.textContent='处理中';
       const pose=active?(message._phase==='writing'?'writing':message._phase==='verifying'||message._phase==='searching'||message._phase==='retrieving'?'search':(message.genui?.raw||message.content)?'writing':this.options.sources?.length?'search':'thinking'):message.status==='complete'?'complete':'rest';
       if(r.pose!==pose){r.pose=pose;const avatar=r.label.querySelector('img');avatar.src='/static/assets/luojia-messenger-'+pose+'.png';avatar.dataset.replyPose=pose;}
-      r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',active&&!!message._preview&&!message._liveParts);
-      const contentState=[message._preview,message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled];
+      const previewing=active&&message._preview!==undefined;
+      r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',previewing);
+      // Keep the preview until the complete verified result can replace it.
+      const contentState=[message._preview,previewing?'':message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled];
       if(!r.contentState||contentState.some((value,index)=>value!==r.contentState[index])){
         r.contentState=contentState;const parts=this.parts(message);r.parts=parts;
-        if(feature.enabled&&!(active&&message._preview!==undefined&&!message._liveParts)){
+        if(feature.enabled&&!previewing){
           if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
             imageResources:this.options.imageResources||[],askModel:event=>this.options.askModel({...event,message_id:message.id}),
             onChange:()=>{this.interactionOrigin=message.id;if(r.save){r.save.textContent='保存互动进度';r.saveFeedback.textContent='';}},
@@ -91,7 +103,7 @@ export class ConversationView{
             onSave:message.genui?async(index,snapshot)=>{const snapshots=r.renderer.snapshots();snapshots[index]=snapshot;await this.options.save(message.id,snapshots);}:null});}
           r.renderer.update(parts);
         }else{
-          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.content.replaceChildren(markdown(active&&message._preview!==undefined&&!message._liveParts?message._preview.replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{enhance:false}));
+          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.content.replaceChildren(markdown(previewing?message._preview.replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{enhance:false}));
         }
       }
       const waiting=message.status==='processing'&&!((message._preview||message.genui?.raw||message.content||'').length)&&!(message._work?.length||message.grounding?.steps?.length);

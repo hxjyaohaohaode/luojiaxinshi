@@ -91,6 +91,10 @@ CREATE TABLE IF NOT EXISTS conversation_messages(
  citations TEXT NOT NULL DEFAULT '[]', model TEXT, input_tokens INTEGER, output_tokens INTEGER,
  created_at INTEGER NOT NULL, UNIQUE(conversation_id,request_id));
 CREATE INDEX IF NOT EXISTS conversation_messages_parent ON conversation_messages(conversation_id,created_at);
+CREATE TABLE IF NOT EXISTS message_attachments(
+ message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ source_id TEXT NOT NULL REFERENCES conversation_sources(id) ON DELETE CASCADE,
+ position INTEGER NOT NULL, PRIMARY KEY(message_id,source_id));
 CREATE TABLE IF NOT EXISTS conversation_promotions(
  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
  fingerprint TEXT NOT NULL, notice_id TEXT NOT NULL REFERENCES notices(id) ON DELETE CASCADE,

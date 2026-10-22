@@ -30,6 +30,8 @@ def check(case='files', output_name=None):
         'conflict':'仅用本条消息，纯文字作答。这是合成工程资料：同一演示活动的通知甲写“11月3日18:00截止”，通知乙写“11月3日16:00截止”。两份材料都没有发布时间、版本号或替代说明。告诉我这项活动的最终截止时间，说明依据。',
         'clarify':'仅用本条消息，这是合成工程测试，没有真实账户或活动资料。帮我完成报名。请用一句话回复。',
         'memory':'我长期用中文写报告，所有项目都习惯先看结论再看依据。请用纯文字简短回复，不联网。',
+        'visual':'帮我看看这张作业图，我接下来应该做什么？这是工程测试，只用本次材料，不联网、不保存长期记忆。',
+        'mixed':'帮我看这批工程测试材料，整理能马上开始的准备顺序。不要漏掉后面的图片、音频和视频；无法理解的内容如实说明。不联网、不保存长期记忆。',
     }
     with tempfile.TemporaryDirectory(prefix='fixture-',dir=output) as folder:
         settings=replace(Settings.from_env(),data_dir=Path(folder),origin='http://127.0.0.1:8794',ai_daily_limit=12,
@@ -42,6 +44,22 @@ def check(case='files', output_name=None):
             client.post('/api/auth/login',json={'username':'synthetic-agent','password':'SyntheticOnly2026!'}).raise_for_status()
             client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf']
             chat=client.post('/api/conversations',json={'title':'原聊天 Agent 合成验收'}).json()
+            if case in ('visual','mixed'):
+                import io
+                from PIL import Image,ImageDraw,ImageFont
+                count=1 if case=='visual' else 6
+                for index in range(count):
+                    picture=Image.new('RGB',(640,300),'white');draw=ImageDraw.Draw(picture)
+                    draw.multiline_text((25,30),f'ENGINEERING TEST - PAGE {index+1}\nBuild a reading website\nRequired: login, search, book list\nSubmit: source code + short report\nDeadline: October 31 (year not stated)',fill='black',font=ImageFont.load_default(size=23),spacing=13)
+                    buffer=io.BytesIO();picture.save(buffer,format='PNG')
+                    uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(f'page-{index+1}.png',buffer.getvalue(),'image/png')})
+                    uploaded.raise_for_status();chat=uploaded.json()
+                if case=='mixed':
+                    sys.path.insert(0,str(ROOT/'tests'))
+                    from media_fixtures import wav,mp4
+                    for name,raw in [('tone.wav',wav()),('colors.mp4',mp4()),('notes.txt',b'Engineering test. Prepare the repository and a report outline first.')]:
+                        uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,raw)})
+                        uploaded.raise_for_status();chat=uploaded.json()
             started=time.monotonic()
             response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
                 'content':prompts[case],'request_id':ident(),'allow_external_processing':True})
@@ -107,5 +125,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','review','conflict','clarify','memory'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','review','conflict','clarify','memory','visual','mixed'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

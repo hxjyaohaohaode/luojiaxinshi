@@ -25,7 +25,8 @@ class GroundingClaim(Strict):
 class ChatAnswer(Strict):
     answer: str = Field(min_length=1,max_length=80000)
     citations: list[Evidence] = Field(default_factory=list,max_length=MAX_CITATIONS)
-    image_sources: list[str] = Field(default_factory=list,max_length=4)
+    image_sources: list[str] = Field(default_factory=list,max_length=100)
+    media_sources: list[str] = Field(default_factory=list,max_length=100)
     claims: list[GroundingClaim] = Field(default_factory=list,max_length=60)
     memory_actions: list[MemoryAction] = Field(default_factory=list,max_length=8)
 

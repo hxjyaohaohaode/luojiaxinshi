@@ -1,6 +1,6 @@
 import {brandMotion} from './motion.js';
 import {setDisclosureVisible} from './reference-interactions.js';
-export const materialFormats='.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.yaml,.yml,.log,.ini,.toml,.sql,.py,.js,.ts,.css,.c,.cpp,.h,.java,.tex,.ics,.eml,.html,.htm,.svg,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.mp4,.webm,.mp3,.wav,.m4a,.ogg,.flac,.zip';
+export const materialFormats='.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.yaml,.yml,.log,.ini,.toml,.sql,.py,.js,.ts,.css,.c,.cpp,.h,.java,.tex,.ics,.eml,.html,.htm,.svg,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.mp4,.webm,.mov,.avi,.wmv,.mp3,.wav,.m4a,.ogg,.flac,.zip';
 export function searchControls({id,esc,icon,scope='materials',kinds=[]}){
  const label=scope==='history'?'搜索历史对话':scope==='sources'?'搜索通知来源':'搜索本次材料';
  const filterIcon='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4"/></svg>';

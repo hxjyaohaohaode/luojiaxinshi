@@ -4,9 +4,9 @@ from app.genui_ai import payload
 from app.genui import validate_node
 from test_workflow import env,account
 from test_workspace import conversation
+from media_fixtures import mp4
 
-# Header fixtures validate boundary handling, not codec playability.
-MP4=b'\x00\x00\x00\x18ftypisom\x00\x00\x02\x00isommp41'+b'payload'*30
+MP4=mp4()
 
 
 def test_private_video_range_and_resource_authorization(env):
@@ -23,9 +23,10 @@ def test_private_video_range_and_resource_authorization(env):
     assert resource_index([{**source,'status':'failed'}])==[]
     source['content']=MP4
     request=payload(env[1],[source],[],{},1)
-    material=request['messages'][1]['content'];assert len(material)==1
-    assert '模型未观看视频' in material[0]['text'] and resources[0]['src'] in material[0]['text']
-    assert 'data:video' not in str(request)
+    material=request['messages'][1]['content']
+    assert resources[0]['src'] in material[0]['text']
+    assert any(part['type']=='video_url' for part in material)
+    assert 'data:video/mp4;base64,' in str(request)
 
 
 def test_media_spoofs_and_plot_expressions_are_rejected():

@@ -95,9 +95,11 @@ def complete(settings,payload,max_bytes):
 def transcribe(settings,payload):
     message,usage=complete(settings,payload,200000)
     text=message.get('content')
-    if not isinstance(text,str) or not text.strip() or len(text)>10000:
+    if not isinstance(text,str) or len(text)>10000:
         raise AIError('没有得到有效听写文字，请重新录音')
-    return {'text':text.strip(),'model':payload['model'],'usage':usage}
+    # An empty successful ASR response is a quiet/unrecognised segment, not a
+    # transport failure. Keep earlier text and continue with subsequent speech.
+    return {'text':text.strip(),'no_speech':not bool(text.strip()),'model':payload['model'],'usage':usage}
 
 
 def synthesize(settings,payload):
@@ -114,6 +116,8 @@ def synthesize(settings,payload):
 
 
 def install_speech(app,db,settings,user,heavy_lock):
+    from threading import BoundedSemaphore
+    speech_slots=BoundedSemaphore(2)
     from .speech_cache import SpeechCache
     cache=SpeechCache(db)
     @app.get('/api/speech/config')
@@ -129,7 +133,9 @@ def install_speech(app,db,settings,user,heavy_lock):
         if not settings.ai_api_key:raise HTTPException(503,'请在服务端填写 MIMO_API_KEY 并重启后使用语音')
         from .model_catalog import channel
         if channel(settings.ai_base_url)=='token_plan':raise HTTPException(503,'当前语音适配器需要普通按量 API 凭证，未向订阅通道发送录音或文字')
-        if not heavy_lock.acquire(False):raise HTTPException(429,'正在处理其他材料，请稍后重试')
+        # Dictation remains responsive while an agent is answering or parsing.
+        # Speech has its own bounded lane; it cannot start another chat job.
+        if not speech_slots.acquire(False):raise HTTPException(429,'语音服务正在处理其他录音，请稍后重试')
         try:
             day=datetime.now(timezone(timedelta(hours=8))).date().isoformat()
             rate_limit(db,'speech:'+current['id']+':'+day,settings.ai_daily_limit,86400)
@@ -137,7 +143,7 @@ def install_speech(app,db,settings,user,heavy_lock):
         except AIError as exc:
             raise HTTPException(502,str(exc)) from None
         finally:
-            heavy_lock.release()
+            speech_slots.release()
 
     async def read_audio(form,key):
         upload=form.get(key)

@@ -17,7 +17,7 @@ from .documents import PARSER_SLOTS
 MAX_UPLOAD=20*1024*1024
 MAX_PREVIEW=1000000
 TEXT_KINDS={'txt','md','csv','tsv','json','jsonl','xml','yaml','yml','log','ini','toml','sql','py','js','ts','css','c','cpp','h','java','tex','ics','eml','html','htm','svg','rtf'}
-FORMATS=TEXT_KINDS|{'pdf','docx','xlsx','pptx','odt','ods','odp','png','jpg','jpeg','webp','gif','bmp','tiff','tif','mp4','webm','mp3','wav','m4a','ogg','flac','doc','xls','ppt'}
+FORMATS=TEXT_KINDS|{'pdf','docx','xlsx','pptx','odt','ods','odp','png','jpg','jpeg','webp','gif','bmp','tiff','tif','mp4','webm','mov','avi','wmv','mp3','wav','m4a','ogg','flac','doc','xls','ppt'}
 
 def safe_path(value):
     value=str(value).replace('\\','/').strip('/')
@@ -72,16 +72,16 @@ def full_extract(data,kind):
                 if text:sections.append({'locator':f'第 {i} 页' if kind=='pptx' else '文档正文','text':text})
         if sum(len(s['text']) for s in sections)>MAX_PREVIEW:raise ValueError('全文超过预览上限，请拆分材料')
         return {'sections':sections,'status':'review','warning':'全文文字预览；版式、图片、图表请对照原件。'}
-    if kind in {'doc','xls','ppt','mp3','wav','m4a','ogg','flac'}:
-        return {'sections':[],'status':'review','warning':'原件已保存，可下载。音频可直接播放；旧版 Office 请另存为 DOCX / XLSX / PPTX 后读取正文。'}
+    if kind in {'mp4','webm','mov','avi','wmv','mp3','wav','m4a','ogg','flac'}:
+        from .media_input import inspect_media
+        return inspect_media(data,kind)
+    if kind in {'doc','xls','ppt'}:
+        return {'sections':[],'status':'review','warning':'原件已保存，可下载；尚未读取正文。请另存为 DOCX / XLSX / PPTX 后上传。'}
     if kind in {'gif','bmp','tif','tiff'}:
         from PIL import Image
         Image.MAX_IMAGE_PIXELS=20000000
         with Image.open(io.BytesIO(data)) as picture:picture.verify()
-        return {'sections':[],'status':'review','warning':'图片原件已保存，可完整预览。需要文字检索时请提供关键词或使用图片检索。'}
-    if kind in {'mp4','webm'}:
-        from .chat_media import chat_file_source
-        return {k:v for k,v in chat_file_source('media.'+kind,data,max_file=MAX_UPLOAD).items() if k in {'sections','status','warning'}}
+        return {'sections':[],'status':'review','warning':'图片原件已保存，当前模型尚未读取这种图片格式；请转为 PNG、JPG 或 WebP 后上传。'}
     from . import parser_worker
     parser_worker.MAX_TEXT=MAX_PREVIEW
     if kind=='docx':

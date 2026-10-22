@@ -19,11 +19,15 @@ CONTRACT = '''
 证据足够或已清楚说明缺项后，单独调用 submit_answer 提交最终内容（不能只是计划或声称将继续工作）。用户说“纯文字”“一句话”限制的是 answer 的呈现，不取消内部工具协议。参数形状：
 {"answer":"Markdown 正文","claims":[{"kind":"fact|inference|advice|unknown|interface","text":"关键结论","evidence_refs":["E1"]}],"image_sources":[],"memory_actions":[]}
 answer 先给本题结论、最重要的条件或下一步；正文中的材料事实就近引用工具 evidence_index 中的 [E编号]。不要手写显示编号、citations 或 citation_indices。没有依据的结论保留未知。执行回执只证明那次操作；读取和子任务概述不能证明学校手续已经完成。
+每条 claim 聚焦一个可核对的事实，evidence_refs 只放支持这条事实的原文；不能把相邻的另一个材料顺手挂到同一 claim。图像/音视频中的直接观察属于 fact，尚未直接观察到的推断才是 inference。
 submit_answer 不能与其他工具放在同一批。也兼容无工具调用的最终 JSON 内容。服务器将检查引文、交互协议、当前权限，并独立复核后发布；有问题会阻止发布。简单问答不需要检索或界面，不因流程而额外搜索。
 需要分层阅读、选择、筛选、试算等交互时，先调用 ui_capabilities 取得所需组件的准确协议，再用随之开放的 submit_interface 提交 lead/state/nodes/claims。lead 只用一句必要导语，nodes 承担主要信息和操作，不套整页模板；同一事实只表达一次，支持细节按需展开。
 memory_control.may_propose=true 时，主动判断本轮是否有新事实、偏好、项目目标或纠错；有维护需要才读取 memory_capabilities，再随最终答复提交 memory_actions，不必等用户说“记住”。没有新信息不为凑流程调用。纯文字答复同样可以维护记忆。临时要求不能变成长期偏好，目标 ID、版本和范围不能猜，关闭或限制记忆时不提交操作。已有记忆不能当作当前官方规定。
 长期偏好与本次答复要求分别处理；每条 source_quote 只摘取支持这一条的最小完整原句，不把同一消息里的临时指令混入长期记录。维护操作在答复核验后才执行，本次提交前没有保存回执，正文不能声称“已保存/已记下”；用实际内容说明本轮如何响应，保存状态由宿主真实回执展示。
-图像尚未由本轮视觉模型读取时不要猜图中内容，使用 research_complete 交给原视觉链路。
+本轮提供的原图直接随调用发送；看到像素后可使用图片观察 ref 作答，同时登记 image_sources。不为读图额外转交生成器；未附原图或无法辨认时保留缺口，不猜内容。
+建议的理由也须有依据：材料中的功能清单不等于评分标准，未给全规则时不得声称“只有这些要求”或“唯一缺口”；自己拟定的顺序、优先级和验收方式明确作为个人建议。
+缺失年份或关键前提时先标明未知，继续做不依赖这些前提的准备，不主动假设年份计算倒计时。不要为解释简单材料扩展无关情景或反复复述全部原文。
+attachment_inventory 是整批材料目录，不等于全部内容已理解。失败、旧 Office 无文字、没有附原件的媒体需按文件名明确缺口，不能静默漏读。音视频随调用发送，观察结论引用对应 ref 并登记 media_sources；不把媒体信息或文件名当成内容。多份资料要比较和汇总当前问题所需内容，不只复述第一份。
 '''
 
 
@@ -172,8 +176,6 @@ def compile_answer(raw, sources, entries, *, allow_ui=True, normalization_log=No
         raise ValueError('本轮要求纯文字，请移除 ui')
     result = resolve_citations(parsed.model_dump(), entries)
     check_evidence(result['citations'], sources)
-    if result['image_sources']:
-        raise ValueError('本阶段未读取图像；请使用 research_complete 交给视觉链路')
     ui = result.pop('ui', None)
     if any(p['kind'] == 'ui' for p in parse_message(result['answer'])):
         raise ValueError('answer 只能写 Markdown，界面须放在 ui 字段')

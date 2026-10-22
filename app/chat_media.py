@@ -1,4 +1,4 @@
-"""Private, bounded media references. Video bytes never enter model payloads."""
+"""Private, bounded playback references; model transport lives in media_input."""
 import hashlib
 import re
 from pathlib import Path
@@ -7,7 +7,7 @@ from fastapi import Response
 from .db import ident
 from .documents import file_source, MAX_FILE
 
-VIDEO_MIME={'mp4':'video/mp4','webm':'video/webm'}
+VIDEO_MIME={'mp4':'video/mp4','webm':'video/webm','mov':'video/quicktime','avi':'video/x-msvideo','wmv':'video/x-ms-wmv'}
 IMAGE_KINDS={'png','jpg','jpeg','webp'}
 
 

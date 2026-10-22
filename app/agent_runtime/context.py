@@ -37,7 +37,7 @@ def initial_context(value, budget):
     """
     result = {key: value[key] for key in ('now', 'timezone', 'memory_control', 'web_restricted') if key in value}
     result['deferred'] = {}
-    for key in ('session_memory', 'working_memory', 'memory_catalog'):
+    for key in ('personal_conditions', 'session_memory', 'working_memory', 'memory_catalog'):
         data = value.get(key)
         if data:
             candidate = {**result, key: data}
@@ -45,7 +45,7 @@ def initial_context(value, budget):
                 result = candidate
             else:
                 result['deferred'][key] = '按需用 memory_capabilities(section=context) 读取完整当前记录'
-    for key in ('sources', 'user_sources', 'evidence_index'):
+    for key in ('attachment_inventory', 'sources', 'user_sources', 'evidence_index'):
         result[key] = []
         omitted = 0
         for entry in value.get(key, []):

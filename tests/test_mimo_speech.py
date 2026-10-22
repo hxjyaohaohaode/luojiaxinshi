@@ -113,3 +113,10 @@ def test_invalid_provider_audio_does_not_reach_playback(env,monkeypatch):
     env[1].ai_api_key='synthetic'
     provider(monkeypatch,lambda req:httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'audio':{'data':'bad-base64'}}}]}))
     with pytest.raises(AIError,match='音频无效'):speech.synthesize(env[1],speech.tts_payload(env[1],'测试'))
+
+def test_silent_asr_segment_does_not_fail_the_recording(env,monkeypatch):
+    env[1].ai_api_key='synthetic';c=account(env)
+    provider(monkeypatch,lambda req:httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':'  '}}]}))
+    response=c.post('/api/speech/transcribe',data={'allow_external_processing':'true'},files={'audio':('quiet.wav',wav(),'audio/wav')})
+    assert response.status_code==200,response.text
+    assert response.json()['text']=='' and response.json()['no_speech'] is True
