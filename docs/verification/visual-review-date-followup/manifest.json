@@ -1,8 +1,12 @@
 {
-  "application_source_commit": "5eb26f8bdb0e4ca6f7999848ca19cf368f33d691",
+  "application_source_commit": "894cfb2dc79b5cfeda872081c4c7ec5c5be22ed1",
   "origin": "local synthetic fixture; not cloud CI",
   "contains_real_user_data": false,
   "cases": {
+    "browser-stability.json": 120,
+    "browser-regression.json": 198,
+    "reference-interactions.json": 45,
+    "workspace-interactions.json": 54,
     "visual-layout.json": 63,
     "node-unit.json": 139
   },
@@ -169,9 +173,9 @@
     "static/memory-assist.js": "033e12daf0eee062519c28f7b06f3deea7237f4646c18568051922bb64fbf558",
     "static/memory-drafts.js": "39b3def2c2cc0b095febc6c5039d1818478183f29be8494c47b6e332317e6a2b",
     "static/memory-intents.js": "03a83e4751a3281b0d39aff7f9907abb2cb9b17965982f4fb37ea3c748a75d2d",
-    "static/memory-lifecycle.js": "827986fbd481d19b0438aac960268b134d280e83b27895a38325d6386fecd6b6",
+    "static/memory-lifecycle.js": "025c7f5d5bb1eebd53cfeca1209997066c314e0b0d2f88928668db9ddc7eaca7",
     "static/memory-list-text.js": "c5c0726702d8919683441b77b1c5b065439c69367da301fa5dedb3a82d4196f9",
-    "static/memory-studio.js": "e34aeb41a06fe975340b46dbe6e3a54da37374e5a80627a8c3655f4302a20150",
+    "static/memory-studio.js": "4936d980cba3da4e956ef29d58965e57033a3ab9e947339314d79138b2d4bcc3",
     "static/memory-tree.css": "e20ef6f25b11a7f6a5cb19543d8ed0d0172311bcf3d0f09aa6c5846ad4574e7a",
     "static/memory-tree.js": "4f6aa1f69aedbb67fb090da009666d65512dedd8a9a53d06961192e02242d280",
     "static/memory.css": "4d15e57f5bc3c03c9077045b82a98a9ebca094cb02e346f6e42c9bca97daa30f",
@@ -210,10 +214,14 @@
     "static/workspace.css": "f265671419d3a916db8348dcfec9d50318b18395402a9432b4fd06163543bfd8"
   },
   "files": {
-    "node-unit.json": "4d64531436bba8d3a425507e3565e50911b2d1200d9e3ab894f588c2632d9c1b",
-    "README.md": "3b2e0850ff84dd3f7d8a06a9c8712635c139e61b33518139d21bb12757b1f9da",
+    "browser-regression.json": "77eec20ef4734f78a1c91487c33d1108783fea5e73abade5209fa5a556133a6c",
+    "browser-stability.json": "1a213d7dcf7c4b1032e16eba82841a538df6d2d2bba9e159efad4fd56b7b8801",
+    "node-unit.json": "f10f894e665811c82e9a083b106f6d897d1318d5fe2f2e2b47331010da6d211d",
+    "README.md": "4de7dd5eba1ab1af5326d655673305ac4cb8d0e9fd901e98dd20b5988392351f",
+    "reference-interactions.json": "b1e26a50e8bfc3d6274f063856d855fefb899f0f3aecdeb3d690503af4b79ed0",
     "visual-layout.json": "852515d0b2505dd4e6832bd7580b530ed9886aba0b58b2f247b1b1aaf0baddb1",
-    "screenshots/memory-1413.png": "b675b81b735aae811490e719beb4d1f5e1b59f814eb3c8e9afe6a2358e99a93e",
-    "screenshots/memory-390.png": "e7230dded68b872c6c3e737540c4d2726fb56473c69d1b9f8daced4db8d4a4ca"
+    "workspace-interactions.json": "aa4766f0e680f35e1317a9d89aa7a055d808fc1793c65e54bcc41a14e21696ed",
+    "screenshots/memory-1413.png": "9631d07a7fa8e70b8afa9f86e7f7c8d0e22bd85335f4e0494f071c6ab0486c7e",
+    "screenshots/memory-390.png": "096966e971daded3e59b897f577cc99e229251184aace296c3833b7fad1cbc0b"
   }
 }

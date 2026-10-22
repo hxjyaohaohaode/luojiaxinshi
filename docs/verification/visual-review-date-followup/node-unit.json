@@ -9,337 +9,337 @@
       "suite": "test",
       "name": "optional proposals require an explicit selection and do not decide participation",
       "passed": true,
-      "seconds": 0.004854
+      "seconds": 0.004473
     },
     {
       "suite": "test",
       "name": "reorder preserves original dependency identity and remaps selected indexes",
       "passed": true,
-      "seconds": 0.000543
+      "seconds": 0.000548
     },
     {
       "suite": "test",
       "name": "unselected, removed or malformed predecessors are never silently discarded",
       "passed": true,
-      "seconds": 0.000655
+      "seconds": 0.000663
     },
     {
       "suite": "test",
       "name": "replacement preserves existing execution unless plan update is explicitly selected",
       "passed": true,
-      "seconds": 0.000337
+      "seconds": 0.000399
     },
     {
       "suite": "test",
       "name": "declined optional tasks leave active work and calendar but remain in history",
       "passed": true,
-      "seconds": 0.000558
+      "seconds": 0.000488
     },
     {
       "suite": "test",
       "name": "PCM WAV is mono, 16 kHz, 16 bit and retains duration across common browser sample rates",
       "passed": true,
-      "seconds": 0.009785
+      "seconds": 0.011541
     },
     {
       "suite": "test",
       "name": "negative samples and mixed stereo are bounded",
       "passed": true,
-      "seconds": 0.001228
+      "seconds": 0.000625
     },
     {
       "suite": "test",
       "name": "a branch preview owns an independent cutoff without persisting or altering the origin",
       "passed": true,
-      "seconds": 0.004543
+      "seconds": 0.004605
     },
     {
       "suite": "test",
       "name": "a branch cannot silently target another answer, a user message or a running turn",
       "passed": true,
-      "seconds": 0.000407
+      "seconds": 0.000415
     },
     {
       "suite": "test",
       "name": "calendar civil days remain correct at leap years, month ends and Beijing midnight",
       "passed": true,
-      "seconds": 0.023194
+      "seconds": 0.019929
     },
     {
       "suite": "test",
       "name": "recurring courses appear only on requested weeks, with inclusive last occurrence",
       "passed": true,
-      "seconds": 0.002395
+      "seconds": 0.002244
     },
     {
       "suite": "test",
       "name": "cross-midnight plans and multi-day all-day arrangements occupy the correct dates",
       "passed": true,
-      "seconds": 0.000512
+      "seconds": 0.000337
     },
     {
       "suite": "test",
       "name": "official deadlines and preparation times remain distinct, cancelled and other-person tasks are excluded",
       "passed": true,
-      "seconds": 0.002065
+      "seconds": 0.001774
     },
     {
       "suite": "test",
       "name": "a repeating overnight course carries into the first visible day and midnight adds no empty segment",
       "passed": true,
-      "seconds": 0.000489
+      "seconds": 0.000435
     },
     {
       "suite": "test",
       "name": "overlapping class cards use separate columns; adjacent classes reuse full width",
       "passed": true,
-      "seconds": 0.000318
+      "seconds": 0.000289
     },
     {
       "suite": "test",
       "name": "the immersive timetable uses the supplied period scale without changing actual times",
       "passed": true,
-      "seconds": 0.000272
+      "seconds": 0.000182
     },
     {
       "suite": "test",
       "name": "source panel groups repeated citations without changing inline numbering",
       "passed": true,
-      "seconds": 0.002061
+      "seconds": 0.002516
     },
     {
       "suite": "test",
       "name": "elapsed work time uses actual timestamps and never goes negative",
       "passed": true,
-      "seconds": 0.001112
+      "seconds": 0.001111
     },
     {
       "suite": "test",
       "name": "private record quotes keep meaningful values without exposing protocol and database fields",
       "passed": true,
-      "seconds": 0.000645
+      "seconds": 0.00065
     },
     {
       "suite": "test",
       "name": "citation targets reach owned record routes and reject executable or unsupported URLs",
       "passed": true,
-      "seconds": 0.000481
+      "seconds": 0.000504
     },
     {
       "suite": "test",
       "name": "focused citations show their own exact span instead of unrelated page navigation",
       "passed": true,
-      "seconds": 0.000384
+      "seconds": 0.000527
     },
     {
       "suite": "test",
       "name": "search ranks exact titles before prefixes and material matches, without mutating records",
       "passed": true,
-      "seconds": 0.001872
+      "seconds": 0.002509
     },
     {
       "suite": "test",
       "name": "search matches notice sources and task source titles, handles empty and incomplete records",
       "passed": true,
-      "seconds": 0.000342
+      "seconds": 0.001536
     },
     {
       "suite": "test",
       "name": "highlighting escapes markup in every segment and treats regex punctuation as text",
       "passed": true,
-      "seconds": 0.001166
+      "seconds": 0.001753
     },
     {
       "suite": "test",
       "name": "serialized delayed writes preserve latest input",
       "passed": true,
-      "seconds": 0.002961
+      "seconds": 0.002389
     },
     {
       "suite": "test",
       "name": "late input cannot resurrect a retired draft",
       "passed": true,
-      "seconds": 0.000684
+      "seconds": 0.000635
     },
     {
       "suite": "test",
       "name": "a second tab cannot silently overwrite a different draft",
       "passed": true,
-      "seconds": 0.001003
+      "seconds": 0.001099
     },
     {
       "suite": "test",
       "name": "network failure can retry without losing latest local text",
       "passed": true,
-      "seconds": 0.000532
+      "seconds": 0.000578
     },
     {
       "suite": "test",
       "name": "lost success response is reconciled before retry",
       "passed": true,
-      "seconds": 0.000634
+      "seconds": 0.000868
     },
     {
       "suite": "test",
       "name": "an old load does not erase input typed while loading",
       "passed": true,
-      "seconds": 0.0007
+      "seconds": 0.00192
     },
     {
       "suite": "test",
       "name": "read failure remains retryable and does not replace user text",
       "passed": true,
-      "seconds": 0.00118
+      "seconds": 0.000596
     },
     {
       "suite": "test",
       "name": "a new editor opened before the old save finishes keeps its draft",
       "passed": true,
-      "seconds": 0.000312
+      "seconds": 0.000427
     },
     {
       "suite": "test",
       "name": "a reopened editor survives an old cache deletion already in flight",
       "passed": true,
-      "seconds": 0.000471
+      "seconds": 0.000619
     },
     {
       "suite": "test",
       "name": "a lost deletion response reconciles before saving a new editor",
       "passed": true,
-      "seconds": 0.000623
+      "seconds": 0.000784
     },
     {
       "suite": "test",
       "name": "a failed deletion cannot retire or overwrite a newer editor",
       "passed": true,
-      "seconds": 0.000396
+      "seconds": 0.00067
     },
     {
       "suite": "test",
       "name": "a deletion conflict leaves another tab intact and keeps this tab recoverable",
       "passed": true,
-      "seconds": 0.000722
+      "seconds": 0.000559
     },
     {
       "suite": "test",
       "name": "a stale checkpoint from a cleared store cannot delete a new session draft",
       "passed": true,
-      "seconds": 0.000406
+      "seconds": 0.000253
     },
     {
       "suite": "test",
       "name": "navigation flush does not wait for cleanup of already saved content",
       "passed": true,
-      "seconds": 0.006525
+      "seconds": 0.007704
     },
     {
       "suite": "test",
       "name": "speech covers the complete reply, splits long paragraphs and keeps emoji intact",
       "passed": true,
-      "seconds": 0.002371
+      "seconds": 0.002802
     },
     {
       "suite": "test",
       "name": "citation snapshots use readable date and material labels, preserving original inputs",
       "passed": true,
-      "seconds": 0.000507
+      "seconds": 0.000735
     },
     {
       "suite": "test",
       "name": "preview events are distinct from committed deltas and resets do not mark completion",
       "passed": true,
-      "seconds": 0.001378
+      "seconds": 0.002312
     },
     {
       "suite": "test",
       "name": "chart series share the same x domain; grouped bars do not overlap",
       "passed": true,
-      "seconds": 0.001422
+      "seconds": 0.001145
     },
     {
       "suite": "test",
       "name": "single scatter x remains centered and finite",
       "passed": true,
-      "seconds": 0.000244
+      "seconds": 0.000265
     },
     {
       "suite": "test",
       "name": "finite extreme values cannot create invalid SVG coordinates",
       "passed": true,
-      "seconds": 0.00023
+      "seconds": 0.000231
     },
     {
       "suite": "test",
       "name": "unsupported action expressions fail validation before any user clicks",
       "passed": true,
-      "seconds": 0.003068
+      "seconds": 0.003846
     },
     {
       "suite": "test",
       "name": "model-authored array conditions filter sections with the same bounded grammar",
       "passed": true,
-      "seconds": 0.001998
+      "seconds": 0.001225
     },
     {
       "suite": "test",
       "name": "data pipelines keep derived counts, totals, rows and chart points in agreement",
       "passed": true,
-      "seconds": 0.001636
+      "seconds": 0.002158
     },
     {
       "suite": "test",
       "name": "arbitrary repeated content and conditional sections export the visible state",
       "passed": true,
-      "seconds": 0.005219
+      "seconds": 0.00384
     },
     {
       "suite": "test",
       "name": "copy and share export the selected tab from the saved view",
       "passed": true,
-      "seconds": 0.000874
+      "seconds": 0.000602
     },
     {
       "suite": "test",
       "name": "every UTF-8 byte boundary gives the same normalized mixed message",
       "passed": true,
-      "seconds": 0.321555
+      "seconds": 0.269923
     },
     {
       "suite": "test",
       "name": "partial JSON lines never apply; text appears first; incomplete UI survives",
       "passed": true,
-      "seconds": 0.000965
+      "seconds": 0.000728
     },
     {
       "suite": "test",
       "name": "duplicate IDs overwrite, patch merges, bad lines do not discard neighbours",
       "passed": true,
-      "seconds": 0.000715
+      "seconds": 0.000558
     },
     {
       "suite": "test",
       "name": "unknown type and invalid props are local readable placeholders",
       "passed": true,
-      "seconds": 0.001295
+      "seconds": 0.001224
     },
     {
       "suite": "test",
       "name": "cycles, depth, missing children and 301st node are bounded",
       "passed": true,
-      "seconds": 0.009599
+      "seconds": 0.011467
     },
     {
       "suite": "test",
       "name": "string, block, message, state and operation caps fail safely",
       "passed": true,
-      "seconds": 0.001227
+      "seconds": 0.00117
     },
     {
       "suite": "test",
       "name": "prototype pollution is rejected at every nesting level",
       "passed": true,
-      "seconds": 0.000638
+      "seconds": 0.000562
     },
     {
       "suite": "test",
@@ -351,151 +351,151 @@
       "suite": "test",
       "name": "dirty state resists streaming defaults, type changes and missing paths",
       "passed": true,
-      "seconds": 0.000516
+      "seconds": 0.000533
     },
     {
       "suite": "test",
       "name": "untrusted data cannot forge service data and actions stay allowlisted",
       "passed": true,
-      "seconds": 0.000865
+      "seconds": 0.001245
     },
     {
       "suite": "test",
       "name": "plain fenced code is never interpreted as a UI block",
       "passed": true,
-      "seconds": 0.000551
+      "seconds": 0.000661
     },
     {
       "suite": "test",
       "name": "verified public source buttons open the exact page without trusting an entire host",
       "passed": true,
-      "seconds": 0.000526
+      "seconds": 0.000679
     },
     {
       "suite": "test",
       "name": "nullable answers accept only declared primitive choices without relaxing ordinary state types",
       "passed": true,
-      "seconds": 0.003045
+      "seconds": 0.002999
     },
     {
       "suite": "test",
       "name": "qualitative compositions validate and retain their registered evidence",
       "passed": true,
-      "seconds": 0.010713
+      "seconds": 0.009876
     },
     {
       "suite": "test",
       "name": "reading focus changes comparison dimensions without changing the source records",
       "passed": true,
-      "seconds": 0.002863
+      "seconds": 0.002792
     },
     {
       "suite": "test",
       "name": "personalized briefs and exercise feedback export the current visible state",
       "passed": true,
-      "seconds": 0.00602
+      "seconds": 0.009044
     },
     {
       "suite": "test",
       "name": "submitted questions display actual typed text while keeping protocol data in the inspectable context",
       "passed": true,
-      "seconds": 0.002379
+      "seconds": 0.002493
     },
     {
       "suite": "test",
       "name": "editing history coalesces typing, branches after undo and keeps a bounded memory",
       "passed": true,
-      "seconds": 0.000803
+      "seconds": 0.000747
     },
     {
       "suite": "test",
       "name": "follow-up context carries editable values and local actions without copying source records",
       "passed": true,
-      "seconds": 0.006663
+      "seconds": 0.006002
     },
     {
       "suite": "test",
       "name": "per-record input context contains only changed editable leaves and no source paragraphs",
       "passed": true,
-      "seconds": 0.00888
+      "seconds": 0.001742
     },
     {
       "suite": "test",
       "name": "copy output retains form drafts and selected option labels",
       "passed": true,
-      "seconds": 0.007866
+      "seconds": 0.000557
     },
     {
       "suite": "test",
       "name": "cleared form drafts, reading tabs and local checklists replace old context",
       "passed": true,
-      "seconds": 0.000468
+      "seconds": 0.00029
     },
     {
       "suite": "test",
       "name": "math presentation supports fractions roots and indices without execution",
       "passed": true,
-      "seconds": 0.001722
+      "seconds": 0.002714
     },
     {
       "suite": "test",
       "name": "all gallery components export readable equivalent text",
       "passed": true,
-      "seconds": 0.027226
+      "seconds": 0.018398
     },
     {
       "suite": "test",
       "name": "plot computes a bounded curve and linked parameters deterministically",
       "passed": true,
-      "seconds": 0.005828
+      "seconds": 0.005365
     },
     {
       "suite": "test",
       "name": "plot rejects unsafe expressions, variables, domains and excessive sampling",
       "passed": true,
-      "seconds": 0.001653
+      "seconds": 0.002179
     },
     {
       "suite": "test",
       "name": "long Chinese answers survive hundreds of frames and a full history checkpoint",
       "passed": true,
-      "seconds": 0.224794
+      "seconds": 0.262271
     },
     {
       "suite": "test",
       "name": "work summaries carry stable stage IDs and reject malformed state",
       "passed": true,
-      "seconds": 0.001374
+      "seconds": 0.000884
     },
     {
       "suite": "test",
       "name": "verified reply phases preserve ordering without accepting arbitrary events",
       "passed": true,
-      "seconds": 0.000397
+      "seconds": 0.000389
     },
     {
       "suite": "test",
       "name": "SSE frames survive every UTF-8 byte split and duplicate delivery",
       "passed": true,
-      "seconds": 0.009863
+      "seconds": 0.006757
     },
     {
       "suite": "test",
       "name": "SSE gaps, malformed frames and oversized events stop safely",
       "passed": true,
-      "seconds": 0.000505
+      "seconds": 0.000691
     },
     {
       "suite": "test",
       "name": "selected UTF-16 text converts to exact API character offsets",
       "passed": true,
-      "seconds": 0.001076
+      "seconds": 0.001761
     },
     {
       "suite": "test",
       "name": "reload recovers the exact Unicode draft and original version in the same tab",
       "passed": true,
-      "seconds": 0.001515
+      "seconds": 0.00152
     },
     {
       "suite": "test",
@@ -507,337 +507,337 @@
       "suite": "test",
       "name": "new owner on reload removes other owner namespace",
       "passed": true,
-      "seconds": 0.000229
+      "seconds": 0.000185
     },
     {
       "suite": "test",
       "name": "unavailable or malformed storage never blocks editing",
       "passed": true,
-      "seconds": 0.000464
+      "seconds": 0.000581
     },
     {
       "suite": "test",
       "name": "unchanged content removes a draft and capacity stays bounded",
       "passed": true,
-      "seconds": 0.000302
+      "seconds": 0.000696
     },
     {
       "suite": "test",
       "name": "confirmed completion starts a new intent while unconfirmed retries stay stable",
       "passed": true,
-      "seconds": 0.015326
+      "seconds": 0.011637
     },
     {
       "suite": "test",
       "name": "retry preserves the same write intent, while edits and accounts get new intents",
       "passed": true,
-      "seconds": 0.00483
+      "seconds": 0.0065
     },
     {
       "suite": "test",
       "name": "memory list separates a complete opening sentence from its continuation",
       "passed": true,
-      "seconds": 0.002981
+      "seconds": 0.001084
     },
     {
       "suite": "test",
       "name": "memory list respects a first-line summary without dropping the first bullet",
       "passed": true,
-      "seconds": 0.00113
+      "seconds": 0.001094
     },
     {
       "suite": "test",
       "name": "long unbroken memory keeps the original preview, including text beyond a clipped title",
       "passed": true,
-      "seconds": 0.002327
+      "seconds": 0.001232
     },
     {
       "suite": "test",
       "name": "excerpt boundaries preserve supplementary unicode and short content",
       "passed": true,
-      "seconds": 0.001258
+      "seconds": 0.000234
     },
     {
       "suite": "test",
       "name": "memory dates use the campus day across the UTC midnight boundary",
       "passed": true,
-      "seconds": 0.000401
+      "seconds": 0.000301
     },
     {
       "suite": "test",
       "name": "memory dates never expose invalid timestamps as visible text",
       "passed": true,
-      "seconds": 0.00017
+      "seconds": 0.000162
     },
     {
       "suite": "test",
       "name": "memory dates accept epoch seconds and do not treat zero as missing",
       "passed": true,
-      "seconds": 0.000184
+      "seconds": 0.000242
     },
     {
       "suite": "test",
       "name": "memory receipt distinguishes actual persistence from proposals and blocked forgetting",
       "passed": true,
-      "seconds": 0.002007
+      "seconds": 0.001664
     },
     {
       "suite": "test",
       "name": "malformed or model-defined receipt statuses cannot become UI text",
       "passed": true,
-      "seconds": 0.001054
+      "seconds": 0.000412
     },
     {
       "suite": "test",
       "name": "lifecycle receipts distinguish temporary context, checkpoints, actual use and clearing",
       "passed": true,
-      "seconds": 0.00031
+      "seconds": 0.000311
     },
     {
       "suite": "test",
       "name": "all eleven approved animations retain the recorded original path geometry",
       "passed": true,
-      "seconds": 0.00358
+      "seconds": 0.00436
     },
     {
       "suite": "test",
       "name": "repeated poses across panels have unique masks, gradients and self-contained references",
       "passed": true,
-      "seconds": 0.014509
+      "seconds": 0.014909
     },
     {
       "suite": "test",
       "name": "every imported animation references an available keyframe and respects a local selector scope",
       "passed": true,
-      "seconds": 0.001586
+      "seconds": 0.001171
     },
     {
       "suite": "test",
       "name": "status graphics stay decorative and feedback escapes text, without forged percentage progress",
       "passed": true,
-      "seconds": 0.001453
+      "seconds": 0.001476
     },
     {
       "suite": "test",
       "name": "a superseded navigation cannot leave a loading overlay or erase the current pending route",
       "passed": true,
-      "seconds": 0.001028
+      "seconds": 0.001952
     },
     {
       "suite": "test",
       "name": "attachment additions retain earlier selections and ignore identical files",
       "passed": true,
-      "seconds": 0.001905
+      "seconds": 0.001922
     },
     {
       "suite": "test",
       "name": "invalid batches preserve the full earlier queue without partial acceptance",
       "passed": true,
-      "seconds": 0.000428
+      "seconds": 0.00047
     },
     {
       "suite": "test",
       "name": "attachment count is checked after deduplication; an empty batch is stable",
       "passed": true,
-      "seconds": 0.000455
+      "seconds": 0.00053
     },
     {
       "suite": "test",
       "name": "older or unsupported servers do not offer an unavailable paid mode",
       "passed": true,
-      "seconds": 0.001522
+      "seconds": 0.001624
     },
     {
       "suite": "test",
       "name": "changing cost profile clears prior consent and exposes the matching cost note",
       "passed": true,
-      "seconds": 0.000543
+      "seconds": 0.000584
     },
     {
       "suite": "test",
       "name": "processing stages reflect the reported phase without claiming previous completion",
       "passed": true,
-      "seconds": 0.001616
+      "seconds": 0.001106
     },
     {
       "suite": "test",
       "name": "a result arriving after navigation or logout does not update the new screen",
       "passed": true,
-      "seconds": 0.001803
+      "seconds": 0.001126
     },
     {
       "suite": "test",
       "name": "read-only polling waits for acceptance and refreshes once on completion",
       "passed": true,
-      "seconds": 0.001947
+      "seconds": 0.001246
     },
     {
       "suite": "test",
       "name": "status errors never trigger regeneration; unknown timings are not displayed as zero",
       "passed": true,
-      "seconds": 0.018045
+      "seconds": 0.017684
     },
     {
       "suite": "test",
       "name": "findings follow original steps after reorder, not new manual steps",
       "passed": true,
-      "seconds": 0.005105
+      "seconds": 0.003935
     },
     {
       "suite": "test",
       "name": "unavailable review needs an explanation and never looks like success",
       "passed": true,
-      "seconds": 0.000269
+      "seconds": 0.000242
     },
     {
       "suite": "test",
       "name": "retained provider finding uses student terms without changing its original evidence",
       "passed": true,
-      "seconds": 0.000348
+      "seconds": 0.000349
     },
     {
       "suite": "test",
       "name": "source coverage keeps its original provenance and fallible attribution",
       "passed": true,
-      "seconds": 0.000255
+      "seconds": 0.000268
     },
     {
       "suite": "test",
       "name": "unselected finding is recorded without redundant typing and reselection needs an explicit decision",
       "passed": true,
-      "seconds": 0.004432
+      "seconds": 0.005209
     },
     {
       "suite": "test",
       "name": "correction follows original identity through reorder while targets refer to selected positions",
       "passed": true,
-      "seconds": 0.000284
+      "seconds": 0.000345
     },
     {
       "suite": "test",
       "name": "global omission can link a new manual step and loses that link if it is excluded",
       "passed": true,
-      "seconds": 0.000256
+      "seconds": 0.000318
     },
     {
       "suite": "test",
       "name": "legacy server receives no new fields and saved blanket note remains available but does not waive issues",
       "passed": true,
-      "seconds": 0.000836
+      "seconds": 0.000853
     },
     {
       "suite": "test",
       "name": "receipt retains original opinion and human note with escaped text and source links",
       "passed": true,
-      "seconds": 0.000427
+      "seconds": 0.000426
     },
     {
       "suite": "test",
       "name": "imported receipt remains historical and missing sources have no dead cross-account link",
       "passed": true,
-      "seconds": 0.000266
+      "seconds": 0.000172
     },
     {
       "suite": "test",
       "name": "overview excludes other-person, cancelled and declined work from personal progress",
       "passed": true,
-      "seconds": 0.001788
+      "seconds": 0.002012
     },
     {
       "suite": "test",
       "name": "focus follows saved follow-up, overdue and near-term flags without mutating records",
       "passed": true,
-      "seconds": 0.000399
+      "seconds": 0.000409
     },
     {
       "suite": "test",
       "name": "empty accounts and unresolved records retain accurate inventory",
       "passed": true,
-      "seconds": 0.000251
+      "seconds": 0.000156
     },
     {
       "suite": "test",
       "name": "notice search covers records beyond the first page and combines date/status/source filters",
       "passed": true,
-      "seconds": 0.027206
+      "seconds": 0.029568
     },
     {
       "suite": "test",
       "name": "model formatting keeps headings, lists and code readable without rendering executable HTML or external media",
       "passed": true,
-      "seconds": 0.000985
+      "seconds": 0.001034
     },
     {
       "suite": "test",
       "name": "list keyboard navigation stays inside the current list and handles an empty result",
       "passed": true,
-      "seconds": 0.000935
+      "seconds": 0.000665
     },
     {
       "suite": "test",
       "name": "idle time is bounded and resumes only with activity",
       "passed": true,
-      "seconds": 0.002889
+      "seconds": 0.001726
     },
     {
       "suite": "test",
       "name": "background and request waits do not count and editing is a subset",
       "passed": true,
-      "seconds": 0.00098
+      "seconds": 0.000885
     },
     {
       "suite": "test",
       "name": "submitting freezes an independent snapshot across retries",
       "passed": true,
-      "seconds": 0.000203
+      "seconds": 0.000165
     },
     {
       "suite": "test",
       "name": "monotonic rollback and upper bound never inflate or produce negative intervals",
       "passed": true,
-      "seconds": 0.000693
+      "seconds": 0.000403
     },
     {
       "suite": "test",
       "name": "timing stays visible without model opinions and imported times remain historical",
       "passed": true,
-      "seconds": 0.000616
+      "seconds": 0.000414
     },
     {
       "suite": "test",
       "name": "read aloud normalizes dates, clock times and reference syntax",
       "passed": true,
-      "seconds": 0.002222
+      "seconds": 0.001021
     },
     {
       "suite": "test",
       "name": "read aloud chunks preserve every character and Unicode at configurable limits",
       "passed": true,
-      "seconds": 0.000866
+      "seconds": 0.000304
     },
     {
       "suite": "test",
       "name": "retrieval candidates alone never count as memories actually used",
       "passed": true,
-      "seconds": 0.001661
+      "seconds": 0.000903
     },
     {
       "suite": "test",
       "name": "board partitions current results once, keeping excluded and cancelled actions out of active lanes",
       "passed": true,
-      "seconds": 0.001612
+      "seconds": 0.001223
     },
     {
       "suite": "test",
       "name": "seven day strip crosses year boundaries and uses only active personal deadlines",
       "passed": true,
-      "seconds": 0.001969
+      "seconds": 0.002253
     },
     {
       "suite": "test",
       "name": "metric accessibility keeps a stable final value and ring bounds real counts",
       "passed": true,
-      "seconds": 0.000308
+      "seconds": 0.000334
     }
   ]
 }
