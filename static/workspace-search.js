@@ -1,4 +1,5 @@
 import {brandMotion} from './motion.js';
+import {setDisclosureVisible} from './reference-interactions.js';
 export const materialFormats='.pdf,.docx,.xlsx,.pptx,.odt,.ods,.odp,.doc,.xls,.ppt,.txt,.md,.csv,.tsv,.json,.jsonl,.xml,.yaml,.yml,.log,.ini,.toml,.sql,.py,.js,.ts,.css,.c,.cpp,.h,.java,.tex,.ics,.eml,.html,.htm,.svg,.rtf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.mp4,.webm,.mp3,.wav,.m4a,.ogg,.flac,.zip';
 export function searchControls({id,esc,icon,scope='materials',kinds=[]}){
  const label=scope==='history'?'搜索历史对话':scope==='sources'?'搜索通知来源':'搜索本次材料';
@@ -14,8 +15,8 @@ export class WorkspaceSearch{
   host.addEventListener('click',e=>{
    const control=e.target.closest('[data-search-mode]');
    if(control){
-    const kind=control.dataset.searchMode,panel=host.querySelector(kind==='file'?'.search-reference':'.search-filters'),open=panel.hidden;
-    panel.hidden=!open;control.setAttribute('aria-expanded',String(open));control.setAttribute('aria-pressed',String(open));
+    const kind=control.dataset.searchMode,panel=host.querySelector(kind==='file'?'.search-reference':'.search-filters'),open=control.getAttribute('aria-expanded')!=='true';
+    setDisclosureVisible(panel,open);control.setAttribute('aria-expanded',String(open));control.setAttribute('aria-pressed',String(open));
     if(kind==='file'){this.mode=open?'file':'text';this.sequence++;if(this.file)this.run();}
    }
    if(e.target.closest('[data-search-clear]'))this.clear();

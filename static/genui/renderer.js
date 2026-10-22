@@ -1,3 +1,4 @@
+import {copyCode} from '../reference-interactions.js';
 import {CATALOG,StateStore,resolve,validateAction,blockMarkdown,StreamParser} from './core.js';
 import {matches,safeClone,safeKey,safeUrl,safeActionUrl,readPath} from './security.js';
 import {el,button,replaceInOrder,markdown,dataTable,download,string} from './dom.js';
@@ -126,7 +127,7 @@ export class UIRenderer{
     if(t==='KeyValue'){const dl=el('dl','gu-kv');for(const item of p.items||[]){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.value));dl.append(row);}if(!dl.childNodes.length)c.append(el('p','gu-muted','暂无信息'));else c.append(dl);return;}
     if(['List','Steps','Checklist','Timeline'].includes(t)){this.items(record);return;}
     if(t==='Table'){c.append(dataTable(p,{view:v,changed:()=>this.changed()}));return;}
-    if(t==='Code'){const pre=el('pre'),code=el('code','',p.text);pre.append(code);const copy=button('复制代码',async()=>{try{await navigator.clipboard.writeText(p.text);this.announce('代码已复制');}catch{this.announce('请选中文字后复制。');}});c.className='gu-code';c.append(el('span','gu-muted',p.language||'文本'),copy,pre);return;}
+    if(t==='Code'){const pre=el('pre'),code=el('code','',p.text);pre.append(code);const copy=button('复制代码',event=>copyCode(event.currentTarget,p.text,text=>this.announce(text)));copy.dataset.codeCopy='';c.className='gu-code';c.append(el('span','gu-muted',p.language||'文本'),copy,pre);return;}
     if(t==='Progress'){const label=el('div','gu-control-label',p.label),progress=el('progress');progress.max=p.max;progress.value=Math.min(p.max,Math.max(0,p.value));progress.setAttribute('aria-label',p.label||'进度');label.append(el('span','gu-numeric',`${Math.round(progress.value/p.max*100)}%`));c.append(label,progress);return;}
     if(['Slider','Stepper','Select','Toggle','TextInput','ButtonGroup'].includes(t)){this.input(record);return;}
     if(t==='Button'){const b=button(p.label,()=>this.action(record,'click',{},true),'gu-button gu-'+p.variant);b.disabled=p.disabled||!model.on?.click;record.actionButtons=[{button:b,label:p.label}];c.append(b);return;}

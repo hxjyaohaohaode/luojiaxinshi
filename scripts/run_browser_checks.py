@@ -1,7 +1,8 @@
-"""Run both browser suites against synthetic, loopback-only application data."""
+"""Run browser suites against synthetic, loopback-only application data."""
 import os
 from pathlib import Path
 import socket
+import sqlite3
 import subprocess
 import sys
 import time
@@ -9,6 +10,19 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / 'artifacts' / 'ci-browser'
+
+
+def reset_fixture_limits(data):
+    # Suites have independent login attempts. This is the owned synthetic DB,
+    # never the normal data/ directory or an arbitrary caller-supplied database.
+    data = Path(data).resolve()
+    if data != (OUT/'data').resolve() or not data.is_relative_to((ROOT/'artifacts').resolve()):
+        raise ValueError('Only the owned synthetic fixture database may be reset.')
+    database=data/'campus.sqlite3'
+    if not database.is_file() or database.resolve().parent != data:
+        raise ValueError('The owned synthetic database is missing or outside its data folder.')
+    with sqlite3.connect(database) as connection:
+        connection.execute('DELETE FROM limits')
 
 
 def main():
@@ -45,8 +59,10 @@ def main():
                 time.sleep(.15)
             failed = False
             suites = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
-                      ('verify_frontend_review.mjs', 'frontend-v8-browser')]
+                      ('verify_frontend_review.mjs', 'frontend-v8-browser'),
+                      ('verify_reference_interactions.mjs', 'reference-interactions-browser')]
             for script, folder in suites:
+                reset_fixture_limits(data)
                 (ROOT/'artifacts'/folder/'report.json').unlink(missing_ok=True)
                 print('Running '+script, flush=True)
                 with (OUT / (script+'.log')).open('w', encoding='utf-8') as output:

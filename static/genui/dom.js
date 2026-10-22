@@ -1,3 +1,4 @@
+import {copyCode} from '../reference-interactions.js';
 import {safeUrl,safeClone} from './security.js';
 export const string=value=>value===null||value===undefined?'':typeof value==='object'?JSON.stringify(value):String(value);
 export function el(tag,className,text){const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=string(text);return node;}
@@ -61,7 +62,7 @@ export function markdown(text,{enhance=true,view={},changed=()=>{}}={}){
     const line=lines[i];if(!line.trim()){i++;continue;}
     if(/^\s*```/.test(line)){
       const language=line.trim().slice(3),code=[];i++;while(i<lines.length&&!/^\s*```\s*$/.test(lines[i]))code.push(lines[i++]);if(i<lines.length)i++;
-      const box=el('div','gu-code'),pre=el('pre'),content=el('code','',code.join('\n'));pre.append(content);box.append(el('span','gu-muted',language),button('复制代码',async event=>{const b=event.currentTarget;try{await navigator.clipboard.writeText(content.textContent);b.textContent='已复制';}catch{b.textContent='请选中文字复制';}}),pre);host.append(box);continue;
+      const box=el('div','gu-code'),pre=el('pre'),content=el('code','',code.join('\n'));pre.append(content);const copy=button('复制代码',event=>copyCode(event.currentTarget,content.textContent));copy.dataset.codeCopy='';box.append(el('span','gu-muted',language),copy,pre);host.append(box);continue;
     }
     if(line.includes('|')&&i+1<lines.length&&/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[i+1])){
       const labels=cellLine(line),rows=[];i+=2;while(i<lines.length&&lines[i].includes('|')&&rows.length<1000){const cells=cellLine(lines[i++]);rows.push(Object.fromEntries(labels.map((_,n)=>['c'+n,cells[n]||''])));}

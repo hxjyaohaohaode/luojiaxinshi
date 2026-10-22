@@ -28,7 +28,8 @@ def main():
             values = ['report unavailable', '-', '-', '-']
         rows.append([label, *values])
     browsers = [('Browser stability', 'artifacts/frontend-v9-browser/report.json'),
-                ('Browser regression', 'artifacts/frontend-v8-browser/report.json')]
+                ('Browser regression', 'artifacts/frontend-v8-browser/report.json'),
+                ('Reference interactions', 'artifacts/reference-interactions-browser/report.json')]
     for label, path in browsers if kind in {'browser', 'all'} else []:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))

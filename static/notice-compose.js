@@ -1,6 +1,6 @@
 import {dictate} from './dictation.js';
 import {installNoticeFiles} from './notice-files.js';
-import {animateSurface} from './experience-system.js';
+import {animateStepChange,syncStepMarkers,finishReferenceMotion} from './reference-interactions.js';
 export function createNoticeComposer({esc,field,area,icon,toast,persist,showDialog,api,ask}) {
   const $=selector=>document.querySelector(selector);
   const files=installNoticeFiles({esc,icon,toast,onChange:updateReadiness});
@@ -59,19 +59,22 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
   }
   function step(next){
     const form=$('#notice-form');if(!form||form.inert)return;
+    if(form.querySelector(`[data-notice-step="${next}"]`)?.hidden===false)return;
     if(next==='review'){
       if(!form.elements.title.reportValidity())return;
       if(!form.elements.body.value.trim()&&!form.elements.files.files.length){toast('请粘贴通知正文，或选择要处理的附件。',true);form.elements.body.focus();return;}
       $('#notice-review-title').textContent=form.elements.title.value;
       $('#notice-review-count').textContent=`${form.elements.body.value.length.toLocaleString()} 字 · ${form.elements.files.files.length} 份附件`;
     }
+    finishReferenceMotion();const before=form.getBoundingClientRect().height;
     for(const panel of form.querySelectorAll('[data-notice-step]'))panel.hidden=panel.dataset.noticeStep!==next;
     for(const label of document.querySelectorAll('[data-notice-stage]')){const active=label.dataset.noticeStage===next;label.classList.toggle('active',active);label.classList.toggle('is-complete',next==='review'&&label.dataset.noticeStage==='content');if(active)label.setAttribute('aria-current','step');else label.removeAttribute('aria-current');}
     form.elements.rights.disabled=next!=='review';
     // A malformed optional link must be visible when native form validation runs.
     form.elements.source_url.disabled=next!=='review';
     persist();form.scrollIntoView({block:'start'});
-    animateSurface(form.querySelector(`[data-notice-step="${next}"]`),next==='review'?1:-1);
+    syncStepMarkers(document.querySelector('.notice-stepper'));
+    animateStepChange(form,form.querySelector(`[data-notice-step="${next}"]`),before,next==='review'?1:-1);
     form.querySelector(`[data-notice-step="${next}"] input`)?.focus({preventScroll:true});
   }
   document.addEventListener('click',event=>{const button=event.target.closest('[data-notice-step-to],[data-notice-stage]');if(button)step(button.dataset.noticeStepTo||button.dataset.noticeStage);const voice=event.target.closest('[data-notice-voice]');if(voice)dictate($('#notice-form').elements.body,voice,{api,toast,ask});});

@@ -24,6 +24,8 @@ def reply(settings, sources, messages, profile):
     quote=next((message['content'] for message in reversed(messages) if message['role']=='user'),'')
     result={'answer':'【工程测试回复】已收到这条测试消息；记忆结果以服务器回执为准，没有执行真实办理。',
             'citations':[],'image_sources':[],'memory_actions':[]}
+    if quote=='【合成验收】输出代码块':
+        result['answer']='以下是合成代码，仅用于组件验收。\n\n```python\nprint("组件验收 <safe>")\n```'
     if quote.startswith('记住，我的测试称呼'):
         result['memory_actions']=[{'operation':'remember','content':quote,'source_quote':quote,'kind':'fact'}]
     elif quote.startswith('我以后希望每次回答先给结论'):
