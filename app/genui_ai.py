@@ -66,6 +66,17 @@ def choose_tier(settings):
     return max(requested, available)
 
 
+def presentation_tier(tier,choice='auto',*,no_ui=False):
+    """The planner can simplify a view, never exceed deployment capabilities."""
+    if no_ui or choice=='text':return 3
+    return max(tier,2) if choice=='compact' else tier
+
+
+def composition_thinking(profile,tier):
+    context=profile.get('_grounding_context')
+    return not bool(context) or context.get('route')=='focused_text' and tier==3
+
+
 class AnswerDecoder:
     """Incrementally decode only the top-level answer JSON string, including escapes."""
     def __init__(self):
@@ -287,15 +298,15 @@ def payload(settings, sources, messages, profile, tier):
         prompt+='\n'+POLICY
         prompt+='\n'+IMAGE_POLICY
         prompt+='\n引用协议：evidence_index 是服务器登记的原文片段。正文和 ui 文本就近使用稳定标记 [E3]、[E8]（必须是本轮存在的 ref），不要手写 [1] 等显示序号。claims.evidence_refs 选择支撑该结论的 ref；不要输出 citations、citation_refs 或 citation_indices 字段，这些由服务器统一生成。服务器恢复准确来源、位置与逐字原句；同一 ref 反复使用仍指向同一原文，改稿不得靠猜测换 ref。只选真正支持结论的片段。引用可打开原文面板，正文无需重复罗列网址；若另列 Markdown 链接，须在同段引用该网页自身的 ref，用户提供链接的提问不能代替网页证据。'
-    # Text composition serializes Pro's prepared evidence. An authored UI also
-    # designs a graph and state transitions, so it keeps thinking enabled.
+    # Prepared evidence already has a retrieval plan and coverage audit. Keep
+    # formatting quick; the independent factual/UI review still gates publication.
     model=settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model
     composition_only=bool(profile.get('_grounding_context'))
     focused=profile.get('_grounding_context',{}).get('route')=='focused_text'
     if composition_only:
         request_role='\n本调用是展示编排阶段。依据 Pro 提供的 coverage_check、evidence_index 与原文组织正文和控件，不重新检索或补造事实。直接输出有效 JSON；事实、未知和建议仍须清楚区分。稿件随后由 Pro 独立核验，未通过不会发布。'
         prompt+=('\n本轮把证据覆盖检查与文字组织合并：逐项识别当前问题、所给证据、个人条件、冲突和缺项，依据完整原文组织回答；不得补造未知。只完成当前用户要求，保持必要条件与准确引用。仍会由另一独立调用核验全部回答后发布。' if focused else request_role)
-    thinking = not composition_only or tier == 1 or focused
+    thinking = composition_thinking(profile,tier)
     request = {'model':model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
                'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled' if thinking else 'disabled'},'max_completion_tokens':settings.ai_output_tokens}
     if not thinking:request['temperature']=0.2
@@ -307,7 +318,7 @@ def payload(settings, sources, messages, profile, tier):
 async def stream_reply(settings, sources, messages, profile, tier):
     from .harness import start_call,finish_call
     call=start_call({'model':settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model,
-        'thinking':{'type':'enabled' if not profile.get('_grounding_context') or tier==1 or profile.get('_grounding_context',{}).get('route')=='focused_text' else 'disabled'},'max_completion_tokens':settings.ai_output_tokens})
+        'thinking':{'type':'enabled' if composition_thinking(profile,tier) else 'disabled'},'max_completion_tokens':settings.ai_output_tokens})
     usage={}
     try:
         async for event in _stream_reply(settings,sources,messages,profile,tier):

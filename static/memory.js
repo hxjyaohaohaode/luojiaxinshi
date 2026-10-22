@@ -47,7 +47,7 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
   }
   async function submit(form,work,success=''){
     const view=captureUiContext(state,form),finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;form.inert=true;
-    try{await work();if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash==='#memory')await render();if(success&&view.sameUser())toast(success);}
+    try{await work();if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash.split('/')[0]==='#memory')await render();if(success&&view.sameUser())toast(success);}
     catch(e){if(view.sameUser())toast(e.message,true);}finally{form.inert=false;finishFeedback();}
   }
   async function context(cid,onSaved){
@@ -101,5 +101,5 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });
-  return {render,context,clearPrivate:()=>{data={projects:[],memories:[]};workbench.clearPrivate();},remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
+  return {render,context,openRecord:id=>editor({id}),clearPrivate:()=>{data={projects:[],memories:[]};workbench.clearPrivate();},remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
 }

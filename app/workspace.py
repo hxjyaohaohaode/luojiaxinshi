@@ -171,7 +171,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
     def delete(cid:str,payload:Version,current=Depends(user)):
         with db.connect(write=True) as conn:
             own(conn,cid,current['id'],payload.version)
-            conn.execute('DELETE FROM edit_caches WHERE user_id=? AND cache_key=?',(current['id'],'chat:'+cid))
+            conn.execute('DELETE FROM edit_caches WHERE user_id=? AND (cache_key=? OR cache_key LIKE ?)',(current['id'],'chat:'+cid,'branch:'+cid+':%'))
             conn.execute('DELETE FROM conversations WHERE id=?',(cid,))
         return {'ok':True}
 

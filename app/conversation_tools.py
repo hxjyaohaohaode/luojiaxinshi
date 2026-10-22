@@ -73,6 +73,10 @@ def keywords(text):
 class Reaction(Strict):value:int=Field(ge=-1,le=1)
 class Share(Strict):body:str=Field(default='',max_length=80000)
 
+class BranchRequest(Version):
+    request_id: str | None = Field(default=None,min_length=16,max_length=80,pattern=r'^[A-Za-z0-9_-]+$')
+
+
 def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock):
     def message(conn,cid,mid,uid):
         own(conn,cid,uid)
@@ -96,8 +100,14 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
             return detail(conn,cid,current['id'],settings)
 
     @app.post('/api/conversations/{cid}/messages/{mid}/branch')
-    def branch(cid:str,mid:str,payload:Version,current=Depends(user)):
+    def branch(cid:str,mid:str,payload:BranchRequest,current=Depends(user)):
         with db.connect(write=True) as conn:
+            # A lost acknowledgement must not clone the conversation twice.
+            new=hashlib.sha256((current['id']+'\0'+cid+'\0'+mid+'\0'+payload.request_id).encode()).hexdigest()[:32] if payload.request_id else ident()
+            existing=conn.execute('SELECT user_id FROM conversations WHERE id=?',(new,)).fetchone()
+            if existing:
+                if existing['user_id']!=current['id']:raise HTTPException(409,'分支标识冲突，请重新打开后再试')
+                return detail(conn,new,current['id'],settings)
             origin=own(conn,cid,current['id'],payload.version,idle=True);message(conn,cid,mid,current['id'])
             if conn.execute('SELECT COUNT(*) FROM conversations WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:raise HTTPException(413,'对话已达 100 段，请先清理不再使用的历史')
             selected=detail(conn,cid,current['id'],settings)['messages'];index=next((i for i,m in enumerate(selected) if m['id']==mid),None)
@@ -106,7 +116,7 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
             size=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(current['id'],)).fetchone()[0]
             size+=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?',(current['id'],)).fetchone()[0]
             if size+sum(len(s['content'] or b'') for s in sources)>200*1024*1024:raise HTTPException(413,'分支原件将超过 200 MB，请先清理材料')
-            new=ident();now=int(time.time());mapping={s['id']:ident() for s in sources};mapping.update({m['id']:ident() for m in selected[:index+1]})
+            now=int(time.time());mapping={s['id']:ident() for s in sources};mapping.update({m['id']:ident() for m in selected[:index+1]})
             def remap(value,key='',original=False):
                 if isinstance(value,str):
                     # Quotes and original evidence remain byte-for-byte source

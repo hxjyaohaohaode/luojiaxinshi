@@ -8,7 +8,7 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
   const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${id}">${text}</button>`;
   async function render(renderId){
     const [result,channels]=await Promise.all([api('/source-catalog'),api('/integrations')]);if(renderId!==state.renderId)return;entries=result;integrations=channels;query='';page=1;matchedIds=null;searchController?.dispose();
-    $('#content').innerHTML=`<div class="page-title between"><div><div class="eyebrow">知道消息从哪里来</div><h1>我的通知来源</h1><p>把官网、公众号和群整理在一起。每个来源的用途、学期和接入方式都清楚可见。</p></div>${action(icon('plus')+' 添加来源','add','','primary')}</div>
+    $('#content').innerHTML=`<div class="page-title between"><div><h1>我的通知来源</h1></div>${action(icon('plus')+' 添加来源','add','','primary')}</div>
       <div class="toolbar source-toolbar"><h2>我登记的来源 <span class="muted small" id="catalog-total"></span></h2>${searchControls({id:"source",esc,icon,scope:"sources",kinds:Object.entries(platforms)})}</div><div id="source-catalog-list" class="source-catalog-list"></div><nav id="source-pages" class="calendar-pagination" aria-label="来源分页" hidden></nav>
       <div class="source-access">${action('平台接入与覆盖范围 '+icon('arrow'),'platforms','','small plain')}</div>`;
     searchController=new WorkspaceSearch(document.querySelector('[data-search-host="source"]'),{api,scope:'sources',onResult:result=>{matchedIds=new Set(result.items.map(s=>s.id));query=result.query;page=1;list();},onError:message=>toast(message,true)});list();

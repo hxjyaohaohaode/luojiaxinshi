@@ -130,7 +130,7 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     # An empty context does not claim that evidence preparation has run.
     assert request['model']=='mimo-v2.6-pro'
     request=genui_ai.payload(settings,evidence(),[{'role':'user','content':'整理交互界面'}],{'_grounding_context':{'status':'checking'}},1)
-    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'enabled'} and 'temperature' not in request
+    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'disabled'} and request['temperature']==0.2
     assert request['messages'][0]['content'].count('"enum":["E1"]')>=1
     seen=[]
     async def complete(settings,payload,**kwargs):
@@ -148,7 +148,7 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     assert audited['evidence'][0]['sections']==evidence()[0]['sections']  # Full context and exact spans still reach Pro.
     settings.ai_composition_model='mimo-v2.6-flash'
     optional=genui_ai.payload(settings,evidence(),[{'role':'user','content':'整理交互界面'}],{'_grounding_context':{'status':'checking'}},1)
-    assert optional['model']=='mimo-v2.6-flash' and optional['thinking']=={'type':'enabled'} and 'temperature' not in optional
+    assert optional['model']=='mimo-v2.6-flash' and optional['thinking']=={'type':'disabled'} and optional['temperature']==0.2
 
 
 def test_repair_receives_the_rejected_ui_without_publishing_it(env,monkeypatch):
@@ -318,7 +318,7 @@ def test_web_failure_is_explicit_and_plain_endpoint_uses_same_review(env,monkeyp
 
 def test_strict_composition_uses_bounded_evidence_and_preserves_analysis_contract(env):
     request=genui_ai.payload(env[1],evidence(),[{'role':'user','content':'核对报名时间'}],{'_grounding_context':{'web':{'status':'unavailable'}}},1)
-    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'enabled'} and request['max_completion_tokens']>=16000
+    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'disabled'} and request['max_completion_tokens']>=16000
     assert 'claims' in request['messages'][0]['content'] and '智能 UI 与正文执行相同证据规则' in request['messages'][0]['content']
     assert 'unavailable' in request['messages'][1]['content'][0]['text']
     from app.chat_ai import DIRECT_CITATIONS

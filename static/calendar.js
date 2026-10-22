@@ -21,7 +21,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   const weekLabels=()=>weekStartsOn===0?['日','一','二','三','四','五','六']:weekdays;
   const phone=matchMedia('(max-width:600px)');
   const control=(label,action,attrs='',cls='')=>`<button type="button" class="button ${cls}" data-calendar-action="${action}" ${attrs}>${label}</button>`;
-  const belongs=()=>location.hash==='#calendar'&&$('#calendar-body');
+  const belongs=()=>(location.hash==='#calendar'||/^#calendar\/[A-Za-z0-9_-]+$/.test(location.hash))&&$('#calendar-body');
   const range=()=>view==='day'?[selected,selected]:view==='week'?[startWeek(selected),addDays(startWeek(selected),6)]:[selected.slice(0,7)+'-01',addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1)];
   function filter(list){return list.filter(e=>visible.has(e.kind)&&(!query||(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));}
   const preferenceKey=()=>`luojia:calendar:${owner}`;
@@ -295,5 +295,11 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   document.addEventListener('keydown',e=>{const cell=e.target.closest('.month-date');if(!cell)return;const n={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(n){e.preventDefault();selected=addDays(cell.dataset.calendarDay,n);refresh();focusMonthControl($(`.month-date[data-calendar-day="${selected}"]`));}});
   window.addEventListener('hashchange',()=>{stash();if(!belongs()){monthResize.disconnect();monthElement=null;}});
   phone.addEventListener('change',()=>{if(belongs())refresh();});
-  return {render,refresh,persist:stash};
+  function openRecord(id){
+    const record=records.find(r=>r.id===id);if(!record)throw Error('这项日程已移除或当前账号无权访问。');
+    selected=record.data.start_date;visible.add(record.data.category||'personal');query='';refresh();
+    const event=entries.find(e=>e.id===id);
+    if(event)detail(event.key);else editor(record);
+  }
+  return {render,refresh,persist:stash,openRecord};
 }

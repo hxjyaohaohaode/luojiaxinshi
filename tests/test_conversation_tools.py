@@ -17,6 +17,32 @@ def upload(c,chat,name,body,path=None):
     assert response.status_code==200,response.text
     return response.json()
 
+
+def test_branch_retry_returns_the_same_owned_conversation_after_lost_acknowledgement(env,monkeypatch):
+    c=account(env);chat=conversation(c);env[1].ai_api_key='fixture'
+    monkeypatch.setattr(chat_ai,'reply',lambda *args:({'answer':'原回答','citations':[],'image_sources':[]},{}))
+    chat,_=send(c,chat,'原问题');mid=chat['messages'][-1]['id']
+    request={'version':chat['version'],'request_id':uuid.uuid4().hex}
+    endpoint=f"/api/conversations/{chat['id']}/messages/{mid}/branch"
+    before=len(c.get('/api/conversations').json())
+    cache=f"/api/edit-cache/branch:{chat['id']}:{mid}"
+    assert c.get(cache).json()=={'payload':None,'revision':0}
+    assert len(c.get('/api/conversations').json())==before
+    assert c.put(cache,json={'revision':0,'payload':{'content':'未发送的分支问题'}}).status_code==200
+    assert c.get(cache).json()['payload']['content']=='未发送的分支问题'
+    first=c.post(endpoint,json=request);assert first.status_code==200,first.text
+    child=first.json();replay=c.post(endpoint,json=request)
+    assert replay.status_code==200 and replay.json()['id']==child['id']
+    assert len(c.get('/api/conversations').json())==before+1
+    other=account(env,'branch.other')
+    assert other.post(endpoint,json=request).status_code==404
+    assert other.get(cache).status_code==404
+    assert other.put(cache,json={'revision':0,'payload':{'content':'越权'}}).status_code==404
+    # The branch is independent once saved; retry does not need a deleted parent.
+    assert c.request('DELETE',f"/api/conversations/{chat['id']}",json={'version':chat['version']}).status_code==200
+    assert c.get(cache).status_code==404
+    assert c.post(endpoint,json=request).json()['id']==child['id']
+
 def search(c,**fields):
     response=c.post('/api/workspace-search',data=fields);assert response.status_code==200,response.text;return response.json()
 

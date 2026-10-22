@@ -44,21 +44,13 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
       $('#content').innerHTML = `<div class="overview-compact">
         <h1 class="sr-only">我的工作台</h1>
         <div class="overview-launch">
-          <section class="overview-letter" aria-labelledby="overview-letter-title" data-spotlight data-reveal>
-            <div class="letter-copy"><span class="section-eyebrow">珞珈信使 · 校园行动助手</span>
-              <h2 id="overview-letter-title">从一则通知，<br>到<span class="letter-highlight">清楚的下一步。</span></h2>
-              <p>留住原文，核对要求。把该做的事，一件件办好。</p>
-              <div class="letter-actions"><a class="button primary" href="#new">${icon('plus')} 处理新通知</a><a class="button plain" href="#chat">和小信使聊聊 ${icon('arrow')}</a></div>
-            </div>
-            <div class="letter-illustration" data-orbit><div class="letter-orbit" aria-hidden="true"><span class="orbit-dot"></span></div><div class="letter-postcard" aria-hidden="true"><span>LUOJIA · 校园来信</span><i></i><i></i><i></i></div><span class="letter-tag tag-original" aria-hidden="true">${icon('doc')} 收好原文</span><span class="letter-tag tag-action" aria-hidden="true">${icon('check')} 理清行动</span><div id="overview-companion"></div><span class="letter-stamp" aria-hidden="true">收好 · 理清 · 办妥</span></div>
-          </section>
           <section class="focus-deck" aria-label="重点事项卡片" data-reveal><div class="deck-underlay" aria-hidden="true"></div><div class="deck-underlay second" aria-hidden="true"></div><section id="overview-focus" class="overview-focus" aria-label="优先查看"></section></section>
         </div>
         <div id="action-metrics" class="action-metrics" aria-label="办理概览"></div>
         <section id="overview-week" class="overview-week" aria-label="未来七天的通知期限" data-reveal></section>
         <div class="overview-workspace">
           <section class="panel flush" id="overview-board">
-            <div class="overview-board-heading"><div><span class="section-eyebrow">接着上次的进度</span><h2>我的行动清单</h2></div>${icon('tasks')}</div>
+            <div class="overview-board-heading"><div><h2>我的行动清单</h2></div>${icon('tasks')}</div>
             <div class="overview-tabs tabs" role="tablist" aria-label="需要处理的事项">
               ${[['tasks','个人行动'],['followup','办理跟进'],['notices','通知核对']].map(([key,label])=>`<button type="button" class="tab" id="overview-tab-${key}" role="tab" aria-controls="overview-items" data-overview-section="${key}">${label}</button>`).join('')}
             </div>
@@ -72,11 +64,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
         </div>
       </div>`;
     }
-    const pose = caughtUp ? 'complete' : 'organize';
-    if ($('#overview-companion').dataset.pose !== pose) {
-      $('#overview-companion').innerHTML = companion(pose,'overview-companion');
-      $('#overview-companion').dataset.pose = pose;
-    }
+
     renderFocus(ordered,notices,caughtUp);
     $('#action-metrics').innerHTML = [
       ['待完成',pending.length,'pending','tasks','个人行动'],

@@ -1,5 +1,3 @@
-import {companion} from './companion.js';
-import {contextHint} from './motion.js';
 import {dictate} from './dictation.js';
 import {installNoticeFiles} from './notice-files.js';
 import {animateSurface} from './experience-system.js';
@@ -8,15 +6,15 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
   const files=installNoticeFiles({esc,icon,toast,onChange:updateReadiness});
   function render(){
     $('#content').innerHTML=`<div class="notice-compose">
-      <div class="notice-welcome"><div><span class="section-eyebrow">收好原文 · 从这里开始</span><h1>处理一则通知</h1><p>把消息放在一起，把下一步留给清楚的自己。</p></div>${companion('organize','compose-companion')}</div>
+      <h1 class="sr-only">处理通知</h1>
       <nav class="notice-stepper" aria-label="提交通知的步骤"><ol>
-        <li><button type="button" class="active" data-notice-stage="content" aria-current="step" aria-controls="notice-content-step"><b>1</b><span><strong>内容与附件</strong><small>保留完整的原文</small></span></button></li>
-        <li><button type="button" data-notice-stage="review" aria-controls="notice-review-step"><b>2</b><span><strong>来源与核对</strong><small>确认材料后再保存</small></span></button></li>
-      </ol><span class="stepper-note">${icon('shield')} 保存后由你确认行动</span></nav>
+        <li><button type="button" class="active" data-notice-stage="content" aria-current="step" aria-controls="notice-content-step"><b>1</b><span><strong>内容与附件</strong></span></button></li>
+        <li><button type="button" data-notice-stage="review" aria-controls="notice-review-step"><b>2</b><span><strong>来源与核对</strong></span></button></li>
+      </ol></nav>
       <div class="notice-compose-layout">
       <form id="notice-form" class="panel stack">
         <section class="stack" id="notice-content-step" data-notice-step="content">
-          <div class="compose-section-heading"><span class="compose-section-icon">${icon('doc')}</span><div><h2>通知内容</h2><p>粘贴正文，或上传原文件与截图。</p></div><span class="compose-step-count">01 / 02</span></div>
+          <div class="compose-section-heading"><span class="compose-section-icon">${icon('doc')}</span><div><h2>通知内容</h2></div><span class="compose-step-count">01 / 02</span></div>
           ${field('通知标题','title','','text','required maxlength="160" placeholder="给这则通知一个便于查找的标题"')}
           ${area('通知正文','body','',5,'maxlength="10000" placeholder="粘贴完整原文，或在下面上传附件。"')}
           <div class="between small muted"><button type="button" class="button small plain" data-notice-voice aria-label="语音补充通知正文">${icon('mic')} 语音补充</button><span id="char-count">0 / 10,000 字</span></div>
@@ -26,8 +24,8 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
           <div class="form-footer"><a class="button" href="#notices">返回资料</a><button type="button" class="button primary" data-notice-step-to="review">下一步 ${icon('arrow')}</button></div>
         </section>
         <section class="stack" id="notice-review-step" data-notice-step="review" hidden>
-          <div class="compose-section-heading"><span class="compose-section-icon">${icon('shield')}</span><div><h2>来源与核对</h2><p>给材料留下出处，方便日后回查。</p></div><span class="compose-step-count">02 / 02</span></div>
-          <div class="review-reassurance">这一步只是保存材料。之后还会逐项核对本人责任和期限，再由你确认待办。</div><div class="notice-preview"><strong id="notice-review-title"></strong><span class="small muted" id="notice-review-count"></span></div>
+          <div class="compose-section-heading"><span class="compose-section-icon">${icon('shield')}</span><div><h2>来源与核对</h2></div><span class="compose-step-count">02 / 02</span></div>
+          <div class="notice-preview"><strong id="notice-review-title"></strong><span class="small muted" id="notice-review-count"></span></div>
           <div class="form-grid">${field('来源名称（选填）','source_label','','text','maxlength="100" placeholder="学院官网、年级群等"')}${field('原发布时间（北京时间）','published_at','','datetime-local')}</div>
           <p class="field-note">原文有“明天”“本周五”等说法时，请补充发布时间。</p>
           <details class="details"><summary>原文链接与材料说明</summary><div class="stack">${field('原文链接（选填）','source_url','','url','disabled maxlength="2000" placeholder="https://…"')}<p class="small muted">链接供回查，不代替正文。PDF 最多 50 页；正文和附件合计不超过 10,000 字。扫描件与复杂表格需要对照原件核对。</p><p class="small muted">保存后可手工整理，或另行确认交给 AI 处理。</p></div></details>
@@ -37,22 +35,21 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
         </section>
       </form>
       <aside class="compose-guide" aria-label="提交材料提示">
-        <section class="compose-envelope" aria-label="尚未保存的通知预览" data-spotlight data-tilt><span class="section-eyebrow">收件预览 · 尚未保存</span><h3 id="compose-preview-title">这一封来信，关于什么？</h3><p id="compose-preview-body">填入标题和正文，这里会留下这次材料的简短预览。</p><div class="compose-envelope-footer">${icon('doc')}<span id="compose-preview-meta">等待添加材料</span></div></section>
+        <section class="compose-envelope" aria-label="尚未保存的通知预览" data-spotlight data-tilt><span class="section-eyebrow">收件预览 · 尚未保存</span><h3 id="compose-preview-title">通知预览</h3><p id="compose-preview-body"></p><div class="compose-envelope-footer">${icon('doc')}<span id="compose-preview-meta">等待添加材料</span></div></section>
         <section class="compose-readiness"><div class="aside-heading">${icon('tasks')}<h2>这次带来了什么</h2></div><ul>
           <li data-ready="title"><span class="readiness-mark" aria-hidden="true"></span><span>通知标题</span><small>待填写</small></li>
           <li data-ready="body"><span class="readiness-mark" aria-hidden="true"></span><span>原文正文</span><small>待补充</small></li>
           <li data-ready="files"><span class="readiness-mark" aria-hidden="true"></span><span>相关附件</span><small>按需添加</small></li>
-        </ul><p>有正文或附件即可继续。是否完整，还需要你对照原通知核对。</p></section>
-        ${contextHint('notice-original','原文多留一点，判断稳妥一点','请保留适用对象、日期和附件说明。不确定的地方先标记待核实。')}
-        <section class="compose-after"><span class="section-eyebrow">保存之后</span><h2>重要的事，由你确认。</h2><p>先查看材料，再选择手工整理或交给 AI 处理。逐项核对后，才会留下个人待办。</p><a href="#notices">查看已有通知 ${icon('arrow')}</a></section>
+        </ul></section>
+
       </aside></div></div>`;
     updateReadiness();
   }
   function updateReadiness(){
     const form=$('#notice-form');if(!form)return;
     const title=!!form.elements.title.value.trim(),length=form.elements.body.value.trim().length,count=form.elements.files.files.length;
-    $('#compose-preview-title').textContent=form.elements.title.value.trim()||'这一封来信，关于什么？';
-    $('#compose-preview-body').textContent=form.elements.body.value.trim().slice(0,180)||'填入标题和正文，这里会留下这次材料的简短预览。';
+    $('#compose-preview-title').textContent=form.elements.title.value.trim()||'通知预览';
+    $('#compose-preview-body').textContent=form.elements.body.value.trim().slice(0,180)||'';
     $('#compose-preview-meta').textContent=length||count?`${length.toLocaleString()} 字正文 · ${count} 份附件`:'等待添加材料';
     const reviewCount=$('#notice-review-count');
     if(reviewCount)reviewCount.textContent=`${form.elements.body.value.length.toLocaleString()} 字 · ${count} 份附件`;

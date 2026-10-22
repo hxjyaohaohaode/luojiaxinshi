@@ -39,7 +39,7 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
       event.preventDefault();const view=captureUiContext(state,form),fd=new FormData(form);form.inert=true;
       try{
         await api('/memory/lifecycle/settings',{method:'PUT',json:{version:s.version,session_days:Number(fd.get('session_days')),episode_days:Number(fd.get('episode_days')),auto_promote:fd.has('auto_promote'),auto_cooldown:fd.has('auto_cooldown'),cross_session:fd.has('cross_session'),semantic_reflection:fd.has('semantic_reflection'),reflection_budget:Number(fd.get('reflection_budget'))}});
-        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash==='#memory')await refresh();toast('已更新保留、晋升与跨会话设置。');}
+        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash.split('/')[0]==='#memory')await refresh();toast('已更新保留、晋升与跨会话设置。');}
       }catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
     });
   }
@@ -109,7 +109,7 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
         if(view.sameDialog())await trace(target.dataset.cid,target.dataset.aid);
       }else if(action==='maintain'){
         const result=await api('/memory/lifecycle/maintain',{method:'POST'});
-        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash==='#memory')await refresh();toast(result.deferred?'当前回复结束后继续整理。':'已检查：晋升 '+result.promoted+' 条，冷却 '+result.cooled+' 条，清理过期会话片段 '+result.expired_session+' 条。');}
+        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash.split('/')[0]==='#memory')await refresh();toast(result.deferred?'当前回复结束后继续整理。':'已检查：晋升 '+result.promoted+' 条，冷却 '+result.cooled+' 条，清理过期会话片段 '+result.expired_session+' 条。');}
       }else if(action==='retry-reflection'){
         if(!await ask('重新请求模型语义复盘','上次请求可能已经计费。重新请求将再次发送当前授权范围内的记忆依据，受每日预算及应用额度限制。','确认重新请求'))return;
         if(!view.sameUser())return;
@@ -119,7 +119,7 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
         if(!await ask('遗忘会话片段','将移除这个片段及其派生记忆，并阻止旧来源重新写入；原对话原文仍保留。','确认遗忘'))return;
         if(!view.sameUser())return;
         await api('/memory/session-items/'+id,{method:'DELETE'});
-        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash==='#memory')await refresh();toast('已遗忘该片段，并阻止从旧来源重新学习。');}
+        if(view.sameUser()){if(view.sameDialog())$('#dialog').close();if(view.sameRoute()&&location.hash.split('/')[0]==='#memory')await refresh();toast('已遗忘该片段，并阻止从旧来源重新学习。');}
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });

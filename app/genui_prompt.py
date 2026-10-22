@@ -87,7 +87,7 @@ def system_prompt(tier, output_schema, supports_json=True, *, indexed_evidence=F
     module=capability_module(tier)
     if not supports_json:
         return persona+module+'\n答复语言跟随用户。本次不支持结构化引用检查；涉及材料事实请提醒本人对照原文核对。'
-    return persona+'输出 JSON，answer 的语言跟随用户，包含 Markdown 自然语言及按需互动内容，不输出 HTML。符合以下 Schema：\n'+json.dumps(output_schema,ensure_ascii=False,separators=(',',':'))+'\n'+module
+    return persona+'输出 JSON，answer 的语言跟随用户，包含 Markdown 自然语言及按需互动内容，不输出 HTML。符合以下 Schema：\n'+json.dumps(output_schema,ensure_ascii=False,separators=(',',':'))+'\n'+module+'\n优先输出 answer 字段，再输出 ui 或 ui_template，让必要正文先到达。简单问题不强行生成 UI；列表、时间线或表格采用精简结构，复用宿主样式，不添加宣传口号、装饰标题和无必要的解释性段落。界面与容器自适应，信息不足时直接说明具体缺项。'
 
 
 def expand_template(value):

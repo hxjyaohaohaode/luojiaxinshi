@@ -69,7 +69,8 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
   check(engine+' mobile detail opens',await page.locator('#memory-detail-pane').isVisible());
   check(engine+' mobile has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
   if(engine==='chromium')await page.screenshot({path:path.join(out,'mobile.png'),fullPage:true});
-  await page.locator('[data-tree-action="close-detail"]').click();await page.locator('[data-tree-action="sessions"]').click();
+  await page.locator('[data-tree-action="close-detail"]').click();if(!await page.locator('[data-tree-action="sessions"]').isVisible())await page.locator('[data-tree-action="toggle-nav"]').click();
+  await page.locator('[data-tree-action="sessions"]').click();
   await until(async()=>(await page.locator('#memory-breadcrumbs').textContent()).includes('会话与工作记忆'));
   check(engine+' short term and working memory remain available',(await page.locator('#memory-breadcrumbs').textContent()).includes('会话与工作记忆'));
   check(engine+' no browser exceptions',report.errors.filter(e=>e.engine===engine).length===0);

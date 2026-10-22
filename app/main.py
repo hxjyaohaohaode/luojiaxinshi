@@ -404,6 +404,12 @@ def create_app(settings=None):
             if not conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(key[5:],uid)).fetchone():
                 raise HTTPException(404,'对话不存在或无权访问')
             return None
+        branch_key=re.fullmatch(r'branch:([a-f0-9]{32}):([a-f0-9]{32})',key)
+        if branch_key:
+            cid,mid=branch_key.groups()
+            if not conn.execute("SELECT 1 FROM conversations c JOIN conversation_messages m ON m.conversation_id=c.id WHERE c.id=? AND c.user_id=? AND m.id=? AND m.role='assistant' AND m.status='complete'",(cid,uid,mid)).fetchone():
+                raise HTTPException(404,'原回答不存在或无权访问')
+            return None
         workflow_key = re.fullmatch(r'(workflow|review):([a-f0-9]{32}):([1-9][0-9]{0,8}):([0-9]{1,9})',key)
         if workflow_key:
             kind,tid, task_version, workflow_version = workflow_key.groups()

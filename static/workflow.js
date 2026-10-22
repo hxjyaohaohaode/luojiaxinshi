@@ -98,8 +98,8 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     }
     const hint=document.createElement('p');hint.className='workflow-scope-note';hint.textContent='先更新进度，需要时再补充回执和跟进。';
     const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.action='close-dialog';cancel.textContent='返回';
-    save.querySelector('span').textContent='修改会暂存，保存后更新办理记录';save.insertBefore(cancel,save.querySelector('[type=submit]'));
-    form.replaceChildren(head,tabs,hint,...Object.values(panels),save);
+    save.querySelector('span').remove();save.insertBefore(cancel,save.querySelector('[type=submit]'));
+    form.replaceChildren(head,tabs,...Object.values(panels),save);
     const choose=(id,focus=false)=>{
       for(const button of tabs.children){const active=button.dataset.workflowTab===id;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;if(active&&focus)button.focus();}
       for(const [key,panel] of Object.entries(panels))panel.hidden=key!==id;
