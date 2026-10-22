@@ -90,10 +90,13 @@ jobs:
             artifacts/reference-interactions-browser/*.png
             artifacts/workspace-interactions-browser/report.json
             artifacts/workspace-interactions-browser/*.png
+            artifacts/visual-review-browser/report.json
+            artifacts/visual-review-browser/*.png
             artifacts/ci-browser/verify_frontend_stability.mjs.log
             artifacts/ci-browser/verify_frontend_review.mjs.log
             artifacts/ci-browser/verify_reference_interactions.mjs.log
             artifacts/ci-browser/verify_workspace_interactions.mjs.log
+            artifacts/ci-browser/verify_visual_review.mjs.log
             artifacts/ci/summary.md
           retention-days: 14
           if-no-files-found: warn

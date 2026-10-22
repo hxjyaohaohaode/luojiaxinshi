@@ -41,7 +41,7 @@
 .overview-compact .overview-companion { width: 160px; height: 176px; margin: -12px 0 0; }
 .overview-focus { min-width: 0; display: flex; flex-direction: column; padding: 24px; background: var(--paper); border: 1px solid #e5e5d9; border-radius: 20px; }
 .focus-label { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 11px; color: var(--warm-ink); }
-.focus-label > span:last-child { font-size: 10px; color: #6a7769; margin-left: auto; border: 1px solid #e5e8dd; padding: 1px 6px; border-radius: 4px; }
+.focus-label > span:last-child:not(.focus-dot) { font-size: 10px; color: #6a7769; margin-left: auto; border: 1px solid #e5e8dd; padding: 1px 6px; border-radius: 4px; }
 .focus-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #aa7d34; flex-shrink: 0; }
 .overview-focus h2 { font-size: 18px; line-height: 1.6; margin: 16px 0 8px; overflow-wrap: anywhere; }
 .overview-focus p { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; line-height: 1.8; }
@@ -357,7 +357,7 @@ html[data-ui-motion=off] .action-metric, html[data-ui-motion=off] .scene-choice 
 .action-metric > .metric-label, .aside-heading h2, .overview-flow strong { font-size: 13px; }
 .action-metric > small { grid-column: 1/-1; margin-top: 3px; }
 .compose-step-count, .letter-stamp { font-size: 11px; }
-.focus-label, .focus-label > span:last-child { font-size: 12px; }
+.focus-label, .focus-label > span:last-child:not(.focus-dot) { font-size: 12px; }
 .overview-board-heading, .overview-tabs, .overview-footer { background: var(--paper); }
 #overview-board { container: action-board / inline-size; }
 @container action-board (min-width: 620px) {
@@ -879,7 +879,8 @@ html[data-ui-motion=off] .material-checklist .check { transition: none; }
   .action-metric { padding: 14px 12px; gap: 5px; }
   .action-metric > .metric-symbol { width: 25px; height: 27px; }
   .action-metric > .metric-label { font-size: 10px; }
-  .task-filter-row > #task-count { width: 100%; margin-left: 0; }
+  .task-filter-row .view-toggle .icon { display: none; }
+  .task-filter-row > #task-count { width: auto; margin-left: auto; }
 }
 html[data-ui-motion=off] .is-ready .readiness-mark { animation: none; }
 @media (prefers-reduced-motion:reduce) { .is-ready .readiness-mark { animation: none; } }

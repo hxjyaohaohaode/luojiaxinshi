@@ -17,7 +17,7 @@ export function taskLanes(tasks) {
 export function taskBoardMarkup(tasks, taskRow, icon) {
   const lanes = taskLanes(tasks).filter(lane => lane.tasks.length);
   return `<div class="task-board" data-lanes="${lanes.length}">${lanes.map(lane => `<section class="task-board-column lane-${lane.key}" aria-label="${lane.title}">
-    <header class="task-lane-heading"><span class="lane-dot" aria-hidden="true"></span><h2>${lane.title}</h2><span>${lane.tasks.length}</span><p>${lane.description}</p></header>
+    <header class="task-lane-heading"><span class="lane-dot" aria-hidden="true"></span><h2>${lane.title}</h2><span>${lane.tasks.length}</span></header>
     <div class="task-lane-items">${lane.tasks.length ? lane.tasks.map(taskRow).join('') : `<div class="lane-empty" aria-label="${lane.title}暂无事项">${icon(lane.key === 'closed' ? 'check' : 'tasks')}<span>暂时没有这类事项</span></div>`}</div>
   </section>`).join('')}</div>`;
 }
