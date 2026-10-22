@@ -47,7 +47,12 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    container:
+      # Keep the image version in sync with package-lock.json. Browsers and OS
+      # dependencies are preinstalled, avoiding apt mirror outages on each run.
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+      options: --init --ipc=host
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -59,7 +64,11 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Verify preinstalled browsers match the locked package
+        run: >-
+          node -e 'const fs = require("node:fs"); const pw = require("playwright");
+          for (const name of ["chromium", "firefox", "webkit"])
+          fs.accessSync(pw[name].executablePath());'
       - name: Run the browser suites against synthetic data
         run: python scripts/run_browser_checks.py
       - name: Write browser counts to the run summary
