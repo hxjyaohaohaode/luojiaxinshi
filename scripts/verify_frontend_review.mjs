@@ -73,22 +73,28 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   }
   await check('chat composer adapts to a shorter container without a window resize',async()=>{
    await page.setViewportSize({width:1024,height:768});await nav('chat/'+chat.id);
-   const original=await page.evaluate(()=>document.documentElement.style.getPropertyValue('--visual-height'));
+   await page.waitForFunction(()=>innerHeight===768&&parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))===768);
+   await page.locator('#chat-composer:not(.is-compact)').waitFor();
+   const workspace=page.locator('#chat-workspace'),original=await workspace.evaluate(node=>node.style.height);
    try{
-    await page.evaluate(()=>document.documentElement.style.setProperty('--visual-height','350px'));
-    await page.locator('#chat-composer.is-compact').waitFor();
+    // Constrain the container itself. The viewport variable belongs to chrome.js
+    // and a pending browser resize event may legitimately refresh it.
+    await workspace.evaluate(node=>node.style.height='350px');
+    await page.waitForFunction(()=>document.querySelector('.chat-main').clientHeight===350&&document.querySelector('#chat-composer').classList.contains('is-compact'));
     await page.locator('#chat-input').fill('保留可阅读的对话区域。\n'.repeat(12));
     const bounds=await page.evaluate(()=>{
      const box=s=>document.querySelector(s).getBoundingClientRect().toJSON();
      return {chat:box('.chat-main'),reader:box('.chat-reading-area'),composer:box('#chat-composer'),input:box('#chat-input'),buttons:[...document.querySelectorAll('#chat-composer .composer-plus,#chat-composer .composer-entry button')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().toJSON())};
     });
+    assert.equal(bounds.chat.height,350,JSON.stringify(bounds));
+    assert.equal(await page.evaluate(()=>innerHeight),768);
     assert.ok(bounds.reader.height>bounds.chat.height*.42,JSON.stringify(bounds));
     assert.ok(bounds.composer.bottom<=bounds.chat.bottom&&bounds.composer.height<90,JSON.stringify(bounds));
     for(const b of bounds.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=bounds.composer.right&&b.bottom<=bounds.composer.bottom);assert.ok(b.right<=bounds.input.x||b.x>=bounds.input.right,JSON.stringify(bounds));}
     await page.screenshot({path:path.join(output,`${engine}-chat-short-container.png`)});
    }finally{
     await page.locator('#chat-input').fill('');
-    await page.evaluate(value=>document.documentElement.style.setProperty('--visual-height',value),original);
+    await workspace.evaluate((node,value)=>node.style.height=value,original);
    }
    await page.locator('#chat-composer:not(.is-compact)').waitFor();
   });
