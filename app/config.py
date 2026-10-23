@@ -42,7 +42,7 @@ class Settings:
     genui_tier: str = 'auto'
     ai_supports_json: bool = True
     ai_supports_tools: bool = False
-    ai_context_tokens: int = 32768
+    ai_context_tokens: int = 1000000
     genui_limits: dict = field(default_factory=dict)
     asr_model: str = 'mimo-v2.5-asr'
     tts_model: str = 'mimo-v2.5-tts'
@@ -52,16 +52,16 @@ class Settings:
     ai_grounding: bool = True
     ai_summary_model: str = 'mimo-v2.6-flash'
     ai_composition_model: str = 'mimo-v2.6-pro'
-    ai_output_tokens: int = 32768
+    ai_output_tokens: int = 131072
     ai_workflow_timeout: int = 1800
     registration_mode: str = 'public'
-    notice_input_tokens: int = 65536
+    notice_input_tokens: int = 868928
     ai_stage_summaries: bool = False
     notice_semantic_review: bool = True
     notice_review_model: str = 'mimo-v2.6-flash'
     notice_fast_enabled: bool = False
     agent_enabled: bool = True
-    agent_context_bytes: int = 96000
+    agent_context_bytes: int = 2000000
     agent_oss_url: str = 'http://127.0.0.1:11434/v1'
     agent_oss_model: str = ''
     agent_oss_context_tokens: int = 32768
@@ -80,9 +80,9 @@ class Settings:
                      int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
         result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
         result.agent_enabled=os.getenv('AGENT_ENABLED','true').strip().lower() in {'true','1','yes'}
-        result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES','96000'))
-        if not 24000 <= result.agent_context_bytes <= 240000:
-            raise ValueError('AGENT_CONTEXT_BYTES 须为 24000—240000')
+        result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES',str(cls.agent_context_bytes)))
+        if not 24000 <= result.agent_context_bytes <= 2000000:
+            raise ValueError('AGENT_CONTEXT_BYTES 须为 24000—2000000')
         from .agent_runtime.providers import loopback_url
         from .agent_runtime.mcp import validate_servers
         result.agent_oss_url=loopback_url(os.getenv('AGENT_OSS_URL',cls.agent_oss_url).strip())
@@ -94,7 +94,7 @@ class Settings:
         result.agent_mcp_servers=validate_servers(json.loads(os.getenv('AGENT_MCP_SERVERS_JSON','{}')))
         if result.registration_mode not in {'public','invite'}:
             raise ValueError('REGISTRATION_MODE 须为 public 或 invite')
-        result.notice_input_tokens=int(os.getenv('NOTICE_INPUT_TOKENS','65536'))
+        result.notice_input_tokens=int(os.getenv('NOTICE_INPUT_TOKENS',str(cls.notice_input_tokens)))
         result.notice_semantic_review=os.getenv('NOTICE_SEMANTIC_REVIEW','true').lower() in {'true','1','yes'}
         result.notice_review_model=os.getenv('MIMO_NOTICE_REVIEW_MODEL',cls.notice_review_model).strip()
         fast_option=os.getenv('NOTICE_FAST_ENABLED','false').strip().lower()
@@ -123,11 +123,11 @@ class Settings:
         result.ai_stage_summaries=os.getenv('AI_STAGE_SUMMARIES','false').lower() in {'true','1','yes'}
         result.ai_summary_model=os.getenv('MIMO_SUMMARY_MODEL',cls.ai_summary_model).strip()
         result.ai_composition_model=os.getenv('MIMO_COMPOSITION_MODEL',cls.ai_composition_model).strip()
-        result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS','32768'))
-        result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS','32768'))
+        result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS',str(cls.ai_context_tokens)))
+        result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS',str(cls.ai_output_tokens)))
         result.ai_workflow_timeout=int(os.getenv('AI_WORKFLOW_TIMEOUT_SECONDS','1800'))
-        if not 4096<=result.ai_output_tokens<=65536 or not 60<=result.ai_workflow_timeout<=1800:
-            raise ValueError('AI_OUTPUT_TOKENS 须为 4096—65536，AI_WORKFLOW_TIMEOUT_SECONDS 须为 60—1800')
+        if not 4096<=result.ai_output_tokens<=131072 or not 60<=result.ai_workflow_timeout<=1800:
+            raise ValueError('AI_OUTPUT_TOKENS 须为 4096—131072，AI_WORKFLOW_TIMEOUT_SECONDS 须为 60—1800')
         if result.genui_tier not in {'auto','1','2','3'} or not 2048<=result.ai_context_tokens<=1000000:
             raise ValueError('GENUI_TIER 或 AI_CONTEXT_TOKENS 配置无效')
         from .genui import LIMITS

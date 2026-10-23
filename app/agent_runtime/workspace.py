@@ -162,6 +162,42 @@ def receipt(row, *, replayed=False):
             'scope': '本账号本站数据；未同步外部日历或执行现实中的任务', 'replayed': replayed}
 
 
+def evidence_sections(result):
+    """Keep dates/status together instead of slicing a page of JSON mid-record.
+
+    Long task descriptions used to consume the first citation span, leaving
+    planned_at in a different span with no record identity. Locators now map
+    each returned record to a complete summary and its original detail fields.
+    """
+    sections = []
+    if 'records' in result:
+        sections.append({'locator': '查询范围', 'text': dumps({k: v for k, v in result.items() if k != 'records'})})
+        records = result['records']
+    else:
+        records = [result]
+    schedule_fields = ('title', 'scope', 'due_date', 'due_time', 'deadline_confirmed',
+        'planned_at', 'reminder_at', 'start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'category')
+    for item in records:
+        operation = 'operation_id' in item
+        identity = str(item.get('operation_id') if operation else item.get('id', '记录'))
+        locator = ('操作 ' if operation else '记录 ') + identity
+        if operation:
+            sections.append({'locator': locator + ' 回执', 'text': dumps({k:v for k,v in item.items() if k != 'record'})})
+            record = item.get('record') or {}
+            locator += ' 操作时快照（当前状态另查记录）'
+        else:
+            record = item
+        data = record.get('data') or {}
+        summary = {k:v for k,v in record.items() if k != 'data'}
+        summary['data'] = {k:data[k] for k in schedule_fields if k in data}
+        if summary.get('id') or data:
+            sections.append({'locator': locator + ' 状态与时间', 'text': dumps(summary)})
+        for key, value in data.items():
+            if key not in schedule_fields and value not in (None, '', [], {}):
+                sections.append({'locator': locator + ' ' + key, 'text': dumps({key: value})})
+    return sections
+
+
 def operations(conn, uid, cid, mid=None):
     sql = 'SELECT * FROM assistant_operations WHERE user_id=? AND conversation_id=?'
     args = [uid, cid]

@@ -45,7 +45,7 @@ def media_part(source):
     return {'type':'video_url','video_url':{'url':url},'fps':1,'media_resolution':'default'}
 
 
-def input_budget(sources,context_tokens,text_bytes=0):
+def input_budget(sources,context_tokens,text_bytes=0,*,output_tokens=8192):
     from .visual_evidence import image_sources,estimated_image_tokens
     from .ai import AIError
     images=image_sources(sources);media=media_sources(sources)
@@ -58,6 +58,6 @@ def input_budget(sources,context_tokens,text_bytes=0):
             # MiMo default resolution caps frames at 300 tokens; temporal
             # patches combine pairs. Include timestamps and framing headroom.
             tokens+=math.ceil(min(2048,math.ceil(seconds))/2)*305+2
-    if tokens+text_bytes//2+8192>context_tokens or sum(len(s['content']) for s in images+media)>60*1024*1024:
+    if tokens+math.ceil(text_bytes/2)+output_tokens>context_tokens or sum(len(s['content']) for s in images+media)>60*1024*1024:
         raise AIError(f'本次 {len(images)} 张图片、{len(media)} 份音视频超过当前模型上下文或传输预算。全部原件仍保留；请分组发送或拆分较长视频，本次未静默忽略附件。')
     return {'images':len(images),'media':len(media),'estimated_media_tokens':tokens}

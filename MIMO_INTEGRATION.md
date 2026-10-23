@@ -38,7 +38,9 @@ MIMO_VOICE_DESIGN_MODEL=mimo-v2.5-tts-voicedesign
 MIMO_VOICE_CLONE_MODEL=mimo-v2.5-tts-voiceclone
 MIMO_TTS_VOICE=mimo_default
 AI_TIMEOUT_SECONDS=180
-AI_OUTPUT_TOKENS=32768
+AI_OUTPUT_TOKENS=131072
+AI_CONTEXT_TOKENS=1000000
+AGENT_CONTEXT_BYTES=2000000
 AI_WORKFLOW_TIMEOUT_SECONDS=1800
 AI_DAILY_LIMIT=30
 AI_STAGE_SUMMARIES=false
@@ -61,7 +63,7 @@ AI_STAGE_SUMMARIES=false
 
 文字请求 POST 到所选官方端点的 `/chat/completions`；四类语音使用普通 API 的同名路径。使用 `Authorization: Bearer <MIMO_API_KEY>`。兼容协议名称不表示调用了 OpenAI 模型。
 
-- 主模型：保留 `messages`、图片 `image_url` 和 JSON 输出，输出上限使用 `max_completion_tokens`。通知整理、检索规划、覆盖检查、原生交互图编排与最终独立复核使用 `thinking: {"type":"enabled"}`，这些调用不传 `temperature` 或 `top_p`。已有独立覆盖结果的纯文字展示阶段关闭思考并使用 `temperature=0.2`。1.4.0 的限定材料短文字路径合并覆盖与写作，两次主模型调用均开启思考，第二次独立复核。阶段提示默认直接使用服务器实际状态；只有显式启用 `AI_STAGE_SUMMARIES=true` 才由 Flash 改写状态提示，不接收内部推理。思考开关与温度限制见[小米官方深度思考说明](https://mimo.mi.com/docs/en-US/quick-start/usage-guide/other/deep-thinking)。`AI_CONTEXT_TOKENS=32768` 是本应用保守预算，不是官方模型最大上下文。
+- 主模型：保留 `messages`、图片 `image_url` 和 JSON 输出，输出上限使用 `max_completion_tokens`。通知整理、检索规划、覆盖检查、原生交互图编排与最终独立复核使用 `thinking: {"type":"enabled"}`，这些调用不传 `temperature` 或 `top_p`。自 1.19.4 起，Agent 工具循环、纯文字展示、修复、独立核验和记忆维护全部显式开启思考，不因任务简单而关闭。工具多轮调用完整回传服务端 `reasoning_content`，只在当前 Provider 内存保存，结束即清理，不进入聊天、持久日志或 UI。1.4.0 的限定材料短文字路径合并覆盖与写作，两次主模型调用均开启思考，第二次独立复核。阶段提示默认直接使用服务器实际状态；只有显式启用 `AI_STAGE_SUMMARIES=true` 才由 Flash 改写状态提示，不接收内部推理。思考开关与温度限制见[小米官方深度思考说明](https://mimo.mi.com/docs/en-US/quick-start/usage-guide/other/deep-thinking)。所有 MiMo 文字阶段统一使用 `AI_CONTEXT_TOKENS=1000000` 和 `max_completion_tokens=131072`，不再保留按阶段设置的较小额度；128K 指思考与最终输出的合计上限。
 - ASR：`model=mimo-v2.5-asr`；`user.content` 内放 `type=input_audio`，数据为 `data:audio/wav;base64,...`；`asr_options.language=auto`；读取 `choices[0].message.content`。
 - 普通 TTS：`assistant.content` 放实际播报正文，`user.content` 仅作为风格指令；`audio={"format":"wav","voice":"mimo_default"}`。
 - 音色设计：`user.content` 必填音色描述；`assistant.content` 放已核对正文；`audio={"format":"wav","optimize_text_preview":false}`，不传 `voice`，避免自动润色改变日期、材料或办理要求。
@@ -76,7 +78,7 @@ AI_STAGE_SUMMARIES=false
 
 文字按 UTF-8 字节数保守计量并预留消息封装空间，图片使用[小米官方尺寸估算规则](https://mimo.mi.com/docs/en-US/quick-start/usage-guide/multimodal-understanding/image-understanding)。该结果是应用预算估算，不是精确 tokenizer 或计费数据；实际用量仍取 API 返回的 `usage`。例如大量短段落会增加来源定位与 JSON 的输入，即使正文未超 10,000 字也可能触及预算。
 
-主模型的[官方上下文规格](https://mimo.mi.com/docs/quick-start/model)为 1M；代码使用保守的 1,000,000 上界，并为通知整理现有的 20,000 输出预算留出空间。维护者可根据真实样本覆盖率调整输入预算，但仍须遵守文件／字数限制和实际账户能力。此检查只覆盖正式通知整理入口，不能推断其他多阶段对话已完成相同的总输入或费用验证。
+主模型的[官方上下文规格](https://mimo.mi.com/docs/quick-start/model)为 1M；代码使用保守的 1,000,000 上界，并为统一的 131,072 最大输出留出空间。维护者可根据真实样本覆盖率调整输入预算，但仍须遵守文件／字数限制和实际账户能力。此检查只覆盖正式通知整理入口，不能推断其他多阶段对话已完成相同的总输入或费用验证。
 
 ## 本应用语音接口和限制
 
@@ -121,6 +123,6 @@ AI_STAGE_SUMMARIES=false
 
 ## 1.8.1 通知流式整理
 
-通知请求使用 `stream=true`、`stream_options.include_usage=true` 和原有 `json_object`，保留 Pro 思考模式及 20,000 输出预算；收齐响应后执行引用、日期和办理结构校验。用量尾包只提取数字，思考正文不进入数据库、日志或浏览器。处理记录区分首段答案等待、模型请求及本地校验耗时；这不是模型纯计算时间或计费凭证。
+通知请求使用 `stream=true`、`stream_options.include_usage=true` 和原有 `json_object`，保留 Pro 思考模式及统一的 131,072 最大输出；收齐响应后执行引用、日期和办理结构校验。用量尾包只提取数字，思考正文不进入数据库、日志或浏览器。处理记录区分首段答案等待、模型请求及本地校验耗时；这不是模型纯计算时间或计费凭证。
 
 对同一复杂通知关闭思考的诊断虽降至约 40 秒，但遗漏可选咨询，未采用为默认。开启思考的另一轮也因缺少一项依据被拒绝，说明不能省略服务器校验。更多诊断与最终复验见 [TESTING.md](TESTING.md)、[ADR-005](docs/ADR-005-notice-streaming-and-measurement.md)。普通 API 与订阅额度的区分不变。

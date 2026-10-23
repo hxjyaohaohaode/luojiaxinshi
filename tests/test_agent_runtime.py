@@ -120,6 +120,18 @@ def test_loop_retrieves_current_owned_material_and_preserves_original_workflow(e
         assert 'turn.completed' in streamed.text
 
 
+def test_one_daily_task_can_complete_multiple_model_steps(env):
+    env[1].ai_daily_limit=1
+    c,model=setup(env,[answer('',[call('list_files')]),answer()])
+    with c:
+        t=thread(c)
+        start(c,t['id'])
+        result=wait(c,t['id'])
+        assert result['turns'][-1]['status']=='completed' and len(model.inputs)==2
+        again=c.post(f"/api/agent/threads/{t['id']}/turns",json={'prompt':'another task','request_id':uuid.uuid4().hex,'allow_external_processing':True})
+        assert again.status_code==429 and '今日智能任务次数' in again.text
+
+
 def test_owner_csrf_and_external_consent_cannot_be_bypassed(env):
     c, _ = setup(env, [])
     other = account(env, 'bob')
@@ -423,6 +435,47 @@ def test_oss_protocol_never_sends_cloud_authorization(env,monkeypatch):
     assert captured[0].url.host=='127.0.0.1'
     payload=json.loads(captured[0].content)
     assert payload['model']=='local-fixture' and 'thinking' not in payload
+
+
+@pytest.mark.parametrize('streaming', [False, True])
+def test_mimo_thinking_survives_tool_continuation_without_leaking_to_transcript(env, monkeypatch, streaming):
+    cfg = env[1]
+    cfg.ai_api_key = 'synthetic-secret'
+    captured, previews = [], []
+    private = 'private fixture reasoning'  # Synthetic, never a real model trace.
+    tool = call('list_files', cid='thinking-test')
+    def handle(request):
+        captured.append(json.loads(request.content))
+        first = len(captured) == 1
+        msg = {'content': '' if first else 'Done', **({'tool_calls': [tool], 'reasoning_content': private} if first else {})}
+        finish = 'tool_calls' if first else 'stop'
+        usage = {'prompt_tokens': 20, 'completion_tokens': 12, 'completion_tokens_details': {'reasoning_tokens': 9}}
+        if not streaming:
+            return httpx.Response(200, json={'model': cfg.ai_model, 'choices': [{'finish_reason': finish, 'message': msg}], 'usage': usage})
+        delta = {**msg, **({'tool_calls': [{'index': 0, **tool}]} if first else {})}
+        packets = [{'model': cfg.ai_model, 'choices': [{'index': 0, 'delta': delta, 'finish_reason': finish}]}, {'choices': [], 'usage': usage}]
+        return httpx.Response(200, text=''.join('data: '+json.dumps(p)+'\n\n' for p in packets)+'data: [DONE]\n\n')
+    original = httpx.AsyncClient
+    monkeypatch.setattr(httpx, 'AsyncClient', lambda **kw: original(**kw, transport=httpx.MockTransport(handle)))
+    async def run():
+        provider = Provider(cfg, 'mimo')
+        history = [{'role': 'user', 'content': 'Inspect this directory'}]
+        async def request():
+            return await provider.complete_stream(history, [], previews.append) if streaming else await provider.complete(history, [])
+        first, usage = await request()
+        assert 'reasoning_content' not in first
+        assert usage['provider_model'] == cfg.ai_model
+        assert usage['completion_tokens_details']['reasoning_tokens'] == 9
+        history.extend([first, {'role': 'tool', 'tool_call_id': tool['id'], 'content': '{}'}])
+        assert provider.reasoning_bytes(history) >= len(private)
+        second, _ = await request()
+        assert second['content'] == 'Done'
+        assert private not in json.dumps(history) and private not in ''.join(previews)
+        assert captured[1]['messages'][1]['reasoning_content'] == private
+        assert all(p['thinking'] == {'type': 'enabled'} and 'temperature' not in p for p in captured)
+        await provider.aclose()
+        assert not provider._reasoning
+    asyncio.run(run())
 
 
 def test_workspace_rejects_hard_links_and_symbolic_links(tmp_path):

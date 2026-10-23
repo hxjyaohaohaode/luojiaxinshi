@@ -44,10 +44,10 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
   }
   function settingsDialog(){
     showDialog('记忆设置',`<form class="stack" id="memory-settings-form"><label class="field">记忆方式<select name="mode">${Object.entries(modes).map(([key,label])=>`<option value="${key}" ${key===settings.mode?'selected':''}>${label}</option>`).join('')}</select></label><p class="small muted">自动记忆保存有原话依据的明确陈述；依据不足时系统暂缓使用、自动检查或归档。仅手动保存仍可调用已有记忆；暂停全部记忆会同时停止调用与自动积累。</p><label class="check"><input type="checkbox" name="auto_organize" ${settings.auto_organize?'checked':''}><span>后台整理分类概览，保留每条原始记忆</span></label><label class="check"><input type="checkbox" name="learn_tasks" ${settings.learn_tasks?'checked':''}><span>将本人办理进度积累为待办与经历记忆</span></label><p class="small muted">记忆整理在本机进行。Agent 随已授权的回答提出记忆操作，不为后台整理额外调用付费模型。</p><div class="form-footer"><button type="submit" class="button primary">保存设置</button></div></form>`);
-    const form=$('#memory-settings-form'),version=settings.version;
+    const form=$('#memory-settings-form'),version=settings.version,before={mode:settings.mode,auto_organize:settings.auto_organize,learn_tasks:settings.learn_tasks};
     form.addEventListener('submit',async event=>{
       event.preventDefault();const fd=new FormData(form),view=captureUiContext(state,form);form.inert=true;
-      try{await api('/memory/settings',{method:'PUT',json:{version,mode:fd.get('mode'),auto_organize:fd.has('auto_organize'),learn_tasks:fd.has('learn_tasks')}});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await refresh();toast('记忆设置已保存。');}catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
+      try{const saved=await api('/memory/settings',{method:'PUT',json:{version,mode:fd.get('mode'),auto_organize:fd.has('auto_organize'),learn_tasks:fd.has('learn_tasks')}});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await refresh();toast('记忆设置已保存。',false,{duration:15000,action:{label:'撤销',run:async()=>{if(!view.sameUser())throw Error('账号已变化，不能撤销原账号的设置。');await api('/memory/settings',{method:'PUT',json:{...before,version:saved.version}});if(view.sameRoute())await refresh();}}});}catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
     });
   }
   async function working(cid){

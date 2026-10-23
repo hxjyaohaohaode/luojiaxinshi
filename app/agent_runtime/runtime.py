@@ -68,7 +68,8 @@ class Run:
         self.observed_agents = set()
         self.tool_failures = {}
         context_tokens = self.settings.agent_oss_context_tokens if thread['options']['provider'] == 'oss' else self.settings.ai_context_tokens
-        output_reserve = 4096 if thread['options']['provider'] == 'oss' else 8192
+        from .providers import completion_budget
+        output_reserve = completion_budget(self.settings, thread['options']['provider'])
         # UTF-8 bytes are the hard application budget, not provider tokens.
         # A conservative estimate of 2 bytes/token avoids treating every byte
         # of Chinese input as a token. The provider still enforces its context.
@@ -281,23 +282,37 @@ class Run:
                     previous, repetitions = '', 0
             # A tool can make additional capabilities available for this step.
             catalog = self.tool_catalog(child)
-            packed, stats = compact(system, self.history if not child else [], current, catalog, self.context_bytes,
+            continuation_bytes = self.provider.reasoning_bytes(current) if isinstance(self.provider, Provider) else 0
+            step_budget = self.context_bytes-continuation_bytes
+            step_system = self.fit_system_context(system, step_budget-size(current)-size(catalog)-2048)
+            packed, stats = compact(step_system, self.history if not child else [], current, catalog, step_budget,
                                     protected_tools=self.protected_tools)
-            if stats['omitted_messages'] or stats['compacted_tool_results'] or stats['compacted_history_messages']:
+            if step_system != system or stats['omitted_messages'] or stats['compacted_tool_results'] or stats['compacted_history_messages']:
                 self.emit('context.compacted', {'agent_id': aid, **stats})
             if self.calls >= 24:
                 raise AgentError('本轮与子任务合计已达 24 次模型调用上限')
             self.calls += 1
-            self.emit('model.started', {'agent_id': aid, 'step': step+1, 'model': self.provider.model})
-            rate_limit(self.db, 'agent-model:' + self.uid, self.settings.ai_daily_limit, 86400)
+            from .providers import completion_budget
+            options = self.provider.generation_options() if isinstance(self.provider, Provider) else {'thinking': {'type': 'enabled'}, 'max_completion_tokens': completion_budget(self.settings)}
+            self.emit('model.started', {'agent_id': aid, 'step': step+1, 'model': self.provider.model, 'thinking': options.get('thinking', {}).get('type')})
+            # Admission counts user turns; a turn can legitimately need several
+            # model/tool steps. Do not exhaust a 30-turn allowance after only
+            # 30 internal model calls (often just a few user tasks).
+            try:
+                rate_limit(self.db, 'agent-model:' + self.uid, self.settings.ai_daily_limit * 24, 86400)
+            except HTTPException as exc:
+                if exc.status_code == 429:raise AgentError('今日模型调用次数已达服务上限，当前任务已保留') from None
+                raise
             async with self.service.model_slots:
                 from ..harness import start_call, finish_call
-                trace = start_call({'model': self.provider.model, 'thinking': {'type': 'disabled'},
-                                    'max_completion_tokens': 4096 if self.thread['options']['provider'] == 'oss' else 8192})
+                trace = start_call({'model': self.provider.model, **options})
                 try:
                     message, usage = await self.model_response(packed, catalog, child)
                 except BaseException as exc:
-                    finish_call(trace, error=exc)
+                    finish_call(trace, getattr(exc,'usage',None), error=exc)
+                    if getattr(exc,'finish_reason',None):
+                        self.emit('model.failed', {'agent_id':aid,'step':step+1,'finish_reason':exc.finish_reason,
+                                                  'usage':getattr(exc,'usage',{})})
                     raise
                 else:
                     finish_call(trace, usage)
@@ -337,9 +352,12 @@ class Run:
             # just-packed historical turns here could leave only 512 bytes for
             # a schema even though the current request has ample real room.
             next_catalog = self.tool_catalog(child, upcoming={c['function']['name'] for c in calls})
-            mandatory, _ = compact(system, [], current, next_catalog, self.context_bytes, protected_tools=self.protected_tools)
+            continuation_bytes = self.provider.reasoning_bytes(current) if isinstance(self.provider, Provider) else 0
+            available = self.context_bytes - continuation_bytes
+            next_system = self.fit_system_context(system, available-size(current)-size(next_catalog)-8192)
+            mandatory, _ = compact(next_system, [], current, next_catalog, available, protected_tools=self.protected_tools)
             required = size(mandatory) + size(next_catalog)
-            output_limit = min(16000, max(512, (self.context_bytes - required - 2048)//len(calls)))
+            output_limit = max(512, (available - required - 2048)//len(calls))
             # Parallelize only a homogeneous read-only batch. Mixed batches
             # preserve order, so reads never race writes or approval decisions.
             if all(c['function']['name'] in self.registry and self.registry[c['function']['name']][3] for c in calls):
@@ -361,6 +379,9 @@ class Run:
 
     def tool_catalog(self, child, upcoming=()):
         return specs(child, self.registry)
+
+    def fit_system_context(self, system, budget):
+        return system
 
     def check_tool_progress(self, calls, results, aid):
         failures = self.tool_failures.setdefault(aid, {})

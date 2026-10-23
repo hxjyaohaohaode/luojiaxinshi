@@ -7,6 +7,23 @@ from urllib.parse import urlsplit
 import httpx
 
 from .types import AgentError
+from ..notice_stream import MAX_CONTENT_BYTES, MAX_STREAM_BYTES
+
+
+def completion_budget(settings, kind='mimo'):
+    # One configured ceiling for every MiMo stage; no hidden per-stage cap.
+    return 4096 if kind == 'oss' else settings.ai_output_tokens
+
+
+def response_usage(data):
+    usage = data.get('usage') or {}
+    safe = {key:max(0,int(usage.get(key) or 0)) for key in ('prompt_tokens','completion_tokens')}
+    if isinstance(data.get('model'),str):safe['provider_model'] = data['model'][:128]
+    for field,detail,total in (('prompt_tokens_details','cached_tokens','prompt_tokens'),
+                              ('completion_tokens_details','reasoning_tokens','completion_tokens')):
+        if isinstance(usage.get(field),dict) and detail in usage[field]:
+            safe[field] = {detail:min(safe[total],max(0,int(usage[field][detail] or 0)))}
+    return safe
 
 
 def loopback_url(url):
@@ -24,6 +41,9 @@ class Provider:
     def __init__(self, settings, kind):
         self.settings, self.kind = settings, kind
         self.reuse_connections, self._client = False, None
+        # Provider-only continuation state. Never enters chat events, durable
+        # transcripts, logs or final answers. Cleared at the end of this run.
+        self._reasoning = {}
         if kind == 'oss':
             self.url = loopback_url(settings.agent_oss_url)
             self.model, self.key = settings.agent_oss_model, ''
@@ -50,6 +70,7 @@ class Provider:
                 yield client
 
     async def aclose(self):
+        self._reasoning.clear()
         if self._client is not None:
             await self._client.aclose()
             self._client = None
@@ -60,12 +81,27 @@ class Provider:
     async def complete_stream(self, messages, tools, on_text, *, on_answer_arguments=None):
         return await self._request(messages, tools, on_text, on_answer_arguments)
 
+    @staticmethod
+    def _key(message):
+        return tuple(call['id'] for call in message.get('tool_calls', []))
+
+    def reasoning_bytes(self, messages):
+        from .context import size
+        return sum(size({'reasoning_content': self._reasoning.get(self._key(message), '')}) + 2
+                   for message in messages if message.get('tool_calls')) if self.kind == 'mimo' else 0
+
+    def generation_options(self):
+        return ({'thinking': {'type': 'enabled'}, 'max_completion_tokens': completion_budget(self.settings)}
+                if self.kind == 'mimo' else {'max_tokens': 4096})
+
     async def _request(self, messages, tools, on_text=None, on_answer_arguments=None):
         payload = {'model': self.model, 'messages': messages, 'stream': False,
                    'tools': tools, 'tool_choice': 'auto', 'max_tokens': 4096}
         if self.kind == 'mimo':
             payload.pop('max_tokens')
-            payload.update(max_completion_tokens=8192, thinking={'type': 'disabled'}, temperature=0.2)
+            payload.update(self.generation_options())
+            payload['messages'] = [{**message, 'reasoning_content': self._reasoning[self._key(message)]}
+                if message.get('tool_calls') and self._key(message) in self._reasoning else message for message in messages]
             # The embedded chat has a typed final-answer tool. Requiring a
             # call here avoids paying to repair an unstructured plain-text
             # answer. Children and the SDK/OSS loop keep their own completion
@@ -81,17 +117,23 @@ class Provider:
                     if response.status_code != 200:
                         raise AgentError(f'模型服务返回 HTTP {response.status_code}；未自动重试，请核对配置与额度')
                     if on_text:
-                        data = await stream_message(response, on_text, on_answer_arguments)
+                        data = await stream_message(response, on_text, on_answer_arguments, retain_reasoning=self.kind == 'mimo')
                     else:
                         body = bytearray()
                         async for chunk in response.aiter_bytes():
                             body.extend(chunk)
-                            if len(body) > 1048576:
-                                raise AgentError('模型响应超过 1 MB，已停止读取')
+                            if len(body) > MAX_CONTENT_BYTES:
+                                raise AgentError('模型响应超过传输大小上限，已停止读取')
                         data = json.loads(body)
             choice = data['choices'][0]
+            safe_usage = response_usage(data)
             if choice.get('finish_reason') not in {'stop', 'tool_calls'}:
-                raise AgentError('模型响应未完整结束，未执行其中的工具')
+                finish=choice.get('finish_reason')
+                reason={'length':'模型达到输出上限','repetition_truncation':'模型重复生成，被服务端截断'}.get(finish,'模型响应未完整结束')
+                error=AgentError(reason+'，未执行其中不完整的工具调用')
+                error.usage=safe_usage
+                error.finish_reason=finish if finish in {'length','repetition_truncation','content_filter'} else 'incomplete'
+                raise error
             msg = choice['message']
             if msg.get('content') is not None and not isinstance(msg['content'], str):
                 raise ValueError('content')
@@ -104,15 +146,14 @@ class Provider:
                     raise ValueError('call id')
                 ids.add(call['id'])
                 fn = call['function']
-                if not isinstance(fn.get('name'), str) or not isinstance(fn.get('arguments'), str) or len(fn['arguments'].encode()) > 64000:
+                if not isinstance(fn.get('name'), str) or not isinstance(fn.get('arguments'), str) or len(fn['arguments'].encode()) > MAX_CONTENT_BYTES:
                     raise ValueError('function')
-            usage = data.get('usage') or {}
-            safe_usage = {key: max(0, int(usage.get(key) or 0)) for key in ('prompt_tokens', 'completion_tokens')}
-            for field, detail, total in (('prompt_tokens_details', 'cached_tokens', 'prompt_tokens'),
-                                         ('completion_tokens_details', 'reasoning_tokens', 'completion_tokens')):
-                if isinstance(usage.get(field), dict) and detail in usage[field]:
-                    safe_usage[field] = {detail: min(safe_usage[total], max(0, int(usage[field][detail] or 0)))}
-            # Hidden reasoning is neither exposed as an event nor persisted.
+            if self.kind == 'mimo' and calls:
+                reasoning = msg.get('reasoning_content') or ''
+                if not isinstance(reasoning, str) or len(reasoning.encode('utf-8')) > 1048576:
+                    raise ValueError('reasoning_limit')
+                self._reasoning[self._key(msg)] = reasoning
+            # Only the provider retains private reasoning for tool continuity.
             return {'role': 'assistant', 'content': msg.get('content') or '', **({'tool_calls': calls} if calls else {})}, safe_usage
         except AgentError:
             raise
@@ -122,7 +163,7 @@ class Provider:
             raise AgentError('模型未返回兼容的完整工具协议；未执行本次工具') from None
 
 
-async def stream_message(response, on_text, on_answer_arguments=None):
+async def stream_message(response, on_text, on_answer_arguments=None, *, retain_reasoning=False):
     """Buffer tools until a complete finish; optionally decode submit's answer.
 
 The argument callback feeds AnswerDecoder, never the raw UI or other tools.
@@ -132,9 +173,10 @@ Nothing is executed or published by either preview callback.
     decoder = codecs.getincrementaldecoder('utf-8')()
     buffer, content, calls, usage, finish, size = '', '', {}, {}, None, 0
     previewed_arguments = 0
+    reasoning, model = [], None
     async for chunk in response.aiter_bytes():
         size += len(chunk)
-        if size > 8 * 1048576:
+        if size > MAX_STREAM_BYTES:
             raise AgentError('模型流超过大小限制')
         buffer += decoder.decode(chunk)
         if len(buffer) > 262144:
@@ -145,11 +187,15 @@ Nothing is executed or published by either preview callback.
             value = line[5:].strip()
             if value == '[DONE]':continue
             packet = json.loads(value)
+            if isinstance(packet.get('model'), str):model = packet['model']
             usage = packet.get('usage') or usage
             for choice in packet.get('choices', []):
                 if choice.get('index', 0) != 0:continue
                 finish = choice.get('finish_reason') or finish
                 delta = choice.get('delta', {})
+                if retain_reasoning and delta.get('reasoning_content'):
+                    if not isinstance(delta['reasoning_content'], str):raise ValueError('reasoning')
+                    reasoning.append(delta['reasoning_content'])
                 text = delta.get('content') or ''
                 if not isinstance(text, str):raise ValueError('content')
                 if text:
@@ -164,7 +210,7 @@ Nothing is executed or published by either preview callback.
                     if part.get('type'):call['type'] = part['type']
                     for key in ('name', 'arguments'):
                         call['function'][key] += (part.get('function') or {}).get(key) or ''
-                    if len(call['function']['arguments'].encode()) > 64000 or len(call['function']['name']) > 128:
+                    if len(call['function']['arguments'].encode()) > MAX_CONTENT_BYTES or len(call['function']['name']) > 128:
                         raise ValueError('call_limit')
                     if on_answer_arguments and index == 0 and call['function']['name'] in ('submit_answer', 'submit_interface'):
                         arguments = call['function']['arguments']
@@ -172,4 +218,5 @@ Nothing is executed or published by either preview callback.
                             on_answer_arguments(arguments[previewed_arguments:])
                             previewed_arguments = len(arguments)
     if decoder.decode(b'', final=True) or buffer.strip():raise ValueError('incomplete_stream')
-    return {'choices': [{'finish_reason': finish, 'message': {'content': content, 'tool_calls': [calls[k] for k in sorted(calls)]}}], 'usage': usage}
+    return {'choices': [{'finish_reason': finish, 'message': {'content': content, 'tool_calls': [calls[k] for k in sorted(calls)],
+        **({'reasoning_content': ''.join(reasoning)} if retain_reasoning else {})}}], 'usage': usage, **({'model': model} if model else {})}

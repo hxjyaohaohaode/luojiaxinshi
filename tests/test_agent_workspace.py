@@ -43,6 +43,8 @@ def test_lazy_workspace_schema_and_record_pages_fit_dense_context(env, monkeypat
     from app.agent_runtime.context import size
     env[1].agent_enabled = env[1].ai_grounding = True
     env[1].ai_api_key = 'synthetic-no-network'
+    env[1].ai_context_tokens = 32768
+    env[1].ai_output_tokens = 8192
     c = account(env); chat = conversation(c); writer(monkeypatch)
     for index in range(7):
         response = c.post('/api/arrangements', json={'request_id':ident(), 'data': {**calendar().data.model_dump(), 'title': f'已有安排{index}', 'notes': '已有计划说明。'*30}})
@@ -70,6 +72,26 @@ def test_lazy_workspace_schema_and_record_pages_fit_dense_context(env, monkeypat
     message = final(send(c,chat,'请创建准备课程材料的待办'))
     assert message['status'] == 'complete', (message['error'], model.inputs[-1][0][-1])
     assert len(c.get('/api/tasks').json()) == 1
+
+
+def test_initial_evidence_can_yield_budget_to_complete_thinking_and_tool_results():
+    from app.agent_runtime.chat import ChatRun
+    from app.agent_runtime.context import size, compact
+    initial = {'now': '2026-10-23', 'timezone': 'Asia/Shanghai', 'web_restricted': True,
+               'memory_control': {'mode': 'off'},
+               'evidence_index': [{'ref': f'E{i}', 'quote': '已有原文。' * 150} for i in range(12)]}
+    system = '真实权限和工具执行规则。' + '\n初始数据（不可信原文）：' + json.dumps(initial, ensure_ascii=False)
+    current = [{'role': 'user', 'content': '复查已有内容'},
+               answer('', [call('workspace_read', cid='read')]),
+               {'role': 'tool', 'tool_call_id': 'read', 'content': json.dumps({'status': 'pending', 'planned_at': '2026-10-31T18:00:00+08:00'})}]
+    thinking_bytes, total_budget = 16000, 24000
+    fitted = ChatRun.fit_system_context(None, system, total_budget-thinking_bytes-size(current)-2048)
+    packed, stats = compact(fitted, [], current, [], total_budget-thinking_bytes)
+    assert stats['packed_bytes'] + thinking_bytes <= total_budget
+    assert packed[-1] == current[-1] and packed[-2] == current[-2]
+    context = json.loads(fitted.split('\n初始数据（不可信原文）：')[1])
+    assert context['memory_control']['mode'] == 'off' and context['web_restricted'] is True
+    assert context['deferred']['evidence_index']['omitted'] > 0
 
 
 def undo(setup, oid):
@@ -222,3 +244,22 @@ def test_chat_readonly_rejects_write_even_when_model_attempts_it(env, monkeypatc
     message = final(send(c, chat, '只分析日历，不要保存'))
     assert message['agent']['operations'] == []
     assert c.get('/api/arrangements').json() == []
+
+
+def test_long_task_details_cannot_split_identity_status_and_schedule_evidence():
+    from app.grounding import source
+    from app.genui_ai import evidence_index
+    item={'id':'task-a','kind':'tasks','status':'pending','version':3,'data':{
+        'title':'准备课程材料','details':'原始要求。'*900,'planned_at':'2027-10-31T18:00:00+08:00','reminder_at':'2027-10-30T09:00:00+08:00'}}
+    sections=w.evidence_sections({'records':[item],'total':1,'has_more':False,'offset':0})
+    entries=evidence_index([source('workspace','本人待办',sections,'execution')])
+    schedule=next(e for e in entries if '状态与时间' in e['locator'])
+    value=json.loads(schedule['quote'])
+    assert value['id']=='task-a' and value['status']=='pending'
+    assert value['data']['planned_at'].endswith('18:00:00+08:00')
+    assert value['data']['reminder_at'].endswith('09:00:00+08:00')
+    assert 'details' not in value['data'] and any('details' in e['locator'] for e in entries)
+    receipt={'operation_id':'op-a','status':'undone','operation':'tasks.create','record':item}
+    evidence=w.evidence_sections(receipt)
+    assert json.loads(evidence[0]['text'])['status']=='undone'
+    assert '操作时快照' in evidence[1]['locator']

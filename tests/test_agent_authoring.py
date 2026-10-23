@@ -168,7 +168,7 @@ def test_review_effort_tracks_derivation_not_presence_of_interface(env):
     source=grounding.source('s','说明',[{'locator':'p1','text':'准备两份材料'}],'material')
     simple={'answer':'先准备材料。','claims':[]}
     options=grounding.review_options(env[1],simple,[source])
-    assert options['thinking']['type']=='disabled' and options['max_completion_tokens']<=2048
+    assert options['thinking']['type']=='enabled' and options['max_completion_tokens']==131072
     calculation={**simple,'claims':[{'kind':'inference','text':'按已给数值计算'}]}
     assert grounding.review_options(env[1],calculation,[source])['thinking']['type']=='enabled'
     assert grounding.review_options(env[1],simple,[source]*3)['thinking']['type']=='enabled'
@@ -177,7 +177,9 @@ def test_review_effort_tracks_derivation_not_presence_of_interface(env):
 @pytest.mark.parametrize('expression,expected', [("due + '（' + dueNote + '）'",False), ('title',False), ("'人数：' + count",False), ("a + b + '元'",True), ('a / b * 100',True), ('sum(values)',True)])
 def test_label_formatting_does_not_trigger_long_reasoning(env, expression, expected):
     draft={'answer':json.dumps({'$expr':expression}), 'claims':[]}
-    assert (grounding.review_options(env[1],draft,[])['thinking']['type']=='enabled') is expected
+    options=grounding.review_options(env[1],draft,[])
+    assert options['thinking']['type']=='enabled'
+    assert options['max_completion_tokens']==131072
 
 
 def test_long_history_does_not_starve_current_ui_schema(env, monkeypatch):

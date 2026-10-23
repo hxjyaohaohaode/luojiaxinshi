@@ -2,9 +2,9 @@
 import codecs
 import json
 
-MAX_STREAM_BYTES = 8_000_000
+MAX_STREAM_BYTES = 64_000_000  # 128K tokens plus per-token SSE envelope overhead.
 MAX_EVENT_BYTES = 500_000
-MAX_CONTENT_BYTES = 500_000
+MAX_CONTENT_BYTES = 1_200_000
 
 
 def read_reply(response, trace):

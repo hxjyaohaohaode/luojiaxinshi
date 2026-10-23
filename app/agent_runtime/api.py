@@ -73,9 +73,13 @@ def install(app, db, settings, user, owner):
 
     @app.get('/api/agent/config')
     def configuration(current=Depends(enabled)):
+        from .providers import completion_budget
         return {'skills': service.skills.metadata(), 'providers': {'mimo': bool(settings.ai_api_key), 'oss': bool(settings.agent_oss_model)},
                 'mcp_servers': list(settings.agent_mcp_servers), 'sandbox_configured': bool(settings.agent_sandbox_image),
-                'limits': {'steps': 12, 'children': 3, 'model_calls_per_turn': 24, 'context_bytes': settings.agent_context_bytes}}
+                'limits': {'steps': 12, 'children': 3, 'model_calls_per_turn': 24, 'context_bytes': settings.agent_context_bytes,
+                           'mimo_context_tokens':settings.ai_context_tokens,'mimo_output_tokens':completion_budget(settings),
+                           'mimo_input_bytes':min(settings.agent_context_bytes,max(512,settings.ai_context_tokens-completion_budget(settings))*2),
+                           'oss_context_tokens':settings.agent_oss_context_tokens}}
 
     @app.get('/api/agent/threads')
     def threads(current=Depends(enabled)):

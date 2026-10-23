@@ -49,13 +49,13 @@ def test_publication_rejects_length_or_unwanted_ui_without_truncation():
         check_response_contract([{'kind':'ui'}],{'no_ui':True})
 
 
-def test_grounded_text_composition_uses_prepared_evidence_without_another_thinking_pass(tmp_path):
+def test_grounded_text_composition_uses_prepared_evidence_with_thinking(tmp_path):
     s=Settings(tmp_path,ai_api_key='synthetic-only')
     request=genui_ai.payload(s,[],[{'role':'user','content':'两句话内，不重建界面。'}],{'_grounding_context':{}},3)
     # An empty dict is not an active prepared context.
     assert request['thinking']['type']=='enabled'
     request=genui_ai.payload(s,[],[{'role':'user','content':'两句话内，不重建界面。'}],{'_grounding_context':{'response_contract':{'max_sentences':2,'no_ui':True}}},3)
-    assert request['thinking']['type']=='disabled' and request['temperature']==0.2
+    assert request['thinking']['type']=='enabled' and 'temperature' not in request
     assert 'AuthoredUI' not in request['messages'][0]['content']
 
 

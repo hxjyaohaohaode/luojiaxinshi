@@ -2,6 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {verifyWorkspaceNavigation} from './workspace_navigation_checks.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const out=path.resolve('artifacts/workspace-interactions-browser');await fs.mkdir(out,{recursive:true});
@@ -9,8 +10,10 @@ const report={fixture:'Synthetic workspace interactions; simulated provider; no 
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()}),page=await browser.newPage({viewport:{width:1413,height:871}});page.setDefaultTimeout(12000);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
- const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){console.log('FAIL',engine,name,error.message.slice(0,500));report.checks.push({engine,name,ok:false,error:error.message});await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png')}).catch(()=>{});}};
- const settle=()=>page.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
+ const check=async(name,fn)=>{console.log('CHECK',engine,name);try{await fn();report.checks.push({engine,name,ok:true});}catch(error){console.log('FAIL',engine,name,error.message.slice(0,500));report.checks.push({engine,name,ok:false,error:error.message});await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png')}).catch(()=>{});}};
+ // Toast lifetimes intentionally pause while focused or hovered. Only wait
+ // for layout/motion transitions, not a dismiss timer requiring user input.
+ const settle=()=>page.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.playState!=='paused'&&a.effect?.getTiming().iterations!==Infinity&&!a.effect?.target?.closest('#toast')).map(a=>a.finished.catch(()=>{}))));
  const resize=async size=>{
   await page.setViewportSize(size);
   // The protocol acknowledges resizing before resize/visualViewport events
@@ -83,7 +86,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('search expands matching material folders and restores the user folder choices',async()=>{
    await page.locator('.chat-heading [data-chat-action=toggle-materials]').click();await searched();const root=page.locator('[data-folder-path="课程"]'),child=page.locator('[data-folder-path="课程/附件"]');assert.equal(await child.evaluate(n=>n.open),false);await page.locator('#material-search').fill('子资料');await page.locator('#material-search').press('Enter');await searched();assert.equal(await child.evaluate(n=>n.open),true);await page.locator('#chat-materials [data-search-clear]').click();await searched();assert.equal(await child.evaluate(n=>n.open),false);assert.equal(await root.evaluate(n=>n.open),true);await root.locator(':scope > summary').click();await settle();await page.locator('#material-search').fill('说明');await page.locator('#material-search').press('Enter');await searched();assert.equal(await root.evaluate(n=>n.open),true);await page.locator('#chat-materials [data-search-clear]').click();await searched();assert.equal(await root.evaluate(n=>n.open),false);await page.locator('.materials-close').click();
   });
-  await page.locator('#chat-input').fill('【合成验收】长篇阅读');await page.locator('#chat-composer [type=submit]').click();await page.waitForFunction(()=>document.querySelector('#chat-thread')?.textContent.includes('第 60 段')&&!document.querySelector('#chat-composer [type=submit]').disabled);
+  await page.locator('#chat-input').fill('【合成验收】长篇阅读');await page.locator('#chat-composer [type=submit]').click();await page.waitForFunction(()=>document.querySelector('#chat-thread')?.textContent.includes('第 60 段')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
   const anchor=async()=>page.evaluate(()=>{const reader=document.querySelector('#chat-thread'),p=reader.querySelectorAll('.message-assistant .message-content p')[25];if(!p)throw Error('Missing long synthetic reading content');reader.scrollTop+=p.getBoundingClientRect().top-reader.getBoundingClientRect().top-12;const range=document.createRange();range.setStart(p.firstChild,0);range.setEnd(p.firstChild,1);window.__readingAnchor={range,p};return{top:range.getBoundingClientRect().top,font:getComputedStyle(p).fontSize,width:reader.clientWidth};});
   const position=async()=>page.evaluate(()=>({top:window.__readingAnchor.range.getBoundingClientRect().top,font:getComputedStyle(window.__readingAnchor.p).fontSize,connected:window.__readingAnchor.p.isConnected,width:document.querySelector('#chat-thread').clientWidth}));
   await check('sidebar collapse and expansion preserve the text anchor through the full transition',async()=>{
@@ -95,6 +98,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('reduced motion leaves native disclosure sizes and controls immediately usable',async()=>{
    await page.emulateMedia({reducedMotion:'reduce'});await page.locator('.chat-heading [data-chat-action=toggle-materials]').click();const folder=page.locator('[data-folder-path="课程"]');await folder.locator(':scope > summary').click();assert.equal(await folder.evaluate(n=>n.getAnimations().length),0);assert.equal(await folder.evaluate(n=>n.style.height),'');await page.locator('.materials-close').click();await page.emulateMedia({reducedMotion:'no-preference'});
   });
+  await verifyWorkspaceNavigation({page,api,nav,resize,check,out,engine});
   await check('all workspace interaction flows finish without unhandled errors',async()=>assert.deepEqual(report.errors.filter(e=>e.engine===engine),[]));
  }catch(error){report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}
  finally{await browser.close();const rows=report.checks.filter(c=>c.engine===engine);console.log(engine+': '+rows.filter(c=>c.ok).length+'/'+rows.length+' passed');}

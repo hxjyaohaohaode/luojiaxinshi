@@ -13,7 +13,7 @@ import sqlite3
 def test_browser_suite_limit_reset_is_confined_to_the_owned_synthetic_database(tmp_path,monkeypatch):
     monkeypatch.setattr(run_browser_checks,'ROOT',tmp_path)
     monkeypatch.setattr(run_browser_checks,'OUT',tmp_path/'artifacts/ci-browser')
-    data=tmp_path/'artifacts/ci-browser/data';data.mkdir(parents=True)
+    data=tmp_path/'artifacts/ci-browser/fixture-test';data.mkdir(parents=True)
     with sqlite3.connect(data/'campus.sqlite3') as connection:
         connection.execute('CREATE TABLE limits (key TEXT)')
         connection.execute("INSERT INTO limits VALUES ('synthetic-login')")

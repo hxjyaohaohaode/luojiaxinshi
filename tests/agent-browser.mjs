@@ -32,6 +32,18 @@ try{
   checks.push('刷新原聊天可恢复待审批项，拒绝后不生成文件');
   await ask('请审批保存待取消的文件');await page.getByRole('button',{name:'拒绝',exact:true}).waitFor();
   const chatId=new URL(page.url()).hash.split('/')[1];
+  const primary=page.locator('#chat-composer .send-button');
+  assert.equal(await page.locator('#chat-composer .composer-stop').count(),0);
+  assert.equal(await primary.getAttribute('aria-label'),'停止本次回复');
+  const bounds=await primary.boundingBox();
+  await page.locator('#chat-input').fill('补充草稿');
+  assert.equal(await primary.getAttribute('aria-label'),'发送补充消息');
+  const typed=await primary.boundingBox();assert.ok(Math.abs(typed.x-bounds.x)<1&&Math.abs(typed.y-bounds.y)<1);
+  await page.locator('#chat-input').fill('  ');assert.equal(await primary.getAttribute('aria-label'),'停止本次回复');
+  await page.locator('#chat-input').press('Enter');assert.equal(await page.getByRole('button',{name:'拒绝',exact:true}).count(),1);
+  await page.locator('#chat-input').fill('');
+  checks.push('生成时同一主按钮为停止，输入补充后为发送，清空后恢复停止；空白 Enter 不取消');
+
   for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844],['keyboard',390,420]]){
     await page.setViewportSize({width,height});await page.locator('#chat-input').focus();
     await page.waitForFunction(()=>document.querySelector('#chat-input').getBoundingClientRect().bottom<=innerHeight+1,{},{timeout:5000});

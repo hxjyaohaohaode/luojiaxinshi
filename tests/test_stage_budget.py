@@ -36,7 +36,7 @@ def test_stage_expands_once_without_retrieving_again_or_disabling_thinking(monke
         return {'content':json.dumps({'supported':True,'issues':[]})},{'prompt_tokens':12,'completion_tokens':40}
     monkeypatch.setattr(grounding,'completion',complete)
     initial=request();result,usage=asyncio.run(grounding.structured_check(Settings(data_dir=Path('.')),initial,grounding.Review,'审查'))
-    assert seen==[5000,32768] and initial['max_completion_tokens']==5000
+    assert seen==[5000,131072] and initial['max_completion_tokens']==5000
     assert result['supported'] and usage=={'prompt_tokens':22,'completion_tokens':5040}
 
 
@@ -46,7 +46,7 @@ def test_authentication_and_ceiling_errors_are_not_retried(monkeypatch,error):
     async def complete(*args):seen.append(True);raise error
     monkeypatch.setattr(grounding,'completion',complete)
     with pytest.raises(type(error)):
-        asyncio.run(grounding.structured_check(Settings(data_dir=Path('.')),request(32768),grounding.Review,'审查'))
+        asyncio.run(grounding.structured_check(Settings(data_dir=Path('.')),request(131072),grounding.Review,'审查'))
     assert len(seen)==1
 
 
@@ -59,5 +59,5 @@ def test_format_and_budget_repairs_have_independent_finite_limits(monkeypatch):
         return {'content':'{"supported":true,"issues":[]}'},{'prompt_tokens':4,'completion_tokens':5}
     monkeypatch.setattr(grounding,'completion',complete)
     result,usage=asyncio.run(grounding.structured_check(Settings(data_dir=Path('.')),request(),grounding.Review,'审查'))
-    assert seen==[5000,5000,32768] and result['supported']
+    assert seen==[5000,5000,131072] and result['supported']
     assert usage=={'prompt_tokens':8,'completion_tokens':5007}

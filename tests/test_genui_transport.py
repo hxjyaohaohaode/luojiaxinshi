@@ -197,3 +197,13 @@ def test_tightened_data_limit_degrades_without_stranding_processing():
     from app.genui_api import message_parts
     parts=message_parts(RAW,1,True,{'stringBytes':8},{'materials':[{'name':'a very long filename exceeding limit'}]})
     assert parts==[{'kind':'text','text':RAW}]
+
+
+def test_plain_repair_accepts_null_ui_but_rejects_interactive_content():
+    from pydantic import ValidationError
+    from app.genui_ai import IndexedAnswer, UIAnswer
+    value=IndexedAnswer.model_validate({'answer':'按原始记录核对。','ui':None})
+    assert 'ui' not in value.model_dump()
+    ui={'state':{},'nodes':[{'id':'note','type':'Markdown','props':{'text':'核对记录'}}]}
+    with pytest.raises(ValidationError):IndexedAnswer.model_validate({'answer':'核对记录','ui':ui})
+    assert UIAnswer.model_validate({'answer':'','ui':ui}).model_dump()['ui']=={**ui,'nodes':[{**ui['nodes'][0],'children':[],'on':{}}]}

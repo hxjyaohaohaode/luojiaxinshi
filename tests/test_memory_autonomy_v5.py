@@ -284,9 +284,10 @@ def test_provider_edit_protocol_accepts_only_the_instance_and_never_retries(env,
     from app import memory_assist,evidence_web
     from pydantic import ValidationError
     calls=[]
-    async def completion(settings,payload,max_bytes):
+    async def completion(settings,payload,max_bytes=1200000):
         calls.append(payload)
         assert payload['response_format']=={'type':'json_object'}
+        assert payload['thinking']=={'type':'enabled'} and payload['max_completion_tokens']==131072
         assert '唯一字段是 replacement' in payload['messages'][0]['content']
         assert json.loads(payload['messages'][1]['content'])=={'selection':'小林','instruction':'改成小陈'}
         return {'content':response},{}

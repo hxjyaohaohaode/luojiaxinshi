@@ -86,7 +86,7 @@ def add_integration(doc):
     style.add_paragraph(doc,'小米 AI 对接与验证','heading1')
     style.add_paragraph(doc,'配置与接口','heading2')
     style.add_paragraph(doc,'配置文件位于“系统_开发/.env”。填写 MIMO_API_KEY 后重启，MIMO_BASE_URL 已设为 https://api.xiaomimimo.com/v1。主模型、ASR、普通 TTS、音色设计和声音复刻分别通过 MIMO_TEXT_MODEL、MIMO_ASR_MODEL、MIMO_TTS_MODEL、MIMO_VOICE_DESIGN_MODEL、MIMO_VOICE_CLONE_MODEL 预置为本方案列出的模型。旧供应商配置不再读取。')
-    style.add_paragraph(doc,'五个模型统一调用 /chat/completions。主模型沿用 JSON 输出与图片输入，思考开关使用 thinking.type=disabled。ASR 使用 input_audio；TTS 将播报正文置于 assistant 消息，音色描述置于 user 消息，并从返回的 audio.data 读取音频。音色设计不传预置 voice，关闭 optimize_text_preview；声音复刻在 audio.voice 中传入参考录音。')
+    style.add_paragraph(doc,'五个模型统一调用 /chat/completions。主模型沿用 JSON 输出与图片输入，思考开关使用 thinking.type=enabled。ASR 使用 input_audio；TTS 将播报正文置于 assistant 消息，音色描述置于 user 消息，并从返回的 audio.data 读取音频。音色设计不传预置 voice，关闭 optimize_text_preview；声音复刻在 audio.voice 中传入参考录音。')
     style.add_paragraph(doc,'本版本使用小米按量 API。Token Plan 的专用密钥、端点和用途条件需要另行核对，不能直接混用。一个密钥能否调用全部模型，以账号实际权限和额度为准；不把限时优惠或模型配置写成永久免费、已经开通或已经验收。')
     style.add_paragraph(doc,'语音入口与应用上限','heading2')
     style.add_paragraph(doc,'聊天及通知输入框的麦克风调用 ASR。浏览器本地将录音转换为 16 位、16 kHz、单声道 WAV 后发送；录音最长 60 秒。个人设置中的“语音播报”可选择三种 TTS 模式，播报正文最多 2,000 字，音色描述最多 500 字，复刻参考 WAV 最长 30 秒，音频输入不超过 5 MB。以上为本应用限制。')

@@ -2,6 +2,11 @@ const bases=new WeakMap();
 
 export function bindProfileForm(form,profile){bases.set(form,structuredClone(profile));}
 
+export function profileUndoValues(form,values){
+  const base=bases.get(form);if(!base)throw Error('资料表单已失效。');
+  return Object.fromEntries(Object.entries(values).filter(([key,value])=>(typeof value==='string'?value.trim():value)!==base[key]).map(([key])=>[key,base[key]]));
+}
+
 export function applyProfileForm(state,form,profile,values){
   const base=bases.get(form),current=state.session.user.profile;
   // A late response must not roll back another field already saved in this tab.

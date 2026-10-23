@@ -42,7 +42,7 @@ def test_parallel_uploads_keep_all_items_and_retry_is_idempotent(env):
     client=account(env);chat=conversation(client)
     with ThreadPoolExecutor(max_workers=3) as pool:
         replies=list(pool.map(lambda i:upload(client,chat,f'材料{i}.txt',f'内容{i}'.encode()),range(9)))
-    assert all(r.status_code==200 for r in replies)
+    assert all(r.status_code==200 for r in replies), [(r.status_code,r.text[:300]) for r in replies if r.status_code!=200]
     ids=[r.json()['uploaded_source_ids'][0] for r in replies]
     assert len(set(ids))==9
     actual=client.get('/api/conversations/'+chat['id']).json()
@@ -122,11 +122,11 @@ def test_corrupt_media_cannot_be_claimed_as_read():
     assert source['status']=='failed'
     assert review_content('未读取',[source])=='未读取'
 
-def test_simple_image_review_has_no_unnecessary_reasoning(env):
+def test_image_review_always_enables_thinking(env):
     source=register_images([library_file('image.png',png())])[0]
     result={'answer':'工程样例','claims':[],'image_sources':[source['id']]}
-    assert grounding.review_options(env[1],result,[source])['thinking']['type']=='disabled'
+    assert grounding.review_options(env[1],result,[source])['thinking']['type']=='enabled'
     result['claims']=[{'kind':'inference','text':'音频没有语音内容，无法从中提取任务要求。'}]
-    assert grounding.review_options(env[1],result,[source])['thinking']['type']=='disabled'
+    assert grounding.review_options(env[1],result,[source])['thinking']['type']=='enabled'
     result['claims']=[{'kind':'inference','text':'假设截止为明年，计算剩余时间。'}]
     assert grounding.review_options(env[1],result,[source])['thinking']['type']=='enabled'

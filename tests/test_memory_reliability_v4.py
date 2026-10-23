@@ -355,7 +355,7 @@ def test_reflection_dribbling_response_has_an_overall_deadline(env,monkeypatch):
     class Client(Response):
         def __init__(self,*args,**kwargs):pass
         def stream(self,*args,**kwargs):return Response()
-    ticks=iter([0,1,100])
+    ticks=iter([0,1,env[1].ai_workflow_timeout+1])
     monkeypatch.setattr(memory_reflection.httpx,'Client',Client)
     monkeypatch.setattr(memory_reflection.time,'monotonic',lambda:next(ticks))
     monkeypatch.setattr(notice_stream,'read_reply',lambda response,trace:(b''.join(response.iter_bytes()),'stop'))

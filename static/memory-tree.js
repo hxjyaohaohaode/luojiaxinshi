@@ -2,6 +2,7 @@ import {captureUiContext,beginFormFeedback} from './ui-request.js';
 import {createMemoryIntents} from './memory-intents.js';
 import {createMemoryDrafts} from './memory-drafts.js';
 import {memoryListText,memoryTimestamp} from './memory-list-text.js';
+import {memoryNodeIcon,memoryEntryIcon} from './memory-icons.js';
 
 const kinds={preference:'偏好',constraint:'约束',decision:'决定',fact:'事实',episode:'经历',skill:'方法',intention:'计划',summary:'概览'};
 const states={active:'可按需调用',pending:'系统暂缓使用',conflict:'存在歧义，暂不使用',needs_review:'自动检查中',cooling:'已冷却',source_changed:'来源已变化或停止使用',archived:'已归档',inactive:'已停用',expired:'已过期',scheduled:'尚未生效'};
@@ -48,13 +49,22 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     </div>`;}
   function nav(){
     if(!$('#memory-tree-nav'))return;
+    const focused=document.activeElement?.closest('#memory-tree-nav [data-tree-id]')?.dataset.treeId;
     for(const n of tree.values())n.item_count=n.subtree_count??n.item_count;
     const branch=(parent,depth=0)=>[...tree.values()].filter(n=>n.parent_id===parent).sort((a,b)=>b.system-a.system||a.title.localeCompare(b.title,'zh')).map(n=>{
       const open=expanded.has(n.id),hasChildren=n.children>0;
-      return `<div role="treeitem" aria-level="${depth+1}" aria-selected="${mode==='tree'&&node===n.id}" ${hasChildren?`aria-expanded="${open}"`:''} data-tree-id="${esc(n.id)}"><div class="memory-tree-node" style="--tree-depth:${depth}"><button class="memory-tree-disclosure" data-tree-expand="${esc(n.id)}" aria-label="${open?'收起':'展开'} ${esc(n.title)}" ${hasChildren?'':'disabled'}><span class="memory-tree-chevron ${open?'is-open':''}">›</span></button><button class="memory-tree-label" data-tree-node="${esc(n.id)}" tabindex="${mode==='tree'&&node===n.id?0:-1}" title="${esc(n.title)}">${icon('doc')}<span>${esc(n.title)}</span>${n.item_count?`<small>${n.item_count}</small>`:''}</button></div>${open?`<div role="group">${branch(n.id,depth+1)}</div>`:''}</div>`;
+      return `<div role="treeitem" aria-level="${depth+1}" aria-selected="${mode==='tree'&&node===n.id}" ${hasChildren?`aria-expanded="${open}"`:''} data-tree-id="${esc(n.id)}"><div class="memory-tree-node"><button class="memory-tree-disclosure" tabindex="-1" data-tree-expand="${esc(n.id)}" aria-label="${open?'收起':'展开'} ${esc(n.title)}" ${hasChildren?'':'disabled'}><span class="memory-tree-chevron ${open?'is-open':''}">›</span></button><button class="memory-tree-label" data-tree-node="${esc(n.id)}" tabindex="${mode==='tree'&&node===n.id?0:-1}" title="${esc(n.title)}">${memoryNodeIcon(n,open)}<span class="memory-tree-name">${esc(n.title)}</span>${n.item_count?`<small>${n.item_count}</small>`:''}</button></div>${open?`<div role="group">${branch(n.id,depth+1)}</div>`:''}</div>`;
     }).join('')+(more.has(parent)?`<button class="button small" data-tree-more="${esc(parent)}">继续载入目录…</button>`:'');
-    $('#memory-tree-nav').innerHTML=`<div role="treeitem" aria-level="1" aria-selected="${mode==='tree'&&node===root}" aria-expanded="true" data-tree-id="${esc(root)}"><div class="memory-tree-node"><button class="memory-tree-label" data-tree-node="${esc(root)}" tabindex="${mode==='session'||node===root?0:-1}">${icon('grid')}<span>全部记忆</span></button></div><div role="group">${branch(root,1)}</div></div>`;
+    $('#memory-tree-nav').innerHTML=`<div role="treeitem" aria-level="1" aria-selected="${mode==='tree'&&node===root}" aria-expanded="true" data-tree-id="${esc(root)}"><div class="memory-tree-node memory-tree-root"><button class="memory-tree-label" data-tree-node="${esc(root)}" tabindex="${mode==='session'||node===root?0:-1}">${memoryNodeIcon({node_key:'root'})}<span class="memory-tree-name">全部记忆</span></button></div><div role="group">${branch(root,1)}</div></div>`;
     $('.memory-session-nav')?.setAttribute('aria-current',mode==='session'?'page':'false');
+    // Collapsing a selected descendant must leave one reachable tab stop.
+    let focusId=focused||(mode==='tree'?node:root),button;
+    for(let depth=0;depth<12;depth++){
+      button=$(`#memory-tree-nav [data-tree-node="${CSS.escape(focusId||root)}"]`);
+      if(button)break;
+      focusId=tree.get(focusId)?.parent_id||root;
+    }
+    if(button){for(const b of document.querySelectorAll('#memory-tree-nav [data-tree-node]'))b.tabIndex=b===button?0:-1;if(focused)button.focus({preventScroll:true});}
   }
   function forgetCachedChildren(id){
     for(const child of [...tree.values()].filter(n=>n.parent_id===id)){forgetCachedChildren(child.id);tree.delete(child.id);}
@@ -82,11 +92,11 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   }
   function list(){
     if(mode==='session'){sessionList();return;}
-    const all=[...rows.memories.map(m=>({id:m.id,title:m.content,text:m.content,kind:kinds[m.kind],state:states[m.state]||'已保存',active:m.state==='active',updated:m.updated_at,locked:m.locked,source:['resource','source_claim'].includes(m.origin),editable:true,path:m.path})),
-      ...(rows.passages||[]).map(p=>({id:p.id,title:p.title,text:p.content,kind:'资料原文',state:p.locator,active:true,updated:p.created_at,source:true,path:p.path}))];
+    const all=[...rows.memories.map(m=>({id:m.id,title:m.content,text:m.content,kind:kinds[m.kind],symbol:memoryEntryIcon(m),state:states[m.state]||'已保存',active:m.state==='active',updated:m.updated_at,locked:m.locked,source:['resource','source_claim'].includes(m.origin),editable:true,path:m.path})),
+      ...(rows.passages||[]).map(p=>({id:p.id,title:p.title,text:p.content,kind:'资料原文',symbol:memoryEntryIcon(p),state:p.locator,active:true,updated:p.created_at,source:true,path:p.path}))];
     for(const m of all){if(m.editable){const excerpt=memoryListText(m.text);m.title=excerpt.title;m.text=excerpt.preview;}if(rows.settings?.mode==='off'&&m.active){m.state='已暂停调用';m.active=false;}}
     const order=new Map((rows.order||all).map((r,i)=>[r.id,i]));all.sort((a,b)=>(order.get(a.id)||0)-(order.get(b.id)||0));
-    $('#memory-items').innerHTML=all.map(m=>`<div class="memory-selectable-row">${m.editable?`<label class="memory-row-check"><span class="sr-only">选择：${esc(m.title.slice(0,35))}</span><input type="checkbox" data-tree-check="${esc(m.id)}" ${checked.has(m.id)?'checked':''}></label>`:'<span class="memory-row-check-spacer"></span>'}<button class="memory-tree-row ${selected===m.id?'is-selected':''}" data-tree-record="${esc(m.id)}" aria-pressed="${selected===m.id}"><span class="memory-row-symbol ${m.source?'is-source':''}">${icon(m.source?'doc':'history')}</span><span class="memory-row-body"><span class="memory-row-title">${esc(m.title.slice(0,100))}</span><span class="memory-row-preview">${esc(m.text.slice(0,150))}</span><span class="memory-row-meta"><span>${esc(m.kind)}</span><span class="${m.active?'is-active':''}">${esc(m.state)}</span>${m.locked?'<span>本人保护</span>':''}${drafts.has(m.id)?'<span class="memory-draft-badge">有草稿</span>':''}</span>${query.tree||searchScope==='all'?`<span class="memory-row-path">${esc(m.path||'')}</span>`:''}</span><time class="memory-row-time" title="${esc(date(m.updated))}">${esc(memoryTimestamp(m.updated))}</time></button></div>`).join('')||`<div class="memory-tree-empty">${icon('doc')}<h2>${query.tree?'没有匹配的内容':'这里还没有内容'}</h2><p>${query.tree?'可以清空关键词，或扩大搜索范围。':'对话、通知、资料、项目说明和办理进展会自动积累。也可以直接添加你想保留的内容。'}</p><div class="memory-detail-buttons">${query.tree?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}${node!==root||stateFilter!=='all'||viewType!=='all'?'<button class="button small" data-tree-action="search-all">查看全部记忆</button>':''}<button class="button small" data-memory-action="new">添加记忆</button></div></div>`;
+    $('#memory-items').innerHTML=all.map(m=>`<div class="memory-selectable-row">${m.editable?`<label class="memory-row-check"><span class="sr-only">选择：${esc(m.title.slice(0,35))}</span><input type="checkbox" data-tree-check="${esc(m.id)}" ${checked.has(m.id)?'checked':''}></label>`:'<span class="memory-row-check-spacer"></span>'}<button class="memory-tree-row ${selected===m.id?'is-selected':''}" data-tree-record="${esc(m.id)}" aria-pressed="${selected===m.id}"><span class="memory-row-symbol ${m.source?'is-source':''}">${m.symbol}</span><span class="memory-row-body"><span class="memory-row-title">${esc(m.title.slice(0,100))}</span><span class="memory-row-preview">${esc(m.text.slice(0,150))}</span><span class="memory-row-meta"><span>${esc(m.kind)}</span><span class="${m.active?'is-active':''}">${esc(m.state)}</span>${m.locked?'<span>本人保护</span>':''}${drafts.has(m.id)?'<span class="memory-draft-badge">有草稿</span>':''}</span>${query.tree||searchScope==='all'?`<span class="memory-row-path">${esc(m.path||'')}</span>`:''}</span><time class="memory-row-time" title="${esc(date(m.updated))}">${esc(memoryTimestamp(m.updated))}</time></button></div>`).join('')||`<div class="memory-tree-empty">${icon('doc')}<h2>${query.tree?'没有匹配的内容':'这里还没有内容'}</h2><p>${query.tree?'可以清空关键词，或扩大搜索范围。':'对话、通知、资料、项目说明和办理进展会自动积累。也可以直接添加你想保留的内容。'}</p><div class="memory-detail-buttons">${query.tree?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}${node!==root||stateFilter!=='all'||viewType!=='all'?'<button class="button small" data-tree-action="search-all">查看全部记忆</button>':''}<button class="button small" data-memory-action="new">添加记忆</button></div></div>`;
     const overview=viewType==='auto'&&!query.tree&&!tree.get(node)?.node_key?.startsWith('source');
     $('#memory-match-count').textContent=`${rows.matched||0} 条内容${query.tree&&searchScope==='folder'?' · 当前目录及子目录':overview?' · 概览显示，搜索可查全文':''}`;
     pagination(rows.matched);bulkBar();
@@ -196,7 +206,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
         const saved=await write('/memory/items/'+id,{...payload,version:Number(form.dataset.version),content:field.value,active:editing.review_status==='pending'?true:!!editing.active,locked:true},'PUT');
         if(!context.sameUser())return;drafts.remove(id);
         if(context.sameRoute()&&selected===id){form.remove();rows.memories=rows.memories.map(m=>m.id===id?{...m,...saved}:m);await render();}
-        toast('修改已保存。');
+        toast('修改已保存。',false,{duration:15000,action:{label:'撤销',run:async()=>{if(!context.sameUser())throw Error('账号已变化，不能撤销原账号的记忆。');await write('/memory/items/'+id+'/restore',{version:saved.version,revision:editing.version});if(context.sameRoute())await render({navigation:true});}}});
       }catch(error){
         if(context.sameRoute()&&form.isConnected&&error.status===409){try{const latest=await api('/memory/items/'+id);if(context.sameUser()&&form.isConnected)compare(latest);}catch{}}
         if(context.sameUser())toast(error.message,true);
@@ -296,8 +306,8 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     if(!e.target.closest('#memory-tree-nav'))return;
     const buttons=[...document.querySelectorAll('#memory-tree-nav [data-tree-node]')],i=buttons.indexOf(e.target),id=e.target.dataset.treeNode;
     if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();const n={ArrowDown:Math.min(i+1,buttons.length-1),ArrowUp:Math.max(i-1,0),Home:0,End:buttons.length-1}[e.key];buttons[n]?.focus();}
-    if(e.key==='ArrowRight'&&id){e.preventDefault();const child=[...tree.values()].find(n=>n.parent_id===id);if(expanded.has(id)&&child)$(`[data-tree-node="${CSS.escape(child.id)}"]`)?.focus();else if(tree.get(id)?.children){try{await children(id);$(`[data-tree-node="${CSS.escape(id)}"]`)?.focus();}catch(error){toast(error.message,true);}}}
-    if(e.key==='ArrowLeft'&&id){e.preventDefault();if(expanded.has(id)){expanded.delete(id);nav();$(`[data-tree-node="${CSS.escape(id)}"]`)?.focus();}else $(`[data-tree-node="${CSS.escape(tree.get(id)?.parent_id||root)}"]`)?.focus();}
+    if(e.key==='ArrowRight'&&id){e.preventDefault();const child=e.target.closest('[data-tree-id]')?.querySelector(':scope > [role="group"] > [data-tree-id] > .memory-tree-node > [data-tree-node]');if((id===root||expanded.has(id))&&child)child.focus();else if(tree.get(id)?.children){try{await children(id);$(`[data-tree-node="${CSS.escape(id)}"]`)?.focus();}catch(error){toast(error.message,true);}}}
+    if(e.key==='ArrowLeft'&&id){e.preventDefault();if(id===root)return;if(expanded.has(id)){expanded.delete(id);nav();$(`[data-tree-node="${CSS.escape(id)}"]`)?.focus();}else $(`[data-tree-node="${CSS.escape(tree.get(id)?.parent_id||root)}"]`)?.focus();}
   });
   document.addEventListener('focusin',e=>{if(!e.target.matches('#memory-tree-nav [data-tree-node]'))return;for(const b of document.querySelectorAll('#memory-tree-nav [data-tree-node]'))b.tabIndex=b===e.target?0:-1;});
   document.addEventListener('click',async e=>{

@@ -215,10 +215,10 @@ export function initializeExperience() {
   watch(document.body);
 }
 
-export function createToastPresenter({esc, icon}) {
+export function createToastPresenter({esc, icon,owner=()=>null}) {
   const host = document.querySelector('#toast');
-  let timer, remaining = 0, duration = 0, started = 0, progress, paused = true;
-  function close() {clearTimeout(timer); progress?.cancel(); paused = true; host.className = ''; host.replaceChildren();}
+  let timer, remaining = 0, duration = 0, started = 0, progress, paused = true, revision=0;
+  function close() {revision++;clearTimeout(timer); progress?.cancel(); paused = true; host.className = ''; host.replaceChildren();}
   function pause() {
     if (paused) return;
     paused = true;
@@ -241,12 +241,23 @@ export function createToastPresenter({esc, icon}) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause(); else if (!host.matches(':hover') && !host.contains(document.activeElement)) resume();
   });
-  return (message, error = false, options = {}) => {
+  const present = (message, error = false, options = {}) => {
+    const ticket=++revision,account=owner();
     clearTimeout(timer); progress?.cancel(); paused = true;
     remaining = Math.max(error ? 7000 : 4500, Math.min(15000, Number.isFinite(options.duration) ? options.duration : String(message).length * 90));
     duration = remaining;
     host.innerHTML = `<span class="toast-symbol" aria-hidden="true">${icon(error ? 'info' : 'check')}</span><span class="toast-copy">${esc(message)}</span><button type="button" class="icon-button" aria-label="关闭提示" data-toast-close>${icon('close')}</button><span class="toast-lifetime" aria-hidden="true"></span>`;
     host.className = 'visible' + (error ? ' error' : '');
+    if(options.action){
+      host.classList.add('has-action');
+      const action=document.createElement('button');action.type='button';action.className='button small toast-action';action.textContent=options.action.label||'撤销';host.querySelector('[data-toast-close]').before(action);
+      action.addEventListener('click',async()=>{
+        if(account!==owner()){close();return;}
+        if(action.disabled)return;action.disabled=true;pause();
+        try{await options.action.run();if(ticket===revision&&account===owner())present(options.action.success||'已撤销。');}
+        catch(cause){if(ticket===revision&&account===owner())present(cause.message||'撤销未完成，请稍后重试。',true,{...options,duration:15000});}
+      });
+    }
     if (motionAllowed()) {
       animateSurface(host.querySelector('.toast-symbol'), 0);
       progress = host.querySelector('.toast-lifetime').animate([{transform: 'scaleX(1)'}, {transform: 'scaleX(0)'}], {duration: remaining, fill: 'forwards'});
@@ -256,4 +267,5 @@ export function createToastPresenter({esc, icon}) {
     resume();
     if (document.hidden || host.matches(':hover') || host.contains(document.activeElement)) pause();
   };
+  return present;
 }

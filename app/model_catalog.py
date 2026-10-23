@@ -48,6 +48,7 @@ def validate(settings):
 def public_configuration(settings):
     kind=channel(settings.ai_base_url)
     return {'configured':bool(settings.ai_api_key),'model':settings.ai_model,'composition_model':settings.ai_composition_model,
+        'context_tokens':settings.ai_context_tokens,'max_output_tokens':settings.ai_output_tokens,'thinking':'enabled',
         'notice_review_enabled':settings.notice_semantic_review,'notice_review_model':settings.notice_review_model,
         'notice_modes':notice_processing_modes(settings),
         'provider':'Xiaomi MiMo','billing_channel':kind,'billing_label':'Token Plan 订阅通道' if kind=='token_plan' else '普通 API 按量通道',

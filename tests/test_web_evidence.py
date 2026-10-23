@@ -47,7 +47,7 @@ def test_each_native_query_keeps_its_site_constraint_and_counts_real_usage(monke
             {'type':'url_citation','url':'https://lib.other.edu.cn/rules','title':'他校规则','summary':'不得混入'}]}, {'prompt_tokens':3,'completion_tokens':2,'web_search_usage':{'tool_usage':1}}
     async def read(url):return None
     monkeypatch.setattr(evidence_web,'completion',complete);monkeypatch.setattr(evidence_web,'read_page',read)
-    sources,report,usage=asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test'),['site:lib.whu.edu.cn 借阅','site:lib.whu.edu.cn 续借']))
+    sources,report,usage=asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test',ai_output_tokens=131072),['site:lib.whu.edu.cn 借阅','site:lib.whu.edu.cn 续借']))
     assert len(requests)==2 and all(p['tools'][0]['max_keyword']==1 for p in requests)
     assert len(sources)==1 and sources[0]['url']=='https://lib.whu.edu.cn/rules'
     assert sources[0]['sections']==[{'locator':'检索摘要','text':'仅搜索摘要'}]
@@ -58,7 +58,7 @@ def test_direct_page_remains_available_when_native_search_fails(monkeypatch):
     async def fail(*args):raise evidence_web.AIError('temporary')
     async def read(url):return {'url':url,'title':'公开原文','sections':[{'locator':'段落1','text':'直接读取。'}],'limited':False}
     monkeypatch.setattr(evidence_web,'completion',fail);monkeypatch.setattr(evidence_web,'read_page',read)
-    sources,report,_=asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test'),['公开主题'],['https://lib.whu.edu.cn/rules']))
+    sources,report,_=asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test',ai_output_tokens=131072),['公开主题'],['https://lib.whu.edu.cn/rules']))
     assert report['status']=='searched' and report['failed_queries']==1 and len(sources)==1
 
 
@@ -91,5 +91,5 @@ def test_native_search_today_uses_beijing_date_after_utc_midnight_boundary(monke
     async def complete(settings,request):requests.append(request);return {'content':''},{}
     monkeypatch.setattr(evidence_web,'datetime',Clock)
     monkeypatch.setattr(evidence_web,'completion',complete)
-    asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test'),['官网今日通知']))
+    asyncio.run(evidence_web.search(SimpleNamespace(ai_model='test',ai_output_tokens=131072),['官网今日通知']))
     assert requests[0]['messages'][1]['content'].startswith('当前北京时间日期：2026-10-17\n')

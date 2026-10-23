@@ -292,8 +292,12 @@ def test_sdk_uses_original_chat_and_replays_verified_result(env, monkeypatch):
     assert result['grounding']['planning_mode']=='agent_tool_loop' and result['grounding']['status']=='checked'
 
 
-def test_latest_full_length_input_survives_long_history_without_disabling_loop(env, monkeypatch):
+@pytest.mark.parametrize('small_window',[False,True])
+def test_latest_full_length_input_survives_long_history_without_disabling_loop(env, monkeypatch,small_window):
     from app.db import ident
+    if small_window:
+        env[1].ai_context_tokens=32768
+        env[1].ai_output_tokens=8192
     c=account(env);chat=conversation(c);writer(monkeypatch)
     with env[0].state.db.connect(write=True) as conn:
         for _ in range(12):
@@ -304,7 +308,11 @@ def test_latest_full_length_input_survives_long_history_without_disabling_loop(e
     m=final(send(c,chat,text))
     assert m['status']=='complete',m['error']
     assert model.inputs[0][0][-1]['content']==text
-    assert m['grounding']['agent_execution']['compactions'][0]['omitted_messages']>0
+    compactions=m['grounding']['agent_execution']['compactions']
+    if small_window:assert compactions[0]['omitted_messages']>0
+    else:
+        assert compactions == []
+        assert sum('旧要求：' in x['content'] for x in model.inputs[0][0])==12
 
 
 def test_skills_load_on_demand_inside_existing_chat(env, monkeypatch):

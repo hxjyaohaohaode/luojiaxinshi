@@ -43,6 +43,7 @@ def test_preflight_preserves_draft_originals_and_daily_attempt(env,monkeypatch):
 
 def test_many_short_paragraphs_count_locators_and_json_overhead(env,monkeypatch):
     client=account(env);body='甲\n'*4500;n=notice(client,text=body)
+    env[1].notice_input_tokens=65536
     env[1].ai_api_key='synthetic-budget-key'
     monkeypatch.setattr(ai,'generate',lambda *args:pytest.fail('metadata budget must reject before generation'))
     response=client.post(f"/api/notices/{n['id']}/generate",json={'version':n['version'],'allow_external_processing':True})

@@ -1,3 +1,4 @@
+import {replacePageNavigation} from './page-navigation.js';
 import {preserveChatViewport} from './chat-viewport.js';
 import {ComposerAttachments,uploadAttachment} from './composer-attachments.js';
 import {MaterialTreeState} from './workspace-tree-state.js';
@@ -70,7 +71,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         if(!drafts.peek('chat-new').payload?.content)recent=catalog[0]?.id;
       }
       if(recent&&recent!=='new'){
-        try{restored=await api('/conversations/'+encodeURIComponent(recent));if(renderId!==state.renderId)return;id=recent;history.replaceState(null,'','#chat/'+id);}
+        try{restored=await api('/conversations/'+encodeURIComponent(recent));if(renderId!==state.renderId)return;id=recent;replacePageNavigation('#chat/'+id);}
         catch(error){if(error.status!==404)throw error;remember(null);}
       }
     }
@@ -141,8 +142,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     fitComposer();const busy=current?.processing||sending;
     $('#chat-composer').classList.toggle('is-processing',!!busy);
     $('#chat-composer textarea').disabled=false;$('#chat-composer textarea').placeholder=busy?'补充条件，或调整方向…':'写下问题…';
-     const submit=$('#chat-composer .send-button');submit.disabled=accepting||attachments?.busy||attachments?.failed;submit.dataset.chatAction='';submit.type='submit';submit.setAttribute('aria-label',busy?'发送补充消息':'发送消息');submit.title=busy?'发送补充，按新要求继续处理':'Enter 发送 · Shift + Enter 换行';submit.innerHTML='<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg>';
-    let stop=$('#chat-composer .composer-stop');if(!stop){stop=document.createElement('button');stop.type='button';stop.className='icon-button composer-stop';stop.dataset.chatAction='cancel';stop.setAttribute('aria-label','停止本次回复');stop.title='停止本次回复';stop.innerHTML='<span class="stop-square" aria-hidden="true"></span>';submit.before(stop);}stop.hidden=!busy;stop.disabled=accepting&&!current?.processing;
+    updateComposerState();
      $$('[data-chat-action="upload"],[data-chat-action="pick-attachments"],[data-chat-action="paste-text"],[data-chat-action="promote"]').forEach(b=>b.disabled=busy);
   }
   function drawMaterials(){
@@ -182,7 +182,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       const result=await api(`/conversations/${pending.originId}/messages/${pending.messageId}/branch`,{method:'POST',json:{version:pending.version,request_id:pending.requestId}});
       if(renderId!==state.renderId||state.session?.user?.id!==pending.owner)return result;
       await drafts.load('chat:'+result.id);if(renderId!==state.renderId)return result;
-      branchDraft=null;current=result;remember(result.id);history.replaceState(null,'','#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
+      branchDraft=null;current=result;remember(result.id);replacePageNavigation('#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
       drafts.activate('chat:'+result.id);drafts.stage('chat:'+result.id,{content:$('#chat-input')?.value??snapshot?.content??''});drafts.stage(oldKey,{content:''});
       $('#chat-composer').dataset.cacheKey='chat:'+result.id;presenter?.dispose();presenter=null;update();
       return current;
@@ -193,7 +193,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if(renderId!==state.renderId)return result;
     await drafts.load('chat:'+result.id);
     if(renderId!==state.renderId)return result;
-    current=result;remember(result.id);history.replaceState(null,'','#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
+    current=result;remember(result.id);replacePageNavigation('#chat/'+result.id);$('#content').dataset.page='chat/'+result.id;
     drafts.activate('chat:'+result.id);
     if(snapshot)drafts.stage('chat:'+result.id,snapshot);
     if(JSON.stringify(drafts.peek('chat-new').payload)===JSON.stringify(snapshot))drafts.stage('chat-new',{content:''});
@@ -311,7 +311,16 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     input.style.overflowY=input.scrollHeight>max?'auto':'hidden';
   }
   window.addEventListener('resize',fitComposer);
-  function updateComposerState(){const submit=$('#chat-composer .send-button');if(submit)submit.disabled=accepting||!!attachments?.busy||!!attachments?.failed;}
+  function updateComposerState(){
+    const submit=$('#chat-composer .send-button');if(!submit)return;
+    const busy=!!(current?.processing||sending),hasDraft=!!$('#chat-input')?.value.trim()||!!attachments?.ids.length;
+    const stop=busy&&!hasDraft,mode=stop?'stop':'send';
+    submit.disabled=accepting||(!stop&&(!!attachments?.busy||!!attachments?.failed));
+    submit.type=stop?'button':'submit';submit.dataset.chatAction=stop?'cancel':'';
+    const label=stop?'停止本次回复':busy?'发送补充消息':'发送消息';
+    submit.setAttribute('aria-label',label);submit.title=stop?label:busy?'发送补充，按新要求继续处理':'Enter 发送 · Shift + Enter 换行';
+    if(submit.dataset.mode!==mode){submit.dataset.mode=mode;submit.innerHTML=stop?'<span class="stop-square" aria-hidden="true"></span>':'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-7 7 7-7 7 7"/></svg>';}
+  }
   function persist(){const form=$('#chat-composer');if(!form)return;const cacheKey=form.dataset.cacheKey,content=$('#chat-input').value;const snapshot={content,source_ids:attachments?.ids||[]};if(cacheKey.startsWith('branch:')&&!content.trim()&&!snapshot.source_ids.length&&!String(drafts.peek(cacheKey).payload?.content||'').trim())return;if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(cacheKey).payload))drafts.stage(cacheKey,snapshot);}
   function uploadDialog(textOnly=false){
     files=[];showDialog(textOnly?'把原文放在这里':'添加文件与文件夹',`<form id="chat-upload-form" class="stack" data-workspace-form="upload">${textOnly?'':`<div class="upload-options"><label class="upload" id="chat-dropzone">${icon('upload')}<strong>选择文件，或拖入文件与文件夹</strong><span class="small muted">文档、表格、幻灯片、代码、图片、音视频与 ZIP<br>最多 100 份，每份 20 MB；保留原文件夹路径</span><input type="file" id="chat-files" multiple accept="${materialFormats}" aria-label="选择对话材料"></label><label class="button small folder-upload">${icon('folder')} 上传整个文件夹<input type="file" id="chat-folder" webkitdirectory directory multiple hidden></label></div><div id="chat-file-selection"></div>`}${field('材料名称（选填）','label','','text','maxlength="160" placeholder="例如：报名通知、我的课表"')}${area('原文或补充内容','body','',textOnly?9:4,'maxlength="10000" placeholder="粘贴原文，或写下材料中需要注意的地方。"')}<div id="upload-progress" class="upload-progress" role="status" aria-live="polite" hidden></div><p class="small muted">原件保存在本次对话。超出模型预算或读取失败时会明确提示。</p><div class="form-footer"><button type="button" class="button" data-action="close-dialog">暂时不加</button><button type="submit" class="button primary">保存材料 ${icon('arrow')}</button></div></form>`);
@@ -394,10 +403,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   });
   document.addEventListener('submit',async event=>{
     const form=event.target,type=form.dataset.workspaceForm;if(!type||!['chat','upload','promote','rename'].includes(type))return;
-    event.preventDefault();const submit=$('[type=submit]',form);if(submit.disabled)return;submit.disabled=true;
+    event.preventDefault();
+    if(type==='chat'){try{await send();}catch(error){toast(error.message,true);}return;}
+    const submit=$('[type=submit]',form);if(!submit||submit.disabled)return;submit.disabled=true;
     form.querySelector('.form-error')?.remove();const routeId=state.renderId,conversationId=current?.id;
     try{
-      if(type==='chat'){await send();return;}
       const fd=new FormData(form);form.inert=true;
       if(type==='upload'){
         if(!files.length&&!fd.get('body')?.trim())throw Error('选择文件、文件夹，或粘贴一段原文后再保存。');
@@ -422,9 +432,9 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         const renamedId=current.id;const result=await api('/conversations/'+renamedId,{method:'PUT',json:{version:current.version,title:fd.get('title')}});if(routeId===state.renderId&&active(renamedId)){current=result;update();$('#dialog').close();}
       }
     }catch(error){if(type==='chat'){toast(error.message,true);return;}let box=$('.form-error',form);if(!box){box=document.createElement('div');box.className='alert error form-error';box.setAttribute('role','alert');form.prepend(box);}box.textContent=error.message;toast(error.message,true);}
-    finally{form.inert=false;submit.disabled=!!current?.processing;if(type!=='chat')submit.disabled=false;}
+    finally{form.inert=false;submit.disabled=false;}
   });
-  document.addEventListener('input',e=>{if(e.target.id==='chat-input'){fitComposer();persist();}});
+  document.addEventListener('input',e=>{if(e.target.id==='chat-input'){fitComposer();persist();updateComposerState();}});
   function attachFiles(incoming){if(current?.processing||sending){toast('请先停止当前回复，再添加材料。',true);return;}try{attachments?.add(incoming);}catch(error){toast(error.message,true);}}
   document.addEventListener('change',e=>{if(e.target.id==='composer-file-input'){attachFiles([...e.target.files]);e.target.value='';}else if(['chat-files','chat-folder'].includes(e.target.id)){addFiles([...e.target.files]);e.target.value='';}});
   document.addEventListener('paste',e=>{const incoming=[...(e.clipboardData?.files||[])];if(!incoming.length)return;if(e.target.closest('#chat-composer')){e.preventDefault();attachFiles(incoming);}else if($('#chat-upload-form')){e.preventDefault();addFiles(incoming);}});

@@ -5,10 +5,9 @@
 #chat-composer .composer-entry{display:contents}
 #chat-composer #chat-input{grid-column:1/-1;grid-row:2;width:100%;min-width:0;margin:0 0 6px;padding:10px 8px 6px;min-height:44px;font-size:16px;line-height:1.65;resize:none;border:0;outline:0;background:transparent;box-shadow:none}
 #chat-composer .composer-plus{grid-column:1;grid-row:3;position:static;align-self:center}
-#chat-composer .composer-voice,#chat-composer .send-button,#chat-composer .composer-stop{grid-row:3;position:static;justify-self:end;align-self:center;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;margin:0;border:0}
+#chat-composer .composer-voice,#chat-composer .send-button{grid-row:3;position:static;justify-self:end;align-self:center;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;margin:0;border:0}
 #chat-composer .send-button{grid-column:2;background:var(--green);color:white}
 #chat-composer .composer-voice{grid-column:2;margin-right:48px;background:transparent;color:#52655c}
-#chat-composer .composer-stop{grid-column:2;margin-right:94px;background:#eff3f0}
 #chat-composer .composer-voice:hover,#chat-composer .composer-plus:hover{background:#eff4f1}
 #chat-composer .composer-voice.listening{background:#e5f1ea;color:#135a3c}
 #chat-composer .composer-actions{position:absolute;left:8px;bottom:calc(100% + 8px);display:flex;flex-direction:column;align-items:stretch;min-width:210px;max-width:calc(100% - 16px);padding:8px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 8px 32px #153a2220;z-index:30;gap:2px}
@@ -37,13 +36,12 @@
 @media(max-width:600px){.chat-main>#chat-composer{border-radius:20px;padding:6px 8px}#chat-composer #chat-input{font-size:16px;padding:7px 6px 4px;margin-bottom:2px}.composer-attachment.is-image{flex-basis:76px;height:76px}.composer-attachments{gap:9px;padding:4px 4px 5px}.message-attachment:has(img){width:90px;height:90px}}
 @media(max-height:500px){.composer-attachment.is-image{flex-basis:58px;height:58px}.composer-attachments{padding-bottom:3px}#chat-composer #chat-input{margin-bottom:0;padding-top:3px}.dictation-panel{padding-top:3px;margin-top:3px}}
 /* Short workspaces keep typing and actions on one row, leaving room to read. */
-.chat-main>#chat-composer.is-compact{grid-template-columns:44px minmax(0,1fr) auto auto auto;padding:4px 6px!important;border-radius:18px!important}
+.chat-main>#chat-composer.is-compact{grid-template-columns:44px minmax(0,1fr) auto auto;padding:4px 6px!important;border-radius:18px!important}
 #chat-composer.is-compact #chat-input{grid-column:2;grid-row:2;margin:0;padding:8px 6px!important;line-height:24px}
 #chat-composer.is-compact .composer-plus{grid-column:1;grid-row:2}
-#chat-composer.is-compact .composer-stop{grid-column:3;grid-row:2;margin:0}
-#chat-composer.is-compact .composer-entry>.composer-voice{grid-column:4;grid-row:2;margin:0}
-#chat-composer.is-compact .send-button{grid-column:5;grid-row:2;margin:0}
-#chat-composer.is-compact :is(.composer-plus,.composer-stop,.send-button,.composer-entry>.composer-voice){width:44px;height:44px;min-height:44px}
+#chat-composer.is-compact .composer-entry>.composer-voice{grid-column:3;grid-row:2;margin:0}
+#chat-composer.is-compact .send-button{grid-column:4;grid-row:2;margin:0}
+#chat-composer.is-compact :is(.composer-plus,.send-button,.composer-entry>.composer-voice){width:44px;height:44px;min-height:44px}
 #chat-composer.is-compact .composer-attachments{padding-bottom:4px}
 #chat-composer.is-compact .composer-attachment{min-height:52px;padding:6px}
 #chat-composer.is-compact .composer-attachment.is-image{flex-basis:52px;height:52px;padding:0}

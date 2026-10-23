@@ -13,13 +13,13 @@ def test_planner_can_simplify_without_exceeding_host_capabilities(tier,choice,no
     assert genui_ai.presentation_tier(tier,choice,no_ui=no_ui)==expected
 
 
-def test_coverage_aware_composition_avoids_a_second_thinking_pass_but_keeps_the_evidence_protocol(tmp_path):
+def test_coverage_aware_composition_always_thinks_but_keeps_the_evidence_protocol(tmp_path):
     settings=Settings(tmp_path)
     messages=[{'role':'user','content':'显示我记录的安排'}]
     profile={'_grounding_context':{'route':'focused_text','coverage_check':{'items':[]}}}
     for tier in (1,2):
         request=genui_ai.payload(settings,[],messages,profile,tier)
-        assert request['thinking']=={'type':'disabled'}
+        assert request['thinking']=={'type':'enabled'}
         assert request['response_format']=={'type':'json_object'}
         assert 'claims' in request['messages'][0]['content']
         assert '独立' in request['messages'][0]['content']

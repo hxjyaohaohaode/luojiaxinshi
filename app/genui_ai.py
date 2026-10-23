@@ -26,6 +26,9 @@ class IndexedAnswer(ChatAnswer):
     # Whitespace is meaningful in a streamed Markdown answer and must reconcile exactly.
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=False)
     answer: str = Field(min_length=1, max_length=80000)
+    # The tool author serializes its optional UI as null. A text repair must
+    # accept that empty field without accepting an actual UI in text mode.
+    ui: None = Field(default=None, exclude=True)
     citation_refs: list[str] = Field(default_factory=list,max_length=MAX_CITATIONS)
     # A redundant empty position field carries no attribution. Accept only the
     # empty legacy value; real claim indices are always resolved per claim.
@@ -75,8 +78,8 @@ def presentation_tier(tier,choice='auto',*,no_ui=False):
 
 
 def composition_thinking(profile,tier):
-    context=profile.get('_grounding_context')
-    return not bool(context) or context.get('route')=='focused_text' and tier==3
+    return True
+
 
 
 class AnswerDecoder:
@@ -285,7 +288,6 @@ def payload(settings, sources, messages, profile, tier):
         for source in context['materials']:source.pop('sections',None)
     from .visual_evidence import review_content
     from .media_input import MEDIA_POLICY,input_budget
-    input_budget(sources,settings.ai_context_tokens,len(json.dumps(context,ensure_ascii=False).encode()))
     materials = review_content(json.dumps(context,ensure_ascii=False),sources)
     if isinstance(materials,str):materials=[{'type':'text','text':materials}]
     response_model=UIAnswer if tier==1 else TemplateAnswer if tier==2 else IndexedAnswer
@@ -309,19 +311,20 @@ def payload(settings, sources, messages, profile, tier):
     if composition_only:
         request_role='\n本调用是展示编排阶段。依据 Pro 提供的 coverage_check、evidence_index 与原文组织正文和控件，不重新检索或补造事实。直接输出有效 JSON；事实、未知和建议仍须清楚区分。稿件随后由 Pro 独立核验，未通过不会发布。'
         prompt+=('\n本轮把证据覆盖检查与文字组织合并：逐项识别当前问题、所给证据、个人条件、冲突和缺项，依据完整原文组织回答；不得补造未知。只完成当前用户要求，保持必要条件与准确引用。仍会由另一独立调用核验全部回答后发布。' if focused else request_role)
-    thinking = composition_thinking(profile,tier)
     request = {'model':model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
-               'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled' if thinking else 'disabled'},'max_completion_tokens':settings.ai_output_tokens}
-    if not thinking:request['temperature']=0.2
+               'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens}
     if settings.ai_supports_json:
         request['response_format'] = {'type':'json_object'}
+    text_bytes=sum(len((m['content'] if isinstance(m['content'],str) else
+        '\n'.join(p['text'] for p in m['content'] if p.get('type')=='text')).encode()) for m in request['messages'])
+    input_budget(sources,settings.ai_context_tokens,text_bytes,output_tokens=request['max_completion_tokens'])
     return request
 
 
 async def stream_reply(settings, sources, messages, profile, tier):
     from .harness import start_call,finish_call
     call=start_call({'model':settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model,
-        'thinking':{'type':'enabled' if composition_thinking(profile,tier) else 'disabled'},'max_completion_tokens':settings.ai_output_tokens})
+        'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens})
     usage={}
     try:
         async for event in _stream_reply(settings,sources,messages,profile,tier):
@@ -334,6 +337,7 @@ async def stream_reply(settings, sources, messages, profile, tier):
 
 
 async def _stream_reply(settings, sources, messages, profile, tier):
+    from .notice_stream import MAX_STREAM_BYTES
     if not settings.ai_api_key:
         raise AIError('问题和材料已保存。AI 尚未配置，填写 API 后可点击重试。')
     request = payload(settings, sources, messages, profile, tier)
@@ -352,7 +356,7 @@ async def _stream_reply(settings, sources, messages, profile, tier):
                 async for chunk in response.aiter_bytes():
                     size += len(chunk)
                     # SSE framing and reasoning tokens are not the answer body.
-                    if size > 16 * LIMITS['messageBytes']:
+                    if size > MAX_STREAM_BYTES:
                         raise AIError('回复超过大小限制，已保留接收到的内容。')
                     buffer += decoder.decode(chunk)
                     if len(buffer) > 262144:

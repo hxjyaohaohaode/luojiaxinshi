@@ -85,10 +85,6 @@
 .calendar-options .calendar-option-group { gap: 8px; padding: 10px 14px; }
 .calendar-options .check { min-height: 42px; }
 #dialog .calendar-options .form-footer { position: sticky; bottom: -1px; margin-bottom: 0; padding: 12px 0 max(4px,env(safe-area-inset-bottom)); }
-.calendar-active-filters { display: flex; gap: 10px; align-items: center; padding: 0 18px 10px; color: #617657; font-size: 12px; }
-.calendar-active-filters[hidden] { display: none; }
-.calendar-active-filters > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.calendar-active-filters .button { white-space: nowrap; }
 
 /* Keep real work small; let the answer take up the reading space. */
 .work-summary { margin: 7px 0 15px; width: fit-content; max-width: 100%; }
@@ -233,7 +229,6 @@
   .workflow-form .workflow-save > span { display: none; }
   .workflow-form .workflow-save .button { width: 100%; min-height: 44px; }
   #dialog input:not([type=checkbox]):not([type=radio]), #dialog select, #dialog textarea { font-size: 16px; }
-  .calendar-active-filters { padding-inline: 10px; gap: 6px; }
   .calendar-option-preview { padding: 10px 12px; }
   #dialog:has(.calendar-options) .dialog-body { padding: 14px 16px; }
   .calendar-options .row.wrap { gap: 8px; display: grid; grid-template-columns: 1fr 1fr; }

@@ -52,7 +52,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await api('/memory/items','POST',{content:'前端验收：回答先给结论，界面随屏幕和容器变化。',kind:'preference'});
   const chat=await api('/conversations','POST',{title:'前端交互验收 '+engine});
   await nav('chat/'+chat.id);await page.locator('#chat-input').fill('记住，我的测试称呼是前端验收同学');await page.locator('#chat-composer [type=submit]').click();
-  await page.waitForFunction(()=>document.querySelector('#chat-thread .message-assistant')&&!document.querySelector('#chat-composer [type=submit]')?.disabled);
+  await page.waitForFunction(()=>document.querySelector('#chat-thread .message-assistant')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
   await page.waitForFunction(()=>[...document.querySelectorAll('[data-chat-action=branch]')].some(b=>!b.disabled));
   const initial=await api('/conversations/'+chat.id);assert.equal(initial.messages.at(-1).status,'complete');
   for(const [width,height] of sizes){

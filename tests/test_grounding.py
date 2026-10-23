@@ -130,7 +130,7 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     # An empty context does not claim that evidence preparation has run.
     assert request['model']=='mimo-v2.6-pro'
     request=genui_ai.payload(settings,evidence(),[{'role':'user','content':'整理交互界面'}],{'_grounding_context':{'status':'checking'}},1)
-    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'disabled'} and request['temperature']==0.2
+    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'enabled'} and 'temperature' not in request
     assert request['messages'][0]['content'].count('"enum":["E1"]')>=1
     seen=[]
     async def complete(settings,payload,**kwargs):
@@ -138,8 +138,8 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     monkeypatch.setattr(grounding,'completion',complete)
     issues,_,_=asyncio.run(grounding.verify(settings,answer(),evidence(),'核对原文',{}))
     assert not issues and seen[0]['model']=='mimo-v2.6-pro'
-    assert seen[0]['thinking']=={'type':'disabled'}
-    assert seen[0]['max_completion_tokens']==min(settings.ai_output_tokens,2048) and seen[0]['temperature']==0.2
+    assert seen[0]['thinking']=={'type':'enabled'}
+    assert seen[0]['max_completion_tokens']==settings.ai_output_tokens and 'temperature' not in seen[0]
     assert json.loads(seen[0]['messages'][1]['content'])['program_checks']
     assert json.loads(seen[0]['messages'][1]['content'])['citation_display_map']==[{'display_number':1,**answer()['citations'][0]}]
     audited=json.loads(seen[0]['messages'][1]['content'])
@@ -148,7 +148,7 @@ def test_composition_model_never_replaces_pro_evidence_verification(env,monkeypa
     assert audited['evidence'][0]['sections']==evidence()[0]['sections']  # Full context and exact spans still reach Pro.
     settings.ai_composition_model='mimo-v2.6-flash'
     optional=genui_ai.payload(settings,evidence(),[{'role':'user','content':'整理交互界面'}],{'_grounding_context':{'status':'checking'}},1)
-    assert optional['model']=='mimo-v2.6-flash' and optional['thinking']=={'type':'disabled'} and optional['temperature']==0.2
+    assert optional['model']=='mimo-v2.6-flash' and optional['thinking']=={'type':'enabled'} and 'temperature' not in optional
 
 
 def test_repair_receives_the_rejected_ui_without_publishing_it(env,monkeypatch):
@@ -318,7 +318,7 @@ def test_web_failure_is_explicit_and_plain_endpoint_uses_same_review(env,monkeyp
 
 def test_strict_composition_uses_bounded_evidence_and_preserves_analysis_contract(env):
     request=genui_ai.payload(env[1],evidence(),[{'role':'user','content':'核对报名时间'}],{'_grounding_context':{'web':{'status':'unavailable'}}},1)
-    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'disabled'} and request['max_completion_tokens']>=16000
+    assert request['model']=='mimo-v2.6-pro' and request['thinking']=={'type':'enabled'} and request['max_completion_tokens']>=16000
     assert 'claims' in request['messages'][0]['content'] and '智能 UI 与正文执行相同证据规则' in request['messages'][0]['content']
     assert 'unavailable' in request['messages'][1]['content'][0]['text']
     from app.chat_ai import DIRECT_CITATIONS
@@ -403,3 +403,24 @@ def test_scoped_workflow_removes_personal_facts_from_generation_inputs(env,monke
     async def run():return [e async for e in grounding.events(env[1],env[0].state.db,owner,chat['id'],'m',[],messages,{'school':'SECRET-PROFILE','response_style':'direct'},1)]
     packets=asyncio.run(run());assert packets[-1]['type']=='complete'
     assert len(seen[0][0])==1 and 'school' not in seen[0][1] and seen[0][1]['response_style']=='direct'
+
+
+def test_protocol_failure_keeps_prior_factual_repairs_and_avoids_old_answers(env, monkeypatch):
+    from app.ai import ReplyValidationError
+    mocks(monkeypatch);env[1].ai_grounding=True;env[1].ai_api_key='synthetic-only'
+    calls=[];reviews=[]
+    async def stream(settings,sources,messages,profile,tier):
+        calls.append(messages)
+        if len(calls)==2:raise ReplyValidationError('JSON字段错误',draft='{"answer":"修复中的草稿"}')
+        if len(calls)==3:
+            assert '身份未经证实' in messages[-1]['content'] and 'JSON字段错误' in messages[-1]['content']
+            assert len([m for m in messages if m['role']=='assistant'])==1
+            assert 'repair_history' not in profile['_grounding_context']
+        yield {'type':'complete','result':answer(),'usage':{}}
+    async def verify(*args):
+        reviews.append(True);return (['身份未经证实'] if len(reviews)==1 else []),{},[]
+    monkeypatch.setattr(genui_ai,'stream_reply',stream);monkeypatch.setattr(grounding,'verify',verify)
+    c=account(env);chat=conversation(c)
+    packets=events(c.post(f"/api/conversations/{chat['id']}/messages/stream",json=payload(chat)))
+    assert packets[-1]['data']['conversation']['messages'][-1]['status']=='complete'
+    assert len(calls)==3 and len(reviews)==2

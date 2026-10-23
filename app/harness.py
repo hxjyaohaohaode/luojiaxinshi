@@ -63,3 +63,4 @@ def finish_call(entry,usage=None,error=None):
         cached_input_tokens=int((usage.get('prompt_tokens_details') or {}).get('cached_tokens') or 0),
         reasoning_tokens=int((usage.get('completion_tokens_details') or {}).get('reasoning_tokens') or 0))
     if error:entry['error_type']=type(error).__name__
+    if isinstance(usage.get('provider_model'), str):entry['provider_model']=usage['provider_model'][:128]
