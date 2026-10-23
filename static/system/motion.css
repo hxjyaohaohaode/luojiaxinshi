@@ -104,7 +104,9 @@
 #toast.visible { transform: translateX(-50%) translateY(0) scale(1); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-4) var(--ease-spring), visibility 0s; }
 
 /* ---------- 路由切换：旧内容轻轻淡出，新内容由编排脚本错峰入场 ---------- */
-.route-pending { opacity: .55; filter: saturate(.85); transition: opacity var(--dur-3) var(--ease-out), filter var(--dur-3); }
+/* Filter animations can crash the Linux WebKit compositor during navigation
+   (microsoft/playwright#42637). Keep feedback on opacity and transforms. */
+.route-pending { opacity: .55; transition: opacity var(--dur-3) var(--ease-out); }
 .route-feedback { animation: float-in var(--dur-4) var(--ease-spring) both; }
 @keyframes float-in { from { opacity: 0; transform: translate(-50%, -8px) scale(.96); } }
 
@@ -114,7 +116,7 @@
 
 /* 内容更新时的轻量“换字”效果 */
 .text-swap { animation: text-swap var(--dur-3) var(--ease-out); }
-@keyframes text-swap { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } }
+@keyframes text-swap { from { opacity: 0; transform: translateY(4px); } }
 
 /* ---------- 加载骨架 ---------- */
 .skeleton-line { display: block; height: 12px; border-radius: 6px; background: linear-gradient(100deg, #e8ede6 30%, #f5f8f2 48%, #e8ede6 64%); background-size: 220% 100%; animation: skeleton-pass 1.5s ease-in-out infinite; }

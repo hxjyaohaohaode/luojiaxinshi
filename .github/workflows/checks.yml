@@ -13,8 +13,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    # Windows filesystem-heavy tests vary with hosted runner performance.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 25 || 15 }}
+    # Windows completed 1027/1059 tests without failures before the old 25-minute
+    # job deadline. Allow the full suite, audits and release build to finish.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 15 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -25,7 +26,7 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
-      - run: python -m pytest -q --junitxml=artifacts/ci/python-tests.xml
+      - run: python -m pytest -q --durations=20 -o faulthandler_timeout=120 --junitxml=artifacts/ci/python-tests.xml
       - run: node --test --test-reporter=junit --test-reporter-destination=artifacts/ci/node-tests.xml tests/*.test.mjs
       - run: python scripts/genui_catalog.py --check
       - run: python scripts/evaluate_genui.py

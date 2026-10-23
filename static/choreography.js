@@ -69,8 +69,8 @@ export function revealText(node, delay = 0) {
     span.setAttribute('aria-hidden', 'true');
     if (glyph.trim()) {
       track(span.animate([
-        {opacity: 0, transform: 'translate3d(0,.45em,0)', filter: 'blur(3px)'},
-        {opacity: 1, transform: 'none', filter: 'blur(0)'},
+        {opacity: 0, transform: 'translate3d(0,.45em,0)'},
+        {opacity: 1, transform: 'none'},
       ], {duration: 520, delay: delay + index * 22, easing: SPRING, fill: 'backwards'}));
     }
     return span;
