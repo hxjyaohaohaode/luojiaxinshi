@@ -1,0 +1,48 @@
+/* White workspace surfaces; green is reserved for action and selection accents. */
+body, .shell, .shell > .sidebar, .workspace, .workspace > .content,
+.workspace > .topbar, .mobile-bottom-nav, .auth-story,
+dialog, .dialog-header, #dialog .dialog-head, .dialog-body, .dialog-footer,
+.settings-item, .settings-aside, .settings-preferences, .settings-home > section.panel,
+.overview-aside .overview-progress, .overview-focus, .overview-letter,
+.notice-compose .panel, .notice-compose .notice-upload,
+.notice-compose .compose-guide .context-hint, .compose-readiness,
+.chat-workspace, .chat-workspace .chat-main, .chat-welcome .scene-choice,
+.chat-main .chat-composer, .library-search, .task-results,
+.memory-workspace, .memory-sidebar, .memory-list, .memory-detail,
+.insight-card, .insight-note, .insight-hero, .intake-entry, .notice-stepper,
+.overview-week, .focus-deck .overview-focus, .auth,
+.chat-workspace.show-materials .chat-materials,
+.task-board-column, .task-board-column.lane-followup, .task-board-column.lane-closed {
+  background: #fff;
+  border-color: var(--line);
+}
+dialog { box-shadow: 0 28px 96px #00000030; }
+dialog::backdrop { background: #00000040; backdrop-filter: blur(6px); }
+.dialog-body .form-footer, .workflow-save { background: #fff; }
+.workspace-search, .workflow-tabs, .workflow-task-head,
+.settings-item-icon, .compose-section-icon, .notice-row .notice-symbol,
+.notice-compose .context-hint, .file-chip.selected-file,
+.message-user .message-content, .record-search .search-filters,
+.record-search .search-reference, .memory-detail-current,
+.memory-revision-comparison > div, .memory-edit-impact,
+.overview-focus > .button, .task-row .task-actions .task-open,
+.intake-preview-ready, .content[data-page=tasks] > .toolbar > .tabs {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select {
+  background-color: #fff;
+  border-color: var(--line-strong);
+}
+input::placeholder, textarea::placeholder { color: #858585; }
+.settings-item:hover, .scene-choice:hover, .task-row:hover,
+.task-row:focus-within, .notice-row:hover, .catalog-card > summary:hover,
+.overview-brief a:hover, .overview-focus > .button:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+[data-spotlight]::before, .action-metric::before, .settings-item::before,
+.scene-choice::before, .notice-card::before, .notice-upload::before { background: none; }
+* { scrollbar-color: #c9c9c9 transparent; }
+::-webkit-scrollbar-thumb { background-color: #c9c9c9; }
+::-webkit-scrollbar-thumb:hover { background-color: #aaa; }

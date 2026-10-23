@@ -97,6 +97,9 @@ class Fact(Strict):
 
 class DraftPlan(Strict):
     action_kind: Literal['unclassified','required','optional','verification'] = 'unclassified'
+    execution_mode: Literal['task','submission','attendance','reading','decision','collection','payment','waiting','custom'] = 'task'
+    dependency_mode: Literal['all','any'] = 'all'
+    condition_mode: Literal['all','any'] = 'all'
     depends_on: list[int] = Field(default_factory=list,max_length=30)
     conditions: list[str] = Field(default_factory=list,max_length=8)
 
@@ -131,6 +134,40 @@ class ActionCondition(Strict):
         return self
 
 
+class ScheduledTime(Strict):
+    kind: Literal['event','window'] = 'event'
+    start_date: str
+    start_time: str | None = None
+    end_date: str | None = None
+    end_time: str | None = None
+    confirmed: bool = False
+    evidence: list[Evidence] = Field(default_factory=list,max_length=10)
+
+    @field_validator('start_date','end_date')
+    @classmethod
+    def dates(cls,value):
+        if value is not None and (len(value)!=10 or date.fromisoformat(value).isoformat()!=value or not 2000<=date.fromisoformat(value).year<=2100):
+            raise ValueError('活动或办理日期须为 2000 至 2100 年间的有效日期')
+        return value
+
+    @field_validator('start_time','end_time')
+    @classmethod
+    def times(cls,value):
+        if value is not None and (len(value)!=5 or time.fromisoformat(value).strftime('%H:%M')!=value):
+            raise ValueError('活动或办理时刻须为 HH:MM')
+        return value
+
+    @model_validator(mode='after')
+    def interval(self):
+        if self.end_time and not self.end_date:raise ValueError('结束时刻需要对应的结束日期')
+        if self.end_date:
+            span=(date.fromisoformat(self.end_date)-date.fromisoformat(self.start_date)).days
+            if not 0<=span<=366:raise ValueError('结束日期不能早于开始日期，单个时段最长一年')
+            if span==0 and self.start_time and self.end_time and self.end_time<=self.start_time:
+                raise ValueError('结束时刻须晚于开始时刻')
+        return self
+
+
 class TaskData(Strict):
     title: str = Field(min_length=1, max_length=160)
     details: str = Field(default='', max_length=3000)
@@ -141,6 +178,7 @@ class TaskData(Strict):
     planned_at: str | None = None
     reminder_at: str | None = None
     deadline_confirmed: bool = False
+    scheduled: ScheduledTime | None = None
     materials: list[str] = Field(default_factory=list, max_length=30)
     submission: str = Field(default='', max_length=1000)
     location: str = Field(default='', max_length=500)

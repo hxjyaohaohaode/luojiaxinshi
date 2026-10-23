@@ -203,7 +203,7 @@ def test_workflow_one_migrates_without_losing_history_and_two_restores_condition
         conn.execute("UPDATE meta SET value='1' WHERE key='workflow_schema_version'")
     migrated=Database(env[1].data_dir/'campus.sqlite3')
     for _ in range(2):
-        with migrated.connect() as conn:assert conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()[0]=='2'
+        with migrated.connect() as conn:assert conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()[0]=='3'
         migrated=Database(env[1].data_dir/'campus.sqlite3')
     current=c.get('/api/tasks/'+tid+'/workflow').json()['task']
     assert current['workflow']['data']['conditions']==[] and current['workflow']['data']['receipt']=='迁移前历史回执'

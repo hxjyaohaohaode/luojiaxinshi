@@ -32,6 +32,7 @@ def main():
                 ('Reference interactions', 'artifacts/reference-interactions-browser/report.json'),
                 ('Workspace interactions', 'artifacts/workspace-interactions-browser/report.json'),
                 ('Visual layout bounds', 'artifacts/visual-review-browser/report.json'),
+                ('Notice intake and flexible workflows', 'artifacts/notice-flow-browser/report.json'),
                 ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),

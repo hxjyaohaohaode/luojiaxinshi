@@ -33,6 +33,13 @@ export function calendarEntries(arrangements,tasks,from,to,{showDone=false}={}){
     if(task.status==='cancelled'||(task.action_excluded&&task.status==='pending')||(!showDone&&task.status==='done')||task.data.scope!=='personal')continue;
     const d=task.data,base={id:task.id,source:'task',title:d.title,location:d.location,notes:d.details,done:task.status==='done',version:task.version};
     if(d.due_date&&d.due_date>=from&&d.due_date<=to)entries.push({...base,key:task.id+':due',kind:'deadline',day:d.due_date,start:d.due_time,end:null,allDay:!d.due_time,verified:d.deadline_confirmed});
+    if(d.scheduled){
+      const s=d.scheduled,end=s.end_date||s.start_date,start=s.start_date>from?s.start_date:from;
+      for(let day=start;day<=end&&day<=to;day=addDays(day,1)){
+        if(day===end&&day!==s.start_date&&s.end_time==='00:00')continue;
+        entries.push({...base,key:task.id+':scheduled:'+day,kind:s.kind==='window'?'notice_window':'notice_event',day,start:day===s.start_date?s.start_time:'00:00',end:day===end?s.end_time:'24:00',allDay:!s.start_time,continuesBefore:day>s.start_date,continuesAfter:day<end,verified:s.confirmed});
+      }
+    }
     if(d.planned_at){const day=dayKey(d.planned_at),start=localTime(d.planned_at);if(day>=from&&day<=to)entries.push({...base,key:task.id+':plan',kind:'plan',day,start,end:null,allDay:false,verified:true});}
   }
   return entries.sort((a,b)=>a.day.localeCompare(b.day)||Number(b.allDay)-Number(a.allDay)||(a.start||'').localeCompare(b.start||'')||a.title.localeCompare(b.title));

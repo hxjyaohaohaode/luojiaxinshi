@@ -28,11 +28,12 @@ def output_schema(schema):
     schema=deepcopy(schema)
     schema['$defs']['Evidence']={'type':'string','pattern':'^R[0-9]{6}$','description':'选择输入中实际存在的原文 ref 编号，程序会还原原句与位置。'}
     for key in PRIVATE_TASK_FIELDS:schema['$defs']['TaskData']['properties'].pop(key,None)
+    schema['$defs']['ScheduledTime']['properties'].pop('confirmed',None)
     # Keep each proposal beside its task in model output; public task records
     # and workflow records remain separate after deterministic normalization.
     schema['$defs']['TaskData']['properties'].update(schema['$defs'].pop('DraftPlan')['properties'])
     task=schema['$defs']['TaskData']
-    task['required']=['title','scope','evidence','action_kind','depends_on','conditions','due_date','due_time','deadline_text','deadline_evidence']
+    task['required']=['title','scope','evidence','action_kind','execution_mode','dependency_mode','condition_mode','depends_on','conditions','due_date','due_time','deadline_text','deadline_evidence']
     task['properties']['evidence']['minItems']=1
     fact=schema['$defs']['Fact']
     fact['required']=['value','evidence']
@@ -67,4 +68,6 @@ def expand(raw,references):
             if isinstance(task,dict):
                 for key in ['evidence','deadline_evidence']:
                     if key in task:task[key]=resolve(task[key])
+                if isinstance(task.get('scheduled'),dict) and 'evidence' in task['scheduled']:
+                    task['scheduled']['evidence']=resolve(task['scheduled']['evidence'])
     return result

@@ -1,8 +1,9 @@
+import {executionModes} from './workflow-kinds.js';
 // Draft identities survive reorder and selection; server IDs exist only after confirmation.
 export const actionKinds={unclassified:'还没分类',required:'必须办',optional:'可自选',verification:'核对信息'};
 export const taskIsPending=task=>task.status==='pending'&&!task.action_excluded;
 const freshId=()=>crypto.randomUUID();
-const defaultPlan=()=>({action_kind:'unclassified',depends_on:[],conditions:[],participation:'undecided'});
+const defaultPlan=()=>({action_kind:'unclassified',execution_mode:'task',dependency_mode:'all',condition_mode:'all',depends_on:[],conditions:[],participation:'undecided'});
 export function initializeDraftPlans(tasks,plans={}){
   const ids=tasks.map(t=>t._plan_id||freshId());
   return tasks.map((t,i)=>{
@@ -27,7 +28,7 @@ export function prepareConfirmation(drafts,notice){
     }
     const p=draft._plan||defaultPlan();
     if(existing&&!draft._plan_update)continue;
-    if(p.action_kind==='unclassified'&&!p.conditions.length&&!p.depends_on.length)continue;
+    if(p.action_kind==='unclassified'&&!p.conditions.length&&!p.depends_on.length&&p.execution_mode==='submission')continue;
     const dependencies=p.depends_on.map(id=>{
       if(!ids.has(id))throw new Error('前置步骤“'+(drafts.find(t=>t._plan_id===id)?.title||'已移除步骤')+'”还没选中。把它选上，或者调整一下前置步骤。');
       return ids.get(id);
@@ -41,15 +42,15 @@ export function draftPlanEditor(draft,index,tasks,esc){
   const candidates=tasks.filter(t=>t._plan_id!==draft._plan_id);
   return `<details class="details draft-plan" ${p.action_kind==='optional'||p.conditions.length||p.depends_on.length?'open':''}><summary>事项类型和前置步骤 · ${esc(actionKinds[p.action_kind])}</summary>
     <div data-plan-replacement ${replace?'':'hidden'}><label class="check"><input type="checkbox" name="plan_update" ${active?'checked':''}><span>同时更新原待办的类型、前置步骤和条件</span></label><p class="small muted">默认保留原来的安排。勾上后按这里更新；没变的条件保留之前的确认，新加的条件要重新确认。</p></div>
-    <fieldset class="draft-plan-controls" ${replace&&!active?'disabled':''}><label class="field">事项类型<select name="plan_kind">${Object.entries(actionKinds).map(([k,v])=>`<option value="${k}" ${p.action_kind===k?'selected':''}>${v}</option>`).join('')}</select></label>
+    <fieldset class="draft-plan-controls" ${replace&&!active?'disabled':''}><label class="field">办理方式<select name="plan_execution_mode">${Object.entries(executionModes).map(([k,v])=>`<option value="${k}" ${p.execution_mode===k?'selected':''}>${v}</option>`).join('')}</select></label><label class="field">事项类型<select name="plan_kind">${Object.entries(actionKinds).map(([k,v])=>`<option value="${k}" ${p.action_kind===k?'selected':''}>${v}</option>`).join('')}</select></label>
     <div data-plan-optional ${p.action_kind==='optional'?'':'hidden'}><label class="field">你想参加吗<select name="plan_participation">${Object.entries({undecided:'还没想好，先记着',joined:'要参加',declined:'不参加，留个记录'}).map(([k,v])=>`<option value="${k}" ${p.participation===k?'selected':''}>${v}</option>`).join('')}</select></label></div>
-    <label class="field">要先确认的条件（每行一条）<textarea name="plan_conditions" rows="2" maxlength="3208" placeholder="例如：已收到正式立项通知">${esc(p.conditions.join('\n'))}</textarea></label><p class="small muted">条件会先记成“待确认”，之后在“办理与跟进”里更新；满不满足由你来确认，AI 不会替你打勾。</p>
+    <label class="field">前置完成方式<select name="plan_dependency_mode"><option value="all">全部完成</option><option value="any" ${p.dependency_mode==='any'?'selected':''}>完成其中一项</option></select></label><label class="field">条件满足方式<select name="plan_condition_mode"><option value="all">全部满足</option><option value="any" ${p.condition_mode==='any'?'selected':''}>满足其中一项</option></select></label><label class="field">要先确认的条件（每行一条）<textarea name="plan_conditions" rows="2" maxlength="3208" placeholder="例如：已收到正式立项通知">${esc(p.conditions.join('\n'))}</textarea></label><p class="small muted">条件会先记成“待确认”，之后在“办理与跟进”里更新；满不满足由你来确认，AI 不会替你打勾。</p>
     ${candidates.length?`<details class="plan-dependencies" ${p.depends_on.length?'open':''}><summary>必须先做的步骤${p.depends_on.length?' · '+p.depends_on.length+' 项':''}</summary><div class="dependency-list">${candidates.map(t=>`<label class="check"><input type="checkbox" name="plan_dependency" value="${esc(t._plan_id)}" ${p.depends_on.includes(t._plan_id)?'checked':''}><span>${esc(t.title||'未命名步骤')}</span></label>`).join('')}</div><p class="small muted">只选原文要求必须先做的；一般的建议顺序不用选。选中的前置步骤要一起保存。</p></details>`:''}</fieldset></details>`;
 }
 export function readDraftPlan(el,base){
   const get=name=>el.querySelector(`[name="${name}"]`),kind=get('plan_kind')?.value||'unclassified';
   return{_plan_id:base._plan_id||freshId(),_source_index:base._source_index??null,_plan_update:!!get('plan_update')?.checked,
-    _plan:{action_kind:kind,participation:kind==='optional'?get('plan_participation').value:'undecided',
+    _plan:{action_kind:kind,execution_mode:get('plan_execution_mode')?.value||'task',dependency_mode:get('plan_dependency_mode')?.value||'all',condition_mode:get('plan_condition_mode')?.value||'all',participation:kind==='optional'?get('plan_participation').value:'undecided',
       conditions:(get('plan_conditions')?.value||'').split('\n').map(t=>t.trim()).filter(Boolean),
       depends_on:[...el.querySelectorAll('[name="plan_dependency"]:checked')].map(e=>e.value)}};
 }
@@ -70,7 +71,7 @@ export function conditionRow(condition,esc){
     <label class="field">依据 / 之前的记录<textarea name="condition_note" rows="2" minlength="2" maxlength="1500" ${condition.state!=='unknown'?'required':''} placeholder="比如看了哪条通知、名单，或问了谁">${esc(condition.note||'')}</textarea></label>
     <button type="button" class="button small plain" data-remove-condition>删掉这条前提</button></div>`;
 }
-export function conditionsEditor(conditions,esc){return `<fieldset class="workflow-section condition-section"><legend>办理前提与外部条件</legend><p class="small muted">先确认资格、立项这些前提，再记提交或完成。改了条件内容，之前的确认结果会清空。</p><div data-condition-list>${conditions.map(c=>conditionRow(c,esc)).join('')}</div><button type="button" class="button small" data-add-condition ${conditions.length>=8?'disabled':''}>加一条前提</button><p class="small muted">最多 8 条，每条都要满足；“任选其一”的写在同一条里。</p></fieldset>`;}
+export function conditionsEditor(conditions,esc){return `<fieldset class="workflow-section condition-section"><legend>办理前提与外部条件</legend><p class="small muted">先确认资格、立项这些前提，再记提交或完成。改了条件内容，之前的确认结果会清空。</p><div data-condition-list>${conditions.map(c=>conditionRow(c,esc)).join('')}</div><button type="button" class="button small" data-add-condition ${conditions.length>=8?'disabled':''}>加一条前提</button><p class="small muted">最多 8 条。按原文选择全部满足或满足其中一项；混合条件保留在同一条中核对。</p></fieldset>`;}
 export function readConditions(form){return[...form.querySelectorAll('[data-condition-id]')].map(e=>({id:e.dataset.conditionId,text:e.querySelector('[name="condition_text"]').value.trim(),state:e.querySelector('[name="condition_state"]').value,note:e.querySelector('[name="condition_note"]').value.trim()}));}
 export function installConditionEditing(esc,persist){
   document.addEventListener('click',event=>{

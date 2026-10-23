@@ -8,10 +8,12 @@ CST=timezone(timedelta(hours=8))
 def eligible(data):
     if data['scope']!='personal':
         raise ValueError('请先核对任务确实由本人办理')
-    if not data['due_date'] and not data['planned_at']:
-        raise ValueError('请先设置经核实的期限或个人计划时间')
+    if not data['due_date'] and not data['planned_at'] and not data.get('scheduled'):
+        raise ValueError('请先设置经核实的期限、活动时段或个人计划时间')
     if data['due_date'] and not data['deadline_confirmed']:
         raise ValueError('正式期限尚未由本人确认')
+    if data.get('scheduled') and not data['scheduled']['confirmed']:
+        raise ValueError('活动或办理时段尚未由本人确认')
     if data['uncertainties'] and not data['resolution_note']:
         raise ValueError('请先填写待核实问题的核实结果')
 
@@ -43,7 +45,7 @@ def build_calendar(tasks):
             else:
                 event.add('dtstart',day)
                 event.add('dtend',day+timedelta(days=1))
-        else:
+        elif data['planned_at']:
             start=datetime.fromisoformat(data['planned_at']).astimezone(timezone.utc)
             event.add('dtstart',start)
             event.add('dtend',start+timedelta(minutes=15))
@@ -62,5 +64,26 @@ def build_calendar(tasks):
             alarm.add('description',data['title'])
             alarm.add('trigger',datetime.fromisoformat(data['reminder_at']).astimezone(timezone.utc))
             event.add_component(alarm)
-        calendar.add_component(event)
+        if data['due_date'] or data['planned_at']:
+            calendar.add_component(event)
+        if data.get('scheduled'):
+            from copy import deepcopy
+            slot=data['scheduled'];scheduled=deepcopy(event)
+            scheduled['uid']=task['id']+'-scheduled@campus-notice.local'
+            scheduled.pop('dtstart',None);scheduled.pop('dtend',None)
+            # One explicit reminder produces one alarm, even when a task has
+            # both an application deadline and a separate attendance interval.
+            if data['due_date'] or data['planned_at']:scheduled.subcomponents=[]
+            start=date.fromisoformat(slot['start_date'])
+            if slot.get('start_time'):
+                start=datetime.combine(start,time.fromisoformat(slot['start_time']),CST).astimezone(timezone.utc)
+            scheduled.add('dtstart',start)
+            if slot.get('end_date') and bool(slot.get('start_time'))==bool(slot.get('end_time')):
+                end=date.fromisoformat(slot['end_date'])
+                end=datetime.combine(end,time.fromisoformat(slot['end_time']),CST).astimezone(timezone.utc) if slot.get('end_time') else end+timedelta(days=1)
+                scheduled.add('dtend',end)
+            label='活动时间' if slot['kind']=='event' else '办理时段'
+            scheduled['summary']=data['title']+' · '+label
+            scheduled['description']=str(event['description'])+'\n'+label+'：'+slot['start_date']+' '+(slot.get('start_time') or '时刻未明确')+' 至 '+(slot.get('end_date') or '结束未明确')+' '+(slot.get('end_time') or '')
+            calendar.add_component(scheduled)
     return calendar.to_ical()

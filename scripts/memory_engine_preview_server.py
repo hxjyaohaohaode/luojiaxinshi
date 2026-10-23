@@ -3,6 +3,10 @@ from mvp_preview_server import app, seed, PORT
 from app import chat_ai, genui_ai
 from dataclasses import replace
 from app import memory_assist,evidence_web
+from app import notice_intake
+from app.documents import text_source
+from fastapi import HTTPException
+import time
 
 assert PORT == 8786, 'Memory fixture must use its own loopback port'
 app.state.settings=replace(app.state.settings,ai_api_key='synthetic-fixture-only',notice_semantic_review=False)
@@ -19,6 +23,22 @@ async def no_external_requests(*args,**kwargs):
 
 memory_assist.propose=edit_fixture
 evidence_web.completion=no_external_requests
+
+
+async def intake_link_fixture(url):
+    # Only an explicit synthetic domain is available. No public network or real
+    # campus pages are used by browser regression tests.
+    if not url.startswith('https://notice-fixture.example/'):
+        raise HTTPException(422,'合成验收只提供指定示例链接')
+    if '/failure' in url:raise HTTPException(422,'示例链接暂时不可读取，请粘贴正文或上传原件')
+    source=text_source('【合成链接材料】这是一则只需阅读的资料通知。\n材料标识：'+url)
+    source['name']='合成通知原文'
+    source['origin']={'url':url,'retrieved_at':int(time.time()),'attachments':[],
+                      'warnings':['仅用于工程验收的合成网页内容。']}
+    return source,'合成资料通知'
+
+
+notice_intake.read_link=intake_link_fixture
 
 def reply(settings, sources, messages, profile):
     quote=next((message['content'] for message in reversed(messages) if message['role']=='user'),'')

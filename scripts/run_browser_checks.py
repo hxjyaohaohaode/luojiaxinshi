@@ -17,7 +17,8 @@ SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_frontend_review.mjs', 'frontend-v8-browser'),
           ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
           ('verify_workspace_interactions.mjs', 'workspace-interactions-browser'),
-          ('verify_visual_review.mjs', 'visual-review-browser')]
+          ('verify_visual_review.mjs', 'visual-review-browser'),
+          ('verify_notice_flow.mjs', 'notice-flow-browser')]
 
 
 def reset_fixture_limits(data):

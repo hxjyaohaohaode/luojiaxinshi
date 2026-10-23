@@ -135,6 +135,21 @@ def build_reminders(tasks, notices, arrangements, now=None):
                     moment = deadline - lead
                     if now < moment <= now + timedelta(hours=24):
                         upcoming.append({'at': moment.isoformat(), 'title': title, 'text': f'{"明天" if lead.days else "1 小时后"}截止', 'task_id': task['id']})
+        slot=data.get('scheduled')
+        if slot:
+            start=parse_time(slot['start_date']+'T'+(slot.get('start_time') or '00:00'))
+            end=parse_time((slot.get('end_date') or slot['start_date'])+'T'+(slot.get('end_time') or '23:59'))
+            if end>=now and start<=now+timedelta(days=7):
+                kind='活动' if slot['kind']=='event' else '办理时段'
+                when=relative_day(start,now)+(' '+slot['start_time'] if slot.get('start_time') else '（时刻未明确）')
+                items.append({'kind':'notice_event','level':'attention' if start<=now+timedelta(days=1) else 'info',
+                              'title':title,'text':kind+' · '+when,'note':'' if slot['confirmed'] else '时段待对照原文核实',
+                              'at':start.isoformat(),'task_id':task['id'],'notice_title':source,'confirmed':slot['confirmed'],
+                              'revision':[slot.get('end_date'),slot.get('end_time'),slot['kind']]})
+                if slot['confirmed'] and slot.get('start_time'):
+                    moment=start-timedelta(minutes=15)
+                    if now<moment<=now+timedelta(days=1):
+                        upcoming.append({'at':moment.isoformat(),'title':title,'text':kind+'将在 15 分钟后开始','task_id':task['id']})
         reminder = parse_time(data.get('reminder_at'))
         if reminder and now - timedelta(hours=12) <= reminder <= now + timedelta(hours=24):
             due = reminder <= now
@@ -169,10 +184,10 @@ def build_reminders(tasks, notices, arrangements, now=None):
             items.append({'kind': 'arrangement', 'level': 'info', 'title': data['title'], 'text': text,
                           'at': moment.isoformat(), 'arrangement_id': record['id'], 'category': data.get('category'),
                           'revision': record.get('version')})
-    waiting = [n for n in notices if n['status'] in {'received', 'draft', 'failed'}]
+    waiting = [n for n in notices if n['status'] in {'received', 'draft', 'failed'} and n.get('disposition','inbox') == 'inbox']
     if waiting:
         drafts = sum(1 for n in waiting if n['status'] == 'draft')
-        items.append({'kind': 'notice', 'level': 'info', 'title': f'{len(waiting)} 则通知还没转成待办',
+        items.append({'kind': 'notice', 'level': 'info', 'title': f'{len(waiting)} 则通知待处理',
                       'text': f'其中 {drafts} 则已经整理好，等你确认' if drafts else '整理一下，看看有没有要做的事',
                       'notice_id': waiting[0]['id'] if len(waiting) == 1 else None,
                       'revision': sorted((n['id'], n['status'], n.get('version', 1)) for n in waiting)})
@@ -203,7 +218,7 @@ def completion_times(conn, uid):
 
 def personal_insights(conn, uid, now=None):
     now = (now or datetime.now(CST)).astimezone(CST)
-    notices = [dict(r) for r in conn.execute('SELECT id,status,source_label,draft,created_at FROM notices WHERE user_id=?', (uid,))]
+    notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.source_label,n.draft,n.created_at,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
     tasks = []
     for row in conn.execute('SELECT id,status,data,created_at,updated_at FROM tasks WHERE user_id=?', (uid,)):
         item = dict(row)
@@ -266,7 +281,7 @@ def personal_insights(conn, uid, now=None):
     return {
         'generated_at': now.isoformat(),
         'notices': {'total': len(notices), 'confirmed': sum(n['status'] == 'confirmed' for n in notices),
-                    'waiting': sum(n['status'] in {'received', 'draft', 'failed'} for n in notices)},
+                    'waiting': sum(n['status'] in {'received', 'draft', 'failed'} and n['disposition']=='inbox' for n in notices)},
         'tasks': {'total': len(personal), 'done': status['done'], 'pending': status['pending'], 'cancelled': status['cancelled'],
                   'overdue': overdue, 'on_time': on_time, 'late': late, 'from_ai': origins['ai'], 'manual': origins['manual']},
         'trend': trend, 'horizon': horizon,
@@ -301,7 +316,7 @@ def install(app, db, user, admin, list_tasks):
 
     def current_reminders(conn, uid):
         tasks = list_tasks(conn, uid)
-        notices = [dict(r) for r in conn.execute('SELECT id,status,version FROM notices WHERE user_id=?', (uid,))]
+        notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.version,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
         arrangements = [serialize_arrangement(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=?', (uid,))]
         return build_reminders(tasks, notices, arrangements)
 

@@ -203,6 +203,7 @@ CREATE TABLE IF NOT EXISTS calendar_checks(
  note TEXT NOT NULL, checked_at INTEGER NOT NULL);
 INSERT OR IGNORE INTO meta VALUES('workflow_schema_version','2');
 UPDATE meta SET value='2' WHERE key='workflow_schema_version' AND value='1';
+UPDATE meta SET value='3' WHERE key='workflow_schema_version' AND value='2';
 """
 
 
@@ -219,8 +220,12 @@ class Database:
                 if version is None or version[0] not in {'1','2','3','4','5'}:
                     raise RuntimeError('数据库版本不兼容，禁止直接降级')
                 workflow_version = conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
-                if workflow_version and workflow_version[0] not in {'1','2'}:
+                if workflow_version and workflow_version[0] not in {'1','2','3'}:
                     raise RuntimeError('办理工作流版本不兼容，禁止直接降级')
+                intake_version = conn.execute("SELECT value FROM meta WHERE key='notice_intake_schema_version'").fetchone()
+                from .notice_intake import TABLES as INTAKE_TABLES
+                if intake_version and (intake_version[0] != '1' or not INTAKE_TABLES.issubset(tables)):
+                    raise RuntimeError('通知接入版本不兼容或数据表缺失，未修改数据库')
                 memory_version=conn.execute("SELECT value FROM meta WHERE key='memory_schema_version'").fetchone()
                 if memory_version and memory_version[0] not in {'1','2'}:
                     raise RuntimeError('个人记忆版本不兼容，禁止直接降级')
@@ -248,6 +253,9 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
             conn.executescript('BEGIN IMMEDIATE;'+GENUI_SCHEMA+'COMMIT;')
             conn.executescript('BEGIN IMMEDIATE;'+WORKFLOW_SCHEMA+'COMMIT;')
+            from .notice_intake import SCHEMA as INTAKE_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+INTAKE_SCHEMA+'COMMIT;')
+            conn.execute('DELETE FROM notice_link_previews WHERE expires_at<?',(int(time.time()),))
             from .insights import REMINDER_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+REMINDER_SCHEMA+'COMMIT;')
             from .memory import SCHEMA as MEMORY_SCHEMA

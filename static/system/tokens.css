@@ -4,17 +4,21 @@
   --brand: #115740;
   --brand-strong: #0c4632;
   --brand-soft: #e7f1e9;
-  --brand-tint: #f2f7f2;
+  --brand-tint: #f7f7f7;
   --gold: #b88a3e;
-  --ink: #1f3329;
-  --ink-2: #33473d;
-  --muted: #5d6e65;          /* 白底对比度约 5.4:1 */
-  --faint: #6f7f76;          /* 白底约 4.5:1，可用于小字 */
-  --line: #e1e7df;
-  --line-strong: #cfd9d0;
-  --bg: #f6f8f3;
+  --ink: #242424;
+  --ink-2: #3d3d3d;
+  --muted: #666666;
+  --faint: #737373;
+  --line: #e5e5e5;
+  --line-strong: #d4d4d4;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #fafbf8;
+  --surface-2: #f7f7f7;
+  --surface-muted: #f7f7f7;
+  --paper: #ffffff;
+  --leaf: #ffffff;
+  --leaf-line: #e5e5e5;
   --orange: #9a5d1c;
   --orange-soft: #fdf1e1;
   --red: #b0372f;
@@ -57,9 +61,9 @@
   --radius-pill: 999px;
 
   /* 阴影 */
-  --shadow-1: 0 1px 2px #1d493a0a;
-  --shadow-2: 0 6px 18px #1d493a0f, 0 1px 3px #1d493a08;
-  --shadow-3: 0 16px 40px #1d493a17, 0 3px 8px #1d493a0a;
+  --shadow-1: 0 1px 2px #0000000a;
+  --shadow-2: 0 6px 18px #0000000f, 0 1px 3px #00000008;
+  --shadow-3: 0 16px 40px #00000017, 0 3px 8px #0000000a;
 
   /* 动效节奏：快速反馈、标准过渡、舒展入场；弹性曲线带轻微回弹 */
   --dur-1: 110ms;

@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .security import DUMMY_PASSWORD, rate_limit, verify_password
 
 # 版本用于展示内容与记录同意时的原文版本；更新不会触发登录后的重复确认。
-POLICY_VERSION = '2026-10-23-r2'
+POLICY_VERSION = '2026-10-23-r3'
 CONFIRM_PHRASE = '注销账号'
 
 SCHEMA = """

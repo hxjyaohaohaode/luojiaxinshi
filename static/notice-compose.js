@@ -1,7 +1,7 @@
 import {dictate} from './dictation.js';
 import {installNoticeFiles} from './notice-files.js';
 import {animateStepChange,syncStepMarkers,finishReferenceMotion} from './reference-interactions.js';
-export function createNoticeComposer({esc,field,area,icon,toast,persist,showDialog,api,ask}) {
+export function createNoticeComposer({esc,field,area,icon,toast,persist,showDialog,api,ask,onRender=()=>{}}) {
   const $=selector=>document.querySelector(selector);
   const files=installNoticeFiles({esc,icon,toast,onChange:updateReadiness});
   function render(){
@@ -28,7 +28,7 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
           <div class="notice-preview"><strong id="notice-review-title"></strong><span class="small muted" id="notice-review-count"></span></div>
           <div class="form-grid">${field('来源名称（选填）','source_label','','text','maxlength="100" placeholder="学院官网、年级群等"')}${field('发布时间（北京时间）','published_at','','datetime-local')}</div>
           <p class="field-note">原文里有“明天”“本周五”这类说法的话，记得填上发布时间。</p>
-          <details class="details"><summary>原文链接与材料说明</summary><div class="stack">${field('原文链接（选填）','source_url','','url','disabled maxlength="2000" placeholder="https://…"')}<p class="small muted">链接方便以后回看，正文还是要贴进来。PDF 最多 50 页，正文和附件加起来不超过 10,000 字。扫描件和复杂表格容易识别出错，记得对照原件看看。</p><p class="small muted">保存后可以自己整理，也可以确认后交给 AI 整理。</p></div></details>
+          <details class="details"><summary>原文链接与材料说明</summary><div class="stack">${field('原文链接（选填）','source_url','','url','disabled maxlength="2000" placeholder="https://…"')}<p class="small muted">可以在第一步读取公开链接，或直接粘贴正文、上传原件。PDF 最多 50 页，正文和附件加起来不超过 10,000 字。扫描件和复杂表格容易识别出错，记得对照原件看看。</p><p class="small muted">保存后可以自己整理，也可以确认后交给 AI 整理。</p></div></details>
           <label class="check"><input type="checkbox" name="materials_complete"><span>正文和重要附件都齐了。</span></label>
           <label class="check"><input type="checkbox" name="rights" required disabled><span>这些材料我有权使用，也去掉了不必要的个人敏感信息。</span></label>
           <div class="form-footer"><button type="button" class="button" data-notice-step-to="content">上一步</button><button class="button primary" type="submit">保存并核对 ${icon('arrow')}</button></div>
@@ -43,14 +43,14 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
         </ul></section>
 
       </aside></div></div>`;
-    updateReadiness();
+    onRender($('#notice-form'));updateReadiness();
   }
   function updateReadiness(){
     const form=$('#notice-form');if(!form)return;
     const title=!!form.elements.title.value.trim(),length=form.elements.body.value.trim().length,count=form.elements.files.files.length;
     $('#compose-preview-title').textContent=form.elements.title.value.trim()||'通知预览';
     $('#compose-preview-body').textContent=form.elements.body.value.trim().slice(0,180)||'';
-    $('#compose-preview-meta').textContent=length||count?`${length.toLocaleString()} 字正文 · ${count} 份附件`:'等你添加材料';
+    $('#compose-preview-meta').textContent=length||count||form.elements.link_preview?.value?`${length.toLocaleString()} 字正文 · ${count} 份附件${form.elements.link_preview?.value?' · 1 份链接材料':''}`:'等你添加材料';
     const reviewCount=$('#notice-review-count');
     if(reviewCount)reviewCount.textContent=`${form.elements.body.value.length.toLocaleString()} 字 · ${count} 份附件`;
     for(const [name,ready,text] of [['title',title,title?'已填写':'待填写'],['body',!!length,length?`${length.toLocaleString()} 字`:'待补充'],['files',!!count,count?`${count} 份待保存`:'按需添加']]){
@@ -62,7 +62,7 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
     if(form.querySelector(`[data-notice-step="${next}"]`)?.hidden===false)return;
     if(next==='review'){
       if(!form.elements.title.reportValidity())return;
-      if(!form.elements.body.value.trim()&&!form.elements.files.files.length){toast('先贴上通知正文，或者选个附件吧。',true);form.elements.body.focus();return;}
+      if(!form.elements.body.value.trim()&&!form.elements.files.files.length&&!form.elements.link_preview?.value){toast('先贴上通知正文，或者选个附件吧。',true);form.elements.body.focus();return;}
       $('#notice-review-title').textContent=form.elements.title.value;
       $('#notice-review-count').textContent=`${form.elements.body.value.length.toLocaleString()} 字 · ${form.elements.files.files.length} 份附件`;
     }

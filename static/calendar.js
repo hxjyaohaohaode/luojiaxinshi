@@ -4,7 +4,7 @@ import {taskIsPending} from './action-plans.js';
 import {dayKey,addDays,weekStart,sundayStart,monthDays,shiftMonth,calendarEntries,layoutTimed,PERIOD_TIMES,periodPosition,minute,dayDistance} from './calendar-model.js';
 
 const $=(s,root=document)=>root.querySelector(s);
-const kinds={deadline:'通知期限',plan:'待办计划',course:'课程',activity:'校园活动',personal:'个人安排'};
+const kinds={notice_event:'通知活动',notice_window:'办理时段',deadline:'通知期限',plan:'待办计划',course:'课程',activity:'校园活动',personal:'个人安排'};
 const weekdays=['一','二','三','四','五','六','日'];
 const pretty=day=>new Intl.DateTimeFormat('zh-CN',{timeZone:'UTC',month:'long',day:'numeric',weekday:'long'}).format(new Date(day+'T00:00:00Z'));
 const tone=e=>e.kind==='course'?'tone-'+([...e.title].reduce((sum,ch)=>sum+ch.codePointAt(0),0)%4):'';

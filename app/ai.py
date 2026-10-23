@@ -24,8 +24,10 @@ SYSTEM_PROMPT = """你是校园通知的事实整理助手。唯一任务：把�
 任务不能增加原文未要求的材料或手续。推荐咨询、可自愿参加的活动保留为 optional；其报名、参加步骤同属可选事项，不能因“有意者须报名”变成所有人必办。参加前须获得主办方确认等限制，放在参加步骤的 conditions。可选事项在 details 中说明可选。存在冲突须并列保留原句并列入 uncertainties，不能自行决定谁有效。
 每项 tasks 内直接填写办理建议：action_kind 为 required/optional/verification/unclassified；depends_on 只列原文明示的必要个人前置步骤在 tasks 中从 0 开始的序号，不把建议顺序变成依赖；conditions 列出“立项后”等需要本人核实的外部条件，不能声称已满足。不再额外输出顶层 plans。不把单位审核动作列为个人前置步骤；应表达为外部条件。可选事项仍由本人决定是否参加。不输出参加决定、条件状态或核实结果。
 先确定完整 tasks 顺序，再逐项核对 depends_on 所指步骤的标题和产物。办理材料的实际前置不能遗漏：例如“填写→下载表格→申请签章/确认→上传”，申请签章依赖取得表格，上传依赖签章和确认；不要把组队等不相干步骤误当成表格步骤。全局待核实问题只放 warnings，单项问题放该任务 uncertainties。
-conditions 各项需同时满足；“或”“任选其一”等替代条件保留在同一项，不拆为必须同时完成的前置。当前个人步骤已经表达的前提用 depends_on，不再重复为外部条件。核实信息步骤不能把它要核实的事情设为自身办理前提。
+每项任务同时给出 execution_mode：task（一般行动）、submission（材料申报）、attendance（到场参加）、reading（阅读知悉）、decision（本人选择）、collection（领取）、payment（缴费核对）、waiting（等待外部结果）或 custom（其他）。这只是办理方式，不是通知类别菜单；同一通知内可以有不同办理方式。纯告知、背景资料或明确与本人无关时允许 tasks 为空，不为了填满流程虚构报名或提交。
+dependency_mode 表示前置步骤 all（全部完成）或 any（任选一个）；condition_mode 表示外部条件 all 或 any。只有原文明示“或”“任选其一”才用 any，不把替代途径变成全部必办。混合条件保留完整原句供本人核对，不擅自简化成 any。当前个人步骤已经表达的前提用 depends_on，不再重复为外部条件。核实信息步骤不能把它要核实的事情设为自身办理前提。
 due_date 只能 YYYY-MM-DD，due_time 只能 HH:MM。无明确日期或年份时均为 null；不得补造 23:59。
+活动开始、会议、上课等发生时间不能冒充截止时间。使用 scheduled 保存实际时段：kind 为 event（活动发生）或 window（开放办理时段），start_date / start_time 与 end_date / end_time 分开，evidence 选择原文编号；结束未明确就留空，不捏造时长。缺少完整开始日期时 scheduled 为 null，并在 uncertainties 说明。不要输出 scheduled.confirmed。确实另有报名或提交截止时才同时填写 due_date / due_time。
 每个 tasks 都必须显式填写 due_date、due_time、deadline_text、deadline_evidence。原文明确的本人办理期限须落在对应步骤中，不能只写在 summary 或 facts.dates；未明确时分别为 null、null、空字符串与空数组。原句 24:00 须按跨日规则写入对应步骤，不要因为归一化而省略整个期限。
 明确写某日24:00时，换算为次日00:00，deadline_text 保留原表述。日期和时刻必须属于同一节点，不拼接不同节点；上午／下午要正确转换为24小时制。
 相对日期只有在明确原发布时间后才能换算，先按北京时间判断发布当天。deadline_text 保存原文期限表述；deadline_evidence 选择包含日期及其对应时刻的原文编号。
@@ -103,6 +105,22 @@ def validate_extraction(raw, sources, published_at):
         if not task.evidence:
             raise ValueError('任务缺少原文依据')
         check_evidence(task.evidence+task.deadline_evidence,sources)
+        if task.scheduled:
+            slot=task.scheduled
+            check_evidence(slot.evidence,sources)
+            slot.confirmed=False
+            visual=any(e.locator==IMAGE_LOCATOR for e in slot.evidence)
+            support=deadline_evidence([e.quote for e in slot.evidence],published_at)
+            if not slot.evidence or not visual and any(day and not support.supports_date(day,None) for day in [slot.start_date,slot.end_date]):
+                task.scheduled=None
+                task.uncertainties.append('活动或办理时段缺少可核对的完整日期，请对照原文补充，未自动推定')
+            elif visual:
+                task.uncertainties.append('活动或办理时段来自图片观察，请对照原图核实日期与时刻')
+            else:
+                for day_key,time_key in [('start_date','start_time'),('end_date','end_time')]:
+                    if getattr(slot,time_key) and not support.supports_time(getattr(slot,day_key),getattr(slot,time_key)):
+                        setattr(slot,time_key,None)
+                        task.uncertainties.append('活动或办理时刻缺少对应原文依据，请核对；未自动补齐')
         task.origin='ai'
         task.deadline_confirmed=False
         task.reminder_at=None

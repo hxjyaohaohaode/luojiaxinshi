@@ -97,11 +97,14 @@ jobs:
             artifacts/workspace-interactions-browser/*.png
             artifacts/visual-review-browser/report.json
             artifacts/visual-review-browser/*.png
+            artifacts/notice-flow-browser/report.json
+            artifacts/notice-flow-browser/*.png
             artifacts/ci-browser/verify_frontend_stability.mjs.log
             artifacts/ci-browser/verify_frontend_review.mjs.log
             artifacts/ci-browser/verify_reference_interactions.mjs.log
             artifacts/ci-browser/verify_workspace_interactions.mjs.log
             artifacts/ci-browser/verify_visual_review.mjs.log
+            artifacts/ci-browser/verify_notice_flow.mjs.log
             artifacts/ci-agent-browser/*.log
             artifacts/ci-agent-browser/results.json
             artifacts/agent-chat-browser/results.json

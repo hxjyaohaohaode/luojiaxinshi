@@ -10,8 +10,8 @@ from pydantic import Field, field_validator
 from .db import audit,dumps
 from .models import Strict
 
-FORMAL_FIELDS={'details','scope','due_date','due_time','deadline_text','materials','submission','location'}
-DATE_FIELDS={'due_date','due_time','deadline_text'}
+FORMAL_FIELDS={'details','scope','due_date','due_time','deadline_text','materials','submission','location','scheduled'}
+DATE_FIELDS={'due_date','due_time','deadline_text','scheduled'}
 SCHEMA="""
 CREATE TABLE IF NOT EXISTS task_reviews(
  task_id TEXT PRIMARY KEY REFERENCES tasks(id) ON DELETE CASCADE,
@@ -61,7 +61,7 @@ def schedule_issues(data):
     """A date-only deadline is compared by date, without inventing 23:59."""
     result=[]
     reminder=data.get('reminder_at')
-    if reminder and not data.get('due_date') and not data.get('planned_at'):
+    if reminder and not data.get('due_date') and not data.get('planned_at') and not data.get('scheduled'):
         result.append({'code':'reminder_without_anchor','message':'正式日期已待定，旧提醒缺少明确的事件时间。请清除旧提醒，或设置本人核实信息的计划与提醒。','blocking':True})
     if data.get('due_date'):
         day=date.fromisoformat(data['due_date']);zone=timezone(timedelta(hours=8))
@@ -71,6 +71,14 @@ def schedule_issues(data):
             value=datetime.fromisoformat(data[key]).astimezone(zone)
             late=value>deadline if deadline else value.date()>day
             if late:result.append({'code':key+'_after_deadline','message':label+'晚于当前正式期限，请重排；事后查询应使用单独的跟进时间。','blocking':key=='reminder_at'})
+    slot=data.get('scheduled')
+    if slot and reminder:
+        day=slot.get('end_date') if slot['kind']=='window' else slot['start_date']
+        clock=slot.get('end_time') if slot['kind']=='window' else slot.get('start_time')
+        if day:
+            moment=datetime.fromisoformat(reminder).astimezone(timezone(timedelta(hours=8)))
+            late=moment>datetime.fromisoformat(day+'T'+clock).replace(tzinfo=moment.tzinfo) if clock else moment.date()>date.fromisoformat(day)
+            if late:result.append({'code':'reminder_after_scheduled','message':'提醒晚于活动开始或办理时段结束，请核对并重排提醒。','blocking':True})
     return result
 
 
@@ -113,7 +121,7 @@ def record_change(conn,uid,tid,before,after,old_status,new_status,change_id=''):
     task=conn.execute('SELECT version FROM tasks WHERE id=? AND user_id=?',(tid,uid)).fetchone()
     row=conn.execute('SELECT data FROM task_workflows WHERE task_id=?',(tid,)).fetchone()
     stage=json.loads(row['data'])['stage'] if row else 'preparing'
-    prior_progress=old_status=='done' or stage in {'submitted','accepted','rejected'}
+    prior_progress=old_status=='done' or stage in {'submitted','accepted','rejected','recorded'}
     schedule_changed=bool(DATE_FIELDS.intersection(fields) and (after.get('planned_at') or after.get('reminder_at')))
     needs_own=(fields and (prior_progress or schedule_changed)) or old_status=='cancelled' and new_status=='pending'
     cause={'source_id':tid,'title':after['title'],'source_version':task['version'],
@@ -137,11 +145,12 @@ def record_deletion(conn,uid,nid):
 
 def record_workflow_change(conn,uid,task,before,after):
     """New adverse outcomes or changed prerequisites can invalidate past progress."""
-    if task['status']!='done' and before['stage'] not in {'submitted','accepted','rejected'}:return
+    if task['status']!='done' and before['stage'] not in {'submitted','accepted','rejected','recorded'}:return
     fields=[]
     if set(before['dependencies'])!=set(after['dependencies']):fields.append('dependencies')
     from .action_plans import constraint_key
     if constraint_key(before)!=constraint_key(after):fields.append('conditions')
+    if task['status']=='done' and before.get('milestones',[])!=after.get('milestones',[]):fields.append('progress')
     if after['stage'] in {'supplement','blocked','rejected'} and (before['stage']!=after['stage'] or before['outcome']!=after['outcome']):fields.append('progress')
     if not fields:return
     cause={'source_id':task['id'],'title':task['data']['title'],'source_version':task['version'],
@@ -167,11 +176,18 @@ def install(app,db,user,own_task,expect_version,get_task):
             if row['state']!='pending':raise HTTPException(409,'这次影响已核对，请刷新查看最新状态')
             workflow=conn.execute('SELECT * FROM task_workflows WHERE task_id=?',(tid,)).fetchone()
             value=json.loads(task['data']);flow=json.loads(workflow['data']) if workflow else None
-            if payload.decision=='keep' and (task['status']=='done' or flow and flow['stage'] in {'submitted','accepted'}):
+            if payload.decision=='keep' and (task['status']=='done' or flow and flow['stage'] in {'submitted','accepted','recorded'}):
                 from .action_plans import require_gates
                 require_gates(flow or {})
-            for dep in flow['dependencies'] if flow else []:
-                if pending(conn,dep):raise HTTPException(422,'请先核对前置步骤的变更，再确认本步骤是否仍适用')
+            if flow and flow.get('dependency_mode','all')=='any' and flow['dependencies']:
+                from .workflow import require_proposed_dependencies
+                # A verified alternative can remain valid while an unused path
+                # is being reviewed. Completion still requires a real ready path.
+                if payload.decision=='keep' and (task['status']=='done' or flow['stage'] in {'submitted','accepted','recorded'}):
+                    require_proposed_dependencies(conn,current['id'],flow)
+            else:
+                for dep in flow['dependencies'] if flow else []:
+                    if pending(conn,dep):raise HTTPException(422,'请先核对前置步骤的变更，再确认本步骤是否仍适用')
             if task['status']!='cancelled' and any(i['blocking'] for i in schedule_issues(value)):
                 raise HTTPException(422,'原提醒已不适用，请先编辑个人计划或清除／重排提醒，再完成复核')
             if payload.decision=='reopen' and task['status']=='cancelled':

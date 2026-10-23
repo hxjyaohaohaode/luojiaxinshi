@@ -261,7 +261,7 @@ def test_additive_migration_and_future_version_rejection(tmp_path):
         conn.execute("DELETE FROM meta WHERE key='workflow_schema_version'")
     migrated = Database(path)
     with migrated.connect() as conn:
-        assert conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()[0] == '2'
+        assert conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()[0] == '3'
         assert conn.execute('PRAGMA foreign_key_check').fetchone() is None
         conn.execute("UPDATE meta SET value='999' WHERE key='workflow_schema_version'")
     with pytest.raises(RuntimeError, match='禁止直接降级'):

@@ -3,6 +3,8 @@ import {brandMotion} from './motion.js';
 import {taskMatchesFilter} from './workflow.js';
 import {animateSurface,numberMarkup,ringMarkup} from './experience-system.js';
 import {dayKey,addDays} from './calendar-model.js';
+import {isNoticeOpen} from './notice-intake.js';
+import {taskTimeLabel,needsTimingReview,taskOnDay} from './notice-timing.js';
 
 // Summaries describe saved records, never an AI recommendation or a submission.
 export function overviewData(tasks, notices) {
@@ -12,12 +14,12 @@ export function overviewData(tasks, notices) {
     Number(!!b.followup_due) - Number(!!a.followup_due) ||
     Number(!!b.overdue) - Number(!!a.overdue) ||
     Number(!!b.due_soon) - Number(!!a.due_soon) ||
-    (a.data.due_date || '9999').localeCompare(b.data.due_date || '9999'));
+    (a.data.due_date || a.data.scheduled?.start_date || '9999').localeCompare(b.data.due_date || b.data.scheduled?.start_date || '9999'));
   return {
     pending, ordered,
-    notices: notices.filter(notice => notice.status !== 'confirmed'),
+    notices: notices.filter(notice => notice.status !== 'confirmed'&&isNoticeOpen(notice)),
     urgent: pending.filter(task => task.overdue || task.due_soon),
-    uncertain: pending.filter(task => !task.data.due_date || !task.data.deadline_confirmed),
+    uncertain: pending.filter(needsTimingReview),
     followup: tasks.filter(task => taskMatchesFilter(task, 'followup')),
     changed: tasks.filter(task => taskMatchesFilter(task, 'changes')),
     sync: tasks.filter(task => taskMatchesFilter(task, 'sync')),
@@ -29,7 +31,7 @@ export function overviewData(tasks, notices) {
 export function overviewWeek(tasks, today = dayKey()) {
   return Array.from({length:7}, (_, index) => {
     const day = addDays(today, index);
-    return {day, tasks: tasks.filter(task => task.data.scope === 'personal' && taskIsPending(task) && task.data.due_date === day)};
+    return {day, tasks: tasks.filter(task => task.data.scope === 'personal' && taskIsPending(task) && taskOnDay(task.data,day))};
   });
 }
 
@@ -82,7 +84,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
     const upcoming = reminders?.summary(4) || '';
     $('#overview-brief').innerHTML = upcoming + `<div class="overview-brief-links">` + [
       [urgent.length,'临近或已过期','soon','attention'],
-      [uncertain.length,'期限待核对','unverified',''],
+      [uncertain.length,'时间待核对','unverified',''],
     ].map(([count,label,filter,cls])=>`<a class="${count?cls:''}" href="#tasks" data-overview-filter="${filter}"><span>${label}</span><b>${count}</b>${icon('arrow')}</a>`).join('')+`<a href="#notices"><span>通知待核对</span><b>${notices.length}</b>${icon('arrow')}</a></div>`;
   }
   function renderFocus(ordered,notices,caughtUp) {
@@ -90,7 +92,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
     const focus = ordered[focusIndex];
     const focusLabel = focus?.followup_due ? '到了跟进时间' : focus?.overdue ? '期限已过，核对进展' : focus?.due_soon ? '近期需要留意' : '接着推进这件事';
     $('#overview-focus').innerHTML = focus
-      ? `<div class="focus-label"><span class="focus-dot"></span>${focusLabel}</div><div class="focus-card-content"><h2>${esc(focus.data.title)}</h2><p>${focus.data.due_date?`${icon('calendar')} ${esc(focus.data.due_date)}${focus.data.due_time?' '+esc(focus.data.due_time):''}${focus.data.deadline_confirmed?'':' · 期限待确认'}`:'期限待核对，可先查看原文'}</p><div class="focus-source">${esc(focus.notice_title||'已保存的个人行动')}</div></div><button type="button" class="button" data-workflow-task="${esc(focus.id)}">查看办理详情 ${icon('arrow')}</button>${ordered.length>1?`<div class="deck-controls"><span aria-live="polite">${focusIndex+1} / ${ordered.length} 项待完成</span><div><button type="button" class="icon-button" data-focus-step="-1" aria-label="上一项重点事项" ${focusIndex===0?'disabled':''}>${icon('back')}</button><button type="button" class="icon-button" data-focus-step="1" aria-label="下一项重点事项" ${focusIndex===ordered.length-1?'disabled':''}>${icon('arrow')}</button></div></div>`:''}`
+      ? `<div class="focus-label"><span class="focus-dot"></span>${focusLabel}</div><div class="focus-card-content"><h2>${esc(focus.data.title)}</h2><p>${icon('calendar')} ${esc(taskTimeLabel(focus.data))}${needsTimingReview(focus)?' · 时间待核对':''}</p><div class="focus-source">${esc(focus.notice_title||'已保存的个人行动')}</div></div><button type="button" class="button" data-workflow-task="${esc(focus.id)}">查看办理详情 ${icon('arrow')}</button>${ordered.length>1?`<div class="deck-controls"><span aria-live="polite">${focusIndex+1} / ${ordered.length} 项待完成</span><div><button type="button" class="icon-button" data-focus-step="-1" aria-label="上一项重点事项" ${focusIndex===0?'disabled':''}>${icon('back')}</button><button type="button" class="icon-button" data-focus-step="1" aria-label="下一项重点事项" ${focusIndex===ordered.length-1?'disabled':''}>${icon('arrow')}</button></div></div>`:''}`
       : `<div class="focus-label"><span class="focus-dot"></span>${caughtUp?'已完成':'待处理'}</div><h2>${notices.length?'还有通知等你核对':caughtUp?'暂无待完成事项':'暂无通知'}</h2>${notices.length?`<p>${notices.length} 则通知待核对</p>`:''}<a class="button" href="${notices.length?'#notices':'#new'}">${notices.length?'去核对通知':'添加通知'} ${icon('arrow')}</a>`;
   }
   function renderItems({pending,ordered,notices,followup},caughtUp) {
@@ -116,7 +118,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
     selectedDay = chosen.day;
     $('#overview-week').innerHTML = `<div class="week-heading"><div><h2>未来七天</h2></div><a href="#calendar" aria-label="在日历查看完整安排">${icon('arrow')}</a></div>
       <div class="week-days" role="group" aria-label="按截止日期查看待办">${days.map((entry,index)=>`<button type="button" data-overview-day="${entry.day}" aria-pressed="${entry.day===selectedDay}" aria-label="${entry.day}，${entry.tasks.length} 项待办"><span>${index===0?'今天':new Intl.DateTimeFormat('zh-CN',{weekday:'short',timeZone:'UTC'}).format(new Date(entry.day+'T00:00:00Z'))}</span><strong>${Number(entry.day.slice(-2))}</strong><i class="${entry.tasks.length?'has-items':''}" aria-hidden="true"></i></button>`).join('')}</div>
-      <div class="week-agenda" aria-live="polite"><span class="week-agenda-label">${selectedDay.slice(5).replace('-',' / ')} · 通知期限</span>${chosen.tasks.length?`<button type="button" data-workflow-task="${esc(chosen.tasks[0].id)}"><span>${esc(chosen.tasks[0].data.title)}</span>${icon('arrow')}</button><small>${chosen.tasks.length} 项待完成${chosen.tasks.some(t=>!t.data.deadline_confirmed)?' · 有期限待核对':''}</small>`:'<p>这一天，暂时没有待办到期。</p><a href="#calendar">安排自己的时间 '+icon('arrow')+'</a>'}</div>`;
+      <div class="week-agenda" aria-live="polite"><span class="week-agenda-label">${selectedDay.slice(5).replace('-',' / ')} · 期限与活动</span>${chosen.tasks.length?`<button type="button" data-workflow-task="${esc(chosen.tasks[0].id)}"><span>${esc(chosen.tasks[0].data.title)}</span>${icon('arrow')}</button><small>${chosen.tasks.length} 项待完成${chosen.tasks.some(needsTimingReview)?' · 有时间待核对':''}</small>`:'<p>这一天，暂无期限或活动安排。</p><a href="#calendar">安排自己的时间 '+icon('arrow')+'</a>'}</div>`;
   }
   document.addEventListener('campus:reminders',()=>{
     if(!document.querySelector('#overview-brief'))return;

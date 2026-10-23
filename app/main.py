@@ -213,10 +213,12 @@ def create_app(settings=None):
 
     def get_sources(conn, nid, active_only=False, include_content=False):
         records=[]
+        origins={r['source_id']:json.loads(r['data']) for r in conn.execute('SELECT o.* FROM notice_source_origins o JOIN sources s ON s.id=o.source_id WHERE s.notice_id=?',(nid,))}
         columns='id,name,kind,sha256,status,sections,warning,active,created_at'+(',content' if include_content else '')
         for row in conn.execute('SELECT '+columns+' FROM sources WHERE notice_id=? ORDER BY created_at,rowid',(nid,)):
             source=dict(row)
             source['sections']=json.loads(source['sections'])
+            if source['id'] in origins:source['origin']=origins[source['id']]
             if not active_only or source['active']:
                 records.append(source)
         return records
@@ -224,8 +226,12 @@ def create_app(settings=None):
     def store_source(conn,nid,source):
         conn.execute('INSERT INTO sources(id,notice_id,name,kind,content,sha256,status,sections,warning,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
                      (source['id'],nid,source['name'],source['kind'],source['content'],source['sha256'],source['status'],dumps(source['sections']),source['warning'],int(time.time())))
+        from .notice_intake import save_origin
+        save_origin(conn,source['id'],source)
 
     def invalidate(conn,nid):
+        from .notice_intake import reopen
+        reopen(conn,nid)
         conn.execute("UPDATE notices SET version=version+1,draft=NULL,draft_version=NULL,status='received',error=NULL,processing_token=NULL,processing_at=NULL,updated_at=? WHERE id=?",(int(time.time()),nid))
 
     def serialize_task(row):
@@ -249,6 +255,8 @@ def create_app(settings=None):
 
     def detailed_notice(conn,nid,uid):
         record=own_notice(conn,nid,uid)
+        from .notice_intake import disposition
+        record['handling']=disposition(conn,nid)
         active=notice_processing(conn,record,settings.ai_timeout)
         record.pop('processing_token',None)
         if record['status']=='processing' and not active:
@@ -414,7 +422,7 @@ def create_app(settings=None):
         return {'url':settings.origin+'/#invite='+raw,'expires_in_days':7}
 
     def check_cache_key(conn,key,uid,check_version=True):
-        if key in {'new-notice','chat-new','arrangement-new'}:
+        if key in {'new-notice','intake-batch','chat-new','arrangement-new'}:
             return None
         if re.fullmatch(r'chat:[a-f0-9]{32}',key):
             if not conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(key[5:],uid)).fetchone():
@@ -473,11 +481,11 @@ def create_app(settings=None):
     def notices(current=Depends(user)):
         with db.connect() as conn:
             # applicability 来自整理结果：是否与本人已知条件相符，供列表按“与我相关”筛选。
-            return [dict(r) for r in conn.execute("SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,(SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count,CASE WHEN n.draft IS NOT NULL AND json_valid(n.draft) THEN json_extract(n.draft,'$.applicability') END AS applicability FROM notices n WHERE user_id=? ORDER BY n.updated_at DESC",(current['id'],))]
+            return [dict(r) for r in conn.execute("SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,COALESCE(d.disposition,'inbox') AS disposition,(SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count,CASE WHEN n.draft IS NOT NULL AND json_valid(n.draft) THEN json_extract(n.draft,'$.applicability') END AS applicability FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE user_id=? ORDER BY n.updated_at DESC",(current['id'],))]
 
-    async def parse_form(request):
-        form=await request.form(max_files=5,max_fields=12,max_part_size=120000)
-        allowed={'title','body','source_label','source_url','published_at','materials_complete','allow_duplicate','files','version','label'}
+    async def parse_form(request,uid):
+        form=await request.form(max_files=5,max_fields=16,max_part_size=120000)
+        allowed={'title','body','source_label','source_url','published_at','materials_complete','allow_duplicate','files','version','label','link_preview','request_id'}
         if set(form.keys())-allowed:
             raise HTTPException(422,'含不支持的提交字段')
         values={key:str(form.get(key,'')) for key in allowed-{'files'}}
@@ -497,8 +505,13 @@ def create_app(settings=None):
             raise HTTPException(422,str(exc)) from None
         finally:
             await form.close()
+        if values['link_preview']:
+            from .notice_intake import preview_source
+            with db.connect() as conn:sources.append(preview_source(conn,uid,values['link_preview']))
+        if sum(s['kind']!='text' for s in sources)>5:
+            raise HTTPException(422,'链接文件与上传附件合计最多 5 份')
         if not sources:
-            raise HTTPException(422,'请粘贴正文或上传附件；来源链接不能代替通知内容')
+            raise HTTPException(422,'请粘贴正文、上传附件，或先读取原文链接')
         return values,sources
 
     def check_quota(conn,uid,sources,new_notice=False):
@@ -511,7 +524,7 @@ def create_app(settings=None):
     @app.post('/api/notices')
     async def create_notice(request:Request,current=Depends(user)):
         rate_limit(db,'upload:'+current['id'],40,3600)
-        values,sources=await parse_form(request)
+        values,sources=await parse_form(request,current['id'])
         title=values['title'].strip()
         if not title or len(title)>160 or len(values['source_label'])>100:
             raise HTTPException(422,'请填写 1—160 字标题，来源名称不超过 100 字')
@@ -531,6 +544,10 @@ def create_app(settings=None):
         nid=ident()
         now=int(time.time())
         with db.connect(write=True) as conn:
+            from .notice_intake import prior_submission,submission_digest
+            digest=submission_digest(values,fingerprint)
+            previous=prior_submission(conn,current['id'],values['request_id'],digest)
+            if previous:return detailed_notice(conn,previous,current['id'])
             check_quota(conn,current['id'],sources,True)
             duplicate=conn.execute('SELECT id,title FROM notices WHERE user_id=? AND fingerprint=?',(current['id'],fingerprint)).fetchone()
             if duplicate and values['allow_duplicate']!='true':
@@ -539,6 +556,8 @@ def create_app(settings=None):
                          (nid,current['id'],title,values['source_label'],source_url,published,values['materials_complete']=='true',fingerprint,now,now))
             for source in sources:
                 store_source(conn,nid,source)
+            if values['request_id']:
+                conn.execute('INSERT INTO notice_submissions VALUES(?,?,?,?)',(current['id'],values['request_id'],nid,digest))
             audit(conn,current['id'],nid,'create_notice',after={'title':title,'sources':[s['name'] for s in sources]})
             result=detailed_notice(conn,nid,current['id'])
         return result
@@ -552,13 +571,18 @@ def create_app(settings=None):
     async def supplement(nid:str,request:Request,current=Depends(user)):
         with db.connect() as conn:
             own_notice(conn,nid,current['id'])
-        values,sources=await parse_form(request)
+        values,sources=await parse_form(request,current['id'])
         try:
             version=int(values['version'])
         except ValueError:
             raise HTTPException(422,'缺少通知版本') from None
         with db.connect(write=True) as conn:
             record=own_notice(conn,nid,current['id'])
+            from .notice_intake import prior_submission,submission_digest
+            fingerprint=hashlib.sha256('|'.join(sorted(s['sha256'] for s in sources)).encode()).hexdigest()
+            digest=submission_digest({**values,'title':'supplement:'+nid},fingerprint)
+            previous=prior_submission(conn,current['id'],values['request_id'],digest)
+            if previous:return detailed_notice(conn,previous,current['id'])
             expect_version(record,version)
             check_quota(conn,current['id'],sources)
             existing=get_sources(conn,nid,True)
@@ -571,6 +595,10 @@ def create_app(settings=None):
             for source in sources:
                 store_source(conn,nid,source)
             invalidate(conn,nid)
+            if values['materials_complete'] in {'true','false'}:
+                conn.execute('UPDATE notices SET materials_complete=? WHERE id=?',(values['materials_complete']=='true',nid))
+            if values['request_id']:
+                conn.execute('INSERT INTO notice_submissions VALUES(?,?,?,?)',(current['id'],values['request_id'],nid,digest))
             audit(conn,current['id'],nid,'supplement',after={'sources':[s['name'] for s in sources]})
             return detailed_notice(conn,nid,current['id'])
 
@@ -643,6 +671,8 @@ def create_app(settings=None):
         with db.connect(write=True) as conn:
             record=own_notice(conn,nid,current['id'])
             expect_version(record,payload.version)
+            from .notice_intake import require_open
+            require_open(conn,nid)
             draft={'title':record['title'],'summary':'手工整理，请对照左侧原文填写本人事项。',
                    'applicability':'needs_review','applicability_reason':'手工确认本人适用条件','facts':{},'tasks':[],
                    'warnings':['手工填写结果不计作 AI 提取成功']}
@@ -675,6 +705,8 @@ def create_app(settings=None):
             with db.connect() as conn:
                 record=own_notice(conn,nid,current['id'])
                 expect_version(record,payload.version)
+                from .notice_intake import require_open
+                require_open(conn,nid)
                 if notice_processing(conn,record,settings.ai_timeout):
                     raise HTTPException(409,'该通知正在生成，请等待当前请求完成')
                 sources=get_sources(conn,nid,True,include_content=True)
@@ -755,7 +787,7 @@ def create_app(settings=None):
             finally:notice_lock.release()
 
     def validate_task(data,sources,global_blockers,enforce_future=True):
-        ai.check_evidence(data.evidence+data.deadline_evidence,sources)
+        ai.check_evidence(data.evidence+data.deadline_evidence+(data.scheduled.evidence if data.scheduled else []),sources)
         value=data.model_dump()
         if data.reminder_at:
             eligible(value)
@@ -767,6 +799,8 @@ def create_app(settings=None):
             raise ValueError('尚未填写正式期限日期')
         if data.deadline_confirmed and (data.uncertainties or global_blockers) and not data.resolution_note:
             raise ValueError('确认期限前，请填写相关待核实问题的核实结果')
+        if data.scheduled and data.scheduled.confirmed and (data.uncertainties or global_blockers) and not data.resolution_note:
+            raise ValueError('确认活动或办理时段前，请填写相关待核实问题的核实结果')
         return value
 
     @app.post('/api/notices/{nid}/confirm')
@@ -780,6 +814,8 @@ def create_app(settings=None):
             expect_version(record,payload.version)
             if record['draft_version']!=payload.version or not record['draft']:
                 raise HTTPException(409,'请先生成或手工建立当前版本的草稿')
+            from .notice_intake import require_open
+            require_open(conn,nid)
             from .notice_resolution import require_confirmation
             quality_result=require_confirmation(json.loads(record['draft']),payload)
             sources=get_sources(conn,nid)
@@ -850,9 +886,9 @@ def create_app(settings=None):
         try:
             previous=json.loads(old['data'])
             value=payload.data.model_dump()
-            ai.check_evidence(payload.data.evidence+payload.data.deadline_evidence,sources)
-            critical=('scope','due_date','due_time','deadline_confirmed','planned_at','reminder_at','uncertainties','resolution_note','deadline_evidence')
-            if any(value[k]!=previous[k] for k in critical):
+            ai.check_evidence(payload.data.evidence+payload.data.deadline_evidence+(payload.data.scheduled.evidence if payload.data.scheduled else []),sources)
+            critical=('scope','due_date','due_time','deadline_confirmed','planned_at','reminder_at','uncertainties','resolution_note','deadline_evidence','scheduled')
+            if any(value[k]!=previous.get(k) for k in critical):
                 value=validate_task(payload.data,sources,blockers(record,[s for s in sources if s['active']]),
                                     enforce_future=payload.data.reminder_at!=previous.get('reminder_at'))
         except ValueError as exc:
@@ -938,6 +974,8 @@ def create_app(settings=None):
 
     from .data_transfer import install_data_transfer
     install_data_transfer(app,db,user)
+    from .notice_intake import install as install_intake
+    install_intake(app,db,user,own_notice,expect_version,detailed_notice)
     install_workspace(app,db,settings,user,heavy_lock)
     from .memory import install_memory
     install_memory(app,db,user)
@@ -945,7 +983,7 @@ def create_app(settings=None):
     install_speech(app,db,settings,user,heavy_lock)
     install_schedule(app,db,user)
     install_workflow(app, db, user, own_notice, own_task, expect_version, serialize_task,
-                     get_sources, store_source, invalidate, validate_task)
+                     get_sources, store_source, invalidate, validate_task, update_task_record)
     app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 
     @app.get('/')

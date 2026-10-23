@@ -52,7 +52,11 @@ def restore_database(source:Path,destination:Path):
             if version[0]=='4' and 'arrangements' not in tables:
                 raise ValueError('备份缺少个人安排表')
             workflow_version = original.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
-            if workflow_version and (workflow_version[0] not in {'1','2'} or not {'task_workflows','notice_changes','calendar_checks'}.issubset(tables)):
+            intake_version = original.execute("SELECT value FROM meta WHERE key='notice_intake_schema_version'").fetchone()
+            from .notice_intake import TABLES as INTAKE_TABLES
+            if intake_version and (intake_version[0] != '1' or not INTAKE_TABLES.issubset(tables)):
+                raise ValueError('备份缺少通知接入数据或版本不兼容')
+            if workflow_version and (workflow_version[0] not in {'1','2','3'} or not {'task_workflows','notice_changes','calendar_checks'}.issubset(tables)):
                 raise ValueError('备份缺少办理工作流数据或版本不兼容')
             memory_version=original.execute("SELECT value FROM meta WHERE key='memory_schema_version'").fetchone()
             if memory_version and (memory_version[0] not in {'1','2'} or not {'memory_projects','personal_memories','conversation_context'}.issubset(tables)
@@ -91,7 +95,7 @@ def restore_database(source:Path,destination:Path):
                 if 'binding_codes' in tables:
                     target.execute('DELETE FROM binding_codes')
                     target.execute('DELETE FROM external_bindings')
-                for table in ('reply_shares','conversation_ai_consents'):
+                for table in ('reply_shares','conversation_ai_consents','notice_link_previews'):
                     if table in tables:target.execute('DELETE FROM '+table)
                 target.execute("UPDATE notices SET status='failed',processing_token=NULL,error='服务恢复后请重新生成草稿' WHERE status='processing'")
                 if 'conversations' in tables:

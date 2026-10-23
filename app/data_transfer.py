@@ -58,8 +58,12 @@ def sources(items):
             value=text(section.get('text'),10000);total+=len(value)
             if total>100000:raise ValueError('单份记录的材料文字过多')
             sections.append({'locator':text(section.get('locator'),80),'text':value,**({'table':True} if section.get('table') is True else {})})
+        origin=s.get('origin') or {}
+        if not isinstance(origin,dict):raise ValueError('材料来源记录格式不正确')
+        portable_origin={'url':safe_url(text(origin.get('url'),2000)), 'retrieved_at':historical_timestamp(origin.get('retrieved_at')),
+                         'attachments':[], 'warnings':['导入的来源记录，未在本次重新读取网页'], 'imported':True} if origin else None
         result.append({'old_id':text(s.get('id'),100),'name':text(s.get('name'),160,'导入材料'),
-                       'sections':sections,'warning':'从备份导入的提取文字，原始附件未包含在 JSON 中，请按需要重新补充。'})
+                       'sections':sections,'warning':'从备份导入的提取文字，原始附件未包含在 JSON 中，请按需要重新补充。','origin':portable_origin})
     return result
 
 
@@ -108,6 +112,7 @@ def validate(data):
             details=TaskData.model_validate(task.get('data',{})).model_dump()
             # Imported backup text is not new evidence of a verified official deadline.
             details.update(deadline_confirmed=False,reminder_at=None)
+            if details.get('scheduled'):details['scheduled']['confirmed']=False
             if task.get('status') not in {'pending','done','cancelled'}:raise ValueError('待办状态无效')
             old_id=text(task.get('id'),100)
             if old_id and old_id in task_ids:raise ValueError('待办标识重复')
@@ -143,9 +148,13 @@ def validate(data):
                             'decided_at':historical_timestamp(change.get('decided_at')),
                             'created_at':historical_timestamp(change.get('original_created_at',change.get('created_at')))})
         from .notice_resolution import portable_receipt
+        from .notice_intake import DispositionUpdate
+        handling=n.get('handling') or {}
+        if not isinstance(handling,dict):raise ValueError('通知处理记录格式不正确')
+        decision=DispositionUpdate(version=1,disposition=handling.get('disposition','inbox'),note=handling.get('note',''))
         notices.append({'key':key('notice',n),'title':text(n.get('title'),160),'source_label':text(n.get('source_label'),100),
                         'source_url':safe_url(text(n.get('source_url'),2000)),'sources':sources(n.get('sources',[])),'tasks':task_items,'changes':changes,
-                        'quality_receipt':portable_receipt(n.get('quality_receipt'))})
+                        'quality_receipt':portable_receipt(n.get('quality_receipt')),'handling':decision.model_dump(exclude={'version'})})
     validate_dependency_graph({t['old_id']:t['workflow']['dependencies'] for n in notices for t in n['tasks'] if t['old_id']})
     for c in collection(data,'conversations',100):
         messages=[]
@@ -238,10 +247,14 @@ def install_data_transfer(app,db,user):
                     elif kind=='notices':
                         conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,materials_complete,fingerprint,status,created_at,updated_at) VALUES(?,?,?,?,?,0,?,?,?,?)',
                                      (rid,current['id'],item['title'],item['source_label'],item['source_url'],item['key'],'confirmed' if item['tasks'] else 'received',now,now))
+                        if not item['tasks'] and item['handling']['disposition']!='inbox':
+                            conn.execute('INSERT INTO notice_dispositions VALUES(?,?,?,?)',(rid,item['handling']['disposition'],item['handling']['note'],now))
                         mapping={}
                         for source in item['sources']:
                             sid=ident();mapping[source['old_id']]=sid
                             conn.execute("INSERT INTO sources(id,notice_id,name,kind,sha256,status,sections,warning,created_at) VALUES(?,?,?,'text',?,'review',?,?,?)",(sid,rid,source['name'],hashlib.sha256(dumps(source['sections']).encode()).hexdigest(),dumps(source['sections']),source['warning'],now))
+                            from .notice_intake import save_origin
+                            save_origin(conn,sid,source)
                         for task in item['tasks']:
                             tid=ident()
                             if task['old_id']:
@@ -250,6 +263,8 @@ def install_data_transfer(app,db,user):
                             details=task['data']
                             for field in ['evidence','deadline_evidence']:
                                 details[field]=[{**e,'source_id':mapping[e['source_id']]} for e in details[field] if e['source_id'] in mapping]
+                            if details.get('scheduled'):
+                                details['scheduled']['evidence']=[{**e,'source_id':mapping[e['source_id']]} for e in details['scheduled']['evidence'] if e['source_id'] in mapping]
                             conn.execute('INSERT INTO tasks(id,user_id,notice_id,data,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)',(tid,current['id'],rid,dumps(details),task['status'],now,now))
                             if task['old_id']:conn.execute('INSERT INTO import_task_links VALUES(?,?,?)',(current['id'],task['old_id'],tid))
                             imported_workflows.append((tid,rid,task['workflow']))

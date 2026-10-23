@@ -14,7 +14,7 @@ def normalize_proposals(raw):
     if not isinstance(plans,dict):return result  # The strict extraction schema reports this.
     for index,task in enumerate(result['tasks']):
         if not isinstance(task,dict):continue
-        fields={k:task.pop(k) for k in ('action_kind','depends_on','conditions') if k in task}
+        fields={k:task.pop(k) for k in ('action_kind','depends_on','conditions','execution_mode','dependency_mode','condition_mode') if k in task}
         if not fields:continue
         key=str(index) if str(index) in plans else index
         current=plans.get(key,{})
@@ -29,7 +29,9 @@ def gate_issues(data):
     result=[]
     if data.get('action_kind')=='optional' and data.get('participation')!='joined':
         result.append({'code':'participation','label':'本人尚未决定参加' if data.get('participation')!='declined' else '本人已决定不参加'})
-    for condition in data.get('conditions',[]):
+    conditions=data.get('conditions',[])
+    if data.get('condition_mode')=='any' and any(c['state']=='met' for c in conditions):return result
+    for condition in conditions:
         if condition['state']!='met':result.append({'code':'condition','label':('条件待核实：' if condition['state']=='unknown' else '条件尚未满足：')+condition['text']})
     return result
 
@@ -46,6 +48,7 @@ def require_task_gates(conn,tid):
 
 def constraint_key(data):
     return (data.get('action_kind','unclassified'),data.get('participation','undecided'),
+            data.get('condition_mode','all'),data.get('dependency_mode','all'),
             tuple(sorted((c['id'],c['text'],c['state']) for c in data.get('conditions',[]))))
 
 
@@ -79,7 +82,8 @@ def apply_confirmed_plans(conn,uid,nid,ids,plans,replacements,now):
         conditions=[existing.get(text) or {'id':ident(),'text':text,'state':'unknown','note':''} for text in plan.conditions]
         participation=plan.participation if 'participation' in plan.model_fields_set or index not in replacements else old['participation']
         new={**old,'action_kind':plan.action_kind,'participation':participation if plan.action_kind=='optional' else 'undecided',
-             'conditions':conditions,'dependencies':[ids[i] for i in plan.depends_on]}
+             'conditions':conditions,'dependencies':[ids[i] for i in plan.depends_on],
+             'execution_mode':plan.execution_mode,'dependency_mode':plan.dependency_mode,'condition_mode':plan.condition_mode}
         graph[tid]=new['dependencies'];updates.append((tid,old,new,version))
     try:validate_dependency_graph(graph)
     except ValueError as exc:raise HTTPException(422,str(exc)) from None

@@ -14,13 +14,27 @@ from pydantic import Field, field_validator
 
 from .db import audit, dumps, ident
 from .documents import MAX_CHARS, text_source, total_chars
-from .models import Strict, TaskData, ActionCondition, safe_url
+from .models import Strict, TaskData, TaskUpdate, ActionCondition, safe_url
 from .action_plans import gate_issues,require_gates,require_task_gates,constraint_key
 from .action_review import public_review,require_reviewed,pending,schedule_issues,record_change,record_workflow_change,descendants,FORMAL_FIELDS
 
 
+class WorkflowStep(Strict):
+    id: str = Field(min_length=1,max_length=60,pattern=r'^[a-zA-Z0-9_.:-]+$')
+    title: str = Field(min_length=1,max_length=160)
+    done: bool = Field(default=False,strict=True)
+    note: str = Field(default='',max_length=500)
+
+
 class WorkflowData(Strict):
-    stage: Literal['preparing', 'submitted', 'supplement', 'accepted', 'rejected', 'blocked'] = 'preparing'
+    stage: Literal['preparing', 'submitted', 'supplement', 'accepted', 'rejected', 'blocked', 'active', 'waiting', 'recorded'] = 'preparing'
+    # Legacy records retain their submission semantics. New confirmed plans
+    # explicitly choose the handling mode; no keyword guesses rewrite old data.
+    execution_mode: Literal['task','submission','attendance','reading','decision','collection','payment','waiting','custom'] = 'submission'
+    phase_label: str = Field(default='',max_length=80)
+    milestones: list[WorkflowStep] = Field(default_factory=list,max_length=20)
+    dependency_mode: Literal['all','any'] = 'all'
+    condition_mode: Literal['all','any'] = 'all'
     action_kind: Literal['unclassified', 'required', 'optional', 'verification'] = 'unclassified'
     participation: Literal['undecided', 'joined', 'declined'] = 'undecided'
     prepared_materials: list[str] = Field(default_factory=list, max_length=30)
@@ -55,11 +69,18 @@ class WorkflowData(Strict):
         if len({c.id for c in values})!=len(values) or len({c.text for c in values})!=len(values):raise ValueError('办理条件不能重复')
         return values
 
+    @field_validator('milestones')
+    @classmethod
+    def unique_steps(cls,values):
+        if len({s.id for s in values})!=len(values):raise ValueError('步骤标识不能重复')
+        return values
+
 
 class WorkflowUpdate(Strict):
     version: int = Field(ge=0)
     task_version: int = Field(ge=1)
     data: WorkflowData
+    complete: bool = Field(default=False,strict=True)
 
 
 class ChangeTarget(Strict):
@@ -144,7 +165,7 @@ def enrich_tasks(conn, tasks):
                                  'status': dep['status'] if dep else 'missing','review_required':bool(reviews.get(tid,{}).get('state')=='pending'),
                                  'conditions_blocked':bool(gate_issues(json.loads(workflows[tid]['data']))) if tid in workflows else False})
         task['workflow'] = {'version': row['version'] if row else 0, 'data': value,
-                            'dependencies': dependencies, 'blocked': any(d['status'] != 'done' or d['review_required'] or d['conditions_blocked'] for d in dependencies)}
+                            'dependencies': dependencies, 'blocked': dependencies_blocked(dependencies,value['dependency_mode'])}
         task['execution_issues']=gate_issues(value)
         task['action_excluded']=value['action_kind']=='optional' and value['participation']=='declined'
         if task['action_excluded']:task['overdue']=task['due_soon']=False
@@ -200,16 +221,31 @@ def change_history(conn, nid, uid):
     return result
 
 
+def dependencies_blocked(dependencies, mode='all'):
+    ready=[d['status']=='done' and not d.get('review_required') and not d.get('conditions_blocked') for d in dependencies]
+    return bool(ready) and not (any(ready) if mode=='any' else all(ready))
+
+
+def require_proposed_dependencies(conn, uid, data):
+    dependencies=[]
+    for dep in data.get('dependencies',[]):
+        row=conn.execute('SELECT t.status,w.data FROM tasks t LEFT JOIN task_workflows w ON w.task_id=t.id WHERE t.id=? AND t.user_id=?',(dep,uid)).fetchone()
+        dependencies.append({'status':row['status'] if row else 'missing','review_required':pending(conn,dep),
+                             'conditions_blocked':bool(gate_issues(json.loads(row['data']))) if row and row['data'] else False})
+    if dependencies_blocked(dependencies,data.get('dependency_mode','all')):
+        label='至少一个' if data.get('dependency_mode')=='any' else '全部'
+        raise HTTPException(422, f'请先完成并核实{label}前置事项；已取消、删除或待复核的步骤不算完成')
+
+
 def require_dependency_ready(conn, task_id, uid):
     require_task_gates(conn,task_id)
     row = conn.execute('SELECT data FROM task_workflows WHERE task_id=?', (task_id,)).fetchone()
     if not row:
         return
-    for dep in json.loads(row['data'])['dependencies']:
-        status = conn.execute('SELECT status FROM tasks WHERE id=? AND user_id=?', (dep, uid)).fetchone()
-        if not status or status['status'] != 'done' or pending(conn,dep):
-            raise HTTPException(422, '前置事项尚未完成、待复核或已取消／删除，请先处理或核实并调整依赖关系')
-        require_task_gates(conn,dep)
+    data=json.loads(row['data'])
+    require_proposed_dependencies(conn,uid,data)
+    if any(not s['done'] for s in data.get('milestones',[])):
+        raise HTTPException(422,'请先完成办理清单中的步骤，或核实后移除不需要的步骤')
 
 
 def reconcile_materials(conn, tid, materials):
@@ -259,7 +295,7 @@ def validate_dependency_graph(graph, roots=None):
 
 
 def install_workflow(app, db, user, own_notice, own_task, expect_version, serialize_task,
-                     get_sources, store_source, invalidate, validate_task):
+                     get_sources, store_source, invalidate, validate_task, update_task_record):
     def get_task(conn, tid, uid):
         return enrich_tasks(conn, [serialize_task(own_task(conn, tid, uid))])[0]
 
@@ -282,33 +318,32 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
             old = workflow_record(conn, task)
             expect_version(old, payload.version)
             data = payload.data.model_dump()
+            prior_steps={step['id']:step for step in old['data']['milestones']}
+            for step in data['milestones']:
+                previous=prior_steps.get(step['id'])
+                if previous and previous['title']!=step['title']:step['done']=False
             prior_conditions={item['id']:item for item in old['data']['conditions']}
             for item in data['conditions']:
                 previous=prior_conditions.get(item['id'])
                 if previous and previous['text']!=item['text']:
                     item['state']='unknown';item['note']=''
-            if data['stage'] in {'submitted','accepted'} and data['stage']!=old['data']['stage']:
+            if data['stage'] in {'submitted','accepted','recorded'} and data['stage']!=old['data']['stage']:
                 require_reviewed(conn,tid)
             if any(s not in task['data']['materials'] for s in data['prepared_materials']):
                 raise HTTPException(422, '材料清单已变化，请重新核对')
             validate_dependencies(conn, tid, current['id'], data['dependencies'])
-            if data['stage'] in {'submitted', 'accepted'} and data['stage']!=old['data']['stage']:
+            if data['stage'] in {'submitted', 'accepted','recorded'} and data['stage']!=old['data']['stage']:
                 require_gates(data)
-                # Check the proposed dependencies, not just the previously saved set.
-                for dep in data['dependencies']:
-                    predecessor = conn.execute('SELECT status FROM tasks WHERE id=? AND user_id=?', (dep, current['id'])).fetchone()
-                    if not predecessor or predecessor['status'] != 'done' or pending(conn,dep):
-                        raise HTTPException(422, '前置事项缺失、未完成或待复核，不能记录为已提交或已受理')
-                    require_task_gates(conn,dep)
-                if len(data['prepared_materials']) < len(set(task['data']['materials'])):
+                require_proposed_dependencies(conn,current['id'],data)
+                if data['stage'] in {'submitted','accepted'} and len(data['prepared_materials']) < len(set(task['data']['materials'])):
                     raise HTTPException(422, '请先核对并勾选全部所需材料')
-                if not data['receipt'] and not data['receipt_url']:
+                if data['stage'] in {'submitted','accepted'} and not data['receipt'] and not data['receipt_url']:
                     raise HTTPException(422, '请填写实际提交记录或回执链接')
-            if data['stage'] in {'accepted', 'rejected', 'supplement', 'blocked'} and not data['outcome']:
+            if data['stage'] in {'accepted', 'rejected', 'supplement', 'blocked','recorded'} and not data['outcome']:
                 raise HTTPException(422, '请填写办理结果、补件要求或受阻原因')
             if data['participation'] == 'declined' and data['action_kind'] != 'optional':
                 raise HTTPException(422, '只有已核实为可选的事项可以记录为不参加')
-            if task['status'] == 'cancelled' and data['stage'] in {'submitted', 'accepted'} and data['stage'] != old['data']['stage']:
+            if task['status'] == 'cancelled' and (payload.complete or data['stage'] in {'submitted', 'accepted','recorded'} and data['stage'] != old['data']['stage']):
                 raise HTTPException(422, '该事项已取消；如已正式恢复，请先处理恢复变更')
             now = int(time.time())
             conn.execute('INSERT INTO task_workflows VALUES(?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=excluded.updated_at',
@@ -318,6 +353,8 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
                 task['version']+=1
             audit(conn, current['id'], task['notice_id'], 'workflow_update', before=old['data'], after=data, task_id=tid)
             record_workflow_change(conn,current['id'],task,old['data'],data)
+            if payload.complete:
+                update_task_record(conn,current['id'],tid,TaskUpdate(version=task['version'],data=TaskData.model_validate(task['data']),status='done',reason='本人保存办理记录并确认完成'))
             return get_task(conn, tid, current['id'])
 
     def impact(conn, proposal, uid, check_versions=True):

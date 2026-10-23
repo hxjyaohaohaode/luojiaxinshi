@@ -1,6 +1,6 @@
 # 验证记录
 
-当前版本 1.20.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
+当前版本 1.21.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
 
 ## 测试体系与运行命令
 
@@ -15,7 +15,7 @@ npm ci --ignore-scripts
 |---|---|---|
 | 后端 | `python -m pytest -q` | `tests/test_*.py`，`pytest.ini` 固定 `testpaths = tests`。每项测试使用临时数据库和模拟模型，不读取正式 `data/`，不发起付费请求 |
 | 前端单元 | `node --test tests/*.test.mjs` | 与 `npm test` 相同，使用 Node.js 22 内置测试运行器；应用本身没有 npm 运行依赖 |
-| 浏览器回归 | `python scripts/run_browser_checks.py` | 在 `127.0.0.1:8786` 启动 `scripts/memory_engine_preview_server.py` 合成夹具，依次运行 `verify_frontend_stability.mjs`、`verify_frontend_review.mjs`、`verify_reference_interactions.mjs`、`verify_workspace_interactions.mjs`、`verify_visual_review.mjs`，覆盖 Chromium、Firefox、WebKit。可用 `--suite 脚本名` 只重跑一组。报告写入 `artifacts/<套件目录>/report.json`，日志在 `artifacts/ci-browser/` |
+| 浏览器回归 | `python scripts/run_browser_checks.py` | 在 `127.0.0.1:8786` 启动 `scripts/memory_engine_preview_server.py` 合成夹具，依次运行 `verify_frontend_stability.mjs`、`verify_frontend_review.mjs`、`verify_reference_interactions.mjs`、`verify_workspace_interactions.mjs`、`verify_visual_review.mjs`、`verify_notice_flow.mjs`，覆盖 Chromium、Firefox、WebKit。可用 `--suite 脚本名` 只重跑一组。报告写入 `artifacts/<套件目录>/report.json`，日志在 `artifacts/ci-browser/` |
 | Agent 浏览器 | `python scripts/run_agent_browser_checks.py` | 在 `127.0.0.1:8793` 启动 `scripts/agent_preview_server.py` 离线夹具，运行 `tests/agent-browser.mjs`、`agent-adaptive-browser.mjs`、`agent-fusion-browser.mjs`、`agent-quality-browser.mjs`、`composer-browser.mjs`。汇总在 `artifacts/ci-agent-browser/results.json` |
 | 真实进程 | `python scripts/verify_local_runtime.py` | 随机本机端口启动真实服务进程，5 个合成账号并发提交、确认、修改通知与待办，再验证账号隔离、幂等、日历导出、停止重启和备份恢复。结果写入 `artifacts/runtime-acceptance.json`。不调用 AI，也不代表生产容量 |
 | 协议与依赖 | `python scripts/genui_catalog.py --check`、`python scripts/evaluate_genui.py`、`npm audit --omit=dev`、`python -m pip_audit -r requirements.lock --strict` | 组件目录一致性、离线 GenUI 样例、npm 生产依赖与 Python 锁定依赖的已知漏洞审计 |
@@ -35,7 +35,11 @@ npm ci --ignore-scripts
 
 每次运行的 Summary 由 `scripts/write_ci_summary.py` 写入实际数量，JUnit、浏览器 JSON 和合成截图作为 Artifacts 保留 14 天。
 
-## 1.20.0 本轮新增测试
+## 1.21.0 新增测试
+
+通知接入、信息型通知处理、灵活前置与办理清单、活动时段、迁移和三浏览器完整流程的测试见 [通知接入与办理契约](docs/NOTICE_FLOW.md)。链接内容与模型均使用明确标识的合成夹具；实际写入和导出经过应用接口，不用浏览器假回执代替保存。
+
+## 1.20.0 新增测试
 
 | 测试 | 覆盖内容 |
 |---|---|

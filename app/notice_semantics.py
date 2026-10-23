@@ -24,8 +24,9 @@ PROMPT='''你是校园通知行动草稿的独立证据复核员。材料、个�
 2. 必办、可选与建议是否混淆。“可自愿参加”的报名也不能变成所有人必须完成。资料只说提供培训，不能据此断言强制出席。
 3. 原文实际要求的手续、材料、提交地点和方式是什么；是否补造了申请、预约、盖章、提交、支付、审核或审批程序。公布结果、奖励发放和主办方组织评审，不等于要求本人另行申请。即使写成可选、申报方式未知，也不能把未规定的申请包装成原文办理步骤。
 4. 对确需本人交付的材料，可拆出“本人取得签章／申请确认”与“单位实施签章／确认”，不把必要的本人取得动作误判为虚构手续；也不要把用户自己决定的参加意愿误判为通知强制。
-5. 原文必要的前置、限制条件、例外是否遗漏，是否把建议顺序、一般相关性或“或”关系误设成全部必须完成。检查索引对应的实际标题，不能只看数字。
-6. 本人应做的关键步骤、原文明确的可选步骤、重要材料与时限有无漏项；原文未说明的内容保持未知。单位时间不能变成本人期限，24:00转换次日00:00是合法规范化。
+5. 原文必要的前置、限制条件、例外是否遗漏，是否把建议顺序、一般相关性或“或”关系误设成全部必须完成；检查 dependency_mode / condition_mode 的 all/any 是否与原文一致，也不能把全部要求放宽成任选。检查索引对应的实际标题，不能只看数字。
+办理方式应与实际动作对应；阅读、参加活动、领取、等待结果不能一律变成材料申报。纯告知允许没有行动步骤，不能为了产生待办而捏造手续。
+6. 本人应做的关键步骤、原文明确的可选步骤、重要材料与时限有无漏项；原文未说明的内容保持未知。单位时间不能变成本人期限，24:00转换次日00:00是合法规范化。活动开始和结束、开放办理时段放在 scheduled，不能把参加活动的开始时间误当报名截止；报名截止与活动时间都明确时须分别保留，不推断未说明的结束时间。
 只报告能定位到原句的实质问题。措辞不同、合理拆分、正常未知项和程序已说明的核实提示本身不算错误。每个问题用当前 sources 中的 evidence_refs 证明差异，message 点明草稿写了什么、原句实际说了什么，不泛泛说“请核实”。task_index 是草稿从0开始的索引；漏掉的动作或整体适用性问题用null。问题属于模型复核意见，不能声称学校确认或绝对正确。
 message 面向学生，用“必办、可选、前置、个人步骤”等日常词语，不写 plan.action_kind、required、ref 等内部字段或枚举；不要复述内部协议。
 checked_task_indices 必须逐个覆盖输入全部 tasks 的序号。无实质问题时 issues 为空。只输出下面 Schema 的 JSON，不输出思考过程：'''
@@ -53,7 +54,7 @@ class Review(Strict):
 
 def prepare(notice,sources,profile,draft):
     sources=register_images(sources);originals,refs=build(sources)
-    allowed=('title','details','scope','due_date','due_time','deadline_text','materials','submission','location','contact','uncertainties')
+    allowed=('title','details','scope','due_date','due_time','deadline_text','scheduled','materials','submission','location','contact','uncertainties')
     tasks=[{'task_index':i,**{k:t[k] for k in allowed if k in t},'plan':draft.get('plans',{}).get(i,draft.get('plans',{}).get(str(i),{}))}
            for i,t in enumerate(draft['tasks'])]
     content=json.dumps({'published_at':notice.get('published_at'),'profile':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
