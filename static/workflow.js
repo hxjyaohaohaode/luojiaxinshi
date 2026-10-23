@@ -227,7 +227,9 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
   document.addEventListener('input',e=>{if(e.target.matches('[data-dependency-search]'))for(const label of document.querySelectorAll('[data-dependency-label]'))label.hidden=!label.dataset.dependencyLabel.includes(e.target.value.toLowerCase());if(e.target.closest('#workflow-form,#change-form'))persist();});
   document.addEventListener('change',e=>{const form=e.target.closest('#workflow-form,#change-form');if(!form)return;if(e.target.name==='action_kind')$('[data-optional-choice]').hidden=e.target.value!=='optional';if(form.id==='change-form'&&e.target.name==='kind')renderTargets(e.target.value);if(e.target.name==='target'){const fields=e.target.closest('[data-target]').querySelector('.target-fields');if(fields)fields.hidden=!e.target.checked;}persist();});
   document.addEventListener('click',async e=>{
-    const b=e.target.closest('[data-workflow-task],[data-change-new],[data-change-open],[data-calendar-check],[data-workflow-export],[data-dismiss-change]');if(!b||b.disabled)return;b.disabled=true;
+    const b=e.target.closest('[data-workflow-task],[data-change-new],[data-change-open],[data-calendar-check],[data-workflow-export],[data-dismiss-change]');if(!b||b.disabled)return;
+    const selection=window.getSelection();if(e.detail&&b.matches('.task-primary')&&selection&&!selection.isCollapsed&&b.contains(selection.anchorNode))return;
+    b.disabled=true;
     try{if(b.dataset.workflowTask)await openTask(b.dataset.workflowTask);else if(b.dataset.changeNew)await newChange(b.dataset.changeNew);else if(b.dataset.changeOpen)await openChange(b.dataset.noticeId,b.dataset.changeOpen);else if(b.dataset.calendarCheck)await calendarCheck(b.dataset.calendarCheck);else if(b.dataset.workflowExport){const {task}=await api(`/tasks/${b.dataset.workflowExport}/workflow`);await exportTasks([task]);}else if(b.hasAttribute('data-dismiss-change')){const f=b.closest('form');if(f.reportValidity())await submit(f,'dismiss');}}
     catch(error){toast(error.message,true);}finally{b.disabled=false;}
   });

@@ -17,15 +17,15 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
   }
   function integrationCards(){
     if(!$('#integration-cards')||!integrations)return;const q=integrations.qq,w=integrations.wechat_publisher;
-    const card=(title,status,detail,footer,ready=false)=>`<article class="integration-card"><div class="between"><h3>${title}</h3><span class="pill ${ready?'green':''}">${status}</span></div><p>${detail}</p><div class="integration-path">${footer}</div></article>`;
+    const card=(title,status,detail,footer,ready=false,href='')=>`<${href?'a':'article'} class="integration-card${href?' integration-link':''}"${href?` href="${esc(href)}" data-action="close-dialog"`:''}><div class="between"><h3>${title}</h3><span class="pill ${ready?'green':''}">${status}</span></div><p>${detail}</p><div class="integration-path">${footer}</div></${href?'a':'article'}>`;
     $('#integration-cards').innerHTML=card('QQ 机器人私聊',q.bound?'已绑定 · 等你发消息':q.configured?'可以绑定了':'还没开通',
       '绑定后，你私聊发给机器人的消息会存进你的对话。附件、聊天记录卡片和引用的内容，要另外上传原件。它不会读群聊记录，也不会给好友发消息。',
       q.configured?`<div class="row wrap">${action(q.bound?'刷新状态':'绑定我的 QQ','qq-bind','','small primary')}${q.bound?action('解除绑定','qq-unlink','','small plain danger'):''}</div>${q.binding?.last_received_at?`<p class="small">最近收到：${esc(new Date(q.binding.last_received_at*1000).toLocaleString('zh-CN'))}</p>`:''}`:'<span>需要管理员开通</span>还没开通也没关系，你可以直接上传文字、截图和附件。',q.bound)+
       card('已授权的公众号文章',w.configured?'已开通':'还没开通',
         '可以导入已授权公众号发过的文章，正文会完整保存，图片和外链附件需要自己补上。不会读你的微信聊天或关注列表。',
         w.configured&&w.can_import?action('挑文章导入','publisher','','small primary'):w.configured?'想导入文章的话，找管理员帮忙就行。':'<span>需要管理员开通</span>开通后就能直接导入公众号文章。',false)+
-      card('智慧珞珈与校内身份','等学校开放','统一身份、课表和通知还要等学校开放接口。现在可以自己填学号或工号，帮小信使判断哪些通知和你有关。','<a href="#settings" class="button small">完善我的个人条件</a>')+
-      card('个人日历','可以导出','确认过的待办可以导出成日历文件（.ics），要自己导入手机日历才会提醒。之后有改动或取消，记得在手机日历里也改一下。','<a href="#calendar" class="button small">看看怎么设置日历提醒</a>',true);
+      card('智慧珞珈与校内身份','等学校开放','统一身份、课表和通知还要等学校开放接口。现在可以自己填学号或工号，帮小信使判断哪些通知和你有关。','<span class="integration-link-label">完善我的个人条件 →</span>',false,'#settings')+
+      card('个人日历','可以导出','确认过的待办可以导出成日历文件（.ics），要自己导入手机日历才会提醒。之后有改动或取消，记得在手机日历里也改一下。','<span class="integration-link-label">看看怎么设置日历提醒 →</span>',true,'#calendar');
   }
   async function refreshIntegrations(){integrations=await api('/integrations');integrationCards();return integrations;}
   async function bindingDialog(){

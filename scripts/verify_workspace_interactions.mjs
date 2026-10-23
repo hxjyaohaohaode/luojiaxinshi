@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {verifyWorkspaceNavigation} from './workspace_navigation_checks.mjs';
+import {verifyNavigationTargets} from './navigation_target_checks.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const out=path.resolve('artifacts/workspace-interactions-browser');await fs.mkdir(out,{recursive:true});
@@ -99,6 +100,9 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    await page.emulateMedia({reducedMotion:'reduce'});await page.locator('.chat-heading [data-chat-action=toggle-materials]').click();const folder=page.locator('[data-folder-path="课程"]');await folder.locator(':scope > summary').click();assert.equal(await folder.evaluate(n=>n.getAnimations().length),0);assert.equal(await folder.evaluate(n=>n.style.height),'');await page.locator('.materials-close').click();await page.emulateMedia({reducedMotion:'no-preference'});
   });
   await verifyWorkspaceNavigation({page,api,nav,resize,check,out,engine});
+  await check('single-purpose navigation cards have complete independent pointer and keyboard targets',async()=>{
+   const targetPage=await browser.newPage();try{await verifyNavigationTargets(targetPage,'http://127.0.0.1:8786');}finally{await targetPage.close();}
+  });
   await check('all workspace interaction flows finish without unhandled errors',async()=>assert.deepEqual(report.errors.filter(e=>e.engine===engine),[]));
  }catch(error){report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}
  finally{await browser.close();const rows=report.checks.filter(c=>c.engine===engine);console.log(engine+': '+rows.filter(c=>c.ok).length+'/'+rows.length+' passed');}

@@ -21,7 +21,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   },{url,method,data,form});
   const settle=()=>page.evaluate(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
   const nav=async route=>{if(page.url()===origin+'/#'+route)await page.reload({waitUntil:'domcontentloaded'});else await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.locator('#content:not([inert])').waitFor();await settle();};
-  const close=async()=>{if(await page.locator('#dialog').evaluate(n=>n.open))await page.keyboard.press('Escape');};
+  const close=async()=>{if(await page.locator('#dialog').evaluate(n=>n.open)){await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});}};
   const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.message});console.log('FAIL',engine,name,error.message);await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});await close();}};
   let noticeId,taskId,linkId;
   try{
@@ -54,6 +54,15 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await page.locator('#draft-form [name=reviewed]').check();await page.locator('#draft-form [type=submit]').click();await page.locator('#draft-pane [data-workflow-task]').first().waitFor();
       const n=await api('/notices/'+noticeId);assert.equal(n.tasks.length,1);const task=n.tasks[0];taskId=task.id;
       assert.equal(task.data.due_date,null);assert.equal(task.data.scheduled.start_time,'14:00');assert.equal(task.data.scheduled.confirmed,true);assert.equal(task.workflow.data.execution_mode,'attendance');
+    });
+    await check('task body opens handling while source and edit controls retain separate actions',async()=>{
+      await nav('tasks');
+      const primary=page.locator(`.task-primary[data-workflow-task="${taskId}"]`),row=primary.locator('xpath=ancestor::div[contains(@class,"task-row")][1]');
+      const box=await primary.boundingBox();assert.ok(box.width>100&&box.height>=44);
+      await primary.click({position:{x:box.width-8,y:box.height-6}});await page.locator('#workflow-form').waitFor();await close();
+      await primary.focus();await page.keyboard.press('Enter');await page.locator('#workflow-form').waitFor();await close();
+      await row.locator('[data-action=edit-task]').click();await page.locator('#task-form').waitFor();assert.equal(await page.locator('#workflow-form').count(),0);await close();
+      await row.locator('.task-source-link').click();await page.waitForURL('**/#notice/'+noticeId);assert.equal(await page.locator('#dialog').evaluate(n=>n.open),false);await settle();
     });
     await check('activity calendar export uses its actual two-hour interval',async()=>{
       const t=(await api('/tasks/'+taskId+'/workflow')).task;

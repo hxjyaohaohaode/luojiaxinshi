@@ -1,0 +1,24 @@
+/* The main task opens handling; source, completion and tools remain independent. */
+.task-primary { display:block; width:100%; min-height:44px; padding:4px 0; border:0; background:transparent; text-align:left; user-select:text; -webkit-user-select:text; }
+.task-primary .task-label { display:block; }
+.task-primary .task-meta { font-weight:400; }
+.task-primary:hover { text-decoration:none; }
+.task-primary:hover .task-label { color:var(--brand); }
+.task-primary:focus-visible { outline-offset:3px; }
+.task-source-link { display:inline-flex; align-items:center; min-height:32px; padding:5px 4px; margin-left:-4px; border-radius:6px; }
+.task-source-link:hover { background:var(--surface-2); }
+.notice-row-link { color:var(--ink); text-decoration:none; }
+.notice-row-link:hover { text-decoration:none; }
+.notice-row-link .spacer { min-width:0; }
+.notice-row-link strong { display:block; font-size:14px; line-height:1.65; overflow-wrap:anywhere; }
+.task-board .task-row { background:#fff; border-color:var(--line); }
+.intake-saved { padding:8px; }
+.intake-saved-main { flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; padding:12px; gap:12px; border-radius:8px; color:var(--ink); }
+.intake-saved-main:hover { background:var(--surface-2); text-decoration:none; }
+.intake-source-link { justify-self:start; align-self:start; }
+.intake-attachment-link { width:100%; justify-content:flex-start; overflow-wrap:anywhere; white-space:normal; }
+.workflow-task-head > a, .source-content > p > a, .notice-meta a {
+ display:inline-flex; align-items:center; min-height:32px; padding:4px; margin-inline:-4px; border-radius:6px;
+}
+.workflow-milestone .check { min-width:44px; min-height:44px; justify-content:center; padding-top:10px; }
+@media(pointer:coarse) { .task-source-link { min-height:44px; } }

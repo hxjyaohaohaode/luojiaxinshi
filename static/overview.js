@@ -61,7 +61,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
           </section>
           <aside class="overview-aside">
             <section class="overview-reminders" aria-labelledby="overview-reminders-title"><div class="aside-heading">${icon('clock')}<h2 id="overview-reminders-title">值得留意</h2></div><div id="overview-brief" class="overview-brief"></div></section>
-            <section id="overview-progress" class="overview-progress" aria-label="个人行动完成情况"></section>
+            <a href="#insights" id="overview-progress" class="overview-progress" aria-label="查看个人行动完成情况与数据看板"></a>
           </aside>
         </div>
       </div>`;
@@ -76,7 +76,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
     ].map(([label,count,filter,symbol,note])=>`<a class="action-metric ${count&&filter!=='pending'?'attention':''}" href="#tasks" data-overview-filter="${filter}"><span class="metric-symbol">${icon(symbol)}</span><span class="metric-label">${label}</span><strong>${numberMarkup(count)}</strong><small>${note}</small>${icon('arrow')}</a>`).join('');
     renderWeek();
     renderBrief(urgent,uncertain,notices);
-    $('#overview-progress').innerHTML = `<div class="between"><h2>完成记录</h2>${icon('check')}</div><div class="completion-summary">${ringMarkup(completed,total,'个人行动完成情况')}<div><strong>${completed}<small> / ${total} 项</small></strong><p>${total?`还有 ${total-completed} 项待完成`:'暂时没有个人行动'}</p></div></div><a href="#insights">看看我的数据看板 ${icon('arrow')}</a>`;
+    $('#overview-progress').innerHTML = `<div class="between"><h2>完成记录</h2>${icon('check')}</div><div class="completion-summary">${ringMarkup(completed,total,'个人行动完成情况')}<div><strong>${completed}<small> / ${total} 项</small></strong><p>${total?`还有 ${total-completed} 项待完成`:'暂时没有个人行动'}</p></div></div><span class="overview-progress-link">看看我的数据看板 ${icon('arrow')}</span>`;
     renderItems({pending,ordered,notices,followup},caughtUp);
   }
   function renderBrief(urgent,uncertain,notices) {
@@ -116,7 +116,7 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
   function renderWeek() {
     const days = overviewWeek(state.tasks), chosen = days.find(day => day.day === selectedDay) || days[0];
     selectedDay = chosen.day;
-    $('#overview-week').innerHTML = `<div class="week-heading"><div><h2>未来七天</h2></div><a href="#calendar" aria-label="在日历查看完整安排">${icon('arrow')}</a></div>
+    $('#overview-week').innerHTML = `<a class="week-heading" href="#calendar" aria-label="未来七天，在日历查看完整安排"><h2>未来七天</h2>${icon('arrow')}</a>
       <div class="week-days" role="group" aria-label="按截止日期查看待办">${days.map((entry,index)=>`<button type="button" data-overview-day="${entry.day}" aria-pressed="${entry.day===selectedDay}" aria-label="${entry.day}，${entry.tasks.length} 项待办"><span>${index===0?'今天':new Intl.DateTimeFormat('zh-CN',{weekday:'short',timeZone:'UTC'}).format(new Date(entry.day+'T00:00:00Z'))}</span><strong>${Number(entry.day.slice(-2))}</strong><i class="${entry.tasks.length?'has-items':''}" aria-hidden="true"></i></button>`).join('')}</div>
       <div class="week-agenda" aria-live="polite"><span class="week-agenda-label">${selectedDay.slice(5).replace('-',' / ')} · 期限与活动</span>${chosen.tasks.length?`<button type="button" data-workflow-task="${esc(chosen.tasks[0].id)}"><span>${esc(chosen.tasks[0].data.title)}</span>${icon('arrow')}</button><small>${chosen.tasks.length} 项待完成${chosen.tasks.some(needsTimingReview)?' · 有时间待核对':''}</small>`:'<p>这一天，暂无期限或活动安排。</p><a href="#calendar">安排自己的时间 '+icon('arrow')+'</a>'}</div>`;
   }
