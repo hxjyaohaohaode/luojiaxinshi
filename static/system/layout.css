@@ -1,0 +1,107 @@
+/* 响应式布局与页面细节。断点：手机 ≤600，平板竖屏 ≤850，平板横屏/小笔记本 ≤1180，宽屏 ≥1600。 */
+
+/* ===== 外壳 ===== */
+/* 内容区底部为手机导航留出空间，最后一项不会被遮住 */
+@media (max-width: 850px) {
+  .workspace > .content:not([data-page^=chat]):not([data-page=calendar]):not([data-page=memory]) {
+    padding-bottom: calc(var(--mobile-nav-height, 58px) + 24px + env(safe-area-inset-bottom));
+  }
+}
+/* 手机横屏：底部导航收成图标，给内容留出高度 */
+@media (max-width: 850px) and (max-height: 500px) {
+  :root { --mobile-nav-height: 46px; }
+  .mobile-bottom-nav { height: 46px; }
+  .mobile-bottom-nav > a, .mobile-bottom-nav > button { min-height: 44px !important; }
+  .mobile-bottom-nav span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .mobile-bottom-nav .selection-indicator { height: 40px; top: 3px; }
+}
+/* 底部导航：选中项图标轻轻弹起 */
+.mobile-bottom-nav .nav-item > .icon { transition: transform var(--dur-4) var(--ease-spring), background-color var(--dur-2), box-shadow var(--dur-2); }
+.mobile-bottom-nav .nav-item.active > .icon { transform: translateY(-1px) scale(1.06); }
+
+/* 横向滚动的标签行：两端渐隐，提示还有更多 */
+@media (max-width: 850px) {
+  .content > .toolbar > .tabs, .library-tabs-row .tabs {
+    flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 12px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+            mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  }
+  .content > .toolbar > .tabs .tab, .library-tabs-row .tabs .tab { flex: none; scroll-snap-align: start; }
+}
+
+/* ===== 工作台 ===== */
+/* 851–1050px 之间重点卡片曾被隐藏 */
+@media (min-width: 851px) and (max-width: 1050px) { .focus-deck { display: block; } }
+.overview-focus h2 { font-size: var(--fs-xl); line-height: 1.4; }
+.week-days > button { border-radius: 14px; }
+.week-days > button > strong { font-variant-numeric: tabular-nums; }
+@media (max-width: 360px) {
+  .week-days { gap: 2px; }
+  .week-days > button { min-width: 0; padding-inline: 0; }
+}
+
+/* ===== 待办 ===== */
+/* 手机上看板改成单列卡片，不再一层套一层 */
+@media (max-width: 600px) {
+  .task-results.board-view { background: transparent; border: 0; box-shadow: none; }
+  .task-results.board-view .task-board-column { padding: 0; background: transparent; border: 0; box-shadow: none; }
+  .task-results.board-view .task-board-column + .task-board-column { margin-top: 18px; }
+  .task-results.board-view .task-lane-heading, .task-results.board-view .task-board-column > header { padding-inline: 4px; }
+  .content .task-page-heading { gap: 10px; }
+  .content .task-page-heading .button.primary { flex: none; padding-inline: 14px; }
+}
+.task-row .task-title { padding-block: 3px; }
+
+/* ===== 聊天 ===== */
+/* 欢迎区在矮屏上收紧，不再顶到输入框 */
+.chat-welcome .scene-choice span { color: var(--muted); }
+@media (min-width: 601px) {
+  .chat-welcome .scene-choice { min-height: 0; grid-template-columns: 40px minmax(0, 1fr) 16px; grid-template-rows: auto auto; align-items: center; gap: 2px 14px; padding: 18px; }
+  .chat-welcome .scene-choice > .icon:first-child { grid-column: 1; grid-row: 1 / 3; margin: 0; }
+  .chat-welcome .scene-choice > strong { grid-column: 2; grid-row: 1; }
+  .chat-welcome .scene-choice > span { grid-column: 2; grid-row: 2; display: block; }
+  .chat-welcome .scene-choice > .icon:last-child { grid-column: 3; grid-row: 1 / 3; }
+}
+@media (max-width: 600px) {
+  .chat-welcome .scene-choice { min-height: 64px; grid-template-columns: 36px minmax(0, 1fr) 16px; gap: 0 12px; padding: 12px 14px; }
+  .chat-welcome .scene-choice > .icon:first-child { width: 36px; height: 36px; padding: 8px; grid-row: 1 / 3; align-self: center; }
+  .chat-welcome .scene-choice > strong { grid-row: 1; align-self: end; }
+  .chat-welcome .scene-choice > span { grid-row: 2; align-self: start; line-height: 1.6; }
+  .chat-welcome .scene-choice > .icon:last-child { grid-row: 1 / 3; align-self: center; }
+}
+@media (max-height: 700px) {
+  .chat-main .chat-welcome { padding-block: 10px; }
+  .chat-welcome .welcome-mascot { height: 64px !important; margin-bottom: 6px; }
+  .chat-welcome .chat-companion { width: 64px; height: 64px; }
+  .chat-welcome .welcome-orbit { display: none; }
+  .chat-welcome h2 { font-size: var(--fs-xl); }
+  .chat-welcome .scene-choices { margin: 12px 0 8px; gap: 8px; }
+}
+@media (max-height: 520px) {
+  .chat-welcome .welcome-mascot { display: none; }
+  .chat-welcome .scene-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chat-welcome .scene-choice { min-height: 48px; padding: 8px 10px; grid-template-columns: minmax(0, 1fr) 14px; }
+  .chat-welcome .scene-choice > .icon:first-child, .chat-welcome .scene-choice > span { display: none; }
+  .chat-welcome .scene-choice > strong { grid-column: 1; grid-row: 1; }
+  .chat-welcome .scene-choice > .icon:last-child { grid-column: 2; grid-row: 1; }
+}
+.chat-footnote a { display: inline-flex; align-items: center; min-height: 28px; padding-inline: 4px; }
+
+/* ===== 日历 ===== */
+@media (min-width: 1101px) {
+  .calendar-layout { grid-template-columns: 224px minmax(0, 1fr); gap: 18px; }
+  .calendar-sidebar { padding-inline: 14px 10px; overflow-x: hidden; }
+  .calendar-sidebar .mini-grid { gap: 2px; }
+  .calendar-sidebar .mini-grid > button { width: auto; min-width: 0; aspect-ratio: 1; height: auto; }
+}
+.calendar-sidebar input[type=search], .calendar-sidebar .calendar-search { width: 100%; max-width: 100%; }
+
+/* ===== 记忆 ===== */
+@media (max-height: 500px) {
+  .memory-tree-nav { overflow-y: auto; }
+  .memory-tree-nav > .memory-session-nav { position: static; }
+}
+.memory-breadcrumbs > button { min-height: 32px; padding-inline: 6px; border-radius: 8px; }
+/* 展开按钮画面上保持 18px，不改变目录缩进（每级 18px）；点击区向左侧缩进空白里延伸到 28px。 */
+.memory-tree-disclosure { position: relative; }
+.memory-tree-disclosure::after { content: ''; position: absolute; inset: 0 0 0 -10px; }

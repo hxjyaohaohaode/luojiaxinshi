@@ -30,7 +30,7 @@
 .ring-caption { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ring-caption b { font-size: 24px; line-height: 1.3; color: #27523c; font-weight: 600; font-variant-numeric: tabular-nums; }
 .ring-caption b small { font-size: 12px; margin-left: 1px; }
-.ring-caption > span { font-size: 10px; color: #65765d; }
+.ring-caption > span { font-size: 12px; color: #65765d; }
 .tabs .selection-indicator { transition: transform 360ms var(--motion-ease), width 360ms var(--motion-ease), height 360ms var(--motion-ease); box-shadow: 0 2px 5px #1a453b08; }
 .sidebar nav .selection-indicator { transition: transform 380ms var(--motion-ease), width 260ms, height 260ms; }
 .sidebar .nav-item > .icon { transition: transform 300ms var(--motion-ease), color 180ms; }

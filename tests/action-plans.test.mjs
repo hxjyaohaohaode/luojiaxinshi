@@ -23,7 +23,7 @@ test('unselected, removed or malformed predecessors are never silently discarded
   assert.throws(()=>prepareConfirmation(d,{tasks:[]}),/前置步骤/);
   assert.throws(()=>prepareConfirmation([d[1]],{tasks:[]}),/已移除步骤/);
   const bad=initializeDraftPlans([{title:'提交',include:true}],{0:{depends_on:[8]}});
-  assert.throws(()=>prepareConfirmation(bad,{tasks:[]}),/未选中/);
+  assert.throws(()=>prepareConfirmation(bad,{tasks:[]}),/还没选中/);
 });
 test('replacement preserves existing execution unless plan update is explicitly selected',()=>{
   const d=initializeDraftPlans([{title:'新要求',include:true,replacement:'existing'}],{0:{action_kind:'optional',conditions:['已获立项']}});

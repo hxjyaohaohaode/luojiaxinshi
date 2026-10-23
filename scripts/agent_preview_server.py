@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.config import Settings
 from app import genui_ai, grounding
+from app.account import record_consent
 from app.db import ident
 from app.main import create_app
 from app.security import hash_password
@@ -110,6 +111,8 @@ with app.state.db.connect(write=True) as conn:
     if not conn.execute("SELECT 1 FROM users WHERE username='agent-preview'").fetchone():
         conn.execute('INSERT INTO users(id,username,password,display_name,role,profile,created_at) VALUES(?,?,?,?,?,?,?)',
                      (ident(),'agent-preview',hash_password('AgentPreviewFixture2026!'),'合成验收账号','user','{}',int(time.time())))
+    # 合成账号直接写库，不经过注册页；按已同意当前版本的隐私政策与用户协议处理，否则登录后会弹出同意框挡住操作。
+    record_consent(conn, conn.execute("SELECT id FROM users WHERE username='agent-preview'").fetchone()[0])
 
 
 if __name__ == '__main__':

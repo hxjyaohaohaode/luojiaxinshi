@@ -66,7 +66,7 @@ Agent 目录提示同时排除空路径和已遗忘／删除的资料节点及�
 
 ## 与参考记忆项目的关系
 
-13 个固定版本的全文件清单、SHA／CRC 及逐项目取舍继续见 [v6 来源复核](verification/memory-upstream-v6.json) 和 [v6 设计](MEMORY_TREE_V6.md)。本轮没有把既有扫描声称为新一轮逐行审读，也没有用“融合百分比”代替证据。
+13 个固定版本的逐项目取舍继续见 [v6 设计](MEMORY_TREE_V6.md) 和 [记忆源码审查](MEMORY_SOURCE_REVIEW.md)；当轮的全文件清单与 SHA／CRC 摘要已从仓库移除，见 git 历史。本轮没有把既有扫描声称为新一轮逐行审读，也没有用“融合百分比”代替证据。
 
 | 既有参考机制 | 本轮进一步落地 |
 |---|---|
@@ -81,8 +81,6 @@ Agent 目录提示同时排除空路径和已遗忘／删除的资料节点及�
 
 - `tests/test_memory_usability_v7.py`：真实 HTTP／SQLite 下的目录、来源、范围、版本、回执、分页、追加、统计与概览边界。
 - `tests/memory-drafts.test.mjs`：Unicode 草稿、刷新恢复、账号清理、拒绝存储、容量上限。
-- `scripts/verify_memory_tree.mjs`：知识树、就地编辑、AI 选区与追加、目录、键盘和手机回归。
-- `scripts/verify_memory_usability.mjs`：丢失回包、并发、搜索乱序、同步、错误恢复、125 条会话分页、项目管理、逐级原文及 320／390／820／1280 像素交互。
-- `scripts/seed_memory_usability.py`：只写隔离 v7 夹具，用合成记录构造分页并重置夹具限流，不读取正式 `data/`。
+- 浏览器回归：`scripts/run_browser_checks.py`。当轮另有知识树与就地编辑、丢失回包与并发、125 条会话分页及 320／390／820／1280 像素交互的专项脚本和隔离夹具，已在 1.20.0 清理，见 git 历史。
 
-实际检查数量、容量耗时和本地激活结果见 [TESTING.md](../TESTING.md) 及 [机器汇总](verification/memory-usability-v7.json)。工程验证覆盖列出的协议和交互，不能证明穷尽未来用户意图、真实手机行为或模型语义错误。
+当轮实际检查数量、容量耗时和本地激活结果见 git 历史，当前测试体系见 [TESTING.md](../TESTING.md)。工程验证覆盖列出的协议和交互，不能证明穷尽未来用户意图、真实手机行为或模型语义错误。

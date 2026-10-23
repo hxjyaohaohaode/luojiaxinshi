@@ -1,9 +1,0 @@
-{
-  "candidateFiles": 207,
-  "candidateBytes": 41225070,
-  "historicalBlobs": 167,
-  "credentialPatternsFound": [],
-  "privatePaths": [],
-  "filesOver50MiB": [],
-  "scope": "Current publish candidates, extracted Word/PDF text, all historical text blobs; excludes ignored real user data. Pattern scanning is not a guarantee of absence."
-}

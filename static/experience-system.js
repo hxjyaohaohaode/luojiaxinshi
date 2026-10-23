@@ -49,7 +49,8 @@ export function initializeExperience() {
     meter.querySelector('i').style.transform = `scaleX(${percent / 100})`;
     meter.querySelector('span').textContent = `原文阅读位置 ${Math.round(percent)}%`;
   }
-  const revealSelector = '[data-reveal],.action-metric,.scene-choice,.notice-card,.task-board-column,.selected-file,.settings-group,.source-card,.memory-card';
+  // 页面入场与列表错峰由 choreography.js 统一编排；这里只处理滚动进入视野的后续元素。
+  const revealSelector = '[data-reveal-on-scroll],.selected-file,.source-card,.memory-card';
   const ornamentSelector = '[data-orbit],.processing-steps,.chat-composer';
   const entrance = new IntersectionObserver(entries => {
     let index = 0;
@@ -198,10 +199,8 @@ export function initializeExperience() {
     });
   }, true);
   const dialog = document.querySelector('#dialog');
-  const dialogChanges = new MutationObserver(() => {
-    pauseDecorations();
-    if (dialog.open) animateSurface(dialog.querySelector('.dialog-body'), 0);
-  });
+  // 对话框的展开与收起由 system/motion.css 的过渡负责。
+  const dialogChanges = new MutationObserver(pauseDecorations);
   dialogChanges.observe(dialog, {attributes: true, attributeFilter: ['open']});
   const mutations = new MutationObserver(records => {
     for (const record of records) for (const node of record.addedNodes) watch(node);

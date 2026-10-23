@@ -14,7 +14,7 @@
 | 麦克风听写、口述问题转文字 | `mimo-v2.5-asr` | 聊天和通知输入框的麦克风；先显示转写文字，用户核对后再发送 |
 | 普通通知、待办、回答播报 | `mimo-v2.5-tts` | “个人设置 → 语音播报 → 普通播报”，使用预置音色 |
 | 小信使个性音色 | `mimo-v2.5-tts-voicedesign` | 选择音色设计并描述声音；每次请求直接合成，不假定存在持久 voice_id |
-| 本人或获授权声音播报 | `mimo-v2.5-tts-voiceclone` | 选择声音复刻，提供参考 WAV 并确认声音授权；每次携带参考录音，无训练步骤 |
+| 本人或获授权声音播报 | `mimo-v2.5-tts-voiceclone` | 默认关闭，维护者设置 `VOICE_CLONE_ENABLED=true` 后可用；选择声音复刻，提供参考 WAV 并确认声音授权；每次携带参考录音，无训练步骤 |
 
 五个模型都已有调用入口，按场景选择；一次普通问答只需要主模型。文本提取、数据库检索、原文匹配、权限、日期校验和排程等确定性程序继续在本地运行，不引入其他 AI 服务。ASR 只做转写，不承诺说话人分离或精确时间戳；TTS 只生成音频，后台提醒送达仍取决于原有日历或通知渠道。
 
@@ -86,7 +86,9 @@ AI_STAGE_SUMMARIES=false
 |---|---|---|
 | `GET /api/speech/config` | 已登录会话 | 四种语音模型及是否已填密钥，不返回密钥 |
 | `POST /api/speech/transcribe` | multipart：`audio`、`allow_external_processing=true` | 转写文字和模型 ID |
-| `POST /api/speech/synthesize` | multipart：`text`、`mode=default/design/clone`、`allow_external_processing=true`；设计追加 `description`；复刻追加 `reference`、`clone_authorized=true` | `audio/wav`，模型 ID 在 `X-Speech-Model` |
+| `POST /api/speech/synthesize` | multipart：`text`、`mode=default/design/clone`、`allow_external_processing=true`；设计追加 `description`；复刻追加 `reference`、`clone_authorized=true` | `audio/wav`，模型 ID 在 `X-Speech-Model`，并带 `X-AI-Generated: true` |
+
+1.20.0 起，合成的 WAV 在文件尾追加 RIFF `LIST/INFO` 元数据（`ICMT`、`ISFT`），写明“AI生成内容”、服务名和模型，作为隐式标识，音频数据本身不变；缓存重放返回同一份已标识文件。声音复刻默认关闭（`VOICE_CLONE_ENABLED=false`），关闭时 `mode=clone` 直接返回 403，不会发到小米；开启前，部署方须先建立被复刻人的书面授权流程。
 
 所有写请求沿用登录、同源校验和 CSRF。录音、参考音频及合成音频在应用内存中处理，不写入通知库或普通日志；小米侧处理规则以其服务条款和隐私政策为准。
 
@@ -105,7 +107,7 @@ AI_STAGE_SUMMARIES=false
 1. 检查模型服务页，确认模型为 `mimo-v2.6-pro`。用一则文字通知验证 JSON、逐字引用及待办确认，再用截图检验视觉理解和人工核对提示。
 2. 分别验证普通聊天和流式互动回答，核对取消、超时、输出长度与引用校验。
 3. 麦克风录制一段包含中文、人名、日期和数字的口述，确认 ASR 结果回填且未自动发送；检查目标手机和电脑的录音兼容性。
-4. 依次试听普通 TTS、音色设计和已授权参考声音复刻，确认正文、日期、数字及专有名词；无参考音频或未确认授权时不应发起复刻。
+4. 依次试听普通 TTS、音色设计和已授权参考声音复刻（复刻须先设置 `VOICE_CLONE_ENABLED=true` 并具备书面授权），确认正文、日期、数字及专有名词；无参考音频或未确认授权时不应发起复刻。
 5. 在小米控制台核对每个模型的实际权限、计费与限流。模型效果、声音相似度、延迟和费用不由模拟测试证明。
 
 ## 官方依据

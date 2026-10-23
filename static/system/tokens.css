@@ -1,0 +1,90 @@
+/* 设计令牌：颜色、字号、间距、圆角、阴影、动效节奏。legacy 层的同名变量在此统一取值。 */
+:root {
+  /* 品牌与中性色 */
+  --brand: #115740;
+  --brand-strong: #0c4632;
+  --brand-soft: #e7f1e9;
+  --brand-tint: #f2f7f2;
+  --gold: #b88a3e;
+  --ink: #1f3329;
+  --ink-2: #33473d;
+  --muted: #5d6e65;          /* 白底对比度约 5.4:1 */
+  --faint: #6f7f76;          /* 白底约 4.5:1，可用于小字 */
+  --line: #e1e7df;
+  --line-strong: #cfd9d0;
+  --bg: #f6f8f3;
+  --surface: #ffffff;
+  --surface-2: #fafbf8;
+  --orange: #9a5d1c;
+  --orange-soft: #fdf1e1;
+  --red: #b0372f;
+  --red-soft: #fcebe8;
+  --blue: #3f5b9a;
+  --blue-soft: #edf1fa;
+
+  /* legacy 变量对齐 */
+  --green: var(--brand);
+  --green-light: var(--brand-soft);
+  --white: var(--surface);
+
+  /* 字号阶梯：中文正文最小 12px */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-base: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 20px;
+  --fs-2xl: 24px;
+  --fs-3xl: 28px;
+  --text-xs: var(--fs-xs);
+  --text-sm: var(--fs-sm);
+  --text-base: var(--fs-base);
+  --lh-tight: 1.35;
+  --lh-body: 1.65;
+
+  /* 间距与圆角 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* 阴影 */
+  --shadow-1: 0 1px 2px #1d493a0a;
+  --shadow-2: 0 6px 18px #1d493a0f, 0 1px 3px #1d493a08;
+  --shadow-3: 0 16px 40px #1d493a17, 0 3px 8px #1d493a0a;
+
+  /* 动效节奏：快速反馈、标准过渡、舒展入场；弹性曲线带轻微回弹 */
+  --dur-1: 110ms;
+  --dur-2: 190ms;
+  --dur-3: 300ms;
+  --dur-4: 460ms;
+  --dur-5: 680ms;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.42, .64, 1);
+  --ease-soft-spring: cubic-bezier(.3, 1.22, .55, 1);
+  --stagger: 38ms;
+  --motion-ease: var(--ease-out);
+  --motion-fast: var(--dur-2);
+  --motion-standard: var(--dur-3);
+
+  /* 触控尺寸 */
+  --tap: 40px;
+  --tap-touch: 44px;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    /* 用 linear() 描述的阻尼弹簧，回弹约 6%，比贝塞尔更自然 */
+    --ease-spring: linear(0, .009, .035 2.1%, .141 4.4%, .723 12.9%, .938 16.7%, 1.017 19.4%, 1.067, 1.099 24.3%, 1.108 26%, 1.103, 1.087 30.4%, 1.016 38.4%, .996 42.3%, .987 46.4%, .989 53.4%, 1.001 66.2%, 1.003 72%, 1);
+    --ease-soft-spring: linear(0, .012, .047 2.6%, .19 5.8%, .623 12.8%, .82 16.8%, .955 21.3%, 1.024 25.6%, 1.045 29.2%, 1.046 32.3%, 1.03 37.6%, 1.006 45.2%, .995 52.3%, 1);
+  }
+}

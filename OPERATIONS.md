@@ -1,12 +1,20 @@
 # 运行、备份与迁移
 
+## 1.20.0 升级说明
+
+- 新增 `account_consents` 表，启动时自动建立，不改动已有表。已有账号下次登录会被请求确认当前版本（`2026-10-23`）的《隐私政策》和《用户协议》。
+- 新配置 `OPERATOR_NAME`、`OPERATOR_CONTACT`：隐私政策中展示的运营者与联系方式，部署前在 `.env` 中填写真实值。`VOICE_CLONE_ENABLED` 默认 `false`，关闭时声音复刻接口返回 403；开启前须建立被复刻人的书面授权流程。
+- 用户可自助注销账号，在线数据当场级联删除；`data/backups/` 中已有的自动备份仍含该账号数据，按 `BACKUP_RETENTION_DAYS` 到期清理。手工备份和另存的快照不在自动轮换范围内，需维护者按同样期限自行处理。
+- 静态脚本与样式改为 `Cache-Control: no-cache` 加 ETag。升级后浏览器会重新校验前端文件，一般无需强制刷新。
+- 通知整理改用独立并发槽，不再与聊天共用；仍是单进程实现，部署继续保持单实例。
+
 ## Windows 本机
 
-当前本机 8765 运行 **1.15.0**，记忆引擎 **schema 5**，核验日期 **2026-10-21**。记忆升级前使用 SQLite backup API 建立并验证一致性备份，私有备份在被 Git 忽略的 `backups/`；报告在 `artifacts/memory-v5-activation.json`。升级后业务记录数量和人工记忆正文保持一致，完整性 `ok`、外键错误 0、服务健康，语义复盘未自动开启。机制、回退条件及复现见 [自主记忆 v5](docs/MEMORY_AUTONOMY_V5.md)，公开验证只包含 [汇总计数](docs/verification/memory-autonomy-v5.json)。
+以下为历史记录：本机 8765 曾运行 **1.15.0**，记忆引擎 **schema 5**，核验日期 **2026-10-21**。记忆升级前使用 SQLite backup API 建立并验证一致性备份，私有备份在被 Git 忽略的 `backups/`；报告在 `artifacts/memory-v5-activation.json`。升级后业务记录数量和人工记忆正文保持一致，完整性 `ok`、外键错误 0、服务健康，语义复盘未自动开启。机制、回退条件及复现见 [自主记忆 v5](docs/MEMORY_AUTONOMY_V5.md)。
 
 2026-10-18 的 **1.12.0** 为历史升级记录：备份 `data/backups/pre-mvp-1.12.0-20261018-181356.sqlite3`，报告 `artifacts/mvp-acceptance/local-upgrade-1.12.0.json`。该轮业务计数与结构版本不变，完整性 `ok`、外键错误 0，没有新增配置、依赖或模型请求。
 
-本版核对用时为可选浏览器观测，保存进现有确认审计与个人导出；旧客户端缺少此字段仍可确认，旧导出仍可导入。页面暂停、刷新和历史数据的统计边界见 [ADR-009](docs/ADR-009-review-time-observation.md)。工程能力与真实试点的剩余条件见 [原 MVP 映射](docs/MVP_COMPLETION_AUDIT.md)。
+本版核对用时为可选浏览器观测，保存进现有确认审计与个人导出；旧客户端缺少此字段仍可确认，旧导出仍可导入。页面暂停、刷新和历史数据的统计边界见 [ADR-009](docs/ADR-009-review-time-observation.md)。工程能力与真实试点的剩余条件见 [办理闭环与演进契约](docs/MVP_WORKFLOW.md) 和 [TESTING.md](TESTING.md)。
 
 ### 近期升级记录
 
@@ -86,7 +94,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\stop.ps1
 
 手工备份写入项目 `backups/`，也可指定 `--file 'D:\受控备份目录\campus.sqlite3'`。目标文件必须不存在。备份包含私人原件；登录会话、未使用邀请、QQ 收件绑定、未使用绑定码、回复分享令牌及对话模型授权从快照中清除。恢复旧版原始快照时也会清理这些授权。对话消息仍保留；恢复后需要本人重新绑定 QQ、重新确认对话模型授权，分享链接须重新创建，避免旧快照复活已经撤销的授权。将重要快照另存至有访问控制的加密磁盘或备份系统，以覆盖本机硬盘故障；本机同盘副本不能解决磁盘损坏。
 
-保留天数通过 `BACKUP_RETENTION_DAYS` 调整。自动清理只处理应用创建的命名文件。通知删除会删除在线关联记录；历史备份在保留期届满后清理。`.env` 需另行保管，不在数据库备份中。恢复操作不会恢复已经失效的登录会话。
+保留天数通过 `BACKUP_RETENTION_DAYS` 调整。自动清理只处理应用创建的命名文件。通知删除和账号注销会删除在线关联记录；历史备份在保留期届满后清理，隐私政策中展示的保留天数读取同一配置。`.env` 需另行保管，不在数据库备份中。恢复操作不会恢复已经失效的登录会话。
 
 ## 恢复到新目录
 
@@ -122,6 +130,9 @@ MIMO_BASE_URL=https://api.xiaomimimo.com/v1
 MIMO_TEXT_MODEL=mimo-v2.6-pro
 MIMO_API_KEY=在服务器本地填写小米按量API密钥
 BACKUP_RETENTION_DAYS=7
+OPERATOR_NAME=运营者名称
+OPERATOR_CONTACT=用户可联系的邮箱或电话
+VOICE_CLONE_ENABLED=false
 ```
 
 ```sh

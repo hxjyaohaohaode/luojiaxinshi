@@ -71,10 +71,30 @@ def test_tts_modes_have_distinct_contracts(env,monkeypatch,mode,model):
     provider(monkeypatch,handle)
     data={'mode':mode,'text':'10月20日提交申请。','allow_external_processing':'true','description':'清晰温和的青年声音'}
     files=None
-    if mode=='clone':data['clone_authorized']='true';files={'reference':('ref.wav',wav(),'audio/wav')}
+    if mode=='clone':data['clone_authorized']='true';files={'reference':('ref.wav',wav(),'audio/wav')};env[1].voice_clone_enabled=True
     response=c.post('/api/speech/synthesize',data=data,files=files)
     assert response.status_code==200,response.text[:100]
-    assert response.content==wav() and response.headers['x-speech-model']==model and len(seen)==1
+    from app.speech import label_audio
+    assert response.content==label_audio(wav(),model) and response.headers['x-speech-model']==model and len(seen)==1
+    assert response.headers['x-ai-generated']=='true'
+
+
+def test_voice_clone_is_closed_unless_deployment_enables_it(env,monkeypatch):
+    c=account(env);env[1].ai_api_key='synthetic'
+    provider(monkeypatch,lambda req:pytest.fail('closed clone mode must not reach the provider'))
+    response=c.post('/api/speech/synthesize',data={'mode':'clone','text':'测试','allow_external_processing':'true','clone_authorized':'true'},files={'reference':('r.wav',wav(),'audio/wav')})
+    assert response.status_code==403
+
+
+def test_synthesized_audio_carries_an_implicit_ai_label():
+    import wave,io
+    from app.speech import label_audio,AI_AUDIO_MARK
+    original=wav();labeled=label_audio(original,'mimo-v2.5-tts')
+    assert AI_AUDIO_MARK.encode() in labeled and label_audio(labeled,'mimo-v2.5-tts')==labeled
+    assert int.from_bytes(labeled[4:8],'little')==len(labeled)-8
+    with wave.open(io.BytesIO(original)) as a,wave.open(io.BytesIO(labeled)) as b:
+        assert a.readframes(a.getnframes())==b.readframes(b.getnframes())
+    assert label_audio(b'not audio','m')==b'not audio'
 
 
 def test_consent_authorization_and_invalid_audio_rejected_before_provider(env,monkeypatch):

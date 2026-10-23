@@ -36,4 +36,4 @@
 
 ## 验证
 
-`tests/test_action_plans.py` 覆盖原子确认、版本冲突、条件证据、历史复核、上下文过时、JSON 导入、旧版本迁移与恢复；`tests/action-plans.test.mjs` 覆盖稳定步骤标识、取消选择、替换保留及活动列表。`scripts/action_plan_preview_server.py` 和 `scripts/verify_action_plans_browser.mjs` 使用隔离合成账号执行三种浏览器的实际 UI、HTTP 与数据库流程。真实模型及最终结果见 [TESTING.md](../TESTING.md)。
+`tests/test_action_plans.py` 覆盖原子确认、版本冲突、条件证据、历史复核、上下文过时、JSON 导入、旧版本迁移与恢复；`tests/action-plans.test.mjs` 覆盖稳定步骤标识、取消选择、替换保留及活动列表。当时另用隔离合成账号在三种浏览器上执行了实际 UI、HTTP 与数据库流程；该预览服务和浏览器脚本已在 1.20.0 清理，当轮结果见 git 历史。当前测试体系见 [TESTING.md](../TESTING.md)。

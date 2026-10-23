@@ -123,7 +123,7 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
 .memory-management-hub h3{font-size:13px;margin:0 0 10px}
 .memory-hub-actions,.memory-management-hub .memory-studio-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px}
 .memory-management-hub .button{min-height:42px;white-space:normal;justify-content:center;margin:0}
-.memory-management-hub .memory-layer-summary{margin:10px 0;font-size:11px;display:flex;flex-wrap:wrap;gap:12px}
+.memory-management-hub .memory-layer-summary{margin:10px 0;font-size:12px;display:flex;flex-wrap:wrap;gap:12px}
 .memory-use-icon[hidden],.memory-change-icon[hidden]{display:none}
 .message-footer>.memory-use-icon,.message-footer>.memory-change-icon{flex:none;width:30px;height:30px;min-width:30px;min-height:30px;padding:6px;display:inline-grid;place-items:center;color:var(--green,#12634b)}
 .chat-thread{overflow-anchor:none;scroll-behavior:auto}
@@ -134,11 +134,11 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
 .reply-audio>.icon-button{flex:none;width:32px;height:32px;min-height:32px;padding:7px;font-size:14px}
 .reply-audio>.icon-button svg{width:18px;height:18px}
 .reply-audio>input[type=range]{flex:1;min-width:40px;width:auto;height:24px;min-height:24px;margin:0;padding:0;accent-color:var(--green,#12634b);border:0;background:transparent}
-.reply-audio>.reply-audio-time{flex:none;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
-.reply-audio>.reply-audio-part{font-size:10px;color:var(--muted)}
-.reply-audio>.reply-audio-download{font-size:11px;min-height:30px}
+.reply-audio>.reply-audio-time{flex:none;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+.reply-audio>.reply-audio-part{font-size:12px;color:var(--muted)}
+.reply-audio>.reply-audio-download{font-size:12px;min-height:30px}
 .reply-audio>audio[hidden],.reply-audio>.reply-audio-part[hidden]{display:none}
-.memory-tree-head>.memory-auto-line{margin:0;margin-right:auto;flex:1;gap:8px;min-width:0;min-height:0;flex-wrap:wrap;font-size:11px;padding:0;border:0}
+.memory-tree-head>.memory-auto-line{margin:0;margin-right:auto;flex:1;gap:8px;min-width:0;min-height:0;flex-wrap:wrap;font-size:12px;padding:0;border:0}
 .memory-auto-line strong{font-size:12px}
 .memory-auto-line .icon-button{width:32px;min-width:32px;min-height:32px;height:32px}
 .memory-nav-toggle{display:none}
@@ -175,17 +175,17 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
 .record-search [data-search-clear]{display:grid;place-items:center;border:0;background:transparent;width:28px;height:32px;padding:5px;flex-shrink:0;color:var(--muted)}
 .record-search .search-tool{position:relative;display:grid;place-items:center;width:38px;height:38px;min-height:38px;flex-shrink:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);cursor:pointer}
 .record-search .search-tool:hover,.record-search .search-tool[aria-pressed=true]{background:#edf5ef;color:var(--green);border-color:#b4cebf}
-.search-tool [data-filter-count]{position:absolute;right:-3px;top:-4px;border-radius:8px;background:var(--green);color:white;font-size:9px;min-width:14px;height:14px;line-height:14px}
+.search-tool [data-filter-count]{position:absolute;right:-3px;top:-4px;border-radius:8px;background:var(--green);color:white;font-size:12px;min-width:14px;height:14px;line-height:14px}
 .record-search .search-filters{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px;background:#f5f8f5;border:1px solid var(--line);border-radius:9px}
-.record-search .search-filters>label{display:flex;align-items:center;gap:8px;flex:1;min-width:145px;font-size:11px;white-space:nowrap}
+.record-search .search-filters>label{display:flex;align-items:center;gap:8px;flex:1;min-width:145px;font-size:12px;white-space:nowrap}
 .record-search .search-filters select{flex:1;width:auto;min-width:0;min-height:34px;margin:0;font-size:12px;padding:5px 22px 5px 7px;border-radius:6px}
 .record-search .search-reference{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid var(--line);border-radius:9px;background:#f7faf7}
-.record-search .search-feedback{font-size:11px;line-height:1.5;min-height:0;margin:0}
+.record-search .search-feedback{font-size:12px;line-height:1.5;min-height:0;margin:0}
 .record-search .search-feedback:empty{display:none}
 .record-search .search-feedback .brand-motion{display:none}
 .record-search [hidden]{display:none!important}
 .record-search .search-active-filters{display:flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0}
-.search-filter-chip,.search-filter-reset{display:inline-flex;align-items:center;gap:6px;min-height:28px;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:var(--white,#fff);color:var(--green);font:inherit;font-size:11px;cursor:pointer}
+.search-filter-chip,.search-filter-reset{display:inline-flex;align-items:center;gap:6px;min-height:28px;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-radius:6px;background:var(--white,#fff);color:var(--green);font:inherit;font-size:12px;cursor:pointer}
 .search-filter-chip>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .search-filter-chip>span:last-child{flex:none;font-size:15px;line-height:1}
 .search-filter-reset{border-color:transparent;background:transparent;color:var(--muted)}
@@ -249,7 +249,7 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
 #dialog .workflow-task-head{padding-bottom:8px}
 #dialog .workflow-task-head h3{font-size:16px;line-height:1.4;margin:2px 0}
 #dialog .workflow-task-head p{font-size:12px;line-height:1.4;margin:3px 0}
-#dialog .workflow-eyebrow{font-size:11px}
+#dialog .workflow-eyebrow{font-size:12px}
 #dialog .workflow-task-head>a{font-size:12px;line-height:1.5}
 #dialog .workflow-form .workflow-tabs{flex-shrink:0;min-height:34px;padding:3px}
 #dialog .workflow-tabs button{min-height:32px;font-size:12px;padding:6px 12px}
@@ -285,7 +285,7 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
  .chat-main>.chat-heading{min-height:48px}
  .chat-workspace .chat-main,.chat-workspace.has-conversation .chat-main{padding:0 12px 8px}
  .chat-reading-area>.chat-thread{padding-block:12px;padding-right:24px}
- .chat-main>.chat-footnote{font-size:10px}
+ .chat-main>.chat-footnote{font-size:12px}
  .source-toolbar{flex-wrap:wrap;gap:8px}
  .source-toolbar>h2{min-height:24px}
  .source-toolbar>.record-search{flex-basis:100%}
@@ -305,18 +305,18 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
  .memory-tree-page{gap:8px}
  .memory-tree-head{gap:6px;flex-wrap:nowrap}
  .memory-nav-toggle{display:inline-flex}
- .memory-tree-head>.button{min-height:40px;padding:6px 8px;font-size:11px}
+ .memory-tree-head>.button{min-height:40px;padding:6px 8px;font-size:12px}
  .memory-auto-line #memory-tree-counts{display:none}
  .memory-auto-line .icon-button{display:none}
- .memory-auto-line strong{font-size:11px}
+ .memory-auto-line strong{font-size:12px}
  .memory-tree-layout,.memory-tree-layout.has-detail{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);border-radius:9px}
  .memory-tree-nav{display:none;max-height:none;height:auto;min-height:0;overflow:hidden;border:0;border-bottom:1px solid var(--line)}
  .memory-tree-layout.nav-open{grid-template-rows:minmax(0,.8fr) minmax(0,1fr)}
  .memory-tree-layout.nav-open .memory-tree-nav{display:flex}
  .memory-tree-main{padding:12px 10px}
  .memory-tree-filters{gap:6px;flex-wrap:nowrap}
- .memory-tree-filters label{min-width:0;font-size:10px;flex:1}
- .memory-tree-filters select{font-size:11px}
+ .memory-tree-filters label{min-width:0;font-size:12px;flex:1}
+ .memory-tree-filters select{font-size:12px}
  .memory-tree-detail.is-visible{height:auto;max-height:var(--visual-height,100dvh);inset:0;width:100%;border-radius:0;padding:16px}
  .memory-tree-detail .memory-detail-heading{top:-16px}
  .memory-tree-detail form{min-height:100%}
@@ -324,7 +324,7 @@ dialog:has(.calendar-date-picker) .dialog-head{background:white}
  .memory-tree-detail form textarea{font-size:16px;min-height:0}
  .time-grid-header>button{flex-direction:column!important;gap:3px!important;min-height:52px!important;padding-block:4px!important}
  .time-grid-header,.time-allday,.time-grid-body{grid-template-columns:40px repeat(var(--day-count),minmax(0,1fr))}
- .time-labels span{left:3px;font-size:10px}
+ .time-labels span{left:3px;font-size:12px}
 }
 @media(max-height:600px) and (min-width:851px){
  .sidebar .sidebar-create{margin-block:12px 8px;min-height:36px}

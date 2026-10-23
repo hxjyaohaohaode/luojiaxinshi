@@ -112,10 +112,9 @@
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests/test_memory_context.py
 .\.venv\Scripts\python.exe scripts/verify_personalization.py --live --long-history
-node scripts/verify_mvp_memory.mjs
 ```
 
-真实模型脚本必须显式传 `--live`，使用隔离临时数据库和合成材料，不读取正式账号。浏览器脚本依赖 `scripts/mvp_preview_server.py`，覆盖三种引擎、六组尺寸和九类页面／表单，包括有效期、模型通道和执行记录。真实调用不是随机化性能实验或真实用户效果评价。
+真实模型脚本必须显式传 `--live`，使用隔离临时数据库和合成材料，不读取正式账号。当轮另有依赖 `scripts/mvp_preview_server.py` 的浏览器脚本，覆盖三种引擎、六组尺寸和九类页面／表单，包括有效期、模型通道和执行记录；该脚本已在 1.20.0 清理，见 git 历史，当前浏览器回归入口见 [TESTING.md](../TESTING.md)。真实调用不是随机化性能实验或真实用户效果评价。
 
 1.8.1 将通知处理纳入真实阶段与标量诊断：状态随执行租约判断，SSE 仅接收完整候选，所有校验通过后才发布草稿；失败不自动重试。`execution_metrics` 记录首段答案等待、模型请求与校验耗时及实际返回用量，未知值不记作零，思考正文不保留。参见 [ADR-005](ADR-005-notice-streaming-and-measurement.md)。
 

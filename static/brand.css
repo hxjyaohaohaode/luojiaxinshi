@@ -12,7 +12,7 @@
   .sidebar .brand{gap:7px;padding-inline:2px}
   .sidebar .brand>.brand-mark{width:46px;height:46px}
   .sidebar .brand strong{font-size:14px}
-  .sidebar .brand small{font-size:11px}
+  .sidebar .brand small{font-size:12px}
 }
 @media(max-width:850px){
   .mobile-brand{display:flex;align-items:center;justify-content:center;width:40px;height:44px;flex:0 0 40px;border-radius:8px}

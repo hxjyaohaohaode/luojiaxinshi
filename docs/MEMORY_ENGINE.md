@@ -112,6 +112,6 @@ JSON 用于归档和迁移。Markdown 用于熟悉的文本编辑：保留文件
 
 容量基准：`.venv\Scripts\python.exe scripts/benchmark_memory_engine.py`。该脚本创建独立合成数据库，不读取真实账号内容。
 
-浏览器验收：先用 `scripts/memory_engine_preview_server.py` 启动 8786 端口的隔离夹具，再运行 `scripts/verify_memory_reliability.mjs`、`scripts/verify_memory_engine.mjs` 与 `scripts/verify_memory_lifecycle.mjs`。如 Playwright 未安装在当前 node_modules，可通过 PLAYWRIGHT_PATH 指向已安装模块。夹具使用明确标注的模拟模型回复，不能当成真实模型效果实测。
+浏览器验收：`python scripts/run_browser_checks.py` 会用 `scripts/memory_engine_preview_server.py` 在 8786 端口启动隔离夹具并运行当前的浏览器套件。如 Playwright 未安装在当前 node_modules，可通过 PLAYWRIGHT_PATH 指向已安装模块。夹具使用明确标注的模拟模型回复，不能当成真实模型效果实测。v3–v4 当时的记忆专项浏览器脚本已在 1.20.0 清理，见 git 历史。
 
-最新实际测试结果见 [TESTING.md](../TESTING.md) 和去账号化的 [v4 验证汇总](verification/memory-reliability-v4.json)。此前交付目录保留原轮次的源码清单、报告及渲染记录；不把不同日期或不同范围的累计测试数相加。
+当前测试体系见 [TESTING.md](../TESTING.md)，各轮实际测试结果见 git 历史；不把不同日期或不同范围的累计测试数相加。

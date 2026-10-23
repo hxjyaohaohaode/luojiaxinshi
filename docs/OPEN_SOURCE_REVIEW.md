@@ -38,7 +38,7 @@
 - **Vercel AI SDK**：[stop-condition.ts](https://github.com/vercel/ai/blob/fce9210c6405c0ad8452fee3f50717e8ea910b97/packages/ai/src/generate-text/stop-condition.ts) 和 [stream-text.ts](https://github.com/vercel/ai/blob/fce9210c6405c0ad8452fee3f50717e8ea910b97/packages/ai/src/generate-text/stream-text.ts) 明确循环停止，并在取消时先结束待决状态、释放读取器。本系统维持生成／修复上限，并修复任务尚未开始就被取消时，订阅者等待不结束、并发槽不释放的问题。
 - **Langfuse**：[observations.ts](https://github.com/langfuse/langfuse/blob/e3a2bee2a2c048adf29b8d8a18b29bd4a8bf8ac3/packages/shared/src/domain/observations.ts) 区分耗时、输出开始和实际用量。本系统继续在本地保存阶段与模型调用计量；没有把应用等待时间当作供应商首 token 延迟，也没有上传私人资料。
 
-第二次快照及逐文件 SHA-256 位于 `D:\项目文件\SKILL_extracted\.upstream-verified\2026-10-18\followup-20261018T050932Z\manifest.json`。仅下载审查所需文件，未整包替换原资料。架构取舍、失败行为和扩展边界见 [ADR-001](ADR-001-execution-and-memory.md)；对应验证位于 `tests/test_memory_lifecycle.py`、`tests/test_execution.py`、`tests/test_stream_job.py` 和 `scripts/verify_mvp_memory.mjs`。
+第二次快照及逐文件 SHA-256 位于 `D:\项目文件\SKILL_extracted\.upstream-verified\2026-10-18\followup-20261018T050932Z\manifest.json`。仅下载审查所需文件，未整包替换原资料。架构取舍、失败行为和扩展边界见 [ADR-001](ADR-001-execution-and-memory.md)；对应验证位于 `tests/test_memory_lifecycle.py`、`tests/test_execution.py` 和 `tests/test_stream_job.py`（当轮的浏览器脚本已在 1.20.0 清理，见 git 历史）。
 
 ## 为什么没有整包引入
 

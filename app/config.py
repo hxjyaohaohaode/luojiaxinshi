@@ -67,6 +67,11 @@ class Settings:
     agent_oss_context_tokens: int = 32768
     agent_sandbox_image: str = ''
     agent_mcp_servers: dict = field(default_factory=dict)
+    # 声音复刻默认关闭，需要部署方建立被复刻人书面授权流程后再开启。
+    voice_clone_enabled: bool = False
+    # 隐私政策中展示的运营者与联系方式，部署时在 .env 中填写。
+    operator_name: str = '珞珈信使项目团队'
+    operator_contact: str = ''
 
     @classmethod
     def from_env(cls):
@@ -79,6 +84,9 @@ class Settings:
                      os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
                      int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
         result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
+        result.operator_name=os.getenv('OPERATOR_NAME',cls.operator_name).strip()[:80] or cls.operator_name
+        result.operator_contact=os.getenv('OPERATOR_CONTACT','').strip()[:120]
+        result.voice_clone_enabled=os.getenv('VOICE_CLONE_ENABLED','false').strip().lower() in {'true','1','yes'}
         result.agent_enabled=os.getenv('AGENT_ENABLED','true').strip().lower() in {'true','1','yes'}
         result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES',str(cls.agent_context_bytes)))
         if not 24000 <= result.agent_context_bytes <= 2000000:

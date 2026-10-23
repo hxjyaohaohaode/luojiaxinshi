@@ -7,7 +7,7 @@
 .hero-art{width:215px;height:206px;display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate;overflow:visible}
 .hero-art::before{content:'';position:absolute;inset:14px 6px 4px;border-radius:50%;background:#ffffff09;z-index:-1}
 .hero-companion{width:185px;height:185px;filter:drop-shadow(0 7px 9px #082a2424)}
-.companion-caption{font-size:10px;letter-spacing:1.5px;color:#cee0ce;margin-top:1px;white-space:nowrap}
+.companion-caption{font-size:12px;letter-spacing:1.5px;color:#cee0ce;margin-top:1px;white-space:nowrap}
 .empty-companion{width:112px;height:112px;margin-bottom:1px}
 .empty:has(.empty-companion){padding-top:27px;gap:10px}
 .help-companion{width:106px;height:106px;margin:0 auto 14px}

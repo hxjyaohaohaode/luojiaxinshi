@@ -248,6 +248,8 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
             conn.executescript('BEGIN IMMEDIATE;'+GENUI_SCHEMA+'COMMIT;')
             conn.executescript('BEGIN IMMEDIATE;'+WORKFLOW_SCHEMA+'COMMIT;')
+            from .insights import REMINDER_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+REMINDER_SCHEMA+'COMMIT;')
             from .memory import SCHEMA as MEMORY_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+MEMORY_SCHEMA+'COMMIT;')
             from .memory_policy import SCHEMA as MEMORY_POLICY_SCHEMA

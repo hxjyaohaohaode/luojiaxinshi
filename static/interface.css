@@ -96,16 +96,16 @@ label.field { gap: 8px; font-size: 14px; }
 .sidebar > .brand { padding: 0 10px; margin: 0 0 32px; gap: 10px; }
 .sidebar .brand img { width: 40px; height: 40px; }
 .sidebar .brand strong { font-size: 17px; letter-spacing: .5px; }
-.sidebar .brand small { display: block; font-size: 11px; margin-top: 3px; letter-spacing: .4px; }
+.sidebar .brand small { display: block; font-size: 12px; margin-top: 3px; letter-spacing: .4px; }
 .sidebar-create { margin: 0 0 24px; min-height: 46px; font-size: 14px; }
-.sidebar .nav-label { display: block; margin: 0 12px 10px; color: #6e8074; font-size: 11px; letter-spacing: 1px; }
+.sidebar .nav-label { display: block; margin: 0 12px 10px; color: #6e8074; font-size: 12px; letter-spacing: 1px; }
 .sidebar .nav-item { min-height: 46px; margin: 4px 0; padding: 11px 14px; font-size: 14px; color: #53675a; }
 .sidebar .nav-item.active { color: var(--green); font-weight: 600; }
 .sidebar nav .selection-indicator { background: #fff; border: 1px solid #dce7df; box-shadow: 0 2px 8px #243b3005; }
 .sidebar .account { padding-top: 16px; border-color: #d8e3da; }
 .sidebar .account .avatar { background: #dfece2; }
 .sidebar .account-name { font-size: 13px; }
-.sidebar .account-name small { font-size: 11px; }
+.sidebar .account-name small { font-size: 12px; }
 .workspace .topbar { height: var(--chrome-height); min-height: var(--chrome-height); background: #ffffffef; padding: 0 var(--page-inset) 0 64px; border-color: var(--line); backdrop-filter: blur(12px); }
 .topbar-left b { font-size: 14px; font-weight: 600; }
 .workspace-chrome-toggle { top: 10px; left: calc(var(--sidebar-open-width) + 10px); width: 44px; height: 44px; min-height: 44px; color: var(--muted); background: transparent; }
@@ -124,7 +124,7 @@ label.field { gap: 8px; font-size: 14px; }
 .overview-compact .overview-companion { width: 112px; height: 112px; margin: 0 16px 0 0; }
 .overview-flow { display: flex; flex-wrap: wrap; gap: 10px 20px; padding: 0; margin: 0 0 20px; color: #718177; font-size: 12px; }
 .overview-flow span { gap: 6px; }
-.overview-flow b { border: 0; background: #e6eee8; color: #52725d; width: 22px; height: 22px; font-size: 11px; }
+.overview-flow b { border: 0; background: #e6eee8; color: #52725d; width: 22px; height: 22px; font-size: 12px; }
 .action-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
 .action-metric { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; padding: 20px; background: #fff; border-radius: 14px; box-shadow: var(--shadow); }
 .action-metric > span { font-size: 13px; align-self: center; }
@@ -330,7 +330,7 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .workspace-search { background: transparent; border: 0; min-height: 44px; padding: 0; }
   .workspace .content:not([data-page^=chat]):not([data-page=calendar]) { padding: 24px var(--page-inset) 32px; }
   .mobile-bottom-nav { background: #fffffffa; padding: 7px 10px calc(7px + env(safe-area-inset-bottom)); border-color: var(--line); }
-  .mobile-bottom-nav .nav-item { min-height: 50px; font-size: 11px; gap: 4px; color: #6c8072; }
+  .mobile-bottom-nav .nav-item { min-height: 50px; font-size: 12px; gap: 4px; color: #6c8072; }
   .mobile-bottom-nav .nav-item.active { background: transparent; color: var(--green); }
   .mobile-bottom-nav .selection-indicator { background: var(--green-light); border-radius: 10px; }
   .button.small { min-height: 44px; }
@@ -352,7 +352,7 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .chat-reading-area > .chat-thread { padding: 18px 32px 20px 0; }
   .chat-reading-area:has(.chat-turn-rail[hidden]) > .chat-thread { padding-inline: 0; }
   .chat-main .chat-composer { width: 100%; margin: 0 auto !important; padding: 5px !important; border-radius: 16px !important; }
-  .chat-main .chat-footnote { margin: 7px auto 0 !important; font-size: 11px; }
+  .chat-main .chat-footnote { margin: 7px auto 0 !important; font-size: 12px; }
   .chat-welcome { padding: 24px 0; }
   .chat-welcome h2 { font-size: 24px; }
   .calendar-toolbar { display: grid !important; grid-template-columns: minmax(0, 1fr) 88px; padding: 4px 8px 4px 52px !important; gap: 0 !important; }
@@ -379,14 +379,14 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .page-title.between { align-items: flex-start; }
   .page-title > .button { font-size: 13px; padding-inline: 12px; flex-shrink: 0; }
   .overview-compact .overview-heading { min-height: 82px; gap: 8px; margin-bottom: 16px; }
-  .overview-kicker { font-size: 11px; margin-bottom: 6px; }
+  .overview-kicker { font-size: 12px; margin-bottom: 6px; }
   .overview-compact .overview-heading h1 { font-size: 22px; }
   .overview-compact .overview-heading p { font-size: 12px; margin-top: 6px; }
   .overview-compact .overview-companion { width: 64px; height: 76px; margin: 0; }
   #overview-companion { flex: 0 0 64px; }
-  .overview-flow { gap: 8px 10px; margin-bottom: 16px; font-size: 11px; justify-content: space-between; }
+  .overview-flow { gap: 8px 10px; margin-bottom: 16px; font-size: 12px; justify-content: space-between; }
   .overview-flow span { gap: 4px; }
-  .overview-flow b { width: 18px; height: 18px; font-size: 10px; }
+  .overview-flow b { width: 18px; height: 18px; font-size: 12px; }
   .action-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
   .action-metric { padding: 12px 14px; gap: 6px; border-radius: 12px; }
   .action-metric > span { font-size: 12px; }
@@ -418,7 +418,7 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .notice-welcome h2 { font-size: 19px; }
   .notice-welcome p { font-size: 13px; }
   .notice-welcome .compose-companion { width: 58px; height: 72px; flex-shrink: 0; }
-  .notice-welcome .small { display: block; margin-top: 4px; font-size: 11px; }
+  .notice-welcome .small { display: block; margin-top: 4px; font-size: 12px; }
   .notice-compose .steps { margin-bottom: 18px; font-size: 13px; }
   .notice-compose .panel { padding: 18px; }
   .notice-compose .stack { gap: 16px; }
@@ -449,8 +449,8 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .scene-choice > .icon:last-child { grid-column: 3; grid-row: 1/3; }
   .scene-choice strong { grid-column: 2; grid-row: 1; font-size: 14px; }
   .scene-choice span { display: block; grid-column: 2; grid-row: 2; font-size: 12px; line-height: 1.6; }
-  .chat-main .chat-footnote { font-size: 10px; }
-  .chat-composer .composer-entry textarea { padding-inline: 4px !important; }
+  .chat-main .chat-footnote { font-size: 12px; }
+  .chat-composer .composer-entry textarea { padding-inline: 13px 6px !important; }
   .chat-composer .composer-plus, .chat-composer .composer-voice, .chat-composer .send-button { min-width: 44px; width: 44px; min-height: 44px; height: 44px; }
   dialog { width: calc(100% - 16px); max-width: calc(100% - 16px); max-height: calc(var(--visual-height, 100dvh) - 24px); border-radius: 18px; }
   .dialog-head { padding: 12px 12px 12px 20px; gap: 10px; }
@@ -465,7 +465,7 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .overview-compact .overview-heading h1 { font-size: 20px; }
   .overview-flow { gap: 6px; }
   .overview-flow b { display: none; }
-  .overview-tabs .tab { font-size: 11px; padding-inline: 7px; }
+  .overview-tabs .tab { font-size: 12px; padding-inline: 7px; }
   .task-row, .overview-compact .task-row { padding-inline: 12px; gap: 0 12px; }
   .task-actions { gap: 6px; }
   .task-actions .task-open { padding-inline: 10px; }

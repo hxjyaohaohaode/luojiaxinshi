@@ -13,7 +13,7 @@ FILES=['README.md','CONTRIBUTING.md','OPERATIONS.md','TESTING.md','ASSETS.md','R
        'package.json','package-lock.json','THIRD_PARTY_NOTICES.md']
 for directory,extensions in [('app',{'.py'}),('static',{'.js','.css','.svg','.html','.png','.webm','.json'}),('tests',{'.py','.mjs'}),
                              ('scripts',{'.py','.mjs','.ps1'}),('docs',{'.md','.txt','.json'}),
-                             ('schema',{'.json'}),('fixtures',{'.json','.md'}),('skills',{'.md'}),
+                             ('schema',{'.json'}),('fixtures',{'.json','.md'}),('skills',{'.md'}),('design',{'.html','.md'}),
                              ('项目资料',{'.md','.txt','.json','.csv','.docx','.pdf','.png','.html'})]:
     FILES.extend(str(p.relative_to(ROOT)).replace('\\','/') for p in (ROOT/directory).rglob('*')
                  if p.is_file() and p.suffix in extensions and '__pycache__' not in p.parts)

@@ -8,7 +8,7 @@
 
 1.11.0 将复核后的本人处理改为逐条记录，检查实际改动、所选步骤与原草稿的关系，保留不采纳意见的依据。处理结果可直接回看，并以历史记录随个人 JSON 迁移；导入不代表重新核实。见 [ADR-008](ADR-008-per-issue-human-resolution.md)。
 
-1.12.0 增加核对页面用时的有界观测，随确认与历史迁移保存，统计范围见 [ADR-009](ADR-009-review-time-observation.md)。原方案逐项映射和有限的剩余验收门槛见 [完成情况映射](MVP_COMPLETION_AUDIT.md)。
+1.12.0 增加核对页面用时的有界观测，随确认与历史迁移保存，统计范围见 [ADR-009](ADR-009-review-time-observation.md)。原方案剩余的外部验收门槛见下文“原方案尚待外部验收的门槛”；原逐项映射文档已移除，见 git 历史。
 
 ## 本轮纠正的问题
 
@@ -150,16 +150,11 @@ node --test tests/*.test.mjs
 .\.venv\Scripts\python.exe -m pip check
 ```
 
-浏览器验收使用 `scripts/mvp_preview_server.py`，仅监听 `127.0.0.1:8780`，数据写入被 Git 忽略的 `artifacts/mvp-acceptance/data`。该服务不会读取正式数据或使用模型密钥。`PLAYWRIGHT_PATH` 可设置为已安装的 Playwright 模块路径；Chromium、Firefox、WebKit 浏览器二进制须事先可用。
+`scripts/mvp_preview_server.py` 仍可启动隔离的合成数据服务，仅监听 `127.0.0.1:8780`，数据写入被 Git 忽略的 `artifacts/mvp-acceptance/data`，不会读取正式数据或使用模型密钥。当时配套的页面、弹窗、流程、竞态和内容浏览器脚本已在 1.20.0 清理，见 git 历史；当前浏览器回归统一运行：
 
 ```powershell
-# 单独终端运行隔离服务，然后在仓库根目录执行：
-$env:MVP_BROWSERS='chromium,firefox,webkit'
-node scripts/verify_mvp_browser.mjs
-node scripts/verify_mvp_dialogs.mjs
-node scripts/verify_mvp_flow.mjs
-node scripts/verify_mvp_races.mjs
-node scripts/verify_mvp_content.mjs
+.\.venv\Scripts\python.exe scripts/run_browser_checks.py
+.\.venv\Scripts\python.exe scripts/run_agent_browser_checks.py
 ```
 
-`verify_mvp_dialogs.mjs` 的语音配置使用浏览器侧布局夹具，只检查普通／设计／复刻表单的排版，不发送语音请求。其他流程通过隔离服务真实 HTTP 与 SQLite 执行。`verify_notice_model.py` 则明确使用本机配置发起一次合成文字通知的真实模型调用；只在需要验证凭证时主动运行。
+`scripts/verify_notice_model.py` 明确使用本机配置发起一次合成文字通知的真实模型调用；只在需要验证凭证时主动运行。

@@ -1,6 +1,6 @@
 # 记忆可靠性与人工管理 v4
 
-日期：2026-10-21。记忆引擎 schema：4。在 [生命周期 v3](MEMORY_LIFECYCLE_V3.md) 的形成、分层、检索和遗忘机制上，补齐版本证据、写入重试、人工修订、复盘作业和管理界面。最终验证数据单独记录在 [验收记录](../TESTING.md) 与 [机器汇总](verification/memory-reliability-v4.json)。
+日期：2026-10-21。记忆引擎 schema：4。在 [生命周期 v3](MEMORY_LIFECYCLE_V3.md) 的形成、分层、检索和遗忘机制上，补齐版本证据、写入重试、人工修订、复盘作业和管理界面。当轮最终验证数据见 git 历史，当前测试体系见 [验收记录](../TESTING.md)。
 
 ## 1. 本轮解决的问题
 
@@ -76,7 +76,7 @@
 | `app/context_snapshot.py` / `memory_policy.py` / `memory_store.py` | 实际选中记忆及依赖/同类项的发布前复核；按 ID 查询，同时保留冲突与父来源检查 |
 | `static/memory-workbench.js` / `memory-intents.js` | 工作区、筛选分页、批量反馈、异步隔离与写入重试意图 |
 | `static/memory.js` / `memory-studio.js` / `memory-lifecycle.js` / `memory.css` | 正文编辑、影响提示、来源和版本、会话条件、复盘操作与响应式样式 |
-| `tests/test_memory_reliability_v4.py` / `scripts/verify_memory_reliability.mjs` | 已复现缺陷、事务/权限/迁移边界和真实浏览器操作 |
+| `tests/test_memory_reliability_v4.py` | 已复现缺陷、事务/权限/迁移边界（当轮的真实浏览器操作脚本已在 1.20.0 清理，见 git 历史） |
 
 迁移沿用 SQLite 事务与完整表校验，接受旧 schema 1/2/3 并升级至 4；标称 v4 却缺表的损坏数据库会拒绝启动。升级前先检查没有执行中的业务，通过 SQLite backup API 备份并验证完整性。升级后核对业务记录数量、人工记忆正文、外键与健康状态；私有备份和账号内容不进入 Git。回退必须使用升级前的完整备份与对应旧代码，不能直接让旧代码读写新 schema。
 

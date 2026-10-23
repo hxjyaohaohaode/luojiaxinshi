@@ -41,7 +41,7 @@ def account(env,name='alice',role='user'):
     c=TestClient(app,base_url=ORIGIN)
     c.headers.update({'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     token=new_invite(app.state.db,role)
-    r=c.post('/api/auth/register',json={'invite':token,'username':name,'password':PASSWORD,'display_name':name})
+    r=c.post('/api/auth/register',json={'invite':token,'username':name,'password':PASSWORD,'display_name':name,'accepted_terms':True})
     assert r.status_code==200,r.text
     c.headers['X-CSRF-Token']=c.get('/api/session').json()['csrf']
     return c
@@ -97,7 +97,7 @@ def test_invite_single_use_and_password_policy(env):
     app,_=env
     c=TestClient(app,base_url=ORIGIN,headers={'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     token=new_invite(app.state.db)
-    body={'invite':token,'username':'alice','password':'short','display_name':'A'}
+    body={'invite':token,'username':'alice','password':'short','display_name':'A','accepted_terms':True}
     assert c.post('/api/auth/register',json=body).status_code==422
     body['password']=PASSWORD
     r=c.post('/api/auth/register',json=body)

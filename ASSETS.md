@@ -2,7 +2,7 @@
 
 ## 应用 Logo · V4
 
-采用用户确认的视觉平衡版：老图书馆中央屋顶、通知纸张与行动对勾。原图保存在项目根目录的 `视觉设计/Logo/`。界面资产由定稿等比缩小生成，保留完整方形画布、透明通道、原始配色及已经校正的视觉重心。
+采用用户确认的视觉平衡版：老图书馆中央屋顶、通知纸张与行动对勾。原图保存在仓库内的 `项目资料/视觉设计/Logo/`。界面资产由定稿等比缩小生成，保留完整方形画布、透明通道、原始配色及已经校正的视觉重心。
 
 | 文件 | 规格与用途 |
 |---|---|
@@ -57,7 +57,7 @@ Full body centered, compact charming rounded silhouette readable at 90 to 120 px
 
 ## 共享仓库中的资源
 
-原 `视觉设计/Logo/` 的原创设计文件随仓库放在 `项目资料/视觉设计/Logo/`，文件内容不变。应用实际加载的全部资源仍在 `static/assets/`，共十个小信使姿态、四个 V4 图标、一个演示视频，以及下方的 11 个 SVG 动效，不依赖原电脑的路径。
+`项目资料/视觉设计/Logo/` 只保留 V4 定稿：视觉平衡版 Logo、应用图标浅底版、尺寸与裁切预览、图标预览页和对应生成提示词，文件内容不变；v1–v3 早期方案及其提示词已移除，可从 git 历史取回。SVG 动效源文件保存在仓库内的 `design/motion/`，随源码发布包分发。应用实际加载的全部资源仍在 `static/assets/`，共十个小信使姿态、四个 V4 图标、一个演示视频，以及下方的 11 个 SVG 动效，不依赖原电脑的路径。
 
 `genui-demo.webm` 为本项目 Canvas 绘制的 640×360、约 3 秒合成动画，100020 字节，仅用于验证原生视频控制与可视展示，不代表外部事件或真实模型生成素材。未使用第三方音轨、视频或字体文件。
 
@@ -73,7 +73,7 @@ Full body centered, compact charming rounded silhouette readable at 90 to 120 px
 | `luojia-messenger-writing.png` | 当前回复正在输出文字的头像 |
 | `luojia-messenger-thinking.png` | 当前回复尚未输出文字、无材料时的思考头像 |
 
-以下 SVG 动效来自用户明确指定的两份本地动效集。SVG 路径、遮罩、渐变、运动关键帧和原始周期保留；仅增加选择器作用域、实例 ID 命名空间和播放控制。重复路径字符串无损共享，生成模块约 128 KB。出处、原 SVG 摘要和路径摘要见 `static/assets/motion-provenance.json`，提取脚本为 `scripts/build_motion_assets.py`。
+以下 SVG 动效来自用户明确指定的两份本地动效集。SVG 路径、遮罩、渐变、运动关键帧和原始周期保留；仅增加选择器作用域、实例 ID 命名空间和播放控制。重复路径字符串无损共享，生成模块约 128 KB。出处、原 SVG 摘要和路径摘要见 `static/assets/motion-provenance.json`，提取脚本为 `scripts/build_motion_assets.py`，它默认读取仓库内 `design/motion/` 的两份原稿，克隆后运行 `python scripts/build_motion_assets.py` 即可重新提取。
 
 | 原动效 | 承载状态 |
 |---|---|

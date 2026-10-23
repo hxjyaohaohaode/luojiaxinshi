@@ -5,6 +5,7 @@ quotes and versions, and protects human edits. No extra model request is made.
 """
 import json
 import hashlib
+import logging
 import re
 import time
 from typing import Literal
@@ -721,10 +722,17 @@ def drain_jobs(db, *, uid=None, limit=24):
                 conn.execute("UPDATE memory_jobs SET state='done',finished_at=? WHERE id=?", (int(time.time()), job['id']))
                 owners.add(job['user_id'])
                 processed += 1
-        except (ValueError, ValidationError):
-            with db.connect(write=True) as conn:
-                conn.execute("UPDATE memory_jobs SET state='failed',error_code='validation',finished_at=? WHERE id=?",
-                             (int(time.time()), job['id']))
+        except Exception as error:
+            # 任何异常都只让这一项失败：否则它会一直排在队首，挡住所有人的后续任务。
+            code = 'validation' if isinstance(error, (ValueError, ValidationError)) else type(error).__name__[:40]
+            if code != 'validation':
+                logging.getLogger('campus').warning('memory_job_failed kind=%s error=%s', job['source_kind'], code)
+            try:
+                with db.connect(write=True) as conn:
+                    conn.execute("UPDATE memory_jobs SET state='failed',error_code=?,finished_at=? WHERE id=?",
+                                 (code, int(time.time()), job['id']))
+            except Exception:
+                logging.getLogger('campus').error('memory_job_mark_failed error=%s', type(error).__name__)
             failed += 1
     with db.connect() as conn:
         owners.update(r['user_id'] for r in conn.execute('''SELECT m.user_id FROM memory_maintenance m
@@ -732,15 +740,19 @@ def drain_jobs(db, *, uid=None, limit=24):
             AND (? IS NULL OR m.user_id=?) AND coalesce(s.auto_organize,1)=1 AND coalesce(s.mode,'auto')='auto'
             ORDER BY m.updated_at,m.user_id LIMIT 24''', (uid, uid)))
     for owner in owners:
-        with db.connect(write=True) as conn:
-            from .memory_lifecycle import maintain
-            maintain(conn,owner)
-            from .memory_tree import reconcile
-            reconcile(conn,owner)
-            from .memory_automatic import triage
-            triage(conn,owner)
-            if settings_for(conn, owner)['auto_organize'] and settings_for(conn, owner)['mode'] == 'auto':
-                organize(conn, owner)
+        # 每个账号的整理单独成事务、单独兜底，一个账号出错不影响其他人。
+        try:
+            with db.connect(write=True) as conn:
+                from .memory_lifecycle import maintain
+                maintain(conn,owner)
+                from .memory_tree import reconcile
+                reconcile(conn,owner)
+                from .memory_automatic import triage
+                triage(conn,owner)
+                if settings_for(conn, owner)['auto_organize'] and settings_for(conn, owner)['mode'] == 'auto':
+                    organize(conn, owner)
+        except Exception as error:
+            logging.getLogger('campus').warning('memory_organize_failed error=%s', type(error).__name__)
     with db.connect() as conn:
         due=[r['id'] for r in conn.execute('''SELECT u.id FROM users u LEFT JOIN memory_lifecycle_runs r ON r.user_id=u.id
             WHERE (r.ran_at IS NULL OR r.ran_at<?) AND (? IS NULL OR u.id=?) ORDER BY coalesce(r.ran_at,0),u.id LIMIT 24''',

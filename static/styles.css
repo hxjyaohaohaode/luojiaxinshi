@@ -1,0 +1,44 @@
+/*
+ * 样式入口。
+ *
+ * legacy 层：历次迭代留下的页面样式，保持原有加载顺序，内部层叠关系不变。
+ * system 层：统一的设计系统（令牌、排版、组件、动效、响应式布局）。
+ *
+ * 后声明的层优先，因此 system 层的普通声明可以覆盖 legacy 层，无需再叠加选择器权重
+ * 或 !important。新样式只写进 system/ 下的文件。
+ */
+@layer legacy, system;
+
+@import url('/static/app.css') layer(legacy);
+@import url('/static/continuity.css') layer(legacy);
+@import url('/static/companion.css') layer(legacy);
+@import url('/static/calendar-help.css') layer(legacy);
+@import url('/static/workspace.css') layer(legacy);
+@import url('/static/calendar.css') layer(legacy);
+@import url('/static/library.css') layer(legacy);
+@import url('/static/genui/genui.css') layer(legacy);
+@import url('/static/genui/agent-view.css') layer(legacy);
+@import url('/static/brand.css') layer(legacy);
+@import url('/static/experience.css') layer(legacy);
+@import url('/static/motion-source.css') layer(legacy);
+@import url('/static/motion.css') layer(legacy);
+@import url('/static/genui/citations.css') layer(legacy);
+@import url('/static/refinements.css') layer(legacy);
+@import url('/static/genui/editorial.css') layer(legacy);
+@import url('/static/workflow.css') layer(legacy);
+@import url('/static/memory.css') layer(legacy);
+@import url('/static/memory-tree.css') layer(legacy);
+@import url('/static/interface.css') layer(legacy);
+@import url('/static/workbench.css') layer(legacy);
+@import url('/static/experience-system.css') layer(legacy);
+@import url('/static/feedback.css') layer(legacy);
+@import url('/static/workspace-layout.css') layer(legacy);
+@import url('/static/genui/answer-surface.css') layer(legacy);
+@import url('/static/composer.css') layer(legacy);
+
+@import url('/static/system/tokens.css') layer(system);
+@import url('/static/system/base.css') layer(system);
+@import url('/static/system/motion.css') layer(system);
+@import url('/static/system/layout.css') layer(system);
+@import url('/static/system/features.css') layer(system);
+@import url('/static/system/polish.css') layer(system);

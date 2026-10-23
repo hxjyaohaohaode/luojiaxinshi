@@ -110,5 +110,7 @@ def build(paths):
 
 
 if __name__ == '__main__':
-    build({'legacy': Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / 'SVG矢量图与动效全集.html',
-           'v2': Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT.parent / 'SVG矢量图与动效系统_v2.html'})
+    # 原始向量与提取器一同分发，克隆仓库即可重建。
+    SOURCE_DIR = ROOT / 'design' / 'motion'
+    build({'legacy': Path(sys.argv[1]) if len(sys.argv) > 1 else SOURCE_DIR / 'SVG矢量图与动效全集.html',
+           'v2': Path(sys.argv[2]) if len(sys.argv) > 2 else SOURCE_DIR / 'SVG矢量图与动效系统_v2.html'})

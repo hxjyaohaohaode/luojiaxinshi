@@ -1,0 +1,96 @@
+/* 排版与基础组件。只做全站一致的“底子”，页面专属布局放在 layout.css。 */
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+}
+::selection { background: #cfe5d3; color: var(--ink); }
+
+/* 中文标题不需要负字距；行高收紧一点更挺拔 */
+h1 { letter-spacing: 0; line-height: var(--lh-tight); }
+h2, h3 { letter-spacing: 0; line-height: 1.4; }
+.number-ticker, .ring-caption b, .action-metric strong, .collection-stat strong, time, .date-col, .task-deadline { font-variant-numeric: tabular-nums; }
+
+/* 弱化文字统一到可读的对比度 */
+.eyebrow, .section-eyebrow { color: var(--faint); letter-spacing: .08em; }
+.footnote { color: var(--faint); font-size: var(--fs-xs); line-height: 1.75; }
+.source-section .locator, .history-badge { color: var(--faint); }
+.muted, .small.muted, small.muted { color: var(--muted); }
+input::placeholder, textarea::placeholder { color: #8b9a91; }
+
+/* 焦点：键盘操作时始终可见，鼠标点击不出现 */
+:where(a, button, summary, [role=tab], [role=button], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+/* 沿用原设计：输入框聚焦只加深一条中性边框，不加绿色外圈（见 workspace-layout.css 的说明）。 */
+:where(input:not([type=checkbox]):not([type=radio]), textarea, select):focus-visible {
+  border-color: #66736d;
+  box-shadow: none;
+  outline: none;
+}
+:where(input[type=checkbox], input[type=radio]):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* 输入控件 */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), textarea, select {
+  border-color: #d8e0da;
+  border-radius: 10px;
+  transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), background-color var(--dur-2);
+}
+input:not([type=checkbox]):not([type=radio]):hover, textarea:hover, select:hover { border-color: #c3cfc7; }
+input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
+
+/* 按钮 */
+.button {
+  border-radius: 10px;
+  letter-spacing: .01em;
+  transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+              color var(--dur-2), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-spring);
+}
+.button.primary { box-shadow: 0 1px 0 #ffffff1f inset, 0 4px 14px #11574026; }
+.button.primary:hover { background: var(--brand-strong); box-shadow: 0 1px 0 #ffffff1f inset, 0 8px 22px #11574033; }
+.button:disabled, .icon-button:disabled { cursor: not-allowed; }
+.button[aria-busy=true], .button.is-busy { cursor: progress; }
+.icon-button { border-radius: 10px; transition: background-color var(--dur-2), color var(--dur-2), transform var(--dur-3) var(--ease-spring); }
+
+/* 胶囊标签 */
+.pill { border-radius: var(--radius-pill); padding: 2px 9px; line-height: 1.6; font-weight: 500; }
+
+/* 面板与卡片 */
+.panel { border-radius: var(--radius-lg); }
+.alert { border-radius: var(--radius-md); }
+
+/* 对话框 */
+dialog { border-radius: var(--radius-xl); }
+dialog::backdrop { background: #142a2140; backdrop-filter: blur(6px) saturate(1.1); }
+
+/* 滚动条：细而不抢眼 */
+* { scrollbar-width: thin; scrollbar-color: #c7d2ca transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #c7d2ca; border: 3px solid transparent; border-radius: 10px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background-color: #aebcb3; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 触屏：操作目标不小于 40–44px */
+@media (pointer: coarse) {
+  .button { min-height: var(--tap-touch); }
+  .button.small { min-height: var(--tap); padding-inline: 13px; }
+  .icon-button { min-width: var(--tap); min-height: var(--tap); }
+}
+
+/* AI 生成内容标识：显著、克制，跟随内容出现 */
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  padding: 1px 8px; border-radius: var(--radius-pill);
+  font-size: var(--fs-xs); font-weight: 600; line-height: 1.7; white-space: nowrap;
+  color: #2f5d47; background: #e9f3ec; border: 1px solid #d3e6d9;
+}
+.ai-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(135deg, #3c8a5c, #b88a3e); }
+.ai-note { font-size: var(--fs-xs); color: var(--faint); line-height: 1.7; }
+.ai-note strong { color: var(--muted); font-weight: 600; }

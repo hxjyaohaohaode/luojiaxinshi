@@ -1,0 +1,207 @@
+/*
+ * 像素级对齐。每条规则都来自实测（artifacts/dev-preview/probe.mjs 测得的字形/图标真实边界），
+ * 注释写明修正前的偏差，便于以后复核。
+ */
+
+/* ===== 工作台 · 重点卡片 ===== */
+/* 40px 的翻页按钮把第一行撑高，字形上方留白 30px、下方 22.6px；按钮外扩不占行高。 */
+.overview-focus > .deck-controls { margin-block: -10px; }
+/* 箭头字形右缘比下方按钮边框缩进 12.5px，整体右移贴齐按钮边。 */
+.overview-focus > .deck-controls { margin-right: -12px; }
+.overview-focus .focus-card-content h2 { margin-block: 6px 4px; }
+
+/* ===== 工作台 · 四个统计卡片 ===== */
+/* 图标块上内边距 13px、右内边距 19px，且中线比标签低 6px：改为同一行居中、上右等距。 */
+.overview-compact .action-metric {
+  padding: 15px 16px 14px;
+  grid-template-columns: minmax(0, 1fr) 30px;
+  grid-template-rows: 30px auto auto;
+  row-gap: 2px;
+}
+.overview-compact .action-metric > .metric-label { grid-column: 1; grid-row: 1; align-self: center; line-height: 1.4; }
+.overview-compact .action-metric > .metric-symbol { grid-column: 2; grid-row: 1; align-self: center; justify-self: end; }
+.overview-compact .action-metric > strong { grid-column: 1 / -1; grid-row: 2; line-height: 1.15; }
+.overview-compact .action-metric > small { grid-column: 1 / -1; grid-row: 3; line-height: 1.6; padding-right: 22px; }
+.overview-compact .action-metric > .icon { right: 16px; bottom: 17px; }
+
+/* ===== 工作台 · 行动清单 ===== */
+/* 选中底板左缘比标题文字左缘靠外 4px：标签行内边距与标题一致。 */
+.overview-compact .overview-tabs { padding-inline: 20px; }
+@media (max-width: 600px) { .overview-compact .overview-tabs { padding-inline: 14px; } }
+/* 清单视图里“办理”按钮中线比标题第一行低 6px。 */
+@media (min-width: 651px) {
+  #overview-items .task-row > .task-actions,
+  .task-results:not(.board-view) .task-row > .task-actions { margin-top: -6px; align-self: flex-start; }
+}
+
+/* ===== 工作台 · 值得留意 ===== */
+/* 侧栏窄，紧凑列表不显示“留意/要紧”字样，把宽度留给标题。 */
+.reminder-list.compact .reminder-item { grid-template-columns: 28px minmax(0, 1fr); }
+.reminder-list.compact .reminder-level { display: none; }
+.reminder-list.compact .reminder-copy strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* 避免“展”这样的单字落到下一行 */
+.reminder-copy, .insight-hero h2, .empty p, .overview-empty p, .chat-welcome .scene-choice span { text-wrap: pretty; }
+.overview-brief > .link-button { display: block; text-align: center; padding: 6px 0; margin: -2px 0 6px; }
+
+/* ===== 通用：下拉小箭头 ===== */
+/* 原来用文字“⌄”，基线偏低像个字母 v；改为线条画的箭头，垂直居中，展开时翻转。 */
+.calendar-date-trigger::after, .calendar-filters > summary::after {
+  content: ''; display: inline-block; flex: none; width: 6px; height: 6px; margin-left: 9px;
+  border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); opacity: .55; float: none; vertical-align: middle;
+  transition: transform var(--dur-3) var(--ease-spring);
+}
+.calendar-filters > summary { display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.calendar-filters > summary::after { margin-right: 4px; }
+.calendar-filters[open] > summary::after { transform: translateY(2px) rotate(225deg); }
+
+/* ===== 日历 ===== */
+/* 侧栏月份标题靠左（左侧让出切换按钮），比下方日期格的中线偏左 12px：两侧等距后居中。 */
+@media (min-width: 851px) {
+  html[data-route=calendar] .mini-title { padding-inline: 44px; justify-content: center; }
+}
+/* “今”按钮 40px，旁边的按钮都是 44px。 */
+@media (min-width: 851px) { .calendar-toolbar .calendar-today { min-height: 44px; height: 44px; } }
+
+/* ===== 聊天 ===== */
+/* 侧栏切换按钮中线比聊天标题低 4px。 */
+@media (min-width: 851px) { .shell:has(.chat-workspace) .workspace-chrome-toggle { top: 6px; } }
+/* 输入文字比下方“+”图标左缘靠外 5px：让占位文字与图标对齐成一条线。 */
+#chat-input { padding-left: 13px; }
+
+/* ===== 通知资料 · 工具栏 ===== */
+/* 搜索框 46、收件日期 47、视图切换 50px，三者统一为 46px。 */
+.library-toolbar .library-search { min-height: 46px; box-sizing: border-box; }
+.library-toolbar .library-search input { min-height: 44px; }
+.library-date > summary { min-height: 46px; height: 46px; box-sizing: border-box; padding-block: 0; }
+.library-toolbar .library-view-toggle { height: 46px; padding: 3px; box-sizing: border-box; align-items: stretch; }
+.library-toolbar .library-view-toggle > button { min-height: 0; height: 100%; }
+
+/* ===== 数据看板 ===== */
+/* 完成情况卡片太窄，“4 件进行中”被拆成两行：首列加宽，短语不拆开。 */
+@media (min-width: 1181px) { .insight-grid:not(.two) { grid-template-columns: 1.45fr 1fr 1fr 1fr; } }
+.insight-completion p { text-wrap: pretty; }
+
+/* ===== 待办 · 看板卡片 ===== */
+/* 44px 的点击区里画着 22px 方框；看板视图把上边距改成 2px 后，方框中线比标题第一行低 9.5px。 */
+.task-board .task-row > .task-check { margin-top: -7px; }
+
+/* ===== 个人与账号 ===== */
+/* 两行文字的设置项高 94–100px，上下各留 25px，显得空：按内容高度留 18px。 */
+.settings-item { min-height: 80px; padding-block: 16px; }
+.settings-menu > .settings-item { grid-column: auto; }
+.settings-menu { margin-bottom: 0; }
+.settings-item:hover { transform: none; }
+@media (max-width: 600px) { .settings-item { min-height: 68px; padding-block: 12px; } }
+
+/* ===== 对话框 · 头部与正文共用一条内容线 ===== */
+/* 实测 1440：标题左缘 349、正文 359（差 10px）；关闭按钮右缘 1091、正文右缘 1071（差 20px，
+   其中 10px 是正文为滚动条预留的槽）。头部改用与正文相同的内边距，并同样预留滚动条槽，
+   这样在任何平台的滚动条宽度下两条线都重合。 */
+#dialog .dialog-head { padding-inline: 28px; overflow: hidden; scrollbar-gutter: stable; }
+#dialog:has(#workflow-form) .dialog-head { padding-inline: 18px; }
+@media (max-width: 650px) { #dialog:has(#workflow-form) .dialog-head { padding-inline: 14px; } }
+@media (max-width: 600px) {
+  #dialog .dialog-head { padding-inline: 18px; scrollbar-gutter: auto; }
+  #dialog:has(#workflow-form) .dialog-head { padding-inline: 14px; }
+  #dialog:has(.calendar-options) .dialog-head { padding-inline: 16px; }
+  #dialog:has(.calendar-date-picker) .dialog-head { padding-inline: 14px; }
+}
+
+/* ===== 对话框 · 页脚 ===== */
+/* “撤销编辑/重做”是透明按钮，又被设了 100px 最小宽度，文字比内容线缩进 25.8px：
+   按内容收窄，并向外让出内边距，让文字本身贴齐内容线。 */
+#dialog .form-edit-actions { margin-left: -10px; gap: 2px; flex-wrap: nowrap; }
+#dialog .form-edit-actions .button { min-width: 0; width: auto; padding-inline: 10px; }
+/* “撤销”和“编辑”分在两个文字节点里（窄屏隐藏后半），按钮的 flex 间距不能插在中间。 */
+.form-edit-actions [data-form-undo] { gap: 0; }
+/* 表单后面还有内容（如账号安全里的“注销账号”）时，页脚不能再用吸底的负外边距，
+   否则会盖住下一块的上边框（实测重叠 2px，上边框消失）。 */
+#dialog .dialog-body > form:not(:last-child) .form-footer { position: static; margin-bottom: 0; }
+#dialog .dialog-body > form:not(:last-child) + .account-danger { margin-top: 10px; }
+/* 纵向表单里，最后一个输入框到页脚分隔线有 40px（栈间距 20 + 页脚外边距 20），比字段间距还大：收成 24px。 */
+#dialog .dialog-body form.stack > .form-footer { margin-top: 4px; }
+@media (max-width: 650px) {
+  /* 窄屏：撤销/重做缩成短词放在左侧，其余按钮按文字长短分配宽度，主按钮不再折成两行
+     （原来“取消”和“更新密码并退出其他设备”各占一半，后者折行）。 */
+  #dialog .form-footer { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
+  #dialog .form-footer > .button { flex: 1 1 auto; width: auto; min-width: 0; }
+  #dialog .form-footer > .form-edit-actions { flex: none; margin-right: 0; }
+  #dialog .form-edit-actions .edit-word { display: none; }
+}
+@media (max-width: 340px) {
+  #dialog .form-footer:has(.form-edit-actions:not([hidden])) { flex-wrap: wrap; }
+  #dialog .form-footer > .form-edit-actions { flex: 1 0 100%; }
+}
+/* 旧样式让窄屏页脚里所有按钮 flex:1，“撤销/重做”单独成行时被拉开到两端。 */
+#dialog .form-edit-actions .button { flex: none; }
+/* 新建安排的页脚里还有一段“北京时间”说明（含自动暂存状态）：
+   宽屏放在撤销/重做之后、靠右贴着取消和保存；窄屏实测被挤成 24–32px 宽的竖排文字，改为单独一行。 */
+#dialog .form-footer > .spacer { text-align: right; align-self: center; }
+#dialog .form-footer:has(> .spacer) > :is([data-dialog-cancel], [type=submit]) { order: 2; }
+@media (max-width: 650px) {
+  #dialog .form-footer:has(> .spacer) { flex-wrap: wrap; }
+  #dialog .form-footer > .spacer { order: -1; flex: 1 0 100%; text-align: left; }
+}
+
+/* ===== 提醒中心 ===== */
+/* 组标题已写明“留意 · 4”，每张卡右侧再写一遍“留意”是重复的；换成去处理的箭头。 */
+.reminder-center .reminder-item { grid-template-columns: 34px minmax(0, 1fr) 24px; }
+
+/* 正文段落避免单字孤行（实测“之后彻底清/除。”） */
+#dialog .alert p, #dialog .dialog-body p { text-wrap: pretty; }
+
+/* ===== 处理通知 · 第一步 ===== */
+/* “语音补充”是透明按钮，麦克风比内容线缩进 13px（窄屏 14px）：向外让出内边距。 */
+.notice-compose [data-notice-voice] { margin-left: -12px; }
+
+/* ===== 通知详情 · 卡片内边距 ===== */
+/* 上下叠放的“办理与跟进”(22px) 与“原文与附件”(16px) 标题左缘差 6px，右栏卡片又是 24px：统一。 */
+.review-grid > .source-pane, #draft-pane > .panel { padding: 22px; }
+@media (max-width: 850px) {
+  .case-workflow, .review-grid > .source-pane, #draft-pane > .panel { padding: 16px; }
+}
+/* 已保存的待办行自带 22px 内边距，叠在卡片内边距里，方框比上方小信使和分隔线缩进 22px（手机 14px）。
+   行向两侧铺满卡片，悬停底色贴边，内容回到卡片的内容线上。 */
+#draft-pane > .panel > .task-row { margin-inline: -22px; padding-inline: 22px; }
+@media (max-width: 850px) { #draft-pane > .panel > .task-row { margin-inline: -16px; padding-inline: 16px; } }
+/* 变动记录每行只有上边框，又带 8px 圆角，分隔线两端被画成弯钩。 */
+.change-list-item { border-radius: 0; }
+
+/* ===== 可展开区块的箭头 ===== */
+/* 这些 summary 在窄屏被设成 flex，系统三角随之消失，用户看不出能展开（“原文与附件”在手机上默认收起）；
+   宽屏又是粗三角“▼”。统一换成线条箭头：收起朝右，展开朝下。 */
+/* 新建安排里的“地点、重复和备注”同样换成线条箭头。 */
+:is(.change-list, .notice-originals, #workflow-form details, #arrangement-form details) > summary { display: flex; align-items: center; gap: 8px; list-style: none; cursor: pointer; }
+:is(.change-list, .notice-originals, #workflow-form details, #arrangement-form details) > summary::-webkit-details-marker { display: none; }
+:is(.change-list, #workflow-form details, #arrangement-form details) > summary::before,
+.notice-originals > summary::after {
+  content: ''; flex: none; width: 6px; height: 6px; margin-inline: 2px 3px;
+  border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg); opacity: .6; transition: transform var(--dur-3) var(--ease-spring);
+}
+:is(.change-list, #workflow-form details, #arrangement-form details)[open] > summary::before { transform: translateY(-2px) rotate(45deg); }
+/* 放在右端的箭头沿用下拉的习惯：收起朝下，展开朝上（与日历筛选一致）。 */
+.notice-originals > summary { justify-content: flex-start; }
+.notice-originals > summary > .small { margin-left: auto; }
+.notice-originals > summary::after { margin-inline: 8px 3px; transform: translateY(-2px) rotate(45deg); }
+.notice-originals[open] > summary::after { transform: translateY(1px) rotate(225deg); }
+/* 引用来源、复查说明的展开箭头也还是文字“⌄”，基线偏低：同样换成线条。 */
+.citation-disclosure summary::after, .review-observation summary::after {
+  content: ''; display: inline-block; flex: none; width: 6px; height: 6px; font-size: 0;
+  border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); opacity: .55; transition: transform var(--dur-3) var(--ease-spring);
+}
+.citation-disclosure[open] summary::after, .review-observation[open] > summary::after { transform: translateY(1px) rotate(225deg); }
+
+/* ===== 数据看板 · 卡片底部链接 ===== */
+/* 实测点击区只有 20px 高（低于 24px 的最小目标）：撑到 32px，文字位置不变。 */
+.insight-card > .link-button { display: inline-flex; align-items: center; min-height: 32px; margin-block: -6px; }
+
+/* ===== 横屏手机 · 我的记忆 ===== */
+/* 844×390 实测：页面锁定一屏高，搜索和筛选占满右栏，记录列表只剩 0–15px，一条记忆都看不到。
+   矮屏仍保持一屏（外框不超出视口），但让右栏整体滚动：筛选随列表一起滚走，记录可以看到。 */
+@media (max-height: 500px) and (min-width: 651px) {
+  .memory-tree-main { overflow-y: auto; overscroll-behavior: contain; }
+  .memory-tree-main > .memory-tree-rows { flex: none; min-height: 0; overflow: visible; }
+}

@@ -28,6 +28,10 @@ def test_public_illustration_cache_does_not_cache_private_data(env):
     assert asset.headers['cache-control']=='public, max-age=86400'
     assert c.get('/api/tasks').headers['cache-control']=='no-store'
     assert c.get('/').headers['cache-control']=='no-store'
+    # 前端代码可缓存但每次校验，未变化时用 304 免去重复下载。
+    script=c.get('/static/app.js')
+    assert script.headers['cache-control']=='no-cache' and script.headers.get('etag')
+    assert c.get('/static/app.js',headers={'If-None-Match':script.headers['etag']}).status_code==304
 
 
 def test_real_pdf_text_and_page_locator():

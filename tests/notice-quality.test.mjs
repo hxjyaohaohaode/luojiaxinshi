@@ -18,8 +18,8 @@ test('unavailable review needs an explanation and never looks like success',()=>
   assert.ok(needsQualityResolution({status:'unavailable'}));assert.ok(needsQualityResolution({status:'needs_review'}));
   assert.ok(!needsQualityResolution({status:'passed'}));
   assert.match(qualityPanel({status:'unavailable',reason:'本次未完成'},[],'',esc),/minlength="8"/);
-  assert.match(qualityPanel({status:'passed',issues:[]},[],'',esc),/仍由你确认保存/);
-  assert.match(qualityPanel(null,[],'',esc),/未进行独立/);
+  assert.match(qualityPanel({status:'passed',issues:[]},[],'',esc),/确认没问题再保存/);
+  assert.match(qualityPanel(null,[],'',esc),/还没让 AI 自查/);
 });
 test('retained provider finding uses student terms without changing its original evidence',()=>{
   const quote='plan.action_kind=required';
@@ -29,6 +29,6 @@ test('retained provider finding uses student terms without changing its original
 });
 test('source coverage keeps its original provenance and fallible attribution',()=>{
   const html=qualityPanel({status:'needs_review',source_checks:[{name:'附件<一>',coverage:'gaps',requirements_summary:'原文要求交付应用',evidence:[{source_id:'source-b',locator:'第8段',quote:'提交手机应用'}]}],issues:[]},[],'',esc);
-  assert.match(html,/逐份原文核对记录 · 1 份/);assert.match(html,/模型提示有遗漏/);
+  assert.match(html,/每份原文的核对情况 · 1 份/);assert.match(html,/AI 提示可能有遗漏/);
   assert.match(html,/附件&lt;一&gt;/);assert.match(html,/data-source="source-b"/);assert.match(html,/提交手机应用/);
 });

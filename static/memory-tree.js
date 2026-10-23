@@ -5,7 +5,7 @@ import {memoryListText,memoryTimestamp} from './memory-list-text.js';
 import {memoryNodeIcon,memoryEntryIcon} from './memory-icons.js';
 
 const kinds={preference:'偏好',constraint:'约束',decision:'决定',fact:'事实',episode:'经历',skill:'方法',intention:'计划',summary:'概览'};
-const states={active:'可按需调用',pending:'系统暂缓使用',conflict:'存在歧义，暂不使用',needs_review:'自动检查中',cooling:'已冷却',source_changed:'来源已变化或停止使用',archived:'已归档',inactive:'已停用',expired:'已过期',scheduled:'尚未生效'};
+const states={active:'正常使用',pending:'暂时不用',conflict:'说法不明确，先不用',needs_review:'自动检查中',cooling:'近期没用到',source_changed:'来源有变或已不用',archived:'已归档',inactive:'已停用',expired:'已过期',scheduled:'还没生效'};
 const date=value=>memoryTimestamp(value,true);
 const options=(esc,items,value)=>Object.entries(items).map(([key,label])=>`<option value="${key}" ${key===value?'selected':''}>${esc(label)}</option>`).join('');
 
@@ -29,10 +29,10 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   }
   async function write(path,payload,method='POST'){
     const id=current(),headers=await intents.headers(id,method+path,payload);
-    if(id!==state.session?.user?.id)throw Error('账号已变化，请重新打开记忆。');
+    if(id!==state.session?.user?.id)throw Error('账号切换了，重新打开记忆页看看吧。');
     const request=new AbortController(),timeout=setTimeout(()=>request.abort(),25000);pendingWrites++;
     try{const result=await api(path,{method,json:payload,headers,signal:request.signal});intents.complete(id,headers['Idempotency-Key']);return result;}
-    catch(error){if(error.status===0)throw Error('本次结果尚未确认。请保留原内容，重试同一操作会核对原回执。');throw error;}
+    catch(error){if(error.status===0)throw Error('网络断了一下，还不确定刚才有没有保存成功。先别改内容，再试一次会自动核对，不会重复保存。');throw error;}
     finally{clearTimeout(timeout);pendingWrites--;}
   }
   function frame(){return `<div id="memory-shell" class="memory-tree-page">
@@ -41,7 +41,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     <div class="memory-tree-layout"><aside class="memory-tree-nav" id="memory-tree-sidebar"><div class="memory-tree-nav-title"><strong>记忆目录</strong><button class="icon-button" data-tree-action="folder-edit" aria-label="编辑当前目录">⋯</button><button class="icon-button" data-tree-action="folder" aria-label="新建子目录">${icon('plus')}</button></div><div id="memory-tree-nav" role="tree" aria-label="记忆目录"></div><button class="memory-session-nav" data-tree-action="sessions">${icon('history')} 会话与工作记忆 <span id="memory-short-count"></span></button></aside>
     <section class="memory-tree-main" aria-label="当前目录的记忆"><nav id="memory-breadcrumbs" class="memory-breadcrumbs" aria-label="记忆路径"></nav>
     <div class="memory-search-line"><label class="memory-tree-search">${icon('search')}<span class="sr-only">搜索记忆</span><input id="memory-search" type="search" maxlength="1000" placeholder="搜索内容、项目、目录或资料"></label><label class="sr-only" for="memory-search-scope">搜索范围</label><select id="memory-search-scope" aria-label="搜索范围"><option value="folder">当前目录</option><option value="all">全部记忆</option></select></div>
-    <div id="memory-tree-filters" class="memory-tree-filters"><label>内容<select id="memory-view-type">${options(esc,{auto:'自动显示',all:'全部内容',memories:'可编辑记忆',passages:'资料原文'},viewType)}</select></label><label>状态<select id="memory-state-filter">${options(esc,{all:'全部状态',active:'可按需调用',held:'系统暂缓',inactive:'停用或归档'},stateFilter)}</select></label><label>排序<select id="memory-sort">${options(esc,{recent:'最近更新',oldest:'最早更新'},sort)}</select></label></div>
+    <div id="memory-tree-filters" class="memory-tree-filters"><label>内容<select id="memory-view-type">${options(esc,{auto:'自动显示',all:'全部内容',memories:'可编辑记忆',passages:'资料原文'},viewType)}</select></label><label>状态<select id="memory-state-filter">${options(esc,{all:'全部状态',active:'正常使用',held:'系统暂缓',inactive:'停用或归档'},stateFilter)}</select></label><label>排序<select id="memory-sort">${options(esc,{recent:'最近更新',oldest:'最早更新'},sort)}</select></label></div>
     <div class="memory-tree-results"><span id="memory-match-count" role="status"></span><label class="memory-check-page"><input id="memory-check-page" type="checkbox">选择本页记忆</label></div>
     <div id="memory-bulk-bar" class="memory-bulk-bar" hidden><span id="memory-selected-count"></span><button class="button small" data-tree-action="move-many">移动</button><button class="button small" data-tree-action="archive-many">归档</button><button class="button small" data-tree-action="activate-many">启用</button><button class="button small danger" data-tree-action="forget-many">遗忘</button><button class="button small" data-tree-action="uncheck">取消选择</button></div>
     <div id="memory-load-status" role="status" class="memory-load-status"></div><div id="memory-items" class="memory-tree-rows"></div><div id="memory-pagination" class="memory-tree-pagination"></div></section>
@@ -54,7 +54,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     const branch=(parent,depth=0)=>[...tree.values()].filter(n=>n.parent_id===parent).sort((a,b)=>b.system-a.system||a.title.localeCompare(b.title,'zh')).map(n=>{
       const open=expanded.has(n.id),hasChildren=n.children>0;
       return `<div role="treeitem" aria-level="${depth+1}" aria-selected="${mode==='tree'&&node===n.id}" ${hasChildren?`aria-expanded="${open}"`:''} data-tree-id="${esc(n.id)}"><div class="memory-tree-node"><button class="memory-tree-disclosure" tabindex="-1" data-tree-expand="${esc(n.id)}" aria-label="${open?'收起':'展开'} ${esc(n.title)}" ${hasChildren?'':'disabled'}><span class="memory-tree-chevron ${open?'is-open':''}">›</span></button><button class="memory-tree-label" data-tree-node="${esc(n.id)}" tabindex="${mode==='tree'&&node===n.id?0:-1}" title="${esc(n.title)}">${memoryNodeIcon(n,open)}<span class="memory-tree-name">${esc(n.title)}</span>${n.item_count?`<small>${n.item_count}</small>`:''}</button></div>${open?`<div role="group">${branch(n.id,depth+1)}</div>`:''}</div>`;
-    }).join('')+(more.has(parent)?`<button class="button small" data-tree-more="${esc(parent)}">继续载入目录…</button>`:'');
+    }).join('')+(more.has(parent)?`<button class="button small" data-tree-more="${esc(parent)}">加载更多目录…</button>`:'');
     $('#memory-tree-nav').innerHTML=`<div role="treeitem" aria-level="1" aria-selected="${mode==='tree'&&node===root}" aria-expanded="true" data-tree-id="${esc(root)}"><div class="memory-tree-node memory-tree-root"><button class="memory-tree-label" data-tree-node="${esc(root)}" tabindex="${mode==='session'||node===root?0:-1}">${memoryNodeIcon({node_key:'root'})}<span class="memory-tree-name">全部记忆</span></button></div><div role="group">${branch(root,1)}</div></div>`;
     $('.memory-session-nav')?.setAttribute('aria-current',mode==='session'?'page':'false');
     // Collapsing a selected descendant must leave one reachable tab stop.
@@ -85,7 +85,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     const count=rows.memories.length;box.disabled=mode==='session'||count===0;box.checked=count>0&&checked.size===count;box.indeterminate=checked.size>0&&!box.checked;
     $('.memory-check-page').hidden=mode==='session'||count===0;
     $('#memory-bulk-bar').hidden=!checked.size;$('#memory-selected-count').textContent=`已选 ${checked.size} 条`;
-    const activate=$('[data-tree-action="activate-many"]');if(activate){activate.disabled=rows.memories.some(m=>checked.has(m.id)&&m.review_status!=='accepted');activate.title=activate.disabled?'有条目依据不足，补充或修订正文后再使用':'';}
+    const activate=$('[data-tree-action="activate-many"]');if(activate){activate.disabled=rows.memories.some(m=>checked.has(m.id)&&m.review_status!=='accepted');activate.title=activate.disabled?'有几条依据不够，补充或修改内容后再启用':'';}
   }
   function pagination(total){
     $('#memory-pagination').innerHTML=total>50?`<button class="button small" data-tree-action="previous" ${page===0?'disabled':''}>上一页</button><span>第 ${page+1} / ${Math.ceil(total/50)} 页</span><button class="button small" data-tree-action="next" ${(page+1)*50>=total?'disabled':''}>下一页</button>`:'';
@@ -94,16 +94,16 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     if(mode==='session'){sessionList();return;}
     const all=[...rows.memories.map(m=>({id:m.id,title:m.content,text:m.content,kind:kinds[m.kind],symbol:memoryEntryIcon(m),state:states[m.state]||'已保存',active:m.state==='active',updated:m.updated_at,locked:m.locked,source:['resource','source_claim'].includes(m.origin),editable:true,path:m.path})),
       ...(rows.passages||[]).map(p=>({id:p.id,title:p.title,text:p.content,kind:'资料原文',symbol:memoryEntryIcon(p),state:p.locator,active:true,updated:p.created_at,source:true,path:p.path}))];
-    for(const m of all){if(m.editable){const excerpt=memoryListText(m.text);m.title=excerpt.title;m.text=excerpt.preview;}if(rows.settings?.mode==='off'&&m.active){m.state='已暂停调用';m.active=false;}}
+    for(const m of all){if(m.editable){const excerpt=memoryListText(m.text);m.title=excerpt.title;m.text=excerpt.preview;}if(rows.settings?.mode==='off'&&m.active){m.state='已暂停使用';m.active=false;}}
     const order=new Map((rows.order||all).map((r,i)=>[r.id,i]));all.sort((a,b)=>(order.get(a.id)||0)-(order.get(b.id)||0));
-    $('#memory-items').innerHTML=all.map(m=>`<div class="memory-selectable-row">${m.editable?`<label class="memory-row-check"><span class="sr-only">选择：${esc(m.title.slice(0,35))}</span><input type="checkbox" data-tree-check="${esc(m.id)}" ${checked.has(m.id)?'checked':''}></label>`:'<span class="memory-row-check-spacer"></span>'}<button class="memory-tree-row ${selected===m.id?'is-selected':''}" data-tree-record="${esc(m.id)}" aria-pressed="${selected===m.id}"><span class="memory-row-symbol ${m.source?'is-source':''}">${m.symbol}</span><span class="memory-row-body"><span class="memory-row-title">${esc(m.title.slice(0,100))}</span><span class="memory-row-preview">${esc(m.text.slice(0,150))}</span><span class="memory-row-meta"><span>${esc(m.kind)}</span><span class="${m.active?'is-active':''}">${esc(m.state)}</span>${m.locked?'<span>本人保护</span>':''}${drafts.has(m.id)?'<span class="memory-draft-badge">有草稿</span>':''}</span>${query.tree||searchScope==='all'?`<span class="memory-row-path">${esc(m.path||'')}</span>`:''}</span><time class="memory-row-time" title="${esc(date(m.updated))}">${esc(memoryTimestamp(m.updated))}</time></button></div>`).join('')||`<div class="memory-tree-empty">${icon('doc')}<h2>${query.tree?'没有匹配的内容':'这里还没有内容'}</h2><p>${query.tree?'可以清空关键词，或扩大搜索范围。':'对话、通知、资料、项目说明和办理进展会自动积累。也可以直接添加你想保留的内容。'}</p><div class="memory-detail-buttons">${query.tree?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}${node!==root||stateFilter!=='all'||viewType!=='all'?'<button class="button small" data-tree-action="search-all">查看全部记忆</button>':''}<button class="button small" data-memory-action="new">添加记忆</button></div></div>`;
+    $('#memory-items').innerHTML=all.map(m=>`<div class="memory-selectable-row">${m.editable?`<label class="memory-row-check"><span class="sr-only">选择：${esc(m.title.slice(0,35))}</span><input type="checkbox" data-tree-check="${esc(m.id)}" ${checked.has(m.id)?'checked':''}></label>`:'<span class="memory-row-check-spacer"></span>'}<button class="memory-tree-row ${selected===m.id?'is-selected':''}" data-tree-record="${esc(m.id)}" aria-pressed="${selected===m.id}"><span class="memory-row-symbol ${m.source?'is-source':''}">${m.symbol}</span><span class="memory-row-body"><span class="memory-row-title">${esc(m.title.slice(0,100))}</span><span class="memory-row-preview">${esc(m.text.slice(0,150))}</span><span class="memory-row-meta"><span>${esc(m.kind)}</span><span class="${m.active?'is-active':''}">${esc(m.state)}</span>${m.locked?'<span>已保护</span>':''}${drafts.has(m.id)?'<span class="memory-draft-badge">有草稿</span>':''}</span>${query.tree||searchScope==='all'?`<span class="memory-row-path">${esc(m.path||'')}</span>`:''}</span><time class="memory-row-time" title="${esc(date(m.updated))}">${esc(memoryTimestamp(m.updated))}</time></button></div>`).join('')||`<div class="memory-tree-empty">${icon('doc')}<h2>${query.tree?'没找到匹配的内容':'这里还空着'}</h2><p>${query.tree?'换个关键词，或者扩大搜索范围试试。':'平时的对话、通知、资料和办事进展会慢慢积累到这里，你也可以直接添加想记住的内容。'}</p><div class="memory-detail-buttons">${query.tree?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}${node!==root||stateFilter!=='all'||viewType!=='all'?'<button class="button small" data-tree-action="search-all">查看全部记忆</button>':''}<button class="button small" data-memory-action="new">添加记忆</button></div></div>`;
     const overview=viewType==='auto'&&!query.tree&&!tree.get(node)?.node_key?.startsWith('source');
-    $('#memory-match-count').textContent=`${rows.matched||0} 条内容${query.tree&&searchScope==='folder'?' · 当前目录及子目录':overview?' · 概览显示，搜索可查全文':''}`;
+    $('#memory-match-count').textContent=`${rows.matched||0} 条内容${query.tree&&searchScope==='folder'?' · 当前目录及子目录':overview?' · 这里是概览，搜索可以查全文':''}`;
     pagination(rows.matched);bulkBar();
   }
   function sessionList(){
-    $('#memory-items').innerHTML=(rows.items||[]).map(s=>`<article class="memory-session-entry"><div class="memory-row-meta"><span>${esc(s.title)}</span><span>${s.lifetime==='turn'?'仅形成当轮':'所属会话内'}</span>${s.edited_by_user?'<span>本人已修订</span>':''}</div><p class="memory-content">${esc(s.content)}</p><p class="small muted">保留至 ${esc(date(s.expires_at))}${s.promoted_id?' · 已形成长期记忆':''}</p><div class="memory-detail-buttons"><a class="button small" href="#chat/${encodeURIComponent(s.conversation_id)}">继续对话</a><button class="button small" data-memory-studio="working" data-id="${esc(s.conversation_id)}">目标与工作记录</button><button class="button small" data-memory-life="edit-session" data-id="${esc(s.id)}">编辑条件</button>${s.promoted_id?'':`<button class="button small" data-memory-life="promote" data-id="${esc(s.id)}">长期保留</button>`}<button class="button small danger" data-memory-life="forget-session" data-id="${esc(s.id)}">遗忘</button></div></article>`).join('')||`<div class="memory-tree-empty"><h2>${query.session?'没有匹配的会话条件':'暂时没有会话条件'}</h2><p>临时要求只在相应会话和保留期内使用，不会因为显示在这里就变成长期偏好。</p>${query.session?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}</div>`;
-    $('#memory-match-count').textContent=`${rows.matched||0} 条会话条件`;pagination(rows.matched);bulkBar();
+    $('#memory-items').innerHTML=(rows.items||[]).map(s=>`<article class="memory-session-entry"><div class="memory-row-meta"><span>${esc(s.title)}</span><span>${s.lifetime==='turn'?'只用于这一轮':'只在这个对话里'}</span>${s.edited_by_user?'<span>我改过</span>':''}</div><p class="memory-content">${esc(s.content)}</p><p class="small muted">保留至 ${esc(date(s.expires_at))}${s.promoted_id?' · 已变成长期记忆':''}</p><div class="memory-detail-buttons"><a class="button small" href="#chat/${encodeURIComponent(s.conversation_id)}">继续对话</a><button class="button small" data-memory-studio="working" data-id="${esc(s.conversation_id)}">目标与工作记录</button><button class="button small" data-memory-life="edit-session" data-id="${esc(s.id)}">编辑条件</button>${s.promoted_id?'':`<button class="button small" data-memory-life="promote" data-id="${esc(s.id)}">长期保留</button>`}<button class="button small danger" data-memory-life="forget-session" data-id="${esc(s.id)}">遗忘</button></div></article>`).join('')||`<div class="memory-tree-empty"><h2>${query.session?'没找到匹配的临时要求':'还没有对话里的临时要求'}</h2><p>临时要求只在对应的对话和保留期内用，不会因为出现在这里就变成长期习惯。</p>${query.session?'<button class="button small" data-tree-action="clear-search">清空搜索</button>':''}</div>`;
+    $('#memory-match-count').textContent=`${rows.matched||0} 条临时要求`;pagination(rows.matched);bulkBar();
   }
   function overlay(open){
     const pane=$('#memory-detail-pane'),modal=!!(open&&pane?.classList.contains('is-visible')&&location.hash.split('/')[0]==='#memory'&&narrow());
@@ -129,7 +129,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     selected=id;list();const m=rows.memories.find(m=>m.id===id),p=rows.passages?.find(p=>p.id===id);
     if(!m&&!p){clearDetail();return;}
     const pane=$('#memory-detail-pane');
-    pane.innerHTML=`<div class="memory-detail-heading"><span class="memory-detail-tag">${m?esc(kinds[m.kind]):'资料原文'}</span><button class="icon-button" data-tree-action="close-detail" aria-label="关闭详情">×</button></div><h2>${m?'记忆详情':esc(p.title)}</h2><p class="small muted">${m?'第 '+m.version+' 版 · '+date(m.updated_at):esc(p.locator)+' · 原文位置 '+p.start_offset}</p><div class="memory-detail-text memory-content">${esc(m?m.content:p.content)}</div>${m?`${drafts.has(m.id)?'<p class="memory-draft-notice">此条目有未保存草稿，点“继续编辑草稿”恢复。</p>':''}<div class="memory-detail-buttons"><button class="button primary" data-tree-action="edit-inline">${icon('edit')} ${drafts.has(m.id)?'继续编辑草稿':'直接编辑'}</button><button class="button" data-memory-assist="open" data-id="${esc(id)}">AI 修改</button><button class="button" data-tree-action="copy">复制</button></div><p class="memory-detail-note">${esc(states[m.state]||'已保存')} · ${esc(m.scope==='project'?(rows.projects.find(p=>p.id===m.project_id)?.name||'所属项目'):m.scope==='topic'?m.topic:'跨项目通用')}<br>${m.shared?'可在原范围内跨会话使用':'仅来源会话使用'}，由 AI 按问题选择。</p><button class="memory-detail-link" data-memory-studio="detail" data-id="${esc(id)}">查看来源与修改历史 →</button><details class="memory-detail-more"><summary>位置与更多操作</summary><p>${esc(m.path||'')}</p><div class="stack"><button class="button small" data-tree-action="move">移动到…</button><button class="button small" data-memory-action="edit" data-id="${esc(id)}">分类、范围与有效期</button><button class="button small" data-memory-life="item" data-id="${esc(id)}">记忆层级与跨会话使用</button>${m.review_status==='accepted'?`<button class="button small" data-memory-action="toggle" data-id="${esc(id)}">${m.active&&m.status==='active'?'停用':'启用'}</button>`:''}<button class="button small danger" data-memory-action="delete" data-id="${esc(id)}">遗忘这条记忆</button></div></details>`:`<p class="memory-detail-note">片段自动跟随原资料更新。要修改原始内容，可进入来源；这里的资料陈述保留来源身份。</p><div class="memory-detail-buttons"><button class="button" data-tree-action="open-source">查看原始资料</button><button class="button" data-tree-action="copy">复制片段</button></div>`}`;
+    pane.innerHTML=`<div class="memory-detail-heading"><span class="memory-detail-tag">${m?esc(kinds[m.kind]):'资料原文'}</span><button class="icon-button" data-tree-action="close-detail" aria-label="关闭详情">×</button></div><h2>${m?'记忆详情':esc(p.title)}</h2><p class="small muted">${m?'第 '+m.version+' 版 · '+date(m.updated_at):esc(p.locator)+' · 原文位置 '+p.start_offset}</p><div class="memory-detail-text memory-content">${esc(m?m.content:p.content)}</div>${m?`${drafts.has(m.id)?'<p class="memory-draft-notice">这条还有没保存的草稿，点“继续编辑草稿”就能接着改。</p>':''}<div class="memory-detail-buttons"><button class="button primary" data-tree-action="edit-inline">${icon('edit')} ${drafts.has(m.id)?'继续编辑草稿':'直接编辑'}</button><button class="button" data-memory-assist="open" data-id="${esc(id)}">AI 修改</button><button class="button" data-tree-action="copy">复制</button></div><p class="memory-detail-note">${esc(states[m.state]||'已保存')} · ${esc(m.scope==='project'?(rows.projects.find(p=>p.id===m.project_id)?.name||'所属项目'):m.scope==='topic'?m.topic:'跨项目通用')}<br>${m.shared?'在同一范围里，别的对话也能用':'只在原来的对话里用'}，AI 会按问题挑着用。</p><button class="memory-detail-link" data-memory-studio="detail" data-id="${esc(id)}">查看来源与修改历史 →</button><details class="memory-detail-more"><summary>位置与更多操作</summary><p>${esc(m.path||'')}</p><div class="stack"><button class="button small" data-tree-action="move">移动到…</button><button class="button small" data-memory-action="edit" data-id="${esc(id)}">分类、范围与有效期</button><button class="button small" data-memory-life="item" data-id="${esc(id)}">记忆层级和跨对话使用</button>${m.review_status==='accepted'?`<button class="button small" data-memory-action="toggle" data-id="${esc(id)}">${m.active&&m.status==='active'?'停用':'启用'}</button>`:''}<button class="button small danger" data-memory-action="delete" data-id="${esc(id)}">遗忘这条记忆</button></div></details>`:`<p class="memory-detail-note">这段内容会跟着原资料自动更新，想改的话去原资料里改就行。</p><div class="memory-detail-buttons"><button class="button" data-tree-action="open-source">查看原始资料</button><button class="button" data-tree-action="copy">复制片段</button></div>`}`;
     pane.hidden=false;$('.memory-tree-layout')?.classList.add('has-detail');pane.classList.add('is-visible');overlay(true);
     pane.dataset.entryId=id;
     if(previous){if($('.memory-detail-more'))$('.memory-detail-more').open=previous.open;pane.scrollTop=previous.scroll;if($('.memory-detail-text'))$('.memory-detail-text').scrollTop=previous.textScroll;}
@@ -166,33 +166,33 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       checked=new Set([...checked].filter(id=>rows.memories.some(m=>m.id===id)));nav();list();
       if(mode==='tree'&&(summary.jobs.queued||summary.jobs.running)&&$('#memory-items .memory-tree-empty')){
         $('#memory-items .memory-tree-empty h2').textContent='正在自动整理记忆';
-        $('#memory-items .memory-tree-empty p').textContent='已有内容正在建立索引，无需重新添加。整理完成后页面会自动更新，也可以继续处理其他事情。';
+        $('#memory-items .memory-tree-empty p').textContent='已有的内容正在整理，不用重新添加。整理好页面会自动更新，你可以先去忙别的。';
       }
       $('#memory-tree-counts').textContent=`${start.source_passages} 个资料片段${watermark.jobs.queued||watermark.jobs.running?' · 正在自动整理':''}`;
       $('#memory-short-count').textContent=start.session_count||'';
-      if(rows.settings)$('#memory-auto-mode').textContent={auto:'AI 自动维护',review:'AI 自动维护',manual:'手动积累',off:'记忆已暂停'}[rows.settings.mode]||'AI 自动维护';
+      if(rows.settings)$('#memory-auto-mode').textContent={auto:'AI 自动维护',review:'AI 自动维护',manual:'手动添加',off:'记忆已暂停'}[rows.settings.mode]||'AI 自动维护';
       if(selected&&!$('#memory-inline-editor'))detail(selected,{focus:false});
       lastToken=watermark.token;pendingUpdate=false;updateNotice();
       if(navDirty){
         const active=mode==='tree'?(data.breadcrumbs||[]).map(n=>n.id).filter(id=>id!==root):[];
         const targets=[...new Set([...expanded,...active])].slice(0,16);if(!targets.length){const first=start.nodes.find(n=>n.node_key==='layer:long');if(first)targets.push(first.id);}
         const loaded=await Promise.allSettled(targets.map(id=>children(id,0,ticket)));
-        if(user===current()&&ticket===revision){navDirty=false;if(loaded.some(r=>r.status==='rejected'&&r.reason.status!==404))updateNotice('部分目录暂时无法读取，可点击刷新重试。',true);}
+        if(user===current()&&ticket===revision){navDirty=false;if(loaded.some(r=>r.status==='rejected'&&r.reason.status!==404))updateNotice('有些目录暂时读不出来，点刷新再试试。',true);}
       }
     }catch(error){
       if(user!==current()||ticket!==revision||!ui.sameRoute())return;
       if(error.status===404&&node&&node!==root){node=root;clearDetail();page=0;navDirty=true;return await render();}
       updateNotice(error.message,true);
-      if(!$('#memory-items').children.length)$('#memory-items').innerHTML='<div class="memory-tree-empty"><h2>暂时无法读取记忆</h2><p>已保存内容仍在。网络恢复后可重试。</p><button class="button" data-tree-action="refresh">重新读取</button></div>';
+      if(!$('#memory-items').children.length)$('#memory-items').innerHTML='<div class="memory-tree-empty"><h2>记忆暂时读不出来</h2><p>保存的内容都还在，网络好了再试一次。</p><button class="button" data-tree-action="refresh">再试一次</button></div>';
     }finally{clearTimeout(timeout);if(ticket===revision){$('.memory-tree-main')?.removeAttribute('aria-busy');if($('#memory-load-status'))$('#memory-load-status').textContent='';controller=null;}}
   }
   async function inlineEdit(){
     let editing=rows.memories.find(m=>m.id===selected);if(!editing)return;const draft=drafts.get(editing.id),id=editing.id;
     const pane=$('#memory-detail-pane');pane.hidden=false;$('.memory-tree-layout')?.classList.add('has-detail');pane.innerHTML=`<form id="memory-inline-editor" class="stack" data-memory-id="${esc(id)}" data-version="${draft?.version||editing.version}"><div class="memory-detail-heading"><h2>编辑记忆</h2><button class="icon-button" type="button" data-tree-action="close-detail" aria-label="收起并保留草稿">×</button></div><div data-edit-conflict hidden></div><label class="field">正文<textarea name="content" required maxlength="2000" rows="12">${esc(draft?.content??editing.content)}</textarea></label><p class="small muted" data-draft-status></p><div class="memory-detail-buttons"><button class="button primary" type="submit">保存</button><button class="button" type="button" data-tree-action="cancel-edit">放弃草稿</button><button class="button" type="button" data-copy-draft>复制草稿</button></div></form>`;
     const form=$('#memory-inline-editor'),field=form.elements.content,conflict=form.querySelector('[data-edit-conflict]');
-    function saveDraft(){drafts.put(id,field.value,Number(form.dataset.version),editing.content);form.querySelector('[data-draft-status]').textContent=`${Array.from(field.value).length} / 2000 字符 · ${drafts.has(id)?'草稿已暂存':'与已保存正文一致'}`;}
+    function saveDraft(){drafts.put(id,field.value,Number(form.dataset.version),editing.content);form.querySelector('[data-draft-status]').textContent=`${Array.from(field.value).length} / 2000 字 · ${drafts.has(id)?'草稿已暂存':'和已保存的内容一样'}`;}
     function compare(latest){
-      conflict.hidden=false;conflict.innerHTML=`<p>已保存正文更新到了第 ${latest.version} 版。草稿仍保留，请先对照再保存。</p><label class="field">最新已保存正文<textarea readonly rows="5">${esc(latest.content)}</textarea></label><button type="button" class="button small" data-use-latest-version>已对照，保留我的草稿继续编辑</button>`;
+      conflict.hidden=false;conflict.innerHTML=`<p>这条在别的页面改过了，现在是第 ${latest.version} 版。你的草稿还在，对照一下再保存吧。</p><label class="field">最新保存的内容<textarea readonly rows="5">${esc(latest.content)}</textarea></label><button type="button" class="button small" data-use-latest-version>看过了，用我的草稿接着改</button>`;
       form.querySelector('[type="submit"]').disabled=true;
       conflict.querySelector('button').addEventListener('click',()=>{editing=latest;form.dataset.version=latest.version;conflict.hidden=true;form.querySelector('[type="submit"]').disabled=false;saveDraft();field.focus();});
     }
@@ -206,14 +206,14 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
         const saved=await write('/memory/items/'+id,{...payload,version:Number(form.dataset.version),content:field.value,active:editing.review_status==='pending'?true:!!editing.active,locked:true},'PUT');
         if(!context.sameUser())return;drafts.remove(id);
         if(context.sameRoute()&&selected===id){form.remove();rows.memories=rows.memories.map(m=>m.id===id?{...m,...saved}:m);await render();}
-        toast('修改已保存。',false,{duration:15000,action:{label:'撤销',run:async()=>{if(!context.sameUser())throw Error('账号已变化，不能撤销原账号的记忆。');await write('/memory/items/'+id+'/restore',{version:saved.version,revision:editing.version});if(context.sameRoute())await render({navigation:true});}}});
+        toast('改好了。',false,{duration:15000,action:{label:'撤销',run:async()=>{if(!context.sameUser())throw Error('账号切换了，没法撤销原账号的修改。');await write('/memory/items/'+id+'/restore',{version:saved.version,revision:editing.version});if(context.sameRoute())await render({navigation:true});}}});
       }catch(error){
         if(context.sameRoute()&&form.isConnected&&error.status===409){try{const latest=await api('/memory/items/'+id);if(context.sameUser()&&form.isConnected)compare(latest);}catch{}}
         if(context.sameUser())toast(error.message,true);
       }finally{form.inert=false;finish();if(!conflict.hidden)form.querySelector('[type="submit"]').disabled=true;}
     });
   }
-  async function copy(text){try{await navigator.clipboard.writeText(text);toast('已复制。');}catch{toast('浏览器未允许复制，可选中文字后复制。',true);}}
+  async function copy(text){try{await navigator.clipboard.writeText(text);toast('已复制。');}catch{toast('浏览器没让复制，选中文字手动复制吧。',true);}}
   function attachPicker(form,selectedNode,exclude=''){
     let seq=0,offset=0,pickerTimer;const field=form.querySelector('[data-location-picker]');
     field.innerHTML=`<label class="field">查找目录<input data-location-query type="search" placeholder="输入目录或项目名称"></label><label class="field">目标目录<select name="destination" required><option value="">正在读取目录…</option></select></label><p class="small muted" data-location-status role="status"></p><div class="memory-picker-pages"><button class="button small" type="button" data-location-prev>上一页</button><button class="button small" type="button" data-location-next>下一页</button></div>`;
@@ -224,8 +224,8 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
         const data=await api('/memory/tree/locations?'+new URLSearchParams({q:input.value,offset,limit:100,...(exclude?{exclude}:{})}));
         if(ticket!==seq||!context.sameDialog())return;
         const found=data.nodes.find(n=>n.id===chosen);if(found)chosenLabel=found.path;
-        select.innerHTML=`<option value="">请选择目标目录</option>${chosen&&!found?`<option value="${esc(chosen)}" selected>${esc(chosenLabel)}</option>`:''}`+data.nodes.map(n=>`<option value="${esc(n.id)}" ${n.id===chosen?'selected':''}>${esc(n.path)}</option>`).join('');
-        field.querySelector('[data-location-status]').textContent=`找到 ${data.matched} 个目录 · 完整路径可区分同名目录`;
+        select.innerHTML=`<option value="">先选一个目标目录</option>${chosen&&!found?`<option value="${esc(chosen)}" selected>${esc(chosenLabel)}</option>`:''}`+data.nodes.map(n=>`<option value="${esc(n.id)}" ${n.id===chosen?'selected':''}>${esc(n.path)}</option>`).join('');
+        field.querySelector('[data-location-status]').textContent=`找到 ${data.matched} 个目录 · 看完整路径就能分清同名目录`;
         field.querySelector('[data-location-prev]').disabled=offset===0;field.querySelector('[data-location-next]').disabled=offset+100>=data.matched;
       }catch(error){if(ticket===seq&&context.sameDialog())field.querySelector('[data-location-status]').textContent=error.message;}
     }
@@ -240,29 +240,29 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     catch(error){if(context.sameUser())toast(error.message,true);}finally{form.inert=false;finish();}
   }
   function folder(){
-    const parent=node||root;showDialog('新建子目录',`<form id="memory-folder-form" class="stack"><p class="small muted">在当前目录下创建。AI 也会自动分类，无需提前配置目录。</p><label class="field">名称<input name="title" required maxlength="60" autofocus></label><div class="form-footer"><button class="button primary" type="submit">创建目录</button></div></form>`);
+    const parent=node||root;showDialog('新建子目录',`<form id="memory-folder-form" class="stack"><p class="small muted">会建在当前目录下。AI 也会自动分类，不用提前建好目录。</p><label class="field">名称<input name="title" required maxlength="60" autofocus></label><div class="form-footer"><button class="button primary" type="submit">创建目录</button></div></form>`);
     const form=$('#memory-folder-form');form.addEventListener('submit',e=>{e.preventDefault();submitDialog(form,()=>write('/memory/tree/folders',{parent_id:parent,title:form.elements.title.value}));});
   }
   function moveEntries(items){
-    if(!items.length)return;showDialog(items.length>1?`移动 ${items.length} 条记忆`:'移动记忆',`<form id="memory-move-form" class="stack"><p class="small muted">查找任意目录即可移动。项目、专题和会话的使用范围保持原样。</p><div data-location-picker></div><div class="form-footer"><button class="button primary" type="submit">移动</button></div></form>`);
+    if(!items.length)return;showDialog(items.length>1?`移动 ${items.length} 条记忆`:'移动记忆',`<form id="memory-move-form" class="stack"><p class="small muted">找到目标目录就能移过去，项目、专题和对话的使用范围都不变。</p><div data-location-picker></div><div class="form-footer"><button class="button primary" type="submit">移动</button></div></form>`);
     const form=$('#memory-move-form');attachPicker(form,items.length===1?items[0].node_id:node);
     form.addEventListener('submit',e=>{e.preventDefault();submitDialog(form,()=>write('/memory/tree/placements',{node_id:form.elements.destination.value,items:items.map(m=>({id:m.id,version:m.version}))},'PUT'),()=>{checked.clear();clearDetail();toast(`已移动 ${items.length} 条记忆。`);});});
   }
   function editFolder(){
-    const item=tree.get(node);if(!item||item.system){toast('系统分类会自动维护。可在当前目录下新建自己的子目录。');return;}
+    const item=tree.get(node);if(!item||item.system){toast('系统分类由 AI 自动维护，你可以在这里建自己的子目录。');return;}
     showDialog('编辑目录',`<form id="memory-folder-edit" class="stack"><label class="field">名称<input name="title" required maxlength="60" value="${esc(item.title)}"></label><div data-location-picker></div><div class="form-footer"><button class="button danger" type="button" data-remove-folder>移除目录，保留内容</button><button class="button primary" type="submit">保存</button></div></form>`);
     const form=$('#memory-folder-edit');attachPicker(form,item.parent_id,item.id);
     form.addEventListener('submit',e=>{e.preventDefault();submitDialog(form,()=>write('/memory/tree/folders/'+item.id,{title:form.elements.title.value,parent_id:form.elements.destination.value,version:item.version},'PUT'));});
     form.querySelector('[data-remove-folder]').addEventListener('click',async()=>{
       const context=captureUiContext(state,form);if(!await ask('移除目录',`“${item.title}”中的记忆、资料和子目录会移到上一级，内容和使用范围都会保留。`,'移除目录'))return;
       if(!context.sameUser())return;
-      try{const result=await write('/memory/tree/folders/'+item.id,{version:item.version},'DELETE');if(context.sameRoute()){node=result.parent_id;navDirty=true;clearDetail();await render();}if(context.sameUser())toast('目录已移除，内容已保留。');}catch(error){if(context.sameUser())toast(error.message,true);}
+      try{const result=await write('/memory/tree/folders/'+item.id,{version:item.version},'DELETE');if(context.sameRoute()){node=result.parent_id;navDirty=true;clearDetail();await render();}if(context.sameUser())toast('目录移除了，里面的内容都还在。');}catch(error){if(context.sameUser())toast(error.message,true);}
     });
   }
   async function batch(action){
     const items=rows.memories.filter(m=>checked.has(m.id));if(!items.length)return;
     const context=captureUiContext(state);
-    if(action==='forget'&&!await ask('遗忘所选记忆',`将遗忘 ${items.length} 条记忆及其派生内容，撤销相关旧回答的记忆用途。关联资料或任务的自动记忆也会停止，原资料、聊天和离线备份仍保留。`,'确认遗忘'))return;
+    if(action==='forget'&&!await ask('遗忘所选记忆',`会遗忘 ${items.length} 条记忆和由它们整理出的内容，以后的回答也不会再用。相关资料或任务不再自动生成记忆；原资料、聊天记录和离线备份都还在。`,'确认遗忘'))return;
     if(!context.sameUser())return;
     await write('/memory/bulk',{action,items:items.map(m=>({id:m.id,version:m.version}))});
     if(!context.sameUser())return;
@@ -276,7 +276,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       const data=await api('/memory/tree/status');if(user!==current()||!context.sameRoute())return;
       if(lastToken&&lastToken!==data.token){
         const interacting=selected||$('#memory-inline-editor')||$('dialog[open]')||checked.size||$('.memory-tools[open]')||document.activeElement?.closest('#memory-tree-nav,.memory-manage-button')||document.activeElement?.matches('#memory-search,[data-tree-check]');
-        navDirty=true;if(interacting){pendingUpdate=true;updateNotice('记忆已有新变化，编辑和选择会保留；完成后可更新列表。',true);}else await render({navigation:true,quiet:true});
+        navDirty=true;if(interacting){pendingUpdate=true;updateNotice('记忆有新变化。你正在改的和选中的都会保留，忙完再刷新列表就好。',true);}else await render({navigation:true,quiet:true});
       }else if(!lastToken)lastToken=data.token;
     }catch{}finally{polling=false;}
   }

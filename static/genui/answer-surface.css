@@ -55,7 +55,7 @@
   #chat-thread .genui h2.gu-heading {font-size:20px}
 }
 @media(max-width:600px){
-  #chat-thread .work-time {font-size:11px}
+  #chat-thread .work-time {font-size:12px}
   #chat-thread .work-summary>summary {min-height:40px}
   #chat-thread .genui .gu-markdown {font-size:15px;line-height:1.8}
 }

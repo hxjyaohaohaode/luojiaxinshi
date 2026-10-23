@@ -36,7 +36,8 @@ def test_replay_uses_private_cache_even_after_quota_and_app_restart(env,monkeypa
     first=say(c);second=say(c)
     assert first.status_code==second.status_code==200
     assert first.headers['x-speech-cache']=='miss' and second.headers['x-speech-cache']=='hit'
-    assert first.content==second.content==wav(.1) and len(calls)==1
+    from app.speech import label_audio
+    assert first.content==second.content==label_audio(wav(.1),'mimo-v2.5-tts') and len(calls)==1
     from fastapi.testclient import TestClient
     restarted=TestClient(create_app(env[1]),base_url='http://127.0.0.1:8765')
     restarted.cookies.update(c.cookies);restarted.headers.update(c.headers)

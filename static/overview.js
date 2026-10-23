@@ -33,7 +33,7 @@ export function overviewWeek(tasks, today = dayKey()) {
   });
 }
 
-export function createOverview({state,esc,icon,companion,greeting,taskRow,noticeRow,moveSelection}) {
+export function createOverview({state,esc,icon,companion,greeting,taskRow,noticeRow,moveSelection,reminders}) {
   const $ = selector => document.querySelector(selector);
   let section = 'tasks', owner = null, focusIndex = 0, selectedDay = dayKey();
   function render() {
@@ -73,12 +73,17 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
       ['日历待同步',sync.length,'sync','calendar','核对设备中的安排'],
     ].map(([label,count,filter,symbol,note])=>`<a class="action-metric ${count&&filter!=='pending'?'attention':''}" href="#tasks" data-overview-filter="${filter}"><span class="metric-symbol">${icon(symbol)}</span><span class="metric-label">${label}</span><strong>${numberMarkup(count)}</strong><small>${note}</small>${icon('arrow')}</a>`).join('');
     renderWeek();
-    $('#overview-brief').innerHTML = [
+    renderBrief(urgent,uncertain,notices);
+    $('#overview-progress').innerHTML = `<div class="between"><h2>完成记录</h2>${icon('check')}</div><div class="completion-summary">${ringMarkup(completed,total,'个人行动完成情况')}<div><strong>${completed}<small> / ${total} 项</small></strong><p>${total?`还有 ${total-completed} 项待完成`:'暂时没有个人行动'}</p></div></div><a href="#insights">看看我的数据看板 ${icon('arrow')}</a>`;
+    renderItems({pending,ordered,notices,followup},caughtUp);
+  }
+  function renderBrief(urgent,uncertain,notices) {
+    if (!$('#overview-brief')) return;
+    const upcoming = reminders?.summary(4) || '';
+    $('#overview-brief').innerHTML = upcoming + `<div class="overview-brief-links">` + [
       [urgent.length,'临近或已过期','soon','attention'],
       [uncertain.length,'期限待核对','unverified',''],
-    ].map(([count,label,filter,cls])=>`<a class="${count?cls:''}" href="#tasks" data-overview-filter="${filter}"><span>${label}</span><b>${count}</b>${icon('arrow')}</a>`).join('')+`<a href="#notices"><span>通知待核对</span><b>${notices.length}</b>${icon('arrow')}</a>`;
-    $('#overview-progress').innerHTML = `<div class="between"><h2>完成记录</h2>${icon('check')}</div><div class="completion-summary">${ringMarkup(completed,total,'个人行动完成情况')}<div><strong>${completed}<small> / ${total} 项</small></strong><p>${total?`还有 ${total-completed} 项待完成`:'暂时没有个人行动'}</p></div></div><a href="#tasks" data-overview-filter="done">回看已完成的事 ${icon('arrow')}</a>`;
-    renderItems({pending,ordered,notices,followup},caughtUp);
+    ].map(([count,label,filter,cls])=>`<a class="${count?cls:''}" href="#tasks" data-overview-filter="${filter}"><span>${label}</span><b>${count}</b>${icon('arrow')}</a>`).join('')+`<a href="#notices"><span>通知待核对</span><b>${notices.length}</b>${icon('arrow')}</a></div>`;
   }
   function renderFocus(ordered,notices,caughtUp) {
     focusIndex = Math.min(focusIndex, Math.max(0, ordered.length - 1));
@@ -113,6 +118,10 @@ export function createOverview({state,esc,icon,companion,greeting,taskRow,notice
       <div class="week-days" role="group" aria-label="按截止日期查看待办">${days.map((entry,index)=>`<button type="button" data-overview-day="${entry.day}" aria-pressed="${entry.day===selectedDay}" aria-label="${entry.day}，${entry.tasks.length} 项待办"><span>${index===0?'今天':new Intl.DateTimeFormat('zh-CN',{weekday:'short',timeZone:'UTC'}).format(new Date(entry.day+'T00:00:00Z'))}</span><strong>${Number(entry.day.slice(-2))}</strong><i class="${entry.tasks.length?'has-items':''}" aria-hidden="true"></i></button>`).join('')}</div>
       <div class="week-agenda" aria-live="polite"><span class="week-agenda-label">${selectedDay.slice(5).replace('-',' / ')} · 通知期限</span>${chosen.tasks.length?`<button type="button" data-workflow-task="${esc(chosen.tasks[0].id)}"><span>${esc(chosen.tasks[0].data.title)}</span>${icon('arrow')}</button><small>${chosen.tasks.length} 项待完成${chosen.tasks.some(t=>!t.data.deadline_confirmed)?' · 有期限待核对':''}</small>`:'<p>这一天，暂时没有待办到期。</p><a href="#calendar">安排自己的时间 '+icon('arrow')+'</a>'}</div>`;
   }
+  document.addEventListener('campus:reminders',()=>{
+    if(!document.querySelector('#overview-brief'))return;
+    const {urgent,uncertain,notices}=overviewData(state.tasks,state.notices);renderBrief(urgent,uncertain,notices);
+  });
   document.addEventListener('click',event=>{
     const tab=event.target.closest('[data-overview-section]');
     if(tab){section=tab.dataset.overviewSection;const data=overviewData(state.tasks,state.notices);renderItems(data,!data.pending.length&&data.completed>0);}

@@ -35,6 +35,30 @@ def wav_data_url(data, max_seconds=60):
     return 'data:audio/wav;base64,'+base64.b64encode(data).decode('ascii')
 
 
+AI_AUDIO_MARK = 'AI生成内容'
+
+
+def label_audio(data, model):
+    """在 WAV 文件中写入隐式标识（RIFF LIST/INFO 元数据），满足生成合成内容的隐式标识要求。
+
+    只在文件尾追加 LIST 块并更新 RIFF 长度，不改动音频数据；已带标识的文件原样返回。
+    非 RIFF/WAVE 数据原样返回，由显式标识负责提示。
+    """
+    if len(data) < 12 or data[:4] != b'RIFF' or data[8:12] != b'WAVE' or AI_AUDIO_MARK.encode() in data[-512:]:
+        return data
+    def chunk(tag, text):
+        value = text.encode('utf-8') + b'\0'
+        if len(value) % 2:
+            value += b'\0'
+        return tag + len(value).to_bytes(4, 'little') + value
+    info = b'INFO' + chunk(b'ICMT', f'{AI_AUDIO_MARK}；服务：珞珈信使；模型：小米 MiMo {model}') + chunk(b'ISFT', '珞珈信使 · 小米 MiMo 语音合成')
+    body = data[:8 + int.from_bytes(data[4:8], 'little')] if int.from_bytes(data[4:8], 'little') + 8 <= len(data) else data
+    if len(body) % 2:
+        body += b'\0'
+    labeled = body + b'LIST' + len(info).to_bytes(4, 'little') + info
+    return labeled[:4] + (len(labeled) - 8).to_bytes(4, 'little') + labeled[8:]
+
+
 def asr_payload(settings,data):
     return {'model':settings.asr_model,'messages':[{'role':'user','content':[
         {'type':'input_audio','input_audio':{'data':wav_data_url(data)}}]}],
@@ -180,9 +204,11 @@ def install_speech(app,db,settings,user,heavy_lock):
         if channel(settings.ai_base_url)=='token_plan':raise HTTPException(503,'当前语音适配器需要普通按量 API 凭证')
         # Reference recordings are deliberately excluded from persistent reuse.
         if form.get('mode','default')=='clone':
+            # 声音复刻涉及他人声音权益与深度合成规定，默认关闭；部署方确有书面授权流程时再开启。
+            if not settings.voice_clone_enabled:raise HTTPException(403,'本部署没有开放声音复刻')
             audio=await run_in_threadpool(invoke,current,payload,'tts');cached=False
         else:
             audio,cached=await run_in_threadpool(cache.get_or_create,current['id'],message_id,settings,payload,
                                                 lambda:invoke(current,payload,'tts'))
-        return Response(audio,media_type='audio/wav',headers={'Cache-Control':'no-store','X-Speech-Model':payload['model'],
-                                                            'X-Speech-Cache':'hit' if cached else 'miss'})
+        return Response(label_audio(audio,payload['model']),media_type='audio/wav',headers={'Cache-Control':'no-store','X-Speech-Model':payload['model'],
+                                                            'X-Speech-Cache':'hit' if cached else 'miss','X-AI-Generated':'true'})

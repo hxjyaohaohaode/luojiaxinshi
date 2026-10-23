@@ -38,11 +38,14 @@ node --test tests/*.test.mjs
 .\.venv\Scripts\python.exe scripts/evaluate_genui.py
 npm audit --omit=dev
 .\.venv\Scripts\python.exe -m pip_audit -r requirements.lock
+# 改动界面时再运行浏览器回归（需要 Playwright 浏览器，见 TESTING.md）
+.\.venv\Scripts\python.exe scripts/run_browser_checks.py
+.\.venv\Scripts\python.exe scripts/run_agent_browser_checks.py
 ```
 
 前端没有新增 npm 包；`package-lock.json` 仍然保留，用于固定和审计空的依赖树。
 
-互动组件画廊地址为 `/static/genui/gallery.html`，可检查所有组件、亮暗主题和窄屏。需要真实 HTTP 流程但没有模型密钥时，运行 `python scripts/genui_test_server.py`，打开 `http://127.0.0.1:8767`。该服务只用 `artifacts/genui-browser-data` 下的合成测试数据，回复明确标记为工程示例，不代表真实模型输出。测试账号及测试入口见该脚本和 `docs/genui/TESTING.md`。
+互动组件画廊地址为 `/static/genui/gallery.html`，可检查所有组件、亮暗主题和窄屏。需要真实 HTTP 流程但没有模型密钥时，运行 `python scripts/genui_test_server.py`，打开 `http://127.0.0.1:8767`。该服务只用 `artifacts/genui-browser-data` 下的合成测试数据，回复明确标记为工程示例，不代表真实模型输出。测试账号及测试入口见该脚本；完整的测试体系、浏览器回归入口和 CI 说明见 [TESTING.md](TESTING.md)。
 
 ## 分支与协作
 
@@ -65,7 +68,7 @@ git push origin main
 
 ## 附件与资料
 
-`项目资料/文件清单.json` 记录共享附件的相对路径、大小和 SHA-256。原始 Word/PDF 没有重新排版或覆盖，历史版本保留在原文件名下。应用附件解析器支持的格式和预览限制见 README。真实用户上传文件保存在私有数据库中，不能用 Git 作为账户数据同步或备份渠道。
+`项目资料/文件清单.json` 记录共享附件的相对路径、大小和 SHA-256。原始 Word/PDF 没有重新排版或覆盖；目录中只保留定稿版本，早期修订已移除，需要时可从 git 历史取回。应用附件解析器支持的格式和预览限制见 README。真实用户上传文件保存在私有数据库中，不能用 Git 作为账户数据同步或备份渠道。
 
 本仓库未新增一个替用户决定的项目开源许可证。公开可见不等同于所有素材都取得了再分发或商业授权；第三方依赖许可见 `THIRD_PARTY_NOTICES.md`，原创角色来源见 `ASSETS.md`。对外发行前由项目维护者确定项目许可证和校园标识的使用方式。
 

@@ -33,4 +33,4 @@ Pro 提取、Flash 思考复核的复杂通知完整调用曾耗时 305.282 秒�
 
 三种浏览器在 320／390／768／844 横屏／1440／1920 六组尺寸验证选项、价格、同意状态、实际 HTTP 路由和配置隔离。窄屏选择框至少 16 像素、44 像素高，为固定导航留出滚动间距。测试使用独立账号、数据库和模拟供应商，不使用正式库，也不追加付费模型调用。
 
-没有新增数据库结构或运行依赖。复现脚本为 `scripts/notice_modes_preview_server.py` 与 `scripts/verify_notice_modes_browser.mjs`；真实模型脚本仍须显式传入 `--live`，各次输出独立保留。结果和失败记录见 [TESTING.md](../TESTING.md)。
+没有新增数据库结构或运行依赖。当时的预览服务与浏览器复现脚本已在 1.20.0 清理，当轮结果和失败记录见 git 历史；真实模型脚本 `scripts/verify_business_notice.py` 仍须显式传入 `--live`。当前测试体系见 [TESTING.md](../TESTING.md)。

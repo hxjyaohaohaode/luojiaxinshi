@@ -112,20 +112,7 @@ AB3E372B799815A8BACDDF73B5825FBCADB0BD149C4692DDF04CD9326B32212A
 
 使用 `scripts/mvp_preview_server.py` 启动隔离的合成数据服务（默认 `127.0.0.1:8780`）。数据目录必须位于 `artifacts/`，脚本不读取正式 `data/`，不配置模型密钥。重复执行大量注册场景前重新启动该测试服务；服务保留正式限流规则，不修改生产认证逻辑。
 
-PowerShell 示例，在仓库根目录执行，Playwright 已安装时：
-
-```powershell
-$env:MVP_ARTIFACT_DIR = 'artifacts/handbook-upgrade'
-$env:MVP_BROWSERS = 'chromium,firefox,webkit'
-node --test tests/*.test.mjs
-node scripts/verify_mvp_browser.mjs
-node scripts/verify_handbook_frontend.mjs
-node scripts/verify_handbook_visual.mjs
-node scripts/verify_upgrade_interactions.mjs
-node scripts/verify_draft_continuity.mjs
-```
-
-`PLAYWRIGHT_PATH` 可指向已有 Playwright 安装，无须加入应用依赖。导航焦点回归使用现有 `verify_navigation_focus.mjs`，本轮覆盖菜单键盘返回、Esc 弹窗层级和延迟聚焦不抢占输入三组场景。结果及边界见仓库 [验证记录](../TESTING.md)。
+当轮在该服务上运行了页面渲染、手册交互、视觉对齐、升级交互、草稿连续性和导航焦点（菜单键盘返回、Esc 弹窗层级、延迟聚焦不抢占输入）等浏览器脚本。这些一次性脚本已在 1.20.0 清理，命令与结果见 git 历史。当前的前端单元测试为 `node --test tests/*.test.mjs`，浏览器回归统一由 `scripts/run_browser_checks.py` 运行，见仓库 [验证记录](../TESTING.md)。
 
 第一轮验收在 `artifacts/frontend-handbook/`；深度融合的验收图片和 JSON 在 `artifacts/handbook-upgrade/`，作为本地工程证据，已被 Git 忽略。粘贴测试使用合成剪贴板事件；移动尺寸和三种浏览器引擎测试不等同于手机硬件、系统软键盘、系统剪贴板或真实用户体验验收。
 
@@ -159,7 +146,7 @@ node scripts/verify_draft_continuity.mjs
 
 补充样式集中在 `static/feedback.css`，在基础样式与已有品牌适配之后加载。对话恢复与日历显示偏好按账号分键；朗读切换会话或离开页面时释放播放器与临时音频 URL。新增上传动作只打开本应用材料表单，不能由模型指定本地路径。
 
-本轮验收服务为 `scripts/feedback_preview_server.py`，在 `artifacts/browser-feedback/data` 中独立运行。其模型和 WAV 音频均为明确的合成夹具，不读取正式账号数据或模型凭证。新增验收脚本 `scripts/verify_browser_feedback.mjs` 覆盖四种宽度与三种引擎的真实保存、流式片段、偏好持久化、生成式筛选和上传、回复反馈、音频控制、会话恢复及来源面板。
+本轮验收服务在 `artifacts/browser-feedback/data` 中独立运行，其模型和 WAV 音频均为明确的合成夹具，不读取正式账号数据或模型凭证。当轮验收脚本覆盖四种宽度与三种引擎的真实保存、流式片段、偏好持久化、生成式筛选和上传、回复反馈、音频控制、会话恢复及来源面板；该预览服务与脚本已在 1.20.0 清理，见 git 历史。
 
 本轮最终完成 480 项交互检查、100 个页面/尺寸组合、10 个办理弹窗和 128 项视觉对齐检查，均通过。后端完整运行 686 项通过，前端逻辑最终运行 115 项通过。测试结果和截图位于 `artifacts/browser-feedback/`；这些检查证明工程行为与响应式布局，不代表真实模型回答质量、语音音质或手机软键盘已经实机验收。
 

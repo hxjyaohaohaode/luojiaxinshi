@@ -625,6 +625,9 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     if not access['attachments']:
         initial_sources=[]
     question = question_context(messages)
+    # 记忆召回只看最新一句：拼进来的历史会把旧话题的记忆排进上下文，也会让“继续”判定失效。
+    latest_users=[m for m in messages if m['role']=='user']
+    memory_question=user_request(latest_users[-1]) if latest_users else question
     contract = response_contract(messages)
     writing_tier = 3 if contract.get('no_ui') else tier
     restricted = scope_start is not None or web_restricted(messages)
@@ -644,7 +647,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     def check_context():
         with db.connect() as conn:assert_current(conn,uid,cid,context_snapshot)
     packed,excerpts,compaction=pack_history(messages)
-    memories,memory_report=recall(db,uid,cid,question,{**access,'profile':access['profile'] and scope_start is None,'memory':memory_access(messages)})
+    memories,memory_report=await asyncio.to_thread(recall,db,uid,cid,memory_question,{**access,'profile':access['profile'] and scope_start is None,'memory':memory_access(messages)})
     from .context_snapshot import bind_memories
     with db.connect() as conn:
         context_snapshot=bind_memories(conn,uid,cid,context_snapshot,memories)
@@ -733,7 +736,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         if not agent_result:
             yield {'type': 'phase', 'phase': 'retrieving', 'label': '正在核对你限定消息中的材料…' if scope_start is not None else scope_description(selected_access), 'local_scope':local_scope}
         if not agent_result and memory_allowed and (planned['local_queries'] or planned.get('memory_project_ids') or planned.get('memory_topics') or planned.get('memory_node_ids')):
-            memories,memory_report=recall(db,uid,cid,question,{**access,'memory':True,'_memory_selection':{'project_ids':planned.get('memory_project_ids',[]),'topics':planned.get('memory_topics',[]),'node_ids':planned.get('memory_node_ids',[])}},queries=planned['local_queries'])
+            memories,memory_report=await asyncio.to_thread(recall,db,uid,cid,memory_question,{**access,'memory':True,'_memory_selection':{'project_ids':planned.get('memory_project_ids',[]),'topics':planned.get('memory_topics',[]),'node_ids':planned.get('memory_node_ids',[])}},queries=planned['local_queries'])
             with db.connect() as conn:
                 context_snapshot=bind_memories(conn,uid,cid,context_snapshot,memories)
             profile['_memory_entries']=memories

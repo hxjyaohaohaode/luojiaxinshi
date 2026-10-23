@@ -85,8 +85,12 @@ class RequestGuard:
             if message['type']=='http.response.start':
                 started=True
                 pdf_preview=scope.get('path','').startswith('/api/conversations/') and scope.get('path','').endswith('/download') and any(k.lower()==b'content-type' and v.startswith(b'application/pdf') for k,v in message.get('headers',[]))
+                path=scope.get('path','')
+                # 图片等资源按天缓存；脚本与样式每次用 ETag 重新校验（未变化时返回 304），
+                # 避免每次打开页面重新下载全部前端代码；接口与首页仍不缓存。
+                cache=b'public, max-age=86400' if path.startswith('/static/assets/') else b'no-cache' if path.startswith('/static/') else b'no-store'
                 extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview else b'DENY'),
-                       (b'referrer-policy',b'no-referrer'),(b'cache-control',b'public, max-age=86400' if scope.get('path','').startswith('/static/assets/') else b'no-store'),
+                       (b'referrer-policy',b'no-referrer'),(b'cache-control',cache),
                        (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
                        (b'content-security-policy',self.csp.replace(b"frame-ancestors 'none'",b"frame-ancestors 'self'") if pdf_preview else self.csp)]
                 if self.production:
@@ -124,11 +128,14 @@ def create_app(settings=None):
             from .memory_learning import drain_jobs
             while True:
                 await asyncio.sleep(10)
+                # 学习与复盘分开兜底：一边出错不会让另一边永远停住；日志只记异常类型，不含内容。
                 try:
                     await run_in_threadpool(drain_jobs,db)
+                except Exception as error:logging.getLogger('campus').error('memory_learning_failed error=%s',type(error).__name__)
+                try:
                     from .memory_reflection import run_one
                     await run_in_threadpool(run_one,db,settings)
-                except Exception:logging.getLogger('campus').error('memory_maintenance_failed: check storage and permissions')
+                except Exception as error:logging.getLogger('campus').error('memory_reflection_failed error=%s',type(error).__name__)
         memory_worker=asyncio.create_task(memory_maintenance())
         try:
             yield
@@ -153,6 +160,8 @@ def create_app(settings=None):
     app.add_middleware(RequestGuard,origin=settings.origin,production=settings.production)
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=[urlparse(settings.origin).hostname])
     heavy_lock=threading.BoundedSemaphore(2)
+    # 通知整理单独限流：聊天一轮可能持续很久，不能因此让通知整理返回“繁忙”。
+    notice_lock=threading.BoundedSemaphore(2)
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, exc):
@@ -181,6 +190,8 @@ def create_app(settings=None):
 
     from .execution import install as install_execution
     install_execution(app,db,user)
+    from .account import install as install_account, record_consent, consent_state
+    install_account(app,db,settings,user)
     from .agent_runtime.api import install as install_agent_runtime
     install_agent_runtime(app,db,settings,user,runtime.owner)
 
@@ -287,9 +298,10 @@ def create_app(settings=None):
         from .model_catalog import public_configuration
         with db.connect() as conn:
             genui=feature_settings(conn,current['id'],settings)
+            consent=consent_state(conn,current['id'])
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
                         'role':current['role'],'profile':json.loads(current['profile'])},'csrf':current['csrf'],
-                'ai':public_configuration(settings),'genui':genui,
+                'ai':public_configuration(settings),'genui':genui,'consent':consent,
                 'environment':'production' if settings.production else 'local'}
 
     @app.post('/api/auth/login')
@@ -317,8 +329,8 @@ def create_app(settings=None):
         uid=ident()
         now=int(time.time())
         recovery=secrets.token_urlsafe(24)
-        if not payload.invite and not payload.accepted_terms:
-            raise HTTPException(422,'请阅读并同意账号和数据使用说明')
+        if not payload.accepted_terms:
+            raise HTTPException(422,'请先阅读并同意《隐私政策》和《用户协议》')
         if payload.account_kind=='phone' and not re.fullmatch(r'\+?[0-9]{7,15}',payload.username):
             raise HTTPException(422,'手机号账号应为 7—15 位数字，可带国际区号 +')
         with db.connect(write=True) as conn:
@@ -335,6 +347,7 @@ def create_app(settings=None):
             conn.execute('INSERT INTO users(id,username,password,display_name,role,profile,created_at) VALUES(?,?,?,?,?,?,?)',
                          (uid,payload.username.lower(),password,payload.display_name,invite['role'] if invite else 'user',dumps(profile),now))
             conn.execute('INSERT INTO account_recovery VALUES(?,?)',(uid,token_hash(recovery)))
+            record_consent(conn,uid,now)
             if invite:
                 conn.execute('UPDATE invites SET used_at=? WHERE token_hash=?',(now,token_hash(payload.invite)))
         return session_response(uid,{'recovery_code':recovery})
@@ -459,7 +472,8 @@ def create_app(settings=None):
     @app.get('/api/notices')
     def notices(current=Depends(user)):
         with db.connect() as conn:
-            return [dict(r) for r in conn.execute('SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,(SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count FROM notices n WHERE user_id=? ORDER BY n.updated_at DESC',(current['id'],))]
+            # applicability 来自整理结果：是否与本人已知条件相符，供列表按“与我相关”筛选。
+            return [dict(r) for r in conn.execute("SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,(SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count,CASE WHEN n.draft IS NOT NULL AND json_valid(n.draft) THEN json_extract(n.draft,'$.applicability') END AS applicability FROM notices n WHERE user_id=? ORDER BY n.updated_at DESC",(current['id'],))]
 
     async def parse_form(request):
         form=await request.form(max_files=5,max_fields=12,max_part_size=120000)
@@ -653,8 +667,8 @@ def create_app(settings=None):
         from .model_catalog import notice_settings
         try:run_settings=notice_settings(settings,payload.processing_mode)
         except ValueError as exc:raise HTTPException(422,str(exc)) from None
-        if not heavy_lock.acquire(blocking=False):
-            raise HTTPException(429,'当前处理繁忙，请稍后重试')
+        if not notice_lock.acquire(blocking=False):
+            raise HTTPException(429,'正在整理的通知有点多，请稍等一会儿再试')
         call_id=ident()
         job=ident()
         try:
@@ -738,7 +752,7 @@ def create_app(settings=None):
                     if abandoned:
                         conn.execute("UPDATE ai_calls SET status='failed' WHERE id=? AND status='processing'",(call_id,))
                         runtime.finish(conn,call_id,'failed','interrupted_request')
-            finally:heavy_lock.release()
+            finally:notice_lock.release()
 
     def validate_task(data,sources,global_blockers,enforce_future=True):
         ai.check_evidence(data.evidence+data.deadline_evidence,sources)
@@ -808,15 +822,21 @@ def create_app(settings=None):
             audit(conn,current['id'],nid,'confirm_draft',before=json.loads(record['draft']),after={'task_ids':ids,'replacements':payload.replacements,'quality_resolution':payload.quality_resolution,'source_indices':payload.source_indices,'quality_result':quality_result})
         return {'task_ids':ids,'replayed':False}
 
+    def list_tasks(conn,uid):
+        items=[serialize_task(r) for r in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=? ORDER BY t.updated_at DESC',(uid,))]
+        attachments={}
+        for row in conn.execute("SELECT s.id,s.notice_id,s.name,s.kind,s.status,length(s.content) AS size FROM sources s JOIN notices n ON s.notice_id=n.id WHERE n.user_id=? AND s.active=1 AND s.content IS NOT NULL ORDER BY s.created_at",(uid,)):
+            attachments.setdefault(row['notice_id'],[]).append(dict(row))
+        for item in items:item['attachments']=attachments.get(item['notice_id'],[])
+        return enrich_tasks(conn, items)
+
     @app.get('/api/tasks')
     def tasks(current=Depends(user)):
         with db.connect() as conn:
-            items=[serialize_task(r) for r in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=? ORDER BY t.updated_at DESC',(current['id'],))]
-            attachments={}
-            for row in conn.execute("SELECT s.id,s.notice_id,s.name,s.kind,s.status,length(s.content) AS size FROM sources s JOIN notices n ON s.notice_id=n.id WHERE n.user_id=? AND s.active=1 AND s.content IS NOT NULL ORDER BY s.created_at",(current['id'],)):
-                attachments.setdefault(row['notice_id'],[]).append(dict(row))
-            for item in items:item['attachments']=attachments.get(item['notice_id'],[])
-            return enrich_tasks(conn, items)
+            return list_tasks(conn,current['id'])
+
+    from .insights import install as install_insights
+    install_insights(app,db,user,admin,list_tasks)
 
     def update_task_record(conn,uid,tid,payload):
         old=own_task(conn,tid,uid)

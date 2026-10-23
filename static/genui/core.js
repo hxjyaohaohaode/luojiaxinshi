@@ -100,7 +100,7 @@ export class StreamParser{
   text(value){const last=this.parts.at(-1);if(last?.kind==='text')last.text+=value;else this.parts.push({kind:'text',text:value});}
   push(chunk){
     if(this.stopped)return;const size=typeof chunk==='string'?bytes(chunk):chunk.byteLength;
-    if(this.size+size>this.limits.messageBytes){this.stopped=true;this.text('\n回复超过显示上限，已保留可读部分。\n');if(this.block)this.block.error('message_limit');return;}
+    if(this.size+size>this.limits.messageBytes){this.stopped=true;this.text('\n回复太长了，先显示能读的部分。\n');if(this.block)this.block.error('message_limit');return;}
     this.size+=size;const value=typeof chunk==='string'?chunk:this.decoder.decode(chunk,{stream:true});this.raw+=value;this.buffer+=value;
     let newline;while((newline=this.buffer.indexOf('\n'))>=0){const line=this.buffer.slice(0,newline).replace(/\r$/,'');this.buffer=this.buffer.slice(newline+1);this.line(line,true);}
   }
@@ -121,7 +121,7 @@ export function blockMarkdown(spec,state=spec.state,view={}){
   const lines=[],seen=new Set();let count=0;
   const value=v=>textValue(v),cell=v=>value(v).replace(/\|/g,'\\|').replace(/\n/g,' ');
   const table=(columns,rows)=>{lines.push('| '+columns.map(c=>cell(c.label)).join(' | ')+' |','| '+columns.map(()=> '---').join(' | ')+' |',...rows.map(row=>'| '+columns.map(c=>cell(row?.[c.key])).join(' | ')+' |'));};
-  function visit(id,scope={},prefix=''){const unique=prefix+id;if(seen.has(unique)||++count>CATALOG.limits.renderItems)return;seen.add(unique);const node=spec.nodes[id];if(!node){lines.push('内容尚未完整接收。');return;}
+  function visit(id,scope={},prefix=''){const unique=prefix+id;if(seen.has(unique)||++count>CATALOG.limits.renderItems)return;seen.add(unique);const node=spec.nodes[id];if(!node){lines.push('这部分内容还没收完整。');return;}
     let p;try{p=resolve(node.props,{...state,...scope},spec.data);}catch{p=node.props||{};}if(p.visible===false)return;
     const t=node.type;let bound;if(p.bind)try{bound=readPath({...state,...scope},p.bind);}catch{}
     if(t==='Checklist'&&bound===undefined)bound=view[unique]?.checked??(p.items||[]).flatMap((item,index)=>item.done?[item.id||'item'+index]:[]);
@@ -152,6 +152,6 @@ export function blockMarkdown(spec,state=spec.state,view={}){
     }
     for(const child of node.children||[])visit(child,scope,prefix);
   }
-  for(const root of spec.roots)visit(root);if(!spec.complete)lines.push('（界面未完整接收，以上为已收到的内容。）');return lines.filter(Boolean).join('\n\n');
+  for(const root of spec.roots)visit(root);if(!spec.complete)lines.push('（互动内容没收完整，上面是已经收到的部分。）');return lines.filter(Boolean).join('\n\n');
 }
 export function messageMarkdown(parts,snapshots={}){return parts.map((p,index)=>p.kind==='text'?p.text:blockMarkdown(p.spec,snapshots[index]?.state||p.spec.state,snapshots[index]?.view||{})).join('\n\n');}

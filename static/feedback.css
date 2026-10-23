@@ -20,11 +20,11 @@
 .overview-week .week-heading a { min-width: 30px; width: 30px; }
 .overview-week .week-days > button { padding: 6px 0; gap: 2px; min-height: 54px; border-radius: 9px; }
 .overview-week .week-days > button > strong { font-size: 16px; }
-.overview-week .week-days > button > span { font-size: 11px; }
+.overview-week .week-days > button > span { font-size: 12px; }
 .overview-week .week-agenda { padding-left: 16px; }
 .overview-week .week-agenda > p { margin: 2px 0; }
 .overview-week .week-agenda > a { min-height: 26px; font-size: 12px; }
-.overview-week .week-agenda-label { font-size: 11px; }
+.overview-week .week-agenda-label { font-size: 12px; }
 .overview-workspace { grid-template-columns: minmax(0,1fr) 240px; gap: 18px; }
 .overview-aside { gap: 12px; position: sticky; top: 82px; }
 .overview-aside > section { padding: 16px; border-radius: 13px; }
@@ -34,7 +34,7 @@
 .overview-aside .progress-ring { width: 66px; height: 66px; flex: 0 0 66px; }
 .overview-aside .progress-ring svg { width: 66px; height: 66px; }
 .overview-aside .progress-ring strong { font-size: 18px; }
-.overview-aside .progress-ring small { font-size: 10px; }
+.overview-aside .progress-ring small { font-size: 12px; }
 .overview-aside .completion-summary > div > strong { font-size: 19px; }
 .overview-aside .completion-summary p { font-size: 12px; margin-top: 4px; }
 .overview-progress > a { min-height: 40px; font-size: 12px; padding-top: 8px; }
@@ -68,7 +68,7 @@
 .workflow-page .condition-editor { margin-bottom: 0; }
 .workflow-page .workflow-section:has([data-dependency-search]) > p { font-size: 12px; }
 .workflow-form .workflow-save { flex-shrink: 0; display: flex; align-items: center; gap: 10px; margin: 0; padding-top: 12px; position: static; }
-.workflow-save .small { font-size: 11px; max-width: 220px; width: auto; }
+.workflow-save .small { font-size: 12px; max-width: 220px; width: auto; }
 .workflow-form .workflow-save .button { width: auto; min-width: 72px; min-height: 42px; }
 .workflow-page .form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 
@@ -80,7 +80,7 @@
 #calendar-option-preview { margin-top: 7px; }
 #calendar-option-preview > div { display: flex; align-items: center; gap: 7px; padding-top: 5px; min-width: 0; }
 #calendar-option-preview > div > span { font-size: 12px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#calendar-option-preview small { color: var(--muted); font-size: 11px; }
+#calendar-option-preview small { color: var(--muted); font-size: 12px; }
 #calendar-option-preview > p { font-size: 12px; line-height: 1.7; color: var(--muted); margin: 0; }
 .calendar-options .calendar-option-group { gap: 8px; padding: 10px 14px; }
 .calendar-options .check { min-height: 42px; }
@@ -92,14 +92,14 @@
 .work-summary > summary { min-height: 36px; border-radius: 8px; padding: 5px 8px; margin-left: -8px; gap: 7px; }
 .work-summary > summary:hover { background: #eff4e9; }
 .work-summary .work-title { font-size: 12px; }
-.work-summary .work-time { font-size: 11px; }
+.work-summary .work-time { font-size: 12px; }
 .work-summary .work-body { max-height: 280px; overflow: auto; padding: 10px 14px; border-left: 2px solid #dce6d5; margin: 5px 0 0 4px; scrollbar-width: thin; }
 .work-summary .work-tools { display: none; }
 .work-summary .work-step p { font-size: 12px; }
 .message-assistant.has-preview .message-content::after { content: ''; display: inline-block; width: 6px; height: 16px; background: var(--green); border-radius: 2px; margin: 4px 0 0 3px; animation: reply-caret 1s step-end infinite; }
-.message.is-streaming .message-label > span { font-size: 11px; }
+.message.is-streaming .message-label > span { font-size: 12px; }
 .message-footer { gap: 5px 8px; align-items: center; flex-wrap: wrap; }
-.message-footer .message-time { font-size: 11px; color: #819078; margin-right: 3px; }
+.message-footer .message-time { font-size: 12px; color: #819078; margin-right: 3px; }
 .message-footer .reply-tools { display: contents; }
 .message-footer > .gu-save-feedback:empty { display: none; }
 .message-footer > .gu-save-feedback, .message-footer > .button:not(.reply-action) { order: 2; }
@@ -152,7 +152,7 @@
 .reply-sources-panel .source-quote-details > summary { min-height: 34px; align-content: center; font-size: 12px; color: #64765b; cursor: pointer; }
 .reply-sources-panel .source-quote { max-height: 210px; overflow: auto; font-size: 12px; }
 .reply-sources-panel .source-result > .button { font-size: 12px; min-height: 34px; padding: 6px 0; }
-.reply-sources-panel .source-result-meta { margin-bottom: 5px; font-size: 11px; }
+.reply-sources-panel .source-result-meta { margin-bottom: 5px; font-size: 12px; }
 
 @media (max-width:1100px) {
   .overview-workspace { grid-template-columns: minmax(0,1fr); }
@@ -185,7 +185,7 @@
   .overview-compact .action-metrics { gap: 8px; margin-bottom: 12px; }
   .overview-compact .action-metric { padding: 12px; gap: 3px 6px; }
   .overview-compact .action-metric > strong { font-size: 25px; }
-  .overview-compact .action-metric > small { font-size: 11px; line-height: 1.6; padding-right: 0; }
+  .overview-compact .action-metric > small { font-size: 12px; line-height: 1.6; padding-right: 0; }
   .overview-compact .action-metric > .icon { display: none; }
   .overview-compact .action-metric > .metric-label { font-size: 12px; }
   .overview-compact .overview-week { display: grid; grid-template-columns: minmax(0,1fr); padding: 12px; gap: 8px; margin-bottom: 14px; }
@@ -195,12 +195,12 @@
   .overview-week .week-days > button { min-height: 52px; }
   .overview-week .week-agenda { grid-column: 1; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2px 8px; padding-top: 8px; }
   .overview-week .week-agenda > p, .overview-week .week-agenda > button { grid-column: 1/-1; font-size: 12px; }
-  .overview-week .week-agenda > a { grid-column: 2; grid-row: 1; font-size: 11px; }
+  .overview-week .week-agenda > a { grid-column: 2; grid-row: 1; font-size: 12px; }
   .overview-workspace { gap: 12px; }
   .overview-aside { grid-template-columns: minmax(0,1fr); gap: 10px; }
   .overview-aside .overview-reminders { padding: 14px; }
   .overview-aside .overview-brief { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
-  .overview-aside .overview-brief a { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 0 0; align-items: center; border-bottom: 0; font-size: 11px; }
+  .overview-aside .overview-brief a { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 0 0; align-items: center; border-bottom: 0; font-size: 12px; }
   .overview-aside .overview-brief a > span { width: 100%; }
   .overview-aside .overview-brief a > b { margin: 0; font-size: 20px; }
   .overview-aside .overview-progress { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; align-items: center; padding: 14px; }

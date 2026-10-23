@@ -122,7 +122,7 @@ def main():
         client=clients[index]
         request(client,'POST','/api/auth/register',json={
             'invite':invitations[index],'username':f'runtime_{index}',
-            'display_name':f'并发测试账号 {index}','password':password})
+            'display_name':f'并发测试账号 {index}','password':password,'accepted_terms':True})
         session(client)
         day=(datetime.now(timezone.utc)+timedelta(days=7)).date().isoformat()
         first_notice=None

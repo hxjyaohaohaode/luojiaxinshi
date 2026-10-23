@@ -37,7 +37,7 @@ test('read-only polling waits for acceptance and refreshes once on completion',a
 });
 test('status errors never trigger regeneration; unknown timings are not displayed as zero',async()=>{
   const h=harness(async()=>{throw new Error('offline');});h.controller.watch({id:'n',status:'processing'});
-  await h.queue.shift()();assert.match(h.fields['[data-notice-elapsed]'].textContent,/不会自动重新调用/);
+  await h.queue.shift()();assert.match(h.fields['[data-notice-elapsed]'].textContent,/不会自动重新交给 AI/);
   assert.equal(h.refreshed(),0);assert.equal(h.queue.length,1);
   assert.deepEqual(metricLines({}),[]);
   assert.ok(metricLines({first_answer_seconds:0,validation_seconds:.015,input_tokens:0,output_tokens:100}).length===3);

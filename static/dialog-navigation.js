@@ -41,8 +41,11 @@ export function installFormHistory(root){
   function controls(form){
     if(histories.has(form)||!form.querySelector('[type="submit"]'))return;
     const footer=form.querySelector('.form-footer')||form.appendChild(Object.assign(document.createElement('div'),{className:'form-footer'}));
+    // 一次性确认类表单（如注销确认）只有确认词，撤销/重做没有意义。
+    if(form.hasAttribute('data-no-history')){histories.set(form,null);if(form.closest('dialog')&&!footer.querySelector('[data-dialog-cancel],[data-action="close-dialog"]')){const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.dialogCancel='';cancel.textContent='取消';footer.prepend(cancel);}return;}
     const actions=document.createElement('div');actions.className='form-edit-actions';
-    actions.innerHTML='<button type="button" class="button plain small" data-form-undo disabled>撤销编辑</button><button type="button" class="button plain small" data-form-redo disabled>重做</button>';
+    // 窄屏只显示“撤销”，把一行留给主要按钮；读屏仍是完整名称。
+    actions.innerHTML='<button type="button" class="button plain small" data-form-undo disabled aria-label="撤销编辑">撤销<span class="edit-word">编辑</span></button><button type="button" class="button plain small" data-form-redo disabled>重做</button>';
     footer.prepend(actions);
     if(form.closest('dialog')&&!footer.querySelector('[data-dialog-cancel],[data-action="close-dialog"]')){
       const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.dialogCancel='';cancel.textContent='取消';footer.insertBefore(cancel,actions.nextSibling);
@@ -62,6 +65,7 @@ export function installFormHistory(root){
     actions.addEventListener('click',event=>{
       const undo=event.target.closest('[data-form-undo]'),redo=event.target.closest('[data-form-redo]');if(!undo&&!redo)return;
       if(form.inert||form.getAttribute('aria-busy')==='true')return;
+      const trigger=undo||redo,hadFocus=document.activeElement===trigger;
       if(undo&&h.past.length>1)h.future.push(h.past.pop());else if(redo&&h.future.length)h.past.push(h.future.pop());else return;
       h.restoring=true;
       try{
@@ -74,7 +78,12 @@ export function installFormHistory(root){
         // Linked fields and draft listeners must see the complete restored form.
         for(const el of changed){el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}
       }
-      finally{h.restoring=false;h.field=null;update();}
+      finally{
+        h.restoring=false;h.field=null;update();
+        // Disabling the last available undo/redo must not drop keyboard focus
+        // out of the dialog. The inverse operation is now available.
+        if(hadFocus&&trigger.disabled)actions.querySelector(undo?'[data-form-redo]':'[data-form-undo]')?.focus({preventScroll:true});
+      }
     });
   }
   const eligible=form=>form.closest('dialog')||['profile-form','preferences-form','memory-inline-editor'].includes(form.id);

@@ -2,22 +2,22 @@ import {el,button} from './dom.js';
 import {safeUrl} from './security.js';
 import {preserveChatViewport} from '../chat-viewport.js';
 let openView=null;
-const kinds={web_page:'已读取网页正文',web_summary:'搜索摘要 · 未读取正文',image:'图片观察 · 请对照原图',material:'资料原文',notice:'通知原文',task:'待办快照',arrangement:'个人日程',memory:'个人记忆',profile:'自填条件',user_input:'用户提供'};
+const kinds={web_page:'读过网页全文',web_summary:'搜索摘要 · 没读全文',image:'从图片里看到的 · 可以对照原图',material:'资料原文',notice:'通知原文',task:'待办记录',arrangement:'个人日程',memory:'个人记忆',profile:'自填条件',user_input:'你提供的'};
 const external=source=>typeof source?.url==='string'&&/^https?:\/\//.test(source.url)?safeUrl(source.url,{hosts:null}):null;
 export function readableSnapshot(text,kind){
   if(!['task','arrangement','profile','memory'].includes(kind))return text;
-  let record;try{record=JSON.parse(text);}catch{return /^\s*[\[{]/.test(text)?'当时保存的记录摘要不可用，请打开对应记录。':text;}
-  if(!record||typeof record!=='object'||Array.isArray(record))return '当时保存的记录摘要不可用，请打开对应记录。';
+  let record;try{record=JSON.parse(text);}catch{return /^\s*[\[{]/.test(text)?'当时的记录摘要读不出来，打开原记录看看吧。':text;}
+  if(!record||typeof record!=='object'||Array.isArray(record))return '当时的记录摘要读不出来，打开原记录看看吧。';
   if(kind==='memory'&&!record.values&&!record.record_type&&!record.data)return text;
   const values=record.values||record.data||record;
   const labels={title:'事项',details:'说明',due_date:'正式期限',due_time:'截止时刻',start_date:'日期',end_date:'结束日期',start_time:'开始',end_time:'结束',location:'地点',submission:'提交至',materials:'材料',next_step:'下一步',status:'状态',college:'学院',grade:'年级',semester:'学期',content:'内容',notes:'备注'};
-  const states={pending:'待完成',done:'已完成',cancelled:'已取消',preparing:'准备中',submitted:'已提交',blocked:'办理受阻'};
+  const states={pending:'待完成',done:'已完成',cancelled:'已取消',preparing:'准备中',submitted:'已提交',blocked:'卡住了'};
   const parts=[];
   for(const [key,label] of Object.entries(labels)){let value=values[key]??record[key];if(value==null||value===''||Array.isArray(value)&&!value.length)continue;if(typeof value==='object'&&!Array.isArray(value))continue;value=Array.isArray(value)?value.filter(v=>typeof v==='string'||typeof v==='number').join('、'):states[value]||String(value);if(value)parts.push(`${label}：${value}`);}
   if(values.deadline_confirmed===false)parts.push('期限待核实');
   const workflow=record.workflow?.data||record.workflow;
-  if(workflow&&typeof workflow==='object')for(const [key,label] of Object.entries({stage:'办理进度',outcome:'办理结果',receipt:'回执',next_step:'下一步'}))if(typeof workflow[key]==='string'&&workflow[key])parts.push(`${label}：${states[workflow[key]]||({accepted:'已核实受理',rejected:'未通过',supplement:'待补件'}[workflow[key]])||workflow[key]}`);
-  return parts.join(' · ')||'此记录没有可展示的内容，请打开对应记录。';
+  if(workflow&&typeof workflow==='object')for(const [key,label] of Object.entries({stage:'办理进度',outcome:'办理结果',receipt:'提交凭证',next_step:'下一步'}))if(typeof workflow[key]==='string'&&workflow[key])parts.push(`${label}：${states[workflow[key]]||({accepted:'已受理',rejected:'未通过',supplement:'待补件'}[workflow[key]])||workflow[key]}`);
+  return parts.join(' · ')||'这条记录没有能显示的内容，打开原记录看看吧。';
 }
 
 export function citationTarget(source){
@@ -34,14 +34,14 @@ export function citationTarget(source){
 
 export function citationEntries(message,sources=[]){
   const byId=new Map([...(sources||[]),...(message.evidence_sources||[])].map(s=>[s.id,s])),entries=new Map();
-  (message.citations||[]).forEach((citation,index)=>{const source=byId.get(citation.source_id)||{id:citation.source_id,name:'原材料已移除（保留当时引文）'};if(!entries.has(source.id))entries.set(source.id,{source,quotes:[]});entries.get(source.id).quotes.push({...citation,number:index+1});});
+  (message.citations||[]).forEach((citation,index)=>{const source=byId.get(citation.source_id)||{id:citation.source_id,name:'原材料已删除（当时引用的原句还在）'};if(!entries.has(source.id))entries.set(source.id,{source,quotes:[]});entries.get(source.id).quotes.push({...citation,number:index+1});});
   for(const source of message.evidence_sources||[])if(external(source)&&!entries.has(source.id))entries.set(source.id,{source,quotes:[]});
   return [...entries.values()];
 }
 
 export function citationPreview(entry,focusNumber=null){
   const focused=entry.quotes.find(q=>q.number===focusNumber);
-  if(!focused&&entry.source.evidence_kind==='user_input')return '本次提问与已提交的界面选择；展开引用原文可核对当时内容。';
+  if(!focused&&entry.source.evidence_kind==='user_input')return '这是你这次的提问和选择，展开引用就能看到当时的原话。';
   const bodyQuotes=entry.quotes.filter(quote=>!/^Produced\s+By\s+CMS\b/i.test(quote.quote.trim()));
   const substantial=(bodyQuotes.length?bodyQuotes:entry.quotes).reduce((best,quote)=>!best||quote.quote.length>best.quote.length?quote:best,null);
   return (focused||substantial)?.quote||entry.source.preview||'';
@@ -86,8 +86,8 @@ export class CitationView{
     const preview=readableSnapshot(citationPreview(entry,focusNumber),source.evidence_kind);if(preview)article.append(el('p','source-result-preview',compact?preview.slice(0,220):preview));
     if(!compact){
       article.append(el('p','source-result-kind',kinds[source.evidence_kind]||'原材料'));
-      if(quotes.length){const detail=el('details','source-quote-details');detail.open=quotes.some(q=>q.number===focusNumber);const snapshot=['task','arrangement','profile','memory'].includes(source.evidence_kind);detail.append(el('summary','',`${source.evidence_kind==='image'?'查看图片依据说明':snapshot?'查看当时记录':'查看引用原文'} · ${quotes.length} 处`));for(const quote of quotes){const block=el('blockquote','source-quote');block.dataset.citationNumber=String(quote.number);if(quote.number===focusNumber)block.classList.add('selected');block.append(el('span','source-quote-label',`[${quote.number}] ${snapshot?'保存时的记录':quote.locator}`),document.createTextNode(readableSnapshot(quote.quote,source.evidence_kind)));detail.append(block);}article.append(detail);}
-      if(source.retrieved_at)article.append(el('p','source-result-kind','检索于 '+new Date(source.retrieved_at).toLocaleString('zh-CN')));
+      if(quotes.length){const detail=el('details','source-quote-details');detail.open=quotes.some(q=>q.number===focusNumber);const snapshot=['task','arrangement','profile','memory'].includes(source.evidence_kind);detail.append(el('summary','',`${source.evidence_kind==='image'?'看看从图片里读到了什么':snapshot?'查看当时记录':'查看引用原文'} · ${quotes.length} 处`));for(const quote of quotes){const block=el('blockquote','source-quote');block.dataset.citationNumber=String(quote.number);if(quote.number===focusNumber)block.classList.add('selected');block.append(el('span','source-quote-label',`[${quote.number}] ${snapshot?'保存时的记录':quote.locator}`),document.createTextNode(readableSnapshot(quote.quote,source.evidence_kind)));detail.append(block);}article.append(detail);}
+      if(source.retrieved_at)article.append(el('p','source-result-kind','查阅于 '+new Date(source.retrieved_at).toLocaleString('zh-CN')));
       if(this.options.sources?.some(s=>s.id===source.id))article.append(button('查看完整材料',()=>this.options.preview(source.id),'button small plain'));
       else if(target&&!target.external){const link=el('a','button small plain','打开对应记录');link.href=target.href;link.addEventListener('click',()=>this.close(false));article.append(link);}
     }

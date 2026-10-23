@@ -1,0 +1,139 @@
+/*
+ * 动效语言：
+ * - 反馈要快（按下 110ms），回弹要柔（弹簧曲线 300–460ms）。
+ * - 入场按“区块 → 列表 → 文字”的先后错峰，制造轻微的跟随感。
+ * - 装饰性动效只在可见前台运行；系统“减少动态效果”或个人关闭时全部退回静态。
+ * 入场动画由 choreography.js 用 Web Animations API 驱动，此处只定义可复用的状态与过渡。
+ */
+
+/* ---------- 悬停与按压 ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .button:hover { transform: translateY(-1px); }
+  .button.plain:hover, .button.small.plain:hover { transform: none; }
+  .icon-button:hover { transform: scale(1.06); }
+  .button:hover > .icon:last-child:not(:first-child),
+  a:hover > .icon:last-child:not(:first-child),
+  .settings-item:hover > .icon:last-child,
+  .action-metric:hover > .icon:last-child,
+  .notice-card:hover .icon:last-child { transform: translateX(3px); }
+  .task-row, .notice-row { transition: background-color var(--dur-2) var(--ease-out); }
+  .task-row:hover, .notice-row:hover { background-color: #f7faf6; }
+  .settings-item { transition: background-color var(--dur-2), border-color var(--dur-2), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-spring); }
+  .settings-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .catalog-card > summary { transition: background-color var(--dur-2); }
+  .catalog-card > summary:hover { background-color: #f6f9f5; }
+}
+.button > .icon, a > .icon, .settings-item > .icon, .action-metric > .icon, .notice-card .icon {
+  transition: transform var(--dur-3) var(--ease-spring);
+}
+/* 按下：所有设备都有，松手时弹回 */
+.button:active:not(:disabled), .icon-button:active:not(:disabled), .task-open:active, .nav-item:active,
+.tab:active, .scene-choice:active, .settings-item:active, .action-metric:active, .source-starter:active,
+.mobile-bottom-nav > :active, .week-days > button:active {
+  transform: scale(.965);
+  transition-duration: var(--dur-1);
+  transition-timing-function: var(--ease-out);
+}
+.nav-item, .tab, .week-days > button, .mobile-bottom-nav > a, .mobile-bottom-nav > button, .source-starter, .task-open {
+  transition: color var(--dur-2), background-color var(--dur-2), transform var(--dur-3) var(--ease-spring);
+}
+
+/* ---------- 选中指示器：带回弹地滑到新位置 ---------- */
+.selection-indicator {
+  transition: transform var(--dur-4) var(--ease-soft-spring), width var(--dur-4) var(--ease-soft-spring),
+              height var(--dur-4) var(--ease-soft-spring), opacity var(--dur-2);
+}
+.tabs .selection-indicator, .sidebar nav .selection-indicator {
+  transition: transform var(--dur-4) var(--ease-soft-spring), width var(--dur-4) var(--ease-soft-spring), height var(--dur-4) var(--ease-soft-spring);
+}
+
+/* 悬停跟随：一块淡色底板比指针慢半拍地滑到悬停项（choreography.js 定位） */
+.hover-follower {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  border-radius: 10px; background: #edf3ee; opacity: 0;
+  transition: transform var(--dur-4) var(--ease-soft-spring), width var(--dur-4) var(--ease-soft-spring),
+              height var(--dur-4) var(--ease-soft-spring), opacity var(--dur-3) var(--ease-out);
+}
+.hover-follower.is-visible { opacity: 1; }
+.sidebar nav { position: relative; }
+.sidebar nav > .nav-item { position: relative; z-index: 1; }
+.sidebar nav > .selection-indicator { z-index: 0; }
+
+/* ---------- 勾选与完成 ---------- */
+.task-check { transition: background-color var(--dur-2), border-color var(--dur-2), transform var(--dur-3) var(--ease-spring), box-shadow var(--dur-3); }
+.task-check:hover:not(:disabled) { border-color: var(--brand); box-shadow: 0 0 0 4px #1157400f; }
+.task-check.just-checked { animation: check-burst var(--dur-4) var(--ease-spring); }
+.task-check.just-checked > .icon { animation: draw-check-system 360ms var(--ease-out) 60ms backwards; stroke-dasharray: 24; }
+.task-title { background: linear-gradient(currentColor, currentColor) no-repeat 0 55% / 0 1px; transition: background-size var(--dur-4) var(--ease-out), color var(--dur-3); }
+.task-row.done .task-title { text-decoration: none; background-size: 100% 1px; }
+.task-row.done { transition: opacity var(--dur-4); }
+@keyframes check-burst { 0% { transform: scale(1); } 35% { transform: scale(.82); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes draw-check-system { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+
+/* 完成时的小花瓣（choreography.js 生成，结束后移除） */
+.confetti-bit {
+  position: fixed; z-index: 400; width: 7px; height: 7px; border-radius: 2px; pointer-events: none;
+  background: var(--bit, #3c8a5c);
+}
+
+/* ---------- 对话框：弹性展开，关闭时淡出 ---------- */
+#dialog[open] { animation: none; }
+#dialog {
+  transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-4) var(--ease-soft-spring),
+              overlay var(--dur-3) allow-discrete, display var(--dur-3) allow-discrete;
+  opacity: 0; transform: translateY(14px) scale(.97);
+}
+#dialog[open] { opacity: 1; transform: none; }
+#dialog::backdrop { transition: opacity var(--dur-3) var(--ease-out), overlay var(--dur-3) allow-discrete, display var(--dur-3) allow-discrete; opacity: 0; }
+#dialog[open]::backdrop { opacity: 1; animation: none; }
+@starting-style {
+  #dialog[open] { opacity: 0; transform: translateY(18px) scale(.965); }
+  #dialog[open]::backdrop { opacity: 0; }
+}
+/* 底部抽屉式对话框（手机）从下方滑入 */
+@media (max-width: 600px) {
+  #dialog { transform: translateY(32px); }
+  @starting-style { #dialog[open] { opacity: 0; transform: translateY(48px); } }
+}
+
+/* ---------- 提示条：从底部弹起 ---------- */
+#toast {
+  transform: translateX(-50%) translateY(24px) scale(.96);
+  transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-4) var(--ease-spring), visibility 0s linear var(--dur-3);
+}
+#toast.visible { transform: translateX(-50%) translateY(0) scale(1); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-4) var(--ease-spring), visibility 0s; }
+
+/* ---------- 路由切换：旧内容轻轻淡出，新内容由编排脚本错峰入场 ---------- */
+.route-pending { opacity: .55; filter: saturate(.85); transition: opacity var(--dur-3) var(--ease-out), filter var(--dur-3); }
+.route-feedback { animation: float-in var(--dur-4) var(--ease-spring) both; }
+@keyframes float-in { from { opacity: 0; transform: translate(-50%, -8px) scale(.96); } }
+
+/* ---------- 文字逐字浮现（choreography.js 拆分字符） ---------- */
+.text-reveal > .tr-char { display: inline-block; white-space: pre; will-change: transform, opacity; }
+.text-reveal > .tr-space { display: inline; white-space: pre; }
+
+/* 内容更新时的轻量“换字”效果 */
+.text-swap { animation: text-swap var(--dur-3) var(--ease-out); }
+@keyframes text-swap { from { opacity: 0; transform: translateY(4px); filter: blur(2px); } }
+
+/* ---------- 加载骨架 ---------- */
+.skeleton-line { display: block; height: 12px; border-radius: 6px; background: linear-gradient(100deg, #e8ede6 30%, #f5f8f2 48%, #e8ede6 64%); background-size: 220% 100%; animation: skeleton-pass 1.5s ease-in-out infinite; }
+
+/* ---------- 顶栏随滚动获得层次 ---------- */
+.workspace > .topbar { transition: box-shadow var(--dur-3) var(--ease-out), background-color var(--dur-3); }
+.workspace.is-scrolled > .topbar { box-shadow: 0 6px 18px #1d493a0d; }
+
+/* ---------- 小信使：轻微呼吸与跟随 ---------- */
+.companion-float { animation: companion-float 5.6s var(--ease-in-out) infinite; transform-origin: 50% 90%; }
+@keyframes companion-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+[data-parallax] { transition: transform 700ms var(--ease-out); will-change: transform; }
+
+/* ---------- 关闭动效 ---------- */
+html[data-ui-motion=off] :is(.button, .icon-button, .nav-item, .tab, .task-check, .settings-item, .selection-indicator, .hover-follower, #dialog, #toast, [data-parallax]) { transition: none !important; }
+html[data-ui-motion=off] :is(.task-check, .task-check > .icon, .text-swap, .companion-float, .route-feedback, .skeleton-line) { animation: none !important; }
+html[data-ui-motion=off] .hover-follower { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hover-follower, .confetti-bit { display: none; }
+  .companion-float, .text-swap, .skeleton-line { animation: none !important; }
+  [data-parallax] { transform: none !important; }
+}

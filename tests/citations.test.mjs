@@ -36,6 +36,6 @@ test('focused citations show their own exact span instead of unrelated page navi
   assert.equal(citationPreview(entry),long);
   assert.equal(citationPreview({source:{preview:'已读取但未引用的正文摘要'},quotes:[]}),'已读取但未引用的正文摘要');
   const user={source:{evidence_kind:'user_input'},quotes:[{number:1,quote:'原始用户问题与界面协议'}]};
-  assert.equal(citationPreview(user),'本次提问与已提交的界面选择；展开引用原文可核对当时内容。');
+  assert.equal(citationPreview(user),'这是你这次的提问和选择，展开引用就能看到当时的原话。');
   assert.equal(citationPreview(user,1),'原始用户问题与界面协议');
 });

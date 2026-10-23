@@ -1,6 +1,7 @@
 """Additive storage and authenticated stream endpoints for declarative conversation UI."""
 import asyncio
 import json
+import logging
 import time
 
 from fastapi import Depends, HTTPException, Request
@@ -255,11 +256,15 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 status='complete';error=''
             except asyncio.CancelledError:
                 status='cancelled';error='已停止生成。已收到的内容保留，模型服务可能已计费。'
-            except (AIError,TimeoutError) as exc:
-                error=str(exc) or '模型连接超时，已保留收到的内容。'
-            except Exception:
-                # Never log provider content, message bodies or user profiles.
-                error='回复处理出现异常，已收到的内容保留，请稍后重试。'
+            except TimeoutError as exc:
+                # 整轮处理超过 AI_WORKFLOW_TIMEOUT_SECONDS，与单次连接超时（AIError）分开说明。
+                error=str(exc) or '这次整理花的时间太长，先停下了。已收到的内容都还在，可以把问题拆小一点再试。'
+            except AIError as exc:
+                error=str(exc) or '和 AI 服务的连接超时了，已收到的内容都还在。'
+            except Exception as exc:
+                # 日志只记异常类型，不记录模型内容、消息正文或个人资料。
+                logging.getLogger('campus').error('reply_failed error=%s',type(exc).__name__)
+                error='这次回复出了点问题，已收到的内容都还在，稍后再试一次吧。'
             finally:
                 try:
                     with db.connect(write=True) as conn:

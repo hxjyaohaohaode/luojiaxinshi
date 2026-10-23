@@ -16,7 +16,7 @@ export function companion(pose='welcome',className=''){
 }
 
 export function companionSetting(){
-  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">想安静专注时，随时关闭。此偏好仅保存在当前浏览器，必要的保存和错误提示始终保留。</p>${motionSetting()}</section>`;
+  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">想安静专注时随时关掉。这个设置只存在当前浏览器里，保存和出错的提示还是会照常显示。</p>${motionSetting()}</section>`;
 }
 
 function closeTip(){
@@ -71,17 +71,17 @@ function contextualTip(){
   const page=document.querySelector('#content')?.dataset.page||'welcome';
   if(page.startsWith('chat')){
     const count=document.querySelectorAll('.material-item').length;
-    const tips=count?['材料已经收在旁边啦。忘记是哪一句，点开原文就能找回来。','只差一个条件也没关系，直接在对话里补充就好。','先问清楚，再决定做什么。你的下一步，始终由你确认。']:['截图和附件都可以带过来，我们把散落的信息放在一起。','不知道从哪里问起？先写一句“我需要做什么”也可以。'];
+    const tips=count?['材料已经收在旁边啦。忘记是哪一句，点开原文就能找回来。','只差一个条件也没关系，直接在对话里补充就好。','先问清楚，再决定做什么。下一步怎么走，由你说了算。']:['截图和附件都可以带过来，我们把散落的信息放在一起。','不知道从哪里问起？先写一句“我需要做什么”也可以。'];
     return tips[tipIndex++%tips.length];
   }
   if(page==='sources')return '同名的群，也可能是不同学期。写上用途，以后就不会认错啦。';
-  if(page.startsWith('notice/'))return '不确定的日期可以先留空，核实后再补上。每一步，都有原文可循。';
+  if(page.startsWith('notice/'))return '不确定的日期可以先空着，确认了再补上。每一步都能在原文里找到依据。';
   const tips={
     new:['先把完整原文留下来，不必一次填得完美。','附件里也可能藏着关键要求，记得一起看看。'],
     tasks:['先理清下一步，再按自己的节奏完成。','误点了完成？刚出现的提示里可以撤回，也能在已完成中恢复。'],
     calendar:['行程之间，记得留一点走到下一间教室的时间。','空下来的一小会儿，也可以留给珞珈山的风。'],
     settings:['按目前的实际情况填写身份条件，以后随时可以更新。'],
-    dashboard:['通知再长，也可以从清楚的一步开始。','认真核对的一小步，也是在照顾未来的自己。','有些事暂时没有答案，先记下待核实，也很好。'],
+    dashboard:['通知再长，也可以从清楚的一步开始。','认真核对的一小步，也是在照顾未来的自己。','有些事暂时没有答案，先记下来等确认，也很好。'],
     welcome:['你好，我是珞珈小信使。把通知理清，我们从第一步开始。']
   };
   const options=tips[page]||tips.dashboard;return options[tipIndex++%options.length];

@@ -58,7 +58,8 @@ export class ConversationView{
       let r=this.records.get(message.id);
       if(!r){
         const article=el('article','message message-'+message.role);article.dataset.messageId=message.id;const label=el('div','message-label'),content=el('div','message-content'),status=el('span'),citations=el('div','message-citations'),error=el('div','message-error'),footer=el('div','message-footer');
-        if(message.role==='user')label.hidden=true;else{const img=el('img');img.src='/static/assets/luojia-messenger-reading.png';img.alt='';img.width=28;img.height=28;label.append(img,document.createTextNode('珞珈小信使'),status);}
+        // 每条助手回复都显式标注“AI 生成”，符合生成合成内容标识要求。
+        if(message.role==='user')label.hidden=true;else{const img=el('img');img.src='/static/assets/luojia-messenger-reading.png';img.alt='';img.width=28;img.height=28;const badge=el('span','ai-badge','AI 生成');badge.title='这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';label.append(img,document.createTextNode('珞珈小信使'),badge,status);}
         article.append(label,content,citations,error,footer);r={article,label,status,content,citations,error,footer};this.records.set(message.id,r);
       }
       if(message.role==='user'){
