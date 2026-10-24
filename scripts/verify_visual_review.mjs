@@ -32,6 +32,15 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    const bounds=await page.locator('#overview-focus').evaluate(n=>{const c=n.getBoundingClientRect(),h=n.querySelector('h2').getBoundingClientRect(),b=n.querySelector('[data-workflow-task]').getBoundingClientRect();return {c:c.toJSON(),h:h.toJSON(),b:b.toJSON()};});
    assert.ok(bounds.h.right<=bounds.c.right&&bounds.b.left>=bounds.h.right,JSON.stringify(bounds));
   });
+  for(const width of [1413,1024,768,390,320]){
+   await resize(width,width<500?844:871);await nav('dashboard');
+   await check('dashboard adapts its summary and keeps actions in the first screen at '+width,async()=>{
+    const b=await page.evaluate(()=>{const rect=s=>document.querySelector(s).getBoundingClientRect().toJSON();return {focus:rect('#overview-focus'),metrics:rect('#action-metrics'),week:rect('#overview-week'),firstTask:rect('#overview-items .task-row'),overflow:document.documentElement.scrollWidth>innerWidth+1,metricsCount:document.querySelectorAll('.action-metric').length,focusAction:rect('#overview-focus [data-workflow-task]')};});
+    assert.equal(b.overflow,false);assert.equal(b.metricsCount,4);assert.ok(b.firstTask.top<page.viewportSize().height-100,JSON.stringify(b));
+    assert.ok(b.focusAction.right<=b.focus.right+1&&b.focusAction.bottom<=b.focus.bottom+1,JSON.stringify(b));
+    report.measurements.push({engine,page:'dashboard-density',width,...b});await capture('dashboard-'+width);
+   });
+  }
   for(const width of [1413,1024,390,320]){
    await resize(width,width<500?844:871);await nav('tasks');
    await check('task controls share a row and leave the first task reachable at '+width,async()=>{
