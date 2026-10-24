@@ -12,7 +12,7 @@ const statusNames={pending:'待完成',done:'已完成',cancelled:'已取消'};
 export function taskMatchesFilter(task,filter){
   const w=task.workflow;
   if(filter==='pending')return taskIsPending(task);
-  if(filter==='followup')return taskIsPending(task)&&(task.followup_due||['submitted','supplement','blocked','waiting'].includes(w?.data.stage));
+  if(filter==='followup')return taskIsPending(task)&&(w?.data.board_lane==='followup'||task.followup_due||['submitted','supplement','blocked','waiting'].includes(w?.data.stage));
   if(filter==='changes')return !!task.pending_changes?.length||reviewPending(task);
   if(filter==='sync')return task.needs_calendar_sync||task.calendar_check_required;
   if(filter==='blocked')return taskIsPending(task)&&(w?.blocked||w?.data.stage==='blocked'||task.execution_issues?.length);

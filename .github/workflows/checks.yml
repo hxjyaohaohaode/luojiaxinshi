@@ -99,6 +99,9 @@ jobs:
             artifacts/visual-review-browser/*.png
             artifacts/notice-flow-browser/report.json
             artifacts/notice-flow-browser/*.png
+            artifacts/task-board-browser/report.json
+            artifacts/task-board-browser/*.png
+            artifacts/ci-browser/verify_task_board.mjs.log
             artifacts/ci-browser/verify_frontend_stability.mjs.log
             artifacts/ci-browser/verify_frontend_review.mjs.log
             artifacts/ci-browser/verify_reference_interactions.mjs.log

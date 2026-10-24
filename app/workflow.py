@@ -27,6 +27,9 @@ class WorkflowStep(Strict):
 
 
 class WorkflowData(Strict):
+    # Personal board placement is independent from formal submission/receipt status.
+    board_lane: Literal['action', 'followup'] | None = None
+    board_order: int | None = Field(default=None,ge=0,le=1000000)
     stage: Literal['preparing', 'submitted', 'supplement', 'accepted', 'rejected', 'blocked', 'active', 'waiting', 'recorded'] = 'preparing'
     # Legacy records retain their submission semantics. New confirmed plans
     # explicitly choose the handling mode; no keyword guesses rewrite old data.

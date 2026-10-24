@@ -82,6 +82,9 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     await workspace.evaluate(node=>node.style.height='350px');
     await page.waitForFunction(()=>document.querySelector('.chat-main').clientHeight===350&&document.querySelector('#chat-composer').classList.contains('is-compact'));
     await page.locator('#chat-input').fill('保留可阅读的对话区域。\n'.repeat(12));
+    // A running translateY entry animation rounds a 44px box to 43.999984px in
+    // Chromium/WebKit. Check settled geometry, retaining the actual 44px minimum.
+    await page.locator('#chat-composer').evaluate(node=>Promise.all(node.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
     const bounds=await page.evaluate(()=>{
      const box=s=>document.querySelector(s).getBoundingClientRect().toJSON();
      return {chat:box('.chat-main'),reader:box('.chat-reading-area'),composer:box('#chat-composer'),input:box('#chat-input'),buttons:[...document.querySelectorAll('#chat-composer .composer-plus,#chat-composer .composer-entry button')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().toJSON())};
@@ -90,7 +93,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     assert.equal(await page.evaluate(()=>innerHeight),768);
     assert.ok(bounds.reader.height>bounds.chat.height*.42,JSON.stringify(bounds));
     assert.ok(bounds.composer.bottom<=bounds.chat.bottom&&bounds.composer.height<90,JSON.stringify(bounds));
-    for(const b of bounds.buttons){assert.ok(b.width>=44&&b.height>=44);assert.ok(b.right<=bounds.composer.right&&b.bottom<=bounds.composer.bottom);assert.ok(b.right<=bounds.input.x||b.x>=bounds.input.right,JSON.stringify(bounds));}
+    for(const b of bounds.buttons){assert.ok(b.width>=44&&b.height>=44,JSON.stringify(bounds));assert.ok(b.right<=bounds.composer.right&&b.bottom<=bounds.composer.bottom,JSON.stringify(bounds));assert.ok(b.right<=bounds.input.x||b.x>=bounds.input.right,JSON.stringify(bounds));}
     await page.screenshot({path:path.join(output,`${engine}-chat-short-container.png`)});
    }finally{
     await page.locator('#chat-input').fill('');

@@ -26,6 +26,7 @@ import {createReminders} from './reminders.js';
 import {createInsightsUI} from './insights.js';
 import {legalMarkup} from './legal.js';
 import {taskBoardMarkup} from './task-views.js';
+import {createTaskBoardDrag,boardMoveError} from './task-drag.js';
 import {createCommandSearch} from './command-search.js';
 import {createWorkflowUI,taskMatchesFilter} from './workflow.js';
 import {createMemoryUI} from './memory.js';
@@ -139,9 +140,10 @@ function shell(page){
 function noticeStatus(n){return noticeState(n);}
 function noticeRow(n){const [label,color]=noticeStatus(n);return `<a class="notice-row notice-row-link" href="#notice/${n.id}"><span class="notice-symbol">${icon('doc')}</span><span class="spacer"><strong>${esc(n.title)}</strong><small>${esc(n.source_label||'个人提交')} · ${n.task_count||0} 项待办</small></span>${pill(label,color)}<span class="date-col">${dateText(n.created_at)}</span></a>`;}
 function taskAttachments(t){const files=t.attachments||(state.notice?.id===t.notice_id?state.notice.sources.filter(s=>s.active&&s.kind!=='text'):[]);if(!files.length)return '';return `<div class="task-attachments" data-attachment-notice="${t.notice_id}"><details class="attachment-peek"><summary>${icon('doc')} ${files.length} 份原文附件 · 点开预览</summary><div class="attachment-list">${files.map(s=>`<button type="button" class="attachment-tile" data-preview-source="${s.id}">${icon('doc')}<span><strong>${esc(s.name)}</strong><small>${esc(s.kind.toUpperCase())}${s.size?' · '+Math.ceil(s.size/1024)+' KB':''}</small></span>${icon('arrow')}</button>`).join('')}</div></details></div>`;}
-function taskRow(t){
+function taskRow(t,board=false){
   const d=t.data;
-  return `<div class="task-row ${t.status==='done'?'done':''}">
+  return `<div class="task-row ${t.status==='done'?'done':''}" data-task-id="${esc(t.id)}">
+    ${board===true?`<button type="button" class="task-drag-handle" data-task-drag-handle aria-label="移动：${esc(d.title)}" aria-describedby="task-board-help" title="按住拖动，或点按选择位置"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h.01M16 5h.01M8 12h.01M16 12h.01M8 19h.01M16 19h.01" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></button>`:''}
     <button class="task-check ${t.status==='done'?'checked':''}" data-action="toggle-task" data-id="${t.id}" aria-label="${t.status==='done'?'恢复待完成':'标记完成'}" aria-pressed="${t.status==='done'}" ${t.status==='cancelled'?'disabled':''}>${t.status==='done'?icon('check'):''}</button>
     <div class="task-main">
       <button type="button" class="task-title task-primary" data-workflow-task="${t.id}" aria-label="办理：${esc(d.title)}"><span class="task-label">${esc(d.title)}</span>
@@ -431,6 +433,7 @@ async function retireAfterSave(key,ticket){
   try{return await drafts.retire(key,ticket);}catch(error){return null;}
 }
 function taskList(){
+  taskBoardDrag?.beforeRender();
   const selected=state.insightSelection?.kind==='tasks'?state.insightSelection:null;
   const filtered=state.tasks.filter(t=>(!selected||selected.ids.includes(t.id))&&(state.filter==='all'||(taskMatchesFilter(t,state.filter)??(state.filter==='soon'?(t.due_soon||t.overdue)&&taskIsPending(t):state.filter==='unverified'?taskIsPending(t)&&t.data.scope==='personal'&&needsTimingReview(t):t.status===state.filter)))&&(!state.query||(t.data.title+' '+t.notice_title+' '+t.data.materials.join(' ')).toLowerCase().includes(state.query.toLowerCase()))&&(!state.dateFilter||taskOnDay(t.data,state.dateFilter)));
   if(!$('#task-results'))$('#content').innerHTML=`<div class="page-title between task-page-heading"><div><h1>我的待办</h1></div><div class="search"><input id="task-search" placeholder="搜索标题、通知或材料…" aria-label="搜索待办" value="${esc(state.query)}"></div><a href="#new" class="button primary">${icon('plus')} 处理通知</a></div><div class="toolbar"><div class="tabs" role="tablist" aria-label="待办状态">${[['pending','待完成'],['followup','待跟进'],['changes','变更待核实'],['soon','近期'],['unverified','时间待核对'],['sync','日历待同步'],['done','已完成'],['cancelled','已取消'],['all','全部']].map(([v,l])=>`<button role="tab" class="tab" data-action="filter" data-filter="${v}">${l}</button>`).join('')}</div></div><div class="task-filter-row"><div class="view-toggle" role="group" aria-label="待办展示方式"><button type="button" data-task-view="board" aria-label="看板视图">${icon('grid')}<span>看板</span></button><button type="button" data-task-view="list" aria-label="清单视图">${icon('menu')}<span>清单</span></button></div><details class="task-date-filter"><summary>${icon('calendar')}<span id="task-date-label">日期筛选</span></summary><div class="filters"><label for="task-date">按期限或活动日期</label><input id="task-date" type="date" value="${esc(state.dateFilter)}">${button('清除日期','clear-date','small plain')}</div></details><span class="small muted" id="task-count"></span></div><div class="divider"></div><div class="panel flush task-results" id="task-results" role="tabpanel" aria-live="polite"></div><div id="task-pages" class="pagination"></div>`;
@@ -441,6 +444,7 @@ function taskList(){
   let selectionNote=$('#task-insight-filter');if(!selectionNote){selectionNote=document.createElement('div');selectionNote.id='task-insight-filter';selectionNote.className='small muted';$('#task-results').before(selectionNote);}selectionNote.innerHTML=selected?`<span>数据看板 · ${esc(selected.label)}</span> ${button('清空筛选','clear-task-filters','small plain')}`:'';
   $('#task-count').textContent=filtered.length+' 项';$('#task-date-label').textContent=state.dateFilter||'日期筛选';
   const pages=Math.max(1,Math.ceil(filtered.length/20));state.taskPage=Math.min(state.taskPage,pages);
+  filtered.sort((a,b)=>(a.workflow?.data.board_order??Infinity)-(b.workflow?.data.board_order??Infinity));
   const visible=filtered.slice((state.taskPage-1)*20,state.taskPage*20);
   $('#task-results').innerHTML=visible.length?(state.taskView==='board'?taskBoardMarkup(visible,taskRow,icon):visible.map(taskRow).join('')):(state.query||state.dateFilter||selected?empty('暂时没有匹配的事项','换一个关键词，或清空筛选。已经保存的事项可以从全部列表找回。',button('清空筛选，查看全部','clear-task-filters','small'),false,'search'):state.filter==='pending'&&state.tasks.some(t=>t.status==='done')?empty('已确认的待办，暂时都处理好了','给自己留一点松弛的时间，也可以去日历看看其他安排。','<a class="button small" href="#calendar">看看日历</a>',false,'serene'):state.filter==='unverified'?empty('没有待核对时间的事项','已确认的待完成事项中，暂时没有需要核对时间的步骤。已完成事项可从对应列表回看。',button('查看全部事项','clear-task-filters','small'),false,'serene'):empty(state.tasks.length?'当前状态下没有事项':'从清楚的一步开始',state.tasks.length?'切换到全部，可以查看其他状态的事项。':'先保存一则通知，核对后把属于自己的步骤转成待办。',state.tasks.length?button('查看全部事项','clear-task-filters','small'):'<a class="button small" href="#new">处理第一则通知</a>',false,'radar'));
 
@@ -479,6 +483,43 @@ $('#dialog').addEventListener('close',()=>{
 });
 document.addEventListener('invalid',event=>{const group=event.target.closest('[data-profile-group]');if(group?.hidden)document.querySelector(`[data-action="profile-section"][data-section="${group.dataset.profileGroup}"]`)?.click();},true);
 const libraryUI=createLibraryUI({state,esc,icon,noticeRow,empty,moveSelection});
+let boardSaving=false;
+async function requestBoardMove(id,payload){
+  if(boardSaving)throw Error('上一项正在保存，请稍后再拖。');
+  boardSaving=true;taskBoardDrag.beforeRender();
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    if(state.session?.task_board_contract!==1){
+      const owner=state.session?.user?.id,session=await api('/session',{signal:controller.signal});
+      if(session.user.id!==owner)throw Error('账号已变化，请刷新后重新拖动。');
+      state.session=session;
+      if(session.task_board_contract!==1){const error=Error('服务尚未更新');error.code='board_unavailable';throw error;}
+    }
+    return await api(`/tasks/${id}/move`,{method:'POST',json:payload,signal:controller.signal});
+  }
+  finally{clearTimeout(timer);boardSaving=false;}
+}
+const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id,placement)=>{
+  const owner=state.session?.user?.id,old=findTask(id);if(!old)return;
+  try{
+    const result=await requestBoardMove(id,{task_version:old.version,workflow_version:old.workflow.version,...placement});
+    if(state.session?.user?.id!==owner)return;
+    state.tasks=result.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
+    if(location.hash==='#tasks')taskList();
+    toast(placement.lane==='closed'&&old.status==='pending'?'已标记完成':'位置已保存',false,{duration:15000,action:{label:'撤销',run:async()=>{
+      if(state.session?.user?.id!==owner)return;
+      let restored;
+      try{restored=await requestBoardMove(id,result.undo);}catch(error){
+        if(state.session?.user?.id!==owner)return;
+        const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();throw Error(boardMoveError(error,refreshed));
+      }
+      if(state.session?.user?.id!==owner)return;
+      state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks')taskList();
+    }}});
+  }catch(error){
+    if(state.session?.user?.id===owner){const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();toast(boardMoveError(error,refreshed),true);}throw error;
+  }
+}});
 const workflowUI=createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area,timeInput,toTime,drafts,route,displayTaskUpdate,exportTasks});
 const reminders=createReminders({state,api,esc,icon,toast,showDialog});
 const insightsUI=createInsightsUI({state,api,esc,icon,companion});

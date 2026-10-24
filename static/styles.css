@@ -50,3 +50,4 @@
 @import url('/static/system/flat-layout.css') layer(system);
 @import url('/static/system/settings-focus.css') layer(system);
 @import url('/static/system/insight-data.css') layer(system);
+@import url('/static/system/task-drag.css') layer(system);

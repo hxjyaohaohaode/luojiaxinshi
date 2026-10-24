@@ -316,7 +316,7 @@ def create_app(settings=None):
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
                         'role':current['role'],'profile':json.loads(current['profile'])},'csrf':current['csrf'],
                 'ai':public_configuration(settings),'genui':genui,'consent':consent,
-                'environment':'production' if settings.production else 'local'}
+                'environment':'production' if settings.production else 'local','task_board_contract':1}
 
     @app.post('/api/auth/login')
     def login(payload: Login, request: Request):
@@ -915,6 +915,9 @@ def create_app(settings=None):
     def update_task(tid:str,payload:TaskUpdate,current=Depends(user)):
         with db.connect(write=True) as conn:
             return update_task_record(conn,current['id'],tid,payload)
+
+    from .task_board import install as install_task_board
+    install_task_board(app,db,user,list_tasks,update_task_record)
 
     @app.get('/api/notices/{nid}/history')
     def history(nid:str,current=Depends(user)):

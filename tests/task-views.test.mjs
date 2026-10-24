@@ -1,10 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {taskLanes} from '../static/task-views.js';
+import {taskLanes,taskBoardMarkup} from '../static/task-views.js';
 import {overviewWeek} from '../static/overview.js';
 import {numberMarkup,ringMarkup} from '../static/experience-system.js';
+import {boardMoveError} from '../static/task-drag.js';
+import {taskMatchesFilter} from '../static/workflow.js';
 
 const task=(id,overrides={})=>({id,status:'pending',data:{scope:'personal',due_date:'2026-12-31'},workflow:{data:{stage:'preparing'}},...overrides});
+test('move failures explain the cause and next action without claiming missing records for an old server',()=>{
+  assert.match(boardMoveError({status:404,message:'Not Found'}),/服务版本.*重启/);
+  assert.match(boardMoveError({status:409},true),/已同步.*重新拖动/);
+  assert.match(boardMoveError({status:0},false),/待确认.*刷新/);
+  assert.match(boardMoveError({status:422,message:'请先完成前置事项'}),/前置.*再试/);
+  assert.equal(taskMatchesFilter(task('follow',{workflow:{data:{stage:'preparing',board_lane:'followup'}}}),'followup'),true);
+});
+test('board keeps empty drop destinations and applies persisted priority without altering records',()=>{
+  const records=[task('a'),task('b',{workflow:{data:{stage:'submitted',board_lane:'action',board_order:0}}}),task('c',{workflow:{data:{stage:'preparing',board_lane:'followup',board_order:0}}})];
+  const before=structuredClone(records);
+  assert.deepEqual(taskLanes(records).map(l=>l.tasks.map(t=>t.id)),[['b','a'],['c'],[]]);
+  assert.deepEqual(records,before);
+  assert.match(taskBoardMarkup([],()=>'',()=>''),/data-task-lane="closed"/);
+});
 test('board partitions current results once, keeping excluded and cancelled actions out of active lanes',()=>{
   const records=[task('prepare'),task('follow',{followup_due:true}),task('submitted',{workflow:{data:{stage:'submitted'}}}),task('blocked',{workflow:{data:{stage:'blocked'}}}),task('done',{status:'done'}),task('cancelled',{status:'cancelled'}),task('declined',{action_excluded:true})];
   const original=structuredClone(records);
