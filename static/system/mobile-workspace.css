@@ -1,0 +1,146 @@
+.task-board-scroll { min-width:0; }
+.task-board-lanes { display:none; }
+.task-drag-dock { position:fixed; z-index:2100; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:8px; border:1px solid #dfe3e6; border-radius:14px; background:#fffffff5; box-shadow:0 8px 30px #17232f26; }
+.task-drag-dock > div { display:grid; place-items:center; min-height:54px; border-radius:9px; font-size:13px; color:#59636d; transition:background-color 140ms,color 140ms; }
+.task-drag-dock > .is-target { background:#e9eef4; color:#213c55; box-shadow:inset 0 0 0 1px #b1c0d0; }
+.task-dragging .task-board-scroll { scroll-snap-type:none; scroll-behavior:auto; }
+
+@container task-area (max-width:850px) {
+  /* Each lane stays a lane. Page scrolling and sideways board swipes remain native. */
+  .task-board-lanes { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:0 0 10px; gap:8px; }
+  .task-board-lanes > button { min-width:0; min-height:44px; display:flex; align-items:center; justify-content:center; gap:6px; padding:6px 2px; font-size:13px; white-space:nowrap; color:#737d86; border-bottom:2px solid transparent; }
+  .task-board-lanes > button[aria-current=true] { color:#253441; border-bottom-color:#536575; font-weight:600; }
+  .task-board-lanes > button > span { font-size:12px; font-variant-numeric:tabular-nums; font-weight:400; }
+  .task-board-scroll { overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; scrollbar-width:none; padding:2px 0 8px; }
+  .task-board-scroll::-webkit-scrollbar { display:none; }
+  .task-board-scroll > .task-board[data-lanes] { --lane-width:min(352px,calc(100cqw - 8px)); width:max-content; grid-template-columns:repeat(3,var(--lane-width)); gap:12px; padding-right:max(8px,calc(100cqw - var(--lane-width))); align-items:start; }
+  .task-board .task-board-column { scroll-snap-align:start; margin:0; }
+  .task-board .task-lane-heading { display:none; }
+  .task-board .task-lane-items { min-height:180px; gap:10px; }
+  .task-board .task-row { padding:12px 10px 4px; gap:2px 8px; border-radius:10px; }
+  .task-board .task-main { padding-right:22px; }
+  .task-board .task-title { font-size:14px; line-height:1.55; }
+  .task-board .task-row > .task-actions { margin:0; padding:0; }
+  .task-board .task-source-link { padding-block:1px; min-height:32px; }
+  .task-board .task-source { display:flex; align-items:center; flex-wrap:wrap; gap:0 6px; }
+  .task-board .task-source-link { max-width:100%; font-size:12px; line-height:1.5; }
+  .task-board-hint { font-size:12px; margin:0 0 2px; }
+}
+
+@media(max-width:760px) {
+  .task-row .task-statuses { gap:4px; }
+  .task-row .workflow-stage,.task-row .pill.green { color:#52616a; background:#f1f3f4; }
+  .task-row .pill.orange { color:#936a32; background:#faf4e9; }
+  .task-row .pill.red { color:#ad4c46; background:#fbefed; }
+  .task-row .task-label,.settings-item strong,.catalog-card strong,.notice-card strong { word-break:normal; overflow-wrap:anywhere; text-align:left; }
+  .task-row :is(.task-source,.task-timing) { line-height:1.5; }
+  .task-filter-row { margin-bottom:4px; }
+  .content[data-page=tasks] > .divider { margin-block:8px; }
+
+  /* One alignment grid for mobile page tools, summaries and readable metadata. */
+  .content :is(.page-title,.workspace-page-heading) { align-items:center; }
+  .source-toolbar { gap:8px; }
+  .source-toolbar .record-search { min-width:0; }
+  .source-directory-empty { border:0; background:#fff; padding:12px 0; text-align:left; }
+  .source-directory-empty > h3 { font-size:14px; line-height:1.5; margin:0 0 8px; }
+  .source-starters { display:grid; gap:0; }
+  .source-starter { min-height:60px; padding:10px 4px; border:0; border-bottom:1px solid #e9ecef; border-radius:0; background:#fff; box-shadow:none; }
+  .source-starter strong { font-size:14px; font-weight:500; }
+  .source-starter > .icon { background:transparent; }
+  .notice-compose { gap:12px; }
+  .notice-stepper { padding:6px 0; border:0; border-radius:0; border-bottom:1px solid #e9ecef; background:#fff; }
+  .notice-compose-layout { gap:12px; }
+  #notice-form { gap:10px; padding-block:0; }
+  #notice-form .autosave-status { margin:0; padding:2px 0; font-size:12px; }
+  #notice-form .intake-switch { margin:0; }
+  #notice-form .compose-section-heading { margin:0; padding-block:6px; }
+  #notice-content-step,#notice-review-step { gap:12px; }
+  #notice-form .field { gap:6px; margin:0; }
+  #notice-form .notice-link-entry { flex-wrap:nowrap; gap:6px; align-items:end; }
+  #notice-form .notice-link-entry .field { flex:1; min-width:0; }
+  #notice-form .notice-link-entry .button { flex:none; width:auto; min-height:44px; padding-inline:10px; font-size:13px; }
+  #notice-form .notice-link-entry input { min-width:0; }
+  .catalog-card > summary { padding:12px 10px; gap:10px; min-height:64px; }
+  .catalog-heading { display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:10px; }
+  .catalog-heading h3 { margin:0; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
+  .catalog-heading .small { font-size:12px; line-height:1.5; }
+  .catalog-heading .catalog-icon { width:30px; height:30px; background:transparent; }
+  .catalog-card .catalog-actions { padding:8px 10px; gap:6px; flex-wrap:wrap; }
+  .settings-home .settings-person { gap:10px; }
+  .settings-person .avatar { width:38px; height:38px; font-size:17px; border-radius:10px; }
+  .settings-person h2 { font-size:16px; line-height:1.4; }
+  .settings-person p { font-size:12px; line-height:1.5; }
+  .settings-categories { margin-bottom:10px; }
+  .settings-home .settings-item { align-items:center; padding:10px 0; gap:10px; }
+  .settings-home .settings-item small { margin-top:2px; line-height:1.5; }
+  .settings-home .settings-item > .icon { flex:none; }
+  .collection-summary { margin-bottom:12px; padding:8px 0 12px; border:0; border-bottom:1px solid #e9ecef; border-radius:0; gap:12px; }
+  .collection-stat { gap:4px; }
+  .collection-stat strong { font-size:22px; }
+  .library-toolbar { padding:0; border:0; border-radius:0; background:#fff; }
+  .library-tabs-row { margin-bottom:8px; }
+  .notice-card { min-height:0; padding:12px; border-radius:10px; }
+  .notice-card:hover { transform:none; box-shadow:none; }
+  .notice-card-content { padding:10px 0 6px; }
+  .notice-card-content > .link-button { min-height:0; padding:0; font-size:14px; line-height:1.55; }
+  .notice-card-content p { margin:5px 0 0; line-height:1.5; }
+  .notice-card .notice-folder { width:30px; height:30px; border-radius:7px; background:#f3f4f5; color:#67747d; }
+  .notice-card .notice-folder::before { display:none; }
+  .notice-card-pills { gap:4px; }
+  .notice-card h3 { font-size:14px; line-height:1.55; }
+  .notice-card-meta,.notice-card-footer { gap:6px; font-size:12px; line-height:1.5; }
+  .insight-chart-grid { gap:18px; }
+  .insight-toolbar h1 { font-size:18px; line-height:1.4; }
+  .insight-chart > header { margin-bottom:14px; }
+  .insight-trend-plot { height:144px; }
+  .insight-horizon { height:160px; }
+  .insight-state-layout { gap:12px; }
+  .insight-state-layout .insight-donut { flex:none; width:112px; height:112px; }
+  .insight-state-legend span,.insight-checks span { min-width:0; overflow-wrap:anywhere; line-height:1.5; }
+
+  /* Calendar colour identifies events, not entire header bands or empty days. */
+  .calendar-main,.time-grid-header,.time-grid-header > button,.time-grid-header > button.selected,.month-cell.selected { background:#fff; }
+  .time-grid-header > button.selected { box-shadow:inset 0 -2px #5b6c79; color:#263944; }
+  .time-grid-header > button.today strong { color:#263944; background:#eff2f3; }
+  .time-calendar:not(.single-day) { min-width:670px; }
+  .time-calendar .time-labels { position:sticky; left:0; z-index:2; background:#fff; }
+  .calendar-scroll-hint { display:block; margin:0; padding:5px 10px; font-size:12px; color:#737d86; }
+  .time-grid-header > span,.time-labels span { color:#78818a; font-size:11px; font-variant-numeric:tabular-nums; }
+  .calendar-date-trigger { font-size:14px; line-height:1.4; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  .calendar-navigation h2 { min-width:0; }
+  .calendar-view-tabs { background:transparent; }
+  .calendar-view-tabs .tab.active { background:#f1f3f4; color:#344550; }
+  .calendar-view-tabs .selection-indicator { background:#f1f3f4; box-shadow:none; }
+  .calendar-day-empty { gap:8px; padding:8px 10px; align-items:center; }
+  .calendar-day-empty > span { min-width:0; font-size:12px; line-height:1.5; }
+  .calendar-day-empty .button { flex:none; min-height:44px; padding-inline:8px; }
+  .calendar-selection { padding:10px; }
+  .calendar-selection > .between { align-items:center; gap:6px; }
+  .calendar-selection h3 { font-size:13px; line-height:1.5; }
+  .calendar-selection h3 small { display:block; }
+  .calendar-selection > .between > button { flex:none; padding-inline:6px; }
+  .agenda-row { display:grid; grid-template-columns:6px 66px minmax(0,1fr) 14px; gap:8px; padding:12px 10px; align-items:start; }
+  .agenda-row > .calendar-dot { margin-top:6px; width:6px; height:6px; }
+  .agenda-time { font-size:12px; line-height:1.6; white-space:normal; font-variant-numeric:tabular-nums; overflow-wrap:normal; }
+  .agenda-time > span { display:block; }
+  .agenda-title { min-width:0; }
+  .agenda-title strong { display:block; font-size:14px; line-height:1.5; word-break:normal; overflow-wrap:anywhere; }
+  .agenda-title small { display:block; margin-top:3px; font-size:12px; line-height:1.5; }
+  .agenda-row > .icon { width:14px; height:18px; margin-top:2px; }
+}
+
+@media(max-width:600px) {
+  /* The menu occupies only the first row. Use its space for the range arrow
+     on row two so all four view tabs keep a full touch target at 320px. */
+  .calendar-toolbar .calendar-navigation > button[data-calendar-action=previous] { margin-left:-44px; justify-self:start; width:44px; }
+  .calendar-toolbar .calendar-view-tabs { grid-column:1 / 4; }
+  .calendar-toolbar .calendar-view-tabs .tab { min-width:44px; }
+}
+
+@media(max-width:760px) and (min-height:650px) {
+  .chat-welcome .welcome-mascot { height:80px !important; margin-bottom:8px; }
+  .chat-welcome .chat-companion { width:80px; height:80px; }
+  .chat-welcome .welcome-orbit { display:none; }
+  .chat-welcome h2 { font-size:18px; line-height:1.5; }
+  .chat-welcome .scene-choices { margin:16px 0 8px; gap:8px; }
+}

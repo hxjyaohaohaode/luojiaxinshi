@@ -52,3 +52,4 @@
 @import url('/static/system/insight-data.css') layer(system);
 @import url('/static/system/task-drag.css') layer(system);
 @import url('/static/system/responsive-density.css') layer(system);
+@import url('/static/system/mobile-workspace.css') layer(system);

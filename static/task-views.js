@@ -20,8 +20,8 @@ export function taskLanes(tasks) {
 
 export function taskBoardMarkup(tasks, taskRow, icon) {
   const lanes = taskLanes(tasks);
-  return `<p class="task-board-hint" id="task-board-help">靠上优先 · 拖到其他列调整进度</p><div class="task-board" data-lanes="${lanes.length}">${lanes.map(lane => `<section class="task-board-column lane-${lane.key}" data-task-lane="${lane.key}" aria-label="${lane.title}">
+  return `<p class="task-board-hint" id="task-board-help">靠上优先 · 按住卡片右上角移动</p><nav class="task-board-lanes" aria-label="看板进度">${lanes.map((lane,i)=>`<button type="button" data-board-jump="${lane.key}" aria-current="${i===0?'true':'false'}">${lane.title}<span>${lane.tasks.length}</span></button>`).join('')}</nav><div class="task-board-scroll"><div class="task-board" data-lanes="${lanes.length}">${lanes.map(lane => `<section class="task-board-column lane-${lane.key}" data-task-lane="${lane.key}" aria-label="${lane.title}">
     <header class="task-lane-heading"><span class="lane-dot" aria-hidden="true"></span><h2>${lane.title}</h2><span>${lane.tasks.length}</span></header>
     <div class="task-lane-items">${lane.tasks.map(task=>taskRow(task,true)).join('')}<div class="lane-empty" aria-label="${lane.title}暂无事项" ${lane.tasks.length?'hidden':''}>${icon(lane.key === 'closed' ? 'check' : 'tasks')}<span>${lane.key==='closed'?'拖到这里标记完成':'拖到这里'}</span></div></div>
-  </section>`).join('')}</div>`;
+  </section>`).join('')}</div></div>`;
 }

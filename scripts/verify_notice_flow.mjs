@@ -45,6 +45,11 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await page.locator('[data-notice-disposition=inbox]').click();await page.locator('#dialog [type=submit]').click();await page.locator('[data-action=manual]').waitFor();
     });
     await check('an activity can be confirmed through the editor with an interval and no deadline',async()=>{
+      await settle();
+      const manualBox=await page.locator('[data-action=manual]').boundingBox();
+      await page.mouse.move(manualBox.x+manualBox.width/2,manualBox.y+manualBox.height-.25);
+      const positions=await page.locator('[data-action=manual]').evaluate(async node=>{const ys=[];for(let i=0;i<24;i++){await new Promise(requestAnimationFrame);ys.push(node.getBoundingClientRect().y);}return ys;});
+      assert.ok(Math.max(...positions)-Math.min(...positions)<.1,'Hovering an action edge must not make its target oscillate');
       await page.locator('[data-action=manual]').click();await page.locator('[data-action=add-task]').click();
       const editor=page.locator('[data-editor]').first();await editor.locator('[name=title]').fill('工程讲座 '+unique);
       await editor.locator('.task-scheduled>summary').click();await editor.locator('[name=use_scheduled]').check();
@@ -82,7 +87,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await nav('new');await page.locator('[data-read-url]').fill('https://notice-fixture.example/'+unique);await page.locator('[data-read-link]').click();await page.locator('[data-use-link]').click();
       assert.ok(await page.locator('[name=link_preview]').inputValue());await page.locator('[data-notice-step-to=review]').click();await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);
       linkId=new URL(page.url()).hash.split('/')[1];const n=await api('/notices/'+linkId);assert.equal(n.sources.length,1);assert.equal(n.sources[0].origin.url,'https://notice-fixture.example/'+unique);
-      assert.ok(await page.locator('.source-content a').count());
+      await page.locator('.source-content a').first().waitFor();assert.ok(await page.locator('.source-content a').count());
     });
     await check('unreadable links leave pasted content intact for fallback',async()=>{
       await nav('new');await page.locator('[name=body]').fill('失败后保留的正文 '+unique);await page.locator('[data-read-url]').fill('https://notice-fixture.example/failure');await page.locator('[data-read-link]').click();await page.getByText('示例链接暂时不可读取，请粘贴正文或上传原件',{exact:true}).waitFor();

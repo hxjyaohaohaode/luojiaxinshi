@@ -65,9 +65,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     });
     await check('keyboard move menu works with reduced motion',async()=>{
       await page.emulateMedia({reducedMotion:'reduce'});await row(b).locator('[data-task-drag-handle]').focus();await page.keyboard.press('Enter');
-      await page.getByRole('button',{name:'移到留意反馈',exact:true}).click();await settle();assert.ok((await ids('followup')).includes(b));assert.equal(await page.locator('.task-drag-ghost').count(),0);
+      const saved=page.waitForResponse(r=>r.url().endsWith('/tasks/'+b+'/move')&&r.request().method()==='POST');
+      await page.getByRole('button',{name:'移到留意反馈',exact:true}).click();assert.equal((await saved).status(),200);await row(b).locator('xpath=ancestor::section[@data-task-lane="followup"]').waitFor();assert.ok((await ids('followup')).includes(b));assert.equal(await page.locator('.task-drag-ghost').count(),0);
     });
-    if(engine==='chromium')await check('native touch long-press reorders cards while ordinary swipes remain scrollable',async()=>{
+    if(engine==='chromium')await check('native touch reorders, crosses lanes through the dock, undoes, and swipes the board',async()=>{
       const mobileContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,storageState:await page.context().storageState()});
       const mobile=await mobileContext.newPage();
       try{
@@ -83,14 +84,27 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
         await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.locator('.task-drag-ghost').waitFor({state:'detached'});await mobile.waitForTimeout(350);
         assert.deepEqual(await follow.evaluateAll(nodes=>nodes.map(n=>n.dataset.taskId)),[before[1],before[0]]);
         assert.equal(await mobile.locator('#dialog').evaluate(n=>n.open),false);
+        const movedId=await follow.last().getAttribute('data-task-id');
+        await follow.last().locator('[data-task-drag-handle]').scrollIntoViewIfNeeded();
+        const grip=await follow.last().locator('[data-task-drag-handle]').boundingBox();
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x+22,y:grip.y+22,id:3}]});
+        await mobile.locator('.task-drag-dock').waitFor();
+        const drop=await mobile.locator('[data-task-drop-lane=action]').boundingBox();
+        for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+22+(drop.x+drop.width/2-grip.x-22)*i/12,y:grip.y+22+(drop.y+drop.height/2-grip.y-22)*i/12,id:3}]});await mobile.waitForTimeout(16);}
+        const dockSaved=mobile.waitForResponse(r=>r.url().endsWith('/tasks/'+movedId+'/move')&&r.request().method()==='POST');
+        await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal((await dockSaved).status(),200);await mobile.locator('.task-drag-dock').waitFor({state:'detached'});
+        await mobile.locator(`[data-task-lane=action] [data-task-id="${movedId}"]`).waitFor();
+        assert.equal((await api('/tasks/'+movedId+'/workflow')).task.workflow.data.board_lane,'action');
+        const undone=mobile.waitForResponse(r=>r.url().endsWith('/tasks/'+movedId+'/move')&&r.request().method()==='POST');
+        await mobile.locator('#toast .toast-action').click();assert.equal((await undone).status(),200);await mobile.locator(`[data-task-lane=followup] [data-task-id="${movedId}"]`).waitFor();
         await mobile.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity&&!a.effect?.target?.closest?.('#toast')).map(a=>a.finished.catch(()=>{}))));
-        // Start away from the lower scroll boundary to exercise a real page swipe.
-        await mobile.locator('#content').evaluate(el=>{el.scrollTop=0;});await mobile.waitForTimeout(100);
-        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:180,y:650,id:2}]});
-        for(let i=1;i<=10;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:180,y:650-i*25,id:2}]});await mobile.waitForTimeout(16);}
+        await mobile.locator('.task-board-scroll').evaluate(el=>{el.scrollLeft=0;});await mobile.waitForTimeout(100);
+        const boardBox=await mobile.locator('.task-board-scroll').boundingBox(),swipeY=Math.min(boardBox.y+100,600);
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:320,y:swipeY,id:2}]});
+        for(let i=1;i<=10;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:320-i*24,y:swipeY,id:2}]});await mobile.waitForTimeout(16);}
         await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.waitForTimeout(250);
         assert.equal(await mobile.locator('.task-drag-ghost').count(),0);
-        assert.ok(await mobile.locator('#content').evaluate(el=>el.scrollTop)>0,'A normal card swipe must scroll the page');
+        assert.ok(await mobile.locator('.task-board-scroll').evaluate(el=>el.scrollLeft)>0,'A normal card swipe must move between lanes');
         await mobile.screenshot({path:path.join(out,'chromium-touch.png')});
       }finally{await mobileContext.close();}
     });

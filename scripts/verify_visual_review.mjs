@@ -99,6 +99,33 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    await trigger.click();await page.locator('[data-workspace-form=source-catalog]').waitFor();assert.equal(await page.locator('[data-workspace-form=source-catalog] [name=platform]').inputValue(),'website');await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});await settle();assert.equal(await trigger.evaluate(n=>n===document.activeElement),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await capture('sources-390');
   });
+  for(const width of [390,320])for(const route of ['dashboard','tasks','notices','calendar','insights','sources','settings','new','chat','memory']){
+   await resize(width,844);await nav(route);
+   await check('mobile '+route+' keeps content and primary controls inside '+width,async()=>{
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    if(route==='tasks'){
+     await page.locator('[data-task-view=board]').click();await settle();
+     const bounds=await page.locator('.task-board-scroll').evaluate(n=>({width:n.clientWidth,scroll:n.scrollWidth}));assert.ok(bounds.scroll>bounds.width,'Mobile lanes must be horizontally reachable');
+     await page.locator('[data-board-jump=followup]').click();await settle();
+     await page.waitForFunction(()=>{const x=document.querySelector('[data-task-lane=followup]').getBoundingClientRect().x;return x>=0&&x<50;});
+     const b=await page.locator('[data-task-lane=followup]').boundingBox();assert.ok(b.x>=0&&b.x<50,JSON.stringify(b));
+    }
+    await capture(route+'-mobile-'+width);
+   });
+  }
+  for(const width of [390,320]){
+   await resize(width,844);await nav('calendar');
+   for(const view of ['day','week','month','list'])await check('mobile calendar '+view+' aligns its controls at '+width,async()=>{
+    await page.locator('[data-calendar-view='+view+']').click();await settle();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    const tabs=await page.locator('.calendar-view-tabs .tab').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
+    assert.equal(tabs.length,4);for(const b of tabs){assert.ok(b.width>=44&&b.height>=44,JSON.stringify(b));assert.ok(Math.abs(b.top-tabs[0].top)<1);}
+    const previous=await page.locator('[data-calendar-action=previous]').boundingBox(),next=await page.locator('[data-calendar-action=next]').boundingBox();
+    assert.ok(previous.x>=0&&previous.x+previous.width<=tabs[0].left+1&&tabs[3].right<=next.x+1&&next.x+next.width<=width+1,JSON.stringify({previous,tabs,next}));
+    if(view==='week')assert.ok(await page.locator('.time-calendar-scroll').evaluate(n=>n.scrollWidth>n.clientWidth),'Week columns must stay readable and swipe horizontally');
+    await capture('calendar-'+view+'-'+width);
+   });
+  }
  }catch(error){report.errors.push({engine,error:error.message});console.log('ERROR',engine,error.message);}
  finally{await browser.close();await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));}
 }

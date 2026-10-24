@@ -25,7 +25,7 @@ import {initializeChoreography,choreograph} from './choreography.js';
 import {createReminders} from './reminders.js';
 import {createInsightsUI} from './insights.js';
 import {legalMarkup} from './legal.js';
-import {taskBoardMarkup} from './task-views.js';
+import {taskBoardMarkup,taskLane} from './task-views.js';
 import {createTaskBoardDrag,boardMoveError} from './task-drag.js';
 import {createCommandSearch} from './command-search.js';
 import {createWorkflowUI,taskMatchesFilter} from './workflow.js';
@@ -449,6 +449,7 @@ function taskList(){
   $('#task-results').innerHTML=visible.length?(state.taskView==='board'?taskBoardMarkup(visible,taskRow,icon):visible.map(taskRow).join('')):(state.query||state.dateFilter||selected?empty('暂时没有匹配的事项','换一个关键词，或清空筛选。已经保存的事项可以从全部列表找回。',button('清空筛选，查看全部','clear-task-filters','small'),false,'search'):state.filter==='pending'&&state.tasks.some(t=>t.status==='done')?empty('已确认的待办，暂时都处理好了','给自己留一点松弛的时间，也可以去日历看看其他安排。','<a class="button small" href="#calendar">看看日历</a>',false,'serene'):state.filter==='unverified'?empty('没有待核对时间的事项','已确认的待完成事项中，暂时没有需要核对时间的步骤。已完成事项可从对应列表回看。',button('查看全部事项','clear-task-filters','small'),false,'serene'):empty(state.tasks.length?'当前状态下没有事项':'从清楚的一步开始',state.tasks.length?'切换到全部，可以查看其他状态的事项。':'先保存一则通知，核对后把属于自己的步骤转成待办。',state.tasks.length?button('查看全部事项','clear-task-filters','small'):'<a class="button small" href="#new">处理第一则通知</a>',false,'radar'));
 
   $('#task-pages').innerHTML=pages>1?`${button('上一页','task-page','small',`data-page="${state.taskPage-1}" ${state.taskPage===1?'disabled':''}`)}<span>第 ${state.taskPage} / ${pages} 页 · 每页 20 项</span>${button('下一页','task-page','small',`data-page="${state.taskPage+1}" ${state.taskPage===pages?'disabled':''}`)}`:'';
+  taskBoardDrag.afterRender();
 }
 document.addEventListener('click',e=>{const view=e.target.closest('[data-task-view]');if(view){state.taskView=view.dataset.taskView;taskList();}});
 document.addEventListener('input',e=>{if(e.target.closest('form[data-cache-key]'))persistCurrentForms();});
@@ -514,10 +515,10 @@ const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id
         const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();throw Error(boardMoveError(error,refreshed));
       }
       if(state.session?.user?.id!==owner)return;
-      state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks')taskList();
+      state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(result.undo.lane);}
     }}});
   }catch(error){
-    if(state.session?.user?.id===owner){const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();toast(boardMoveError(error,refreshed),true);}throw error;
+    if(state.session?.user?.id===owner){const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(taskLane(findTask(id)||old));}toast(boardMoveError(error,refreshed),true);}throw error;
   }
 }});
 const workflowUI=createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area,timeInput,toTime,drafts,route,displayTaskUpdate,exportTasks});

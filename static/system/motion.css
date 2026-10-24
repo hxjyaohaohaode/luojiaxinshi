@@ -8,9 +8,9 @@
 
 /* ---------- 悬停与按压 ---------- */
 @media (hover: hover) and (pointer: fine) {
-  .button:hover { transform: translateY(-1px); }
-  .button.plain:hover, .button.small.plain:hover { transform: none; }
-  .icon-button:hover { transform: scale(1.06); }
+  /* Moving a hit region away from a stationary pointer can oscillate hover
+     indefinitely at its edge. Keep the target fixed; animate its contents. */
+  .button:hover, .icon-button:hover, .notice-card:hover, .source-starter:hover { transform: none; }
   .button:hover > .icon:last-child:not(:first-child),
   a:hover > .icon:last-child:not(:first-child),
   .settings-item:hover > .icon:last-child,
@@ -19,7 +19,7 @@
   .task-row, .notice-row { transition: background-color var(--dur-2) var(--ease-out); }
   .task-row:hover, .notice-row:hover { background-color: #f7faf6; }
   .settings-item { transition: background-color var(--dur-2), border-color var(--dur-2), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-spring); }
-  .settings-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .settings-item:hover { transform: none; box-shadow: var(--shadow-2); }
   .catalog-card > summary { transition: background-color var(--dur-2); }
   .catalog-card > summary:hover { background-color: #f6f9f5; }
 }
