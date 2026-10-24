@@ -99,6 +99,7 @@ body { font-size:14px; line-height:1.55; }
 
 /* Phones / portrait tablets: compact summaries and a full-width action list. */
 @media(max-width:850px) {
+  .sidebar .nav-item,.sidebar .sidebar-create { min-height:44px; }
   .workspace > .content:not([data-page^=chat]):not([data-page=calendar]):not([data-page=memory]) { padding:10px 12px calc(var(--mobile-nav-height,58px) + 12px + env(safe-area-inset-bottom)); }
   .overview-compact { grid-template-columns:minmax(0,1fr); gap:10px; }
   .overview-compact > .action-metrics { grid-column:1; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
@@ -127,6 +128,13 @@ body { font-size:14px; line-height:1.55; }
   .settings-home .settings-item { min-height:56px; }
   .settings-home .settings-person { margin-bottom:12px; }
   .insight-key-metric > strong { font-size:26px; }
+}
+
+/* A tablet can keep sources and tools alongside the item instead of using phone rows. */
+@media(min-width:601px) and (max-width:850px) {
+  .overview-compact .task-row { grid-template-columns:22px minmax(0,1fr) auto; }
+  .overview-compact .task-row > .task-actions { grid-column:3; grid-row:1; }
+  .overview-compact .task-source { display:flex; }
 }
 
 /* Small phones: two summaries per row; the seven-day picker gets its own row. */
@@ -158,6 +166,7 @@ body { font-size:14px; line-height:1.55; }
   @container overview-area (max-width:760px) {
     .overview-compact > .overview-workspace { grid-template-columns:minmax(0,1fr); }
     .overview-compact > .overview-week { grid-template-columns:80px minmax(0,1fr); }
-    .overview-week > .week-agenda { grid-column:1/-1; border:0; padding:0; }
+    .overview-week > .week-agenda { grid-column:1/-1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; border:0; padding:0; }
+    .week-agenda > p,.week-agenda > button { flex:1; }
   }
 }
