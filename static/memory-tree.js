@@ -17,12 +17,13 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   let query={tree:'',session:''},searchScope='folder',viewType='auto',stateFilter='all',sort='recent';
   let tree=new Map(),expanded=new Set(),rows={memories:[],passages:[],projects:[]},summary={},loading=new Set(),more=new Map(),checked=new Set();
   let navDirty=true,lastToken='',polling=false,pendingUpdate=false,pendingWrites=0,returnFocus=null;
+  let indexing=false,lastPollAt=0;
   const narrow=()=>matchMedia('(max-width:1200px)').matches;
   function current(){
     const id=state.session?.user?.id||null;
     if(id!==owner){
       owner=id;drafts.select(id);node='';root='';query={tree:'',session:''};page=0;selected='';mode='tree';viewType='auto';stateFilter='all';sort='recent';searchScope='folder';revision++;
-      tree.clear();expanded.clear();loading.clear();more.clear();checked.clear();lastToken='';navDirty=true;pendingUpdate=false;
+      tree.clear();expanded.clear();loading.clear();more.clear();checked.clear();lastToken='';navDirty=true;pendingUpdate=false;indexing=false;lastPollAt=0;
       controller?.abort();overlay(false);
     }
     return id;
@@ -153,9 +154,12 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     try{
       const params=new URLSearchParams({q:query[mode],offset:page*50,limit:50});
       if(mode==='tree'){if(node&&(searchScope!=='all'||!query.tree))params.set('node_id',node);params.set('view',viewType);params.set('state',stateFilter);params.set('sort',sort);}
-      const [start,data,watermark]=await Promise.all([api('/memory/tree',{signal:request.signal}),api((mode==='session'?'/memory/session-items?':'/memory/tree/entries?')+params,{signal:request.signal}),api('/memory/tree/status',{signal:request.signal})]);
+      // Read the watermark first: a newer status must not acknowledge entries
+      // that were read before indexing committed in another request.
+      const watermark=await api('/memory/tree/status',{signal:request.signal});
+      const [start,data]=await Promise.all([api('/memory/tree',{signal:request.signal}),api((mode==='session'?'/memory/session-items?':'/memory/tree/entries?')+params,{signal:request.signal})]);
       if(user!==current()||ticket!==revision||!ui.sameRoute()||wantedMode!==mode)return;
-      summary={...start,jobs:watermark.jobs};root=start.root_id;if(!node)node=root;
+      summary={...start,jobs:watermark.jobs};indexing=!!(watermark.jobs.queued||watermark.jobs.running);root=start.root_id;if(!node)node=root;
       if(page>0&&page*50>=data.matched){page=Math.max(0,Math.ceil(data.matched/50)-1);return await render();}
       if(navDirty){tree.clear();more.clear();for(const n of start.nodes)tree.set(n.id,n);}
       else for(const n of start.nodes)tree.set(n.id,n);
@@ -184,7 +188,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       if(error.status===404&&node&&node!==root){node=root;clearDetail();page=0;navDirty=true;return await render();}
       updateNotice(error.message,true);
       if(!$('#memory-items').children.length)$('#memory-items').innerHTML='<div class="memory-tree-empty"><h2>记忆暂时读不出来</h2><p>保存的内容都还在，网络好了再试一次。</p><button class="button" data-tree-action="refresh">再试一次</button></div>';
-    }finally{clearTimeout(timeout);if(ticket===revision){$('.memory-tree-main')?.removeAttribute('aria-busy');if($('#memory-load-status'))$('#memory-load-status').textContent='';controller=null;}}
+    }finally{clearTimeout(timeout);if(ticket===revision){$('.memory-tree-main')?.removeAttribute('aria-busy');if($('#memory-load-status'))$('#memory-load-status').textContent='';controller=null;if(indexing)lastPollAt=0;}}
   }
   async function inlineEdit(){
     let editing=rows.memories.find(m=>m.id===selected);if(!editing)return;const draft=drafts.get(editing.id),id=editing.id;
@@ -271,9 +275,10 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   }
   async function poll(){
     const user=current();if(!user||location.hash.split('/')[0]!=='#memory'||document.visibilityState==='hidden'||polling||controller||pendingWrites)return;
-    polling=true;const context=captureUiContext(state);
+    polling=true;lastPollAt=Date.now();const context=captureUiContext(state);
     try{
       const data=await api('/memory/tree/status');if(user!==current()||!context.sameRoute())return;
+      indexing=!!(data.jobs.queued||data.jobs.running);
       if(lastToken&&lastToken!==data.token){
         const interacting=selected||$('#memory-inline-editor')||$('dialog[open]')||checked.size||$('.memory-tools[open]')||document.activeElement?.closest('#memory-tree-nav,.memory-manage-button')||document.activeElement?.matches('#memory-search,[data-tree-check]');
         navDirty=true;if(interacting){pendingUpdate=true;updateNotice('记忆有新变化。你正在改的和选中的都会保留，忙完再刷新列表就好。',true);}else await render({navigation:true,quiet:true});
@@ -345,7 +350,9 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       }
     }catch(error){if(context.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });
-  setInterval(poll,20000);
+  // A pending local index should appear as soon as it is ready; idle pages
+  // retain the normal 20-second cadence and editing still defers replacement.
+  setInterval(()=>{if(Date.now()-lastPollAt>=(indexing?1000:20000))poll();},1000);
   window.addEventListener('online',poll);document.addEventListener('visibilitychange',poll);window.addEventListener('focus',poll);
   window.addEventListener('hashchange',()=>{current();if(location.hash.split('/')[0]!=='#memory'){controller?.abort();revision++;overlay(false);}});
   matchMedia('(max-width:1200px)').addEventListener('change',()=>overlay(!!selected));

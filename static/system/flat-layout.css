@@ -51,6 +51,19 @@
 .dialog-body > .panel, .dialog-body .panel .panel { border:0; border-radius:0; box-shadow:none; }
 #dialog .integration-card { border:0; border-radius:0; box-shadow:none; padding-inline:0; }
 
+@media(max-height:560px) {
+  #dialog:has(#workflow-form) { height:calc(var(--visual-height,100dvh) - 16px); }
+  #dialog:has(#workflow-form) .dialog-head { padding-block:8px; }
+  #dialog:has(#workflow-form) .dialog-body { padding-block:8px; }
+  #dialog .workflow-task-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:0 12px; padding:0; background:transparent; }
+  #dialog .workflow-task-head .workflow-eyebrow { display:none; }
+  #dialog .workflow-task-head h3 { grid-column:1; margin:0; font-size:14px; }
+  #dialog .workflow-task-head p { grid-column:1; margin:2px 0 0; }
+  #dialog .workflow-task-head > a { grid-column:2; grid-row:1 / 3; min-height:44px; display:inline-flex; align-items:center; }
+  #dialog .workflow-editing .workflow-tabs { margin-block:6px; }
+  #dialog .workflow-form > .workflow-save { padding-block:6px; }
+}
+
 @container task-area (max-width:850px) {
   .task-board[data-lanes], .task-board[data-lanes="1"] .task-lane-items { grid-template-columns:minmax(0,1fr); }
   .task-board-column:last-child { grid-column:auto; }
@@ -65,8 +78,8 @@
   }
   .task-board .task-row { padding:14px 12px; }
   .task-filter-row { gap:8px; }
-  .task-page-heading { flex-wrap:wrap; }
-  .task-page-heading .search { flex:1 1 180px; min-width:0; }
+  .task-page-heading { flex-wrap:nowrap; }
+  .task-page-heading .search { flex:1 1 0; min-width:0; }
   .notice-compose, .intake-entries { gap:16px; }
   .notice-compose .panel, .intake-entry { padding-inline:0; }
   .case-heading { flex-wrap:wrap; gap:10px; }

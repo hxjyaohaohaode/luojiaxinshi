@@ -1,3 +1,4 @@
+import {readableSnapshot} from './record-preview.js';
 import {el,button} from './genui/dom.js';
 const images=new Set(['png','jpg','jpeg','webp']),videos=new Set(['mp4','webm']);
 export function attachmentPreview(container,source,url,options={}){
@@ -13,7 +14,7 @@ export function attachmentPreview(container,source,url,options={}){
  if(source.warning)container.append(el('p','small muted',source.warning));container.append(content);
  function draw(){content.replaceChildren();previous.disabled=page===0;next.disabled=page===pages-1;status.textContent=`${page+1} / ${pages}`;const part=sections.slice(page*size,(page+1)*size);if(!part.length){content.append(el('p','muted','暂无可预览文字，请下载原件或补充正文。'));return;}
   if(part.every(s=>s.table)){const wrap=el('div','preview-table-scroll'),table=el('table','preview-table'),caption=el('caption','sr-only',source.name),body=el('tbody');table.append(caption,body);for(const row of part){const tr=el('tr'),locator=el('th','',row.locator);locator.scope='row';tr.append(locator);for(const cell of row.text.split('\t'))tr.append(el('td','',cell));body.append(tr);}wrap.append(table);content.append(wrap);}
-  else for(const section of part){const row=el('section','source-section');row.append(el('span','locator',section.locator),el('p','preserve-lines',section.text));content.append(row);}
+  else for(const section of part){const row=el('section','source-section');row.append(el('span','locator',section.locator),el('p','preserve-lines',readableSnapshot(section.text,source.evidence_kind||source.kind,{multiline:true})));content.append(row);}
  }draw();
 }
 function fullAttachmentPreview(container,source,url,api){
@@ -32,7 +33,7 @@ function fullAttachmentPreview(container,source,url,api){
  search.addEventListener('input',()=>{clearTimeout(timer);sequence++;page=1;timer=setTimeout(draw,250);});
  async function draw(){const request=++sequence;status.textContent='正在读取…';try{const result=await api(url.replace(/^\/api/,'').replace('/download','/preview')+'?page='+page+'&q='+encodeURIComponent(search.value));if(request!==sequence||!container.isConnected)return;page=result.page;previous.disabled=page===1;next.disabled=page===result.pages;status.textContent=`${page} / ${result.pages} · ${result.matched} 个段落${search.value?'匹配':''}`;content.replaceChildren();
   if(!result.sections.length&&!result.resources?.length)content.append(el('p','muted',search.value?'全文中没有这个关键词，请换个词试试。':'暂无可读取文字。原件已保留，可从上方下载；扫描图片需另行识别。'));
-  for(const section of result.sections){const row=el('section','source-section');row.append(el('span','locator',section.locator),el('pre','preserve-lines',section.text));content.append(row);}
+  for(const section of result.sections){const row=el('section','source-section');row.append(el('span','locator',section.locator),el('p','preserve-lines',readableSnapshot(section.text,source.evidence_kind||source.kind,{multiline:true})));content.append(row);}
   if(!search.value)for(const resource of result.resources||[]){const image=el('img');image.src=resource.url;image.alt=resource.name;image.loading='lazy';content.append(image);}
   content.scrollTop=0;
  }catch(error){if(request===sequence&&container.isConnected){status.textContent=error.message;content.replaceChildren(button('重新读取',draw,'button small'));}}}draw();

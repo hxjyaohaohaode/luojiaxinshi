@@ -48,3 +48,5 @@
 @import url('/static/system/navigation-targets.css') layer(system);
 @import url('/static/system/secondary-targets.css') layer(system);
 @import url('/static/system/flat-layout.css') layer(system);
+@import url('/static/system/settings-focus.css') layer(system);
+@import url('/static/system/insight-data.css') layer(system);

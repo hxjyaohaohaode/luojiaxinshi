@@ -76,24 +76,24 @@
   background: var(--bit, #3c8a5c);
 }
 
-/* ---------- 对话框：弹性展开，关闭时淡出 ---------- */
+/* ---------- 对话框：外壳即时响应，正文由分组错峰接入 ---------- */
 #dialog[open] { animation: none; }
 #dialog {
-  transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-4) var(--ease-soft-spring),
-              overlay var(--dur-3) allow-discrete, display var(--dur-3) allow-discrete;
-  opacity: 0; transform: translateY(14px) scale(.97);
+  transition: opacity 120ms var(--ease-out), transform 180ms var(--ease-out),
+              overlay 120ms allow-discrete, display 120ms allow-discrete;
+  opacity: 0; transform: translateY(8px);
 }
 #dialog[open] { opacity: 1; transform: none; }
 #dialog::backdrop { transition: opacity var(--dur-3) var(--ease-out), overlay var(--dur-3) allow-discrete, display var(--dur-3) allow-discrete; opacity: 0; }
 #dialog[open]::backdrop { opacity: 1; animation: none; }
 @starting-style {
-  #dialog[open] { opacity: 0; transform: translateY(18px) scale(.965); }
+  #dialog[open] { opacity: 0; transform: translateY(8px); }
   #dialog[open]::backdrop { opacity: 0; }
 }
 /* 底部抽屉式对话框（手机）从下方滑入 */
 @media (max-width: 600px) {
-  #dialog { transform: translateY(32px); }
-  @starting-style { #dialog[open] { opacity: 0; transform: translateY(48px); } }
+  #dialog { transform: translateY(16px); }
+  @starting-style { #dialog[open] { opacity: 0; transform: translateY(16px); } }
 }
 
 /* ---------- 提示条：从底部弹起 ---------- */
@@ -134,8 +134,12 @@
 html[data-ui-motion=off] :is(.button, .icon-button, .nav-item, .tab, .task-check, .settings-item, .selection-indicator, .hover-follower, #dialog, #toast, [data-parallax]) { transition: none !important; }
 html[data-ui-motion=off] :is(.task-check, .task-check > .icon, .text-swap, .companion-float, .route-feedback, .skeleton-line) { animation: none !important; }
 html[data-ui-motion=off] .hover-follower { display: none; }
+html[data-ui-motion=off] #dialog::backdrop { transition: none !important; }
+html[data-ui-motion=off] :is(.button, .icon-button, .task-open, .nav-item, .tab, .scene-choice, .settings-item, .action-metric, .source-starter, .week-days > button, .mobile-bottom-nav > *, .button > .icon, a > .icon) { transform: none !important; }
 @media (prefers-reduced-motion: reduce) {
+  #dialog, #dialog::backdrop { transition: none !important; }
   .hover-follower, .confetti-bit { display: none; }
   .companion-float, .text-swap, .skeleton-line { animation: none !important; }
   [data-parallax] { transform: none !important; }
+  :is(.button, .icon-button, .task-open, .nav-item, .tab, .scene-choice, .settings-item, .action-metric, .source-starter, .week-days > button, .mobile-bottom-nav > *, .button > .icon, a > .icon) { transform: none !important; }
 }

@@ -21,12 +21,33 @@ USERNAME = 'workflow.demo'
 PASSWORD = 'Mvp-Verification-Only-2026'
 
 
+def prepare_memory():
+    """The fixture is ready only after its real local indexes are queryable."""
+    from app.memory_learning import drain_jobs
+    from app.memory_tree_queries import entries
+    with app.state.db.connect() as conn:
+        uid = conn.execute('SELECT id FROM users WHERE username=?', (USERNAME,)).fetchone()['id']
+    for _ in range(10):
+        result = drain_jobs(app.state.db, uid=uid, limit=128)
+        assert result['failed'] == 0, 'Synthetic memory indexing failed'
+        with app.state.db.connect() as conn:
+            pending = conn.execute("SELECT count(*) FROM memory_jobs WHERE user_id=? AND state IN ('queued','running')", (uid,)).fetchone()[0]
+        if not pending:
+            with app.state.db.connect(write=True) as conn:
+                assert entries(conn, uid, view='auto')['matched'] > 0, 'Synthetic memory overview is empty'
+            return
+    raise RuntimeError('Synthetic memory indexing did not finish')
+
+
 def seed():
     with app.state.db.connect(write=True) as conn:
-        if conn.execute('SELECT 1 FROM users WHERE username=?', (USERNAME,)).fetchone():
+        existing = conn.execute('SELECT 1 FROM users WHERE username=?', (USERNAME,)).fetchone()
+        if existing:
             # A fresh verification run resets throttling only in this isolated fixture DB.
             conn.execute('DELETE FROM limits')
-            return
+    if existing:
+        prepare_memory()
+        return
     c = TestClient(app, base_url=ORIGIN, headers={'Origin': ORIGIN, 'X-Requested-With': 'campus-notice'})
     r = c.post('/api/auth/register', json={'username': USERNAME, 'password': PASSWORD,
                 'display_name': '虚构验收同学', 'accepted_terms': True})
@@ -58,6 +79,7 @@ def seed():
                 c.put(f'/api/tasks/{tid}/workflow', json={'version': 0, 'task_version': 1, 'data': d})
             c.post(f"/api/notices/{n['id']}/changes", json={'notice_version': n['version'], 'kind': 'unverified',
                    'text': '虚构测试：群内有人转述提交日期可能调整，尚未找到正式通知。', 'source_label': '虚构群内转述', 'targets': []})
+    prepare_memory()
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ from app.documents import text_source
 from fastapi import HTTPException
 import time
 
-assert PORT == 8786, 'Memory fixture must use its own loopback port'
+assert PORT in {8786,8787}, 'Memory fixture must use its own loopback port'
 app.state.settings=replace(app.state.settings,ai_api_key='synthetic-fixture-only',notice_semantic_review=False)
 
 

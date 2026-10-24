@@ -1,0 +1,48 @@
+.settings-home { display:block; }
+.settings-home .settings-person { margin-bottom:24px; }
+.settings-layout { display:grid; grid-template-columns:176px minmax(0,1fr); gap:36px; align-items:start; }
+.settings-categories { display:flex; flex-direction:column; gap:6px; }
+.settings-categories > button { min-height:48px; padding:10px 12px; text-align:left; border:0; border-left:2px solid transparent; border-radius:0; background:transparent; color:var(--muted); }
+.settings-categories > button[aria-selected=true] { border-left-color:var(--ink); background:var(--surface-2); color:var(--ink); font-weight:600; }
+.settings-groups { display:block; min-width:0; }
+.settings-home [data-settings-panel][hidden] { display:none !important; }
+.settings-home [data-settings-panel] { min-width:0; }
+.settings-home .settings-menu { display:block; border:0; border-radius:0; background:transparent; overflow:visible; }
+.settings-home .settings-group h3 { margin:0 0 4px; color:var(--muted); }
+.settings-home .settings-group h3::after { display:none; }
+.settings-home .settings-item { display:flex; width:100%; min-height:68px; padding:12px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; box-shadow:none; background:#fff; }
+.settings-home .settings-item:last-child { border-bottom:0; }
+.settings-home .settings-item:hover { background:var(--surface-2); transform:none; box-shadow:none; }
+.settings-home .settings-item-icon { width:30px; height:32px; background:transparent; }
+.settings-usage { margin-top:28px; border-top:1px solid var(--line); }
+.settings-usage > summary { display:flex; align-items:center; min-height:48px; cursor:pointer; font-weight:600; }
+.settings-usage > summary::after { content:'›'; margin-left:auto; transform:rotate(90deg); }
+.settings-usage[open] > summary::after { transform:rotate(-90deg); }
+.settings-usage > .panel { border:0; border-radius:0; box-shadow:none; padding:8px 0 0; margin:0; }
+.settings-usage > .panel > h2 { display:none; }
+#profile-form .profile-tabs { display:flex; flex-wrap:nowrap; overflow:visible; gap:0; background:transparent; border:0; box-shadow:none; padding:0; }
+#profile-form .profile-tabs > .tab { min-width:0; min-height:44px; padding:8px 12px; border:0; border-bottom:2px solid transparent; border-radius:0; background:transparent; }
+#profile-form .profile-tabs > .tab.active { border-bottom-color:var(--ink); color:var(--ink); }
+#profile-form .profile-tabs > .selection-indicator { display:none; }
+#profile-form [data-profile-group] { min-width:0; }
+#profile-form .form-grid { gap:18px 24px; }
+#profile-form .field :is(input,select,textarea) { border:0; border-bottom:1px solid #b8b8b8; border-radius:0; box-shadow:none; background:#fff; padding:9px 4px; min-height:44px; }
+#profile-form .field :is(input,select,textarea):focus { border-bottom:2px solid var(--ink); outline:2px solid #555; outline-offset:2px; }
+#profile-form [data-profile-group=goals]:not([hidden]) { display:grid; gap:16px; }
+#profile-form [data-profile-group][hidden] { display:none !important; }
+#profile-form .form-footer { margin-top:0; }
+@media(max-width:650px) {
+  .settings-layout { display:block; }
+  .settings-categories { flex-direction:row; gap:0; margin-bottom:20px; }
+  .settings-categories > button { flex:1; min-width:0; min-height:48px; padding:8px 4px; text-align:center; font-size:13px; border-left:0; border-bottom:2px solid transparent; }
+  .settings-categories > button[aria-selected=true] { border-bottom-color:var(--ink); background:transparent; }
+  .settings-home .settings-person { margin-bottom:20px; }
+  #profile-form .form-grid { grid-template-columns:minmax(0,1fr); gap:16px; }
+  #profile-form .profile-tabs > .tab { padding-inline:8px; font-size:13px; }
+}
+@media(max-height:560px) {
+  #dialog:has(#profile-form) .dialog-head { padding-block:8px; }
+  #dialog:has(#profile-form) .dialog-body { padding-block:8px; }
+  #profile-form .form-grid { gap:12px 24px; }
+  #profile-form .form-footer { position:static; margin-bottom:0; }
+}

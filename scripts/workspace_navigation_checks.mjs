@@ -81,7 +81,7 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
     assert.notEqual((await api('/memory/items/'+memory.id)).content,memory.content);await page.locator('#toast .toast-action').click();await page.waitForFunction(()=>document.querySelector('#toast .toast-copy')?.textContent==='已撤销。');assert.equal((await api('/memory/items/'+memory.id)).content,memory.content);
   });
   await check('interactive answer preference undo persists the previous preference',async()=>{
-    await nav('settings');const before=(await api('/session')).genui;await page.locator('[data-action="settings-genui"]').click();await page.locator('#genui-settings-form [name="enabled"]').setChecked(!before.enabled);await page.locator('#genui-settings-form [type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await page.locator('#toast .toast-action').waitFor();assert.equal((await api('/session')).genui.enabled,!before.enabled);await page.locator('#toast .toast-action').click();await page.waitForFunction(()=>document.querySelector('#toast .toast-copy')?.textContent==='已撤销。');assert.equal((await api('/session')).genui.enabled,before.enabled);
+    await nav('settings');await page.locator('[data-settings-category=display]').click();const before=(await api('/session')).genui;await page.locator('[data-action="settings-genui"]').click();await page.locator('#genui-settings-form [name="enabled"]').setChecked(!before.enabled);await page.locator('#genui-settings-form [type="submit"]').click();await page.locator('#dialog').waitFor({state:'hidden'});await page.locator('#toast .toast-action').waitFor();assert.equal((await api('/session')).genui.enabled,!before.enabled);await page.locator('#toast .toast-action').click();await page.waitForFunction(()=>document.querySelector('#toast .toast-copy')?.textContent==='已撤销。');assert.equal((await api('/session')).genui.enabled,before.enabled);
   });
   await check('task edit undo restores the saved title and state with a fresh version',async()=>{
     const task=(await api('/tasks')).find(t=>t.status==='pending'&&t.data.scope==='personal');assert.ok(task);
@@ -129,7 +129,17 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
     const conversation=await api('/conversations','POST',{title:tag+' 返回验收'});await nav('chat/'+conversation.id);assert.equal(await page.locator('.workspace-back:visible').count(),0);await page.locator('#chat-input').fill('离开后保留的合成草稿');await nav('settings');await nav('chat/'+conversation.id);assert.equal(await page.locator('#chat-input').inputValue(),'离开后保留的合成草稿');
   });
   await check('a directly opened child returns to its real parent without manufacturing a root parent',async()=>{
-    await page.goto('http://127.0.0.1:8786/?direct-navigation='+Date.now()+'#memory');await page.locator('#memory-tree-nav').waitFor();await page.locator('.workspace-back:visible').click();await page.waitForFunction(()=>location.hash==='#settings'&&document.querySelector('#content').dataset.page==='settings'&&!document.querySelector('#content').inert);assert.equal(await page.locator('.workspace-back:visible').count(),0);
+    await page.goto(new URL(page.url()).origin+'/?direct-navigation='+Date.now()+'#memory');await page.locator('#memory-tree-nav').waitFor();await page.locator('.workspace-back:visible').click();await page.waitForFunction(()=>location.hash==='#settings'&&document.querySelector('#content').dataset.page==='settings'&&!document.querySelector('#content').inert);assert.equal(await page.locator('.workspace-back:visible').count(),0);
+  });
+  await check('settings show one category and keep hidden profile values intact',async()=>{
+    await nav('settings');assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);
+    assert.equal(await page.locator('[data-settings-panel=personal] .settings-item:visible').count(),3);
+    for(const category of ['account','display','personal']){await page.locator('[data-settings-category='+category+']').click();assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);assert.equal(await page.locator('[data-settings-panel='+category+']').isVisible(),true);}
+    await page.locator('[data-settings-category=personal]').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('[data-settings-panel=account]').isVisible(),true);await page.keyboard.press('Home');
+    await page.locator('[data-action=settings-profile]').click();const before=await page.locator('#profile-form').evaluate(form=>Object.fromEntries(new FormData(form)));
+    assert.equal(Object.keys(before).length,17);
+    for(const group of ['semester','contacts','goals','campus']){await page.locator('[data-section='+group+']').click();assert.equal(await page.locator('[data-profile-group]:visible').count(),1);}
+    assert.deepEqual(await page.locator('#profile-form').evaluate(form=>Object.fromEntries(new FormData(form))),before);await page.keyboard.press('Escape');
   });
   for(const record of calendarRecords)await api('/arrangements/'+record.id,'DELETE',{version:record.version});
 }

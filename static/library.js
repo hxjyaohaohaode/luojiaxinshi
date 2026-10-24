@@ -27,12 +27,13 @@ export function createLibraryUI({state,esc,icon,noticeRow,empty,moveSelection}){
   }
   function update(){
     if(!$('#library-results'))return;
-    const items=filterNotices(state.notices,{query,status,from,to,relevance}),pages=Math.max(1,Math.ceil(items.length/15));page=Math.max(1,Math.min(page,pages));
+    const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;
+    const items=filterNotices(state.notices.filter(n=>!selected||selected.ids.includes(n.id)),{query,status,from,to,relevance}),pages=Math.max(1,Math.ceil(items.length/15));page=Math.max(1,Math.min(page,pages));
     document.querySelectorAll('[data-library-status]').forEach(b=>{const active=b.dataset.libraryStatus===status;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;});moveSelection($('.tabs'));
     $('#library-count').textContent=`${items.length} / ${state.notices.length} 则`;
     document.querySelectorAll('[data-library-relevance]').forEach(b=>{const value=b.dataset.libraryRelevance;b.setAttribute('aria-pressed',String(value===relevance));const count=value==='all'?state.notices.length:state.notices.filter(n=>n.applicability===value).length;b.querySelector('b').textContent=count;b.hidden=value!=='all'&&!count&&value!==relevance;});
-    $('#library-filter-note').innerHTML=query||status!=='all'||relevance!=='all'||from||to?`<span>${from&&to&&from>to?'开始日期晚于结束日期，请调整范围。':'已按当前条件筛选全部通知。'}</span>${items.length?'<button class="link-button" type="button" data-library-reset>清空筛选</button>':''}`:'';
-    const hasFilter=!!(query.trim()||status!=='all'||relevance!=='all'||from||to),emptyKey=items.length?'':hasFilter||state.notices.length?'search':'listening',results=$('#library-results');
+    $('#library-filter-note').innerHTML=selected||query||status!=='all'||relevance!=='all'||from||to?`<span>${selected?'数据看板 · '+esc(selected.label)+' · ':''}${from&&to&&from>to?'开始日期晚于结束日期，请调整范围。':'已按当前条件筛选全部通知。'}</span><button class="link-button" type="button" data-library-reset>清空筛选</button>`:'';
+    const hasFilter=!!(selected||query.trim()||status!=='all'||relevance!=='all'||from||to),emptyKey=items.length?'':hasFilter||state.notices.length?'search':'listening',results=$('#library-results');
     results.classList.toggle('card-view',view==='cards'&&items.length>0);
     document.querySelectorAll('[data-library-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.libraryView===view)));
     if(!emptyKey||results.dataset.emptyKey!==emptyKey)results.innerHTML=items.length?items.slice((page-1)*15,page*15).map(view==='cards'?noticeCard:noticeRow).join(''):empty(hasFilter||state.notices.length?'暂时没有匹配的通知':'先收好第一则通知',hasFilter||state.notices.length?'试试标题中的另一个词，或清空筛选。':'正文、附件和截图可以一起保存，之后随时回来核对。',hasFilter||state.notices.length?'<button class="button small" type="button" data-library-reset>清空筛选</button>':'<a class="button" href="#new">提交第一则通知</a>',false,hasFilter||state.notices.length?'search':'listening');
@@ -45,11 +46,11 @@ export function createLibraryUI({state,esc,icon,noticeRow,empty,moveSelection}){
     const display=e.target.closest('[data-library-view]');
     if(display){view=display.dataset.libraryView;update();animateSurface($('#library-results'),0);}
     const tab=e.target.closest('[data-library-status]'),pagination=e.target.closest('[data-library-page]');
-    if(tab){status=tab.dataset.libraryStatus;page=1;update();}
+    if(tab){state.insightSelection=null;status=tab.dataset.libraryStatus;page=1;update();}
     const chip=e.target.closest('[data-library-relevance]');
     if(chip){relevance=chip.dataset.libraryRelevance;page=1;update();}
     if(pagination&&!pagination.disabled){page=Number(pagination.dataset.libraryPage);update();$('#library-results').scrollIntoView({block:'nearest'});}
-    if(e.target.closest('[data-library-reset]')){query='';status='all';from='';to='';relevance='all';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';update();$('#library-search').focus({preventScroll:true});}
+    if(e.target.closest('[data-library-reset]')){state.insightSelection=null;query='';status='all';from='';to='';relevance='all';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';update();$('#library-search').focus({preventScroll:true});}
   });
-  return {render};
+  return {render,resetFilters(){query='';status='all';from='';to='';relevance='all';page=1;}};
 }

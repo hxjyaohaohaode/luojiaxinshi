@@ -4,8 +4,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {verifyWorkspaceNavigation} from './workspace_navigation_checks.mjs';
 import {verifyNavigationTargets} from './navigation_target_checks.mjs';
+import {verifyInsightData,verifyInsightNavigation} from './insight_data_checks.mjs';
+import {verifyRecordPreview} from './record_preview_checks.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
+const base=process.env.WORKSPACE_BASE_URL||'http://127.0.0.1:8786';
 const out=path.resolve('artifacts/workspace-interactions-browser');await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic workspace interactions; simulated provider; no real user data',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
@@ -27,7 +30,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  const searched=async()=>{await page.waitForFunction(()=>[...document.querySelectorAll('[data-search-host]')].every(n=>!n.hasAttribute('aria-busy')));await settle();};
  const api=(url,method='GET',json)=>page.evaluate(async({url,method,json})=>{const s=await(await fetch('/api/session')).json(),r=await fetch('/api'+url,{method,headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':s.csrf,...(json?{'Content-Type':'application/json'}:{})},...(json?{body:JSON.stringify(json)}:{})});if(!r.ok)throw Error(await r.text());return r.json();},{url,method,json});
  try{
-  await page.goto('http://127.0.0.1:8786/#login');await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
+  await page.goto(base+'/#login');await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
   if(!(await api('/source-catalog')).length)for(const [name,platform] of [['合成学院网站','website'],['合成班级群','qq_group']])await api('/source-catalog','POST',{name,platform,followed:true,semester:'工程测试学期'});
   await nav('sources');const sources=await api('/source-catalog'),query=page.locator('#source-search'),filter=page.locator('[data-search-mode=filter]');
   await check('clearing a keyword preserves the selected type and date filters',async()=>{
@@ -101,7 +104,16 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   });
   await verifyWorkspaceNavigation({page,api,nav,resize,check,out,engine});
   await check('single-purpose navigation cards have complete independent pointer and keyboard targets',async()=>{
-   const targetPage=await browser.newPage();try{await verifyNavigationTargets(targetPage,'http://127.0.0.1:8786');}finally{await targetPage.close();}
+   const targetPage=await browser.newPage();try{await verifyNavigationTargets(targetPage,base);}finally{await targetPage.close();}
+  });
+  await check('insight metrics open exact task and notice selections and clear back to all records',async()=>{
+   await verifyInsightNavigation({page,api,nav});
+  });
+  await check('insights refresh on demand and saved changes, retain errors, and ignore stale route responses',async()=>{
+   const targetPage=await browser.newPage();try{await verifyInsightData(targetPage,base);}finally{await targetPage.close();}
+  });
+  await check('record previews show complete user content without leaking internal field representations',async()=>{
+   const targetPage=await browser.newPage();try{await verifyRecordPreview(targetPage,base);}finally{await targetPage.close();}
   });
   await check('all workspace interaction flows finish without unhandled errors',async()=>assert.deepEqual(report.errors.filter(e=>e.engine===engine),[]));
  }catch(error){report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}

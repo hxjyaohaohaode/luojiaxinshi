@@ -204,19 +204,20 @@ def build_reminders(tasks, notices, arrangements, now=None):
 def completion_times(conn, uid):
     """每项待办最近一次被标记完成的时间（来自修改记录）。"""
     result = {}
-    for row in conn.execute("SELECT task_id,after_json,created_at FROM audit WHERE user_id=? AND action='update_task' AND task_id IS NOT NULL ORDER BY created_at", (uid,)):
+    for row in conn.execute("SELECT task_id,before_json,after_json,created_at FROM audit WHERE user_id=? AND action='update_task' AND task_id IS NOT NULL ORDER BY created_at,id", (uid,)):
         try:
             after = json.loads(row['after_json'] or 'null') or {}
+            before = json.loads(row['before_json'] or 'null') or {}
         except ValueError:
             continue
         if after.get('status') == 'done':
-            result[row['task_id']] = row['created_at']
+            if before.get('status') != 'done':result[row['task_id']] = row['created_at']
         elif after.get('status') in {'pending', 'cancelled'}:
             result.pop(row['task_id'], None)
     return result
 
 
-def personal_insights(conn, uid, now=None):
+def personal_insights(conn, uid, now=None, current_tasks=None):
     now = (now or datetime.now(CST)).astimezone(CST)
     notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.source_label,n.draft,n.created_at,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
     tasks = []
@@ -224,15 +225,18 @@ def personal_insights(conn, uid, now=None):
         item = dict(row)
         item['data'] = json.loads(item['data'])
         tasks.append(item)
+    if current_tasks is not None:tasks=current_tasks
     personal = [t for t in tasks if t['data'].get('scope') == 'personal']
-    done_at = completion_times(conn, uid)
-    status = Counter(t['status'] for t in personal)
+    eligible = [t for t in personal if not t.get('action_excluded')]
+    pending = [t for t in eligible if t['status']=='pending']
+    done_at = {tid:moment for tid,moment in completion_times(conn, uid).items() if tid in {t['id'] for t in eligible if t['status']=='done'}}
+    status = Counter(t['status'] for t in eligible)
     on_time = late = 0
     for task in personal:
         if task['status'] != 'done' or task['id'] not in done_at:
             continue
         deadline, _ = deadline_of(task['data'])
-        if deadline is None:
+        if deadline is None or not task['data'].get('deadline_confirmed'):
             continue
         if done_at[task['id']] <= deadline.timestamp():
             on_time += 1
@@ -242,30 +246,31 @@ def personal_insights(conn, uid, now=None):
     monday = now.date() - timedelta(days=now.weekday())
     weeks = [monday - timedelta(weeks=i) for i in range(7, -1, -1)]
     weekly = Counter()
+    weekly_ids = {}
     for tid, moment in done_at.items():
         day = datetime.fromtimestamp(moment, CST).date()
         start = day - timedelta(days=day.weekday())
         weekly[start] += 1
-    trend = [{'week': w.isoformat(), 'label': f'{w.month}/{w.day}', 'done': weekly[w]} for w in weeks]
+        weekly_ids.setdefault(start,[]).append(tid)
+    trend = [{'week': w.isoformat(), 'label': f'{w.month}/{w.day}', 'done': weekly[w],'ids':weekly_ids.get(w,[])} for w in weeks]
     # 未来 4 周的期限分布
     horizon = []
     for i in range(4):
         start = monday + timedelta(weeks=i)
         horizon.append({'week': start.isoformat(), 'label': '本周' if i == 0 else '下周' if i == 1 else f'{start.month}/{start.day} 起',
-                        'confirmed': 0, 'unconfirmed': 0})
+                        'confirmed': 0, 'unconfirmed': 0,'ids':[]})
     overdue = 0
-    for task in personal:
-        if task['status'] != 'pending':
-            continue
+    for task in pending:
         deadline, _ = deadline_of(task['data'])
         if deadline is None:
             continue
         if deadline < now:
-            overdue += 1
+            overdue += bool(task['data'].get('deadline_confirmed'))
             continue
         index = (deadline.date() - monday).days // 7
         if 0 <= index < 4:
             horizon[index]['confirmed' if task['data'].get('deadline_confirmed') else 'unconfirmed'] += 1
+            horizon[index]['ids'].append(task['id'])
     sources = Counter((n['source_label'] or '本人提交').strip() or '本人提交' for n in notices)
     relevance = Counter()
     for notice in notices:
@@ -276,9 +281,28 @@ def personal_insights(conn, uid, now=None):
                 relevance['unknown'] += 1
         else:
             relevance['unprocessed'] += 1
-    origins = Counter(t['data'].get('origin', 'manual') for t in tasks)
+    origins = Counter(t['data'].get('origin', 'manual') for t in personal)
     ai = Counter(r['status'] for r in conn.execute('SELECT status FROM ai_calls WHERE user_id=?', (uid,)))
+    def group(key,label,kind,records):
+        return {'key':key,'label':label,'kind':kind,'count':len(records),'ids':[r['id'] for r in records]}
+    notice_rows=[group('all','全部通知','notices',notices)]
+    for key,label in [('received','待整理'),('draft','待确认'),('processing','整理中'),('failed','整理失败'),('confirmed','已转为行动')]:
+        notice_rows.append(group(key,label,'notices',[n for n in notices if n['status']==key and n['disposition']=='inbox']))
+    for key,label in [('reference','仅存资料'),('not_applicable','与我无关'),('closed','已结束')]:
+        notice_rows.append(group(key,label,'notices',[n for n in notices if n['disposition']==key]))
+    active_sources=list(conn.execute('SELECT s.notice_id,s.kind,o.data AS origin FROM sources s JOIN notices n ON n.id=s.notice_id LEFT JOIN notice_source_origins o ON o.source_id=s.id WHERE n.user_id=? AND s.active=1',(uid,)))
+    intake=[]
+    for key,label in [('text','粘贴正文'),('file','上传材料'),('link','链接快照')]:
+        ids={r['notice_id'] for r in active_sources if (bool(r['origin']) if key=='link' else not r['origin'] and (r['kind']=='text' if key=='text' else r['kind']!='text'))}
+        intake.append(group(key,label,'notices',[n for n in notices if n['id'] in ids]))
+    task_rows=[group('all','本人事项','tasks',personal),group('pending','待完成','tasks',pending),group('done','已完成','tasks',[t for t in eligible if t['status']=='done']),group('cancelled','已取消','tasks',[t for t in eligible if t['status']=='cancelled']),group('excluded','已决定不参加','tasks',[t for t in personal if t.get('action_excluded')])]
+    def timing_review(t):
+        d=t['data'];slot=d.get('scheduled');mode=t.get('workflow',{}).get('data',{}).get('execution_mode')
+        return bool(d.get('due_date') and not d.get('deadline_confirmed') or slot and not slot.get('confirmed') or not d.get('due_date') and not slot and mode in {None,'submission'})
+    timing=[group('overdue','已过期未完成','tasks',[t for t in pending if t['data'].get('deadline_confirmed') and deadline_of(t['data'])[0] and deadline_of(t['data'])[0]<now]),group('unverified','时间待核对','tasks',[t for t in pending if timing_review(t)]),group('event','活动时间','tasks',[t for t in pending if t['data'].get('scheduled',{} ) and t['data']['scheduled']['kind']=='event']),group('window','办理时段','tasks',[t for t in pending if t['data'].get('scheduled',{}) and t['data']['scheduled']['kind']=='window'])]
+    progress=[group('followup','待跟进','tasks',[t for t in pending if t.get('followup_due') or t.get('workflow',{}).get('data',{}).get('stage') in {'submitted','supplement','blocked','waiting'}]),group('changes','变化待复核','tasks',[t for t in personal if t.get('pending_changes') or (t.get('change_review') or {}).get('state')=='pending']),group('blocked','受阻或前提待确认','tasks',[t for t in pending if t.get('workflow',{}).get('blocked') or t.get('workflow',{}).get('data',{}).get('stage')=='blocked' or t.get('execution_issues')]),group('sync','日历待同步','tasks',[t for t in personal if t.get('needs_calendar_sync') or t.get('calendar_check_required')])]
     return {
+        'dimensions':{'notices':notice_rows,'intake':intake,'tasks':task_rows,'timing':timing,'progress':progress},
         'generated_at': now.isoformat(),
         'notices': {'total': len(notices), 'confirmed': sum(n['status'] == 'confirmed' for n in notices),
                     'waiting': sum(n['status'] in {'received', 'draft', 'failed'} and n['disposition']=='inbox' for n in notices)},
@@ -287,7 +311,7 @@ def personal_insights(conn, uid, now=None):
         'trend': trend, 'horizon': horizon,
         'sources': [{'label': label, 'count': count} for label, count in sources.most_common(6)],
         'relevance': {'matches_known': relevance['matches_known'], 'needs_review': relevance['needs_review'],
-                      'not_matching': relevance['not_matching'], 'unprocessed': relevance['unprocessed']},
+                      'not_matching': relevance['not_matching'], 'unprocessed': relevance['unprocessed'],'unknown':relevance['unknown']},
         'ai': {'calls': sum(ai.values()), 'succeeded': ai['succeeded']},
     }
 
@@ -347,7 +371,7 @@ def install(app, db, user, admin, list_tasks):
     @app.get('/api/insights')
     def insights(current=Depends(user)):
         with db.connect() as conn:
-            return personal_insights(conn, current['id'])
+            return personal_insights(conn, current['id'], current_tasks=list_tasks(conn,current['id']))
 
     @app.get('/api/admin/insights')
     def site_insights(current=Depends(admin)):

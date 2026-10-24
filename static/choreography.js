@@ -3,13 +3,6 @@
 import {motionAllowed} from './experience-system.js';
 
 const EASE_OUT = 'cubic-bezier(.22,1,.36,1)';
-const SPRING = (() => {
-  try {
-    const probe = document.createElement('div');
-    probe.animate([{opacity: 0}, {opacity: 1}], {duration: 1, easing: 'linear(0, 1)'}).cancel();
-    return 'linear(0, .012, .047 2.6%, .19 5.8%, .623 12.8%, .82 16.8%, .955 21.3%, 1.024 25.6%, 1.045 29.2%, 1.046 32.3%, 1.03 37.6%, 1.006 45.2%, .995 52.3%, 1)';
-  } catch { return 'cubic-bezier(.3,1.22,.55,1)'; }
-})();
 
 // 页面中可作为“区块”的元素：按文档顺序错峰出现。
 const BLOCKS = [
@@ -28,11 +21,6 @@ const ITEMS = [
   '.settings-item', '.scene-choice', '.catalog-card', '.source-starter', '.integration-card', '.fact',
   '.calendar-list-row', '.memory-tree-row', '.memory-record', '.reminder-item', '.insight-card', '.insight-bar',
 ].join(',');
-// 适合逐字浮现的短标题。
-const HEADINGS = [
-  '.overview-focus h2', '.chat-welcome h1', '.chat-welcome h2', '.settings-person h2', '.notice-primary h1',
-  '.overview-empty h2', '.empty h3', '.saved-notice-header h2', '.insight-hero h2', '.reminder-hero h2', '.auth-greeting',
-].join(',');
 
 const live = new Set();
 function track(animation) {
@@ -46,11 +34,11 @@ function inViewport(node, margin = 160) {
   const rect = node.getBoundingClientRect();
   return rect.bottom > -margin && rect.top < innerHeight + margin && rect.width > 0 && rect.height > 0;
 }
-function rise(node, delay, distance = 14, duration = 560) {
+function rise(node, delay, distance = 8, duration = 280) {
   return track(node.animate([
-    {opacity: 0, transform: `translate3d(0,${distance}px,0) scale(.985)`},
+    {opacity: 0, transform: `translate3d(0,${distance}px,0)`},
     {opacity: 1, transform: 'none'},
-  ], {duration, delay, easing: SPRING, fill: 'backwards'}));
+  ], {duration, delay, easing: EASE_OUT, fill: 'backwards'}));
 }
 
 // 把标题拆成逐字元素，按顺序轻轻浮起；读屏仍朗读完整标题。
@@ -71,7 +59,7 @@ export function revealText(node, delay = 0) {
       track(span.animate([
         {opacity: 0, transform: 'translate3d(0,.45em,0)'},
         {opacity: 1, transform: 'none'},
-      ], {duration: 520, delay: delay + index * 22, easing: SPRING, fill: 'backwards'}));
+      ], {duration: 220, delay: delay + Math.min(index * 8, 120), easing: EASE_OUT, fill: 'backwards'}));
     }
     return span;
   }));
@@ -80,22 +68,61 @@ export function revealText(node, delay = 0) {
 
 // 页面切换后调用：区块 → 条目 → 标题，带轻微延迟的跟随感。
 export function choreograph(root) {
-  if (!root || !motionAllowed()) return;
   cancelChoreography();
+  if (!root || !motionAllowed()) return;
   const blocks = [...root.querySelectorAll(BLOCKS)].filter(node => inViewport(node) && !node.closest('.sr-only'));
   const top = blocks.filter(node => !blocks.some(other => other !== node && other.contains(node))).slice(0, 12);
-  const seen = new Set();
-  top.forEach((block, index) => {
-    const delay = index * 55;
-    rise(block, delay);
-    const items = [...block.querySelectorAll(ITEMS)].filter(node => inViewport(node, 40)).slice(0, 10);
-    items.forEach((item, j) => { seen.add(item); rise(item, delay + 120 + j * 34, 10, 520); });
+  const parts = [];
+  for (const block of top) {
+    const items = [...block.querySelectorAll(ITEMS)].filter(node => inViewport(node, 0));
+    // Animate each visible card once, never its enclosing panel at the same time.
+    const leaves = items.filter(node => !items.some(other => other !== node && node.contains(other)));
+    if (leaves.length) parts.push(...[...block.children].filter(node => !items.some(item => node === item || node.contains(item))), ...leaves);
+    else parts.push(block);
+  }
+  if (!parts.length) parts.push(...root.querySelectorAll('.memory-tree-head,.memory-tree-nav-title,.memory-breadcrumbs,.memory-search-line,.memory-tree-filters,.memory-tree-results,.memory-tree-row,.chat-heading,.chat-welcome > *,.chat-composer'));
+  [...new Set(parts)].filter(node => inViewport(node, 0) && !node.closest('.sr-only')).slice(0, 18)
+    .forEach((node, index) => rise(node, Math.min(index * 28, 168)));
+  // Titles already participate in their section; avoid a second nested reveal.
+  markSeen(root);
+}
+
+// Dialog headings appear immediately, followed by visible semantic groups.
+// Body identity, rather than every field mutation, defines a new presentation.
+function installDialogSequence() {
+  const dialog = document.querySelector('#dialog');
+  if (!dialog) return;
+  let body = null;
+  const animations = new Set();
+  const cancel = () => { for (const animation of animations) animation.cancel(); animations.clear(); };
+  const present = () => {
+    const next = dialog.open ? dialog.querySelector('.dialog-body') : null;
+    if (next === body) return;
+    cancel(); body = next;
+    if (!body || !motionAllowed()) return;
+    // Replace the old whole-body slide when navigating within an open dialog.
+    for (const animation of body.getAnimations()) animation.cancel();
+    const groups = [];
+    const collect = (node, depth = 0) => {
+      if (!inViewport(node, 0) || node.closest('[hidden],.sr-only') || node.matches('input[type=hidden]')) return;
+      if (depth < 3 && node.matches('form,.stack,.workflow-page,.reminder-center,.integration-grid,.integration-cards')) {
+        for (const child of node.children) collect(child, depth + 1);
+      } else groups.push(node);
+    };
+    for (const child of body.children) collect(child);
+    groups.slice(0, 12).forEach((node, index) => {
+      const animation = rise(node, Math.min(index * 34, 170), 6, 250);
+      animations.add(animation);
+      animation.finished.catch(() => {}).finally(() => animations.delete(animation));
+    });
+  };
+  new MutationObserver(present).observe(dialog, {childList: true, attributes: true, attributeFilter: ['open']});
+  dialog.addEventListener('close', () => { if (!dialog.open) { cancel(); body = null; } });
+  dialog.addEventListener('cancel', cancel);
+  document.addEventListener('focusin', event => {
+    if (!dialog.contains(event.target)) return;
+    for (const animation of [...animations]) if (animation.effect?.target?.contains(event.target)) animation.cancel();
   });
-  // 聊天、记忆这类整屏工作区没有可错峰的区块：只淡入，不位移不缩放。
-  // 弹性曲线会过冲，整屏容器会被放大约 0.07%，测量和布局都会受影响。
-  if (!top.length) track((root.firstElementChild || root).animate([{opacity: 0}, {opacity: 1}], {duration: 320, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards'}));
-  root.querySelectorAll(HEADINGS).forEach(node => { if (inViewport(node)) revealText(node, 160); });
-  markSeen(root, seen);
 }
 
 // 列表在页面内刷新（筛选、翻页、切换视图）时，新条目错峰补位。
@@ -118,7 +145,7 @@ function animateNewItems(nodes) {
     known.add(node);
     const key = itemKey(node), fresh = !seenKeys.has(key);
     seenKeys.add(key);
-    if (fresh && motionAllowed() && index < 12 && inViewport(node, 40)) rise(node, index++ * 30, 8, 460);
+    if (fresh && motionAllowed() && index < 12 && inViewport(node, 40)) rise(node, Math.min(index++ * 24, 144), 6, 250);
   }
 }
 
@@ -231,6 +258,11 @@ let installed = false;
 export function initializeChoreography() {
   if (installed) return;
   installed = true;
+  installDialogSequence();
+  const stopWhenReduced = () => { if (!motionAllowed()) cancelChoreography(); };
+  matchMedia('(prefers-reduced-motion:reduce)').addEventListener('change', stopWhenReduced);
+  document.addEventListener('visibilitychange', stopWhenReduced);
+  new MutationObserver(stopWhenReduced).observe(document.documentElement, {attributes: true, attributeFilter: ['data-ui-motion']});
   installHoverFollower('.sidebar nav', '.nav-item');
   // Settings cards already have hover feedback. Inserting a follower into
   // their grid changed child-index layout rules and moved click targets.

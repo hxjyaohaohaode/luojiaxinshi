@@ -43,6 +43,25 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     await page.locator('#task-search').fill('申请');await page.locator('[data-filter=all]').click();await page.locator('[data-task-view=list]').click();assert.equal(await page.locator('#task-search').inputValue(),'申请');assert.ok(await page.locator('#task-results .task-row').count()>0);await page.locator('#task-search').fill('');await page.locator('[data-task-view=board]').click();
    });
   }
+  await check('a pending memory index refreshes automatically without acknowledging unread entries',async()=>{
+   let firstStatus=true,firstEntries=true,watermarkSent=false,entryBeforeWatermark=false;
+   const statusRoute='**/api/memory/tree/status',entriesRoute='**/api/memory/tree/entries?*';
+   await page.route(statusRoute,async route=>{
+    const response=await route.fetch(),data=await response.json();
+    if(firstStatus){firstStatus=false;await route.fulfill({response,json:{...data,token:data.token+':pending-fixture',jobs:{queued:1}}});watermarkSent=true;}
+    else await route.fulfill({response});
+   });
+   await page.route(entriesRoute,async route=>{
+    const response=await route.fetch(),data=await response.json();
+    if(firstEntries){firstEntries=false;entryBeforeWatermark=!watermarkSent;await route.fulfill({response,json:{...data,memories:[],passages:[],order:[],matched:0,total:0}});}
+    else await route.fulfill({response});
+   });
+   try{
+    await resize(1413);await nav('memory');
+    await page.locator('[data-tree-record]').first().waitFor({timeout:4000});
+    assert.equal(firstStatus,false);assert.equal(firstEntries,false);assert.equal(entryBeforeWatermark,false);
+   }finally{await page.unroute(statusRoute);await page.unroute(entriesRoute);}
+  });
   for(const [width,side] of [[1413,234],[1024,380],[390,234],[320,234]]){
    await resize(width,width<500?844:871);await nav('memory');await page.waitForFunction(()=>!document.querySelector('.memory-tree-main')?.matches('[aria-busy=true]'));
    if(width>850){await page.locator('.sidebar-resize').focus();await page.keyboard.press(side===380?'End':'Home');await settle();}

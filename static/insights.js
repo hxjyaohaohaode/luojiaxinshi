@@ -6,6 +6,7 @@ const RELEVANCE = [
   ['needs_review', '需要确认是否适用', '#b88a3e'],
   ['not_matching', '可能不适用', '#9aa79f'],
   ['unprocessed', '还没整理', '#d6ddd7'],
+  ['unknown', '尚未明确', '#b8c1bc'],
 ];
 
 function percent(part, total) { return total ? Math.round(part / total * 100) : 0; }
@@ -31,41 +32,40 @@ function donut(segments, total, caption) {
 export function createInsightsUI({state, api, esc, icon, companion}) {
   const $ = selector => document.querySelector(selector);
 
+  let snapshot=null,requestId=0,refreshTimer=0,renderedSnapshot='';
+  const dimensionNames={notices:'通知处理',intake:'接入材料',tasks:'本人事项',timing:'期限与活动',progress:'办理跟进'};
+  const colors=['#237b70','#7ba7c9','#c4a25f','#a5afb7','#9b8bb1','#c88b70','#87986b','#b7b9bc'];
+  function trendChart(rows){
+    const maximum=Math.max(1,...rows.map(row=>row.done));
+    const points=rows.map((row,index)=>({row,x:(index+.5)*100/Math.max(1,rows.length),y:88-row.done/maximum*68}));
+    const path=points.map((p,index)=>(index?'L':'M')+p.x+','+p.y).join(' ');
+    return `<div class="insight-trend-plot" role="group" aria-label="近8周完成趋势"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="trend-grid" d="M6 20H94 M6 54H94 M6 88H94"/>${points.length?`<path class="trend-area" d="${path} L94,88 L6,88Z"/><path class="trend-line" d="${path}"/>`:''}</svg>${points.map(({row,x,y})=>`<button type="button" class="insight-trend-point" data-insight-selection="trend:${row.week}" data-left="${x}" data-width="${100/Math.max(1,rows.length)}" aria-label="${row.label}起一周，完成${row.done}项"><i data-top="${y}"></i><span data-top="${y}">${row.done}</span></button>`).join('')}</div><div class="insight-trend-labels">${rows.map(row=>`<span>${row.label}</span>`).join('')}</div>`;
+  }
+  function horizonChart(rows){
+    const maximum=Math.max(1,...rows.map(row=>row.confirmed+row.unconfirmed));
+    return `<div class="insight-horizon" role="group" aria-label="未来4周期限分布">${rows.map(row=>`<button type="button" class="insight-horizon-column" data-insight-selection="horizon:${row.week}" aria-label="${row.label}，已确认${row.confirmed}项，待确认${row.unconfirmed}项"><span class="insight-column-total">${row.confirmed+row.unconfirmed}</span><span class="insight-column-track"><i class="horizon-confirmed" data-height="${row.confirmed/maximum*100}"></i><i class="horizon-unconfirmed" data-height="${row.unconfirmed/maximum*100}"></i></span><span>${row.label}</span></button>`).join('')}</div>`;
+  }
+  function horizontal(rows,group){
+    const maximum=Math.max(1,...rows.map(row=>row.count));
+    return `<div class="insight-horizontal">${rows.map((row,index)=>`<button type="button" class="insight-horizontal-row" data-insight-selection="${group}:${row.key}"><span>${esc(row.label)}</span><span class="insight-horizontal-track"><i data-width="${row.count/maximum*100}" data-color="${colors[index%colors.length]}"></i></span><b>${row.count}</b></button>`).join('')}</div>`;
+  }
   function personal(data) {
-    const t = data.tasks, finished = t.on_time + t.late;
-    const weekDone = data.trend.at(-1)?.done || 0, lastWeek = data.trend.at(-2)?.done || 0;
-    const delta = weekDone - lastWeek;
-    const mood = !t.total ? '还没有待办，处理第一则通知后这里就会热闹起来。'
-      : t.overdue ? `有 ${t.overdue} 件事过了期限，先看看还能不能补救。`
-      : weekDone ? `这周已经完成 ${weekDone} 件，${delta > 0 ? '比上周多了 ' + delta + ' 件，节奏很好。' : delta < 0 ? '慢慢来，稳稳推进就好。' : '和上周差不多，保持住。'}`
-      : '这周还没有完成记录，挑一件最小的事开始吧。';
-    const sourceMax = Math.max(1, ...data.sources.map(s => s.count));
-    const relevanceTotal = RELEVANCE.reduce((sum, [key]) => sum + (data.relevance[key] || 0), 0);
-    return `
-    <section class="insight-hero">
-      <div class="insight-hero-copy"><span class="insight-kicker">我的数据看板</span><h2>${esc(mood)}</h2><p class="small muted">只统计你自己的通知和待办，数据每次打开时重新计算。</p></div>
-      ${companion('complete', 'insight-companion')}
-    </section>
-    <div class="insight-grid">
-      <article class="insight-card insight-completion">${ringMarkup(t.done, t.done + t.pending, '完成率')}<div><h3>完成情况</h3><p><strong>${numberMarkup(t.done)}</strong> 件已完成 · <span class="nowrap">${t.pending} 件进行中</span></p><p class="small muted">${t.cancelled ? t.cancelled + ' 件已取消，不算在内' : '已取消的不算在内'}</p></div></article>
-      <article class="insight-card"><h3>按时完成</h3><p class="insight-number">${finished ? percent(t.on_time, finished) + '<small>%</small>' : '—'}</p><p class="small muted">${finished ? `有期限的 ${finished} 件里，${t.on_time} 件按时完成` : '完成有期限的事项后会统计'}</p></article>
-      <article class="insight-card ${t.overdue ? 'is-warning' : ''}"><h3>已过期未完成</h3><p class="insight-number">${numberMarkup(t.overdue)}</p><p class="small muted">${t.overdue ? '去待办看看还能怎么补救' : '没有拖着的事，真好'}</p></article>
-      <article class="insight-card"><h3>通知转成待办</h3><p class="insight-number">${numberMarkup(data.notices.confirmed)}<small> / ${data.notices.total}</small></p><p class="small muted">${data.notices.waiting ? data.notices.waiting + ' 则还在等你整理' : '收到的通知都处理过了'}</p></article>
-    </div>
-    <div class="insight-grid two">
-      <article class="insight-card wide"><header><h3>近 8 周完成数</h3><span class="small muted">以完成时间计</span></header>${barChart(data.trend, {label: 'label', value: 'done', caption: '近 8 周每周完成的事项数'})}</article>
-      <article class="insight-card wide"><header><h3>接下来 4 周的期限</h3><span class="insight-legend"><i class="seg-confirmed"></i>已确认 <i class="seg-unconfirmed"></i>待确认</span></header>${barChart(data.horizon, {label: 'label', stack: ['confirmed', 'unconfirmed'], caption: '未来 4 周每周到期的事项数'})}</article>
-    </div>
-    <div class="insight-grid two">
-      <article class="insight-card wide"><header><h3>通知和你的关系</h3><span class="small muted">来自 AI 整理时的判断</span></header>
-        <div class="insight-relevance">${relevanceTotal ? donut(RELEVANCE.map(([key, label, color]) => [key, label, color, data.relevance[key] || 0]), relevanceTotal, '通知与你的相关程度分布') : '<p class="small muted">还没有通知。</p>'}
-        <ul class="insight-legend-list">${RELEVANCE.map(([key, label, color]) => `<li><i data-color="${color}"></i>${label}<b>${data.relevance[key] || 0}</b></li>`).join('')}</ul></div>
-        <a class="link-button small" href="#notices">去通知资料按“和我有关”筛选 →</a></article>
-      <article class="insight-card wide"><header><h3>通知从哪里来</h3><span class="small muted">按你填写的来源</span></header>
-        ${data.sources.length ? `<ol class="insight-sources">${data.sources.map((s, i) => `<li data-i="${i}"><span>${esc(s.label)}</span><span class="insight-source-bar"><i data-width="${(s.count / sourceMax * 100).toFixed(1)}"></i></span><b>${s.count}</b></li>`).join('')}</ol>` : '<p class="small muted">还没有通知来源。</p>'}
-      </article>
-    </div>
-    <p class="insight-foot small muted">待办共 ${t.total} 件，其中 ${t.from_ai} 件来自 AI 整理、${t.manual} 件为手工添加，全部经你确认后保存。</p>`;
+    const dimensions=data.dimensions||{},find=(group,key)=>dimensions[group]?.find(row=>row.key===key)||{key,label:'',count:0,ids:[]};
+    const top=[['notices','all','全部通知'],['tasks','pending','待完成'],['progress','followup','待跟进'],['timing','overdue','已过期']];
+    const taskStates=(dimensions.tasks||[]).filter(row=>row.key!=='all');
+    const noticeFlow=(dimensions.notices||[]).filter(row=>row.key!=='all'&&row.count>0);
+    const taskTotal=taskStates.reduce((sum,row)=>sum+row.count,0);
+    const segments=taskStates.map((row,index)=>[row.key,row.label,colors[index%colors.length],row.count]);
+    return `<div class="insight-toolbar"><div><h1>数据看板</h1><p class="small muted">更新于 <time>${esc(new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(data.generated_at)))}（北京时间）</time></p></div><button type="button" class="button" data-insight-refresh>${icon('history')}刷新数据</button></div><p data-insight-status role="status" class="small muted"></p>
+    <div class="insight-key-metrics">${top.map(([group,key,label])=>`<button type="button" class="insight-key-metric" data-insight-selection="${group}:${key}"><span>${label}</span><strong>${numberMarkup(find(group,key).count)}</strong>${icon('arrow')}</button>`).join('')}</div>
+    <div class="insight-chart-grid">
+      <section class="insight-chart"><header><h2>近 8 周完成</h2><span>本人事项</span></header>${trendChart(data.trend)}</section>
+      <section class="insight-chart"><header><h2>未来 4 周期限</h2><span class="insight-chart-legend"><i class="horizon-confirmed"></i>已确认 <i class="horizon-unconfirmed"></i>待确认</span></header>${horizonChart(data.horizon)}</section>
+      <section class="insight-chart"><header><h2>事项状态</h2><span>${taskTotal} 项</span></header><div class="insight-state-layout">${donut(segments,taskTotal,'本人事项状态分布').replace('则通知','项')}<div class="insight-state-legend">${taskStates.map((row,index)=>`<button type="button" data-insight-selection="task-status:${row.key}"><i data-color="${colors[index%colors.length]}"></i><span>${esc(row.label)}</span><b>${row.count}</b></button>`).join('')}</div></div></section>
+      <section class="insight-chart"><header><h2>通知处理</h2><span>${data.notices?.total??find('notices','all').count} 则</span></header>${noticeFlow.length?horizontal(noticeFlow,'notices'):'<p class="insight-chart-empty">暂无通知</p>'}</section>
+      <section class="insight-chart compact-chart"><header><h2>材料接入</h2><span>同一通知可含多种材料</span></header>${horizontal(dimensions.intake||[],'intake')}</section>
+      <section class="insight-chart compact-chart"><header><h2>时间与办理核对</h2></header><div class="insight-checks">${[...(dimensions.timing||[]).filter(row=>row.key!=='overdue').map(row=>['timing',row]),...(dimensions.progress||[]).filter(row=>row.key!=='followup').map(row=>['progress',row])].map(([group,row],index)=>`<button type="button" data-insight-selection="${group}:${row.key}"><i data-color="${colors[index%colors.length]}"></i><span>${esc(row.label)}</span><b>${row.count}</b></button>`).join('')}</div></section>
+    </div>`;
   }
 
   function site(data) {
@@ -78,18 +78,52 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
       </div></section>`;
   }
 
-  async function render(renderId) {
-    const isAdmin = state.session.user.role === 'admin';
-    const [mine, all] = await Promise.all([api('/insights'), isAdmin ? api('/admin/insights').catch(() => null) : null]);
-    if (renderId !== state.renderId) return;
-    $('#content').innerHTML = `<div class="insight-page"><h1 class="sr-only">数据看板</h1>${personal(mine)}${all ? site(all) : ''}</div>`;
-    // 页面启用了严格 CSP，不允许内联 style 属性；尺寸与颜色通过 CSSOM 设置。
-    const page = $('#content .insight-page');
-    page.querySelectorAll('[data-i]').forEach(node => node.style.setProperty('--i', node.dataset.i));
-    page.querySelectorAll('[data-height]').forEach(node => { node.style.height = node.dataset.height + '%'; });
-    page.querySelectorAll('[data-width]').forEach(node => { node.style.width = node.dataset.width + '%'; });
-    page.querySelectorAll('[data-color]').forEach(node => { node.style.background = node.dataset.color; });
+  async function render(renderId=state.renderId) {
+    if($('#content')?.dataset.page!=='insights'||renderId!==state.renderId)return;
+    const ticket=++requestId,owner=state.session;
+    if(!owner?.user)return;
+    const button=$('[data-insight-refresh]');if(button)button.setAttribute('aria-busy','true');
+    const status=$('[data-insight-status]');if(status)status.textContent='正在更新…';
+    try {
+      const [mine,all]=await Promise.all([api('/insights'),owner.user.role==='admin'?api('/admin/insights').catch(()=>null):null]);
+      if(ticket!==requestId||renderId!==state.renderId||owner!==state.session||$('#content')?.dataset.page!=='insights')return;
+      snapshot=mine;
+      const signature=JSON.stringify([{...mine,generated_at:null},all?{...all,generated_at:null}:null]);
+      if(signature===renderedSnapshot&&$('.insight-page [data-insight-refresh]')&&$('.insight-toolbar time')){
+        $('.insight-toolbar time').textContent=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(mine.generated_at));
+        $('[data-insight-status]').textContent='';return;
+      }
+      const content=$('#content'),scroll=content.scrollTop,windowY=window.scrollY;
+      const focused=document.activeElement?.closest('[data-insight-selection],[data-insight-refresh]');
+      const focusKey=focused?.dataset.insightSelection,focusRefresh=focused?.hasAttribute('data-insight-refresh');
+      $('#content').innerHTML=`<div class="insight-page">${personal(mine)}${all?site(all):''}</div>`;
+      renderedSnapshot=signature;
+      const page=$('#content .insight-page');
+      page.querySelectorAll('[data-i]').forEach(node=>node.style.setProperty('--i',node.dataset.i));
+      page.querySelectorAll('[data-height]').forEach(node=>node.style.height=node.dataset.height+'%');
+      page.querySelectorAll('[data-width]').forEach(node=>node.style.width=node.dataset.width+'%');
+      page.querySelectorAll('[data-color]').forEach(node=>node.style.background=node.dataset.color);
+      page.querySelectorAll('[data-left]').forEach(node=>node.style.left=node.dataset.left+'%');
+      page.querySelectorAll('[data-top]').forEach(node=>node.style.top=node.dataset.top+'%');
+      const restore=focusKey?page.querySelector('[data-insight-selection="'+CSS.escape(focusKey)+'"]'):focusRefresh?page.querySelector('[data-insight-refresh]'):null;
+      restore?.focus({preventScroll:true});content.scrollTop=scroll;window.scrollTo({top:windowY,left:window.scrollX,behavior:'instant'});
+    } catch(error) {
+      if(ticket!==requestId||renderId!==state.renderId||owner!==state.session||$('#content')?.dataset.page!=='insights')return;
+      if(!$('.insight-page'))$('#content').innerHTML='<div class="insight-page"><h1>数据看板</h1><p data-insight-status role="status"></p><button type="button" class="button" data-insight-refresh>重试</button></div>';
+      $('[data-insight-status]').textContent='更新失败：'+error.message+'；已显示的数据未改动。';
+    } finally {
+      if(ticket===requestId&&owner===state.session){const current=$('[data-insight-refresh]');if(current){current.disabled=false;current.removeAttribute('aria-busy');}}
+    }
   }
-
-  return {render};
+  function refresh(){if(!document.hidden&&$('#content')?.dataset.page==='insights'&&$('.insight-page')){const renderId=state.renderId;clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(renderId===state.renderId&&$('#content')?.dataset.page==='insights')render(renderId);},400);}}
+  document.addEventListener('click',event=>{
+    if(event.target.closest('[data-insight-refresh]'))render(state.renderId);
+    const selection=event.target.closest('[data-insight-selection]');
+    if(selection&&snapshot){const [group,key]=selection.dataset.insightSelection.split(':'),row=group==='trend'||group==='horizon'?snapshot[group]?.filter(item=>item.week===key).map(item=>({kind:'tasks',ids:item.ids||[],label:(group==='trend'?'完成记录 · ':'期限分布 · ')+item.label}))[0]:snapshot.dimensions?.[group==='task-status'?'tasks':group]?.find(item=>item.key===key);if(row)document.dispatchEvent(new CustomEvent('campus:insight-selection',{detail:{kind:row.kind,ids:[...row.ids],label:row.label}}));}
+  });
+  document.addEventListener('campus:data-updated',refresh);
+  document.addEventListener('visibilitychange',refresh);
+  window.addEventListener('focus',refresh);
+  setInterval(refresh,60000);
+  return {render,refresh};
 }
