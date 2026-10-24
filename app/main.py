@@ -39,15 +39,21 @@ from .execution import notice_processing
 
 MAX_BODY = 26*1024*1024
 CST = timezone(timedelta(hours=8))
+# Exact, reviewed Codex annotation stylesheets. A desktop update may change the
+# sheet; retain the previous signature for previews opened in older clients.
+# These hashes authorize CSS only, and only on non-production loopback origins.
+LOCAL_ANNOTATION_STYLE_HASHES = (
+    'WO55anZ1V8A0G22bY2t72RV4dI79SLI4VnYLgsEeWUc=',
+    '62lPaUtpvg47KrxPOXYc0Ki8fkE6PNsbY5I9DpyEwZ4=',  # Codex 26.1021.3705
+)
 
 
 class RequestGuard:
     def __init__(self, app, origin, production):
         self.app, self.origin, self.production = app, origin, production
-        # Exact hash of the installed browser annotation stylesheet, local preview only.
         # No third-party CSS is copied or executed by this application.
         local_preview = not production and urlparse(origin).hostname in {'localhost','127.0.0.1','::1'}
-        style_hash = " 'sha256-WO55anZ1V8A0G22bY2t72RV4dI79SLI4VnYLgsEeWUc='" if local_preview else ''
+        style_hash = ''.join(f" 'sha256-{digest}'" for digest in LOCAL_ANNOTATION_STYLE_HASHES) if local_preview else ''
         self.csp = ("default-src 'self'; script-src 'self'; style-src 'self'" + style_hash + "; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'").encode('ascii')
 
     async def __call__(self, scope, receive, send):
