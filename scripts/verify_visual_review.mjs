@@ -16,7 +16,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const settle=async()=>{await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
  const resize=async(width,height=871)=>{await page.setViewportSize({width,height});await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<2,{width,height});await settle();};
- const nav=async route=>{await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.waitForFunction(route=>document.querySelector('#content')?.dataset.page===route&&!document.querySelector('#content').inert,route);await settle();};
+ const nav=async route=>{await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.waitForFunction(route=>{const content=document.querySelector('#content'),rendered=content?.dataset.page;return content&&!content.inert&&rendered===location.hash.slice(1)&&(rendered===route||route==='chat'&&rendered?.startsWith('chat/'));},route);await settle();};
  const capture=async name=>{if(engine==='chromium')await page.screenshot({path:path.join(out,name+'.png')});};
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.message});console.log('FAIL',engine,name,error.message);await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  try{
@@ -98,6 +98,12 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    const preset=page.locator('[data-source-action=preset][data-id=website]'),trigger=await preset.count()?preset:page.locator('.source-toolbar>[data-source-action=add]');
    await trigger.click();await page.locator('[data-workspace-form=source-catalog]').waitFor();assert.equal(await page.locator('[data-workspace-form=source-catalog] [name=platform]').inputValue(),'website');await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});await settle();assert.equal(await trigger.evaluate(n=>n===document.activeElement),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await capture('sources-390');
+  });
+  await check('bare chat restores the selected conversation through its canonical route',async()=>{
+   const title='合成布局恢复 '+engine;
+   const id=await page.evaluate(async title=>{const session=await fetch('/api/session').then(r=>r.json());const response=await fetch('/api/conversations',{method:'POST',headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf,'Content-Type':'application/json'},body:JSON.stringify({title})});if(!response.ok)throw Error(await response.text());return (await response.json()).id;},title);
+   await nav('chat/'+id);await nav('sources');await nav('chat');
+   assert.equal(new URL(page.url()).hash,'#chat/'+id);assert.equal(await page.locator('#conversation-title').innerText(),title);
   });
   for(const width of [390,320])for(const route of ['dashboard','tasks','notices','calendar','insights','sources','settings','new','chat','memory']){
    await resize(width,844);await nav(route);
