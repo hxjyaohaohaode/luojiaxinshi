@@ -3,6 +3,7 @@ import hashlib
 import json
 import re
 import time
+from .usage_limits import check_count, check_storage, limits_for
 from fastapi import Depends,HTTPException
 from pydantic import Field,ValidationError
 from .db import audit,dumps,ident
@@ -100,13 +101,15 @@ def unresolved_dependency(source_id):
     return 'missing_'+hashlib.sha256(source_id.encode()).hexdigest()[:32]
 
 
-def validate(data):
+def validate(data, capacity=None):
+    from .usage_limits import DEFAULTS
+    capacity=capacity or DEFAULTS
     from .workspace import CatalogItem
     bounded(data)
     if data.get('format_version')!=1:raise ValueError('仅支持本系统导出的第 1 版数据文件')
     profile=Profile.model_validate(data.get('profile',{})).model_dump()
     notices=[];chats=[];task_ids=set()
-    for n in collection(data,'notices',200):
+    for n in collection(data,'notices',capacity.notices):
         task_items=[]
         for task in collection(n,'tasks',100):
             details=TaskData.model_validate(task.get('data',{})).model_dump()
@@ -152,11 +155,11 @@ def validate(data):
         handling=n.get('handling') or {}
         if not isinstance(handling,dict):raise ValueError('通知处理记录格式不正确')
         decision=DispositionUpdate(version=1,disposition=handling.get('disposition','inbox'),note=handling.get('note',''))
-        notices.append({'key':key('notice',n),'title':text(n.get('title'),160),'source_label':text(n.get('source_label'),100),
+        notices.append({'old_id':text(n.get('id'),100),'key':key('notice',n),'title':text(n.get('title'),160),'source_label':text(n.get('source_label'),100),
                         'source_url':safe_url(text(n.get('source_url'),2000)),'sources':sources(n.get('sources',[])),'tasks':task_items,'changes':changes,
                         'quality_receipt':portable_receipt(n.get('quality_receipt')),'handling':decision.model_dump(exclude={'version'})})
     validate_dependency_graph({t['old_id']:t['workflow']['dependencies'] for n in notices for t in n['tasks'] if t['old_id']})
-    for c in collection(data,'conversations',100):
+    for c in collection(data,'conversations',capacity.conversations):
         messages=[]
         for m in collection(c,'messages',2000):
             if m.get('role') not in {'user','assistant'}:raise ValueError('对话角色无效')
@@ -170,11 +173,11 @@ def validate(data):
         from .memory import Context
         context=Context.model_validate(c.get('context',{'version':0})).model_dump()
         chats.append({'key':key('chat',c),'title':text(c.get('title'),100),'sources':sources(c.get('sources',[])),'messages':messages,'context':context})
-    arrangements=[{'key':key('arrangement',x),'data':Arrangement.model_validate(x.get('data',{})).model_dump()} for x in collection(data,'arrangements',1000)]
-    catalog=[{'key':key('catalog',x),'data':CatalogItem.model_validate(x).model_dump()} for x in collection(data,'source_catalog',500)]
+    arrangements=[{'key':key('arrangement',x),'data':Arrangement.model_validate(x.get('data',{})).model_dump()} for x in collection(data,'arrangements',capacity.arrangements)]
+    catalog=[{'key':key('catalog',x),'data':CatalogItem.model_validate(x).model_dump()} for x in collection(data,'source_catalog',capacity.sources)]
     from .memory import Memory,Project
     projects=[];memories=[]
-    for item in collection(data,'memory_projects',100):
+    for item in collection(data,'memory_projects',capacity.memory_projects):
         old_id=text(item.get('id'),40)
         if not old_id:raise ValueError('项目缺少原始标识')
         projects.append({'key':key('memory_project',item),'old_id':old_id,'data':Project.model_validate({k:item[k] for k in Project.model_fields if k in item}).model_dump()})
@@ -199,16 +202,22 @@ def install_data_transfer(app,db,user):
         raw=dumps(payload.data)
         if len(raw.encode())>10*1024*1024:raise HTTPException(413,'导入文件超过 10 MB，请拆分')
         digest=hashlib.sha256(raw.encode()).hexdigest()
-        try:data=validate(payload.data)
+        try:data=validate(payload.data,db.usage_limits)
         except (ValueError,ValidationError,TypeError,KeyError,OverflowError):raise HTTPException(422,'备份格式、字段或上限不符合要求，请使用本系统导出的 JSON 文件')
+        from .notice_matters import validate_import_groups
+        try:imported_matters=validate_import_groups(payload.data.get('notice_matters',[]),db.usage_limits.notices)
+        except ValueError as exc:raise HTTPException(422,str(exc)) from None
         counts={k:len(data[k]) for k in ['memory_projects','memories','notices','conversations','arrangements','source_catalog'] if data[k] or k in ['notices','conversations','arrangements','source_catalog']}
         warnings=['只新增记录，不覆盖现有记录；重复导入相同记录会跳过。','附件原件不在 JSON 备份内，恢复提取文字；对话恢复为可读文字，互动状态和引用编号不恢复。','导入待办的正式期限需重新核对，提醒时间清空；不会自动向外部日历写入。']
         warnings.append('办理记录、回执及变更前后值按历史保留；原待确认变更转为待核实线索，设备提醒验证需要重新进行。')
+        if payload.data.get('task_material_archive'):
+            warnings.append('此文件中的本人办理材料版本目录和提交快照仅供查阅，本次 JSON 导入不恢复这些记录或文件原件。完整恢复请使用管理员数据库备份；原件可在各待办中单独下载。')
         if any(n['quality_receipt'] for n in data['notices']):warnings.append('逐条核对记录作为导入历史保留，不视为当前版本已重新核实；缺失来源保留引句但不能跳转。')
         warnings.append('前置关系按同一账号的原始标识连接；分批导入可补齐先前缺失的关系，找不到的前置事项仍待核实；循环关系会拒绝导入。')
         if data['memories'] or data['memory_projects']:
             warnings.append('项目与记忆按导出文件中的启用状态恢复；原对话来源关联不迁移，历史声明不恢复其他账号权限；项目缺失时拒绝该次导入。')
-        if not payload.confirm:return {'digest':digest,'counts':counts,'warnings':warnings}
+        if imported_matters:warnings.append('事项归组按原通知标识恢复；请一并导入组内通知，已有归组不会被导入操作改写。')
+        if not payload.confirm:return {'digest':digest,'counts':counts,'warnings':warnings,'matter_count':len(imported_matters)}
         if payload.digest!=digest:raise HTTPException(409,'文件在预览后发生变化，请重新预览')
         now=int(time.time());added=0;skipped=0
         with db.connect(write=True) as conn:
@@ -224,14 +233,20 @@ def install_data_transfer(app,db,user):
             imported_workflows=[];imported_reviews=[]
             for kind in counts:
                 for item in data[kind]:
-                    if conn.execute('SELECT 1 FROM import_receipts WHERE user_id=? AND item_key=?',(current['id'],item['key'])).fetchone():skipped+=1;continue
+                    if conn.execute('SELECT 1 FROM import_receipts WHERE user_id=? AND item_key=?',(current['id'],item['key'])).fetchone():
+                        if kind=='notices' and item['old_id']:
+                            previous=conn.execute('SELECT id FROM notices WHERE user_id=? AND fingerprint=?',(current['id'],item['key'])).fetchone()
+                            if previous:conn.execute('INSERT OR IGNORE INTO import_notice_links VALUES(?,?,?)',(current['id'],item['old_id'],previous['id']))
+                        skipped+=1;continue
+                    if kind in {'notices','conversations','arrangements','source_catalog'}:
+                        check_count(conn,current['id'],kind,'sources' if kind=='source_catalog' else kind,'导入记录')
+                    if kind=='notices':check_count(conn,current['id'],'tasks','tasks','待办',len(item['tasks']))
                     rid=ident()
                     if kind=='memory_projects':
                         rid=mapped_project(item['old_id']);value=item['data']
                         if conn.execute('SELECT 1 FROM memory_projects WHERE id=? AND user_id=?',(rid,current['id'])).fetchone():
                             conn.execute('INSERT INTO import_receipts VALUES(?,?,?)',(current['id'],item['key'],now));skipped+=1;continue
-                        if conn.execute('SELECT count(*) FROM memory_projects WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:
-                            raise HTTPException(422,'导入后项目将超过 100 个，请先整理已有项目')
+                        check_count(conn,current['id'],'memory_projects','memory_projects','项目')
                         conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',(rid,current['id'],value['name'],value['description'],now,now))
                     elif kind=='memories':
                         from .memory_store import MAX_MEMORIES,record_revision
@@ -247,6 +262,7 @@ def install_data_transfer(app,db,user):
                     elif kind=='notices':
                         conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,materials_complete,fingerprint,status,created_at,updated_at) VALUES(?,?,?,?,?,0,?,?,?,?)',
                                      (rid,current['id'],item['title'],item['source_label'],item['source_url'],item['key'],'confirmed' if item['tasks'] else 'received',now,now))
+                        if item['old_id']:conn.execute('INSERT OR REPLACE INTO import_notice_links VALUES(?,?,?)',(current['id'],item['old_id'],rid))
                         if not item['tasks'] and item['handling']['disposition']!='inbox':
                             conn.execute('INSERT INTO notice_dispositions VALUES(?,?,?,?)',(rid,item['handling']['disposition'],item['handling']['note'],now))
                         mapping={}
@@ -320,5 +336,7 @@ def install_data_transfer(app,db,user):
                     audit(conn,current['id'],row['notice_id'],'import_dependencies_resolved',before={'dependencies':before},after={'dependencies':value['dependencies']},task_id=row['task_id'])
             try:validate_dependency_graph(graph)
             except ValueError as exc:raise HTTPException(422,str(exc)) from None
+            from .notice_matters import import_groups
+            import_groups(conn,current['id'],imported_matters)
             if payload.apply_profile:conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(data['profile']),current['id']))
         return {'added':added,'skipped':skipped,'warnings':warnings}

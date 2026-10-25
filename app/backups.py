@@ -56,6 +56,22 @@ def restore_database(source:Path,destination:Path):
             from .notice_intake import TABLES as INTAKE_TABLES
             if intake_version and (intake_version[0] != '1' or not INTAKE_TABLES.issubset(tables)):
                 raise ValueError('备份缺少通知接入数据或版本不兼容')
+            from .notice_ingest import TABLES as INGEST_TABLES
+            from .task_materials import TABLES as MATERIAL_TABLES
+            from .source_sync import TABLES as SYNC_TABLES
+            from .integrations import GROUP_TABLES
+            from .publisher_sync import TABLES as PUBLISHER_TABLES
+            from .push_delivery import TABLES as PUSH_TABLES
+            from .notice_automation import TABLES as AUTOMATION_TABLES
+            from .group_delivery import TABLES as GROUP_DELIVERY_TABLES
+            from .notice_matters import TABLES as MATTER_TABLES
+            for meta_key,required in (('notice_matters_schema_version',MATTER_TABLES),('notice_ingest_schema_version',INGEST_TABLES),('task_material_schema_version',MATERIAL_TABLES),
+                    ('source_sync_schema_version',SYNC_TABLES),('qq_group_schema_version',GROUP_TABLES),
+                    ('publisher_sync_schema_version',PUBLISHER_TABLES),('push_delivery_schema_version',PUSH_TABLES),
+                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES)):
+                current=original.execute('SELECT value FROM meta WHERE key=?',(meta_key,)).fetchone()
+                if current and (current[0]!='1' or not required.issubset(tables)):
+                    raise ValueError('备份缺少收件、办理材料或提醒数据，或版本不兼容：'+meta_key)
             if workflow_version and (workflow_version[0] not in {'1','2','3'} or not {'task_workflows','notice_changes','calendar_checks'}.issubset(tables)):
                 raise ValueError('备份缺少办理工作流数据或版本不兼容')
             memory_version=original.execute("SELECT value FROM meta WHERE key='memory_schema_version'").fetchone()
@@ -97,6 +113,14 @@ def restore_database(source:Path,destination:Path):
                     target.execute('DELETE FROM external_bindings')
                 for table in ('reply_shares','conversation_ai_consents','notice_link_previews'):
                     if table in tables:target.execute('DELETE FROM '+table)
+                for table in ('qq_group_subscriptions','qq_authorized_groups','qq_group_codes','push_outbox','push_devices'):
+                    if table in tables:target.execute('DELETE FROM '+table)
+                for table in ('source_subscriptions','publisher_subscriptions'):
+                    if table in tables:
+                        target.execute("UPDATE "+table+" SET enabled=0,running_until=0,error='从备份恢复，请重新确认来源授权'")
+                if 'notice_automation_settings' in tables:
+                    target.execute('UPDATE notice_automation_settings SET enabled=0,consented_at=NULL')
+                    target.execute("UPDATE notice_automation_jobs SET state='cancelled',lease_until=NULL,error='从备份恢复，请重新确认自动整理' WHERE state IN ('queued','running')")
                 target.execute("UPDATE notices SET status='failed',processing_token=NULL,error='服务恢复后请重新生成草稿' WHERE status='processing'")
                 if 'conversations' in tables:
                     target.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL')

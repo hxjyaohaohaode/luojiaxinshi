@@ -3,6 +3,7 @@ import json
 import re
 import time
 
+from .usage_limits import check_count, check_storage, limits_for
 from fastapi import Depends, HTTPException, Query, Response
 from pydantic import Field
 
@@ -353,7 +354,7 @@ def install(app, db, user):
                 bounded(data,max_nodes=1000000)
                 if (not isinstance(data, dict) or data.get('format') != 'campus-memory-v1'
                         or not isinstance(data.get('memories'), list) or len(data['memories']) > MAX_MEMORIES
-                        or not isinstance(data.get('projects', []), list) or len(data.get('projects', [])) > 100):
+                        or not isinstance(data.get('projects', []), list) or len(data.get('projects', [])) > db.usage_limits.memory_projects):
                     raise ValueError()
                 entries = data['memories']
             with db.connect(write=True) as conn:
@@ -368,8 +369,7 @@ def install(app, db, user):
                         project_id = raw['id'] if conn.execute('SELECT 1 FROM memory_projects WHERE id=? AND user_id=?',
                             (raw['id'], current['id'])).fetchone() else digest(current['id'] + ':' + raw['id'])[:32]
                         if not conn.execute('SELECT 1 FROM memory_projects WHERE id=? AND user_id=?', (project_id, current['id'])).fetchone():
-                            if conn.execute('SELECT count(*) FROM memory_projects WHERE user_id=?', (current['id'],)).fetchone()[0] >= 100:
-                                raise ValueError()
+                            check_count(conn,current['id'],'memory_projects','memory_projects','项目')
                             now = int(time.time())
                             conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',
                                 (project_id, current['id'], project.name, project.description, now, now))

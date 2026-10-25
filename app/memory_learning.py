@@ -8,6 +8,7 @@ import hashlib
 import logging
 import re
 import time
+from .usage_limits import check_count, check_storage, limits_for
 from typing import Literal
 
 from pydantic import Field, ValidationError
@@ -379,7 +380,7 @@ def _apply_action(conn, uid, cid, message, context, action):
         existing=conn.execute('SELECT id FROM memory_projects WHERE user_id=? AND name=?',(uid,name.name)).fetchone()
         if existing:action.project_id=existing['id']
         else:
-            if conn.execute('SELECT count(*) FROM memory_projects WHERE user_id=?',(uid,)).fetchone()[0]>=100:raise ValueError('项目数量达到上限')
+            check_count(conn,uid,'memory_projects','memory_projects','项目')
             from .db import ident
             action.project_id=ident();now=int(time.time())
             conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',(action.project_id,uid,name.name,name.description,now,now))

@@ -165,14 +165,14 @@ def test_missing_memory_project_rolls_back_entire_import(env):
         assert conn.execute('SELECT count(*) FROM import_receipts WHERE user_id=?',(uid(dest),)).fetchone()[0]==0
 
 
-@pytest.mark.parametrize('kind,limit',[('project',100),('memory',10000)])
+@pytest.mark.parametrize('kind,limit',[('project',1000),('memory',10000)])
 def test_import_respects_existing_account_memory_capacity(env,kind,limit):
     c=account(env);dest=account(env,'dest');project(c);memory(c);owner=uid(dest);now=int(time.time())
     with env[0].state.db.connect(write=True) as conn:
         for i in range(limit):
             if kind=='project':conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',(ident(),owner,'已有项目 '+str(i),'',now,now))
             else:conn.execute("INSERT INTO personal_memories VALUES(?,?,'global',NULL,'','preference','已有记忆',NULL,1,0,1,?,?)",(ident(),owner,now,now))
-    r=import_export(dest,c.get('/api/export').json());assert r.status_code==422,r.text
+    r=import_export(dest,c.get('/api/export').json());assert r.status_code==(413 if kind=='project' else 422),r.text
     catalog=dest.get('/api/memory').json()
     assert len(catalog['projects'])==(limit if kind=='project' else 0)
     assert catalog['total']==(limit if kind=='memory' else 0)

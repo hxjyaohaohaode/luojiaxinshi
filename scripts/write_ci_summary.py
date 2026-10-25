@@ -34,6 +34,11 @@ def main():
                 ('Visual layout bounds', 'artifacts/visual-review-browser/report.json'),
                 ('Notice intake and flexible workflows', 'artifacts/notice-flow-browser/report.json'),
                 ('Task board drag and recovery', 'artifacts/task-board-browser/report.json'),
+                ('Natural notice intake', 'artifacts/natural-intake-browser/report.json'),
+                ('Personal materials and submissions', 'artifacts/task-materials-browser/report.json'),
+                ('Source subscriptions and personal inbox', 'artifacts/source-inbox-browser/report.json'),
+                ('Persistent push and device ownership', 'artifacts/push-browser/report.json'),
+                ('Notice matter grouping and campus capacities', 'artifacts/notice-matters-browser/report.json'),
                 ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),
@@ -42,7 +47,7 @@ def main():
     for label, path in browsers if kind in {'browser', 'all'} else []:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))
-            rows.append([label, len(data['checks']), sum(not c['ok'] for c in data['checks'] if isinstance(c, dict)), len(data['errors']), 0])
+            rows.append([label, len(data['checks']), sum(not c.get('ok', c.get('passed', False)) for c in data['checks'] if isinstance(c, dict)), len(data['errors']), 0])
         except (OSError, ValueError, KeyError, TypeError):
             rows.append([label, 'report unavailable', '-', '-', '-'])
     text = '## Verification results\n\nCommit: `'+os.getenv('GITHUB_SHA', 'local')+'`\n\n'

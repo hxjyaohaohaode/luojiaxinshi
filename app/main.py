@@ -36,6 +36,7 @@ from .speech import install_speech
 from .schedule import install_schedule, serialize as serialize_arrangement, own as own_arrangement
 from .workflow import install_workflow, enrich_tasks, notice_changes, require_dependency_ready, reconcile_materials
 from .execution import notice_processing
+from .notice_ingest import ingest_notice, fingerprint as intake_fingerprint, intake_state, search_notices, personal_storage_bytes
 
 MAX_BODY = 26*1024*1024
 CST = timezone(timedelta(hours=8))
@@ -108,7 +109,11 @@ class RequestGuard:
 
 def create_app(settings=None):
     settings=settings or Settings.from_env()
-    db=Database(settings.data_dir/'campus.sqlite3')
+    db=Database(settings.data_dir/'campus.sqlite3',settings.usage_limits)
+    from . import source_sync, integrations
+    with db.connect(write=True) as conn:
+        source_sync.initialize(conn)
+        integrations.initialize(conn)
     from .execution import Runtime,HEARTBEAT_SECONDS
     runtime=Runtime(db)
 
@@ -143,6 +148,13 @@ def create_app(settings=None):
                     await run_in_threadpool(run_one,db,settings)
                 except Exception as error:logging.getLogger('campus').error('memory_reflection_failed error=%s',type(error).__name__)
         memory_worker=asyncio.create_task(memory_maintenance())
+        source_worker=asyncio.create_task(source_sync.run_worker(db,settings))
+        from .push_delivery import run_worker as run_push_worker
+        push_worker=asyncio.create_task(run_push_worker(db))
+        from .notice_automation import run_worker as run_notice_automation
+        automation_worker=asyncio.create_task(run_notice_automation(application,db,settings))
+        from .group_delivery import run_worker as run_group_delivery
+        group_worker=asyncio.create_task(run_group_delivery(db,settings))
         try:
             yield
         finally:
@@ -157,7 +169,11 @@ def create_app(settings=None):
                 pass
             lease_worker.cancel()
             memory_worker.cancel()
-            await asyncio.gather(lease_worker,memory_worker,return_exceptions=True)
+            source_worker.cancel()
+            push_worker.cancel()
+            automation_worker.cancel()
+            group_worker.cancel()
+            await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,group_worker,return_exceptions=True)
             await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
@@ -275,6 +291,9 @@ def create_app(settings=None):
         record['tasks']=[serialize_task(t) for t in conn.execute('SELECT * FROM tasks WHERE notice_id=? ORDER BY created_at,rowid',(nid,))]
         enrich_tasks(conn, record['tasks'])
         record['changes'] = notice_changes(conn, nid, uid)
+        record.update(intake_state(conn,nid))
+        from .notice_automation import detail as automation_detail
+        record['automation']=automation_detail(conn,nid,uid)
         from .notice_progress import decode
         record['calls']=[]
         for call in conn.execute('''SELECT a.model,a.status,a.input_tokens,a.output_tokens,a.created_at,m.metrics
@@ -351,7 +370,7 @@ def create_app(settings=None):
             invite=conn.execute('SELECT * FROM invites WHERE token_hash=? AND used_at IS NULL AND expires_at>?',(token_hash(payload.invite),now)).fetchone() if payload.invite else None
             if payload.invite and invite is None:
                 raise HTTPException(400,'邀请链接无效、已使用或已过期，请向管理员获取新链接')
-            if conn.execute('SELECT COUNT(*) FROM users').fetchone()[0]>=5000:
+            if conn.execute('SELECT COUNT(*) FROM users').fetchone()[0]>=settings.usage_limits.registered_users:
                 raise HTTPException(503,'本站账号容量已满，请联系管理员')
             if conn.execute('SELECT 1 FROM users WHERE username=?',(payload.username.lower(),)).fetchone():
                 raise HTTPException(409,'该用户名已被使用')
@@ -486,8 +505,12 @@ def create_app(settings=None):
     @app.get('/api/notices')
     def notices(current=Depends(user)):
         with db.connect() as conn:
-            # applicability 来自整理结果：是否与本人已知条件相符，供列表按“与我相关”筛选。
-            return [dict(r) for r in conn.execute("SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,COALESCE(d.disposition,'inbox') AS disposition,(SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count,CASE WHEN n.draft IS NOT NULL AND json_valid(n.draft) THEN json_extract(n.draft,'$.applicability') END AS applicability FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE user_id=? ORDER BY n.updated_at DESC",(current['id'],))]
+            return search_notices(conn,current['id'])
+
+    @app.get('/api/notices/search')
+    def find_notices(q:str='',current=Depends(user)):
+        with db.connect() as conn:
+            return search_notices(conn,current['id'],q)
 
     async def parse_form(request,uid):
         form=await request.form(max_files=5,max_fields=16,max_part_size=120000)
@@ -521,19 +544,17 @@ def create_app(settings=None):
         return values,sources
 
     def check_quota(conn,uid,sources,new_notice=False):
-        count=conn.execute('SELECT COUNT(*) FROM notices WHERE user_id=?',(uid,)).fetchone()[0]
-        size=conn.execute('SELECT COALESCE(SUM(length(content)),0) FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?',(uid,)).fetchone()[0]
-        size+=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(uid,)).fetchone()[0]
-        if (new_notice and count>=200) or size+sum(len(s['content'] or b'') for s in sources)>200*1024*1024:
-            raise HTTPException(413,'当前账号已达到 200 则通知或 200 MB 原件上限，请导出并清理不再需要的通知')
+        from .usage_limits import check_count, check_storage
+        if new_notice:check_count(conn,uid,'notices','notices','通知')
+        check_storage(conn,uid,sum(len(s['content'] or b'') for s in sources))
 
     @app.post('/api/notices')
     async def create_notice(request:Request,current=Depends(user)):
         rate_limit(db,'upload:'+current['id'],40,3600)
         values,sources=await parse_form(request,current['id'])
         title=values['title'].strip()
-        if not title or len(title)>160 or len(values['source_label'])>100:
-            raise HTTPException(422,'请填写 1—160 字标题，来源名称不超过 100 字')
+        if len(title)>160 or len(values['source_label'])>100:
+            raise HTTPException(422,'标题不超过 160 字，来源名称不超过 100 字')
         try:
             source_url=safe_url(values['source_url'])
             published=None
@@ -546,31 +567,39 @@ def create_app(settings=None):
             raise HTTPException(422,str(exc)) from None
         if total_chars(sources)>MAX_CHARS:
             raise HTTPException(422,'正文与附件合计超过 10000 字，请拆分通知；未静默截断')
-        fingerprint=hashlib.sha256('|'.join(sorted(s['sha256'] for s in sources)).encode()).hexdigest()
-        nid=ident()
-        now=int(time.time())
+        fingerprint=intake_fingerprint(sources)
         with db.connect(write=True) as conn:
             from .notice_intake import prior_submission,submission_digest
             digest=submission_digest(values,fingerprint)
             previous=prior_submission(conn,current['id'],values['request_id'],digest)
             if previous:return detailed_notice(conn,previous,current['id'])
-            check_quota(conn,current['id'],sources,True)
-            duplicate=conn.execute('SELECT id,title FROM notices WHERE user_id=? AND fingerprint=?',(current['id'],fingerprint)).fetchone()
-            if duplicate and values['allow_duplicate']!='true':
-                raise HTTPException(409,{'message':'发现内容相同的通知，可打开原通知；不同批次可明确另建','duplicate_id':duplicate['id']})
-            conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,published_at,materials_complete,fingerprint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
-                         (nid,current['id'],title,values['source_label'],source_url,published,values['materials_complete']=='true',fingerprint,now,now))
-            for source in sources:
-                store_source(conn,nid,source)
+            ingestion=ingest_notice(conn,current['id'],sources=sources,title=title,source_label=values['source_label'],
+                source_url=source_url,published_at=published,materials_complete=values['materials_complete']=='true',
+                allow_duplicate=values['allow_duplicate']=='true',external_key='manual:'+values['request_id'] if values['request_id'] else '')
+            nid=ingestion['notice_id']
             if values['request_id']:
                 conn.execute('INSERT INTO notice_submissions VALUES(?,?,?,?)',(current['id'],values['request_id'],nid,digest))
-            audit(conn,current['id'],nid,'create_notice',after={'title':title,'sources':[s['name'] for s in sources]})
             result=detailed_notice(conn,nid,current['id'])
+            result.update(ingestion=ingestion,reused=not ingestion['created'],source_retained=True)
         return result
 
     @app.get('/api/notices/{nid}')
     def notice(nid:str,current=Depends(user)):
         with db.connect() as conn:
+            return detailed_notice(conn,nid,current['id'])
+
+    @app.post('/api/notices/{nid}/intake-updates/{update_id}/review')
+    async def review_intake_update(nid:str,update_id:str,request:Request,current=Depends(user)):
+        payload=await request.json()
+        if not isinstance(payload,dict) or set(payload)!={'version','reviewed'} or payload['reviewed'] is not True or type(payload['version']) is not int:
+            raise HTTPException(422,'请明确确认已核对新旧原文及相关待办')
+        with db.connect(write=True) as conn:
+            record=own_notice(conn,nid,current['id']);expect_version(record,payload['version'])
+            update=conn.execute('SELECT * FROM notice_ingest_updates WHERE id=? AND notice_id=?',(update_id,nid)).fetchone()
+            if not update:raise HTTPException(404,'来源更新不存在')
+            if update['state']=='pending':
+                conn.execute("UPDATE notice_ingest_updates SET state='reviewed',reviewed_at=? WHERE id=?",(int(time.time()),update_id))
+                audit(conn,current['id'],nid,'intake_update_review',after={'update_id':update_id,'personal_review_only':True})
             return detailed_notice(conn,nid,current['id'])
 
     @app.post('/api/notices/{nid}/supplement')
@@ -665,6 +694,9 @@ def create_app(settings=None):
             if existing and existing['conversation_id'] and conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(existing['conversation_id'],current['id'])).fetchone():return {'conversation_id':existing['conversation_id']}
             rows=conn.execute('SELECT * FROM sources WHERE notice_id=? AND active=1 ORDER BY created_at,rowid',(nid,)).fetchall()
             if len(rows)>12:raise HTTPException(400,'本通知附件超过单次对话上限，请选取相关材料另建对话')
+            from .usage_limits import check_count, check_storage
+            check_count(conn,current['id'],'conversations','conversations','会话')
+            check_storage(conn,current['id'],sum(len(row['content'] or b'') for row in rows))
             cid=ident();now=int(time.time())
             conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(cid,current['id'],record['title'][:100],now,now))
             for row in rows:
@@ -683,6 +715,9 @@ def create_app(settings=None):
                    'applicability':'needs_review','applicability_reason':'手工确认本人适用条件','facts':{},'tasks':[],
                    'warnings':['手工填写结果不计作 AI 提取成功']}
             conn.execute("UPDATE notices SET draft=?,version=version+1,draft_version=version+1,status='draft',error=NULL,processing_token=NULL,updated_at=? WHERE id=?",(dumps(draft),int(time.time()),nid))
+            from .notice_automation import mark_profile
+            profile_value=conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()['profile']
+            mark_profile(conn,nid,current['id'],record['version']+1,profile_value)
             return detailed_notice(conn,nid,current['id'])
 
     @app.get('/api/notices/{nid}/processing')
@@ -779,6 +814,8 @@ def create_app(settings=None):
                     runtime.finish(conn,call_id,'discarded','context_changed')
                 else:
                     runtime.finish(conn,call_id,'succeeded','draft_ready')
+                    from .notice_automation import mark_profile
+                    mark_profile(conn,nid,current['id'],payload.version+1,current['profile'])
                     result=detailed_notice(conn,nid,current['id'])
             if result is None:
                 raise HTTPException(409,'生成期间材料已改变，本次旧草稿已丢弃，请刷新后重新生成')
@@ -791,6 +828,8 @@ def create_app(settings=None):
                         conn.execute("UPDATE ai_calls SET status='failed' WHERE id=? AND status='processing'",(call_id,))
                         runtime.finish(conn,call_id,'failed','interrupted_request')
             finally:notice_lock.release()
+
+    app.state.generate_notice=generate
 
     def validate_task(data,sources,global_blockers,enforce_future=True):
         ai.check_evidence(data.evidence+data.deadline_evidence+(data.scheduled.evidence if data.scheduled else []),sources)
@@ -817,6 +856,8 @@ def create_app(settings=None):
             prior=conn.execute('SELECT result FROM confirmations WHERE notice_id=? AND draft_version=?',(nid,payload.version)).fetchone()
             if prior:
                 return {'task_ids':json.loads(prior['result']),'replayed':True}
+            from .notice_automation import require_current_profile
+            require_current_profile(conn,nid,current['id'])
             expect_version(record,payload.version)
             if record['draft_version']!=payload.version or not record['draft']:
                 raise HTTPException(409,'请先生成或手工建立当前版本的草稿')
@@ -852,6 +893,8 @@ def create_app(settings=None):
                     record_change(conn,current['id'],tid,previous_data,value,old['status'],old['status'])
                     audit(conn,current['id'],nid,'confirm_revision',before=json.loads(old['data']),after=value,task_id=tid)
                 else:
+                    from .usage_limits import check_count
+                    check_count(conn,current['id'],'tasks','tasks','待办')
                     tid=ident()
                     conn.execute('INSERT INTO tasks(id,user_id,notice_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)',(tid,current['id'],nid,dumps(value),now,now))
                     audit(conn,current['id'],nid,'confirm_task',after=value,task_id=tid)
@@ -965,8 +1008,15 @@ def create_app(settings=None):
             from .memory_store import export_archive
             memory_archive=export_archive(conn,current['id'])
             memories=memory_archive['memories']
+            from .task_materials import export_task_materials
+            material_archive=export_task_materials(conn,current['id'])
+            from .notice_matters import export_groups
+            matters=export_groups(conn,current['id'])
         result={'format_version':1,'exported_at':datetime.now(CST).isoformat(),'profile':json.loads(current['profile']),
                 'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'memory_archive':memory_archive,'note':'含记忆来源与历史、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
+        result['task_material_archive']=material_archive
+        result['notice_matters']=matters
+        result['note']+=' 本人办理材料及固定提交版本的目录与记录已附带；二进制文件请在对应待办下载。完整恢复请使用数据库备份。'
         return Response(dumps(result),media_type='application/json',headers={'Content-Disposition':'attachment; filename="campus-data.json"'})
 
     @app.delete('/api/notices/{nid}')
@@ -974,6 +1024,8 @@ def create_app(settings=None):
         with db.connect(write=True) as conn:
             record=own_notice(conn,nid,current['id'])
             expect_version(record,payload.version)
+            from .notice_matters import detach
+            detach(conn,current['id'],nid)
             from .action_review import record_deletion
             record_deletion(conn,current['id'],nid)
             conn.execute('DELETE FROM notices WHERE id=?',(nid,))
@@ -989,10 +1041,25 @@ def create_app(settings=None):
     from .memory import install_memory
     install_memory(app,db,user)
     install_integrations(app,db,settings,user,admin)
+    source_sync.install(app,db,user)
+    from .usage_limits import install as install_usage
+    install_usage(app,db,settings,user)
+    from .notice_matters import install as install_matters
+    install_matters(app,db,user)
     install_speech(app,db,settings,user,heavy_lock)
     install_schedule(app,db,user)
     install_workflow(app, db, user, own_notice, own_task, expect_version, serialize_task,
                      get_sources, store_source, invalidate, validate_task, update_task_record)
+    from .task_materials import install_task_materials
+    install_task_materials(app,db,settings,user,own_task,expect_version)
+    from .push_delivery import install as install_push
+    install_push(app,db,user)
+    from .notice_automation import install as install_notice_automation
+    install_notice_automation(app,db,settings,user)
+
+    @app.get('/notification-worker.js')
+    def notification_worker():
+        return FileResponse(ROOT/'static'/'notification-worker.js',media_type='application/javascript',headers={'Service-Worker-Allowed':'/'})
     app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 
     @app.get('/')

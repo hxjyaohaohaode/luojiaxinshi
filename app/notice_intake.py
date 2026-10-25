@@ -156,7 +156,7 @@ def save_origin(conn, sid, source):
 
 
 def submission_digest(values, fingerprint):
-    keys = ('title', 'source_label', 'source_url', 'published_at', 'materials_complete')
+    keys = ('title', 'source_label', 'source_url', 'published_at', 'materials_complete', 'allow_duplicate')
     return hashlib.sha256(dumps({**{k: values.get(k, '') for k in keys}, 'fingerprint': fingerprint}).encode()).hexdigest()
 
 

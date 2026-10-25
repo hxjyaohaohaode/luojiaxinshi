@@ -6,7 +6,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
-const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/visual-review-browser');
+const origin=process.env.VISUAL_BASE_URL||'http://127.0.0.1:8786',out=path.resolve('artifacts/visual-review-browser');
 await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic local data only; measurements do not replace visual review',checks:[],errors:[],measurements:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
@@ -14,9 +14,9 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
  const page=await browser.newPage({viewport:{width:1413,height:871},locale:'en-US',timezoneId:'America/Los_Angeles'});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
- const settle=()=>page.evaluate(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
+ const settle=async()=>{await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
  const resize=async(width,height=871)=>{await page.setViewportSize({width,height});await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<2,{width,height});await settle();};
- const nav=async route=>{await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.locator('#content:not([inert])').waitFor();await settle();};
+ const nav=async route=>{await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.waitForFunction(route=>document.querySelector('#content')?.dataset.page===route&&!document.querySelector('#content').inert,route);await settle();};
  const capture=async name=>{if(engine==='chromium')await page.screenshot({path:path.join(out,name+'.png')});};
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.message});console.log('FAIL',engine,name,error.message);await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  try{

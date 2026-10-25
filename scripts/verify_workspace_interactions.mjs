@@ -16,8 +16,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const check=async(name,fn)=>{console.log('CHECK',engine,name);try{await fn();report.checks.push({engine,name,ok:true});}catch(error){console.log('FAIL',engine,name,error.message.slice(0,500));report.checks.push({engine,name,ok:false,error:error.message});await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png')}).catch(()=>{});}};
  // Toast lifetimes intentionally pause while focused or hovered. Only wait
- // for layout/motion transitions, not a dismiss timer requiring user input.
- const settle=()=>page.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.playState!=='paused'&&a.effect?.getTiming().iterations!==Infinity&&!a.effect?.target?.closest('#toast')).map(a=>a.finished.catch(()=>{}))));
+ // for visible layout/motion transitions, not hidden disclosure descendants
+ // or a dismiss timer requiring user input. Firefox may retain a hidden
+ // animation at time zero while still reporting it as running.
+ const settle=async()=>{try{await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));}catch(error){console.log('Unsettled animations',await page.evaluate(()=>document.getAnimations().map(a=>({target:a.effect?.target?.id||a.effect?.target?.getAttribute?.('class'),state:a.playState,current:a.currentTime,timing:a.effect?.getTiming(),timeline:a.timeline?.constructor?.name}))));throw error;}await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
  const resize=async size=>{
   await page.setViewportSize(size);
   // The protocol acknowledges resizing before resize/visualViewport events

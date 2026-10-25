@@ -133,7 +133,7 @@ def test_duplicate_notice_explicit_override(env):
     n=notice(c)
     payload={'title':'另一个学期','body':TEXT,'materials_complete':'true'}
     r=c.post('/api/notices',data=payload)
-    assert r.status_code==409 and r.json()['detail']['duplicate_id']==n['id']
+    assert r.status_code==200 and r.json()['id']==n['id'] and r.json()['reused']
     payload['allow_duplicate']='true'
     assert c.post('/api/notices',data=payload).status_code==200
 

@@ -207,8 +207,14 @@ UPDATE meta SET value='3' WHERE key='workflow_schema_version' AND value='2';
 """
 
 
+class CapacityConnection(sqlite3.Connection):
+    pass
+
+
 class Database:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, usage_limits=None):
+        from .usage_limits import DEFAULTS
+        self.usage_limits = usage_limits or DEFAULTS
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as conn:
@@ -222,6 +228,10 @@ class Database:
                 workflow_version = conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
                 if workflow_version and workflow_version[0] not in {'1','2','3'}:
                     raise RuntimeError('办理工作流版本不兼容，禁止直接降级')
+                material_version=conn.execute("SELECT value FROM meta WHERE key='task_material_schema_version'").fetchone()
+                from .task_materials import TABLES as MATERIAL_TABLES
+                if material_version and (material_version[0]!='1' or not MATERIAL_TABLES.issubset(tables)):
+                    raise RuntimeError('本人材料版本不兼容或数据表缺失，未修改数据库')
                 intake_version = conn.execute("SELECT value FROM meta WHERE key='notice_intake_schema_version'").fetchone()
                 from .notice_intake import TABLES as INTAKE_TABLES
                 if intake_version and (intake_version[0] != '1' or not INTAKE_TABLES.issubset(tables)):
@@ -272,10 +282,25 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+REVIEW_SCHEMA+'COMMIT;')
             from .agent_runtime.store import SCHEMA as AGENT_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+AGENT_SCHEMA+'COMMIT;')
+            from .task_materials import SCHEMA as MATERIAL_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+MATERIAL_SCHEMA+'COMMIT;')
+            from .notice_ingest import initialize as initialize_ingest
+            initialize_ingest(conn)
+            from .notice_matters import initialize as initialize_matters
+            initialize_matters(conn)
+            from .source_sync import initialize as init_source_sync
+            init_source_sync(conn)
+            from .integrations import initialize as init_qq_groups
+            init_qq_groups(conn)
+            from .push_delivery import initialize as init_push
+            init_push(conn)
+            from .notice_automation import initialize as init_notice_automation
+            init_notice_automation(conn)
 
     @contextmanager
     def connect(self, write=False):
-        conn = sqlite3.connect(self.path, timeout=15)
+        conn = sqlite3.connect(self.path, timeout=15, factory=CapacityConnection)
+        conn.usage_limits = self.usage_limits
         conn.row_factory = sqlite3.Row
         from .memory_store import tokens,digest
         conn.create_function('memory_tokens',1,tokens,deterministic=True)

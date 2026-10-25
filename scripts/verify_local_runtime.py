@@ -33,6 +33,22 @@ USERS=5
 NOTICES_PER_USER=20
 
 
+def cleanup_fixture(scratch, artifact_root):
+    # Windows can release inherited log/database handles just after taskkill
+    # returns. Retry only that transient condition, keeping a bounded failure.
+    for attempt in range(12):
+        target=Path(scratch.name).resolve()
+        if target.parent!=artifact_root.resolve() or not target.name.startswith('runtime-check-'):
+            raise RuntimeError('Refusing cleanup outside the acceptance directory')
+        try:
+            scratch.cleanup()
+            return
+        except PermissionError as error:
+            if getattr(error,'winerror',None) not in {5,32,33} or attempt==11:
+                raise
+            time.sleep(min(.1*(attempt+1),1))
+
+
 def main():
     configure_text_output()
     artifact_root=(ROOT/'artifacts').resolve()
@@ -216,15 +232,14 @@ def main():
                 'stale_updates_rejected':True,'idempotent_replays_passed':True,
                 'elapsed_seconds':round(time.perf_counter()-started,2),
                 'scope':'Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.'}
-        (artifact_root/'runtime-acceptance.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-        print(json.dumps(report,ensure_ascii=False),flush=True)
     finally:
         stop()
         for client in clients:
             client.close()
-        if Path(scratch.name).resolve().parent!=artifact_root:
-            raise RuntimeError('Refusing cleanup outside the acceptance directory')
-        scratch.cleanup()
+        cleanup_fixture(scratch,artifact_root)
+    report['elapsed_seconds']=round(time.perf_counter()-started,2)
+    (artifact_root/'runtime-acceptance.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    print(json.dumps(report,ensure_ascii=False),flush=True)
 
 
 if __name__=='__main__':

@@ -1,4 +1,5 @@
 """Private conversations, user-selected material promotion and source directory."""
+from .usage_limits import check_count, check_storage, limits_for
 from datetime import datetime,timezone,timedelta
 import asyncio
 import hashlib
@@ -46,7 +47,7 @@ class SendMessage(Version):
 
 
 class Promote(Version):
-    title: str = Field(min_length=1,max_length=160)
+    title: str = Field(default='',max_length=160)
     source_ids: list[str] = Field(min_length=1,max_length=12)
     source_label: str = Field(default='本人提交',max_length=100)
     source_url: str = Field(default='',max_length=2000)
@@ -157,8 +158,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
         rate_limit(db,'conversation:'+current['id'],50,3600)
         cid=ident();now=int(time.time())
         with db.connect(write=True) as conn:
-            if conn.execute('SELECT COUNT(*) FROM conversations WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:
-                raise HTTPException(413,'已达到 100 个会话，请导出并删除不再需要的对话')
+            check_count(conn,current['id'],'conversations','conversations','会话')
             conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(cid,current['id'],payload.title,now,now))
             return conversation_detail(conn,cid,current['id'],settings)
 
@@ -228,10 +228,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
             combined=existing+unique
             if len(combined)>100 or sum(s.get('full_chars',sum(len(p['text']) for p in s.get('full_sections',s['sections']))) for s in combined)>5000000:
                 raise HTTPException(413,'每个对话最多 100 份材料、500 万字全文。请按事项拆分对话')
-            stored=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(current['id'],)).fetchone()[0]
-            stored+=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?',(current['id'],)).fetchone()[0]
-            if stored+sum(len(s['content'] or b'') for s in unique)>200*1024*1024:
-                raise HTTPException(413,'材料存储超过每账号 200 MB 上限，请先导出并清理旧材料')
+            check_storage(conn,current['id'],sum(len(s['content'] or b'') for s in unique))
             for s in unique:
                 conn.execute('INSERT INTO conversation_sources VALUES(?,?,?,?,?,?,?,?,?,?)',(s['id'],cid,s['name'],s['kind'],s['content'],s['sha256'],s['status'],dumps(s['sections']),s['warning'],int(time.time())))
                 full=s.get('full_sections',s['sections'])
@@ -485,26 +482,16 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 raise HTTPException(413,'所选通知正文合计超过 1 万字，不能仅用截取片段建立通知。请按独立通知拆分原文，再选择相关材料。')
             if any(s['kind'] in {'doc','xls','ppt','mp3','wav','m4a','ogg','flac'} for s in selected):
                 raise HTTPException(422,'请先将音频转为可核对的文字，或将旧版 Office 转为新版文档，再转为通知。原件仍保留在对话中。')
-            fingerprint=hashlib.sha256(dumps(sorted(s['sha256'] for s in selected)).encode()).hexdigest()
+            from .notice_ingest import fingerprint as intake_fingerprint, ingest_notice
+            fingerprint=intake_fingerprint(selected)
             prior=conn.execute('SELECT notice_id FROM conversation_promotions WHERE conversation_id=? AND fingerprint=?',(cid,fingerprint)).fetchone()
             if prior:
                 return {'notice_id':prior['notice_id'],'already_created':True}
-            count=conn.execute('SELECT COUNT(*) FROM notices WHERE user_id=?',(current['id'],)).fetchone()[0]
-            if count>=200:
-                raise HTTPException(413,'已达到 200 则通知上限，请先导出并清理旧通知')
-            size=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?',(current['id'],)).fetchone()[0]
-            size+=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(current['id'],)).fetchone()[0]
-            if size+sum(len(s['content'] or b'') for s in selected)>200*1024*1024:
-                raise HTTPException(413,'复制原件将超过每账号 200 MB 存储上限')
-            nid=ident();now=int(time.time())
-            conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,materials_complete,fingerprint,created_at,updated_at) VALUES(?,?,?,?,?,0,?,?,?)',
-                         (nid,current['id'],payload.title,payload.source_label,payload.source_url,fingerprint,now,now))
-            for s in selected:
-                conn.execute('INSERT INTO sources(id,notice_id,name,kind,content,sha256,status,sections,warning,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
-                             (ident(),nid,s['name'],s['kind'],s['content'],s['sha256'],s['status'],dumps(s['sections']),s['warning'],now))
+            ingestion=ingest_notice(conn,current['id'],sources=selected,title=payload.title,source_label=payload.source_label,
+                source_url=payload.source_url,external_key='conversation:'+cid+':'+fingerprint)
+            nid=ingestion['notice_id']
             conn.execute('INSERT INTO conversation_promotions VALUES(?,?,?)',(cid,fingerprint,nid))
-            audit(conn,current['id'],nid,'create_notice',after={'from_conversation':cid,'sources':[s['name'] for s in selected]})
-        return {'notice_id':nid,'already_created':False}
+        return {'notice_id':nid,'already_created':not ingestion['created'],'source_retained':True}
 
     @app.get('/api/source-catalog')
     def catalog(current=Depends(user)):
@@ -514,8 +501,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
     @app.post('/api/source-catalog')
     def add_source(payload:CatalogItem,current=Depends(user)):
         with db.connect(write=True) as conn:
-            if conn.execute('SELECT COUNT(*) FROM source_catalog WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:
-                raise HTTPException(413,'最多登记 100 个来源，请先清理不再使用的条目')
+            check_count(conn,current['id'],'source_catalog','sources','来源')
             sid=ident();now=int(time.time())
             conn.execute('INSERT INTO source_catalog(id,user_id,data,created_at,updated_at) VALUES(?,?,?,?,?)',(sid,current['id'],payload.model_dump_json(),now,now))
         return {'id':sid}

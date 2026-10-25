@@ -27,7 +27,7 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
         const result={engine:name,width:viewport.width,label,checks:[]};
         const check=(ok,detail,actual)=>result.checks.push({detail,passed:!!ok,...(actual===undefined?{}:{actual})});
         try{await run(check);result.passed=result.checks.every(c=>c.passed);}catch(error){result.error=error.message;result.passed=false;}
-        report.scenarios.push(result);console.log(name+' '+viewport.width+' '+label+': '+(result.passed?'pass':'FAIL'));
+        report.scenarios.push(result);console.log(name+' '+viewport.width+' '+label+': '+(result.passed?'pass':'FAIL'));if(result.error)console.log(result.error);
       };
       const delayed=async(path,match,submit,edit,done)=>{
         let release,observe,complete,timer,intercepted=false;
@@ -41,8 +41,9 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
         }finally{clearTimeout(timer);release();if(intercepted)await finished;await page.unroute(pattern,handler);}
       };
       const fillNotice=async(title,body)=>{
+        if(!await page.locator('.intake-metadata').evaluate(n=>n.open))await page.locator('.intake-metadata>summary').click();
         await page.locator('#notice-form [name=title]').fill(title);await page.locator('#notice-form [name=body]').fill(body);
-        await page.locator('[data-notice-step-to=review]').click();await page.locator('#notice-form [name=rights]').check();await page.locator('#notice-form [name=materials_complete]').check();
+        await page.locator('#notice-form [name=rights]').check();await page.locator('#notice-form [name=materials_complete]').check();
       };
       for(const phase of ['business','cleanup']){
         await scenario('通知 '+phase+' 等待期间重开并刷新草稿',async check=>{
@@ -53,7 +54,7 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
             await page.locator((viewport.width<=850?'.mobile-bottom-nav':'.sidebar')+' a[href="#tasks"]').click();await page.waitForSelector('#task-results');
             if(viewport.width<=850)await page.locator('.mobile-bottom-nav [data-action=menu]').click();
             await page.locator('.sidebar-create').click();await page.waitForSelector('#notice-form');await page.locator('#content[aria-busy=true]').waitFor({state:'detached'});
-            await page.locator('#notice-form [name=title]').fill(newer);await page.locator('#notice-form [name=body]').fill('后来输入，必须在刷新后保留。'+stamp);
+            if(!await page.locator('.intake-metadata').evaluate(n=>n.open))await page.locator('.intake-metadata>summary').click();await page.locator('#notice-form [name=title]').fill(newer);await page.locator('#notice-form [name=body]').fill('后来输入，必须在刷新后保留。'+stamp);
             await page.locator('#notice-form [name=files]').setInputFiles({name:'后来选择的材料.txt',mimeType:'text/plain',buffer:Buffer.from('虚构补充附件')});
             const beforeReleaseTitle=await page.locator('#notice-form [name=title]').inputValue();check(beforeReleaseTitle===newer,'释放旧请求前，新标题已正确填写',beforeReleaseTitle);
           },async()=>{
@@ -77,7 +78,7 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
             check(await page.locator('#arrangement-form [name=title]').inputValue()==='','第一项仍在保存时，新建入口开启空白表单');
             await page.locator('#arrangement-form [name=title]').fill(newer);nextRequest=await page.locator('#arrangement-form').getAttribute('data-request-id');check(nextRequest!==firstRequest,'第二项使用独立提交标识');
           },async()=>{
-            await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('安排已保存'));check(await page.locator('#dialog').evaluate(d=>d.open),'旧保存不关闭新安排');check(await page.locator('#arrangement-form [name=title]').inputValue()===newer,'新安排内容保持');
+            await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('安排存好了'));check(await page.locator('#dialog').evaluate(d=>d.open),'旧保存不关闭新安排');check(await page.locator('#arrangement-form [name=title]').inputValue()===newer,'新安排内容保持');
             await page.locator('#arrangement-form .autosave-status').filter({hasText:'编辑内容已暂存'}).first().waitFor();
             const cache=await read('/edit-cache/arrangement-new');check(cache.payload?.data.title===newer&&cache.payload?.request_id===nextRequest,'新内容及独立提交标识都已暂存');
             await page.reload();await page.waitForSelector('#calendar-body');await page.locator('#content[aria-busy=true]').waitFor({state:'detached'});await page.locator('[data-calendar-action=new]').first().click();
@@ -90,11 +91,11 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
       await scenario('重复通知明确另建失败后可重试',async check=>{
         await clearCache('new-notice');const stamp=Date.now(),title='虚构同批内容 '+stamp,body='重复通知重试测试 '+stamp;
         const original=await context.request.post(origin+'/api/notices',{headers,form:{title,body,materials_complete:'true'}});if(!original.ok())throw new Error('Duplicate fixture creation failed: '+original.status());
-        await open('new','#notice-form');await fillNotice(title,body);await page.locator('#notice-form [type=submit]').click();await page.waitForSelector('[data-action=duplicate-create]');
+        await open('new','#notice-form');await fillNotice(title,body);await page.locator('[name=allow_duplicate]').check();
         const failure=async route=>{await route.fulfill({status:503,json:{detail:'虚构测试：另建请求暂时失败'}});};
-        await page.route(origin+'/api/notices',failure);await page.locator('[data-action=duplicate-create]').click();await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('另建请求暂时失败'));await page.unroute(origin+'/api/notices',failure);
-        check(await page.locator('[data-action=duplicate-create]').isEnabled(),'失败后另建按钮恢复');
-        await page.locator('[data-action=duplicate-create]').click();await page.waitForSelector('.notice-primary');
+        await page.route(origin+'/api/notices',failure);await page.locator('#notice-form [type=submit]').click();await page.locator('#notice-form .form-error').filter({hasText:'另建请求暂时失败'}).waitFor();await page.unroute(origin+'/api/notices',failure);
+        check(await page.locator('#notice-form [type=submit]').isEnabled(),'失败后保存按钮恢复');
+        await page.locator('#notice-form [type=submit]').click();await page.waitForSelector('.notice-primary');
         check((await read('/notices')).filter(n=>n.title===title).length===2,'再次点击真正提交，未因一次性监听器失效');
       });
     }finally{await context.close();}

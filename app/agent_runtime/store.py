@@ -3,6 +3,7 @@ import hashlib
 import json
 import time
 
+from ..usage_limits import check_count, check_storage, limits_for
 from fastapi import HTTPException
 
 from ..db import dumps, ident
@@ -95,11 +96,9 @@ class Store:
         with self.db.connect(write=True) as conn:
             if options.conversation_id and not conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?', (options.conversation_id, uid)).fetchone():
                 raise HTTPException(404, '原对话不存在或无权访问')
-            if conn.execute('SELECT count(*) FROM agent_threads WHERE user_id=?', (uid,)).fetchone()[0] >= 100:
-                raise HTTPException(413, '任务会话已达 100 个，请先删除旧会话')
+            check_count(conn,uid,'agent_threads','agent_threads','任务会话')
             if not options.conversation_id:
-                if conn.execute('SELECT count(*) FROM conversations WHERE user_id=?', (uid,)).fetchone()[0] >= 100:
-                    raise HTTPException(413, '原对话已达 100 个，请先整理旧对话')
+                check_count(conn,uid,'conversations','conversations','会话')
                 options = options.model_copy(update={'conversation_id': ident()})
                 conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',
                              (options.conversation_id, uid, options.title, now, now))

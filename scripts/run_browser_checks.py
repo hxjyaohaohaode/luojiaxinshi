@@ -19,7 +19,12 @@ SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_workspace_interactions.mjs', 'workspace-interactions-browser'),
           ('verify_visual_review.mjs', 'visual-review-browser'),
           ('verify_notice_flow.mjs', 'notice-flow-browser'),
-          ('verify_task_board.mjs', 'task-board-browser')]
+          ('verify_task_board.mjs', 'task-board-browser'),
+          ('verify_natural_intake.mjs', 'natural-intake-browser'),
+          ('verify_task_materials.mjs', 'task-materials-browser'),
+          ('verify_source_inbox.mjs', 'source-inbox-browser'),
+          ('verify_push_browser.mjs', 'push-browser'),
+          ('verify_notice_matters.mjs', 'notice-matters-browser')]
 
 
 def reset_fixture_limits(data):
@@ -51,12 +56,12 @@ def main():
     data = Path(fixture_data.name).resolve()
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
-    env = dict(os.environ, MVP_PORT='8786', MVP_DATA_DIR=str(data), PYTHONUNBUFFERED='1')
+    env = dict(os.environ, MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
     for key in ('MIMO_API_KEY', 'AI_API_KEY', 'OPENAI_API_KEY'):
         env.pop(key, None)
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
     with (OUT / 'fixture.log').open('w', encoding='utf-8') as log:
-        fixture = subprocess.Popen([sys.executable, 'scripts/memory_engine_preview_server.py'],
+        fixture = subprocess.Popen([sys.executable, 'scripts/push_preview_server.py'],
                                    cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, **flags)
         try:
             deadline = time.monotonic() + 45

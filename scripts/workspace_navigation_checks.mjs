@@ -36,7 +36,7 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
   await check('workspace toggle, title and search share their center with the sidebar open or collapsed',async()=>{
     for(const collapsed of [true,false]){
       if(await page.locator('.shell').evaluate(el=>el.classList.contains('sidebar-collapsed'))!==collapsed)await page.locator('.workspace-chrome-toggle').click();
-      await page.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
+      await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));
       const g=await page.evaluate(()=>{const center=s=>{const r=document.querySelector(s).getBoundingClientRect();return r.top+r.height/2;};return {toggle:center('.workspace-chrome-toggle'),title:center('.topbar-left b'),search:center('.topbar-right .workspace-search')};});
       assert.ok(Math.abs(g.toggle-g.title)<2&&Math.abs(g.toggle-g.search)<2,JSON.stringify(g));
     }

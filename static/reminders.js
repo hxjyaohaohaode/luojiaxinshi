@@ -4,7 +4,7 @@ const LEVEL_TEXT = {urgent:'要紧', attention:'留意', info:'其他'};
 const KIND_ICON = {overdue:'clock', due:'calendar', reminder:'bell', followup:'history', change:'shield', arrangement:'calendar', notice:'doc'};
 const NOTIFIED_KEY = 'campus.reminders.notified', ENABLED_KEY = 'campus.reminders.browser';
 
-export function createReminders({state, api, esc, icon, toast, showDialog}) {
+export function createReminders({state, api, esc, icon, toast, showDialog, push=null}) {
   let data=null, owner=null, timers=[], poll=0, loading=null, generation=0;
   let filter='unread', managing=false, selected=new Set(), saving=false, lastError='';
   const $ = selector => document.querySelector(selector);
@@ -38,7 +38,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog}) {
   }
   function schedule() {
     timers.forEach(clearTimeout);timers=[];
-    if(!data||!supported()||Notification.permission!=='granted'||!browserEnabled())return;
+    if(!data||push?.enabled()||!supported()||Notification.permission!=='granted'||!browserEnabled())return;
     const seen=notified(),now=Date.now(),uid=owner;
     for(const entry of data.upcoming){
       const at=Date.parse(entry.at),key=`${uid}:${entry.task_id||entry.arrangement_id}:${entry.at}`;
@@ -59,12 +59,12 @@ export function createReminders({state, api, esc, icon, toast, showDialog}) {
     loading=request;return request;
   }
   function stop() { generation++;owner=null;data=null;loading=null;saving=false;lastError='';selected.clear();clearInterval(poll);timers.forEach(clearTimeout);timers=[]; }
-  function start() { const uid=state.session?.user.id;if(owner===uid){refresh();return;}stop();owner=uid;filter='unread';managing=false;if(!uid)return;poll=setInterval(()=>{if(!document.hidden)refresh();},60e3);refresh(); }
+  function start() { push?.start();const uid=state.session?.user.id;if(owner===uid){refresh();return;}stop();owner=uid;filter='unread';managing=false;if(!uid)return;poll=setInterval(()=>{if(!document.hidden)refresh();},60e3);refresh(); }
   function browserControl() {
     if(!supported())return '<p class="small muted">当前浏览器不支持网页通知。</p>';
     if(Notification.permission==='denied')return '<p class="small muted">浏览器已拒绝通知，可在网站设置中开启。</p>';
     const on=Notification.permission==='granted'&&browserEnabled();
-    return `<label class="check reminder-toggle"><input type="checkbox" data-reminder-browser ${on?'checked':''}><span>到点时发送浏览器通知<small>仅在页面打开时生效。</small></span></label>`;
+    return `<label class="check reminder-toggle"><input type="checkbox" data-reminder-browser ${on?'checked':''}><span>页面打开时提醒<small>只在当前页面保持打开时生效。</small></span></label>`;
   }
   function centerMarkup() {
     const items=visibleItems(),ids=new Set(items.map(item=>item.id));selected=new Set([...selected].filter(id=>ids.has(id)));
@@ -94,7 +94,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog}) {
   async function open() {
     const view=captureUiContext(state);await refresh();if(!view.sameDialog())return;
     filter='unread';managing=false;selected.clear();
-    showDialog('提醒',`<div class="reminder-center"><div data-reminder-content>${centerMarkup()}</div><p class="small muted">已读和归档仅管理提醒，不会完成待办；期限或通知有新变化时会重新提醒。</p>${browserControl()}</div>`);
+    showDialog('提醒',`<div class="reminder-center"><div data-reminder-content>${centerMarkup()}</div><p class="small muted">已读和归档仅管理提醒，不会完成待办；期限或通知有新变化时会重新提醒。</p>${push?`<div data-push-settings>${push.markup()}</div><details class="details"><summary>页面内提醒</summary>${browserControl()}</details>`:browserControl()}</div>`);push?.refresh();
   }
   async function update(ids,status) {
     if(saving||!ids.length||owner!==state.session?.user.id)return false;
@@ -130,6 +130,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog}) {
     }
   });
   $('#dialog')?.addEventListener('dialog-back',()=>requestAnimationFrame(renderCenter));
+  document.addEventListener('campus:push-state',schedule);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&owner)refresh();});
   return {start,stop,refresh,open,summary,latest:()=>data};
 }

@@ -29,3 +29,14 @@
  .workflow-milestone { grid-template-columns:auto minmax(0,1fr); }
  .workflow-milestone>.button { grid-column:2; justify-self:start; }
 }
+
+.intake-update-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.intake-provenance { margin-block: 12px; }
+.collection-summary.inbox-intents { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 4px; }
+.inbox-intents .collection-stat { appearance: none; min-width: 0; min-height: 44px; padding: 8px; font: inherit; color: inherit; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 8px; cursor: pointer; }
+.inbox-intents .collection-stat > span { white-space: normal; line-height: 1.4; }
+.inbox-intents .collection-stat[aria-pressed="true"] { background: var(--surface-soft, #f6f6f6); border-color: var(--line, #ddd); }
+.library-refine { margin-block: 8px 12px; }
+.library-refine > summary { cursor: pointer; min-height: 44px; padding-block: 12px; }
+.library-refine > summary #library-count { float: right; margin-left: 12px; }
+.library-refine .library-tabs-row { margin-top: 8px; }

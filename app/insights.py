@@ -107,10 +107,18 @@ def build_reminders(tasks, notices, arrangements, now=None):
     items, upcoming = [], []
     for task in tasks:
         data = task['data']
-        if task['status'] != 'pending' or data.get('scope') != 'personal' or task.get('action_excluded'):
+        if data.get('scope') != 'personal' or task.get('action_excluded'):
             continue
         title = data.get('title') or '未命名事项'
         source = task.get('notice_title') or ''
+        # Completed/submitted work may still receive corrections or requests
+        # for supplementary material. Completion only suppresses old due dates.
+        if task.get('pending_changes'):
+            items.append({'kind': 'change', 'level': 'attention', 'title': title, 'text': f'通知有 {len(task["pending_changes"])} 处变化等你核实',
+                          'task_id': task['id'], 'notice_title': source,
+                          'revision': sorted(task['pending_changes'], key=lambda change: json.dumps(change, sort_keys=True))})
+        if task['status'] != 'pending':
+            continue
         deadline, all_day = deadline_of(data)
         confirmed = bool(data.get('deadline_confirmed'))
         if deadline:
@@ -161,10 +169,6 @@ def build_reminders(tasks, notices, arrangements, now=None):
         if task.get('followup_due'):
             items.append({'kind': 'followup', 'level': 'attention', 'title': title, 'text': '到了跟进时间，看看办理进展',
                           'at': (task.get('workflow') or {}).get('data', {}).get('followup_at'), 'task_id': task['id'], 'notice_title': source})
-        if task.get('pending_changes'):
-            items.append({'kind': 'change', 'level': 'attention', 'title': title, 'text': f'通知有 {len(task["pending_changes"])} 处变化等你核实',
-                          'task_id': task['id'], 'notice_title': source,
-                          'revision': sorted(task['pending_changes'], key=lambda change: json.dumps(change, sort_keys=True))})
     today = now.date()
     for record in arrangements:
         data = record['data']

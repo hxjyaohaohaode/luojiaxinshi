@@ -7,6 +7,7 @@ import hashlib
 import json
 import re
 import time
+from ..usage_limits import check_count, check_storage, limits_for
 from typing import Literal
 
 from fastapi import HTTPException
@@ -300,8 +301,7 @@ def apply(conn, db, uid, cid, mid, name, args):
             saved = db.agent_update_task(conn, uid, args.target_id, TaskUpdate(version=args.version,
                 data=value, status=args.status or before['status'], reason='本人对话要求'))
         else:
-            if conn.execute('SELECT count(*) FROM tasks WHERE user_id=?', (uid,)).fetchone()[0] >= 5000:
-                raise HTTPException(422, '已保存 5000 项待办，请先整理旧待办')
+            check_count(conn,uid,'tasks','tasks','待办')
             db.agent_validate_task(value, [], [], True)
             tid, nid, now = ident(), personal_list(conn, uid), int(time.time())
             conn.execute('INSERT INTO tasks(id,user_id,notice_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)',

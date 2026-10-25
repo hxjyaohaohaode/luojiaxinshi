@@ -3,6 +3,7 @@ import json
 import hashlib
 import re
 import time
+from .usage_limits import check_count, check_storage, limits_for
 from typing import Literal
 
 from fastapi import Depends, HTTPException, Query, Header
@@ -235,8 +236,7 @@ def install_memory(app,db,user):
     @app.post('/api/memory/projects')
     def create_project(payload:Project,current=Depends(user)):
         with db.connect(write=True) as conn:
-            if conn.execute('SELECT count(*) FROM memory_projects WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:
-                raise HTTPException(422,'项目数量已达 100，请先整理不再使用的项目')
+            check_count(conn,current['id'],'memory_projects','memory_projects','项目')
             key=ident();now=int(time.time())
             conn.execute('INSERT INTO memory_projects VALUES(?,?,?,?,1,?,?)',(key,current['id'],payload.name,payload.description,now,now))
             return dict(own(conn,'memory_projects',key,current['id']))

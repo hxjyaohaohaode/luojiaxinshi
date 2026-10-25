@@ -30,10 +30,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     const unique=engine+'-'+Date.now();
     for(const key of ['new-notice','intake-batch']){const cache=await api('/edit-cache/'+key);await api('/edit-cache/'+key,'PUT',{revision:cache.revision,payload:null});}
     await check('paste and upload preserve two originals and create one notice',async()=>{
-      await nav('new');await page.locator('#notice-form [name=title]').fill('工程通知 '+unique);
+      await nav('new');await page.locator('.intake-metadata>summary').click();await page.locator('#notice-form [name=title]').fill('工程通知 '+unique);
       await page.locator('#notice-form [name=body]').fill('【合成材料】2027年10月20日14:00至16:00参加讲座。'+unique);
       await page.locator('#notice-form [name=files]').setInputFiles({name:'讲座附件.txt',mimeType:'text/plain',buffer:Buffer.from('【合成附件】参加者请在讲座开始前到场。'+unique)});
-      await page.locator('[data-notice-step-to=review]').click();await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();
+      await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();
       await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);await page.locator('.notice-handling').waitFor();
       noticeId=new URL(page.url()).hash.split('/')[1];const n=await api('/notices/'+noticeId);
       assert.equal(n.sources.length,2);assert.ok(n.sources.some(s=>s.name==='讲座附件.txt'));assert.equal(n.tasks.length,0);
@@ -85,7 +85,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     });
     await check('public link preview is reviewed, stored and keeps its exact source URL',async()=>{
       await nav('new');await page.locator('[data-read-url]').fill('https://notice-fixture.example/'+unique);await page.locator('[data-read-link]').click();await page.locator('[data-use-link]').click();
-      assert.ok(await page.locator('[name=link_preview]').inputValue());await page.locator('[data-notice-step-to=review]').click();await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);
+      assert.ok(await page.locator('[name=link_preview]').inputValue());await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);
       linkId=new URL(page.url()).hash.split('/')[1];const n=await api('/notices/'+linkId);assert.equal(n.sources.length,1);assert.equal(n.sources[0].origin.url,'https://notice-fixture.example/'+unique);
       await page.locator('.source-content a').first().waitFor();assert.ok(await page.locator('.source-content a').count());
     });
@@ -93,17 +93,19 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await nav('new');await page.locator('[name=body]').fill('失败后保留的正文 '+unique);await page.locator('[data-read-url]').fill('https://notice-fixture.example/failure');await page.locator('[data-read-link]').click();await page.getByText('示例链接暂时不可读取，请粘贴正文或上传原件',{exact:true}).waitFor();
       assert.equal(await page.locator('[name=body]').inputValue(),'失败后保留的正文 '+unique);assert.equal(await page.locator('[name=link_preview]').inputValue(),'');
     });
-    await check('batch partial success is retained; duplicates are explicitly reused or saved as another batch',async()=>{
-      await nav('intake');let cards=page.locator('[data-intake-entry]');await cards.nth(0).locator('[name=title]').fill('批量通知 A '+unique);await cards.nth(0).locator('[name=body]').fill('独立的批量正文 '+unique);
-      await page.locator('#intake-add').click();cards=page.locator('[data-intake-entry]');await cards.nth(1).locator('[name=title]').fill('批量通知重复 '+unique);await cards.nth(1).locator('[name=body]').fill('独立的批量正文 '+unique);
-      await page.locator('#intake-save').click();await page.locator('[data-intake-retry]').waitFor();assert.equal(await page.locator('.intake-saved').count(),1);assert.equal(await page.locator('[data-intake-entry]').count(),1);
-      await page.locator('[data-intake-retry]').click();await page.locator('#intake-save').click();await page.waitForFunction(()=>document.querySelectorAll('.intake-saved').length===2);
-      await nav('intake');assert.equal(await page.locator('.intake-saved').count(),2);assert.equal(await page.locator('#intake-save').isDisabled(),true);
-      const notices=await api('/notices');assert.equal(notices.filter(n=>n.title==='批量通知 A '+unique).length,1);assert.equal(notices.filter(n=>n.title==='批量通知重复 '+unique).length,1);
+    await check('batch partial success survives retry; duplicates reuse the notice unless another batch is selected',async()=>{
+      await nav('intake');let cards=page.locator('[data-intake-entry]');await cards.nth(0).locator('.intake-metadata>summary').click();await cards.nth(0).locator('[name=title]').fill('批量通知 A '+unique);await cards.nth(0).locator('[name=body]').fill('独立的批量正文 '+unique);
+      await page.locator('#intake-add').click();cards=page.locator('[data-intake-entry]');await cards.nth(1).locator('[data-read-url]').fill('https://notice-fixture.example/failure');
+      await page.locator('#intake-save').click();await page.locator('[data-intake-entry] [role=alert]').waitFor();assert.equal(await page.locator('.intake-saved').count(),1);assert.equal(await page.locator('[data-intake-entry]').count(),1);
+      const retry=page.locator('[data-intake-entry]');await retry.locator('[data-read-url]').fill('');await retry.locator('[name=body]').fill('独立的批量正文 '+unique);await page.locator('#intake-save').click();await page.waitForFunction(()=>document.querySelectorAll('.intake-saved').length===2);
+      assert.match(await page.locator('.intake-saved').nth(1).innerText(),/已有通知/);
+      await page.locator('#intake-add').click();const separate=page.locator('[data-intake-entry]');await separate.locator('.intake-metadata>summary').click();await separate.locator('[name=title]').fill('批量通知另批 '+unique);await separate.locator('[name=body]').fill('独立的批量正文 '+unique);await separate.locator('[name=allow_duplicate]').check();await page.locator('#intake-save').click();await page.waitForFunction(()=>document.querySelectorAll('.intake-saved').length===3);
+      await nav('intake');assert.equal(await page.locator('.intake-saved').count(),3);assert.equal(await page.locator('#intake-save').isDisabled(),true);
+      const notices=await api('/notices');assert.equal(notices.filter(n=>n.title==='批量通知 A '+unique).length,1);assert.equal(notices.filter(n=>n.title==='批量通知另批 '+unique).length,1);
     });
     await check('batch can supplement an existing notice, reopening it and preserving originals',async()=>{
       let n=await api('/notices/'+linkId);await api('/notices/'+linkId+'/disposition','PUT',{version:n.version,disposition:'reference',note:''});
-      await nav('intake');await page.locator('#intake-add').click();const card=page.locator('[data-intake-entry]');await card.locator('[name=target]').selectOption(linkId);await card.locator('[name=title]').fill('补充 '+unique);await card.locator('[name=body]').fill('补充的后续说明 '+unique);await card.locator('[name=materials_complete]').check();await page.locator('#intake-save').click();await page.waitForFunction(()=>document.querySelectorAll('.intake-saved').length===3);
+      await nav('intake');await page.locator('#intake-add').click();const card=page.locator('[data-intake-entry]');await card.locator('.intake-metadata>summary').click();await card.locator('[name=target]').selectOption(linkId);await card.locator('[name=title]').fill('补充 '+unique);await card.locator('[name=body]').fill('补充的后续说明 '+unique);await card.locator('[name=materials_complete]').check();await page.locator('#intake-save').click();await page.waitForFunction(()=>document.querySelectorAll('.intake-saved').length===4);
       n=await api('/notices/'+linkId);assert.equal(n.handling.disposition,'inbox');assert.equal(n.sources.length,2);assert.equal(Boolean(n.materials_complete),true);
     });
     for(const [width,height] of [[1440,900],[390,844],[320,620],[844,390]]){

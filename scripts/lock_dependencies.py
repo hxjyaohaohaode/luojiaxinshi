@@ -3,7 +3,7 @@ from pathlib import Path
 from packaging.requirements import Requirement
 
 roots=['fastapi','uvicorn','python-multipart','pypdf','defusedxml','httpx','python-dotenv','icalendar',
-       'Pillow','cryptography','opentelemetry-api','av']
+       'Pillow','cryptography','opentelemetry-api','av','pywebpush']
 seen={}
 pending=list(roots)
 while pending:

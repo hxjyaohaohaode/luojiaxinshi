@@ -17,6 +17,7 @@ from .documents import MAX_CHARS, text_source, total_chars
 from .models import Strict, TaskData, TaskUpdate, ActionCondition, safe_url
 from .action_plans import gate_issues,require_gates,require_task_gates,constraint_key
 from .action_review import public_review,require_reviewed,pending,schedule_issues,record_change,record_workflow_change,descendants,FORMAL_FIELDS
+from .task_materials import PersonalSubmission,prepare_submission,store_submission,replay_submission
 
 
 class WorkflowStep(Strict):
@@ -84,6 +85,7 @@ class WorkflowUpdate(Strict):
     task_version: int = Field(ge=1)
     data: WorkflowData
     complete: bool = Field(default=False,strict=True)
+    submission: PersonalSubmission | None = None
 
 
 class ChangeTarget(Strict):
@@ -317,6 +319,7 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
     def update_workflow(tid: str, payload: WorkflowUpdate, current=Depends(user)):
         with db.connect(write=True) as conn:
             task = serialize_task(own_task(conn, tid, current['id']))
+            if replay_submission(conn,current['id'],tid,payload):return get_task(conn,tid,current['id'])
             expect_version(task, payload.task_version)
             old = workflow_record(conn, task)
             expect_version(old, payload.version)
@@ -330,6 +333,15 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
                 previous=prior_conditions.get(item['id'])
                 if previous and previous['text']!=item['text']:
                     item['state']='unknown';item['note']=''
+            submission_snapshot=None
+            if payload.submission:
+                if payload.complete:raise HTTPException(422,'记录提交后请等待实际结果，不同时标记事项完成')
+                data,submission_snapshot=prepare_submission(conn,task,current['id'],payload.submission,data)
+                # A later submission must recheck gates even when the previous
+                # stage was already submitted (for example a replacement file).
+                require_reviewed(conn,tid)
+                require_gates(data)
+                require_proposed_dependencies(conn,current['id'],data)
             if data['stage'] in {'submitted','accepted','recorded'} and data['stage']!=old['data']['stage']:
                 require_reviewed(conn,tid)
             if any(s not in task['data']['materials'] for s in data['prepared_materials']):
@@ -356,6 +368,8 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
                 task['version']+=1
             audit(conn, current['id'], task['notice_id'], 'workflow_update', before=old['data'], after=data, task_id=tid)
             record_workflow_change(conn,current['id'],task,old['data'],data)
+            if submission_snapshot is not None:
+                store_submission(conn,task,current['id'],payload,submission_snapshot,payload.version+1)
             if payload.complete:
                 update_task_record(conn,current['id'],tid,TaskUpdate(version=task['version'],data=TaskData.model_validate(task['data']),status='done',reason='本人保存办理记录并确认完成'))
             return get_task(conn, tid, current['id'])

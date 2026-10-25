@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv, dotenv_values
+from .usage_limits import UsageLimits
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -31,7 +32,7 @@ class Settings:
     ai_model: str = "mimo-v2.6-pro"
     ai_api_key: str = ""
     ai_timeout: int = 180
-    ai_daily_limit: int = 30
+    ai_daily_limit: int = 1000
     qq_bot_app_id: str = ''
     qq_bot_secret: str = ''
     wechat_publisher_app_id: str = ''
@@ -70,6 +71,7 @@ class Settings:
     # 声音复刻默认关闭，需要部署方建立被复刻人书面授权流程后再开启。
     voice_clone_enabled: bool = False
     # 隐私政策中展示的运营者与联系方式，部署时在 .env 中填写。
+    usage_limits: UsageLimits = field(default_factory=UsageLimits)
     operator_name: str = '珞珈信使项目团队'
     operator_contact: str = ''
 
@@ -82,7 +84,8 @@ class Settings:
                      os.getenv("APP_ENV", "local") == "production",
                      os.getenv("MIMO_BASE_URL", cls.ai_base_url).strip().rstrip("/"),
                      os.getenv("MIMO_TEXT_MODEL", cls.ai_model).strip(), os.getenv("MIMO_API_KEY", "").strip(),
-                     int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "30")))
+                     int(os.getenv("AI_TIMEOUT_SECONDS", "180")), int(os.getenv("AI_DAILY_LIMIT", "1000")))
+        result.usage_limits=UsageLimits.parse(os.getenv('USAGE_LIMITS_JSON','{}'))
         result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
         result.operator_name=os.getenv('OPERATOR_NAME',cls.operator_name).strip()[:80] or cls.operator_name
         result.operator_contact=os.getenv('OPERATOR_CONTACT','').strip()[:120]
@@ -150,6 +153,6 @@ class Settings:
             raise ValueError("对外提供服务须使用 production 模式及 HTTPS")
         from .model_catalog import validate
         validate(result)
-        if not 10 <= result.ai_timeout <= 180 or not 1 <= result.ai_daily_limit <= 1000:
-            raise ValueError('AI 超时须为 10—180 秒，每账号每日上限须为 1—1000 次')
+        if not 10 <= result.ai_timeout <= 180 or not 1 <= result.ai_daily_limit <= 10000:
+            raise ValueError('AI 超时须为 10—180 秒，每账号每日上限须为 1—10000 次')
         return result

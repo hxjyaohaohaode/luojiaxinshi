@@ -7,15 +7,19 @@ export function noticeState(n){
   if(disposition!=='inbox')return [dispositionNames[disposition]||'已收好',''];
   return ({received:['待处理',''],draft:['待核对','orange'],processing:['处理中','blue'],confirmed:['已转为行动','green'],failed:['处理失败','red']})[n.status]||['待处理',''];
 }
-export function batchEntry(){return {id:crypto.randomUUID(),request_id:crypto.randomUUID(),title:'',body:'',source_label:'',source_url:'',published_at:'',materials_complete:false,target:'',target_version:null,link_preview:'',files:[],saved_id:'',error:''};}
-export function prepareEntry(item,files,toTime){
-  if(!item.title.trim())throw new Error('请填写通知标题');
-  if(!item.body.trim()&&!files.length&&!item.link_preview)throw new Error('请添加正文、附件或已读取的链接');
+export function batchEntry(){return {id:crypto.randomUUID(),request_id:crypto.randomUUID(),title:'',body:'',source_label:'',source_url:'',published_at:'',materials_complete:false,allow_duplicate:false,target:'',target_version:null,link_preview:'',read_url:'',files:[],saved_id:'',error:''};}
+export function validateEntry(item,files){
+  if(item.title.trim().length>160)throw new Error('通知标题不能超过 160 字');
+  if(!item.body.trim()&&!files.length&&!item.link_preview&&!item.read_url?.trim())throw new Error('请添加正文、附件或已读取的链接');
   if(item.files.length&&!files.length)throw new Error('请重新选择暂存的附件，或明确移除附件记录');
   if(files.length>5||files.some(file=>file.size>5*1024*1024||!file.size))throw new Error('每则通知最多 5 份附件，每份大于 0 且不超过 5 MB');
+}
+export function prepareEntry(item,files,toTime){
+  validateEntry(item,files);
+  if(!item.body.trim()&&!files.length&&!item.link_preview)throw new Error('原文链接尚未读取，请重新保存');
   const form=new FormData();
   for(const key of ['title','body','source_label','source_url','link_preview','request_id'])form.set(key,item[key]||'');
-  if(item.allow_duplicate)form.set('allow_duplicate','true');
+  if(item.allow_duplicate&&!item.target)form.set('allow_duplicate','true');
   form.set('published_at',toTime(item.published_at)||'');form.set('materials_complete',String(item.materials_complete));
   if(item.target)form.set('version',String(item.target_version));
   files.forEach(file=>form.append('files',file));
@@ -26,7 +30,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
   const $=s=>document.querySelector(s),key='intake-batch';
   let owner=null,items=[],fileMap=new Map(),generation=0,busy=false,previewRequest=0;
   const sameOwner=session=>!!session&&state.session===session;
-  const linkFields=()=>`<div class="notice-link-entry"><label class="field">原文链接<input type="url" data-read-url placeholder="https://…" maxlength="2000"></label><button type="button" class="button" data-read-link>读取链接</button></div><input type="hidden" name="link_preview"><div data-link-preview role="status"></div>`;
+  const linkFields=()=>`<div class="notice-link-entry"><label class="field">原文链接<input type="url" data-read-url placeholder="https://…" maxlength="2000"></label><button type="button" class="button" data-read-link>预览链接</button></div><input type="hidden" name="link_preview"><div data-link-preview role="status"></div>`;
   function previewLabel(form,name='已读取的链接材料'){
     const target=form.querySelector('[data-link-preview]');if(!target)return;
     target.innerHTML=form.elements.link_preview.value?`<div class="intake-preview-ready"><span>${esc(name)}</span><button type="button" class="button small plain" data-remove-link>移除链接材料</button></div>`:'';
@@ -35,9 +39,38 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     const head=form.querySelector('.compose-section-heading');
     head.insertAdjacentHTML('afterend',linkFields());
     form.insertAdjacentHTML('beforeend',`<input type="hidden" name="request_id" value="${crypto.randomUUID()}">`);
-    head.insertAdjacentHTML('beforebegin','<div class="intake-switch"><a class="button small plain" href="#intake">多则通知 / 补充原事项</a></div>');
+    head.insertAdjacentHTML('beforebegin','<div class="intake-switch"><a class="button small plain" href="#intake">多则通知一起保存</a></div>');
+    // A pasted URL is an input, not a separate mandatory preview workflow.
+    // The form resumes its ordinary save only after that URL has been read.
+    form.addEventListener('submit',async event=>{
+      const input=form.querySelector('[data-read-url]'),url=input.value.trim();
+      if(!url||(form.elements.link_preview.value&&form.elements.source_url.value===url))return;
+      event.preventDefault();event.stopPropagation();
+      const finish=beginFormFeedback(form,'正在读取通知链接…');if(!finish)return;
+      const user=state.session,route=state.renderId,request=++previewRequest;
+      let resume=false;form.inert=true;
+      try{
+        const preview=await api('/intake/link',{method:'POST',json:{url}});
+        if(!sameOwner(user)||route!==state.renderId||request!==previewRequest||!form.isConnected||input.value.trim()!==url)return;
+        applyLink(form,preview);persist();resume=true;
+      }catch(error){if(sameOwner(user)&&form.isConnected)toast(error.message,true);}
+      finally{form.inert=false;finish();}
+      if(resume&&sameOwner(user)&&route===state.renderId&&form.isConnected)form.requestSubmit();
+    });
   }
   function restoreSingle(form){previewLabel(form);form.dispatchEvent(new Event('input',{bubbles:true}));}
+  function applyLink(form,preview){
+    const source=preview.source;
+    form.elements.link_preview.value=preview.id;
+    if(!form.elements.title.value.trim())form.elements.title.value=preview.title||source.name;
+    form.elements.source_url.value=source.origin.url;
+    // Remember the entered URL as well: an HTTP redirect may have changed origin.url.
+    const input=form.querySelector('[data-read-url]');if(input)input.value=source.origin.url;
+    previewLabel(form,source.name);
+    const warnings=source.origin.warnings||[];
+    if(warnings.length)form.querySelector('[data-link-preview]')?.insertAdjacentHTML('beforeend',`<p class="field-note">${warnings.map(esc).join('；')}</p>`);
+    form.dispatchEvent(new Event('input',{bubbles:true}));
+  }
   async function readLink(form,item=null){
     const input=form.querySelector('[data-read-url]'),url=input.value.trim()||form.elements.source_url?.value||'',user=state.session,request=++previewRequest;
     if(!url){input.focus();toast('先填入原文链接',true);return;}
@@ -51,14 +84,12 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
       const dialog=state.dialogRequest;
       $('#dialog [data-use-link]').addEventListener('click',()=>{
         if(!sameOwner(user)||dialog!==state.dialogRequest||!form.isConnected)return;
-        form.elements.link_preview.value=preview.id;
-        if(!form.elements.title.value.trim())form.elements.title.value=preview.title||source.name;
-        form.elements.source_url.value=origin.url;
+        applyLink(form,preview);
         if(item){capture();item.link_preview=preview.id;stage();}
-        previewLabel(form,source.name);form.dispatchEvent(new Event('input',{bubbles:true}));persist();$('#dialog').close();
+        persist();$('#dialog').close();
       },{once:true});
     }catch(error){if(sameOwner(user)&&form.isConnected)toast(error.message,true);}
-    finally{if(button.isConnected){button.disabled=false;button.textContent='读取链接';}}
+    finally{if(button.isConnected){button.disabled=false;button.textContent='预览链接';}}
   }
   function dispositionPanel(n){
     const value=n.handling?.disposition||'inbox';
@@ -76,22 +107,42 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     for(const card of document.querySelectorAll('[data-intake-entry]')){
       const item=items.find(i=>i.id===card.dataset.intakeEntry);if(!item||item.saved_id)continue;
       for(const name of ['title','body','source_label','source_url','published_at','link_preview'])item[name]=card.elements[name].value;
+      item.read_url=card.querySelector('[data-read-url]').value;
       item.materials_complete=card.elements.materials_complete.checked;
       const selected=card.elements.target.value;
+      card.elements.allow_duplicate.disabled=!!selected;
+      const separate=!selected&&card.elements.allow_duplicate.checked;
+      if(!!item.allow_duplicate!==separate){item.allow_duplicate=separate;item.request_id=crypto.randomUUID();}
+      if(selected)card.elements.allow_duplicate.checked=false;
       if(item.target!==selected){item.target=selected;item.target_version=state.notices.find(n=>n.id===selected)?.version??null;}
     }
   }
   function stage(){if(owner&&sameOwner(owner)&&!busy){drafts.stage(key,{items:structuredClone(items)});}}
   function itemHTML(item,index){
-    if(item.saved_id)return `<article class="panel intake-saved"><a class="intake-saved-main" href="#notice/${encodeURIComponent(item.saved_id)}"><strong>${esc(item.title)}</strong><span class="small">继续核对与办理 ${icon('arrow')}</span></a><button class="button small plain" type="button" data-intake-remove="${esc(item.id)}">移出收件列表</button></article>`;
-    return `<form class="panel stack intake-entry" data-intake-entry="${esc(item.id)}" data-workspace-form="intake-entry"><div class="between"><h2>通知 ${index+1}</h2><button type="button" class="button small plain" data-intake-remove="${esc(item.id)}">移除这一则</button></div><label class="field">保存到<select name="target"><option value="">新建一则通知</option>${item.target&&!state.notices.some(n=>n.id===item.target)?`<option value="${esc(item.target)}" selected>原通知暂不可用，请重新选择</option>`:''}${state.notices.map(n=>`<option value="${esc(n.id)}" ${item.target===n.id?'selected':''}>补充：${esc(n.title)}</option>`).join('')}</select></label>${field('标题','title',item.title,'text','required maxlength="160"')}${linkFields()}${area('正文','body',item.body,4,'maxlength="10000"')}<label class="field">这一则的附件<input type="file" name="files" multiple accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4,.webm"></label><div class="small" data-intake-files>${item.files.length?esc(item.files.join('、')):''}</div>${item.files.length&&!fileMap.has(item.id)?'<div class="alert">附件需要重新选择。<button type="button" class="link-button" data-clear-file-record>移除附件记录</button></div>':''}<div class="form-grid">${field('来源名称','source_label',item.source_label,'text','maxlength="100"')}${field('发布时间（北京时间）','published_at',item.published_at,'datetime-local')}</div>${field('原文地址','source_url',item.source_url,'url','maxlength="2000"')}<label class="check"><input type="checkbox" name="materials_complete" ${item.materials_complete?'checked':''}>正文和关键附件已核对齐全</label>${item.error?`<div class="alert error" role="alert">${esc(item.error)}${item.refresh_target?`<div class="row wrap"><a class="button small" href="#notice/${encodeURIComponent(item.target)}">核对原通知</a><button type="button" class="button small" data-intake-refresh="${esc(item.id)}">刷新原通知版本</button></div>`:''}${item.existing_id?`<div class="row wrap"><a class="button small" href="#notice/${encodeURIComponent(item.existing_id)}">打开已有通知</a><button type="button" class="button small" data-intake-reuse="${esc(item.id)}">使用已有通知</button><button type="button" class="button small" data-intake-retry="${esc(item.id)}">${item.retry_changed?'保存当前修改':'确属另一批次'}</button></div>`:''}</div>`:''}</form>`;
+    if(item.saved_id)return `<article class="panel intake-saved"><a class="intake-saved-main" href="#notice/${encodeURIComponent(item.saved_id)}"><strong>${esc(item.title||'已保存通知')}</strong><span class="small">${item.reused?'已有通知 · 来源已保留':'已保存'} ${icon('arrow')}</span></a><button class="button small plain" type="button" data-intake-remove="${esc(item.id)}">移出收件列表</button></article>`;
+    return `<form class="panel stack intake-entry" data-intake-entry="${esc(item.id)}" data-workspace-form="intake-entry">
+      <div class="between"><h2>通知 ${index+1}</h2><button type="button" class="button small plain" data-intake-remove="${esc(item.id)}">移除这一则</button></div>
+      ${linkFields()}${area('正文','body',item.body,4,'maxlength="10000"')}
+      <label class="field">这一则的通知原件或截图<input type="file" name="files" multiple accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4,.webm"></label>
+      <p class="field-note">本人填写件、成绩单等办理文件，请到对应待办中添加。</p>
+      <div class="small" data-intake-files>${item.files.length?esc(item.files.join('、')):''}</div>
+      ${item.files.length&&!fileMap.has(item.id)?'<div class="alert">附件需要重新选择。<button type="button" class="link-button" data-clear-file-record>移除附件记录</button></div>':''}
+      <details class="details intake-metadata" ${item.target||item.allow_duplicate?'open':''}><summary>标题、来源与补充归位（选填）</summary><div class="stack">
+        ${field('标题','title',item.title,'text','maxlength="160" placeholder="从内容生成"')}
+        <div class="form-grid">${field('来源名称','source_label',item.source_label,'text','maxlength="100"')}${field('发布时间（北京时间）','published_at',item.published_at,'datetime-local')}</div>
+        ${field('原文地址','source_url',item.source_url,'url','maxlength="2000"')}
+        <label class="field">补充到已有通知<select name="target"><option value="">按这一则收件</option>${item.target&&!state.notices.some(n=>n.id===item.target)?`<option value="${esc(item.target)}" selected>原通知暂不可用，请重新选择</option>`:''}${state.notices.map(n=>`<option value="${esc(n.id)}" ${item.target===n.id?'selected':''}>${esc(n.title)}</option>`).join('')}</select></label>
+        <label class="check"><input type="checkbox" name="allow_duplicate" value="true" ${item.allow_duplicate?'checked':''} ${item.target?'disabled':''}><span>这是另一学期或批次，单独收件</span></label>
+      </div></details>
+      <label class="check"><input type="checkbox" name="materials_complete" ${item.materials_complete?'checked':''}>正文和关键附件已核对齐全</label>
+      ${item.error?`<div class="alert error" role="alert">${esc(item.error)}${item.refresh_target?`<div class="row wrap"><a class="button small" href="#notice/${encodeURIComponent(item.target)}">核对原通知</a><button type="button" class="button small" data-intake-refresh="${esc(item.id)}">刷新原通知版本</button></div>`:''}${item.existing_id?`<div class="row wrap"><a class="button small" href="#notice/${encodeURIComponent(item.existing_id)}">打开已有通知</a><button type="button" class="button small" data-intake-reuse="${esc(item.id)}">使用已有通知</button><button type="button" class="button small" data-intake-retry="${esc(item.id)}">${item.retry_changed?'保存当前修改':'确属另一批次'}</button></div>`:''}</div>`:''}</form>`;
   }
   function draw(){
     const list=$('#intake-entries');if(!list)return;
     list.innerHTML=items.map(itemHTML).join('');
     for(const form of list.querySelectorAll('[data-intake-entry]')){
       form.inert=busy;
-      const item=items.find(i=>i.id===form.dataset.intakeEntry);form.elements.link_preview.value=item.link_preview;previewLabel(form);
+      const item=items.find(i=>i.id===form.dataset.intakeEntry);form.elements.link_preview.value=item.link_preview;form.querySelector('[data-read-url]').value=item.read_url||'';previewLabel(form);
       const files=fileMap.get(item.id);if(files){const transfer=new DataTransfer();files.forEach(f=>transfer.items.add(f));form.elements.files.files=transfer.files;}
     }
     const remaining=items.filter(i=>!i.saved_id).length;
@@ -113,7 +164,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     const pending=items.filter(i=>!i.saved_id);if(!pending.length)return;
     for(const form of document.querySelectorAll('[data-intake-entry]'))if(!form.reportValidity())return;
     const snapshots=pending.map(item=>({item:structuredClone(item),files:[...(fileMap.get(item.id)||[])]}));
-    try{for(const s of snapshots)prepareEntry(s.item,s.files,toTime);}catch(error){toast(error.message,true);return;}
+    try{for(const s of snapshots)validateEntry(s.item,s.files);}catch(error){toast(error.message,true);return;}
     busy=true;$('#intake-save').disabled=true;$('#intake-add').disabled=true;
     for(const form of document.querySelectorAll('[data-intake-entry]'))form.inert=true;
     let saved=0,failed=0;
@@ -123,9 +174,15 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
         if(!sameOwner(user)||run!==generation)break;
         const item=items.find(i=>i.id===snapshot.item.id);if(!item)continue;
         try{
+          const typedUrl=snapshot.item.read_url?.trim();
+          if(typedUrl&&(!snapshot.item.link_preview||snapshot.item.source_url!==typedUrl)){
+            const preview=await api('/intake/link',{method:'POST',json:{url:typedUrl}});
+            if(!sameOwner(user)||run!==generation)break;
+            for(const target of [item,snapshot.item]){target.link_preview=preview.id;target.source_url=preview.source.origin.url;target.read_url=preview.source.origin.url;if(!target.title.trim())target.title=preview.title||preview.source.name;}
+          }
           const result=await api(item.target?`/notices/${item.target}/supplement`:'/notices',{method:'POST',body:prepareEntry(snapshot.item,snapshot.files,toTime)});
           if(!sameOwner(user)||run!==generation)break;
-          item.saved_id=result.id;item.error='';item.existing_id='';saved++;
+          item.saved_id=result.id;item.title=result.title||item.title;item.reused=!!(result.reused||result.ingestion?.duplicate);item.error='';item.existing_id='';saved++;
         }catch(error){
           if(!sameOwner(user)||run!==generation)break;
           item.existing_id=error.detail?.duplicate_id||'';item.refresh_target=!!item.target&&error.status===409&&!item.existing_id;
@@ -143,8 +200,8 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
   }
   document.addEventListener('click',async event=>{
     const link=event.target.closest('[data-read-link]');if(link){const form=link.closest('form');await readLink(form,items.find(i=>i.id===form.dataset.intakeEntry));return;}
-    const removeLink=event.target.closest('[data-remove-link]');if(removeLink){const form=removeLink.closest('form');form.elements.link_preview.value='';previewLabel(form);form.dispatchEvent(new Event('input',{bubbles:true}));persist();return;}
-    if(event.target.closest('#intake-add')&&!busy){capture();items.push(batchEntry());stage();draw();$('#intake-entries .intake-entry:last-child [name=title]')?.focus();}
+    const removeLink=event.target.closest('[data-remove-link]');if(removeLink){const form=removeLink.closest('form');form.elements.link_preview.value='';form.querySelector('[data-read-url]').value='';previewLabel(form);form.dispatchEvent(new Event('input',{bubbles:true}));persist();return;}
+    if(event.target.closest('#intake-add')&&!busy){capture();items.push(batchEntry());stage();draw();$('#intake-entries .intake-entry:last-child [name=body]')?.focus();}
     if(event.target.closest('#intake-save'))await saveBatch();
     const refresh=event.target.closest('[data-intake-refresh]');if(refresh&&!busy){
       capture();const item=items.find(i=>i.id===refresh.dataset.intakeRefresh),session=state.session;refresh.disabled=true;
@@ -181,6 +238,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     }
     capture();stage();
   });
+  document.addEventListener('invalid',event=>{if(event.target.closest('[data-intake-entry]')){const details=event.target.closest('details');if(details)details.open=true;}},true);
   document.addEventListener('submit',event=>{if(event.target.matches('[data-intake-entry]')){event.preventDefault();saveBatch();}});
   return {attachSingle,restoreSingle,decorateNotice,render};
 }

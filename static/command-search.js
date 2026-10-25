@@ -1,10 +1,11 @@
 /* Grouped, keyboard-operable search. Each response belongs to its dialog and
    account; opening search never replaces the active page's records. */
-export function searchRecords(tasks, notices, value = '') {
+import {noticeSearchText,noticeSearchExcerpt} from './notice-search.js';
+export function searchRecords(tasks, notices, value = '',{noticeMatches=false}={}) {
   const query = value.trim().toLowerCase();
   const rank = item => {
     const title = item.title.toLowerCase();
-    return !query ? 0 : title === query ? 4 : title.startsWith(query) ? 3 : title.includes(query) ? 2 : item.search.toLowerCase().includes(query) ? 1 : 0;
+    return !query ? 0 : title === query ? 4 : title.startsWith(query) ? 3 : title.includes(query) ? 2 : item.serverMatch||item.search.toLowerCase().includes(query) ? 1 : 0;
   };
   const select = items => items.map((item, index) => ({ ...item, rank: rank(item), index }))
     .filter(item => !query || item.rank > 0).sort((a, b) => b.rank - a.rank || a.index - b.index);
@@ -18,8 +19,11 @@ export function searchRecords(tasks, notices, value = '') {
     }))),
     notices: select(notices.map(notice => ({
       title: notice.title || '未命名通知',
-      search: [notice.source_label, notice.source_name].filter(Boolean).join(' '),
+      search: noticeSearchText(notice),
       meta: notice.source_label || notice.source_name || '已保存的通知原文',
+      excerpt: noticeSearchExcerpt(notice,value),
+      source: notice.search_source||'',
+      serverMatch: noticeMatches,
       url: '#notice/' + encodeURIComponent(notice.id),
     }))),
   };
@@ -39,10 +43,28 @@ export function highlightMatch(text, value, esc) {
 export function createCommandSearch({ state, api, esc, icon, showDialog, loadingState, empty }) {
   const $ = selector => document.querySelector(selector);
   let records = null, limit = 6;
+  let searchSequence=0,searchTimer=null,searching=false,searchError='';
+  function clearSearch(){clearTimeout(searchTimer);searchSequence++;searching=false;searchError='';}
+  function searchNotices(immediate=false){
+    clearSearch();
+    const term=$('#global-search')?.value.trim();
+    if(!records||!term){render();return;}
+    searching=true;records.noticeQuery='';records.noticeResults=[];render();
+    const sequence=searchSequence,request=state.dialogRequest,session=state.session;
+    const current=()=>sequence===searchSequence&&session===state.session&&request===state.dialogRequest&&$('#dialog')?.open&&$('#global-search')?.value.trim()===term;
+    searchTimer=setTimeout(async()=>{
+      try{
+        const results=await api('/notices/search?q='+encodeURIComponent(term));
+        if(!current())return;
+        records.noticeResults=results;records.noticeQuery=term;searching=false;render();
+      }catch(error){if(current()){searching=false;searchError=error.message;render();}}
+    },immediate?0:180);
+  }
   function render() {
     const input = $('#global-search'), results = $('#global-results');
     if (!input || !results || !records) return;
-    const query = input.value, found = searchRecords(records.tasks, records.notices, query);
+    const query=input.value,remote=!!query.trim(),notices=remote?(records.noticeQuery===query.trim()?records.noticeResults:[]):records.notices;
+    const found=searchRecords(records.tasks,notices,query,{noticeMatches:remote});
     const total = found.tasks.length + found.notices.length;
     const group = (key, title, symbol) => {
       const items = found[key];
@@ -50,19 +72,21 @@ export function createCommandSearch({ state, api, esc, icon, showDialog, loading
       return `<section class="command-group" aria-labelledby="command-${key}-heading">
         <h3 id="command-${key}-heading">${title}<span>${items.length}</span></h3>
         ${items.slice(0, limit).map((item, index) => `<${item.taskId?'button':'a'} class="command-result" data-command-item data-command-key="${key}-${index}" ${item.taskId?`type="button" data-workflow-task="${esc(item.taskId)}"`:`href="${esc(item.url)}"`}>
-          <span class="command-symbol">${icon(symbol)}</span><span class="command-copy"><strong>${highlightMatch(item.title, query, esc)}</strong><small>${highlightMatch(item.meta, query, esc)}</small></span>${icon('arrow')}</${item.taskId?'button':'a'}>`).join('')}
+          <span class="command-symbol">${icon(symbol)}</span><span class="command-copy"><strong>${highlightMatch(item.title, query, esc)}</strong><small>${highlightMatch(item.meta, query, esc)}</small>${item.excerpt?`<small class="command-excerpt">${item.source?esc(item.source)+' · ':''}${highlightMatch(item.excerpt,query,esc)}</small>`:''}</span>${icon('arrow')}</${item.taskId?'button':'a'}>`).join('')}
       </section>`;
     };
     const quick = query.trim() ? '' : `<section class="command-group command-shortcuts" aria-labelledby="command-actions-heading"><h3 id="command-actions-heading">快捷前往</h3>
       ${[['new', 'plus', '处理一则通知'], ['chat', 'spark', '和小信使聊聊'], ['calendar', 'calendar', '查看日历']].map(([route, symbol, title]) => `<a class="command-shortcut" data-command-item href="#${route}">${icon(symbol)}<span>${title}</span>${icon('arrow')}</a>`).join('')}</section>`;
-    results.removeAttribute('aria-busy');
-    $('#command-count').textContent = `${total} 条记录`;
-    results.innerHTML = quick + (total ? group('tasks', '行动与待办', 'tasks') + group('notices', '通知原文', 'doc') : empty(query.trim() ? '暂时没有匹配的内容' : '从第一则通知开始', query.trim() ? '换一个更短的标题、来源或材料关键词。' : '保存后的通知和行动，会一起出现在这里。', query.trim() ? '<button type="button" class="button small" data-clear-global-search>清空搜索</button>' : '', true, query.trim() ? 'search' : 'listening'))
+    results.setAttribute('aria-busy',String(searching));
+    $('#command-count').textContent = searching?`${total} 条待办结果 · 正在查找通知…`:searchError?'通知查找失败':`${total} 条记录`;
+    const pending=searching?'<p class="notice-search-status" role="status">正在查找通知正文和附件…</p>':searchError?`<div class="notice-search-status" role="alert">${esc(searchError)} <button type="button" class="button small" data-command-search-retry>重试</button></div>`:'';
+    results.innerHTML = quick + (total ? group('tasks', '行动与待办', 'tasks') + group('notices', '通知原文', 'doc') : searching||searchError?'':empty(query.trim() ? '暂时没有匹配的内容' : '从第一则通知开始', query.trim() ? '换一个正文、附件或材料关键词。' : '保存后的通知和行动，会一起出现在这里。', query.trim() ? '<button type="button" class="button small" data-clear-global-search>清空搜索</button>' : '', true, query.trim() ? 'search' : 'listening')) + pending
       + (found.tasks.length > limit || found.notices.length > limit ? '<button type="button" class="button small command-more" data-command-more data-command-item>展开更多结果</button>' : '');
   }
   async function load() {
+    clearSearch();
     const request = state.dialogRequest, user = state.session?.user?.id;
-    const current = () => request === state.dialogRequest && user === state.session?.user?.id && !!$('#global-search');
+    const current = () => request === state.dialogRequest && user === state.session?.user?.id && $('#dialog')?.open && !!$('#global-search');
     records = null;
     $('#global-results').setAttribute('aria-busy', 'true');
     $('#global-results').innerHTML = loadingState('正在读取通知与待办', '可以先输入关键词，加载后会显示结果。');
@@ -71,7 +95,7 @@ export function createCommandSearch({ state, api, esc, icon, showDialog, loading
       const [tasks, notices] = await Promise.all([api('/tasks'), api('/notices')]);
       if (!current()) return;
       records = { tasks, notices };
-      render();
+      searchNotices(true);
     } catch (error) {
       if (!current()) return;
       $('#global-results').removeAttribute('aria-busy');
@@ -80,25 +104,27 @@ export function createCommandSearch({ state, api, esc, icon, showDialog, loading
     }
   }
   function open() {
-    limit = 6;
+    clearSearch();limit = 6;
     showDialog('查找通知和待办', `<div class="command-search">
-      <div class="command-input">${icon('search')}<label class="sr-only" for="global-search">输入标题、来源或材料关键词</label><input id="global-search" type="search" placeholder="想找哪则通知，或哪一步？" autocomplete="off" autofocus aria-controls="global-results" aria-describedby="command-count"><button type="button" class="icon-button" data-clear-global-search aria-label="清空搜索">${icon('close')}</button></div>
+      <div class="command-input">${icon('search')}<label class="sr-only" for="global-search">搜索标题、正文、附件或办理材料</label><input id="global-search" type="search" placeholder="搜索通知正文、附件或待办" autocomplete="off" autofocus aria-controls="global-results" aria-describedby="command-count"><button type="button" class="icon-button" data-clear-global-search aria-label="清空搜索">${icon('close')}</button></div>
       <p class="command-count" id="command-count" role="status" aria-live="polite"></p><div id="global-results" class="global-results"></div>
       <div class="command-footer"><span><kbd>↑</kbd><kbd>↓</kbd> 选择 <kbd>Enter</kbd> 打开</span><span><kbd>Esc</kbd> 返回</span></div></div>`);
     load();
   }
   document.addEventListener('input', event => {
-    if (event.target.id === 'global-search'&&!event.isComposing) { limit = 6; render(); }
+    if (event.target.id === 'global-search'&&!event.isComposing) { limit = 6; searchNotices(); }
   });
-  document.addEventListener('compositionend',event=>{if(event.target.id==='global-search'){limit=6;render();}});
+  document.addEventListener('compositionend',event=>{if(event.target.id==='global-search'){limit=6;searchNotices();}});
   document.addEventListener('click', event => {
     if (!$('#global-search')) return;
     if (event.target.closest('[data-clear-global-search]')) {
-      $('#global-search').value = ''; limit = 6; render(); $('#global-search').focus();
+      $('#global-search').value = ''; limit = 6; searchNotices(); $('#global-search').focus();
     } else if (event.target.closest('[data-command-more]')) {
       const prior = new Set([...$('#global-results').querySelectorAll('[data-command-key]')].map(item => item.dataset.commandKey));
       limit += 6; render();
       [...$('#global-results').querySelectorAll('[data-command-key]')].find(item => !prior.has(item.dataset.commandKey))?.focus();
+    } else if(event.target.closest('[data-command-search-retry]')){
+      searchNotices(true);
     } else if (event.target.closest('[data-command-retry]')) {
       $('#global-search').focus(); load();
     } else if (event.target.closest('a[data-command-item]')) $('#dialog').close();

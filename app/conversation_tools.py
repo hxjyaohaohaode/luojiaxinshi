@@ -6,6 +6,7 @@ import secrets
 import time
 import io
 import zipfile
+from .usage_limits import check_count, check_storage, limits_for
 from fastapi import Depends,HTTPException,Request,Response
 from pydantic import Field
 from starlette.concurrency import run_in_threadpool
@@ -113,13 +114,11 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                 if existing['user_id']!=current['id']:raise HTTPException(409,'分支标识冲突，请重新打开后再试')
                 return detail(conn,new,current['id'],settings)
             origin=own(conn,cid,current['id'],payload.version,idle=True);message(conn,cid,mid,current['id'])
-            if conn.execute('SELECT COUNT(*) FROM conversations WHERE user_id=?',(current['id'],)).fetchone()[0]>=100:raise HTTPException(413,'对话已达 100 段，请先清理不再使用的历史')
+            check_count(conn,current['id'],'conversations','conversations','会话')
             selected=detail(conn,cid,current['id'],settings)['messages'];index=next((i for i,m in enumerate(selected) if m['id']==mid),None)
             if index is None:raise HTTPException(409,'请先切换到要分支的回答版本')
             sources=sources_for(conn,cid,True)
-            size=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE c.user_id=?',(current['id'],)).fetchone()[0]
-            size+=conn.execute('SELECT COALESCE(SUM(length(s.content)),0) FROM sources s JOIN notices n ON n.id=s.notice_id WHERE n.user_id=?',(current['id'],)).fetchone()[0]
-            if size+sum(len(s['content'] or b'') for s in sources)>200*1024*1024:raise HTTPException(413,'分支原件将超过 200 MB，请先清理材料')
+            check_storage(conn,current['id'],sum(len(s['content'] or b'') for s in sources))
             now=int(time.time());mapping={s['id']:ident() for s in sources};mapping.update({m['id']:ident() for m in selected[:index+1]})
             def remap(value,key='',original=False):
                 if isinstance(value,str):

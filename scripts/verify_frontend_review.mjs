@@ -132,11 +132,14 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    for(const b of boxes){assert.ok(b.date.y>=b.top&&b.date.bottom<=b.bottom+1,JSON.stringify(b));assert.ok(b.day.y>=b.top&&b.day.bottom<=b.bottom+1,JSON.stringify(b));assert.equal(b.top,boxes[0].top);}
    await page.screenshot({path:path.join(output,engine+'-calendar-week.png')});
   });
-  await check('11 task completion changes immediately and rolls back a failed save',async()=>{
-   const item=(await api('/tasks')).find(t=>t.status!=='cancelled');await nav('notice/'+item.notice_id);
+  await check('11 simple task completion changes immediately and rolls back a failed save',async()=>{
+   let item=(await api('/tasks')).find(t=>t.status!=='cancelled');const personal=await api('/tasks/'+item.id+'/workflow');
+   await api('/tasks/'+item.id+'/workflow','PUT',{version:personal.task.workflow.version,task_version:personal.task.version,data:{...personal.task.workflow.data,execution_mode:'task',stage:'active'},complete:false});
+   item=(await api('/tasks')).find(t=>t.id===item.id);await nav('notice/'+item.notice_id);
    const selector=`[data-action=toggle-task][data-id="${item.id}"]`,control=page.locator(selector).first(),old=item.status==='done';
-   await page.route('**/api/tasks/'+item.id,async route=>{await new Promise(r=>setTimeout(r,400));await route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({detail:'合成冲突验收'})});},{times:1});
-   await control.click();assert.equal((await control.getAttribute('class')).includes('checked'),!old);assert.equal(await control.getAttribute('aria-busy'),'true');
+   let release;const responseGate=new Promise(resolve=>release=resolve),attempt=page.waitForRequest(r=>r.url().endsWith('/api/tasks/'+item.id)&&r.method()==='PUT');
+   await page.route('**/api/tasks/'+item.id,async route=>{await responseGate;await route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({detail:'合成冲突验收'})});},{times:1});
+   try{await control.click();await attempt;assert.equal((await control.getAttribute('class')).includes('checked'),!old);assert.equal(await control.getAttribute('aria-busy'),'true');}finally{release();}
    await page.waitForFunction(({selector,old})=>{const e=document.querySelector(selector);return e&&!e.hasAttribute('aria-busy')&&e.classList.contains('checked')===old;},{selector,old});
    await control.click();await page.waitForFunction(selector=>{const e=document.querySelector(selector);return e&&!e.disabled&&!e.hasAttribute('aria-busy');},selector);
    const fresh=(await api('/tasks')).find(t=>t.id===item.id);assert.notEqual(fresh.status,item.status);

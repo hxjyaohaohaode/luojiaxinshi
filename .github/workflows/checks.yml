@@ -101,6 +101,16 @@ jobs:
             artifacts/notice-flow-browser/*.png
             artifacts/task-board-browser/report.json
             artifacts/task-board-browser/*.png
+            artifacts/natural-intake-browser/*
+            artifacts/task-materials-browser/*
+            artifacts/source-inbox-browser/*
+            artifacts/notice-matters-browser/*
+            artifacts/push-browser/*
+            artifacts/ci-browser/verify_natural_intake.mjs.log
+            artifacts/ci-browser/verify_task_materials.mjs.log
+            artifacts/ci-browser/verify_source_inbox.mjs.log
+            artifacts/ci-browser/verify_notice_matters.mjs.log
+            artifacts/ci-browser/verify_push_browser.mjs.log
             artifacts/ci-browser/verify_task_board.mjs.log
             artifacts/ci-browser/verify_frontend_stability.mjs.log
             artifacts/ci-browser/verify_frontend_review.mjs.log

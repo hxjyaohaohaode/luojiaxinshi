@@ -1,4 +1,5 @@
 """Owner-scoped personal arrangements. Notification deadlines remain separate."""
+from .usage_limits import check_count, check_storage, limits_for
 from datetime import date, datetime, time, timedelta, timezone
 import json
 import time as clock
@@ -134,8 +135,7 @@ def create_arrangement(conn,uid,payload):
         return serialize(prior)
     if conn.execute('SELECT 1 FROM arrangement_receipts WHERE user_id=? AND request_id=?', (uid,payload.request_id)).fetchone():
         raise HTTPException(409, '这项安排曾经保存，随后已删除。请先核对保存状态；需要另建时使用新的草稿。')
-    if conn.execute('SELECT count(*) FROM arrangements WHERE user_id=?', (uid,)).fetchone()[0] >= 1000:
-        raise HTTPException(422, '已保存 1000 项安排，请先整理不再需要的安排')
+    check_count(conn,uid,'arrangements','arrangements','个人安排')
     eid, now = ident(), int(clock.time())
     conn.execute('INSERT INTO arrangements(id,user_id,request_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)', (eid, uid, payload.request_id, dumps(payload.data.model_dump()), now, now))
     return serialize(own(conn, eid, uid))
