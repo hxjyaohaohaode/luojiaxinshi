@@ -13,10 +13,20 @@ ROOT=Path(__file__).resolve().parent.parent
 OUT=ROOT/'artifacts/ci-openui-browser'
 
 
-def main():
+def ensure_fixture_port_free(port=8794):
     with socket.socket() as probe:
-        try:probe.bind(('127.0.0.1',8794))
-        except OSError:raise SystemExit('Port 8794 is occupied; no existing process was reused or stopped.') from None
+        # POSIX retains the closed fixture's accepted sockets in TIME_WAIT.
+        # Like Uvicorn, permit that state while still rejecting a live listener.
+        # Windows uses exclusive binding instead: SO_REUSEADDR there can admit
+        # another active listener and must not be used for this ownership check.
+        if os.name=='nt':probe.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+        else:probe.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+        try:probe.bind(('127.0.0.1',port))
+        except OSError:raise SystemExit(f'Port {port} is occupied; no existing process was reused or stopped.') from None
+
+
+def main():
+    ensure_fixture_port_free()
     OUT.mkdir(parents=True,exist_ok=True)
     env=dict(os.environ,PYTHONUNBUFFERED='1')
     for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY'):env.pop(key,None)

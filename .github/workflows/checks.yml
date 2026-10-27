@@ -55,7 +55,7 @@ jobs:
       # dependencies are preinstalled, avoiding apt mirror outages on each run.
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
       options: --init --ipc=host --user 1001
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -92,6 +92,7 @@ jobs:
           OPENUI_VERIFY_SCRIPT: scripts/verify_chat_interactions.mjs
         run: python scripts/run_openui_browser_checks.py
       - name: Verify reload during review and persistent reply revisions
+        if: always()
         env:
           OPENUI_VERIFY_SCRIPT: scripts/verify_chat_recovery.mjs
         run: python scripts/run_openui_browser_checks.py
