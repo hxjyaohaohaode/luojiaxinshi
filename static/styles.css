@@ -38,6 +38,7 @@
 
 @import url('/static/system/tokens.css') layer(system);
 @import url('/static/system/base.css') layer(system);
+@import url('/static/system/openui.css') layer(system);
 @import url('/static/system/motion.css') layer(system);
 @import url('/static/system/layout.css') layer(system);
 @import url('/static/system/features.css') layer(system);
@@ -53,5 +54,8 @@
 @import url('/static/system/task-drag.css') layer(system);
 @import url('/static/system/responsive-density.css') layer(system);
 @import url('/static/system/mobile-workspace.css') layer(system);
+@import url('/static/system/chat-layout.css') layer(system);
+@import url('/static/system/chat-refinements.css') layer(system);
+@import url('/static/system/execution-trace.css') layer(system);
 
 @import url('/static/notice-intake-polish.css') layer(system);

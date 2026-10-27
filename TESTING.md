@@ -1,5 +1,29 @@
 # 验证记录
 
+## 对话动作、执行轨迹与可取消的新建手势
+
+`OPENUI_VERIFY_SCRIPT=scripts/verify_chat_interactions.mjs` 配合 `python scripts/run_openui_browser_checks.py` 以隔离账号和合成回复检查三种浏览器。覆盖旧轮次无重生成、最后一轮状态检查、按用户发送时间进行 5 分钟分组、执行轨迹和真实耗时、默认收起与 CSS 网格反复展开、等宽数字、重复点击的 5 秒反馈环、增量文字晕染与减少动态效果、尾字保护、材料面板重排锚点、长短回复版本切换、末尾空白，以及间断滚轮、取消窗口和 Chromium 原生触摸上滑。记录在 `artifacts/chat-interactions/{browser}/`，已加入 CI。轮次、时间和复现文字为合成夹具；执行轨迹在实际产品中只读取该回复已有的工具记录和计时，不追加模型调用，也不展示模型私有推理。
+
+手机上滑到阈值后松手、桌面在末尾再次滚动到阈值后停止，均先显示 1.2 秒的取消窗口。回拉、反向滚动、继续操作或点击取消会撤回本次新建；正常滚到末尾不会触发。旧对话和草稿继续保存在原位置。正文、展开记录和材料列的过渡使用 CSS 网格；阅读锚点只修正滚动位置，不参与计算展开高度。
+
+`tests/test_reminder_occurrences.py` 验证真实结束时间、短课结束、未知结束时间、跨日与重复日程、全天边界、已读身份稳定和超过 20 项的未来提醒。`tests/chat-policy.test.mjs` 与 `tests/execution-trace.test.mjs` 验证动作适用状态、分组和轨迹中的未知时间不被编造；`tests/reminders.test.mjs` 保留账号隔离、批量快照与网络恢复检查。看板沿用 `scripts/verify_task_board.mjs` 的原生指针、触摸、键盘菜单、保存冲突、撤销和刷新持久化检查，去掉弹簧跟随与落位淡入。
+
+## 紧凑输入与阅读空间
+
+`OPENUI_VERIFY_SCRIPT=scripts/verify_chat_layout.mjs` 配合 `python scripts/run_openui_browser_checks.py` 检查三种浏览器的单行输入、显式换行增高和删除后收回、超长单行、菜单及附件、桌面阅读收起顶栏、空闲/上滚/重新输入恢复、程序滚动不触发，以及手机/平板/键盘高度。结果与截图在 `artifacts/chat-layout/{browser}/`，已经加入 CI。输入未显式换行时保持单行并随光标横向滚动；多行编辑仍受实际容器高度约束。原 `tests/composer-browser.mjs` 另行覆盖附件保存和真实模拟麦克风的录音转写交互。
+
+阅读顶栏也接收隔离生成式组件内的真实滚动手势；输入控件和业务操作权限保持各自的处理流程。程序跟随、宽度重排和版本切换的滚动修正会跳过阅读手势判断。看板拖动期间固定顶栏状态，并区分触摸手柄的隐式指针捕获和看板的显式捕获；服务端确认位置后也不会重播卡片或列的入场动画。
+
+## 非标准模型输出回归
+
+`tests/test_answer_format.py` 检查普通 Markdown、JSON 围栏、BOM/CRLF、二次编码对象、逐字符及任意分片、真实图片身份引用、空响应、未知引用、重复字段、非有限数、截断结构、独立复核拒绝和记忆协议边界。`tests/test_openui.py` 同时检查围栏内的 UI 能增量显示，以及独立 UI 编排不能用普通正文代替界面。处理和恢复边界见 [答复格式兼容](docs/ANSWER_FORMAT.md)。
+
+## 流式 OpenIntelligentUI 适配
+
+新增 `tests/test_openui.py`、`tests/genui-openui.test.mjs` 覆盖增量 JSON 字段、转义和 Unicode、HTML 先于脚本可见、协议限制、账号与快照版本、保存与后续输入验证。`python scripts/run_openui_browser_checks.py` 在 8794 使用独立合成 Agent，覆盖 Chromium/Firefox/WebKit 的真实流式显示、同 iframe 启用、计算筛选、刷新恢复、键盘与手机尺寸、用户追问和宿主隔离；报告在 `artifacts/openui-browser/{browser}/report.json`，现已加入 CI 浏览器任务。真实 MiMo 验收命令与计费边界见 [实现记录](docs/genui/OPEN_INTELLIGENT_UI.md)。
+
+浏览器回归还检查共享表单的按钮重复监听只发出一次请求，以及修正后只恢复契约兼容的已编辑字段、未编辑初值采用新稿。另有真实模型产物的离线回放脚本，验证实际生成程序的计算、非法输入、保存重算、手机布局及继续提问；它与合成测试和真实模型网络耗时分别记录。
+
 当前版本 1.23.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
 
 ## 测试体系与运行命令
@@ -99,3 +123,13 @@ npm ci --ignore-scripts
 工作区及布局回归只等待可见元素当前运行的有限动画，并给出明确超时；折叠筛选中的隐藏动画及暂停的提示条不作为页面就绪条件。布局、焦点、草稿和真实保存行为继续分别断言。
 
 布局回归显式创建并选中合成会话，再验证 `#chat` 恢复为 `#chat/{id}`；页面就绪判断同时核对实际路由与已渲染页面，覆盖有历史会话时的正常跳转。
+
+## 刷新恢复与浮动顶栏回归（2026-10-27）
+
+- `tests/test_reply_preview.py`：生成/核验中连续 GET、改稿清空旧 UI、失败稿恢复、账号隔离、主动选择版本持久化，以及未完成稿不进入后续模型上下文。
+- `tests/test_chat_continuity.py`：同账号同对话的真实操作回执、当前状态与撤销状态；作者和审核者同步取得回执；纯表扬零模型调用且不冒充业务操作，授权和后续任务不走捷径。
+- `OPENUI_VERIFY_SCRIPT=scripts/verify_chat_recovery.mjs .venv/Scripts/python.exe scripts/run_openui_browser_checks.py`：三个浏览器在真实 SSE 核验等待期间刷新，检查最新 UI 恢复、最终原文一致以及旧版/最新版选择后的再次刷新。模型边界仍使用合成输入，四秒等待仅用于制造可重复的刷新窗口，不是速度基准。
+- `scripts/verify_chat_layout.mjs` 验证顶栏显隐采用浮层透明度/位移动画；显隐和空闲恢复前后阅读区域的高度、位置、滚动位置一致。
+- `scripts/verify_chat_interactions.mjs` 验证执行摘要没有内嵌时间线，完整轨迹通过独立窗口打开，搜索和真实详情仍可使用。
+
+实质性事实和互动代码继续执行原有程序检查与独立模型审查；模型仍使用配置的完整思考和输出上限，不用合成计时承诺真实服务延迟。

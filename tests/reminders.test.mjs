@@ -74,3 +74,18 @@ test('switching accounts during a large bulk write stops the remaining batches',
   mutation.resolve(snapshot(item('alice',true)));await nextTurn();
   assert.equal(posts.length,1);assert.deepEqual(reminders.latest().items.map(x=>x.id),['bob']);
 });
+
+test('page notifications skip past/invalid times and do not announce stale timers after suspension',async t=>{
+  const original={Notification:globalThis.Notification,localStorage:globalThis.localStorage},sent=[],timers=[],storage=new Map([['campus.reminders.browser','on']]);
+  let now=Date.parse('2026-10-27T01:00:00Z'),gets=0;
+  class PageNotification{static permission='granted';constructor(title,options){sent.push({title,...options});}close(){}}
+  globalThis.Notification=PageNotification;globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
+  t.after(()=>{for(const [key,value]of Object.entries(original))if(value===undefined)delete globalThis[key];else globalThis[key]=value;});
+  t.mock.method(Date,'now',()=>now);t.mock.method(globalThis,'setTimeout',(callback,delay)=>{timers.push({callback,delay});return timers.length;});t.mock.method(globalThis,'clearTimeout',()=>{});
+  const data={items:[],upcoming:[{at:new Date(now-1000).toISOString(),task_id:'past',title:'过期'},{at:'invalid',task_id:'invalid'},{at:new Date(now+25*3600e3).toISOString(),task_id:'far'},{at:new Date(now+1000).toISOString(),arrangement_id:'next',kind:'arrangement',title:'合成课程',text:'15 分钟后开始'}]};
+  const {reminders}=harness(t,async()=>{gets++;return data;});reminders.start();await reminders.refresh();
+  assert.equal(timers.length,1);assert.equal(timers[0].delay,1000);
+  now+=2000;timers[0].callback();assert.equal(sent.length,1);
+  data.upcoming=[{at:new Date(now+1000).toISOString(),task_id:'later',title:'稍后',text:'合成提醒'}];await reminders.refresh();const missed=timers.at(-1);now+=5*60e3;missed.callback();await nextTurn();
+  assert.equal(sent.length,1);assert.ok(gets>=3,'A stale timer refreshes the current reminder state');
+});

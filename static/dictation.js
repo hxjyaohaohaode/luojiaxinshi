@@ -1,6 +1,7 @@
 import {encodeWav} from './audio-wav.js';
 import {SpeechSegments,appendTranscript} from './dictation-segments.js';
 let active=null;
+export const isDictating=input=>!!active&&(!input||active.input===input);
 export async function finishDictation(input){if(active?.input===input)await active.finish();}
 export async function dictate(input,button,{api,toast}){
   if(active){if(active.input===input)await (active.action?.()??active.finish());else active.cancel();return;}

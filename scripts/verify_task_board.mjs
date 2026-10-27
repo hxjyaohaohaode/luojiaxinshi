@@ -4,11 +4,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const pw=createRequire(import.meta.url)(process.env.PLAYWRIGHT_PATH||'playwright');
-const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/task-board-browser');
+const origin=process.env.CAMPUS_VERIFY_ORIGIN||'http://127.0.0.1:8786',out=path.resolve(process.env.OPENUI_ARTIFACT_DIR||'artifacts/task-board-browser');
 await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic tasks; real pointer events, storage, conflict guards and undo',checks:[],errors:[]};
-for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
-  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromium,firefox,webkit').split(',')){
+  const browser=await pw[engine].launch({headless:true,...(process.platform==='win32'&&engine==='chromium'?{channel:'msedge'}:{})});
   const page=await browser.newPage({viewport:{width:1440,height:950},locale:'zh-CN'});page.setDefaultTimeout(12000);
   page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
   const api=(url,method='GET',data=null,form=false)=>page.evaluate(async({url,method,data,form})=>{
@@ -22,14 +22,16 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   const ids=lane=>page.locator(`[data-task-lane="${lane}"] .task-row`).evaluateAll(nodes=>nodes.map(n=>n.dataset.taskId));
   const drag=async(id,x,y,{cancel=false}={})=>{
     const box=await row(id).locator('.task-primary').boundingBox();
+    const sourceBox=await row(id).boundingBox(),offsetX=box.x+12-sourceBox.x,offsetY=box.y+12-sourceBox.y;
     await page.mouse.move(box.x+12,box.y+12);await page.mouse.down();
     for(let i=1;i<=14;i++){await page.mouse.move(box.x+12+(x-box.x-12)*i/14,box.y+12+(y-box.y-12)*i/14);await page.waitForTimeout(16);}
     await page.locator('.task-drag-ghost').waitFor();
+    const ghost=await page.locator('.task-drag-ghost').boundingBox();assert.ok(Math.abs(ghost.x-(x-offsetX))<1.5&&Math.abs(ghost.y-(y-offsetY))<1.5,'The ghost follows the pointer without a spring delay');assert.ok(Math.abs(ghost.width-sourceBox.width)<1.5);
     if(cancel)await page.keyboard.press('Escape');
-    await page.mouse.up();await page.locator('.task-drag-ghost').waitFor({state:'detached'});await settle();
+    await page.mouse.up();assert.equal(await page.locator('.task-drag-ghost').count(),0,'Release must remove the ghost immediately, without a landing animation');await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.locator('.task-board-column,.task-board .task-row').evaluateAll(nodes=>nodes.flatMap(node=>node.getAnimations()).filter(animation=>animation.constructor.name==='Animation').length),0,'Server acknowledgements must not replay card or lane entrances');await settle();
   };
   try{
-    await page.goto(origin);await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
+    await page.goto(origin);await page.locator('[name=username]').fill(process.env.CAMPUS_VERIFY_USER||'workflow.demo');await page.locator('[name=password]').fill(process.env.CAMPUS_VERIFY_PASSWORD||'Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
     const prefix='拖动验收 '+engine+' '+Date.now();
     const notice=await api('/notices','POST',{title:prefix,body:prefix+'：仅用于测试个人安排，不包含真实办理要求。',source_label:'工程夹具',materials_complete:'true'},true);
     const manual=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});
@@ -78,9 +80,11 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
         await follow.last().scrollIntoViewIfNeeded();await mobile.waitForTimeout(250);
         const handle=await follow.last().locator('[data-task-drag-handle]').boundingBox(),target=await follow.first().boundingBox();
         const session=await mobileContext.newCDPSession(mobile),x=handle.x+22,y=handle.y+22;
-        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});await mobile.waitForTimeout(220);
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+4,y,id:1}]});
         await mobile.locator('.task-drag-ghost').waitFor();
         for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+(target.x+80-x)*i/12,y:y+(target.y+12-y)*i/12,id:1}]});await mobile.waitForTimeout(16);}
+        await fs.writeFile(path.join(out,engine+'-touch-placement.json'),JSON.stringify(await mobile.evaluate(()=>({moving:document.documentElement.classList.contains('task-dragging'),ghosts:document.querySelectorAll('.task-drag-ghost').length,placeholderLane:document.querySelector('.task-drop-placeholder')?.closest('[data-task-lane]')?.dataset.taskLane,next:document.querySelector('.task-drop-placeholder')?.nextElementSibling?.dataset.taskId})),null,2));
+        assert.equal(await mobile.locator('.task-drag-ghost').count(),1,'Transferring implicit touch capture to the board must keep dragging active');
         await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.locator('.task-drag-ghost').waitFor({state:'detached'});await mobile.waitForTimeout(350);
         assert.deepEqual(await follow.evaluateAll(nodes=>nodes.map(n=>n.dataset.taskId)),[before[1],before[0]]);
         assert.equal(await mobile.locator('#dialog').evaluate(n=>n.open),false);
@@ -88,6 +92,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
         await follow.last().locator('[data-task-drag-handle]').scrollIntoViewIfNeeded();
         const grip=await follow.last().locator('[data-task-drag-handle]').boundingBox();
         await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x+22,y:grip.y+22,id:3}]});
+        await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+26,y:grip.y+22,id:3}]});
         await mobile.locator('.task-drag-dock').waitFor();
         const drop=await mobile.locator('[data-task-drop-lane=action]').boundingBox();
         for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+22+(drop.x+drop.width/2-grip.x-22)*i/12,y:grip.y+22+(drop.y+drop.height/2-grip.y-22)*i/12,id:3}]});await mobile.waitForTimeout(16);}

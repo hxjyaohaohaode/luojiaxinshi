@@ -5,6 +5,8 @@ import {el,button,replaceInOrder,markdown,dataTable,download,string} from './dom
 import {formula} from './math.js';
 import {prose,choice,comparison} from './editorial.js';
 import {interactionBlock,EditHistory,editablePaths} from './interaction.js';
+import {StreamMarkdownView} from './stream-text.js';
+import {protectOrphans} from './typography.js';
 let nextInstance=0,chartsModule;
 const numeric=value=>{if(typeof value!=='number'||!Number.isFinite(value))throw Error('数值暂不可用');return value;};
 const errorText='这部分暂时无法显示，其余内容仍可使用。';
@@ -82,6 +84,7 @@ export class UIRenderer{
     if(this.disposed)return;this.paintItems=0;const start=performance.now(),focused=this.root.contains(document.activeElement)?document.activeElement:null,focusRecord=focused?[...this.records.values()].find(r=>r.content.contains(focused)):null,field=focused?.dataset.field,selection=focused&&'selectionStart'in focused?[focused.selectionStart,focused.selectionEnd]:null;
     replaceInOrder(this.body,this.spec.roots.map(id=>this.node(id)));for(const [id,r]of this.records)if(!this.body.contains(r.element)){r.cleanup?.();this.records.delete(id);}else r.measure?.();
     if(focused&&focusRecord){const current=this.records.get(focusRecord.id),replacement=focused.isConnected?focused:field?[...current?.content.querySelectorAll('[data-field]')||[]].find(e=>e.dataset.field===field):null;if(replacement&&!replacement.closest('[hidden]')&&document.activeElement!==replacement){replacement.focus({preventScroll:true});if(selection&&replacement.setSelectionRange)try{replacement.setSelectionRange(...selection);}catch{/* Nontext controls have no caret. */}}}
+    protectOrphans(this.body);
     const label=this.options.aiLabel===false?'':typeof this.options.aiLabel==='string'?this.options.aiLabel:'AI 生成内容';this.status.textContent=[label,!this.spec.complete?'未完整接收':this.spec.errors?.length?'部分内容已降级':''].filter(Boolean).join(' · ');
     this.save.hidden=!!this.options.externalActions||!this.options.onSave||!Object.values(this.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart'));this.footer.hidden=this.options.compact&&!this.status.textContent&&this.save.hidden&&!this.feedback.textContent&&this.historyControls.hidden;this.root.dataset.complete=String(!!this.spec.complete);this.options.onRender?.(performance.now()-start);this.options.onContentRendered?.();
   }
@@ -213,25 +216,28 @@ export class UIRenderer{
   }
 }
 
+import {SandboxRenderer} from './openui.js';
+
 export class MessageRenderer{
   constructor(container,options={}){this.container=container;this.options=options;this.parser=new StreamParser({limits:options.limits,data:options.data});this.parts=[];this.frame=0;this.markdownView=Object.create(null);this.container.classList.add('gu-message');}
   push(chunk){this.parser.push(chunk);this.parts=this.parser.snapshot();this.schedule();}
   finish(){this.parts=this.parser.finish();this.schedule();return this.parts;}
-  update(parts){this.parts=parts;this.schedule();}
+  update(parts,{streaming=false}={}){this.parts=parts;this.streaming=streaming;this.schedule();}
   setHostContext(context){Object.assign(this.options,context);for(const r of this.rendered||[])if(r.ui){Object.assign(r.ui.options,context);for(const record of r.ui.records.values())if(['HostView','Image','Video'].includes(record.model?.type))record.signature=null;r.ui.schedule();}}
   schedule(){if(!this.frame)this.frame=requestAnimationFrame(()=>{this.frame=0;this.paint();});}
   paint(){
     const follow=this.options.beforeRender?.(),elements=[];this.rendered??=[];
-    this.parts.forEach((part,index)=>{let r=this.rendered[index];if(!r||r.kind!==part.kind){r?.ui?.dispose();r={kind:part.kind,element:el('div',part.kind==='text'?'gu-text-part':'gu-ui-part')};this.rendered[index]=r;}
-      if(part.kind==='text'&&r.text!==part.text){this.markdownView[index]??={};r.element.replaceChildren(markdown(part.text,{view:this.markdownView[index],changed:()=>this.options.onChange?.()}));r.text=part.text;}
-      else if(part.kind==='ui'){if(r.ui)r.ui.update(part.spec,true);else r.ui=new UIRenderer(r.element,part.spec,{...this.options,snapshot:this.options.snapshots?.[index],askModel:this.options.askModel?event=>this.options.askModel({...event,block_index:index}):null,onSave:this.options.onSave?value=>this.options.onSave(index,value):null});}
+    this.parts.forEach((part,index)=>{let r=this.rendered[index];if(!r||r.kind!==part.kind){r?.ui?.dispose();r?.prose?.dispose();r={kind:part.kind,element:el('div',part.kind==='text'?'gu-text-part':'gu-ui-part')};this.rendered[index]=r;if(part.kind==='text'){r.clip=el('div','prose-flow-clip');r.body=el('div','prose-flow-body');r.clip.append(r.body);r.element.append(r.clip);r.element.classList.add('prose-flow');r.element.dataset.ready=String(!this.streaming&&!this.options.reveal);}}
+      if(part.kind==='text'){this.markdownView[index]??={};r.prose??=new StreamMarkdownView(r.body,{view:this.markdownView[index],changed:()=>this.options.onChange?.()});r.prose.render(part.text,{streaming:!!this.streaming});r.text=part.text;if(r.element.dataset.ready!=='true'&&(!this.streaming||part.text.trim()))requestAnimationFrame(()=>r.element.dataset.ready='true');}
+      else if(part.kind==='ui'){const Renderer=Object.hasOwn(part.spec,'sandbox')?SandboxRenderer:UIRenderer;if(r.ui&&!(r.ui instanceof Renderer)){r.ui.dispose();r.ui=null;}if(r.ui)r.ui.update(part.spec,true);else r.ui=new Renderer(r.element,part.spec,{...this.options,snapshot:this.options.snapshots?.[index],askModel:this.options.askModel?event=>this.options.askModel({...event,block_index:index}):null,onSave:this.options.onSave?value=>this.options.onSave(index,value):null});}
       elements.push(r.element);
     });
-    while(this.rendered.length>this.parts.length)this.rendered.pop().ui?.dispose();replaceInOrder(this.container,elements);this.options.afterRender?.(follow);
+    while(this.rendered.length>this.parts.length){const record=this.rendered.pop();record.ui?.dispose();record.prose?.dispose();}replaceInOrder(this.container,elements);this.options.afterRender?.(follow);
   }
   snapshots(){return Object.fromEntries((this.rendered||[]).flatMap((r,i)=>r.ui?[[i,r.ui.snapshot()]]:[]));}
+  markdown(){return this.parts.map((part,index)=>{if(part.kind==='text')return part.text;const ui=this.rendered?.[index]?.ui;if(ui instanceof SandboxRenderer)return ui.markdown();const snapshot=ui?.snapshot();return blockMarkdown(part.spec,snapshot?.state||part.spec.state,snapshot?.view||{});}).join('\n\n');}
   interaction(force=false,scope=null){const blocks=Object.create(null);let changed=false;for(const [index,r]of (this.rendered||[]).entries())if(r.ui&&(scope?.block===undefined||Number(scope.block)===index)){const value=r.ui.interaction(scope);if(value.available){blocks[index]=value.block;changed||=value.changed;}}return Object.keys(blocks).length&&(force||changed)?blocks:null;}
-  reconcileSelections(selections){for(const selected of selections){const ui=this.rendered?.[Number(selected.block)]?.ui;if(!ui)continue;const node=ui.spec.nodes[selected.node],key=selected.view_key||selected.node;if(selected.kind==='draft'&&selected.field&&node?.type==='Form'){const field=node.props.fields.find(f=>f.name===selected.field);if(!field)continue;let value=ui.view[key]?.fields?.[selected.field]??(field.type==='checkbox'?false:'');if(field.type==='select')value=value===''?null:field.options?.[Number(value)]?.value;if(JSON.stringify(value)!==JSON.stringify(selected.value))ui.touchedViews.add(key);continue;}if(selected.kind==='view'&&node){const local=ui.view[key]||{};let value;if(['Tabs','Carousel'].includes(node.type))value=node.props.labels?.[Number(local.selected)||0]??(Number(local.selected)||0);else if(node.type==='Checklist')value=local.checked||[];if(value!==undefined&&JSON.stringify(value)!==JSON.stringify(selected.value))ui.touchedViews.add(key);continue;}const path=selected.path||node?.props?.bind;if(!path||path.startsWith('item.'))continue;try{if(editablePaths(ui.spec,ui.store.values).has(path)&&JSON.stringify(ui.store.get(path))!==JSON.stringify(selected.value))ui.touchedPaths.add(path);}catch{/* Older context records cannot introduce an undeclared input. */}}}
+  reconcileSelections(selections){for(const selected of selections){const ui=this.rendered?.[Number(selected.block)]?.ui;if(!ui||Object.hasOwn(ui.spec,'sandbox'))continue;const node=ui.spec.nodes[selected.node],key=selected.view_key||selected.node;if(selected.kind==='draft'&&selected.field&&node?.type==='Form'){const field=node.props.fields.find(f=>f.name===selected.field);if(!field)continue;let value=ui.view[key]?.fields?.[selected.field]??(field.type==='checkbox'?false:'');if(field.type==='select')value=value===''?null:field.options?.[Number(value)]?.value;if(JSON.stringify(value)!==JSON.stringify(selected.value))ui.touchedViews.add(key);continue;}if(selected.kind==='view'&&node){const local=ui.view[key]||{};let value;if(['Tabs','Carousel'].includes(node.type))value=node.props.labels?.[Number(local.selected)||0]??(Number(local.selected)||0);else if(node.type==='Checklist')value=local.checked||[];if(value!==undefined&&JSON.stringify(value)!==JSON.stringify(selected.value))ui.touchedViews.add(key);continue;}const path=selected.path||node?.props?.bind;if(!path||path.startsWith('item.'))continue;try{if(editablePaths(ui.spec,ui.store.values).has(path)&&JSON.stringify(ui.store.get(path))!==JSON.stringify(selected.value))ui.touchedPaths.add(path);}catch{/* Older context records cannot introduce an undeclared input. */}}}
   markSaved(){for(const r of this.rendered||[])r.ui?.markSaved();}
-  dispose(){cancelAnimationFrame(this.frame);for(const r of this.rendered||[])r.ui?.dispose();this.container.replaceChildren();}
+  dispose(){cancelAnimationFrame(this.frame);for(const r of this.rendered||[]){r.ui?.dispose();r.prose?.dispose();}this.container.replaceChildren();}
 }

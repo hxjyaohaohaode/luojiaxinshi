@@ -4,8 +4,10 @@ The original publication fence and independent reviewer own final publication.
 """
 import asyncio
 from datetime import datetime
+from dataclasses import replace
 import hashlib
 import json
+import re
 import time
 from typing import Literal
 
@@ -15,7 +17,8 @@ from pydantic import Field, ValidationError, field_validator
 from ..ai import AIError
 from ..db import dumps
 from ..models import Strict
-from ..genui import CATALOG, LIMITS
+from ..genui import CATALOG, LIMITS, parse_message
+from ..openui import SandboxUI, UIStreamDecoder
 from .runtime import Run, bounded_result
 from .store import finish
 from .tools import REGISTRY
@@ -130,6 +133,9 @@ TOOL_LABELS = {
     'memory_capabilities': '读取本轮记忆维护协议',
     'submit_answer': '提交答复核验',
     'submit_interface': '提交互动答复核验',
+    'openui_capabilities': '读取界面生成协议',
+    'generateSandboxedUi': '生成互动界面',
+    'compose_interface': '生成互动界面',
 }
 
 
@@ -154,8 +160,20 @@ def message_state(conn, uid, cid, mid):
             'operations': personal_workspace.operations(conn, uid, cid, mid)}
 
 
+class GenerateSandboxedUI(SandboxUI):
+    lead: str = Field(min_length=1,max_length=240)
+    claims: list[AgentClaim] = Field(default_factory=list,max_length=60)
+    memory_actions: list[dict] = Field(default_factory=list,max_length=8)
+    image_sources: list[str] = Field(default_factory=list,max_length=100)
+    media_sources: list[str] = Field(default_factory=list,max_length=100)
+
+
+class ComposeInterface(Strict):
+    brief: str = Field(min_length=1,max_length=1200,description='简短说明本轮展示目标、阅读顺序和需要的交互；原文和用户要求会自动传给生成器，不抄原文、不写代码。')
+
+
 class ChatRun(Run):
-    protected_tools = Run.protected_tools | {'ui_capabilities', 'memory_capabilities'}
+    protected_tools = Run.protected_tools | {'ui_capabilities', 'openui_capabilities', 'memory_capabilities'}
     registry = {**REGISTRY,
         'workspace_read': (personal_workspace.WorkspaceRead, '读取本人日历、待办或当前对话的真实操作回执，含可修改的 ID/version；支持查询与分页。', False, True, True),
         'workspace_capabilities': (Empty, '加载本人日历和待办的直接操作工具。创建、改期、完成、取消、删除或撤销无需重复审批；只读范围不能写入。', False, True, False),
@@ -167,6 +185,9 @@ class ChatRun(Run):
         'memory_capabilities': (MemoryCapabilities, '读取原有记忆系统的操作协议或当前上下文。有新事实、偏好、目标、纠错时按当前模式自主维护；纯文字也可用。操作随最终答复提交，保存回执由原系统产生。', False, True, False),
         'submit_answer': (SubmitAnswer, '单独调用此工具提交本轮最终答复，随后独立核验。answer 是用户看到的 Markdown，ui 为按需自由编排的界面；claims 使用 kind/text/evidence_refs。用户要求纯文字时仍用本工具，ui=null。', False, False, False),
         'submit_interface': (SubmitInterface, '单独提交互动答复。lead 仅一句必要导语，主要回答和操作写在 nodes；所有事实在对应节点引用。提交后独立复核，不能与其他工具同批。', False, False, False),
+        'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
+        'openui_capabilities': (Empty, '生成互动界面前读取一次流式 HTML/CSS/JS 协议与宿主桥，然后使用 generateSandboxedUi。简单问答不用调用。', False, True, False),
+        'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，宿主处理代码与排版；不调用业务工具，不可与其他工具同批。', False, False, False),
     }
 
     def __init__(self, service, thread, row, provider, *, mid, sources, messages, profile, access,
@@ -199,6 +220,7 @@ class ChatRun(Run):
         self.loaded_skills = set()
         self.evidence_entries, self.candidate, self.candidate_raw = [], None, None
         self.answer_errors = []
+        self.answer_normalizations = []
         self.ui_normalizations = []
         self.memory_contract_loaded = False
         self.ui_protocol_loaded = False
@@ -206,6 +228,16 @@ class ChatRun(Run):
         from ..response_contract import response_contract
         from ..genui_ai import choose_tier
         self.allow_ui = not response_contract(messages).get('no_ui') and choose_tier(service.settings) == 1
+        latest_question=next((m['content'] for m in reversed(messages) if m['role']=='user'),'')
+        from ..visual_evidence import image_sources
+        self.focused_visual=bool(self.access.get('attachments') and image_sources(self.original)
+            and len(image_sources(self.original))==len(self.original) and len(latest_question)<=160
+            and re.search(r'看|读取|读一下|解读|识别|提取|解释|分析|描述|总结',latest_question)
+            and not re.search(r'联网|搜索|研究|资料库|日历|日程|待办|记住|记忆|偏好|保存|删除|创建|添加|安排|导出|文件|生成|制作|界面|图表|交互|互动|比较|结合|对比|判断|规划|提醒|之前|上次|长期|以后|将来|应该|建议|下一步|怎么|如何|为什么|方案|计划|是否|能否|能不能|实现|开发|编程|设计|网页|程序|项目|帮.{0,8}做|做个|做一个|今天|明天|后天|现在|本周|下周|上周|这周|本月|冲突|空闲',latest_question))
+        self.openui_preloaded=bool(self.allow_ui and service.settings.ai_context_tokens>=65536 and self.context_bytes>=96000
+            and re.search(r'生成式|交互|互动|界面|滑块|计算器|可视化|图表|模拟器',latest_question))
+        self.openui_protocol_loaded=False
+        self.ui_composition_model=None
         self.registry = dict(self.registry)
         if restricted:
             self.registry.pop('public_search')
@@ -214,6 +246,11 @@ class ChatRun(Run):
         if not service.settings.agent_mcp_servers:
             self.registry.pop('mcp_call')
             self.registry.pop('mcp_list_tools')
+        if self.focused_visual:
+            # The current request asks to read the supplied images. Do not
+            # attach a general project/file/subagent/memory tool catalogue to
+            # this bounded perception task; every pixel and evidence ref stays.
+            self.registry={k:v for k,v in self.registry.items() if k=='submit_answer'}
         with self.db.connect() as conn:
             self.retry_operations = personal_workspace.prior_attempts(conn,self.uid,self.cid,self.mid) if self.access.get('schedule') else []
 
@@ -227,6 +264,12 @@ class ChatRun(Run):
 
     def emit(self, kind, data):
         item = super().emit(kind, data)
+        if kind == 'model.started' and data.get('agent_id') == 'root':
+            from ..visual_evidence import image_sources
+            if image_sources(list(self.records.values())):
+                self.queue.put_nowait({'type':'phase','phase':'writing','label':'正在读取原图并分析内容…'})
+            elif data.get('step',1)>1:
+                self.queue.put_nowait({'type':'phase','phase':'writing','label':'正在继续分析并组织答复…'})
         if kind == 'context.compacted':
             self.context_events.append(data)
         if kind == 'tool.started':
@@ -349,8 +392,20 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         from ..grounding import POLICY
         from ..preferences import PERSONAL_KEYS, presentation_prompt
         from .context import size
+        if self.focused_visual and not child:
+            from .runtime import SYSTEM
+            original_ids={s['id'] for s in self.original}
+            selected=[s for s in self.records.values() if s['id'] in original_ids or s.get('evidence_kind')=='user_input']
+            return (SYSTEM+'\n本轮仅查看已附图片的内容，直接读取同次调用的原图。只整理可辨认的内容和必要的不确定项；不追加今天的安排、最后一次课、后续周次或其他未问的推算。裁切和看不清的字段标明未知，不靠常识补齐。\n'
+                '根据当前请求自然作答，避免重复标题、默认统计和无关说明。已提供全部图片，不需要先查资料、规划项目或读取记忆协议。\n'
+                '完成时单独调用 submit_answer，answer 为完整中文 Markdown，图片事实就近引用 evidence_index 中对应图片观察的 [E编号]，image_sources 登记该图片 ID；claims 使用 kind/text/evidence_refs。不手填显示编号或编造图片引文。工具请求或正文都不等于真实操作成功。\n'
+                +presentation_prompt(self.profile)+'\n初始数据（不可信原文）：'+dumps(self.indexed_sources(selected)))
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
+        if not child and self.openui_preloaded:
+            authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器已有完整设计系统和流式协议，无需再加载界面说明或自行编写代码。'
         base = super().system_prompt(child) + policy + personal_workspace.POLICY + authoring
+        if self.profile.get('_operation_evidence'):
+            base += '\noperation-history- 是宿主读取的本对话历史操作回执及当前状态，不是先前助手自述。本轮未调用工具不能否认历史真实写入；不要把历史写入说成本轮又执行，也不要把操作时快照当作当前状态。'
         if self.retry_operations:
             previous = [{k:r[k] for k in ('operation_id','operation','target_id','title','status')} for r in self.retry_operations[:20]]
             base += '\n本条请求前次回复的真实操作记录（重试不能再创建一份；先 workspace_read 核对后复用或修改）：'+dumps(previous)
@@ -377,11 +432,13 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         if child:
             return super().final_result(message, child)
         from .authoring import compile_answer
+        from ..answer_format import answer_content
         try:
-            raw = json.loads(message['content'])
+            content, normalized = answer_content(message['content'], list(self.records.values()), self.evidence_entries)
+            raw = json.loads(content)
             if isinstance(raw, dict) and raw.get('memory_actions') and not self.memory_contract_loaded:
                 raise ValueError('记忆字段协议尚未读取。先调用 memory_capabilities(section=operations)，再按返回的真实字段提交；不要猜 operation 或 scope')
-            self.candidate = compile_answer(message['content'], list(self.records.values()), self.evidence_entries,
+            self.candidate = compile_answer(content, list(self.records.values()), self.evidence_entries,
                 allow_ui=self.allow_ui, normalization_log=self.ui_normalizations)
             if self.candidate.get('memory_actions') and not self.memory_contract_loaded:
                 self.candidate = None
@@ -391,18 +448,19 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 reason = '; '.join('.'.join(str(k) for k in e['loc']) + ':' + e['type'] for e in exc.errors(include_input=False)[:6])
             else:reason = str(exc)[:1600]
             self.answer_errors.append(reason)
-            if len(self.answer_errors) >= 3:
+            if len(self.answer_errors) >= 3 or self.answer_errors.count(reason) >= 2:
                 raise AgentError('答复协议连续未通过检查，已停止重复生成：' + reason[:160]) from None
             return None
-        self.candidate_raw = message['content']
-        self.plan = {'strategy': 'integrated', 'presentation': 'interactive' if '```genui' in self.candidate['answer'] else 'text',
+        self.candidate_raw = content
+        if normalized:self.answer_normalizations.append({'format':normalized,'normalized_to':'answer_object'})
+        self.plan = {'strategy': 'integrated', 'presentation': 'interactive' if any(p['kind']=='ui' for p in parse_message(self.candidate['answer'])) else 'text',
                      'web_reason': '根据本轮实际工具结果作答', 'gaps': [], 'local_queries': self.local_queries[:4],
                      'public_queries': self.public_queries[:3], 'local_scopes': sorted(self.used_scopes)}
         return self.candidate['answer']
 
     def continuation_prompt(self):
-        return ('本次最终答复未通过协议检查：' + self.answer_errors[-1] +
-                '。需要记忆维护时先读取 memory_capabilities，临时要求与长期事实分开。然后调用 submit_answer 提交完整答复，不用自由文本猜 JSON 字段；不能把提议说成已经保存。') if self.answer_errors else super().continuation_prompt()
+        return ('本次最终答复未通过检查：' + self.answer_errors[-1] +
+                '。只修正指出的问题，用 submit_answer 完整提交已有正文和对应证据；不要重复查询、重做已完成操作，或为格式修正读取无关协议。需要记忆操作时仍须先取得协议，不声称尚未成功的保存。') if self.answer_errors else super().continuation_prompt()
 
     async def model_response(self, messages, catalog, child):
         # Pixels belong at the transport boundary, never in durable history or
@@ -424,9 +482,17 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         if child or not hasattr(self.provider, 'complete_stream'):
             return await super().model_response(messages, catalog, child)
         from ..genui_ai import AnswerDecoder
-        decoders, started = {'content': AnswerDecoder(), 'submit': AnswerDecoder(fields=('answer', 'lead'))}, False
+        from ..answer_format import AnswerPreview, JSONEnvelopeStream
+        decoders, started = {'content': AnswerPreview(), 'submit': AnswerDecoder(fields=('answer', 'lead'))}, False
+        ui_decoders={'content':[UIStreamDecoder()], 'submit':[UIStreamDecoder(prefix=()),UIStreamDecoder()]}
+        envelope=JSONEnvelopeStream()
         def preview(delta, channel='content'):
             nonlocal started
+            ui_delta=envelope.push(delta) if channel=='content' else delta
+            for ui_decoder in ui_decoders[channel]:
+                try:packet=ui_decoder.packet(ui_delta)
+                except (ValueError,TypeError):packet=None
+                if packet:self.queue.put_nowait({'type':'ui_preview','content':packet})
             try:text = decoders[channel].push(delta)
             except (ValueError, TypeError):return
             if text:
@@ -436,7 +502,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             on_answer_arguments=lambda delta: preview(delta, 'submit'))
 
     def validate_calls(self, calls):
-        if len(calls)>1 and any(c['function']['name'] in ('submit_answer','submit_interface','research_complete') for c in calls):
+        if len(calls)>1 and any(c['function']['name'] in ('submit_answer','submit_interface','generateSandboxedUi','compose_interface','research_complete') for c in calls):
             raise AgentError('最终答复与其他操作混在同一批，未执行这批工具；请重试')
 
     def completed_result(self, child):
@@ -470,21 +536,27 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         if child:
             return catalog
         for item in catalog:
-            if item['function']['name'] in ('submit_answer', 'submit_interface') and not (self.memory_contract_loaded or 'memory_capabilities' in upcoming):
+            if item['function']['name'] in ('submit_answer', 'submit_interface', 'generateSandboxedUi') and not (self.memory_contract_loaded or 'memory_capabilities' in upcoming):
                 item['function']['parameters']['properties'].pop('memory_actions', None)
             if item['function']['name'] == 'submit_answer':
                 fn = item['function']
-                fn['description'] = '单独提交纯文字答复，answer 写完整正文；要生成交互内容，先取得 ui_capabilities，再用 submit_interface。'
+                fn['description'] = '单独提交纯文字答复，answer 写完整正文；要自由生成互动内容，调用 generateSandboxedUi。'
                 fn['parameters']['properties'].pop('ui', None)
                 fn['parameters'].get('$defs', {}).pop('UIEnvelope', None)
         return [item for item in catalog
                 if (item['function']['name'] != 'submit_interface' or self.allow_ui and (self.ui_protocol_loaded or 'ui_capabilities' in upcoming))
+                and (item['function']['name'] != 'generateSandboxedUi' or self.allow_ui and (getattr(self,'openui_protocol_loaded',False) or 'openui_capabilities' in upcoming))
+                and (item['function']['name'] != 'openui_capabilities' or self.allow_ui and not self.openui_preloaded and not self.openui_protocol_loaded)
+                and (item['function']['name'] != 'compose_interface' or self.allow_ui and (self.openui_preloaded or self.openui_protocol_loaded or 'openui_capabilities' in upcoming))
                 and (item['function']['name'] != 'memory_capabilities' or self.memory_available())
                 and (item['function']['name'] != 'workspace_capabilities' or self.mutate_context and personal_workspace.write_allowed(self.user_messages))]
 
     async def tool(self, call, aid, child, output_limit=16000):
         self.guard()
         return await super().tool(call, aid, child, output_limit)
+
+    def tool_timeout(self,name):
+        return self.settings.ai_timeout+30 if name=='compose_interface' else super().tool_timeout(name)
 
     def bound_tool_result(self, name, result, limit):
         from .context import size
@@ -572,8 +644,57 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 'execution', operation_completed=name != 'workspace_read')])
             self.used_scopes.add('schedule')
             return {**result, **self.indexed_sources([self.records[sid]])}
-        if name in ('submit_answer', 'submit_interface', 'research_complete') and await self.completion_needs_followup():
+        if name in ('submit_answer', 'submit_interface', 'generateSandboxedUi', 'compose_interface', 'research_complete') and await self.completion_needs_followup():
             raise AgentError('子任务仍在运行或有新结果尚未核对；先读取新的完成、失败或取消状态，再提交答复')
+        if name == 'openui_capabilities':
+            if not self.allow_ui:raise AgentError('本轮要求纯文字，不加载界面协议')
+            from ..openui_prompt import OPEN_UI_RULES
+            self.openui_protocol_loaded=True
+            return {'renderer':'open_generative_ui','rules':OPEN_UI_RULES}
+        if name == 'compose_interface':
+            if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
+            if self.calls>=24:raise AgentError('本轮模型调用次数已达上限，请缩小任务')
+            self.calls+=1
+            from ..security import rate_limit
+            try:rate_limit(self.db,'agent-model:'+self.uid,self.settings.ai_daily_limit*24,86400)
+            except HTTPException as exc:
+                if exc.status_code==429:raise AgentError('今日模型调用次数已达服务上限，当前任务已保留') from None
+                raise
+            from .. import genui_ai
+            from ..response_contract import response_contract
+            from ..harness import CURRENT
+            trace=CURRENT.get()
+            if trace:trace.phase('writing')
+            self.queue.put_nowait({'type':'phase','phase':'writing','label':'正在生成互动界面…'})
+            fast=replace(self.settings,ai_composition_model=self.settings.ai_ui_model)
+            profile={**self.profile,'_authoring_evidence_index':self.evidence_entries,
+                '_ui_composition_only':True,'_ui_composition_thinking':self.settings.ai_ui_thinking,
+                '_grounding_context':{'response_contract':response_contract(self.user_messages),
+                    'latest_user_request':self.row['prompt'],'interface_brief':args.brief,
+                    'ui_contract':{'local':'本地计算与视图变化可先用；宿主操作、保存和正式发布等待独立复核。'}}}
+            raw=None
+            try:
+                async with self.service.model_slots, asyncio.timeout(self.settings.ai_timeout+10):
+                    async for event in genui_ai.stream_reply(fast,list(self.records.values()),self.user_messages,profile,1):
+                        if event['type'] in ('preview','ui_preview'):self.queue.put_nowait(event)
+                        elif event['type']=='complete':
+                            raw=event.get('repair_draft');usage=event.get('usage',{})
+                            self.usage['prompt_tokens']+=usage.get('input_tokens') or 0
+                            self.usage['completion_tokens']+=usage.get('output_tokens') or 0
+                            self.usage['model_calls']+=1
+            except TimeoutError:raise AIError('互动界面生成超时，已停止这轮；已收到的内容保留，可重新生成。') from None
+            self.guard()
+            if not raw:raise AgentError('界面生成稿未完整返回，请缩小范围后重试')
+            if self.final_result({'content':raw},False) is None:raise AgentError(self.continuation_prompt())
+            self.ui_composition_model=fast.ai_composition_model
+            return {'submitted_for_review':True}
+        if name == 'generateSandboxedUi':
+            if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
+            value=args.model_dump()
+            final={'answer':value.pop('lead'),**{key:value.pop(key) for key in ('claims','memory_actions','image_sources','media_sources')}}
+            final['ui']=value
+            if self.final_result({'content':dumps(final)},False) is None:raise AgentError(self.continuation_prompt())
+            return {'submitted_for_review':True}
         if name == 'submit_interface':
             if not self.allow_ui or not self.ui_protocol_loaded:
                 raise AgentError('本轮尚未取得界面组件协议或用户要求纯文字，请核对本轮呈现要求')
@@ -719,11 +840,15 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                'pages_read': sum(s['evidence_kind'] == 'web_page' for s in records)}
         return {'plan': self.plan, 'sources': records, 'retrieval': {**self.coverage, **selection}, 'web': web, 'host_activity': activity,
                 'candidate': self.candidate, 'candidate_raw': self.candidate_raw, 'evidence_entries': self.evidence_entries,
+                'composition_model':self.ui_composition_model,
+                'composition_thinking':'enabled' if not self.ui_composition_model or self.settings.ai_ui_thinking else 'disabled',
                 'usage': self.usage, 'execution': {'thread_id': self.tid, 'turn_id': self.id, 'mode': 'existing_conversation',
                     'tool_calls': self.tool_count, 'model_calls': self.usage['model_calls'], 'subagents': len(self.agents),
                     'subagent_results': [{'name': a['name'], 'status': a['status'], 'summary': a['result'][:4000]} for a in self.agents.values()],
                     'skills': sorted(self.loaded_skills),
                     'compactions': self.context_events, 'ui_normalizations': self.ui_normalizations,
+                    'answer_normalizations': self.answer_normalizations,
+                    'focused_visual': self.focused_visual,
                     'answer_repairs': len(self.answer_errors), 'gaps': self.plan['gaps']}}
 
 
@@ -744,6 +869,7 @@ async def research(settings, db, uid, cid, mid, sources, messages, profile, acce
                       profile=profile, access=access, check_context=check_context, bind_memory=bind_memory,
                       restricted=restricted, requested_urls=requested_urls, mutate_context=mutate_context)
         await run.local(prompt, [])
+        run.merge(profile.get('_operation_evidence',[]))
         from ..media_input import input_budget
         from .providers import completion_budget
         output_tokens=completion_budget(settings)

@@ -217,6 +217,32 @@ def prior_attempts(conn, uid, cid, mid):
         ORDER BY o.created_at,o.id''',(mid,uid,cid))]
 
 
+def history_evidence(conn, uid, cid, messages):
+    """Historical effects come from the operation ledger, never assistant prose."""
+    parents = {m['id'] for m in messages if m['role'] == 'user'}
+    if not parents: return []
+    rows = [r for r in conn.execute('''SELECT o.*,m.parent_id FROM assistant_operations o
+        JOIN conversation_messages m ON m.id=o.message_id
+        WHERE o.user_id=? AND o.conversation_id=? ORDER BY o.created_at,o.id''',(uid,cid))
+        if r['parent_id'] in parents]
+    evidence = []
+    for row in rows[-50:]:
+        item = receipt(row)
+        proof = {k:v for k,v in item.items() if k not in ('record','undo_available','replayed')}
+        table = 'arrangements' if item['operation'].startswith('calendar.') else 'tasks'
+        current = conn.execute('SELECT * FROM '+table+' WHERE id=? AND user_id=?',(item['target_id'],uid)).fetchone()
+        state = {'exists':bool(current)}
+        if current:
+            state.update({k:current[k] for k in ('version','status') if k in current.keys()})
+            data = json.loads(current['data'])
+            state['data'] = {k:data[k] for k in ('title','start_date','end_date','start_time','end_time','all_day','repeat','repeat_until','planned_at','due_date','due_time') if k in data}
+        evidence.append({'id':'operation-history-'+row['id'], 'name':'此前本站操作：'+row['title'],
+            'kind':'text','status':'ready','evidence_kind':'execution','current':True,
+            'sections':[{'locator':'历史操作回执','text':dumps(proof)},
+                        {'locator':'本轮读取的当前状态','text':dumps(state)}]})
+    return evidence
+
+
 def read(conn, uid, cid, args):
     items = []
     if args.kind == 'operations':

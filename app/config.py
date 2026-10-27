@@ -53,6 +53,8 @@ class Settings:
     ai_grounding: bool = True
     ai_summary_model: str = 'mimo-v2.6-flash'
     ai_composition_model: str = 'mimo-v2.6-pro'
+    ai_ui_model: str = 'mimo-v2.6-pro'
+    ai_ui_thinking: bool = False
     ai_output_tokens: int = 131072
     ai_workflow_timeout: int = 1800
     registration_mode: str = 'public'
@@ -134,6 +136,8 @@ class Settings:
         result.ai_stage_summaries=os.getenv('AI_STAGE_SUMMARIES','false').lower() in {'true','1','yes'}
         result.ai_summary_model=os.getenv('MIMO_SUMMARY_MODEL',cls.ai_summary_model).strip()
         result.ai_composition_model=os.getenv('MIMO_COMPOSITION_MODEL',cls.ai_composition_model).strip()
+        result.ai_ui_model=os.getenv('MIMO_UI_MODEL',cls.ai_ui_model).strip() or result.ai_composition_model
+        result.ai_ui_thinking=os.getenv('MIMO_UI_THINKING','false').strip().lower() in {'true','1','yes'}
         result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS',str(cls.ai_context_tokens)))
         result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS',str(cls.ai_output_tokens)))
         result.ai_workflow_timeout=int(os.getenv('AI_WORKFLOW_TIMEOUT_SECONDS','1800'))

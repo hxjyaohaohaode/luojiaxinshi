@@ -102,12 +102,9 @@ class Provider:
             payload.update(self.generation_options())
             payload['messages'] = [{**message, 'reasoning_content': self._reasoning[self._key(message)]}
                 if message.get('tool_calls') and self._key(message) in self._reasoning else message for message in messages]
-            # The embedded chat has a typed final-answer tool. Requiring a
-            # call here avoids paying to repair an unstructured plain-text
-            # answer. Children and the SDK/OSS loop keep their own completion
-            # contract; this does not force searches or extra planning steps.
-            if any(tool['function']['name'] == 'submit_answer' for tool in tools):
-                payload['tool_choice'] = 'required'
+            # MiMo's official Chat API supports only auto; required/named
+            # choices are silently removed upstream. Reliability belongs in
+            # the local answer adapter and typed execution/publication gates.
         if on_text:
             payload.update(stream=True, stream_options={'include_usage': True})
         headers = {'Authorization': 'Bearer ' + self.key} if self.key else {}
@@ -140,6 +137,11 @@ class Provider:
             calls = msg.get('tool_calls') or []
             if not isinstance(calls, list) or len(calls) > 8:
                 raise ValueError('calls')
+            if not calls and not (msg.get('content') or '').strip():
+                error = AgentError('模型未返回正文或可执行的工具调用；已停止本轮，可手动重试')
+                error.usage = safe_usage
+                error.finish_reason = 'empty_response'
+                raise error
             ids = set()
             for call in calls:
                 if call.get('type') != 'function' or not isinstance(call.get('id'), str) or not call['id'] or len(call['id']) > 128 or call['id'] in ids:
@@ -212,7 +214,7 @@ Nothing is executed or published by either preview callback.
                         call['function'][key] += (part.get('function') or {}).get(key) or ''
                     if len(call['function']['arguments'].encode()) > MAX_CONTENT_BYTES or len(call['function']['name']) > 128:
                         raise ValueError('call_limit')
-                    if on_answer_arguments and index == 0 and call['function']['name'] in ('submit_answer', 'submit_interface'):
+                    if on_answer_arguments and index == 0 and call['function']['name'] in ('submit_answer', 'submit_interface', 'generateSandboxedUi'):
                         arguments = call['function']['arguments']
                         if len(arguments) > previewed_arguments:
                             on_answer_arguments(arguments[previewed_arguments:])

@@ -43,7 +43,19 @@ def main():
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),
                 ('Agent incremental rendering', 'artifacts/agent-quality-browser/performance.json'),
-                ('Composer attachments and dictation', 'artifacts/composer-browser/results.json')]
+                ('Composer attachments and dictation', 'artifacts/composer-browser/results.json'),
+                ('OpenUI streaming Chromium', 'artifacts/openui-browser/chromium/report.json'),
+                ('OpenUI streaming Firefox', 'artifacts/openui-browser/firefox/report.json'),
+                ('OpenUI streaming WebKit', 'artifacts/openui-browser/webkit/report.json'),
+                ('Compact chat Chromium', 'artifacts/chat-layout/chromium/report.json'),
+                ('Compact chat Firefox', 'artifacts/chat-layout/firefox/report.json'),
+                ('Compact chat WebKit', 'artifacts/chat-layout/webkit/report.json'),
+                ('Chat interactions Chromium', 'artifacts/chat-interactions/chromium/report.json'),
+                ('Chat interactions Firefox', 'artifacts/chat-interactions/firefox/report.json'),
+                ('Chat interactions WebKit', 'artifacts/chat-interactions/webkit/report.json'),
+                ('Chat recovery Chromium', 'artifacts/chat-recovery/chromium/report.json'),
+                ('Chat recovery Firefox', 'artifacts/chat-recovery/firefox/report.json'),
+                ('Chat recovery WebKit', 'artifacts/chat-recovery/webkit/report.json')]
     for label, path in browsers if kind in {'browser', 'all'} else []:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))

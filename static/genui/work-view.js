@@ -1,5 +1,6 @@
 import {el} from './dom.js';
 import {safeUrl} from './security.js';
+let disclosureId=0;
 
 export function elapsedLabel(start,end){
   const seconds=Math.max(0,Math.floor((end||Date.now()/1000)-(start||end||Date.now()/1000)));
@@ -25,51 +26,45 @@ export function workHeadline(message){
 }
 
 export class WorkSummaryView{
-  constructor(parent,before){
-    this.root=el('details','work-summary');this.head=el('summary');this.dot=el('span','work-indicator');this.dot.setAttribute('aria-hidden','true');
+  constructor(parent,before,{openTrace}={}){
+    this.openTrace=openTrace;
+    this.root=el('section','work-summary');this.head=el('button','work-summary-toggle');this.head.type='button';this.dot=el('span','work-indicator');this.dot.setAttribute('aria-hidden','true');
     this.title=el('span','work-title');this.time=el('span','work-time');this.chevron=el('span','work-chevron','⌄');this.chevron.setAttribute('aria-hidden','true');
-    this.head.append(this.dot,this.title,this.time,this.chevron);this.body=el('div','work-body');this.root.append(this.head,this.body);parent.insertBefore(this.root,before);
-    this.root.addEventListener('toggle',()=>{if(this.root.open)this.renderDetails();});
+    this.head.append(this.dot,this.title,this.time,this.chevron);this.body=el('div','work-body');this.disclosure=el('div','work-disclosure');this.clip=el('div','work-disclosure-clip');this.clip.append(this.body);this.disclosure.append(this.clip);this.disclosure.id='work-disclosure-'+(++disclosureId);this.head.setAttribute('aria-controls',this.disclosure.id);this.root.append(this.head,this.disclosure);parent.insertBefore(this.root,before);
+    this.setExpanded(false);this.head.addEventListener('click',()=>this.setExpanded(!this.expanded));
+  }
+  setExpanded(open){
+    if(open)this.renderDetails();
+    this.expanded=open;this.root.dataset.expanded=String(open);this.head.setAttribute('aria-expanded',String(open));this.disclosure.inert=!open;this.disclosure.setAttribute('aria-hidden',String(!open));
   }
   update(message){
     this.message=message;
     const steps=message._work||message.grounding?.steps||[],report=message.grounding||{},running=message.status==='processing';
-    this.root.hidden=!steps.length&&!report.status;
-    if(this.running&&!running)this.root.open=false;
+    this.root.hidden=report.planning_mode==='host_acknowledgement'||!steps.length&&!report.status;
     this.root.dataset.state=running?'running':message.status==='complete'?'complete':'interrupted';
     this.start=report.started_at||steps[0]?.started_at;this.end=report.checked_at||report.finished_at||steps.at(-1)?.finished_at;
     this.title.textContent=workHeadline(message);
     const clock=()=>{this.time.textContent=this.start?elapsedLabel(this.start,this.running?null:this.end):'';};
     if(this.running!==running){clearInterval(this.timer);this.running=running;if(running)this.timer=setInterval(clock,1000);}
     clock();
-    if(this.root.open)this.renderDetails();
+    if(this.expanded)this.renderDetails();
   }
   renderDetails(){
     if(!this.message)return;
     const message=this.message,report=message.grounding||{},steps=message._work||report.steps||[],receipt=report.work_summary;
-    const key=JSON.stringify([steps,receipt,report.harness?.call_count,message.evidence_sources]);if(key===this.key)return;this.key=key;
-    this.body.replaceChildren();
+    if(!this.summaryBody){this.summaryBody=el('div','work-receipt');this.traceLink=el('button','work-trace-link');this.traceLink.type='button';this.traceLink.addEventListener('click',()=>this.openTrace?.(this.message));this.body.append(this.summaryBody,this.traceLink);}
+    const key=JSON.stringify([receipt,message.evidence_sources]);
+    if(key!==this.key){this.key=key;this.summaryBody.replaceChildren();
     if(receipt){
-      if(receipt.highlights?.length){const highlights=el('ul','work-highlights');for(const text of receipt.highlights)highlights.append(el('li','',text));this.body.append(highlights);}
-      const outcomes=el('ul','work-outcomes');
-      for(const text of receipt.outcomes||[])outcomes.append(el('li','',text));
-      if(outcomes.childNodes.length)this.body.append(outcomes);
-      if(receipt.gaps?.length){const gaps=el('ul','work-gaps');for(const gap of receipt.gaps)gaps.append(el('li','',gap));this.body.append(el('strong','','尚缺的信息'),gaps);}
+      if(receipt.highlights?.length){const highlights=el('ul','work-highlights');for(const text of receipt.highlights)highlights.append(el('li','',text));this.summaryBody.append(highlights);}
+      // Per-tool outcomes live in the trace and real operation cards. Repeating
+      // every receipt here makes even a short summary taller than the answer.
+      if(receipt.gaps?.length){const gaps=el('ul','work-gaps');for(const gap of receipt.gaps)gaps.append(el('li','',gap));this.summaryBody.append(el('strong','','尚缺的信息'),gaps);}
       const sources=(message.evidence_sources||[]).filter(s=>receipt.cited_sources?.includes(s.id));
-      if(sources.length){const names=el('ul','work-source-list');for(const source of sources){const li=el('li'),url=source.url&&safeUrl(source.url,{hosts:null});if(url){const link=el('a','',source.name);link.href=url;link.target='_blank';link.rel='noopener noreferrer';li.append(link);}else li.textContent=source.name;names.append(li);}this.body.append(el('strong','','实际引用'),names);}
+      if(sources.length){const names=el('ul','work-source-list');for(const source of sources){const li=el('li'),url=source.url&&safeUrl(source.url,{hosts:null});if(url){const link=el('a','',source.name);link.href=url;link.target='_blank';link.rel='noopener noreferrer';li.append(link);}else li.textContent=source.name;names.append(li);}this.summaryBody.append(el('strong','','实际引用'),names);}
     }
-    const detail=el('details','work-audit');detail.append(el('summary','',`执行记录 · ${steps.length} 项`));
-    const list=el('ol','work-steps');
-    for(const step of steps){
-      const item=el('li','work-step');item.dataset.state=step.state;
-      const head=el('div','work-step-heading');head.append(el('strong','',step.title),el('span','work-step-state',step.state==='running'?'进行中':step.state==='complete'?'结束':'未完成'));
-      item.append(head);
-      if(step.summary&&step.summary!==step.title)item.append(el('p','',step.summary));
-      if(step.detail)item.append(el('p','work-subtle',step.detail));
-      list.append(item);
     }
-    if(receipt){detail.append(list);this.body.append(detail);}else this.body.append(list);
-    const calls=report.harness?.call_count;if(calls)this.body.append(el('p','work-subtle',`模型调用 ${calls} 次`));
+    this.traceLink.textContent=`查看执行轨迹 · ${steps.length} 项 ↗`;this.traceLink.hidden=!steps.length||!this.openTrace;
   }
   dispose(){clearInterval(this.timer);this.root.remove();}
 }

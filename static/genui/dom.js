@@ -55,18 +55,18 @@ export function dataTable(props,{view={},changed=()=>{}}={}){
   for(const col of columns){const th=el('th');th.scope='col';if(col.sortable!==false){const b=button(col.label,()=>{view.desc=view.sort===col.key?!view.desc:false;view.sort=col.key;view.page=0;paint();changed();},'gu-sort');th.append(b);sortButtons.push({th,b,col});}else th.textContent=col.label;row.append(th);}
   const previous=button('上一页',()=>{view.page--;paint();changed();}),next=button('下一页',()=>{view.page++;paint();changed();});pager.append(previous,status,next);box.append(pager);paint();return box;
 }
-export function markdown(text,{enhance=true,view={},changed=()=>{}}={}){
+export function markdown(text,{enhance=true,streaming=false,view={},changed=()=>{}}={}){
   const host=el('div','gu-markdown'),lines=String(text).split('\n');let i=0,count=0;
   const cellLine=line=>line.trim().replace(/^\||\|$/g,'').split(/(?<!\\)\|/).map(v=>v.trim().replace(/\\\|/g,'|'));
   while(i<lines.length&&count++<1000){
     const line=lines[i];if(!line.trim()){i++;continue;}
     if(/^\s*```/.test(line)){
       const language=line.trim().slice(3),code=[];i++;while(i<lines.length&&!/^\s*```\s*$/.test(lines[i]))code.push(lines[i++]);if(i<lines.length)i++;
-      const box=el('div','gu-code'),pre=el('pre'),content=el('code','',code.join('\n'));pre.append(content);const copy=button('复制代码',event=>copyCode(event.currentTarget,content.textContent));copy.dataset.codeCopy='';box.append(el('span','gu-muted',language),copy,pre);host.append(box);continue;
+      const box=el('div','gu-code'),pre=el('pre'),content=el('code','',code.join('\n'));pre.append(content);const copy=button('复制代码',event=>copyCode(event.currentTarget,content.textContent));copy.disabled=streaming;copy.dataset.codeCopy='';box.append(el('span','gu-muted',language),copy,pre);host.append(box);continue;
     }
     if(line.includes('|')&&i+1<lines.length&&/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[i+1])){
       const labels=cellLine(line),rows=[];i+=2;while(i<lines.length&&lines[i].includes('|')&&rows.length<1000){const cells=cellLine(lines[i++]);rows.push(Object.fromEntries(labels.map((_,n)=>['c'+n,cells[n]||''])));}
-      const key='table'+count;view[key]??=Object.create(null);host.append(dataTable({columns:labels.map((label,n)=>({label,key:'c'+n,sortable:enhance})),rows,pageSize:10},{view:view[key],changed}));continue;
+      const key='table'+count;view[key]??=Object.create(null);host.append(dataTable({columns:labels.map((label,n)=>({label,key:'c'+n,sortable:enhance})),rows,pageSize:streaming?1000:10},{view:view[key],changed}));continue;
     }
     if(/^\s*[-*] \[[ xX]\] /.test(line)){
       const list=el('ul','gu-checklist');while(i<lines.length&&/^\s*[-*] \[[ xX]\] /.test(lines[i])){const match=lines[i].match(/^\s*[-*] \[([ xX])\] (.*)$/),key='check'+i,input=el('input'),label=el('label','gu-check'),li=el('li');input.type='checkbox';input.checked=view[key]??(match[1].toLowerCase()==='x');input.disabled=!enhance;input.addEventListener('change',()=>{view[key]=input.checked;changed();});const span=el('span');inline(match[2],span);label.append(input,span);li.append(label);list.append(li);i++;}host.append(list);continue;

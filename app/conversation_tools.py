@@ -35,9 +35,9 @@ def logical_messages(conn,cid):
         result.append({**chosen,'_versions':versions})
     return result
 
-def select_reply(conn,mid):
+def select_reply(conn,mid,*,allow_incomplete=False):
     row=conn.execute("SELECT parent_id,status FROM conversation_messages WHERE id=? AND role='assistant'",(mid,)).fetchone()
-    if row and row['status']=='complete' and row['parent_id']:
+    if row and (row['status']=='complete' or allow_incomplete and row['status'] in {'failed','cancelled'}) and row['parent_id']:
         conn.execute('INSERT INTO reply_selection VALUES(?,?) ON CONFLICT(parent_id) DO UPDATE SET message_id=excluded.message_id',(row['parent_id'],mid))
 
 def model_sources(conn,sources,question):
@@ -92,7 +92,7 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
     @app.post('/api/conversations/{cid}/messages/{mid}/reaction')
     def reaction(cid:str,mid:str,payload:Reaction,current=Depends(user)):
         with db.connect(write=True) as conn:
-            message(conn,cid,mid,current['id'])
+            if message(conn,cid,mid,current['id'])['status']!='complete':raise HTTPException(409,'完整回复生成后才能评价')
             conn.execute('INSERT INTO reply_reactions VALUES(?,?) ON CONFLICT(message_id) DO UPDATE SET value=excluded.value',(mid,payload.value))
         return {'value':payload.value}
 
@@ -100,8 +100,8 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
     def select(cid:str,mid:str,payload:Version,current=Depends(user)):
         with db.connect(write=True) as conn:
             own(conn,cid,current['id'],payload.version,idle=True);r=message(conn,cid,mid,current['id'])
-            if r['status']!='complete':raise HTTPException(409,'仅能选用完整回复；未完成的版本仍可回看')
-            select_reply(conn,mid);changed(conn,cid)
+            if r['status']=='processing':raise HTTPException(409,'请等待回复结束后切换版本')
+            select_reply(conn,mid,allow_incomplete=True);changed(conn,cid)
             return detail(conn,cid,current['id'],settings)
 
     @app.post('/api/conversations/{cid}/messages/{mid}/branch')
@@ -113,7 +113,8 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
             if existing:
                 if existing['user_id']!=current['id']:raise HTTPException(409,'分支标识冲突，请重新打开后再试')
                 return detail(conn,new,current['id'],settings)
-            origin=own(conn,cid,current['id'],payload.version,idle=True);message(conn,cid,mid,current['id'])
+            origin=own(conn,cid,current['id'],payload.version,idle=True)
+            if message(conn,cid,mid,current['id'])['status']!='complete':raise HTTPException(409,'请从完整回复开启分支')
             check_count(conn,current['id'],'conversations','conversations','会话')
             selected=detail(conn,cid,current['id'],settings)['messages'];index=next((i for i,m in enumerate(selected) if m['id']==mid),None)
             if index is None:raise HTTPException(409,'请先切换到要分支的回答版本')

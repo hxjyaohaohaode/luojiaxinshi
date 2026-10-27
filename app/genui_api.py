@@ -52,6 +52,10 @@ def readable(parts):
         return str(value)
     for part in parts:
         if part['kind']=='text':lines.append(part['text']);continue
+        if 'sandbox' in part['spec']:
+            lines.append(part['spec'].get('text',''))
+            if not part['spec']['complete']:lines.append('（互动内容未完整接收。）')
+            continue
         spec=part['spec'];seen=set()
         def visit(node_id):
             if node_id in seen:return
@@ -97,6 +101,8 @@ def load_message(conn, item, settings):
     item.update(parts=parts,genui={'v':1,'tier':row['tier'],'validated':bool(row['validated']),'snapshots':snapshots,'snapshot_version':row['snapshot_version'],'ai_label':row['ai_label'],'data':data})
     # Raw is owned conversation data, needed for exact stream/history equivalence, never sent in logs.
     item['genui']['raw']=row['raw']
+    from .reply_preview import load
+    load(conn,item)
     return item
 
 
@@ -131,7 +137,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
             row=conn.execute('SELECT g.*,m.status FROM genui_messages g JOIN conversation_messages m ON m.id=g.message_id WHERE m.id=? AND m.conversation_id=?',(mid,cid)).fetchone()
             if not row:raise HTTPException(404,'互动消息不存在')
             if row['snapshot_version']!=payload.version:raise HTTPException(409,'互动进度已在其他页面保存，请先刷新核对')
-            if row['status']=='processing':raise HTTPException(409,'请等待本次回复结束后保存互动进度')
+            if row['status']!='complete' or not row['validated']:raise HTTPException(409,'请等待本次回复完整核验后保存互动进度')
             try:
                 parts=parse_message(row['raw'],settings.genui_limits,json.loads(row['trusted_data']))
                 snapshots=validate_snapshots(payload.snapshots,parts)
@@ -205,6 +211,8 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
 
         async def generate():
             raw='';status='failed';error='回复已中断，已收到的内容已保留。';result=None;usage={};seq=0
+            from .reply_preview import PreviewCheckpoint
+            preview=PreviewCheckpoint(feature['limits']['messageBytes'])
             task=asyncio.current_task();active[cid]=(asyncio.get_running_loop(),task)
             try:
                 seq+=1;yield packet('start',{'message_id':mid,'conversation':initial,'tier':tier,'data':trusted,'limits':feature['limits']},seq)
@@ -233,10 +241,23 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                         if event['type']=='work':
                             seq+=1;yield packet('work',{'message_id':mid,'steps':event['steps']},seq)
                             continue
+                        if event['type']=='ui_preview':
+                            preview.apply('ui_preview',event)
+                            with db.connect(write=True) as conn:
+                                live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
+                                if not live or live['processing_token']!=token:raise asyncio.CancelledError()
+                                preview.save(conn,mid)
+                            seq+=1;yield packet('ui_preview',{'message_id':mid,'content':event['content']},seq)
+                            continue
                         if event['type']=='preview':
-                            # This is transient text, never a saved, validated UI graph.
-                            # Transport it as it arrives, not as a timed replay.
-                            seq+=1;yield packet('preview',{'message_id':mid,'text':event['text'],'reset':bool(event.get('reset'))},seq)
+                            # Persist separately before delivery. Reload restores the
+                            # unfinished revision without making it verified evidence.
+                            preview.apply('preview',event)
+                            with db.connect(write=True) as conn:
+                                live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
+                                if not live or live['processing_token']!=token:raise asyncio.CancelledError()
+                                preview.save(conn,mid)
+                            seq+=1;yield packet('preview',{'message_id':mid,'text':event['text'],'reset':bool(event.get('reset')),'clear_ui':bool(event.get('clear_ui'))},seq)
                             continue
                         if event['type']=='delta':
                             if len((raw+event['text']).encode())>feature['limits']['messageBytes']:raise AIError('回复已达大小上限，已保留收到的部分。')
@@ -279,13 +300,15 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                                     if part['kind']=='ui':part['spec']['complete']=False
                             citations=display_citations(result) if result and status=='complete' else []
                             conn.execute('UPDATE genui_messages SET raw=?,parts=?,validated=?,trusted_data=?,updated_at=? WHERE message_id=?',(raw,dumps(parts),int(status=='complete'),dumps(trusted),int(time.time()),mid))
+                            if status=='complete':conn.execute('DELETE FROM reply_previews WHERE message_id=?',(mid,))
                             conn.execute('UPDATE conversation_messages SET content=?,status=?,error=?,citations=?,input_tokens=?,output_tokens=? WHERE id=?',
                                          (readable(parts),status,error,dumps(citations),usage.get('input_tokens'),usage.get('output_tokens'),mid))
                             from .conversation_tools import select_reply
-                            select_reply(conn,mid)
+                            select_reply(conn,mid,allow_incomplete=bool(preview.text or preview.ui))
                             conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
                             report_row=conn.execute('SELECT report FROM reply_grounding WHERE message_id=?',(mid,)).fetchone()
                             report=json.loads(report_row['report']) if report_row else {}
+                            if report.get('planning_mode')=='host_acknowledgement':conn.execute("UPDATE genui_messages SET ai_label='系统回复' WHERE message_id=?",(mid,))
                             reason=(report.get('harness') or {}).get('stop_reason') or ('complete' if status=='complete' else 'request_failed')
                             app.state.execution.finish(conn,mid,'succeeded' if status=='complete' else status,reason)
                             from .memory_learning import completed_turn

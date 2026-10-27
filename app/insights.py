@@ -172,21 +172,38 @@ def build_reminders(tasks, notices, arrangements, now=None):
     today = now.date()
     for record in arrangements:
         data = record['data']
-        for day in arrangement_occurrences(data, today, today + timedelta(days=2)):
+        duration_days=(date.fromisoformat(data.get('end_date') or data['start_date'])-date.fromisoformat(data['start_date'])).days
+        for day in arrangement_occurrences(data, today-timedelta(days=max(0,duration_days)), today + timedelta(days=2)):
             start_time = data.get('start_time')
+            end_day=day+timedelta(days=max(0,duration_days))
             if start_time:
                 hour, minute = map(int, start_time.split(':'))
                 moment = datetime(day.year, day.month, day.day, hour, minute, tzinfo=CST)
-                if moment < now - timedelta(hours=1):
+                end_time=data.get('end_time')
+                if end_time:
+                    hour,minute=map(int,end_time.split(':'))
+                    end=datetime(end_day.year,end_day.month,end_day.day,hour,minute,tzinfo=CST)
+                else:
+                    # An unspecified end is not an invented course duration.
+                    end=moment+timedelta(hours=1)
+                if end <= now:
                     continue
-                text = f'{relative_day(moment, now)} {start_time}' + (f' · {data["location"]}' if data.get('location') else '')
+                phase='ongoing' if moment<=now else 'upcoming'
+                text = ('进行中 · ' if phase=='ongoing' else '')+f'{relative_day(moment, now)} {start_time}'
+                if end_time:text+='–'+(f'{relative_day(end,now)} ' if end_day!=day else '')+end_time
+                text+=(f' · {data["location"]}' if data.get('location') else '')
                 if now < moment - timedelta(minutes=15) <= now + timedelta(hours=24):
-                    upcoming.append({'at': (moment - timedelta(minutes=15)).isoformat(), 'title': data['title'], 'text': '15 分钟后开始', 'arrangement_id': record['id']})
+                    upcoming.append({'kind':'arrangement','at': (moment - timedelta(minutes=15)).isoformat(), 'title': data['title'], 'text': '15 分钟后开始', 'arrangement_id': record['id']})
             else:
                 moment = datetime(day.year, day.month, day.day, tzinfo=CST)
+                end=datetime(end_day.year,end_day.month,end_day.day,tzinfo=CST)+timedelta(days=1)
+                if end<=now:continue
+                phase='all_day'
                 text = relative_day(moment, now) + ' 全天'
-            items.append({'kind': 'arrangement', 'level': 'info', 'title': data['title'], 'text': text,
+                if end_day!=day:text+='–'+relative_day(end-timedelta(days=1),now)
+            items.append({'kind': 'arrangement', 'level': 'attention' if moment<=now+timedelta(hours=24) else 'info', 'title': data['title'], 'text': text,
                           'at': moment.isoformat(), 'arrangement_id': record['id'], 'category': data.get('category'),
+                          'ends_at':end.isoformat() if not start_time or data.get('end_time') else None,'phase':phase,
                           'revision': record.get('version')})
     waiting = [n for n in notices if n['status'] in {'received', 'draft', 'failed'} and n.get('disposition','inbox') == 'inbox']
     if waiting:
@@ -201,7 +218,7 @@ def build_reminders(tasks, notices, arrangements, now=None):
     items.sort(key=lambda item: (LEVELS[item['level']], item.get('at') or '9999'))
     upcoming.sort(key=lambda item: item['at'])
     counts = Counter(item['level'] for item in items)
-    return {'generated_at': now.isoformat(), 'items': items, 'upcoming': upcoming[:20],
+    return {'generated_at': now.isoformat(), 'items': items, 'upcoming': upcoming,
             'counts': {'urgent': counts['urgent'], 'attention': counts['attention'], 'info': counts['info'], 'total': len(items)}}
 
 

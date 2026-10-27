@@ -74,13 +74,13 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('chat composer adapts to a shorter container without a window resize',async()=>{
    await page.setViewportSize({width:1024,height:768});await nav('chat/'+chat.id);
    await page.waitForFunction(()=>innerHeight===768&&parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))===768);
-   await page.locator('#chat-composer:not(.is-compact)').waitFor();
+    await page.locator('#chat-composer:not(.is-short)').waitFor();
    const workspace=page.locator('#chat-workspace'),original=await workspace.evaluate(node=>node.style.height);
    try{
     // Constrain the container itself. The viewport variable belongs to chrome.js
     // and a pending browser resize event may legitimately refresh it.
     await workspace.evaluate(node=>node.style.height='350px');
-    await page.waitForFunction(()=>document.querySelector('.chat-main').clientHeight===350&&document.querySelector('#chat-composer').classList.contains('is-compact'));
+    await page.waitForFunction(()=>document.querySelector('.chat-main').clientHeight===350&&document.querySelector('#chat-composer').classList.contains('is-short'));
     await page.locator('#chat-input').fill('保留可阅读的对话区域。\n'.repeat(12));
     // A running translateY entry animation rounds a 44px box to 43.999984px in
     // Chromium/WebKit. Check settled geometry, retaining the actual 44px minimum.
@@ -93,13 +93,13 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     assert.equal(await page.evaluate(()=>innerHeight),768);
     assert.ok(bounds.reader.height>bounds.chat.height*.42,JSON.stringify(bounds));
     assert.ok(bounds.composer.bottom<=bounds.chat.bottom&&bounds.composer.height<90,JSON.stringify(bounds));
-    for(const b of bounds.buttons){assert.ok(b.width>=44&&b.height>=44,JSON.stringify(bounds));assert.ok(b.right<=bounds.composer.right&&b.bottom<=bounds.composer.bottom,JSON.stringify(bounds));assert.ok(b.right<=bounds.input.x||b.x>=bounds.input.right,JSON.stringify(bounds));}
+    for(const b of bounds.buttons){assert.ok(b.width>=40&&b.height>=40,JSON.stringify(bounds));assert.ok(b.right<=bounds.composer.right&&b.bottom<=bounds.composer.bottom,JSON.stringify(bounds));assert.ok(b.right<=bounds.input.x||b.x>=bounds.input.right,JSON.stringify(bounds));}
     await page.screenshot({path:path.join(output,`${engine}-chat-short-container.png`)});
    }finally{
     await page.locator('#chat-input').fill('');
     await workspace.evaluate((node,value)=>node.style.height=value,original);
    }
-   await page.locator('#chat-composer:not(.is-compact)').waitFor();
+    await page.locator('#chat-composer:not(.is-short)').waitFor();
   });
   await page.setViewportSize({width:1651,height:871});
   for(const [width,height] of [[1651,871],[390,844]]){

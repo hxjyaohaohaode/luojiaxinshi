@@ -1,5 +1,7 @@
 # genui v1 协议
 
+此页描述兼容保留的原生组件图。当前复杂任务默认按需使用 `openui` 自由生成文档，支持 CSS 优先、HTML 渐进预览和最终交互；模型参数、`ui_preview` 事件、隔离与历史保存见 [OpenIntelligentUI 适配](OPEN_INTELLIGENT_UI.md)。两种产物共享原会话、版本与 `ui-state` 端点。
+
 消息是 Markdown 文字与 `genui` 围栏块交错的 parts。普通代码围栏保持代码，不能嵌套解释成界面。genui 中每行是一个完整 JSON 操作；在收到行结束前不应用半行。UTF-8 字节拆分用流式解码；CRLF 与 LF 等价。EOF 时未关闭围栏标为 incomplete，保留已通过检查的部分和可读降级。
 
 ```genui

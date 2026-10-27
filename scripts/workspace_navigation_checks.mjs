@@ -20,7 +20,7 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
     for(let i=1;i<boxes.length;i++)assert.ok(boxes[i].x-boxes[i-1].x>=16&&boxes[i].x-boxes[i-1].x<=24,JSON.stringify(boxes));
     const g=await page.locator('#memory-tree-nav').evaluate(el=>{const row=el.querySelector('.memory-tree-root'),r=row.getBoundingClientRect(),b=el.getBoundingClientRect();return {left:r.left-b.left,right:b.right-r.right,overflow:document.documentElement.scrollWidth-innerWidth,lines:[...el.querySelectorAll('[role="group"]')].map(n=>getComputedStyle(n).borderLeftWidth),shadow:getComputedStyle(el.querySelector('[aria-selected="true"]>.memory-tree-node')).boxShadow};});
     assert.ok(g.left<=2&&g.right<=2&&g.overflow<=1,JSON.stringify(g));assert.equal(g.shadow,'none');assert.ok(g.lines.every(v=>parseFloat(v)===0));
-    assert.equal(await label(parent).locator('[data-memory-icon="folder"]').count(),1,'A user directory named .docx remains a directory');
+    assert.equal(await label(parent).locator('[data-memory-icon="folder"],[data-memory-icon="folder-open"]').count(),1,'A user directory named .docx remains a directory in either expansion state');
     assert.equal(await page.locator(`[data-tree-record="${memory.id}"] [data-memory-icon="intention"]`).count(),1);
     await page.screenshot({animations:'disabled',path:path.join(out,engine+'-memory-tree-desktop.png')});
   });

@@ -210,7 +210,12 @@ def validate_snapshots(snapshots,parts):
     for index,snapshot in snapshots.items():
         if not index.isdigit() or str(int(index))!=index or int(index)>=len(parts) or parts[int(index)]['kind']!='ui':raise ValueError('invalid_snapshot_block')
         if not isinstance(snapshot,dict) or set(snapshot)!={'state','view'}:raise ValueError('invalid_snapshot')
-        spec=parts[int(index)]['spec'];validate_state(spec,snapshot['state']);validate_view(spec,snapshot['view'])
+        spec=parts[int(index)]['spec']
+        if 'sandbox' in spec:
+            from .openui import validate_controls
+            validate_controls(spec,snapshot['state'])
+            if snapshot['view']!={}:raise ValueError('openui_view')
+        else:validate_state(spec,snapshot['state']);validate_view(spec,snapshot['view'])
     return snapshots
 
 
@@ -256,7 +261,17 @@ def submission_context(conn,cid,payload):
     for index,block in blocks.items():
         if not index.isdigit() or str(int(index))!=index or int(index)>=len(parts) or parts[int(index)]['kind']!='ui':raise ValueError('interaction_block')
         if not isinstance(block,dict) or set(block)!={'inputs','view'} or not isinstance(block['inputs'],dict):raise ValueError('interaction_block')
-        spec=parts[int(index)]['spec'];fields,actions=contracts(spec);state=deepcopy(spec['state'])
+        spec=parts[int(index)]['spec']
+        if 'sandbox' in spec:
+            from .openui import validate_controls
+            state=validate_controls(spec,block['inputs'])
+            if block['view']!={}:raise ValueError('openui_view')
+            for key,value in state['controls'].items():
+                control=spec['controls'][key]
+                summary.append({'block':int(index),'node':'sandbox','path':'controls.'+key,'label':control['label'],
+                    'value':value,'changed':not same(value,control['value']),'input_type':control['type']})
+            continue
+        fields,actions=contracts(spec);state=deepcopy(spec['state'])
         if set(block['inputs'])-(set(fields)|set(actions)):raise ValueError('interaction_input')
         for path,value in block['inputs'].items():write_path(state,path,value)
         validate_state(spec,state)
@@ -299,6 +314,9 @@ def checkpoint(conn,payload):
         for index,block in payload.blocks.items():
             spec=parts[int(index)]['spec']
             current=snapshots.setdefault(index,{'state':deepcopy(spec['state']),'view':{}})
+            if 'sandbox' in spec:
+                current['state']=deepcopy(block['inputs'])
+                continue
             for path,value in block['inputs'].items():write_path(current['state'],path,deepcopy(value))
             for key,value in block['view'].items():current['view'][key]=deepcopy(value)
         validate_snapshots(snapshots,parts)

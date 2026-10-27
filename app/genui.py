@@ -385,6 +385,7 @@ class Block:
 
 
 def parse_message(raw, limits=None, data=None):
+    from .openui import OpenUIBlock
     limits = {**LIMITS, **(limits or {})}
     if not isinstance(raw, str):
         fail('invalid_message')
@@ -411,12 +412,12 @@ def parse_message(raw, limits=None, data=None):
                 block = None
             elif line.strip():
                 block.line(line)
-        elif not fence and re.fullmatch(r'\s*```genui\s*', line):
+        elif not fence and re.fullmatch(r'\s*```(?:genui|openui)\s*', line):
             if sum(p['kind'] == 'ui' for p in parts) >= limits['blocks']:
                 fence = 'overflow'
                 text('交互区块数量已达上限，以下为原始说明。\n')
             else:
-                block = Block(limits, data)
+                block = OpenUIBlock(limits, data) if line.strip()=='```openui' else Block(limits, data)
                 parts.append({'kind': 'ui', 'block': block})
         else:
             if re.match(r'\s*```', line):

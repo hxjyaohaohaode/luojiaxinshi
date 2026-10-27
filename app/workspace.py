@@ -312,6 +312,9 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     latest=conn.execute("SELECT id FROM conversation_messages WHERE conversation_id=? AND role='assistant' ORDER BY rowid DESC LIMIT 1",(cid,)).fetchone()
                     if payload.retry_message_id and latest['id']!=previous['id']:
                         raise HTTPException(409,'后面已有新对话，请重新提问，避免旧问题覆盖上下文')
+                    last_user=conn.execute("SELECT id FROM conversation_messages WHERE conversation_id=? AND role='user' ORDER BY rowid DESC LIMIT 1",(cid,)).fetchone()
+                    if not last_user or previous['parent_id']!=last_user['id']:
+                        raise HTTPException(409,'后面已有新对话，请从这条回复开启分支，或在当前对话重新提问')
                     parent=previous['parent_id']
                 else:
                     if not payload.content:
@@ -333,6 +336,10 @@ def install_workspace(app,db,settings,user,heavy_lock):
                         conn.execute('UPDATE conversations SET title=? WHERE id=?',(payload.content[:40],cid))
                 messages=[]
                 for m in logical_messages(conn,cid):
+                    if m['role']=='assistant' and m['status']!='complete':
+                        # A selected unfinished revision is a viewing choice.
+                        # Use the last complete sibling as conversational context.
+                        m=next((v for v in reversed(m.get('_versions',[])) if v['status']=='complete'),m)
                     if m['status']=='complete':
                         item={k:v for k,v in m.items() if k!='_versions'}
                         interaction=conn.execute('SELECT context FROM genui_interactions WHERE message_id=?',(m['id'],)).fetchone()
@@ -462,7 +469,11 @@ def install_workspace(app,db,settings,user,heavy_lock):
     def cancel(cid:str,payload:Version,current=Depends(user)):
         with db.connect(write=True) as conn:
             own(conn,cid,current['id'],payload.version)
+            previews=[r['id'] for r in conn.execute('''SELECT m.id FROM conversation_messages m
+                JOIN reply_previews p ON p.message_id=m.id WHERE m.conversation_id=?
+                AND m.status='processing' AND (p.text<>'' OR p.ui<>'null')''',(cid,))]
             conn.execute("UPDATE conversation_messages SET status='cancelled',error='已停止采纳本次回复；模型服务可能仍在处理并计费。' WHERE conversation_id=? AND status='processing'",(cid,))
+            for mid in previews:select_reply(conn,mid,allow_incomplete=True)
             conn.execute('UPDATE conversations SET processing_token=NULL,processing_at=NULL WHERE id=?',(cid,));changed(conn,cid)
             result=conversation_detail(conn,cid,current['id'],settings)
         cancel_genui(cid)

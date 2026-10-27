@@ -1,4 +1,5 @@
 import {CATALOG} from './catalog.js';
+import {OpenUIBlock,openUIPlainText} from './openui-codec.js';
 import {safeClone,safeKey,pathParts,readPath,matches,bytes} from './security.js';
 import {parseExpression,evaluateExpression} from './expression.js';
 export {CATALOG,evaluateExpression};
@@ -106,9 +107,9 @@ export class StreamParser{
   }
   line(line,newline){
     if(this.block){if(/^\s*```\s*$/.test(line)){this.block.closed=true;if(!this.block.ended)this.block.error('missing_end');this.block=null;}else if(line.trim())this.block.line(line);return;}
-    if(!this.fence&&/^\s*```genui\s*$/.test(line)){
+    if(!this.fence&&/^\s*```(?:genui|openui)\s*$/.test(line)){
       if(this.parts.filter(p=>p.kind==='ui').length>=this.limits.blocks){this.fence='overflow';this.text('交互区块数量已达上限，以下为原始说明。\n');return;}
-      const block=new Block(this.limits,this.data);this.parts.push({kind:'ui',block});this.block=block;return;
+      const block=line.trim()==='```openui'?new OpenUIBlock():new Block(this.limits,this.data);this.parts.push({kind:'ui',block});this.block=block;return;
     }
     if(/^\s*```/.test(line)){if(this.fence&&/^\s*```\s*$/.test(line))this.fence=null;else if(!this.fence)this.fence='code';}
     this.text(line+(newline?'\n':''));
@@ -118,6 +119,7 @@ export class StreamParser{
 }
 export function parseMessage(raw,options){const parser=new StreamParser(options);parser.push(raw);return parser.finish();}
 export function blockMarkdown(spec,state=spec.state,view={}){
+  if(spec.sandbox){const selections=Object.entries(state?.controls||{}).map(([key,value])=>key+'：'+(typeof value==='boolean'?(value?'已选中':'未选中'):value));return [openUIPlainText(spec.sandbox),...selections].join('\n\n');}
   const lines=[],seen=new Set();let count=0;
   const value=v=>textValue(v),cell=v=>value(v).replace(/\|/g,'\\|').replace(/\n/g,' ');
   const table=(columns,rows)=>{lines.push('| '+columns.map(c=>cell(c.label)).join(' | ')+' |','| '+columns.map(()=> '---').join(' | ')+' |',...rows.map(row=>'| '+columns.map(c=>cell(row?.[c.key])).join(' | ')+' |'));};

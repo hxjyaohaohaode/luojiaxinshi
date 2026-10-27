@@ -1,4 +1,5 @@
 import {motionAllowed} from './experience-system.js';
+import {actionSucceeded,clearActionFeedback} from './action-feedback.js';
 
 // Interaction-only adaptations of the supplied AnimatedList, Stepper and Files.
 // Existing styles and containers remain the source of all final dimensions.
@@ -87,14 +88,14 @@ function keepVisible(root,item){
 const copyResets=new WeakMap();
 export async function copyCode(button,text,announce=()=>{}){
   if(!button||button.disabled)return;
-  clearTimeout(copyResets.get(button));button.disabled=true;button.setAttribute('aria-busy','true');
+  clearTimeout(copyResets.get(button));clearActionFeedback(button);button.disabled=true;button.setAttribute('aria-busy','true');
   try{
     await navigator.clipboard.writeText(text);
-    if(button.isConnected){button.textContent='已复制';button.setAttribute('aria-label','代码已复制');button.title='代码已复制';announce('代码已复制');}
+    if(button.isConnected){actionSucceeded(button,'代码已复制');announce('代码已复制');}
   }catch{
     if(button.isConnected){button.textContent='复制失败';button.setAttribute('aria-label','复制失败，请选择代码后复制');button.title='请选择代码后复制';announce('复制失败，请选择代码后复制');}
   }finally{
-    if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy');copyResets.set(button,setTimeout(()=>{if(button.isConnected){button.textContent='复制代码';button.setAttribute('aria-label','复制代码');button.title='复制代码';}},1800));}
+    if(button.isConnected){button.disabled=false;button.removeAttribute('aria-busy');if(!button.dataset.actionSuccess)copyResets.set(button,setTimeout(()=>{if(button.isConnected){button.textContent='复制代码';button.setAttribute('aria-label','复制代码');button.title='复制代码';}},1800));}
   }
 }
 

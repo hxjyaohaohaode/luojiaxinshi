@@ -199,7 +199,7 @@ class Run:
             if rule[2]:
                 await self.approve(aid + ':' + call['id'], name, args.model_dump())
             self.guard()
-            async with asyncio.timeout(45):
+            async with asyncio.timeout(self.tool_timeout(name)):
                 actual = await self.execute_tool(name, args, child)
                 result = self.bound_tool_result(name, actual, output_limit)
                 observation = self.tool_observation(name, args, result if name == 'ui_capabilities' else actual)
@@ -223,6 +223,9 @@ class Run:
 
     async def execute_tool(self, name, args, child=False):
         return await execute(self, name, args, child)
+
+    def tool_timeout(self,name):
+        return 45
 
     def bound_tool_result(self, name, result, limit):
         return bounded_result(result, limit)
@@ -345,7 +348,7 @@ class Run:
             repetitions = repetitions + 1 if signature == previous else 1
             previous = signature
             waiting_for_children = any(not a['task'].done() for a in self.agents.values()) and all(
-                c['function']['name'] in ('wait_agents', 'list_agents', 'submit_answer', 'submit_interface', 'research_complete') for c in calls)
+                c['function']['name'] in ('wait_agents', 'list_agents', 'submit_answer', 'submit_interface', 'generateSandboxedUi', 'compose_interface', 'research_complete') for c in calls)
             if repetitions >= 3 and not waiting_for_children:
                 raise AgentError('模型连续重复相同工具请求，已停止无进展循环')
             # History is evictable on the next compact() call. Counting the
@@ -393,7 +396,7 @@ class Run:
                 continue
             # Waiting for a child is progress coordination, not a malformed
             # request. It must not exhaust the parameter repair allowance.
-            if name in ('submit_answer', 'submit_interface', 'research_complete') and (self.pending_agent_results() or any(not a['task'].done() for a in self.agents.values())):
+            if name in ('submit_answer', 'submit_interface', 'generateSandboxedUi', 'compose_interface', 'research_complete') and (self.pending_agent_results() or any(not a['task'].done() for a in self.agents.values())):
                 continue
             failures[name] = failures.get(name, 0) + 1
             if failures[name] >= 3:

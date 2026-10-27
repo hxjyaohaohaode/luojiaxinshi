@@ -183,6 +183,11 @@ CREATE TABLE IF NOT EXISTS genui_interactions(
  message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
  origin_message_id TEXT REFERENCES conversation_messages(id) ON DELETE SET NULL,
  context TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS reply_previews(
+ message_id TEXT PRIMARY KEY REFERENCES conversation_messages(id) ON DELETE CASCADE,
+ text TEXT NOT NULL DEFAULT '', ui TEXT NOT NULL DEFAULT 'null',
+ revision INTEGER NOT NULL DEFAULT 0, sequence INTEGER NOT NULL DEFAULT 0,
+ updated_at REAL NOT NULL);
 INSERT OR IGNORE INTO meta VALUES('genui_schema_version','1');
 """
 

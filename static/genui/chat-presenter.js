@@ -8,12 +8,16 @@ import {AgentView} from './agent-view.js';
 import {CitationView} from './citations.js';
 import {submittedMessageText as userMessageText} from './interaction.js';
 import {memoryOperationSummary,memoryUseCount} from './memory-notice.js';
+import {previewSpec} from './openui-codec.js';
+import {replyPolicy,timeGroups} from './chat-policy.js';
+import {actionSucceeded,clearActionFeedback} from '../action-feedback.js';
+import {StreamMarkdownView} from './stream-text.js';
 
 export {userMessageText};
 function stamp(value,full=false){if(!value)return '';return new Date(value*1000).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',...(full?{year:'numeric',second:'2-digit'}:{})});}
 const replyPaths={speak:'M4 9v6h4l5 4V5L8 9z M16 8a6 6 0 0 1 0 8 M19 5a10 10 0 0 1 0 14',copy:'M9 9h11v12H9z M15 9V3H3v12h6',like:'M8 10v11H3V10z M8 10l4-8h2v7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H8',dislike:'M8 14V3H3v11z M8 14l4 8h2v-7h6a2 2 0 0 0 2-2l-2-8a2 2 0 0 0-2-2H8',branch:'M6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M18 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 7v10 M6 13h6a6 6 0 0 0 6-6',regenerate:'M20 7a9 9 0 1 0 1 8 M20 2v5h-5',share:'M12 16V3 M7 8l5-5 5 5 M5 12v9h14v-9',previous:'m14 6-6 6 6 6',next:'m10 6 6 6-6 6',save:'M5 3h14v19l-7-4-7 4z'};
 function replyAction(action,label){const b=button('',null,'button small plain reply-action');b.setAttribute('aria-label',label);b.title=label;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.6');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');path.setAttribute('d',replyPaths[action]);svg.append(path);b.append(svg);return b;}
-function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
+function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],openCitation:number=>record.citationView?.open(number),hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
 export class ConversationView{
   constructor(container,options){this.container=container;this.options=options;this.records=new Map();}
   configure(options){Object.assign(this.options,options);}
@@ -23,8 +27,10 @@ export class ConversationView{
     return null;
   }
   markContextSubmitted(context,saved=false){if(context){this.submittedContexts??=new Map();this.submittedContexts.set(context.message_id,JSON.stringify(context.blocks));if(saved){const record=this.records.get(context.message_id);if(record?.saveFeedback)record.saveFeedback.textContent='本次提交的选择已保存';}}}
-  dispose(){for(const r of this.records.values()){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();}this.records.clear();}
+  dispose(){for(const r of this.records.values()){r.renderer?.dispose();r.plainProse?.dispose();r.work?.dispose();r.citationView?.dispose();for(const control of r.footer.querySelectorAll('[data-action-success]'))clearActionFeedback(control);}this.records.clear();}
   parts(message){
+    if(message.status!=='complete'&&message._preview===undefined&&message.preview){const p=message.preview;return [{kind:'text',text:p.text.replace(/\[E\d+\]/g,'')},...(p.ui?[{kind:'ui',spec:previewSpec(p.ui)}]:[])];}
+    if(message.status==='processing'&&message._uiPreview)return [{kind:'text',text:(message._preview??message.content??'').replace(/\[E\d+\]/g,'')},{kind:'ui',spec:previewSpec(message._uiPreview)}];
     if(message.status==='processing'&&message._preview!==undefined)return [{kind:'text',text:message._preview.replace(/\[E\d+\]/g,'')}];
     if(message._liveParts)return message._liveParts;
     if(message.genui?.v===1){
@@ -34,10 +40,12 @@ export class ConversationView{
     }
     return [{kind:'text',text:message.content||''}];
   }
-  copy(message){const record=this.records.get(message.id);const parts=this.parts(message),snapshots=record?.renderer?.snapshots()||message.genui?.snapshots||{};return messageMarkdown(parts,snapshots);}
+  copy(message){const record=this.records.get(message.id);if(record?.renderer)return record.renderer.markdown();const parts=this.parts(message),snapshots=message.genui?.snapshots||{};return messageMarkdown(parts,snapshots);}
   copyHTML(message){
     const record=this.records.get(message.id);if(!record)return '';
     const original=record.content,clone=original.cloneNode(true),controls=[...original.querySelectorAll('input,textarea,select')];
+    clone.querySelectorAll('iframe.openui-frame').forEach(frame=>{const text=frame.closest('.openui-surface')?.querySelector('.openui-readable')?.textContent||'';const readable=document.createElement('div');readable.textContent=text;readable.style.whiteSpace='pre-wrap';frame.replaceWith(readable);});
+    clone.querySelectorAll('.openui-fallback,.openui-toolbar,.openui-status').forEach(node=>node.remove());
     [...clone.querySelectorAll('input,textarea,select')].forEach((node,index)=>{const value=controls[index];node.replaceWith(document.createTextNode(value.type==='checkbox'?(value.checked?'☑':'☐'):value.tagName==='SELECT'?value.selectedOptions[0]?.textContent||value.value:value.value));});
     clone.querySelectorAll('.citation-mark').forEach(node=>node.replaceWith(document.createTextNode('['+node.dataset.citation+']')));
     clone.querySelectorAll('[hidden]').forEach(node=>node.remove());
@@ -49,19 +57,22 @@ export class ConversationView{
   }
   draw(messages){
     this.messages=messages;
-    const messageIds=new Set(),latestAnswers=new Map();
-    for(const message of messages){messageIds.add(message.id);if(message.role==='assistant'&&message.parent_id)latestAnswers.set(message.parent_id,message);}
-    const lastAssistant=messages.filter(m=>m.role==='assistant').at(-1)?.id,activeMessage=messages.find(m=>m.role==='assistant'&&m.status==='processing')?.id,feature=this.options.feature||{};
+    const messageIds=new Set(messages.map(message=>message.id)),groups=timeGroups(messages);
+    const activeMessage=messages.find(m=>m.role==='assistant'&&m.status==='processing')?.id,feature=this.options.feature||{};
     const contextKey=JSON.stringify([this.options.sources?.map(s=>[s.id,s.status,s.name]),this.options.arrangements?.map(r=>[r.id,r.version]),this.options.tasks?.map(r=>[r.id,r.version])]);
     if(contextKey!==this.contextKey){this.contextKey=contextKey;this.host={...hostRegistry(this.options),imageResources:this.options.imageResources||[],mediaResources:this.options.mediaResources||[]};for(const r of this.records.values())r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
-    const children=messages.map(message=>{
+    const children=messages.flatMap(message=>{
       let r=this.records.get(message.id);
       if(!r){
-        const article=el('article','message message-'+message.role);article.dataset.messageId=message.id;const label=el('div','message-label'),content=el('div','message-content'),status=el('span'),citations=el('div','message-citations'),error=el('div','message-error'),footer=el('div','message-footer');
+        const article=el('article','message message-'+message.role);article.dataset.messageId=message.id;article.dataset.turnId=message.parent_id||message.id;article.dataset.role=message.role;const label=el('div','message-label'),content=el('div','message-content'),status=el('span','message-state'),citations=el('div','message-citations'),error=el('div','message-error'),footer=el('div','message-footer');
         // 每条助手回复都显式标注“AI 生成”，符合生成合成内容标识要求。
         if(message.role==='user')label.hidden=true;else{const img=el('img');img.src='/static/assets/luojia-messenger-reading.png';img.alt='';img.width=28;img.height=28;const badge=el('span','ai-badge','AI 生成');badge.title='这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';label.append(img,document.createTextNode('珞珈小信使'),badge,status);}
         article.append(label,content,citations,error,footer);r={article,label,status,content,citations,error,footer};this.records.set(message.id,r);
       }
+      const grouping=groups.get(message.id);
+      if(grouping){if(!r.separator){r.separator=el('div','chat-time-separator');r.separator.append(el('time'));}const time=r.separator.firstChild;time.textContent=grouping.label;time.dateTime=new Date(grouping.at*1000).toISOString();time.title=stamp(grouping.at,true);}
+      const nodes=grouping?[r.separator,r.article]:[r.article];
+      if(!r.time){r.time=el('time','message-time sr-only');if(message.created_at){r.time.dateTime=new Date(message.created_at*1000).toISOString();r.time.textContent='发送于 '+stamp(message.created_at,true);}r.time.id='message-time-'+message.id;r.article.prepend(r.time);r.content.setAttribute('aria-describedby',r.time.id);r.content.title=stamp(message.created_at,true);}
       if(message.role==='user'){
         const attachmentKey=JSON.stringify(message.attachments||[]);
         if(r.attachmentKey!==attachmentKey){
@@ -77,37 +88,40 @@ export class ConversationView{
         if(r.userKey!==key){r.userKey=key;r.content.replaceChildren(document.createTextNode(text));const selections=message.interaction?.selections;
           if(selections?.length){const details=el('details','message-selection-context'),summary=el('summary','','附带当前界面选择 · '+selections.length+' 项'),list=el('dl');for(const item of selections){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.display??(typeof item.value==='object'?JSON.stringify(item.value):String(item.value??'未选择'))));list.append(row);}details.append(summary,list);if(message.interaction.checkpoint?.status==='conflict')details.append(el('p','','这些选择已用于本次问题。旧界面在另一页面有较新进度，已保留那份进度。'));r.content.append(details);}
         }
-        r.citations.hidden=r.error.hidden=true;r.footer.hidden=false;const answer=latestAnswers.get(message.id);const state=answer?.status==='complete'?'已回复':answer?.status==='processing'?'处理中':answer?'回复中断':'已保存';r.footer.textContent=`${stamp(message.created_at)} · ${state}`;r.footer.title=answer?`系统已接收 · ${stamp(answer.created_at,true)}`:`保存于 ${stamp(message.created_at,true)}`;return r.article;
+        r.citations.hidden=r.error.hidden=r.footer.hidden=true;return nodes;
       }
+      const policy=replyPolicy(messages,message,this.options);
+      const fixedReply=message.grounding?.planning_mode==='host_acknowledgement',badge=r.label.querySelector('.ai-badge');if(badge){badge.textContent=fixedReply?'系统回复':'AI 生成';badge.title=fixedReply?'系统回复':'这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';}
       const links=message.status==='complete'&&message.genui?.validated?(message.evidence_sources||[]).map(source=>source.url).filter(url=>typeof url==='string'):[];
       if(JSON.stringify(links)!==JSON.stringify(r.linkResources)){r.linkResources=links;r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
       const redirected=message.status==='cancelled'&&message.error?.includes('按更新后的问题继续'),lastVersion=message.versions?.at(-1),keptPrevious=message.status==='complete'&&lastVersion?.id!==message.id&&['failed','cancelled'].includes(lastVersion?.status);
       r.status.textContent=message.status==='processing'?(message._phaseLabel||((message.genui?.raw||message.content)?'正在书写…':this.options.sources?.length?'正在对照材料…':'正在思考…')):message.status==='complete'?(keptPrevious?(lastVersion.agent?.operations?.length?'新回复未完成，操作结果见下方；正文为上一版':'新版本未完成，已保留上一版'):''):redirected?'已按补充继续':'回复未完成';
       const active=message.status==='processing'&&message.id===activeMessage;
-      if(!r.work)r.work=new WorkSummaryView(r.article,r.content);r.work.update(message);
-      if(!r.agent)r.agent=new AgentView(r.article,r.content);r.agent.update(message);
-      if(active&&(message._work?.length||message.grounding?.steps?.length))r.status.textContent='处理中';
+      if(!r.work)r.work=new WorkSummaryView(r.article,r.content,{openTrace:message=>this.options.openTrace?.(message)});r.work.update(message);
+      if(!r.agent)r.agent=new AgentView(r.article,r.content);r.agent.update(message,{busy:!!activeMessage||!!this.options.busy,readOnly:this.options.readOnly});
+      if(active&&(message._work?.length||message.grounding?.steps?.length)){const stage=message._phase||[...(message._work||message.grounding?.steps||[])].reverse().find(s=>s.state==='running')?.stage;r.status.textContent=stage==='verifying'?'核验中':message.preview||message._preview!==undefined?'生成中':'处理中';}
       const pose=active?(message._phase==='writing'?'writing':message._phase==='verifying'||message._phase==='searching'||message._phase==='retrieving'?'search':(message.genui?.raw||message.content)?'writing':this.options.sources?.length?'search':'thinking'):message.status==='complete'?'complete':'rest';
       if(r.pose!==pose){r.pose=pose;const avatar=r.label.querySelector('img');avatar.src='/static/assets/luojia-messenger-'+pose+'.png';avatar.dataset.replyPose=pose;}
-      const previewing=active&&message._preview!==undefined;
+      const previewing=active&&(message._preview!==undefined||!!message.preview);
       r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',previewing);
       // Keep the preview until the complete verified result can replace it.
-      const contentState=[message._preview,previewing?'':message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled];
+      const contentState=[message._preview,previewing?'':message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled,JSON.stringify(message._uiPreview),message.preview?.sequence];
       if(!r.contentState||contentState.some((value,index)=>value!==r.contentState[index])){
         r.contentState=contentState;const parts=this.parts(message);r.parts=parts;
-        if(feature.enabled&&!previewing){
-          if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
+        if(feature.enabled){
+          if(r.plainProse){r.plainProse.dispose();r.plainProse=null;}
+          if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,reveal:!!this.options.transitionProse,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
             imageResources:this.options.imageResources||[],askModel:event=>this.options.askModel({...event,message_id:message.id}),
-            onChange:()=>{this.interactionOrigin=message.id;if(r.save){r.save.textContent='保存互动进度';r.saveFeedback.textContent='';}},
+            onChange:()=>{this.interactionOrigin=message.id;if(r.save){clearActionFeedback(r.save);r.save.textContent='保存互动进度';r.saveFeedback.textContent='';}},
             onContentRendered:()=>r.citationView?.decorate(),
             afterRender:follow=>{r.citationView?.decorate();this.options.afterRender?.(follow);},
             onSave:message.genui?async(index,snapshot)=>{const snapshots=r.renderer.snapshots();snapshots[index]=snapshot;await this.options.save(message.id,snapshots);}:null});}
-          r.renderer.update(parts);
+          r.renderer.update(parts,{streaming:active});
         }else{
-          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.content.replaceChildren(markdown(previewing?message._preview.replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{enhance:false}));
+          r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.plainProse??=new StreamMarkdownView(r.content);r.plainProse.render(previewing?(message._preview??message.preview.text).replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{streaming:active});
         }
       }
-      const waiting=message.status==='processing'&&!((message._preview||message.genui?.raw||message.content||'').length)&&!(message._work?.length||message.grounding?.steps?.length);
+      const waiting=message.status==='processing'&&!((message._preview||message.preview?.text||message.genui?.raw||message.content||'').length)&&!message.preview?.ui&&!(message._work?.length||message.grounding?.steps?.length);
       if(waiting&&!r.waiting){r.waiting=el('div','thinking');const visual=el('span');visual.innerHTML=brandMotion('mesh','',{priority:3});r.waiting.append(visual,el('span','','正在结合材料整理回复…'));r.article.insertBefore(r.waiting,r.citations);}else if(!waiting&&r.waiting){r.waiting.remove();r.waiting=null;}if(r.waiting)r.waiting.lastChild.textContent=message._phaseLabel||'正在结合材料整理回复…';
       if(!r.citationView)r.citationView=new CitationView(r.content,r.citations,this.options);r.citationView.update(message,this.options);
       r.citations.hidden=!r.citations.childNodes.length;
@@ -119,25 +133,24 @@ export class ConversationView{
         r.memoryTool.className='reply-action '+(recallCount?'memory-use-icon':'memory-change-icon');r.memoryTool.hidden=false;r.memoryTool.dataset.memoryLife='trace';r.memoryTool.dataset.id=message.id;r.memoryTool.dataset.cid=message.conversation_id||this.options.conversationId||'';
         const label=[recallCount?`本次使用 ${recallCount} 条记忆`:'',receipt].filter(Boolean).join('；');r.memoryTool.setAttribute('aria-label',label+'，查看记忆记录');r.memoryTool.title=label;
       }else if(r.memoryTool)r.memoryTool.hidden=true;
-      const errorKey=JSON.stringify([message.status,message.error,lastAssistant]);if(r.errorKey!==errorKey){r.errorKey=errorKey;r.error.replaceChildren();r.error.hidden=redirected||['complete','processing'].includes(message.status);if(!r.error.hidden){r.error.append(el('p','',message.error||'回复未完成，已收到的内容仍保留。'));if(message.id===lastAssistant){const retry=button('重试这条回复',null,'button small');retry.dataset.chatAction='retry';retry.dataset.id=message.id;r.error.append(retry);}}}
-      if(!r.time){r.time=el('time','message-time',stamp(message.created_at));if(message.created_at)r.time.dateTime=new Date(message.created_at*1000).toISOString();r.footer.append(r.time);}
+      const errorKey=JSON.stringify([message.status,message.error,policy.retry]);if(r.errorKey!==errorKey){r.errorKey=errorKey;r.error.replaceChildren();r.error.hidden=redirected||['complete','processing'].includes(message.status);if(!r.error.hidden){r.error.append(el('p','',message.error||'回复未完成，已收到的内容仍保留。'));if(policy.retry){const retry=button('重试这条回复',null,'button small');retry.dataset.chatAction='retry';retry.dataset.id=message.id;r.error.append(retry);}}}
       if(!r.copy){r.copy=replyAction('copy','复制回复');r.copy.dataset.chatAction='copy';r.copy.dataset.id=message.id;r.footer.append(r.copy);}
-      r.copy.disabled=message.status!=='complete';
-      const toolsKey=JSON.stringify([message.id,message.status,message.reaction,message.versions?.map(v=>v.id),message.version_index]);
+      r.copy.hidden=!policy.copy;r.copy.disabled=!policy.copy||r.copy.getAttribute('aria-busy')==='true';
+      const toolsKey=JSON.stringify([message.id,policy,message.reaction,message.versions?.map(v=>v.id),message.version_index]);
       if(r.toolsKey!==toolsKey){r.toolsKey=toolsKey;
         if(!r.tools){r.tools=el('div','reply-tools');r.footer.append(r.tools);}
         const controls=[];
-        for(const [action,label,pressed]of [['speak','朗读这条回复',false],['like','这条回答有帮助',message.reaction===1],['dislike','这条回答没有帮助',message.reaction===-1],['branch','从这条回复开启分支',false],['regenerate','重新生成回复',false],['share','分享回复',false]]){const b=[...r.tools.children].find(n=>n.dataset.chatAction===action)||replyAction(action,label);b.dataset.chatAction=action;b.dataset.id=message.id;b.disabled=message.status!=='complete';if(['like','dislike'].includes(action))b.setAttribute('aria-pressed',String(pressed));controls.push(b);}
-        if(message.versions?.length>1){const index=message.version_index??message.versions.findIndex(v=>v.id===message.id),pager=el('span','reply-versions');for(const [step,label]of [[-1,'‹'],[1,'›']]){const b=replyAction(step<0?'previous':'next',step<0?'上一版回复':'下一版回复');b.dataset.chatAction='version';b.dataset.id=message.id;b.dataset.index=index+step;b.setAttribute('aria-label',step<0?'上一版回复':'下一版回复');b.disabled=active||index+step<0||index+step>=message.versions.length;pager.append(b);if(step===-1)pager.append(el('span','',`${index+1} / ${message.versions.length}`));}controls.push(pager);}
+        for(const [action,label,pressed]of [['speak','朗读这条回复',false],['like','这条回答有帮助',message.reaction===1],['dislike','这条回答没有帮助',message.reaction===-1],['branch','从这条回复开启分支',false],['regenerate','重新生成回复',false],['share','分享回复',false]]){if(!policy[action])continue;const b=[...r.tools.children].find(n=>n.dataset.chatAction===action)||replyAction(action,label);b.dataset.chatAction=action;b.dataset.id=message.id;b.disabled=b.getAttribute('aria-busy')==='true';if(['like','dislike'].includes(action))b.setAttribute('aria-pressed',String(pressed));controls.push(b);}
+        if(message.versions?.length>1){const index=message.version_index??message.versions.findIndex(v=>v.id===message.id),pager=el('span','reply-versions');for(const [step,label]of [[-1,'‹'],[1,'›']]){const b=replyAction(step<0?'previous':'next',step<0?'上一版回复':'下一版回复');b.dataset.chatAction='version';b.dataset.id=message.id;b.dataset.index=index+step;b.setAttribute('aria-label',step<0?'上一版回复':'下一版回复');b.disabled=!policy.version||index+step<0||index+step>=message.versions.length;pager.append(b);if(step===-1)pager.append(el('span','',`${index+1} / ${message.versions.length}`));}controls.push(pager);}
         replaceInOrder(r.tools,controls);
       }
-      if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer)return;r.save.disabled=true;r.saveFeedback.textContent='';try{await this.options.save(message.id,r.renderer.snapshots());r.renderer.markSaved();r.save.textContent='进度已保存';r.saveFeedback.textContent='';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.disabled=false;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
-      r.save.hidden=!(feature.enabled&&message.genui&&r.parts?.some(p=>p.kind==='ui'&&Object.values(p.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart'))));r.save.disabled=message.status==='processing';
+      if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer||r.save.disabled)return;r.save.disabled=true;r.save.setAttribute('aria-busy','true');r.saveFeedback.textContent='';const snapshots=r.renderer.snapshots(),sent=JSON.stringify(snapshots);try{await this.options.save(message.id,snapshots);if(JSON.stringify(r.renderer.snapshots())===sent){r.renderer.markSaved();actionSucceeded(r.save,'互动进度已保存');r.saveFeedback.textContent='互动进度已保存';}else r.saveFeedback.textContent='上次选择已保存，当前修改尚未保存';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.removeAttribute('aria-busy');r.save.disabled=!replyPolicy(this.messages,message,this.options).save;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
+      r.save.hidden=!(policy.save&&feature.enabled&&r.parts?.some(p=>p.kind==='ui'&&(p.spec.sandbox||Object.values(p.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart')))));r.save.disabled=!policy.save||r.save.getAttribute('aria-busy')==='true';
       r.footer.hidden=!(message.genui?.raw||message.content||message.versions?.length>1);
       if(feature.debug&&message.genui){if(!r.debug){r.debug=el('details','gu-raw-debug');r.debug.append(el('summary','','查看原始回复'),el('pre'));r.article.append(r.debug);}r.debug.lastChild.textContent=message.genui.raw;}
-      return r.article;
+      return nodes;
     });
-    for(const [id,r]of this.records)if(!messageIds.has(id)){r.renderer?.dispose();r.work?.dispose();r.citationView?.dispose();this.records.delete(id);}
+    for(const [id,r]of this.records)if(!messageIds.has(id)){r.renderer?.dispose();r.plainProse?.dispose();r.work?.dispose();r.citationView?.dispose();for(const control of r.footer.querySelectorAll('[data-action-success]'))clearActionFeedback(control);this.records.delete(id);}
     replaceInOrder(this.container,children);
   }
 }

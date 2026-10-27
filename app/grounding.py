@@ -142,8 +142,12 @@ async def structured_check(settings, request, schema, label, validate=None):
             budget_expansions+=1
             continue
         for key in usage:usage[key]+=int(spent.get(key) or 0)
+        if not (message.get('content') or '').strip('\ufeff \t\r\n'):
+            raise AIError(label+'返回空结果，已停止本轮；未跳过检查直接作答。')
         try:
-            checked=schema.model_validate_json(message['content']).model_dump()
+            from .answer_format import answer_content
+            canonical,_=answer_content(message['content'],[],[])
+            checked=schema.model_validate_json(canonical).model_dump()
             if validate:validate(checked)
             return checked,usage
         except (ValueError,KeyError,TypeError) as exc:
@@ -469,7 +473,7 @@ def check_result(result, sources):
         raise ValueError('互动界面校验失败，请修复指定节点与属性：'+dumps({'blocks':diagnostics,'fields':fields[:8]}))
     from .genui_state import validate_state
     for part in parts:
-        if part['kind']=='ui':
+        if part['kind']=='ui' and 'sandbox' not in part['spec']:
             try:validate_state(part['spec'],part['spec']['state'])
             except ValueError as exc:raise ValueError('互动状态绑定校验失败：'+str(exc)+'。请初始化所有输入和本地动作路径，选项与初始值匹配；逐项编辑需 Collection.bind 指向 state 原始数组。') from None
     if any(not normalized(e['quote']) for e in result['citations']):
@@ -491,7 +495,7 @@ def check_result(result, sources):
     if any(index[c['source_id']].get('media_evidence') and c['source_id'] not in result.get('media_sources',[]) for c in cited):
         raise ValueError('媒体观察引用须登记 media_sources，不得冒充逐字转录')
     from .response_contract import prose_without_code
-    prose=prose_without_code('\n'.join(p['text'] for p in parts if p['kind']=='text'))
+    prose=prose_without_code('\n'.join(p['text'] if p['kind']=='text' else p['spec'].get('text','') for p in parts))
     for number in re.findall(r'(?<!\\)\[(\d+)\](?!\()', prose):
         if not 1 <= int(number) <= len(cited):
             raise ValueError(f'引用编号不存在：[{number}]，本轮只有{len(cited)}处已登记引用。作者草稿必须使用本轮[E编号]与evidence_refs，不能沿用旧回复或审查意见的显示序号。')
@@ -501,11 +505,15 @@ def check_result(result, sources):
     # an invalid scheme cannot pass server review and become a broken control.
     for part in parts:
         if part['kind'] != 'ui':continue
+        if part['spec'].get('sandbox'):
+            from .openui import inspect_document
+            for url in inspect_document(part['spec']['sandbox']).links:
+                if not url.startswith('#') and (not public_url(url) or url not in allowed_urls):raise ValueError('界面链接须为本轮证据中登记的公开网址')
         for node in part['spec']['nodes'].values():
             for action in node.get('on', {}).values():
                 if action.get('kind') == 'open_url' and (not public_url(action.get('url', '')) or action['url'] not in allowed_urls):
                     raise ValueError('界面链接须为本轮证据中登记的公开网址')
-    for url in urls_in(result['answer']):
+    for url in urls_in('\n'.join(p['text'] for p in parts if p['kind']=='text')):
         if url not in allowed_urls:
             raise ValueError('网址不在证据中')
     for paragraph in prose.split('\n\n'):
@@ -552,6 +560,24 @@ def review_options(settings, result, sources):
     return {'thinking': {'type': 'enabled'}, 'max_completion_tokens': settings.ai_output_tokens}
 
 
+def review_answer(result):
+    """Give the reviewer original UI fields without nested JSON escaping.
+
+    No evidence, authored code, styling or claim is dropped. The same strings
+    are inspected as structured fields instead of a JSON fence inside a second
+    JSON document, reducing transport tokens and parsing work for the reviewer.
+    """
+    from .genui import parse_message
+    value={key:item for key,item in result.items() if key!='citations'}
+    parts=parse_message(result['answer'])
+    if not any(p['kind']=='ui' and p['spec'].get('sandbox') for p in parts):return value
+    value['answer']='\n'.join(p['text'] for p in parts if p['kind']=='text')
+    value['ui_documents']=[p['spec']['sandbox'] for p in parts if p['kind']=='ui' and p['spec'].get('sandbox')]
+    native=[p['spec'] for p in parts if p['kind']=='ui' and not p['spec'].get('sandbox')]
+    if native:value['native_ui']=native
+    return value
+
+
 async def verify(settings, result, sources, question, context):
     from .genui import parse_message
     check_response_contract(parse_message(result['answer']), context.get('response_contract', {}))
@@ -570,15 +596,17 @@ program_checks 已检查引文字面、编号、协议和输出约束。不要�
     has_ui=any(part['kind']=='ui' for part in parse_message(result['answer']))
     if has_ui:
         prompt += "\n同时检查 UI 中每张卡片、图表、选项、初值、公式和按钮承诺，尤其是条件遗漏、数字不一致、将本地互动冒充真实操作；相同事实只建立一次证据映射，再核对各处表达。实际界面功能由 ui_contract 与程序检查约束。"
+        prompt += '\nui_documents 若存在，包含未经删减的 CSS、HTML、函数与初始化表达式原始字段，已经解开传输围栏；直接核对这些字段，不再二次解码 JSON。样式只在遮蔽必要条件或误导重点时构成实质问题；不要为无关视觉偏好要求改稿。'
     if any(s.get('evidence_kind') in ('web_page','web_summary') for s in sources):
         prompt += "\n网页摘要不能证明现行规则；检查来源日期与适用范围，不把版权年份当生效日期。只有适用范围重叠且规则不兼容才报告冲突。登记的网页 url 可以支持页面入口链接，不要求正文再次出现完整网址；链接引用应指向该网页本身。来源覆盖有限时不能声称已查全。"
     prompt += '\n若提供 host_activity，它是宿主程序生成的本轮执行范围记录，不是模型自述。public_search_rounds=0 且 other_external_execution_attempted=false 可支持本阶段未访问外部网页；retrieval_scopes 不含 library 可支持本阶段未检索资料库。它不证明业务操作成功，也不能证明后续自动记忆维护未发生。没有必要要求回答追加这些合规说明；未声称的事项不作为缺失问题。'
+    prompt += '\noperation-history- 来源是服务器按当前账号与本对话读取的历史操作回执，committed/undone 和当前状态必须区分。本轮未调用工具不能否认历史写入；历史写入也不能证明本轮又执行或当前仍有效。只核验本次答复，不重复完成此前任务。每个不同事实只核对一次，结论确定后立即返回两字段 JSON，不反复推演已通过的语法、保留未知或相同表述。'
     audit_context={key:context[key] for key in ('now','timezone','response_contract','host_activity') if key in context}
     if has_ui:audit_context['ui_contract']=context.get('ui_contract',{})
     request={'model': settings.ai_model, **review_options(settings, result, sources),
         'response_format': {'type': 'json_object'}, 'messages': [{'role': 'system', 'content': prompt + dumps(Review.model_json_schema())},
         {'role': 'user', 'content': review_content(dumps({'question': question,
-            'answer_to_audit': {key: value for key, value in result.items() if key != 'citations'},
+            'answer_to_audit': review_answer(result),
             'citation_display_map': [{'display_number': number, **citation} for number, citation in enumerate(result['citations'], 1)],
             'evidence': snapshots(sources), 'grounding_context': audit_context, 'program_checks':checks}), sources)}]}
     from .media_input import input_budget
@@ -614,6 +642,26 @@ async def events(settings, db, uid, cid, mid, initial_sources, messages, profile
 async def _events(settings, db, uid, cid, mid, initial_sources, messages, profile, tier):
     from . import genui_ai
     from .harness import CURRENT,GENERATION_LIMIT,PROTOCOL_RETRIES,SEMANTIC_RETRIES
+    # Exact praise has no factual answer to invent or re-audit. Assent ("可以",
+    # "好的") and replies to questions must still follow the ordinary tool path.
+    latest=next((m for m in reversed(messages) if m['role']=='user'),{})
+    praise=re.sub(r'[\s，,。！!😊👍]', '', latest.get('content',''))
+    previous=next((m for m in reversed(messages[:-1]) if m['role']=='assistant'),{})
+    if (settings.ai_api_key and praise in {'谢谢','谢谢你','非常棒','太棒了','好的非常棒','谢谢非常棒'}
+            and not latest.get('interaction') and not re.search(r'[？?]|是否|要不要|请确认|确认后',previous.get('content',''))):
+        with db.connect() as conn:
+            attached=conn.execute('SELECT 1 FROM message_attachments WHERE message_id=?',(latest.get('id',''),)).fetchone()
+        if not attached:
+            now=int(time.time());CURRENT.get().stop_reason='acknowledgement'
+            report={'status':'checked','started_at':now,'checked_at':now,'attempts':0,
+                    'checks':['固定礼貌答复；无事实、操作承诺或模型生成内容'],
+                    'planning_mode':'host_acknowledgement','model_modes':{},'usage':{'input_tokens':0,'output_tokens':0}}
+            save_report(db,mid,[],report)
+            yield {'type':'phase','phase':'writing','label':'正在回复…'}
+            result={'answer':'谢谢！','citations':[],'image_sources':[],'claims':[]}
+            yield {'type':'delta','text':result['answer']}
+            yield {'type':'complete','result':result,'usage':report['usage'],'sources':[]}
+            return
     total = {'input_tokens': 0, 'output_tokens': 0}
     scope_start=message_scope_start(messages)
     if scope_start is not None:
@@ -624,6 +672,9 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         profile={k:v for k,v in profile.items() if k not in PERSONAL_KEYS}
     if not access['attachments']:
         initial_sources=[]
+    if access['schedule'] and scope_start is None:
+        from .agent_runtime.workspace import history_evidence
+        with db.connect() as conn:profile={**profile,'_operation_evidence':history_evidence(conn,uid,cid,messages)}
     question = question_context(messages)
     # 记忆召回只看最新一句：拼进来的历史会把旧话题的记忆排进上下文，也会让“继续”判定失效。
     latest_users=[m for m in messages if m['role']=='user']
@@ -745,6 +796,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             sources, coverage = agent_result['sources'], agent_result['retrieval']
         else:
             sources, coverage = await asyncio.to_thread(retrieve, db, uid, cid, initial_sources, messages, profile, [question] + planned['local_queries'])
+            sources += profile.get('_operation_evidence',[])
         report['retrieval'] = coverage
         check_context()
         report['web'] = agent_result['web'] if agent_result else {'status': 'not_needed', 'reason': planned['web_reason'], 'queries': []}
@@ -822,6 +874,8 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         else:sources_for_answer=sources
         report['now'] = datetime.now(CST).isoformat()
         context = {**report, 'timezone': 'Asia/Shanghai', 'ui_contract': {
+            'shared_form':'CampusUI.form 是宿主预置函数：按 inputs 校验空值、有限数、min/max、integer、step；调用 outputs 中的纯函数更新对应结果节点，错误时全部清为 —；恢复或输入变更会重算。digits 为顶层0..6精度；无顶层digits且无同名结果元素时，也接受 outputs.digits 中的整数精度。prompt 配置以捕获监听独占该按钮点击并 stopImmediatePropagation，后续按钮监听不执行；只在点击后调用一次宿主 sendPrompt，自动携带输入和计算结果。宿主还限制一次真实手势最多一个请求。无需要求模型重写这些宿主实现。',
+            'bridge_alias':'Websandbox.connection.remote 与 CampusUI 在运行时是同一个只读 API 对象；旧产物别名具有相同的用户手势、参数与权限校验。原生输入由宿主附入 interaction.selections，values 不是唯一上下文。',
             'local_state':'控件只改变本回答的阅读视角、筛选、情境作答、展开状态或试算；绑定会更新相应内容，不改写来源事实。',
             'save':'用户点击保存互动进度可保存本回答状态；不会修改日程、待办或通知。',
             'host_actions':['open_calendar','open_sources','review_material','upload_material'],
@@ -829,8 +883,8 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             'ask_model':'用户点击提交后，宿主自动验证并附带本回答已编辑的输入、批注与阅读选择，生成 interaction.selections；values 是额外字段，不是唯一上下文。全局提交包括各记录已编辑字段，记录内按钮仅附该记录及全局字段；未编辑的模型初始值不是用户事实。重复数组 notes 等可编辑记录不必再次复制到 values 才能传递。总上下文最多40项/16000字节，超过会拒绝发送，不会静默截断。下一轮仍须检索核验。'}}
         profile = {**profile, '_grounding_context': context}
         if agent_result and agent_result.get('candidate'):
-            report['models']['composition'] = settings.ai_model
-            report['model_modes']['composition'] = 'enabled'
+            report['models']['composition'] = agent_result.get('composition_model') or settings.ai_model
+            report['model_modes']['composition'] = agent_result.get('composition_thinking','enabled')
         else:
             report['model_modes']['composition'] = 'enabled'
         messages=packed
@@ -849,7 +903,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
                 yield {'type': 'phase', 'phase': 'writing', 'label': '正在根据证据组织回答…' if attempt == 0 else '正在修正尚未通过检查的草稿…',
                        'data': {'materials':[{'id':s['id'],'name':s['name'],'status':s['status']} for s in sources], 'resources':resource_index(sources)}}
             draft = None
-            if attempt:yield {'type':'preview','text':'','reset':True}
+            if attempt:yield {'type':'preview','text':'','reset':True,'clear_ui':True}
             provider_draft = None
             repair_issues = list(dict.fromkeys(repair_issues + feedback))
             # Older assistant statements are not evidence. A correction needs
@@ -868,7 +922,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
                     yield {'type': 'preview', 'text': json.loads(agent_result['candidate_raw'])['answer'], 'reset': True}
                 else:
                     async for event in genui_ai.stream_reply(settings, sources_for_answer, current_messages, writing_profile, writing_tier):
-                        if event['type']=='preview':
+                        if event['type'] in ('preview','ui_preview'):
                             yield event
                         if event['type'] == 'complete':
                             draft = event['result']

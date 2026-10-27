@@ -28,6 +28,7 @@ def completed_work(result, report, steps):
     from .genui import parse_message
     components = [n['type'] for part in parse_message(result.get('answer', '')) if part['kind'] == 'ui'
         for n in part['spec']['nodes'].values()]
+    if any(p['kind']=='ui' and p['spec'].get('sandbox') for p in parse_message(result.get('answer',''))):components.append('OpenGenerativeUI')
     # Reuse conclusions already checked by the independent reviewer. No new
     # model, inferred success, stage template, or unverified child summary.
     highlights = list(dict.fromkeys(brief(re.sub(r'\[(?:E)?\d+\]', '', c['text']).strip())

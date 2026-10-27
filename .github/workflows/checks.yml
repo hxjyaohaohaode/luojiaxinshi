@@ -78,7 +78,24 @@ jobs:
       - name: Verify embedded Agent approvals, UI, media and incremental rendering
         if: ${{ !cancelled() && steps.browser-suites.outcome != 'skipped' }}
         run: python scripts/run_agent_browser_checks.py
-      - name: Write browser counts to the run summary
+      - name: Verify streaming OpenUI in Chromium, Firefox and WebKit
+        if: always()
+        run: python scripts/run_openui_browser_checks.py
+      - name: Verify compact chat layout and reading chrome
+        if: always()
+        env:
+          OPENUI_VERIFY_SCRIPT: scripts/verify_chat_layout.mjs
+        run: python scripts/run_openui_browser_checks.py
+      - name: Verify chat controls, execution trace, reading anchors and reversible new-chat gestures
+        if: always()
+        env:
+          OPENUI_VERIFY_SCRIPT: scripts/verify_chat_interactions.mjs
+        run: python scripts/run_openui_browser_checks.py
+      - name: Verify reload during review and persistent reply revisions
+        env:
+          OPENUI_VERIFY_SCRIPT: scripts/verify_chat_recovery.mjs
+        run: python scripts/run_openui_browser_checks.py
+      - name: Write browser counts including streaming OpenUI
         if: always()
         run: python scripts/write_ci_summary.py --kind browser
       - name: Upload synthetic browser reports and screenshots
@@ -129,6 +146,16 @@ jobs:
             artifacts/agent-quality-browser/performance.json
             artifacts/composer-browser/results.json
             artifacts/composer-browser/*.png
+            artifacts/openui-browser/*/report.json
+            artifacts/openui-browser/*/*.png
+            artifacts/chat-layout/*/report.json
+            artifacts/chat-layout/*/*.png
+            artifacts/chat-interactions/*/report.json
+            artifacts/chat-interactions/*/*.png
+            artifacts/chat-recovery/*/report.json
+            artifacts/chat-recovery/*/*.png
+            artifacts/ci-openui-browser/*.log
+            artifacts/ci-openui-browser/results.json
             artifacts/ci/summary.md
           retention-days: 14
           if-no-files-found: warn

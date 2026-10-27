@@ -1,10 +1,16 @@
 # 第三方资源与新增依赖登记
 
+## OpenIntelligentUI 生成式 UI 适配（2026-10-26）
+
+参考 [CopilotKit/OpenIntelligentUI](https://github.com/CopilotKit/OpenIntelligentUI) 的任务呈现、CSS 优先流式参数、就地预览、隔离执行、自动高度与宿主追问机制，核对提交 `8391a94c1c3939c679e40ddd7bfc08a9ef690e70`。按本项目的 MiMo/FastAPI/SSE/原生 DOM 实现，具体路径与采用范围见 `docs/genui/OPEN_INTELLIGENT_UI.md`。上游为 MIT，Copyright (c) Atai Barkai，许可全文保留在 `docs/licenses/open-intelligent-ui/LICENSE.txt`。未新增 npm 或 Python 运行依赖；未引入上游示例数据、品牌素材或远程库。
+
 ## Codex 智能任务运行时适配（2026-10-22）
 
 参考用户提供的 OpenAI Codex 源码目录（Apache-2.0，Copyright 2025 OpenAI），按现有 Python/FastAPI 项目独立重写执行循环、工具权限编排、子任务、上下文与 SDK/API 模式；未复制 Rust 实现、完整提示词或官方 SDK 源码。参考路径与文件 SHA256 见 `docs/CODEX_SOURCE_MANIFEST.json`，能力边界见 `docs/CODEX_RUNTIME.md`。上游 LICENSE 与 NOTICE 原文保留在 `docs/licenses/codex/`。没有新增 Python 或 npm 运行依赖；命令沙箱为维护者可选的已有 Docker 运行环境，所选镜像的分发许可另行遵守。
 
-## genui 本次新增
+共享表单和 SVG 辅助样式从上游 `packages/design-system/src/index.ts` 适配，代码位于 `static/genui/design-system.css`，保留 MIT 署名和许可。
+
+## 原 genui 组件图的历史适配
 
 无新增 npm 或 Python 运行依赖。协议、校验、表达式、DOM/SVG 图表、组件画廊均独立实现；不复制第三方产品前端、样式、提示词或商标。
 

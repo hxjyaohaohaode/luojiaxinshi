@@ -17,22 +17,13 @@ export function boardMoveError(error,refreshed=false) {
 export function createTaskBoardDrag({onMove,blocked=()=>false}) {
   const root=()=>document.querySelector('#task-results');
   const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.dataset.uiMotion==='off';
-  const cards=()=>[...(root()?.querySelectorAll('.task-row[data-task-id]')||[])];
   let candidate=null,drag=null,busy=false,frame=0,suppressUntil=0,menu=null,selectedLane='action';
+  function setDragging(active){document.documentElement.classList.toggle('task-dragging',active);document.dispatchEvent(new CustomEvent('campus:task-dragging',{detail:active}));}
   function selectLane(lane,scroll=true,smooth=false){
     selectedLane=lane;
     for(const button of root()?.querySelectorAll('[data-board-jump]')||[])button.setAttribute('aria-current',String(button.dataset.boardJump===lane));
     const scroller=root()?.querySelector('.task-board-scroll'),column=root()?.querySelector(`[data-task-lane="${lane}"]`);
     if(scroll&&scroller&&column&&scroller.scrollWidth>scroller.clientWidth+1)scroller.scrollTo({left:scroller.scrollLeft+column.getBoundingClientRect().left-scroller.getBoundingClientRect().left,behavior:smooth&&!reduced()?'smooth':'instant'});
-  }
-  const rects=()=>new Map(cards().filter(el=>!el.hidden).map(el=>[el.dataset.taskId,el.getBoundingClientRect()]));
-  function flip(previous){
-    if(reduced())return;
-    for(const el of cards()){
-      const from=previous.get(el.dataset.taskId);if(!from||el.hidden)continue;
-      const to=el.getBoundingClientRect(),x=from.x-to.x,y=from.y-to.y;
-      if(Math.abs(x)+Math.abs(y)>1)el.animate([{transform:`translate(${x}px,${y}px)`},{transform:'none'}],{duration:190,easing:'cubic-bezier(.2,.8,.2,1)'});
-    }
   }
   function emptyStates(){
     for(const list of root()?.querySelectorAll('.task-lane-items')||[]){
@@ -47,7 +38,7 @@ export function createTaskBoardDrag({onMove,blocked=()=>false}) {
     active.portal.remove();active.dock?.remove();active.placeholder.remove();active.row.hidden=false;
     active.row.classList.remove('is-moving');
     if(root()?.hasPointerCapture(active.pointerId))root().releasePointerCapture(active.pointerId);
-    document.documentElement.classList.remove('task-dragging');
+    setDragging(false);
     for(const lane of root()?.querySelectorAll('.is-drop-target')||[])lane.classList.remove('is-drop-target');
     emptyStates();
   }
@@ -72,9 +63,9 @@ export function createTaskBoardDrag({onMove,blocked=()=>false}) {
       dock.innerHTML=[['action','接着推进'],['followup','留意反馈'],['closed','标记完成']].map(([lane,label])=>`<div data-task-drop-lane="${lane}">${label}</div>`).join('');document.body.append(dock);
     }
     drag={...c,placeholder,portal,ghost,scroll,dock,x:c.lastX,y:c.lastY,offsetX:c.startX-box.x,offsetY:c.startY-box.y,
-      visualX:box.x,visualY:box.y,velocityX:0,velocityY:0,last:performance.now(),valid:true,lane:c.row.closest('[data-task-lane]')};
+      valid:true,lane:c.row.closest('[data-task-lane]')};
     root()?.setPointerCapture(c.pointerId);
-    document.documentElement.classList.add('task-dragging');emptyStates();frame=requestAnimationFrame(tick);
+    setDragging(true);emptyStates();position();target();frame=requestAnimationFrame(tick);
   }
   function target(){
     const d=drag;if(!d)return;
@@ -94,23 +85,14 @@ export function createTaskBoardDrag({onMove,blocked=()=>false}) {
     lane.classList.add('is-drop-target');d.lane=lane;
     const list=lane.querySelector('.task-lane-items');
     const items=[...list.querySelectorAll('.task-row:not([hidden])')];
-    const listTop=list.getBoundingClientRect().top;
-    const before=(!dockTarget&&items.find(el=>d.y<listTop+el.offsetTop+el.offsetHeight/2))||list.querySelector('.lane-empty');
+    const before=(!dockTarget&&items.find(el=>{const box=el.getBoundingClientRect();return d.y<box.top+box.height/2;}))||list.querySelector('.lane-empty');
     if(d.placeholder.parentElement!==list||d.placeholder.nextElementSibling!==before){
-      const previous=rects();list.insertBefore(d.placeholder,before);emptyStates();flip(previous);
+      list.insertBefore(d.placeholder,before);emptyStates();
     }
   }
-  function tick(now){
+  function position(){const d=drag;if(d)d.ghost.style.transform=`translate3d(${d.x-d.offsetX}px,${d.y-d.offsetY}px,0)`;}
+  function tick(){
     const d=drag;if(!d)return;
-    const dt=Math.min((now-d.last)/1000,.032);d.last=now;
-    if(reduced()){d.visualX=d.x-d.offsetX;d.visualY=d.y-d.offsetY;}
-    else{
-      // Slightly underdamped: a short, soft return, without delaying the drop target.
-      d.velocityX+=((d.x-d.offsetX-d.visualX)*420-d.velocityX*30)*dt;
-      d.velocityY+=((d.y-d.offsetY-d.visualY)*420-d.velocityY*30)*dt;
-      d.visualX+=d.velocityX*dt;d.visualY+=d.velocityY*dt;
-    }
-    d.ghost.style.transform=`translate3d(${d.visualX}px,${d.visualY}px,0) scale(${reduced()?1:1.015})`;
     const r=d.scroll.getBoundingClientRect(),top=Math.max(r.top,0),bottom=Math.min(r.bottom,innerHeight);
     const dockHover=document.elementFromPoint(d.x,d.y)?.closest('[data-task-drop-lane]');
     if(!dockHover&&d.x>=r.left&&d.x<=r.right){
@@ -146,14 +128,9 @@ export function createTaskBoardDrag({onMove,blocked=()=>false}) {
     const oldList=d.row.parentElement,oldNext=[...oldList.children].slice([...oldList.children].indexOf(d.row)+1).find(el=>el.matches('.task-row:not([hidden])'));
     const unchanged=oldList===d.placeholder.parentElement&&(oldNext?.dataset.taskId||null)===value.before_id;
     selectLane(value.lane);d.dock?.remove();
-    const landing=d.placeholder.getBoundingClientRect();
     d.placeholder.replaceWith(d.row);d.row.hidden=false;d.row.classList.remove('is-moving');
-    document.documentElement.classList.remove('task-dragging');d.lane.classList.remove('is-drop-target');emptyStates();
-    if(!reduced()){
-      d.row.classList.add('task-drop-settling');
-      const animation=d.ghost.animate([{transform:d.ghost.style.transform,opacity:1},{transform:`translate3d(${landing.x}px,${landing.y+2}px,0) scale(.995)`,opacity:.45,offset:.72},{transform:`translate3d(${landing.x}px,${landing.y}px,0) scale(1)`,opacity:0}],{duration:240,easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'});
-      animation.finished.catch(()=>{}).finally(()=>{d.portal.remove();d.row.classList.remove('task-drop-settling');});
-    }else d.portal.remove();
+    setDragging(false);d.lane.classList.remove('is-drop-target');emptyStates();
+    d.portal.remove();
     if(!unchanged)void commit(d.row.dataset.taskId,value,d.row);
   }
   function openMenu(handle){
@@ -191,18 +168,20 @@ export function createTaskBoardDrag({onMove,blocked=()=>false}) {
     if(event.target.closest('a,input,textarea,select,summary,[contenteditable],.task-check,.task-actions,.task-attachments'))return;
     if(event.pointerType==='touch'&&!handle)return;
     candidate={row,pointerId:event.pointerId,pointerType:event.pointerType,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY};
-    if(event.pointerType==='touch')candidate.timer=setTimeout(start,180);
+    // A tiny movement distinguishes a drag from the handle's keyboard/click menu.
   });
   document.addEventListener('pointermove',event=>{
     if(candidate&&candidate.pointerId===event.pointerId){
       candidate.lastX=event.clientX;candidate.lastY=event.clientY;
-      if(Math.hypot(event.clientX-candidate.startX,event.clientY-candidate.startY)>=7)start();
+      if(Math.hypot(event.clientX-candidate.startX,event.clientY-candidate.startY)>=3)start();
     }
-    if(drag&&drag.pointerId===event.pointerId){event.preventDefault();drag.x=event.clientX;drag.y=event.clientY;}
+    if(drag&&drag.pointerId===event.pointerId){event.preventDefault();drag.x=event.clientX;drag.y=event.clientY;position();target();}
   },{passive:false});
   document.addEventListener('pointerup',finish);
   document.addEventListener('pointercancel',cancel);
-  document.addEventListener('lostpointercapture',event=>{if(drag?.pointerId===event.pointerId)cancel();});
+  // Touch starts with implicit capture on the handle. Transferring it to the
+  // board emits lostpointercapture on that handle; the board still owns it.
+  document.addEventListener('lostpointercapture',event=>{const board=root();if(drag?.pointerId===event.pointerId&&event.target===board&&!board.hasPointerCapture(event.pointerId))cancel();});
   document.addEventListener('click',event=>{
     if(event.detail!==0&&performance.now()<suppressUntil){suppressUntil=0;event.preventDefault();event.stopImmediatePropagation();return;}
     const handle=event.target.closest?.('#task-results [data-task-drag-handle]');

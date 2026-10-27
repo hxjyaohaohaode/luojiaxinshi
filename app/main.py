@@ -93,13 +93,18 @@ class RequestGuard:
                 started=True
                 pdf_preview=scope.get('path','').startswith('/api/conversations/') and scope.get('path','').endswith('/download') and any(k.lower()==b'content-type' and v.startswith(b'application/pdf') for k,v in message.get('headers',[]))
                 path=scope.get('path','')
+                openui_frame=path=='/static/genui/sandbox.html'
+                frame_csp=("default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
+                           "img-src data: blob:; connect-src 'none'; font-src 'none'; media-src 'none'; "
+                           "frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; "
+                           "frame-ancestors 'self'; sandbox allow-scripts").encode('ascii')
                 # 图片等资源按天缓存；脚本与样式每次用 ETag 重新校验（未变化时返回 304），
                 # 避免每次打开页面重新下载全部前端代码；接口与首页仍不缓存。
                 cache=b'public, max-age=86400' if path.startswith('/static/assets/') else b'no-cache' if path.startswith('/static/') else b'no-store'
-                extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview else b'DENY'),
+                extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview or openui_frame else b'DENY'),
                        (b'referrer-policy',b'no-referrer'),(b'cache-control',cache),
                        (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
-                       (b'content-security-policy',self.csp.replace(b"frame-ancestors 'none'",b"frame-ancestors 'self'") if pdf_preview else self.csp)]
+                       (b'content-security-policy',frame_csp if openui_frame else self.csp.replace(b"frame-ancestors 'none'",b"frame-ancestors 'self'") if pdf_preview else self.csp)]
                 if self.production:
                     extra.append((b'strict-transport-security',b'max-age=31536000'))
                 message['headers']=message.get('headers',[])+extra

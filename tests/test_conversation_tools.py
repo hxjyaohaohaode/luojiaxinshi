@@ -126,16 +126,23 @@ def test_all_document_images_and_tiff_pages_remain_accessible(env):
     assert Image.open(io.BytesIO(page.content)).getpixel((0,0))[:3]==(0,0,255)
     assert c.get(base+'/download?preview=true&frame=2').status_code==422
 
-def test_regeneration_excludes_all_previous_versions_and_later_turns(env,monkeypatch):
+def test_regeneration_is_limited_to_latest_user_turn_and_excludes_previous_versions(env,monkeypatch):
     c=account(env);chat=conversation(c);env[1].ai_api_key='fixture';contexts=[]
     def reply(settings,sources,messages,profile):contexts.append([m['content'] for m in messages]);return {'answer':'version-'+str(len(contexts)),'citations':[],'image_sources':[]},{}
-    monkeypatch.setattr(chat_ai,'reply',reply);chat,_=send(c,chat,'原始问题');old=chat['messages'][-1]['id'];chat,_=send(c,chat,'后续问题')
+    monkeypatch.setattr(chat_ai,'reply',reply);chat,_=send(c,chat,'原始问题');old=chat['messages'][-1]['id']
     chat,_=send(c,chat,'',regenerate_message_id=old);assert contexts[-1]==['原始问题']
-    first=chat['messages'][1];assert first['content']=='version-3';assert len(first['versions'])==2
+    assert len(chat['messages'][1]['versions'])==2
+    chat,_=send(c,chat,'后续问题');latest=chat['messages'][-1]['id'];before=len(contexts)
+    for endpoint in ('messages','messages/stream'):
+        response=c.post(f"/api/conversations/{chat['id']}/{endpoint}",json={'version':chat['version'],'content':'','regenerate_message_id':old,'request_id':uuid.uuid4().hex,'allow_external_processing':True})
+        assert response.status_code==409,response.text
+        assert '分支' in response.json()['detail']
+    assert len(contexts)==before
+    restored=c.get('/api/conversations/'+chat['id']).json();assert restored['version']==chat['version']
     assert [m['role'] for m in chat['messages']]==['user','assistant','user','assistant']
-    chat,_=send(c,chat,'',regenerate_message_id=first['id']);assert contexts[-1]==['原始问题'];assert len(chat['messages'][1]['versions'])==3
+    chat,_=send(c,chat,'',regenerate_message_id=latest);assert contexts[-1]==['原始问题','version-2','后续问题'];assert len(chat['messages'][-1]['versions'])==2
     select=c.post(f"/api/conversations/{chat['id']}/messages/{old}/select",json={'version':chat['version']});assert select.status_code==200
-    chat=select.json();chat,_=send(c,chat,'新的追问');assert contexts[-1]==['原始问题','version-1','后续问题','version-2','新的追问']
+    chat=select.json();chat,_=send(c,chat,'新的追问');assert contexts[-1]==['原始问题','version-1','后续问题','version-4','新的追问']
 
 def test_stream_revision_failure_preserves_completed_version(env,monkeypatch):
     c=account(env);chat=conversation(c);env[1].ai_api_key='fixture'

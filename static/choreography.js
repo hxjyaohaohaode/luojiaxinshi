@@ -145,6 +145,9 @@ function animateNewItems(nodes) {
     known.add(node);
     const key = itemKey(node), fresh = !seenKeys.has(key);
     seenKeys.add(key);
+    // Board positions are already committed locally at pointer release.
+    // The server acknowledgement must not replay a lane/card entrance.
+    if(node.closest('.task-board'))continue;
     if (fresh && motionAllowed() && index < 12 && inViewport(node, 40)) rise(node, Math.min(index++ * 24, 144), 6, 250);
   }
 }

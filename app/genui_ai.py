@@ -16,6 +16,7 @@ from .genui import parse_message,CATALOG
 from .models import Strict
 from .genui_state import context_text
 from .visual_evidence import IMAGE_POLICY
+from .openui import SandboxUI, UIStreamDecoder
 
 
 class IndexedClaim(GroundingClaim):
@@ -51,7 +52,18 @@ class AuthoredUI(Strict):
 
 class UIAnswer(IndexedAnswer):
     answer: str = Field(min_length=0,max_length=80000)
-    ui: AuthoredUI | None = None
+    ui: SandboxUI | AuthoredUI | None = None
+
+
+class OpenUIAnswer(IndexedAnswer):
+    answer: str = Field(min_length=0,max_length=80000)
+    ui: SandboxUI | None = None
+    memory_actions: list = Field(default_factory=list,max_length=0)
+
+
+def answer_model(tier,profile):
+    if tier==1:return OpenUIAnswer if profile.get('_ui_composition_only') else UIAnswer
+    return TemplateAnswer if tier==2 else IndexedAnswer
 
 
 class TemplateAnswer(IndexedAnswer):
@@ -78,7 +90,7 @@ def presentation_tier(tier,choice='auto',*,no_ui=False):
 
 
 def composition_thinking(profile,tier):
-    return True
+    return not (tier==1 and profile.get('_ui_composition_only') and not profile.get('_ui_composition_thinking'))
 
 
 
@@ -267,6 +279,15 @@ def validation_failure(reason,raw):
     return ReplyValidationError(reason,draft=draft)
 
 
+def authoring_index(sources,profile):
+    entries=profile.get('_authoring_evidence_index')
+    if entries is None:return evidence_index(sources)
+    if not isinstance(entries,list) or len(entries)>MAX_CITATIONS or len({e.get('ref') for e in entries if isinstance(e,dict)})!=len(entries):raise ValueError('invalid_authoring_index')
+    if any(not isinstance(e,dict) or not re.fullmatch(r'E[1-9][0-9]*',str(e.get('ref',''))) for e in entries):raise ValueError('invalid_authoring_index')
+    check_evidence([{key:e[key] for key in ('source_id','locator','quote')} for e in entries],sources)
+    return entries
+
+
 def payload(settings, sources, messages, profile, tier):
     from .chat_media import resource_index
     if not profile.get('_grounding_context'):
@@ -281,7 +302,7 @@ def payload(settings, sources, messages, profile, tier):
         context['memories']=profile.get('_memory_entries',[])
     if profile.get('_grounding_context'):
         context['grounding_context']=profile['_grounding_context']
-        context['evidence_index']=evidence_index(sources)
+        context['evidence_index']=authoring_index(sources,profile)
         context['evidence_index_scope']={'selected_spans':len(context['evidence_index']),'maximum_spans':MAX_CITATIONS,
             'method':'相关性排序、去除网页重复段落、按来源轮流保留；有上限，未登记片段不能据此引用。'}
         # The index holds the exact evidence text; do not duplicate paragraphs in the prompt.
@@ -290,7 +311,7 @@ def payload(settings, sources, messages, profile, tier):
     from .media_input import MEDIA_POLICY,input_budget
     materials = review_content(json.dumps(context,ensure_ascii=False),sources)
     if isinstance(materials,str):materials=[{'type':'text','text':materials}]
-    response_model=UIAnswer if tier==1 else TemplateAnswer if tier==2 else IndexedAnswer
+    response_model=answer_model(tier,profile)
     output_schema=response_model.model_json_schema()
     if context.get('evidence_index'):
         output_schema['properties']['citation_refs']['items']['enum']=[item['ref'] for item in context['evidence_index']]
@@ -310,9 +331,11 @@ def payload(settings, sources, messages, profile, tier):
     focused=profile.get('_grounding_context',{}).get('route')=='focused_text'
     if composition_only:
         request_role='\n本调用是展示编排阶段。依据 Pro 提供的 coverage_check、evidence_index 与原文组织正文和控件，不重新检索或补造事实。直接输出有效 JSON；事实、未知和建议仍须清楚区分。稿件随后由 Pro 独立核验，未通过不会发布。'
+        if profile.get('_ui_composition_only'):
+            request_role='\n本调用只做界面编排与代码生成。用户原话和已登记 evidence_index 优先，interface_brief 是主 Agent 提供的展示建议；不另做研究或重新设计业务流程。使用已注入的设计原语，数值试算用 CampusUI.form 避免重复写验证监听代码；正文一行导语即可，不重写基础控件样式，不提交 memory_actions。输出完整有效 JSON；稿件随后由 Pro 独立核验。'
         prompt+=('\n本轮把证据覆盖检查与文字组织合并：逐项识别当前问题、所给证据、个人条件、冲突和缺项，依据完整原文组织回答；不得补造未知。只完成当前用户要求，保持必要条件与准确引用。仍会由另一独立调用核验全部回答后发布。' if focused else request_role)
     request = {'model':model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
-               'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens}
+               'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled' if composition_thinking(profile,tier) else 'disabled'},'max_completion_tokens':settings.ai_output_tokens}
     if settings.ai_supports_json:
         request['response_format'] = {'type':'json_object'}
     text_bytes=sum(len((m['content'] if isinstance(m['content'],str) else
@@ -324,7 +347,7 @@ def payload(settings, sources, messages, profile, tier):
 async def stream_reply(settings, sources, messages, profile, tier):
     from .harness import start_call,finish_call
     call=start_call({'model':settings.ai_composition_model if profile.get('_grounding_context') and tier==1 else settings.ai_model,
-        'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens})
+        'thinking':{'type':'enabled' if composition_thinking(profile,tier) else 'disabled'},'max_completion_tokens':settings.ai_output_tokens})
     usage={}
     try:
         async for event in _stream_reply(settings,sources,messages,profile,tier):
@@ -343,7 +366,10 @@ async def _stream_reply(settings, sources, messages, profile, tier):
     request = payload(settings, sources, messages, profile, tier)
     buffered_answer=bool(profile.get('_grounding_context'))
     appended_flags={}
-    answer = AnswerDecoder()
+    from .answer_format import AnswerPreview, JSONEnvelopeStream, answer_content
+    answer = AnswerPreview()
+    envelope = JSONEnvelopeStream()
+    ui_stream = UIStreamDecoder()
     raw, buffer, size, finish, usage = '', '', 0, None, {}
     raw_bytes=0
     decoder = codecs.getincrementaldecoder('utf-8')()
@@ -385,6 +411,10 @@ async def _stream_reply(settings, sources, messages, profile, tier):
                         if raw_bytes > settings.genui_limits.get('messageBytes',LIMITS['messageBytes']):
                             raise AIError('回复过长，已停止读取；请缩小问题后重试。')
                         text=answer.push(delta) if settings.ai_supports_json else delta
+                        if tier==1 and settings.ai_supports_json:
+                            preview=ui_stream.packet(envelope.push(delta))
+                            if preview:
+                                yield {'type':'ui_preview','content':preview}
                         if text:
                             # The actual provider stream is visible immediately. A preview
                             # cannot mount controls or acquire validated citation status.
@@ -395,12 +425,21 @@ async def _stream_reply(settings, sources, messages, profile, tier):
             if finish in ('length','repetition_truncation'):
                 raise validation_failure('模型输出达到长度上限' if finish=='length' else '模型输出出现重复',raw)
             raise AIError('模型回复未完整结束，未采纳本次草稿；请重试或缩小问题。')
+        if not raw.strip('\ufeff \t\r\n'):
+            raise AIError('模型未返回正文或界面内容，已停止本轮；可手动重试。')
         if settings.ai_supports_json:
-            result=(UIAnswer if tier==1 else TemplateAnswer if tier==2 else IndexedAnswer).model_validate_json(raw)
+            raw,normalized=answer_content(raw,sources,authoring_index(sources,profile) if profile.get('_grounding_context') else [])
+            result=answer_model(tier,profile).model_validate_json(raw)
+            if profile.get('_ui_composition_only') and not result.ui:
+                raise ValueError('openui_missing_document:本轮专门生成互动界面，须提供完整ui，不能仅用正文替代')
             available={s['id'] for s in sources if s['kind'] in IMAGE_MIME and s['status']!='failed'}
-            if any(sid not in available for sid in result.image_sources) or result.answer!=answer.output or not result.answer.strip() and not getattr(result,'ui',None):
+            preview_text=answer.output.lstrip('\ufeff').strip() if normalized=='markdown' else answer.output
+            if normalized=='serialized_json' and not answer.output:
+                preview_text=result.answer
+                if not buffered_answer:yield {'type':'delta','text':result.answer}
+            if any(sid not in available for sid in result.image_sources) or result.answer!=preview_text or not result.answer.strip() and not getattr(result,'ui',None):
                 raise ValueError('invalid_evidence_or_stream')
-            result=resolve_citations(result.model_dump(),evidence_index(sources) if profile.get('_grounding_context') else [])
+            result=resolve_citations(result.model_dump(),authoring_index(sources,profile) if profile.get('_grounding_context') else [])
             check_evidence(result['citations'],sources)
             if tier==1:
                 authored=result.pop('ui',None)
@@ -436,7 +475,7 @@ async def _stream_reply(settings, sources, messages, profile, tier):
     except (ValueError,KeyError,IndexError,TypeError,UnicodeError) as exc:
         indexed=bool(profile.get('_grounding_context'))
         detail=str(exc)
-        reason=(detail if detail.startswith('authored_ui_') else '引用包含未登记的 ref：'+detail.partition(':')[2] if detail.startswith('invalid_citation_refs:') else
+        reason=(detail if detail.startswith(('authored_ui_','openui_')) else '引用包含未登记的 ref：'+detail.partition(':')[2] if detail.startswith('invalid_citation_refs:') else
                 '稳定引用标记与手填编号混用；正文和UI使用 [E编号]，claims 仅填写 evidence_refs，citation_indices 留空' if detail=='mixed_citation_protocols' else
                 '正文混入手写引用序号 ['+detail.partition(':')[2]+']；本轮只用 evidence_index 中的 [E编号] 标记，不能沿用审查意见或旧回复的显示序号' if detail.startswith('mixed_citation_markers:') else
                 f'引用片段超过{MAX_CITATIONS}项服务器证据上限，请复用支持同一规则的原文，不删除用户要求' if detail=='citation_ref_limit' else
