@@ -6,14 +6,47 @@ const platforms={website:'学校 / 学院官网',wechat_public:'微信公众号'
 export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route}){
   let entries=[],query='',editing=null,integrations=null,publisherItems=[],publisherNext=null,page=1,searchController=null,matchedIds=null,subscriptions=[],automation=null;
   const expanded=new Map();let expansionOwner=null;
+  const pendingPresets=new Set();
   const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${id}">${text}</button>`;
   async function render(renderId){
+    const view=captureUiContext(state);
     if(expansionOwner!==state.session?.user?.id){expanded.clear();expansionOwner=state.session?.user?.id;}
-    const [result,channels,sync,auto]=await Promise.all([api('/source-catalog'),api('/integrations'),api('/source-subscriptions'),api('/notice-automation')]);if(renderId!==state.renderId)return;entries=result;integrations=channels;subscriptions=sync;automation=auto;query='';page=1;matchedIds=null;searchController?.dispose();
+    const [result,channels,sync,auto]=await Promise.all([api('/source-catalog'),api('/integrations'),api('/source-subscriptions'),api('/notice-automation')]);if(renderId!==state.renderId||!view.sameRoute())return;entries=result;integrations=channels;subscriptions=sync;automation=auto;query='';page=1;matchedIds=null;searchController?.dispose();
     $('#content').innerHTML=`<div class="page-title between"><div><h1>我的通知来源</h1></div></div>
+      <div class="source-access row wrap">${action('选择学校官网','school-presets','','primary')}<span class="small muted">选好栏目后，持续接收学校发布的新通知。</span></div>
       <div class="toolbar source-toolbar"><h2>我常看的来源 <span class="muted small" id="catalog-total"></span></h2>${searchControls({id:"source",esc,icon,scope:"sources",kinds:Object.entries(platforms)})}${action(icon('plus')+' 添加来源','add','','primary')}</div><div id="source-catalog-list" class="source-catalog-list"></div><nav id="source-pages" class="calendar-pagination" aria-label="来源分页" hidden></nav>
       <div class="source-access row wrap">${action('能接入哪些平台 '+icon('arrow'),'platforms','','small plain')}${action('自动整理'+(automation.enabled?' · 已开启':' · 未开启'),'automation','','small')}${automation.counts?.failed?`<span class="small">${automation.counts.failed} 条整理失败</span>`:''}</div>`;
     searchController=new WorkspaceSearch(document.querySelector('[data-search-host="source"]'),{api,scope:'sources',onResult:result=>{matchedIds=new Set(result.items.map(s=>s.id));query=result.query;page=1;list();},onError:message=>toast(message,true)});list();
+  }
+  async function schoolPresetsDialog(){
+    showDialog('选择学校官网','<div id="source-presets" class="stack" aria-live="polite"><p role="status">正在读取学校栏目…</p></div>');
+    const view=captureUiContext(state);
+    try{
+      const presets=await api('/source-presets');if(!view.sameDialog())return;
+      $('#source-presets').innerHTML=`<p class="small muted">点击“订阅此栏目”后开始自动接收，可随时暂停。自动整理需在来源页单独开启。</p>${presets.length?presets.map(p=>{
+        const existing=subscriptions.find(s=>s.config?.preset_id===p.id),pending=pendingPresets.has(state.session?.user?.id+':'+p.id);
+        return `<article class="integration-card stack"><div><p class="small muted">${esc(p.institution)}</p><h3>${esc(p.name)}</h3></div><p>${esc(p.purpose)}</p><div class="row wrap"><a class="button small plain" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">打开官网 ↗</a><button type="button" class="button small primary" data-source-action="${existing?'preset-view':'preset-subscribe'}" data-id="${esc(existing?.source_id||p.id)}" ${pending?'disabled aria-busy="true"':''}>${existing?'已添加 · 查看来源':pending?'正在订阅…':'订阅此栏目'}</button></div></article>`;
+      }).join(''):'<p>暂时没有可选栏目，可返回后自行添加来源。</p>'}`;
+    }catch(error){if(view.sameDialog())$('#source-presets').innerHTML=`<p class="alert error" role="status">${esc(error.message)}</p>${action('重新读取','school-presets','','small')}`;}
+  }
+  function showSource(id){
+    query='';matchedIds=null;page=Math.floor(Math.max(0,entries.findIndex(e=>e.id===id))/12)+1;expanded.set(id,true);list();
+    const card=[...document.querySelectorAll('[data-source-record]')].find(n=>n.dataset.sourceRecord===id);
+    if(card){card.open=true;expanded.set(id,true);card.scrollIntoView({block:'nearest'});card.querySelector('summary')?.focus();}
+  }
+  async function subscribePreset(button){
+    const view=captureUiContext(state,button),owner=state.session?.user?.id,id=button.dataset.id,key=owner+':'+id;
+    if(pendingPresets.has(key))return;pendingPresets.add(key);button.setAttribute('aria-busy','true');
+    try{
+      const result=await api('/source-presets/'+encodeURIComponent(id)+'/subscribe',{method:'POST',json:{}});
+      if(!view.sameRoute())return;
+      const reveal=view.sameDialog(),dialogVersion=state.dialogRequest;
+      if(reveal)$('#dialog').close();
+      await render(state.renderId);if(!view.sameRoute())return;
+      if(reveal&&state.dialogRequest===dialogVersion&&!$('#dialog')?.open)showSource(result.source_id);
+      toast(result.created?'已订阅此栏目，可立即刷新接收通知':'已添加，可在来源设置中查看或调整接收');
+    }catch(error){if(view.sameDialog())toast(error.message,true);}
+    finally{pendingPresets.delete(key);button.removeAttribute('aria-busy');if(view.sameUser())for(const current of document.querySelectorAll('[data-source-action="preset-subscribe"]'))if(current.dataset.id===id){current.disabled=false;current.removeAttribute('aria-busy');current.textContent='订阅此栏目';}}
   }
   function integrationCards(){
     if(!$('#integration-cards')||!integrations)return;const q=integrations.qq,w=integrations.wechat_publisher;
@@ -58,7 +91,8 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
   }
   function syncDialog(entry){
     const s=subscriptionFor(entry.id),c=s.config||{url:entry.data.url||'',mode:'html',article_path_prefix:'/info/',interval_minutes:30};
-    showDialog('官网自动接收',`<form class="stack" data-workspace-form="source-sync" data-source-id="${esc(entry.id)}" data-version="${s.version||0}"><label class="check"><input name="enabled" type="checkbox" ${s.config?s.enabled?'checked':'':'checked'}><span>持续接收此来源的新通知</span></label>${field('通知列表或 RSS/Atom 地址','url',c.url,'url','required maxlength="2000"')}<label class="field">列表格式<select name="mode"><option value="html" ${c.mode==='html'?'selected':''}>网页通知列表</option><option value="feed" ${c.mode==='feed'?'selected':''}>RSS / Atom</option></select></label>${field('通知正文路径前缀（网页列表必填）','article_path_prefix',c.article_path_prefix||'','text','maxlength="300" placeholder="例如 /info/ 或 /news/"')}${field('检查间隔（分钟）','interval_minutes',c.interval_minutes,'number','min="5" max="1440" required')}<p class="small muted">首次读取列表现有通知，之后增量接收并检查原文更新。只读取同域名下的指定范围；关键附件仍需核对。服务运行时生效。</p><div class="form-footer"><button class="button" type="button" data-action="close-dialog">返回</button><button class="button primary" type="submit">保存订阅</button></div></form>`);
+    const sourceFields=c.preset_id?`<p class="small muted">已适配栏目：${esc(entry.data.name)}。来源地址随栏目保存，无需填写。</p>${['preset_id','url','mode','article_path_prefix'].map(name=>`<input type="hidden" name="${name}" value="${esc(c[name]||'')}">`).join('')}`:`${field('通知列表或 RSS/Atom 地址','url',c.url,'url','required maxlength="2000"')}<label class="field">列表格式<select name="mode"><option value="html" ${c.mode==='html'?'selected':''}>网页通知列表</option><option value="feed" ${c.mode==='feed'?'selected':''}>RSS / Atom</option></select></label>${field('通知正文路径前缀（网页列表必填）','article_path_prefix',c.article_path_prefix||'','text','maxlength="300" placeholder="例如 /info/ 或 /news/"')}`;
+    showDialog('官网自动接收',`<form class="stack" data-workspace-form="source-sync" data-source-id="${esc(entry.id)}" data-version="${s.version||0}"><label class="check"><input name="enabled" type="checkbox" ${s.config?s.enabled?'checked':'':'checked'}><span>持续接收此来源的新通知</span></label>${sourceFields}${field('检查间隔（分钟）','interval_minutes',c.interval_minutes,'number','min="5" max="1440" required')}<p class="small muted">首次读取列表现有通知，之后增量接收并检查原文更新。只读取同域名下的指定范围；关键附件仍需核对。服务运行时生效。</p><div class="form-footer"><button class="button" type="button" data-action="close-dialog">返回</button><button class="button primary" type="submit">保存订阅</button></div></form>`);
   }
   async function publisherDialog(offset=0){
     const result=await api('/integrations/wechat/articles?offset='+offset);publisherItems=result.items;publisherNext=result.next_offset;
@@ -90,6 +124,9 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
       else if(action==='automation-retry'){const view=captureUiContext(state,b);await api('/notice-automation/'+encodeURIComponent(b.dataset.id)+'/retry',{method:'POST'});if(view.sameDialog()){await automationDialog();toast('已重新排队');}}
       else if(action==='clear-search'){searchController.clear();}
       else if(action==='add')editor(null);
+      else if(action==='school-presets'||action==='preset'&&b.dataset.id==='website')await schoolPresetsDialog();
+      else if(action==='preset-subscribe')await subscribePreset(b);
+      else if(action==='preset-view'){if($('#dialog')?.open)$('#dialog').close();showSource(b.dataset.id);}
       else if(action==='preset'&&Object.hasOwn(platforms,b.dataset.id))editor(null,{platform:b.dataset.id});
       else if(action==='edit'&&item)editor(item);
       else if(action==='sync-config'&&item)syncDialog(item);

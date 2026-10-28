@@ -14,10 +14,11 @@ import httpx
 from fastapi import Depends, HTTPException
 from pydantic import Field, field_validator, model_validator
 
-from .db import dumps
+from .db import dumps, ident
 from .evidence_web import decode_page, public_url
 from .models import Strict
-from .notice_intake import read_link
+from .notice_intake import read_link, read_notice_materials
+from .official_sources import PRESETS, get_preset, parse_official_index
 from .public_http import PublicHTTPTransport
 from .security import rate_limit
 
@@ -55,6 +56,7 @@ class Subscription(Strict):
     url: str = Field(min_length=1, max_length=2000)
     article_path_prefix: str = Field(default='', max_length=300)
     interval_minutes: int = Field(default=30, ge=5, le=1440)
+    preset_id: str = Field(default='', max_length=80)
 
     @field_validator('url')
     @classmethod
@@ -65,6 +67,11 @@ class Subscription(Strict):
 
     @model_validator(mode='after')
     def bounded_scope(self):
+        if self.preset_id:
+            preset = get_preset(self.preset_id)
+            if (not preset or self.mode != 'html' or canonical_url(self.url) != canonical_url(preset['url'])
+                    or self.article_path_prefix != preset['article_path_prefix']):
+                raise ValueError('预设栏目范围已改变，请重新选择学校官网或使用自定义来源')
         if self.mode == 'html' and (not self.article_path_prefix.startswith('/') or
                 len(self.article_path_prefix) < 2 or any(x in self.article_path_prefix for x in ('?', '#', '..', '\\'))):
             raise ValueError('网页订阅须填写通知正文的路径前缀，例如 /info/；不能订阅整站所有链接')
@@ -100,6 +107,8 @@ class ListLinks(HTMLParser):
 
 def parse_index(text, url, config):
     """Only links on the subscribed host; no crawl traversal or inferred dates."""
+    if config.get('preset_id'):
+        return parse_official_index(text, url, config['preset_id'])
     candidates = []
     if config['mode'] == 'feed':
         if '<!DOCTYPE' in text.upper() or '<!ENTITY' in text.upper():
@@ -228,14 +237,26 @@ async def sync_source(db, sid, uid=None, force=False):
             pending = [dict(r) for r in conn.execute('SELECT * FROM source_subscription_items WHERE source_id=? ORDER BY checked_at,discovered_at DESC LIMIT 8', (sid,))]
         for item in pending:
             try:
-                source, _ = await read_link(item['url'])
-                if urlsplit(source.get('origin', {}).get('url', item['url'])).hostname != urlsplit(config['url']).hostname:
-                    raise HTTPException(422, '正文跳转出了订阅来源域名')
                 with db.connect(write=True) as conn:
                     if not unchanged(conn):
                         return None
-                    result = ingest_notice(conn, snapshot['user_id'], title=item['title'], sources=[source],
-                        source_label=catalog['name'], source_url=item['url'], published_at=item['published_at'],
+                    conn.execute('UPDATE source_subscriptions SET running_until=? WHERE source_id=?',
+                                 (int(time.time()) + 300, sid))
+                source, _ = await read_link(item['url'])
+                if urlsplit(source.get('origin', {}).get('url', item['url'])).hostname != urlsplit(config['url']).hostname:
+                    raise HTTPException(422, '正文跳转出了订阅来源域名')
+                article_date = source.get('origin', {}).get('published_at')
+                if article_date and item['published_at'] and article_date[:10] != item['published_at'][:10]:
+                    source['origin']['listed_published_at'] = item['published_at']
+                    source['origin'].setdefault('warnings', []).append(
+                        f"列表日期 {item['published_at'][:10]} 与正文日期 {article_date[:10]} 不同，已保留两者并采用正文日期，请核对原文")
+                materials = await read_notice_materials(source, read=read_link) if config.get('preset_id') else [source]
+                published = article_date or item['published_at']
+                with db.connect(write=True) as conn:
+                    if not unchanged(conn):
+                        return None
+                    result = ingest_notice(conn, snapshot['user_id'], title=item['title'], sources=materials,
+                        source_label=catalog['name'], source_url=item['url'], published_at=published,
                         external_key='website:' + sid + ':' + item['url'], materials_complete=False,observed_at=time.time())
                     created += bool(result.get('created'))
                     updated += bool(result.get('updated'))
@@ -286,6 +307,42 @@ async def run_worker(db, settings=None):
 
 
 def install(app, db, user):
+    @app.get('/api/source-presets')
+    def presets(current=Depends(user)):
+        return PRESETS
+
+    @app.post('/api/source-presets/{preset_id}/subscribe')
+    def subscribe_preset(preset_id: str, current=Depends(user)):
+        from .usage_limits import check_count
+        from .workspace import CatalogItem
+        preset = get_preset(preset_id)
+        if not preset:
+            raise HTTPException(404, '此学校栏目不存在，请重新选择')
+        # Source and subscription are saved together. Repeated requests reuse the
+        # same owner-scoped source and never resume an explicitly paused one.
+        with db.connect(write=True) as conn:
+            sid = None
+            for row in conn.execute('SELECT id,data FROM source_catalog WHERE user_id=? ORDER BY created_at,rowid', (current['id'],)):
+                catalog = json.loads(row['data'])
+                if catalog.get('platform') == 'website' and canonical_url(catalog.get('url', '')) == canonical_url(preset['url']):
+                    sid = row['id']
+                    break
+            created = sid is None
+            if created:
+                check_count(conn, current['id'], 'source_catalog', 'sources', '来源')
+                catalog = CatalogItem(name=preset['name'], platform='website', url=preset['url'],
+                                      institution=preset['institution'], purpose=preset['purpose'])
+                sid, now = ident(), int(time.time())
+                conn.execute('INSERT INTO source_catalog(id,user_id,data,created_at,updated_at) VALUES(?,?,?,?,?)',
+                             (sid, current['id'], catalog.model_dump_json(), now, now))
+            previous = conn.execute('SELECT source_id FROM source_subscriptions WHERE source_id=?', (sid,)).fetchone()
+            if not previous:
+                config = Subscription(url=preset['url'], article_path_prefix=preset['article_path_prefix'],
+                                      preset_id=preset_id).model_dump(exclude={'enabled', 'version'})
+                conn.execute('INSERT INTO source_subscriptions(source_id,user_id,config,enabled) VALUES(?,?,?,1)',
+                             (sid, current['id'], dumps(config)))
+            return {'source_id': sid, 'created': created, 'subscription': status(conn, sid, current['id'])}
+
     @app.get('/api/source-subscriptions')
     def subscriptions(current=Depends(user)):
         with db.connect() as conn:
