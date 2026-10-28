@@ -13,7 +13,8 @@ def subscribe(client, preset='whu-notices'):
 def test_preset_subscription_is_atomic_idempotent_and_owner_scoped(env):
     a, b = account(env), account(env, 'bob')
     presets = a.get('/api/source-presets').json()
-    assert {p['id'] for p in presets} == {'whu-notices', 'whu-journal-affairs'}
+    assert {p['id'] for p in presets} == {'whu-notices', 'whu-sres-notices', 'whu-journal-affairs'}
+    assert [p['id'] for p in presets[:2]] == ['whu-sres-notices', 'whu-notices']
     first, again, other = subscribe(a), subscribe(a), subscribe(b)
     assert first['created'] and not again['created']
     assert first['source_id'] == again['source_id'] != other['source_id']

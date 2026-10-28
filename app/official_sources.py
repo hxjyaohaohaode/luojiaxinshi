@@ -1,4 +1,4 @@
-"""Small, explicit adapters for two public WHU notice columns.
+"""Small, explicit adapters for public WHU notice columns.
 
 Dates keep the precision supplied by the publisher. No login, browser script,
 URL rewriting, or traversal is used to obtain an article.
@@ -15,6 +15,10 @@ from .evidence_web import public_url
 
 
 PRESETS = [
+    {'id': 'whu-sres-notices', 'name': '资环院通知公告',
+     'institution': '武汉大学资源与环境科学学院',
+     'url': 'https://sres.whu.edu.cn/xxgk/tzgg.htm', 'article_path_prefix': '/info/3771/',
+     'purpose': '资源与环境科学学院通知公告当前列表；保留原文、发布日期和附件，需校内权限的页面明确提示'},
     {'id': 'whu-notices', 'name': '武汉大学通知公告', 'institution': '武汉大学',
      'url': 'https://www.whu.edu.cn/tzgg.htm', 'article_path_prefix': '/info/5231/',
      'purpose': '学校通知公告当前列表中的公开原文；需要校内权限的文章会提示未能读取'},
@@ -24,7 +28,8 @@ PRESETS = [
      'article_path_prefix': '/undergraduate/',
      'purpose': '学院学生事务栏目当前列表，包含该栏目实际发布的本科生和研究生通知'},
 ]
-_HOSTS = {'www.whu.edu.cn': 'whu-notices', 'journal.whu.edu.cn': 'whu-journal-affairs'}
+_HOSTS = {'sres.whu.edu.cn': 'whu-sres-notices', 'www.whu.edu.cn': 'whu-notices',
+          'journal.whu.edu.cn': 'whu-journal-affairs'}
 _VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 _BLOCKED = {'script', 'style', 'noscript', 'svg', 'iframe', 'template'}
 _BLOCKS = {'p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'h4', 'tr', 'article', 'section'}
@@ -124,6 +129,11 @@ def _article_url(href, base, preset_id):
         allowed = bool(re.fullmatch(r'/info/5231/\d+\.htm', parts.path)) or (
             parts.path == '/new2024/tzggnr.jsp' and query.get('wbtreeid') == ['5231']
             and len(query.get('wbnewsid', [])) == 1 and query['wbnewsid'][0].isdigit())
+    elif preset_id == 'whu-sres-notices':
+        query = parse_qs(parts.query)
+        allowed = bool(re.fullmatch(r'/info/3771/\d+\.htm', parts.path)) or (
+            parts.path == '/xzcontent.jsp' and query.get('wbtreeid') == ['3771']
+            and len(query.get('wbnewsid', [])) == 1 and query['wbnewsid'][0].isdigit())
     else:
         # The column contains articles from both undergraduate and graduate paths.
         allowed = bool(re.fullmatch(r'/(?:undergraduate|graduate|notice)/(?:[A-Za-z0-9_-]+/)*\d{8}[A-Za-z0-9]+', parts.path))
@@ -139,6 +149,9 @@ def parse_official_index(text, url, preset_id):
         tables = [n for n in root.walk() if n.tag == 'table']
         container = next((n for n in tables if all(label in n.text() for label in ('发布单位', '发布日期'))), None)
         rows = [n for n in container.walk() if n.tag == 'tr'] if container else []
+    elif preset_id == 'whu-sres-notices':
+        container = _first(root, tag='ul', cls='list-container')
+        rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
     else:
         container = _first(root, tag='ul', cls='p-list5')
         rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
@@ -148,12 +161,16 @@ def parse_official_index(text, url, preset_id):
     for row in rows:
         for link in (n for n in row.walk() if n.tag == 'a'):
             target = _article_url(link.attrs.get('href'), url, preset_id)
-            title = _clean(link.text())
+            title_node = _first(link, cls='content') if preset_id == 'whu-sres-notices' else None
+            title = _clean(title_node.text() if title_node else link.text())
             if not target or not title or target in seen:
                 continue
             if preset_id == 'whu-notices':
                 cells = [n for n in row.children if isinstance(n, _Node) and n.tag == 'td']
                 published = _date(cells[2].text()) if len(cells) >= 3 else None
+            elif preset_id == 'whu-sres-notices':
+                stamp = _first(row, cls='time')
+                published = _date(stamp.text()) if stamp else None
             else:
                 stamp = _first(row, cls='date')
                 published = _date(stamp.text()) if stamp else None
@@ -184,6 +201,14 @@ def parse_official_article(text, url):
         if not published and header:
             stamp = next((n for n in header.walk() if n.tag == 'p' and '发布时间' in n.text()), None)
             published = _date(stamp.text()) if stamp else None
+    elif preset_id == 'whu-sres-notices':
+        article = _first(root, node_id='bgnr')
+        title_node = _first(article, cls='news-title')
+        body = _first(article, cls='v_news_content')
+        material_area = _first(article, cls='news_content') or body
+        title = _clean(title_node.text()) if title_node else ''
+        stamp = _first(article, cls='time-info')
+        published = _date(stamp.text()) if stamp else None
     else:
         article = _first(root, cls='m-txt2')
         header = _first(article, cls='con-top')
@@ -198,7 +223,7 @@ def parse_official_article(text, url):
     gate_text = body_text if body else _clean(root.text())
     if _PERMISSION.search(gate_text) and (not body or len(body_text) < 300):
         raise HTTPException(422, '这则通知需要校内权限或登录，未作为公开正文接收；请本人提供原文')
-    if not body or not title or not body_text:
+    if not body or not title:
         raise HTTPException(422, '官网正文结构不匹配或没有公开文字，未把导航和权限页当作通知；请核对原文')
     attachments, names = [], {}
     for link in (n for n in material_area.walk() if n.tag == 'a'):
@@ -209,8 +234,28 @@ def parse_official_article(text, url):
             names[target] = label[:160]
             if len(attachments) == 30:
                 break
+    if preset_id == 'whu-sres-notices':
+        # VSB embeds some notices as a PDF rather than visible paragraphs. Read
+        # only the literal URL argument of this observed call; never run script.
+        for script in (n for n in body.walk() if n.tag == 'script'):
+            raw = ''.join(child for child in script.children if isinstance(child, str))
+            for match in re.finditer(r'''showVsbpdfIframe\(\s*(["'])([^"'\r\n]+\.pdf(?:\?[^"'\r\n]*)?)\1\s*,''', raw):
+                target = public_url(urldefrag(urljoin(url, match[2]))[0])
+                if target and target not in attachments and len(attachments) < 30:
+                    attachments.append(target)
+                    names[target] = title[:150] + '.pdf'
+    attachment_only = not body_text and bool(attachments)
+    if not body_text and not attachment_only:
+        raise HTTPException(422, '官网正文结构不匹配或没有公开文字，未把导航和权限页当作通知；请核对原文')
+    # A title is publisher text, not a reconstruction of an unread attachment.
+    if attachment_only:
+        body_text = title
+    has_media = any(n.tag in {'video', 'audio', 'iframe'} or (
+        n.tag == 'img' and not urlsplit(urljoin(url, n.attrs.get('src') or '')).path.startswith(
+            '/system/resource/images/fileTypeImages/')) for n in body.walk())
     return {'text': body_text, 'title': title[:160], 'published_at': published,
             'published_at_precision': 'date' if published else None,
             'attachments': attachments, 'attachment_names': names,
-            'has_media': any(n.tag in {'img', 'video', 'audio', 'iframe'} for n in body.walk()),
+            'has_media': has_media, 'attachment_only': attachment_only,
+            'warnings': ['网页正文以附件形式发布，当前文字仅为标题；请核对附件读取结果'] if attachment_only else [],
             'parser_id': preset_id}

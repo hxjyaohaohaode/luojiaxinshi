@@ -133,6 +133,8 @@ async def _read_link(url, allowed_host=None):
                         title = official['title'] if official else re.sub(r'\s+', ' ', ''.join(parser.title_parts)).strip()[:160]
                         source = text_source(text, title or name[:160])
                         warnings = []
+                        if official:
+                            warnings.extend(official.get('warnings', []))
                         if parser.has_media:
                             warnings.append('网页中的图片、音视频未自动读取，请按需要补上传原件')
                         if parser.attachments:
@@ -142,6 +144,10 @@ async def _read_link(url, allowed_host=None):
                         if official:
                             origin.update({key: official[key] for key in ('title', 'published_at',
                                 'published_at_precision', 'attachment_names', 'parser_id')})
+                            if official.get('attachment_only'):
+                                origin['attachment_only'] = True
+                                source['status'] = 'review'
+                                source['warning'] = '通知内容位于附件，当前网页只有标题；请核对附件内容后使用'
                     else:
                         if mime == 'application/pdf' and not name.lower().endswith('.pdf'):
                             name += '.pdf'

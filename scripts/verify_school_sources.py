@@ -19,7 +19,7 @@ from app.security import new_invite
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--allow-public-network', action='store_true', required=True)
-    parser.add_argument('--preset', action='append', choices=['whu-notices', 'whu-journal-affairs'])
+    parser.add_argument('--preset', action='append', choices=['whu-sres-notices', 'whu-notices', 'whu-journal-affairs'])
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts' / 'public-sources-2026-10-29')
     args = parser.parse_args()
     out = args.output.resolve()
@@ -43,7 +43,7 @@ def main():
                 'password': 'Synthetic-Verification-Only-2026',
                 'display_name': '公开官网接入验收', 'accepted_terms': True})
             client.headers['X-CSRF-Token'] = request('GET', '/session')['csrf']
-            for preset_id in args.preset or ['whu-notices', 'whu-journal-affairs']:
+            for preset_id in args.preset or ['whu-sres-notices', 'whu-notices']:
                 print('Checking ' + preset_id, flush=True)
                 saved = request('POST', '/source-presets/' + preset_id + '/subscribe', json={})
                 sid = saved['source_id']
