@@ -43,7 +43,12 @@ try{
   await input.click();await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chat-heading')).opacity==='1');
   checks.push('顶栏以浮层淡入淡出；显隐与空闲恢复均不改变阅读区域高度、位置或滚动锚点');
   for(const [label,width,height]of [['mobile',390,844],['keyboard',390,420],['tablet',800,700]]){
-    await page.setViewportSize({width,height});await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();
+    await page.setViewportSize({width,height});
+    // The visual viewport resize event can arrive after setViewportSize resolves.
+    // Measure only once the app has applied that event and layout has settled.
+    await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<1,{width,height});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();
     assert.ok(size.form.height<=60&&size.form.bottom<=height+1&&size.scroll<=width+1&&size.thread.height>90,JSON.stringify(size));
     for(const key of ['plus','voice','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=44);
     await page.screenshot({path:out+'/'+label+'.png',caret:'initial'});
