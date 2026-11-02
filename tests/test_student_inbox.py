@@ -1,4 +1,11 @@
 """Student inbox exposes owner-scoped aggregation, dates and source warnings."""
+import json
+import shutil
+import subprocess
+
+import pytest
+
+from app.notice_ingest import search_notices
 from tests.test_workflow import account, env
 
 
@@ -45,3 +52,40 @@ def test_legacy_notice_without_receipts_has_safe_fallback(env):
             ('legacy-receipt', uid, 'legacy-personal', '', '', '班级群', '', '[]', 2, 2))
     assert student.get('/api/notices').json()[0]['origin_labels'] == ['个人提交', '班级群']
     assert student.get('/api/notices/search', params={'q': '班级群'}).json()[0]['id'] == 'legacy-personal'
+
+
+def test_notice_list_query_runs_with_node_sqlite(env):
+    """Exercise the actual list query on Node's independently bundled SQLite."""
+    node = shutil.which('node')
+    if not node:
+        pytest.skip('Node is not installed')
+    one, two = account(env, 'sqlite-one'), account(env, 'sqlite-two')
+    response = one.post('/api/notices', data={'title': '示例通知', 'body': '示例通知\n这里是正文'})
+    assert response.status_code == 200
+    assert two.post('/api/notices', data={'title': '别人的通知', 'body': '另一账号的正文'}).status_code == 200
+    uid = one.get('/api/session').json()['user']['id']
+    db = env[0].state.db
+    statements = []
+    with db.connect() as conn:
+        conn.set_trace_callback(statements.append)
+        assert len(search_notices(conn, uid)) == 1
+        conn.set_trace_callback(None)
+    sql = next(statement for statement in statements if statement.lstrip().startswith('SELECT n.id,n.title'))
+    script = r'''
+const fs = require('node:fs');
+let DatabaseSync;
+try { ({DatabaseSync} = require('node:sqlite')); }
+catch (error) { console.error('NODE_SQLITE_UNAVAILABLE'); process.exit(77); }
+const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+const db = new DatabaseSync(input.path, {readOnly: true});
+console.log(JSON.stringify({version:process.versions.sqlite, rows:db.prepare(input.sql).all()}));
+db.close();
+'''
+    run = subprocess.run([node, '-e', script], input=json.dumps({'path': str(db.path), 'sql': sql}),
+                         text=True, encoding='utf-8', capture_output=True, timeout=30)
+    if run.returncode == 77 and 'NODE_SQLITE_UNAVAILABLE' in run.stderr:
+        pytest.skip('Node does not provide a built-in SQLite library')
+    assert run.returncode == 0, run.stderr
+    rows = json.loads(run.stdout)['rows']
+    assert len(rows) == 1 and rows[0]['title'] == '示例通知'
+    assert rows[0]['source_excerpt'] == '这里是正文'
