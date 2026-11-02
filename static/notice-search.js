@@ -3,8 +3,8 @@
 export function noticeSearchText(notice={}) {
   const sources=(notice.sources||[]).filter(source=>source.active!==false);
   const tasks=(notice.tasks||[]).map(task=>task.data||task);
-  return [notice.title,notice.source_label,notice.source_name,notice.source_url,
-    notice.body,notice.search_snippet,notice.search_excerpt,
+  return [notice.title,notice.source_label,notice.source_name,notice.source_url,...(Array.isArray(notice.origin_labels)?notice.origin_labels:[]),
+    notice.body,notice.source_excerpt,notice.search_snippet,notice.search_excerpt,
     ...sources.flatMap(source=>[source.name,...(source.sections||[]).map(section=>section.text)]),
     ...tasks.flatMap(task=>[task.title,task.submission_method,task.location,task.contact,...(task.materials||[])])
   ].filter(value=>typeof value==='string'&&value).join('\n');

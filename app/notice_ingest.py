@@ -199,12 +199,37 @@ def search_notices(conn, uid, query=''):
     query = query.strip()
     if len(query) > 200:
         raise HTTPException(422, '搜索内容请控制在 200 字以内')
-    records = [dict(r) for r in conn.execute("""SELECT n.id,n.title,n.source_label,n.status,n.version,n.created_at,n.updated_at,n.error,
+    records = [dict(r) for r in conn.execute("""SELECT n.id,n.title,n.source_label,n.published_at,n.status,n.version,n.created_at,n.updated_at,n.error,
         COALESCE(d.disposition,'inbox') AS disposition,
         (SELECT COUNT(*) FROM tasks t WHERE t.notice_id=n.id) AS task_count,
         CASE WHEN n.draft IS NOT NULL AND json_valid(n.draft) THEN json_extract(n.draft,'$.applicability') END AS applicability,
-        (SELECT COUNT(*) FROM notice_ingest_updates u WHERE u.notice_id=n.id AND u.state='pending') AS pending_intake_updates
+        (SELECT COUNT(*) FROM notice_ingest_updates u WHERE u.notice_id=n.id AND u.state='pending') AS pending_intake_updates,
+        (SELECT COUNT(*) FROM sources s WHERE s.notice_id=n.id AND s.active=1 AND s.status IN ('review','failed')) AS source_review_count,
+        (SELECT substr(COALESCE(json_extract(CASE WHEN j.type='object' THEN j.value ELSE '{}' END,'$.text'),''),1,180)
+           FROM sources s JOIN json_each(CASE WHEN json_valid(s.sections) THEN s.sections ELSE '[]' END) j
+           WHERE s.notice_id=n.id AND s.active=1 AND j.type='object'
+             AND length(trim(COALESCE(json_extract(CASE WHEN j.type='object' THEN j.value ELSE '{}' END,'$.text'),'')))>0
+           ORDER BY CASE WHEN length(trim(n.title))>0
+                    AND instr(trim(COALESCE(json_extract(j.value,'$.text'),'')),trim(n.title))>0
+                    AND length(trim(COALESCE(json_extract(j.value,'$.text'),'')))<=length(trim(n.title))+24 THEN 1 ELSE 0 END,
+                    CASE WHEN s.kind='text' THEN 0 ELSE 1 END,s.created_at,s.id,CAST(j.key AS INTEGER) LIMIT 1) AS source_excerpt
         FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=? ORDER BY n.updated_at DESC,n.rowid DESC""", (uid,))]
+    # A merged notice can have several origin labels. Only the owner's receipts
+    # participate; keep older notices without receipts usable as well.
+    origin_labels = {}
+    for row in conn.execute('''SELECT r.notice_id,r.source_label FROM notice_ingest_receipts r
+            JOIN notices n ON n.id=r.notice_id AND n.user_id=r.user_id
+            WHERE r.user_id=? ORDER BY r.created_at,r.rowid''', (uid,)):
+        label = (row['source_label'] or '').strip() or '个人提交'
+        labels = origin_labels.setdefault(row['notice_id'], [])
+        if label not in labels:
+            labels.append(label)
+    for record in records:
+        primary_label = (record['source_label'] or '').strip() or '个人提交'
+        labels = origin_labels.get(record['id'], [])
+        if primary_label not in labels:
+            labels.insert(0, primary_label)
+        record['origin_labels'] = labels
     from .notice_queue import annotate
     annotate(conn, uid, records)
     from .notice_matters import annotate as annotate_matters
@@ -220,7 +245,7 @@ def search_notices(conn, uid, query=''):
         value = json.loads(task['data'])
         chunks_by_notice.setdefault(task['notice_id'], []).append(('办理事项', ' '.join([value.get('title', ''), *value.get('materials', []), value.get('submission', '')])))
     for record in records:
-        chunks = [('标题', record['title']), ('来源', record['source_label']), *chunks_by_notice.get(record['id'], [])]
+        chunks = [('标题', record['title']), ('来源', '、'.join(record['origin_labels'])), *chunks_by_notice.get(record['id'], [])]
         haystack = '\n'.join(text for _, text in chunks).casefold()
         if not all(term in haystack for term in terms):
             continue

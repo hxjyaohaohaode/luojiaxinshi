@@ -9,6 +9,7 @@ import {installChrome,syncChrome} from './chrome.js';
 import {createAuthUI} from './auth.js';
 import {createChatUI} from './chat.js';
 import {createSourcesUI} from './sources.js';
+import {createCampusUI} from './campus.js';
 import {createDraftStore,moveSelection} from './continuity.js';
 import {companion,companionSetting,initializeCompanion,greeting,celebrateCompletion} from './companion.js';
 import {calendarHelp} from './calendar-help.js';
@@ -134,11 +135,11 @@ function profileSaved(message,form,profile,values,view){
   toast(message,false,Object.keys(previous).length?{duration:15000,action:{label:'撤销',run:async()=>{if(!view.sameUser())throw Error('账号已变化，不能撤销原账号的设置。');const restored=await patchProfile(api,profile,previous);if(!view.sameUser())return;for(const key of Object.keys(previous))state.session.user.profile[key]=restored[key];updateAccount();if(view.sameRoute()&&location.hash==='#settings')settingsPage({preserveScroll:true});}}}:{});
 }
 function authPage(){noticeFiles=[];memoryUI.clearPrivate();authUI.render();}
-const navs=[['dashboard','grid','办理工作台'],['chat','spark','和小信使聊聊'],['tasks','tasks','待办'],['notices','doc','通知资料'],['calendar','calendar','日历'],['insights','chart','数据看板'],['sources','history','通知来源'],['settings','settings','个人与账号']];
+const navs=[['dashboard','grid','办理工作台'],['notices','doc','通知资料'],['tasks','tasks','待办'],['calendar','calendar','日历'],['sources','history','通知来源'],['chat','spark','和小信使聊聊'],['insights','chart','数据看板'],['campus','grid','学院工作台'],['settings','settings','个人与账号']];
 function shell(page){
   if($('.shell')){updateShell(page);return;}
   const u=state.session.user;
-  $('#app').innerHTML=`<div class="shell"><a class="skip-link" href="#content">跳到主要内容</a><button type="button" class="menu-scrim" data-action="menu" aria-label="关闭导航菜单" tabindex="-1"></button><aside class="sidebar"><div class="sidebar-resize" role="separator" tabindex="0" aria-label="调整侧栏宽度，方向键可调节" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="460" aria-valuenow="234"></div><a href="#dashboard" class="brand"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="50" height="50"><span><strong>珞珈信使</strong></span></a><a class="button primary sidebar-create" href="#new">${icon('plus')} 收通知</a><nav aria-label="主导航">${navs.map(([id,i,l])=>`<a class="nav-item" href="#${id}">${icon(i)}<span>${l}</span>${id==='chat'?'<small>AI</small>':''}</a>`).join('')}</nav><div class="sidebar-bottom"><div class="account"><a href="#settings" class="avatar" aria-label="个人设置">${esc(u.display_name.slice(0,1))}</a><a href="#settings" class="spacer account-name">${esc(u.display_name)}<small>${{student:'学生',teacher:'教师',staff:'教职工',other:'个人'}[u.profile.campus_role]||'个人'}空间</small></a><button class="icon-button" title="退出登录" aria-label="退出登录" data-action="logout">${icon('logout')}</button></div></div></aside><div class="workspace"><button type="button" class="icon-button workspace-chrome-toggle" data-shell-toggle aria-label="收起侧栏" title="展开或收起侧栏 · Ctrl / ⌘ + \\">${icon('menu')}</button><header class="topbar"><div class="topbar-left"><a class="mobile-brand" href="#dashboard" aria-label="珞珈信使首页"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="40" height="40"></a><span>我的空间</span><span>/</span><b></b></div><div class="topbar-right">${motionToggle()}<button type="button" class="icon-button reminder-bell" data-action="reminders" aria-label="提醒" title="提醒">${icon('bell')}<span class="reminder-badge" hidden></span></button><button type="button" class="workspace-search" data-action="quick-search" aria-label="查找通知和待办">${icon('search')}<span>查找通知和待办</span><kbd>/</kbd></button><span class="date-text">${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'short'}).format(new Date())}</span><a href="#settings" class="service-indicator ${state.session.ai.configured?'configured':''}" title="${state.session.ai.configured?'AI 助手已接通':'AI 还没接通，可以先手动整理'}"><i class="dot"></i>${state.session.ai.configured?'AI 已就绪':'AI 未接通'}</a></div></header><main class="content" id="content" tabindex="-1">${loadingState()}</main></div><nav class="mobile-bottom-nav" aria-label="常用页面">${[['dashboard','grid','工作台'],['tasks','tasks','待办'],['chat','spark','助手'],['calendar','calendar','日历']].map(([id,i,l])=>`<a href="#${id}" class="nav-item">${icon(i)}<span>${l}</span></a>`).join('')}<button type="button" data-action="menu">${icon('menu')}<span>更多</span></button></nav></div>`;
+  $('#app').innerHTML=`<div class="shell"><a class="skip-link" href="#content">跳到主要内容</a><button type="button" class="menu-scrim" data-action="menu" aria-label="关闭导航菜单" tabindex="-1"></button><aside class="sidebar"><div class="sidebar-resize" role="separator" tabindex="0" aria-label="调整侧栏宽度，方向键可调节" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="460" aria-valuenow="234"></div><a href="#dashboard" class="brand"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="50" height="50"><span><strong>珞珈信使</strong></span></a><a class="button primary sidebar-create" href="#new">${icon('plus')} 收通知</a><nav aria-label="主导航">${navs.map(([id,i,l])=>`<a class="nav-item" href="#${id}">${icon(i)}<span>${l}</span>${id==='chat'?'<small>AI</small>':''}</a>`).join('')}</nav><div class="sidebar-bottom"><div class="account"><a href="#settings" class="avatar" aria-label="个人设置">${esc(u.display_name.slice(0,1))}</a><a href="#settings" class="spacer account-name">${esc(u.display_name)}<small>${accountCaption(u)}</small></a><button class="icon-button" title="退出登录" aria-label="退出登录" data-action="logout">${icon('logout')}</button></div></div></aside><div class="workspace"><button type="button" class="icon-button workspace-chrome-toggle" data-shell-toggle aria-label="收起侧栏" title="展开或收起侧栏 · Ctrl / ⌘ + \\">${icon('menu')}</button><header class="topbar"><div class="topbar-left"><a class="mobile-brand" href="#dashboard" aria-label="珞珈信使首页"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="40" height="40"></a><span>我的空间</span><span>/</span><b></b></div><div class="topbar-right">${motionToggle()}<button type="button" class="icon-button reminder-bell" data-action="reminders" aria-label="提醒" title="提醒">${icon('bell')}<span class="reminder-badge" hidden></span></button><button type="button" class="workspace-search" data-action="quick-search" aria-label="查找通知和待办">${icon('search')}<span>查找通知和待办</span><kbd>/</kbd></button><span class="date-text">${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'short'}).format(new Date())}</span><a href="#settings" class="service-indicator ${state.session.ai.configured?'configured':''}" title="${state.session.ai.configured?'AI 助手已接通':'AI 还没接通，可以先手动整理'}"><i class="dot"></i>${state.session.ai.configured?'AI 已就绪':'AI 未接通'}</a></div></header><main class="content" id="content" tabindex="-1">${loadingState()}</main></div><nav class="mobile-bottom-nav" aria-label="常用页面">${[['dashboard','grid','工作台'],['notices','doc','通知'],['tasks','tasks','待办'],['calendar','calendar','日历']].map(([id,i,l])=>`<a href="#${id}" class="nav-item">${icon(i)}<span>${l}</span></a>`).join('')}<button type="button" data-action="menu">${icon('menu')}<span>更多</span></button></nav></div>`;
 }
 function noticeStatus(n){return noticeState(n);}
 function noticeRow(n){const [label,color]=noticeStatus(n);return `<a class="notice-row notice-row-link" href="#notice/${n.id}"><span class="notice-symbol">${icon('doc')}</span><span class="spacer"><strong>${esc(n.title)}</strong><small>${esc(n.source_label||'个人提交')} · ${n.task_count||0} 项待办</small></span>${pill(label,color)}<span class="date-col">${dateText(n.created_at)}</span></a>`;}
@@ -241,6 +242,8 @@ async function route(){
       page=location.hash.slice(1)||'chat';
     }else if(page==='sources'){
       await sourcesUI.render(id);
+    }else if(page==='campus'){
+      await campusUI.render(id);
     }else if(page==='memory'){
       await memoryUI.render();
     }else if(page==='insights'){
@@ -487,6 +490,7 @@ const authUI=createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,d
 const memoryUI=createMemoryUI({state,api,esc,icon,showDialog,toast,ask});
 const chatUI=createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI});
 const sourcesUI=createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route});
+const campusUI=createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount});
 $('#dialog').addEventListener('close',()=>{
   const target=dialogReturnTarget,closingFocus=document.activeElement;
   // Safari may return native-dialog focus to the previously focused input,
@@ -499,7 +503,7 @@ $('#dialog').addEventListener('close',()=>{
   });
 });
 document.addEventListener('invalid',event=>{const group=event.target.closest('[data-profile-group]');if(group?.hidden)document.querySelector(`[data-action="profile-section"][data-section="${group.dataset.profileGroup}"]`)?.click();},true);
-const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection});
+const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData});
 let boardSaving=false;
 async function requestBoardMove(id,payload){
   if(boardSaving)throw Error('上一项正在保存，请稍后再拖。');
@@ -599,7 +603,8 @@ installPageNavigation();
 
 installAttachmentPreviews({api,toast});
 
-function updateAccount(){const p=state.session.user.profile,u=state.session.user,name=p.preferred_name||u.display_name,avatar=$('.account .avatar'),account=$('.account-name');if(avatar){avatar.textContent=name.slice(0,1);avatar.className='avatar avatar-'+(p.avatar_tone||'forest');}if(account){account.replaceChildren(document.createTextNode(name));const small=document.createElement('small');small.textContent=p.college||({student:'学生',teacher:'教师',staff:'教职工',other:'个人'}[p.campus_role]||'个人')+'空间';account.append(small);}}
+function accountCaption(u){const role=u.campus_membership?.role;if(role)return ({college_admin:'学院管理员',counselor:'辅导员',student:'学生'}[role]||'学院成员')+'空间';if(u.role==='admin')return '系统管理员';return '个人空间';}
+function updateAccount(){const p=state.session.user.profile,u=state.session.user,name=p.preferred_name||u.display_name,avatar=$('.account .avatar'),account=$('.account-name');if(avatar){avatar.textContent=name.slice(0,1);avatar.className='avatar avatar-'+(p.avatar_tone||'forest');}if(account){account.replaceChildren(document.createTextNode(name));const small=document.createElement('small');small.textContent=accountCaption(u);account.append(small);}}
 
 installDataTransfer({api,toast,onImported:async()=>{state.session=await api('/session');updateAccount();await refreshData();}});
 

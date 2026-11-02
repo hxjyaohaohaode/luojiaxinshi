@@ -1,0 +1,18 @@
+.campus-section{padding:1.2rem 0;border-bottom:1px solid var(--border,#e3e8e3)}
+.campus-section h2{margin:0 0 .65rem;font-size:1.05rem}
+.campus-section>p{margin:.45rem 0 .9rem}
+.campus-section form{max-width:760px}
+.campus-section textarea{resize:vertical}
+.campus-list{display:grid;gap:.6rem}
+.campus-row{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;padding:.9rem 1rem;border:1px solid var(--border,#e3e8e3);border-radius:12px;background:#fff;min-width:0}
+.campus-row>div:first-child{min-width:0;overflow-wrap:anywhere}
+.campus-row[hidden]{display:none}
+.campus-row p{margin:.35rem 0}
+.campus-excerpt{white-space:pre-wrap;overflow-wrap:anywhere;max-height:9em;overflow:auto}
+.campus-college-picker{max-width:420px;margin:1rem 0}
+.campus-shortcuts{padding:.8rem 0;gap:.5rem}
+.campus-search{display:flex;align-items:end;gap:.6rem;flex-wrap:wrap;margin:.7rem 0 1rem}
+.campus-search .field{flex:1 1 220px;max-width:420px}
+.campus-pagination{margin-top:1rem;gap:.6rem;align-items:center}
+.campus-section [data-campus-match][hidden]{display:none}
+@media(max-width:640px){.campus-row{flex-direction:column}.campus-section{padding:1rem 0}.campus-section .form-grid{grid-template-columns:1fr}.campus-row .row{width:100%}}

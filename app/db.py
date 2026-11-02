@@ -263,6 +263,10 @@ class Database:
                 from .agent_runtime.store import TABLES as AGENT_TABLES
                 if agent_version and (agent_version[0]!='1' or not AGENT_TABLES.issubset(tables)):
                     raise RuntimeError('智能任务版本不兼容或数据表缺失，未修改数据库')
+                campus_version=conn.execute("SELECT value FROM meta WHERE key='campus_schema_version'").fetchone()
+                from .campus import TABLES as CAMPUS_TABLES
+                if campus_version and (campus_version[0]!='1' or not CAMPUS_TABLES.issubset(tables)):
+                    raise RuntimeError('学院权限版本不兼容或数据表缺失，未修改数据库')
             conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(SCHEMA)
             conn.executescript('BEGIN IMMEDIATE;'+WORKSPACE_SCHEMA+"UPDATE meta SET value='4' WHERE key='schema_version';COMMIT;")
@@ -301,6 +305,8 @@ class Database:
             init_push(conn)
             from .notice_automation import initialize as init_notice_automation
             init_notice_automation(conn)
+            from .campus import initialize as init_campus
+            init_campus(conn)
 
     @contextmanager
     def connect(self, write=False):

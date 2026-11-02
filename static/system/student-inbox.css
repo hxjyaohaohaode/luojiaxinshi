@@ -1,0 +1,23 @@
+.student-source-panel{padding:14px 16px;margin-bottom:14px;border:1px solid var(--line,#e0e6df);border-radius:12px;background:#fff}
+.student-source-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.student-source-heading strong{font-size:15px}
+.student-source-heading a{font-size:13px}
+.student-source-details summary{margin-top:8px;color:var(--muted,#65716b);font-size:13px;line-height:1.5;cursor:pointer}
+.student-source-details summary:focus-visible{outline:2px solid #257357;outline-offset:3px;border-radius:2px}
+#library-refresh-result{margin:.65rem 0 0;line-height:1.5}
+#library-refresh-result:empty{display:none}
+.student-source-list{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:10px}
+.student-source-status{display:flex;flex-direction:column;gap:3px;min-width:0;padding-left:9px;border-left:3px solid #7ea786}
+.student-source-status strong{font-size:13px;overflow-wrap:anywhere}
+.student-source-status span{font-size:12px;color:var(--muted,#65716b);overflow-wrap:anywhere}
+.student-source-status[data-state=error]{border-color:#c26b4e}
+.student-source-status[data-state=paused],.student-source-status[data-state=manual]{border-color:#aab2ae}
+.student-unreviewed-note{margin:-10px 0 14px;line-height:1.6}
+.student-unreviewed-note:empty{display:none}
+.student-inbox-controls{display:flex;align-items:end;gap:10px 14px;flex-wrap:wrap;margin:0 0 10px}
+.student-inbox-controls .field{flex:1 1 180px;max-width:280px;min-width:0}
+.student-inbox-controls select{min-height:44px;width:100%}
+.student-inbox-controls p{flex:1 1 230px;margin:0 0 4px;line-height:1.5}
+.notice-card-content .student-notice-excerpt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:normal;color:var(--muted,#65716b)}
+.student-list-meta{margin:0 16px 12px 54px;color:var(--muted,#65716b);font-size:12px;line-height:1.5}
+@media(max-width:650px){.student-source-panel{padding:12px;margin-bottom:12px}.student-source-list{gap:10px}.student-source-status{flex:1 1 180px}.student-inbox-controls{align-items:stretch}.student-inbox-controls .field{flex:1 1 140px;max-width:none}.student-inbox-controls p{flex-basis:100%;margin:0}.student-list-meta{margin-left:12px}}

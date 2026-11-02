@@ -2,6 +2,11 @@ $ErrorActionPreference = 'Stop'
 $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskPython = Join-Path $taskRoot '.venv\Scripts\python.exe'
 $taskManage = Join-Path $taskRoot 'manage.py'
+$taskTemp = Join-Path $taskRoot 'data\tmp'
+New-Item -ItemType Directory -Path $taskTemp -Force | Out-Null
+$env:TEMP = $taskTemp
+$env:TMP = $taskTemp
+$env:PIP_NO_CACHE_DIR = '1'
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 

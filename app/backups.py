@@ -65,10 +65,11 @@ def restore_database(source:Path,destination:Path):
             from .notice_automation import TABLES as AUTOMATION_TABLES
             from .group_delivery import TABLES as GROUP_DELIVERY_TABLES
             from .notice_matters import TABLES as MATTER_TABLES
+            from .campus import TABLES as CAMPUS_TABLES
             for meta_key,required in (('notice_matters_schema_version',MATTER_TABLES),('notice_ingest_schema_version',INGEST_TABLES),('task_material_schema_version',MATERIAL_TABLES),
                     ('source_sync_schema_version',SYNC_TABLES),('qq_group_schema_version',GROUP_TABLES),
                     ('publisher_sync_schema_version',PUBLISHER_TABLES),('push_delivery_schema_version',PUSH_TABLES),
-                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES)):
+                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES),('campus_schema_version',CAMPUS_TABLES)):
                 current=original.execute('SELECT value FROM meta WHERE key=?',(meta_key,)).fetchone()
                 if current and (current[0]!='1' or not required.issubset(tables)):
                     raise ValueError('备份缺少收件、办理材料或提醒数据，或版本不兼容：'+meta_key)
@@ -114,6 +115,9 @@ def restore_database(source:Path,destination:Path):
                 for table in ('reply_shares','conversation_ai_consents','notice_link_previews'):
                     if table in tables:target.execute('DELETE FROM '+table)
                 for table in ('qq_group_subscriptions','qq_authorized_groups','qq_group_codes','push_outbox','push_devices'):
+                    if table in tables:target.execute('DELETE FROM '+table)
+                # Old snapshots must not silently revive revoked college privileges.
+                for table in ('campus_counselor_scopes','campus_members'):
                     if table in tables:target.execute('DELETE FROM '+table)
                 for table in ('source_subscriptions','publisher_subscriptions'):
                     if table in tables:

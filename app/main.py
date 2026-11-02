@@ -334,11 +334,14 @@ def create_app(settings=None):
     @app.get('/api/session')
     def session(current=Depends(user)):
         from .model_catalog import public_configuration
+        from .campus import membership as campus_membership
         with db.connect() as conn:
             genui=feature_settings(conn,current['id'],settings)
             consent=consent_state(conn,current['id'])
+            affiliation=campus_membership(conn,current['id'])
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
-                        'role':current['role'],'profile':json.loads(current['profile'])},'csrf':current['csrf'],
+                        'role':current['role'],'profile':json.loads(current['profile']),
+                        'campus_membership':{'role':affiliation['role'],'college_name':affiliation['college_name']} if affiliation else None},'csrf':current['csrf'],
                 'ai':public_configuration(settings),'genui':genui,'consent':consent,
                 'environment':'production' if settings.production else 'local','task_board_contract':1}
 
@@ -1061,6 +1064,8 @@ def create_app(settings=None):
     install_push(app,db,user)
     from .notice_automation import install as install_notice_automation
     install_notice_automation(app,db,settings,user)
+    from .campus import install as install_campus
+    install_campus(app,db,user)
 
     @app.get('/notification-worker.js')
     def notification_worker():
