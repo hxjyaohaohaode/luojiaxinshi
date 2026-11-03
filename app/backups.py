@@ -66,10 +66,19 @@ def restore_database(source:Path,destination:Path):
             from .group_delivery import TABLES as GROUP_DELIVERY_TABLES
             from .notice_matters import TABLES as MATTER_TABLES
             from .campus import TABLES as CAMPUS_TABLES
-            for meta_key,required in (('notice_matters_schema_version',MATTER_TABLES),('notice_ingest_schema_version',INGEST_TABLES),('task_material_schema_version',MATERIAL_TABLES),
+            from .verification import TABLES as VERIFICATION_TABLES
+            from .mail_delivery import TABLES as MAIL_TABLES
+            from .delivery_policy import TABLES as DELIVERY_POLICY_TABLES
+            from .campus_imports import TABLES as IMPORT_TABLES
+            from .message_interactions import TABLES as MESSAGE_INTERACTION_TABLES
+            from .proactive_feedback import TABLES as FEEDBACK_TABLES
+            import_version=original.execute("SELECT value FROM meta WHERE key='campus_import_schema_version'").fetchone()
+            if import_version and (import_version[0]!='1' or not IMPORT_TABLES.issubset(tables)):
+                raise ValueError('备份缺少校园导入记录或版本不兼容')
+            for meta_key,required in (('message_interaction_schema_version',MESSAGE_INTERACTION_TABLES),('proactive_feedback_schema_version',FEEDBACK_TABLES),('notice_matters_schema_version',MATTER_TABLES),('notice_ingest_schema_version',INGEST_TABLES),('task_material_schema_version',MATERIAL_TABLES),
                     ('source_sync_schema_version',SYNC_TABLES),('qq_group_schema_version',GROUP_TABLES),
                     ('publisher_sync_schema_version',PUBLISHER_TABLES),('push_delivery_schema_version',PUSH_TABLES),
-                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES),('campus_schema_version',CAMPUS_TABLES)):
+                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES),('campus_schema_version',CAMPUS_TABLES),('verification_schema_version',VERIFICATION_TABLES),('mail_delivery_schema_version',MAIL_TABLES),('delivery_policy_schema_version',DELIVERY_POLICY_TABLES)):
                 current=original.execute('SELECT value FROM meta WHERE key=?',(meta_key,)).fetchone()
                 if current and (current[0]!='1' or not required.issubset(tables)):
                     raise ValueError('备份缺少收件、办理材料或提醒数据，或版本不兼容：'+meta_key)
@@ -109,6 +118,11 @@ def restore_database(source:Path,destination:Path):
                 target.execute('PRAGMA secure_delete=ON')
                 target.execute('DELETE FROM sessions')
                 target.execute('DELETE FROM invites')
+                if 'auth_challenges' in tables:target.execute('DELETE FROM auth_challenges')
+                # Restore must not resurrect ownership of an old/reassigned contact.
+                if 'verified_contacts' in tables:target.execute('DELETE FROM verified_contacts')
+                if 'mail_outbox' in tables:target.execute('DELETE FROM mail_outbox')
+                if 'mail_preferences' in tables:target.execute('UPDATE mail_preferences SET enabled=0')
                 if 'binding_codes' in tables:
                     target.execute('DELETE FROM binding_codes')
                     target.execute('DELETE FROM external_bindings')

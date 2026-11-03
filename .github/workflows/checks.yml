@@ -13,9 +13,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    # Windows completed 1027/1059 tests without failures before the old 25-minute
-    # job deadline. Allow the full suite, audits and release build to finish.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 15 }}
+    # Include every backend shard, parser installation, audit and release check.
+    # Windows process startup needs additional time; no test files are omitted.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 45 || 25 }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -24,9 +24,16 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
-      - run: python -m pytest -q --durations=20 -o faulthandler_timeout=120 --junitxml=artifacts/ci/python-tests.xml
+      - name: Install the checksum-pinned legacy Office parser
+        run: python scripts/install_legacy_parser.py
+      - name: Run every backend file in isolated shards
+        run: python scripts/audit_full_suite.py --workers 4 --output artifacts/ci/backend --junitxml artifacts/ci/python-tests.xml
       - run: node --test --test-reporter=junit --test-reporter-destination=artifacts/ci/node-tests.xml tests/*.test.mjs
       - run: python scripts/genui_catalog.py --check
       - run: python scripts/evaluate_genui.py
@@ -44,6 +51,9 @@ jobs:
           name: unit-reports-${{ matrix.os }}
           path: |
             artifacts/ci/python-tests.xml
+            artifacts/ci/backend/*.xml
+            artifacts/ci/backend/*.json
+            artifacts/ci/backend/*.log
             artifacts/ci/node-tests.xml
             artifacts/ci/summary.md
           retention-days: 14
@@ -55,7 +65,7 @@ jobs:
       # dependencies are preinstalled, avoiding apt mirror outages on each run.
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
       options: --init --ipc=host --user 1001
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -185,6 +195,7 @@ jobs:
           test "$(docker exec campus-ci id -u)" = 10001
           docker exec campus-ci python manage.py check
           docker exec campus-ci python -c 'from app.genui_prompt import capability_module; assert len(capability_module(1)) > 1000'
+          docker exec campus-ci python -c 'from app.documents import file_source; r=file_source("legacy.doc",b"{\\rtf1\\ansi Container parser smoke.\\par Done.}"); assert r["status"] in {"ok","review"} and any("Container parser smoke" in s["text"] for s in r["sections"]), r["warning"]'
           curl --fail --silent -H 'Host: campus-ci.invalid' http://127.0.0.1:18065/ > /tmp/campus-index.html
           grep -q 'id="app"' /tmp/campus-index.html
       - name: Diagnose an isolated container failure

@@ -155,9 +155,13 @@ def validate(data, capacity=None):
         handling=n.get('handling') or {}
         if not isinstance(handling,dict):raise ValueError('通知处理记录格式不正确')
         decision=DispositionUpdate(version=1,disposition=handling.get('disposition','inbox'),note=handling.get('note',''))
+        from .proactive_feedback import Feedback
+        correction=n.get('feedback') or {}
+        feedback=Feedback(notice_version=1,version=0,mode=correction.get('mode','auto'),note=correction.get('note',''))
         notices.append({'old_id':text(n.get('id'),100),'key':key('notice',n),'title':text(n.get('title'),160),'source_label':text(n.get('source_label'),100),
                         'source_url':safe_url(text(n.get('source_url'),2000)),'sources':sources(n.get('sources',[])),'tasks':task_items,'changes':changes,
-                        'quality_receipt':portable_receipt(n.get('quality_receipt')),'handling':decision.model_dump(exclude={'version'})})
+                        'quality_receipt':portable_receipt(n.get('quality_receipt')),'handling':decision.model_dump(exclude={'version'}),
+                        'feedback':feedback.model_dump(include={'mode','note'})})
     validate_dependency_graph({t['old_id']:t['workflow']['dependencies'] for n in notices for t in n['tasks'] if t['old_id']})
     for c in collection(data,'conversations',capacity.conversations):
         messages=[]
@@ -169,7 +173,21 @@ def validate(data, capacity=None):
             if status not in {'complete','failed','cancelled','pending','processing'}:raise ValueError('消息状态无效')
             # An interrupted export is never evidence of a completed model reply.
             if status in {'pending','processing'}:status='cancelled'
-            messages.append({'role':m['role'],'content':text(m.get('content'),1048576),'created_at':timestamp,'status':status})
+            from .message_interactions import EMOJIS
+            emojis=m.get('emojis') or []
+            if not isinstance(emojis,list) or len(emojis)>len(EMOJIS) or any(item not in EMOJIS for item in emojis):raise ValueError('消息表情格式不正确')
+            quote=m.get('reply_to')
+            if quote is not None:
+                if not isinstance(quote,dict) or quote.get('role') not in {'user','assistant'}:raise ValueError('引用消息格式不正确')
+                quote={'message_id':text(quote.get('message_id'),100),'role':quote['role'],'excerpt':text(quote.get('excerpt'),2400)}
+            messages.append({'old_id':text(m.get('id'),100),'role':m['role'],'content':text(m.get('content'),1048576),'created_at':timestamp,'status':status,'emojis':list(dict.fromkeys(emojis)),'reply_to':quote})
+        known={message['old_id']:message for message in messages if message['old_id']}
+        if len(known)!=sum(bool(message['old_id']) for message in messages):raise ValueError('对话消息标识重复')
+        for message in messages:
+            quote=message['reply_to']
+            original=known.get(quote['message_id']) if quote else None
+            if original and (original['role']!=quote['role'] or ' '.join(quote['excerpt'].split()) not in ' '.join(original['content'].split())):
+                raise ValueError('引用快照与导入的原消息不一致')
         from .memory import Context
         context=Context.model_validate(c.get('context',{'version':0})).model_dump()
         chats.append({'key':key('chat',c),'title':text(c.get('title'),100),'sources':sources(c.get('sources',[])),'messages':messages,'context':context})
@@ -208,7 +226,7 @@ def install_data_transfer(app,db,user):
         try:imported_matters=validate_import_groups(payload.data.get('notice_matters',[]),db.usage_limits.notices)
         except ValueError as exc:raise HTTPException(422,str(exc)) from None
         counts={k:len(data[k]) for k in ['memory_projects','memories','notices','conversations','arrangements','source_catalog'] if data[k] or k in ['notices','conversations','arrangements','source_catalog']}
-        warnings=['只新增记录，不覆盖现有记录；重复导入相同记录会跳过。','附件原件不在 JSON 备份内，恢复提取文字；对话恢复为可读文字，互动状态和引用编号不恢复。','导入待办的正式期限需重新核对，提醒时间清空；不会自动向外部日历写入。']
+        warnings=['只新增记录，不覆盖现有记录；重复导入相同记录会跳过。','附件原件不在 JSON 备份内，恢复提取文字；对话恢复为可读文字，生成式互动状态和事实引用编号不恢复；消息引用快照与表情保留。','导入待办的正式期限需重新核对，提醒时间清空；不会自动向外部日历写入。']
         warnings.append('办理记录、回执及变更前后值按历史保留；原待确认变更转为待核实线索，设备提醒验证需要重新进行。')
         if payload.data.get('task_material_archive'):
             warnings.append('此文件中的本人办理材料版本目录和提交快照仅供查阅，本次 JSON 导入不恢复这些记录或文件原件。完整恢复请使用管理员数据库备份；原件可在各待办中单独下载。')
@@ -265,6 +283,8 @@ def install_data_transfer(app,db,user):
                         if item['old_id']:conn.execute('INSERT OR REPLACE INTO import_notice_links VALUES(?,?,?)',(current['id'],item['old_id'],rid))
                         if not item['tasks'] and item['handling']['disposition']!='inbox':
                             conn.execute('INSERT INTO notice_dispositions VALUES(?,?,?,?)',(rid,item['handling']['disposition'],item['handling']['note'],now))
+                        if item['feedback']['mode']!='auto':
+                            conn.execute('INSERT INTO notice_recommendation_feedback VALUES(?,?,?,?,?,1,?)',(rid,current['id'],item['feedback']['mode'],item['feedback']['note'],1,now))
                         mapping={}
                         for source in item['sources']:
                             sid=ident();mapping[source['old_id']]=sid
@@ -301,11 +321,22 @@ def install_data_transfer(app,db,user):
                         conn.execute('INSERT INTO memory_selection_modes VALUES(?,?)',(rid,context.get('selection_mode') or 'manual'))
                         for source in item['sources']:
                             conn.execute("INSERT INTO conversation_sources(id,conversation_id,name,kind,sha256,status,sections,warning,created_at) VALUES(?,?,?,'text',?,'review',?,?,?)",(ident(),rid,source['name'],hashlib.sha256(dumps(source['sections']).encode()).hexdigest(),dumps(source['sections']),source['warning'],now))
-                        parent=None
+                        parent=None;message_ids={};quoted=[]
                         for message in item['messages']:
                             mid=ident()
                             conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,parent_id,created_at,error) VALUES(?,?,?,?,?,?,?,?)",(mid,rid,message['role'],message['content'],message['status'],parent if message['role']=='assistant' else None,message['created_at'],'从备份恢复的未完成回复，已收到的内容保留。' if message['status']!='complete' else ''))
+                            if message['old_id']:message_ids[message['old_id']]=mid
+                            for emoji in message['emojis']:conn.execute('INSERT INTO message_emojis VALUES(?,?,?)',(mid,emoji,now))
+                            if message['reply_to']:quoted.append((mid,message['reply_to']))
                             if message['role']=='user':parent=mid
+                        for mid,quote in quoted:
+                            # An old revision can be absent from a text-only archive.
+                            # Preserve its snapshot without claiming a live reference.
+                            reference=message_ids.get(quote['message_id'])
+                            if reference:
+                                original=conn.execute('SELECT role,content FROM conversation_messages WHERE id=?',(reference,)).fetchone()
+                                if original['role']!=quote['role'] or ' '.join(quote['excerpt'].split()) not in ' '.join(original['content'].split()):raise ValueError('引用快照与导入的原消息不一致')
+                            conn.execute('INSERT INTO message_quotes VALUES(?,?,?,?,?)',(mid,reference,quote['role'],quote['excerpt'],now))
                     elif kind=='arrangements':conn.execute('INSERT INTO arrangements(id,user_id,request_id,data,created_at,updated_at) VALUES(?,?,?,?,?,?)',(rid,current['id'],'import_'+item['key'],dumps(item['data']),now,now))
                     else:conn.execute('INSERT INTO source_catalog(id,user_id,data,created_at,updated_at) VALUES(?,?,?,?,?)',(rid,current['id'],dumps(item['data']),now,now))
                     conn.execute('INSERT INTO import_receipts VALUES(?,?,?)',(current['id'],item['key'],now));added+=1
@@ -338,5 +369,9 @@ def install_data_transfer(app,db,user):
             except ValueError as exc:raise HTTPException(422,str(exc)) from None
             from .notice_matters import import_groups
             import_groups(conn,current['id'],imported_matters)
-            if payload.apply_profile:conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(data['profile']),current['id']))
+            if payload.apply_profile:
+                # Importing an editable profile must never replace an identity contact.
+                existing=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
+                profile={**data['profile'],'phone':existing.get('phone','')}
+                conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(profile),current['id']))
         return {'added':added,'skipped':skipped,'warnings':warnings}

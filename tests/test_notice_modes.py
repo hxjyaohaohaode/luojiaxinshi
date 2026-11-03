@@ -8,15 +8,16 @@ from test_workflow import env,account,notice
 from test_notice_semantics import install_provider
 
 
-@pytest.mark.parametrize('mode',['configured','fast'])
+@pytest.mark.parametrize('mode',['configured','fast','daily'])
 def test_request_selects_both_models_with_bounded_review_and_immutable_configuration(env,monkeypatch,mode):
     fast='mimo-v2.6-pro-ultraspeed'
-    c,n,seen=install_provider(env,monkeypatch,expected_review_model=fast if mode=='fast' else None)
+    c,n,seen=install_provider(env,monkeypatch,expected_review_model=fast if mode=='fast' else 'mimo-v2.6-flash' if mode=='daily' else None,
+        expected_thinking='disabled' if mode=='daily' else 'enabled',expected_output=32768 if mode=='daily' else None)
     cfg=env[1];cfg.notice_fast_enabled=True
     before=(cfg.ai_model,cfg.notice_review_model)
     response=c.post('/api/notices/'+n['id']+'/generate',json={'version':n['version'],'allow_external_processing':True,'processing_mode':mode})
     assert response.status_code==200,response.text
-    expected=[fast,fast] if mode=='fast' else list(before)
+    expected=[fast,fast] if mode=='fast' else ['mimo-v2.6-flash']*2 if mode=='daily' else list(before)
     assert [p['model'] for p in seen]==expected
     assert (cfg.ai_model,cfg.notice_review_model)==before
     metrics=c.get('/api/executions').json()['items'][0]['metrics']
@@ -26,6 +27,10 @@ def test_request_selects_both_models_with_bounded_review_and_immutable_configura
         consent=json.loads(conn.execute("SELECT after_json FROM audit WHERE action='ai_processing_consent'").fetchone()[0])
     assert consent['processing_mode']==mode and consent['model']==expected[0] and consent['review_model']==expected[1]
     assert consent['maximum_requests']==2
+    assert [p['thinking']['type'] for p in seen]==['disabled' if mode=='daily' else 'enabled']*2
+    assert cfg.notice_thinking=='enabled' and cfg.ai_output_tokens==131072
+    if mode=='daily':assert all(p['temperature']==0.1 and p['top_p']==0.8 for p in seen)
+    else:assert all('temperature' not in p and 'top_p' not in p for p in seen)
 
 
 @pytest.mark.parametrize('mode,enabled,base',[('fast',False,None),('invented',True,None),('fast',True,TOKEN_PLAN)])
@@ -43,14 +48,14 @@ def test_unavailable_mode_rejected_before_attempt_or_existing_notice_changes(env
 
 def test_fast_option_is_owner_enabled_and_never_crosses_subscription_channel(tmp_path):
     cfg=Settings(tmp_path)
-    assert [x['id'] for x in notice_processing_modes(cfg)]==['configured']
+    assert [x['id'] for x in notice_processing_modes(cfg)]==['configured','daily']
     cfg.notice_fast_enabled=True
-    modes=notice_processing_modes(cfg);assert [x['id'] for x in modes]==['configured','fast']
-    assert '30' in modes[1]['price_note'] and '60' in modes[1]['price_note']
+    modes=notice_processing_modes(cfg);assert [x['id'] for x in modes]==['configured','daily','fast']
+    assert '30' in modes[-1]['price_note'] and '60' in modes[-1]['price_note']
     fast=notice_settings(cfg,'fast');assert fast is not cfg and cfg.ai_model=='mimo-v2.6-pro'
     assert fast.notice_semantic_review==cfg.notice_semantic_review
     cfg.ai_base_url=TOKEN_PLAN
-    assert [x['id'] for x in notice_processing_modes(cfg)]==['configured']
+    assert [x['id'] for x in notice_processing_modes(cfg)]==['configured','daily']
     with pytest.raises(ValueError):notice_settings(cfg,'fast')
 
 
@@ -61,3 +66,7 @@ def test_disabled_review_is_described_without_promising_a_second_call(tmp_path):
     for mode in modes:
         assert mode['review_model'] is None and '复核已由维护者关闭' in mode['description']
     assert not notice_settings(cfg,'fast').notice_semantic_review
+    with pytest.raises(ValueError):notice_settings(cfg,'daily')
+    cfg.notice_semantic_review=True;cfg.notice_daily_enabled=False
+    assert 'daily' not in [mode['id'] for mode in notice_processing_modes(cfg)]
+    with pytest.raises(ValueError):notice_settings(cfg,'daily')

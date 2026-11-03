@@ -4,7 +4,7 @@ from .db import dumps
 from .memory import context_for, memory_access, recall
 from .memory_learning import learning_allowed
 from .memory_store import settings_for
-from .preferences import PERSONAL_KEYS
+from .preferences import PERSONAL_KEYS, LOCAL_ONLY_KEYS
 from .retrieval_scope import account_access
 
 
@@ -90,5 +90,6 @@ def basic_profile(db, uid, cid, mid, messages, profile,original_sources=None):
         conn.execute('INSERT OR REPLACE INTO reply_grounding VALUES(?,?,?)',
                      (mid, dumps(sources), dumps({'status': 'context_only', 'memory': report,
                        'context_snapshot': snapshot, 'prompt_version': 'memory-engine-v1'})))
-    permitted = {key: value for key, value in profile.items() if access['profile'] or key not in PERSONAL_KEYS}
+    permitted = {key: value for key, value in profile.items()
+                 if key not in LOCAL_ONLY_KEYS and (access['profile'] or key not in PERSONAL_KEYS)}
     return {**permitted, **fields, '_memory_entries': memories}

@@ -25,6 +25,7 @@ from .material_files import expand_files,MAX_UPLOAD,safe_path
 from .conversation_tools import logical_messages,select_reply,model_sources,install_tools
 from .genui_state import Interaction, submission_context, checkpoint
 from .visual_evidence import display_citations
+from .message_interactions import QuoteInput,MessageInput,validate_inputs,persist_input,decorate as interaction_details,check_replay,load_index as interaction_index
 
 
 class NewConversation(Strict):
@@ -42,6 +43,8 @@ class SendMessage(Version):
     regenerate_message_id: str | None = Field(default=None,max_length=40)
     steer_message_id: str | None = Field(default=None,max_length=40)
     allow_external_processing: bool = True
+    reply_to: QuoteInput | None = None
+    additional_messages: list[MessageInput] = Field(default_factory=list,max_length=15)
     ui_context: Interaction | None = None
     source_ids: list[str] = Field(default_factory=list,max_length=100)
 
@@ -66,6 +69,7 @@ class CatalogItem(Strict):
     semester: str = Field(default='',max_length=40)
     url: str = Field(default='',max_length=2000)
     followed: bool = False
+    wechat_id: str = Field(default='', max_length=80, pattern=r'^[a-zA-Z0-9_-]*$')
 
     @field_validator('url')
     @classmethod
@@ -103,6 +107,7 @@ def conversation_detail(conn,cid,uid,settings):
     result.pop('processing_token',None)
     result['sources']=sources_for(conn,cid)
     result['messages']=[]
+    interactions=interaction_index(conn,cid)
     for message in logical_messages(conn,cid):
         item=dict(message);versions=item.pop('_versions',[]);item.pop('position',None);item['citations']=json.loads(item['citations'])
         item['attachments']=[dict(s) for s in conn.execute('''SELECT s.id,s.name,s.kind,length(s.content) AS size
@@ -110,19 +115,18 @@ def conversation_detail(conn,cid,uid,settings):
             WHERE a.message_id=? AND s.conversation_id=? ORDER BY a.position''',(item['id'],cid))]
         if expired and item['status']=='processing':
             item.update(status='failed',error='上次回复已中断，消息已保留，可以重试。')
-        item=load_message(conn,item,settings)
+        item=interaction_details(conn,load_message(conn,item,settings),interactions)
         item=load_report(conn,item)
         from .agent_runtime.chat import message_state
         item['agent'] = message_state(conn, uid, cid, item['id'])
         interaction=conn.execute('SELECT context FROM genui_interactions WHERE message_id=?',(item['id'],)).fetchone()
         if interaction:item['interaction']=json.loads(interaction['context'])
-        reaction=conn.execute('SELECT value FROM reply_reactions WHERE message_id=?',(item['id'],)).fetchone();item['reaction']=reaction[0] if reaction else 0
         if versions:
             item['versions']=[]
             for version in versions:
                 v={k:value for k,value in version.items() if k!='position'};v['citations']=json.loads(v['citations'])
                 v['agent'] = item['agent'] if v['id']==item['id'] else message_state(conn,uid,cid,v['id'])
-                item['versions'].append(load_report(conn,load_message(conn,v,settings)))
+                item['versions'].append(interaction_details(conn,load_report(conn,load_message(conn,v,settings)),interactions))
             item['version_index']=next(i for i,v in enumerate(versions) if v['id']==item['id'])
         result['messages'].append(item)
     result['character_count']=total_chars(result['sources'])
@@ -282,15 +286,18 @@ def install_workspace(app,db,settings,user,heavy_lock):
             day=datetime.now(timezone(timedelta(hours=8))).date().isoformat()
             rate_limit(db,'ai:'+current['id']+':'+day,settings.ai_daily_limit,86400,check_only=True)
         with db.connect() as conn:
+            inputs=validate_inputs(conn,cid,payload)
             history=[m for m in logical_messages(conn,cid) if m['status']=='complete']
-            if len(history)+1>2000 or sum(len(m['content']) for m in history)+len(payload.content)>4000000:
+            if len(history)+len(inputs)>2000 or sum(len(m['content']) for m in history)+sum(len(i.content) for i in inputs)>4000000:
                 raise HTTPException(413,'本会话内容已较长，请新建对话继续；原回复未中断，你的补充草稿仍保留。')
 
     def prepare_send(cid,payload,current):
         with db.connect() as conn:
             own(conn,cid,current['id'])
             if conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND request_id=?',(cid,payload.request_id)).fetchone():
+                check_replay(conn,cid,payload)
                 return None,conversation_detail(conn,cid,current['id'],settings)
+            validate_inputs(conn,cid,payload)
         if settings.ai_api_key and not payload.allow_external_processing:
             raise HTTPException(422,'请确认本会话材料可发送到所配置的模型服务')
         if not heavy_lock.acquire(blocking=False):
@@ -319,29 +326,32 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 else:
                     if not payload.content:
                         raise HTTPException(422,'请写下你希望助手帮忙的内容')
-                    parent=ident()
-                    interaction=None
-                    if payload.ui_context:
-                        try:interaction=submission_context(conn,cid,payload.ui_context)
-                        except (ValueError,TypeError,KeyError):raise HTTPException(422,'当前界面选择未通过检查，消息尚未发送；请核对选择或重新打开这条回复') from None
-                    conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'user',?,'complete',?)",(parent,cid,payload.content,now))
-                    for position,sid in enumerate(dict.fromkeys(payload.source_ids)):
-                        if not conn.execute('SELECT 1 FROM conversation_sources WHERE id=? AND conversation_id=?',(sid,cid)).fetchone():
-                            raise HTTPException(422,'附件已移除或不属于本次对话，请重新选择')
-                        conn.execute('INSERT INTO message_attachments VALUES(?,?,?)',(parent,sid,position))
-                    if interaction:
-                        interaction['checkpoint']=checkpoint(conn,payload.ui_context)
-                        conn.execute('INSERT INTO genui_interactions VALUES(?,?,?)',(parent,payload.ui_context.message_id,dumps(interaction)))
+                    inputs=validate_inputs(conn,cid,payload)
+                    input_parents=[]
+                    for incoming in inputs:
+                        parent=ident();input_parents.append(parent)
+                        interaction=None
+                        if incoming.ui_context:
+                            try:interaction=submission_context(conn,cid,incoming.ui_context)
+                            except (ValueError,TypeError,KeyError):raise HTTPException(422,'当前界面选择未通过检查，消息尚未发送') from None
+                        conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'user',?,'complete',?)",(parent,cid,incoming.content,now))
+                        for position,sid in enumerate(dict.fromkeys(incoming.source_ids)):
+                            conn.execute('INSERT INTO message_attachments VALUES(?,?,?)',(parent,sid,position))
+                        persist_input(conn,cid,parent,incoming)
+                        if interaction:
+                            interaction['checkpoint']=checkpoint(conn,incoming.ui_context)
+                            conn.execute('INSERT INTO genui_interactions VALUES(?,?,?)',(parent,incoming.ui_context.message_id,dumps(interaction)))
                     if conversation['title']=='新的校园对话':
-                        conn.execute('UPDATE conversations SET title=? WHERE id=?',(payload.content[:40],cid))
+                        conn.execute('UPDATE conversations SET title=? WHERE id=?',(inputs[0].content[:40],cid))
                 messages=[]
+                interactions=interaction_index(conn,cid)
                 for m in logical_messages(conn,cid):
                     if m['role']=='assistant' and m['status']!='complete':
                         # A selected unfinished revision is a viewing choice.
                         # Use the last complete sibling as conversational context.
                         m=next((v for v in reversed(m.get('_versions',[])) if v['status']=='complete'),m)
                     if m['status']=='complete':
-                        item={k:v for k,v in m.items() if k!='_versions'}
+                        item=interaction_details(conn,{k:v for k,v in m.items() if k!='_versions'},interactions)
                         interaction=conn.execute('SELECT context FROM genui_interactions WHERE message_id=?',(m['id'],)).fetchone()
                         if interaction:item['interaction']=json.loads(interaction['context'])
                         messages.append(item)
@@ -350,9 +360,11 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     raise HTTPException(413,'本会话内容已较长，请新建对话继续；历史和材料仍保留在这里')
                 from .retrieval_scope import account_access
                 from .memory_learning import ingest_message
-                ingest_message(conn,current['id'],cid,parent,messages)
+                for input_parent in ([parent] if previous_id else input_parents):
+                    stop=next(i for i,message in enumerate(messages) if message['id']==input_parent)
+                    ingest_message(conn,current['id'],cid,input_parent,messages[:stop+1])
                 access=account_access(messages)
-                sources=model_sources(conn,sources_for(conn,cid,True),messages[-1]['content'] if messages else payload.content) if access['attachments'] else []
+                sources=model_sources(conn,sources_for(conn,cid,True),'\n'.join(i.content for i in inputs) if not previous_id else messages[-1]['content'] if messages else payload.content) if access['attachments'] else []
                 # Exclude assistant text tied to materials the user removed from current context.
                 current_ids={s['id'] for s in sources}
                 accessible=set(current_ids)
@@ -453,6 +465,8 @@ def install_workspace(app,db,settings,user,heavy_lock):
 
     cancel_genui=install_genui(app,db,settings,user,heavy_lock,prepare_send,own,changed,conversation_detail,SendMessage,preflight_steer)
     install_tools(app,db,settings,user,own,changed,conversation_detail,sources_for,heavy_lock)
+    from .message_interactions import install as install_message_interactions
+    install_message_interactions(app,db,user,own)
 
     @app.delete('/api/conversations/{cid}/model-consent')
     def revoke_model_consent(cid:str,payload:Version,current=Depends(user)):

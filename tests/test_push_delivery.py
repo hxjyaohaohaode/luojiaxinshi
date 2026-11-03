@@ -318,7 +318,7 @@ def test_receipts_wait_for_analysis_and_skip_current_nonmatching_drafts(env):
         conn.execute("UPDATE notice_automation_jobs SET state='failed' WHERE notice_id=?",(nid,))
         pending=[v for k,v in push.candidates(conn,uid,now).items() if k.startswith('received:')]
         assert len(pending)==1 and '需要判断' in pending[0]['payload']['body']
-        conn.execute("UPDATE notices SET status='draft',draft_version=version,draft=? WHERE id=?",(dumps({'applicability':'not_matching'}),nid))
+        conn.execute("UPDATE notices SET status='draft',draft_version=version,draft=? WHERE id=?",(dumps({'applicability':'not_matching','quality':{'status':'passed'}}),nid))
         mark_profile(conn,nid,uid,1,profile)
         assert not any(k.startswith('received:') for k in push.candidates(conn,uid,now))
         conn.execute("UPDATE notices SET draft=? WHERE id=?",(dumps({'applicability':'matches_known'}),nid))
@@ -403,6 +403,7 @@ def test_installed_webpush_encrypts_and_uses_our_transport_without_network(env, 
     with db.connect(write=True) as conn:
         config = push.configuration(conn)
         device = dict(conn.execute('SELECT * FROM push_devices WHERE id=?', (device_id,)).fetchone())
+    config['subject']='https://campus.example'
     response = push.deliver(device, {'title': 'Synthetic encryption only', 'body': 'private test message'}, config)
     assert response.status_code == 201 and len(sent) == 1
     endpoint, options = sent[0]

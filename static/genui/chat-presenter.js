@@ -1,4 +1,3 @@
-import {brandMotion} from '../motion.js';
 import {parseMessage,messageMarkdown} from './core.js';
 import {MessageRenderer} from './renderer.js';
 import {el,button,replaceInOrder,markdown} from './dom.js';
@@ -12,11 +11,20 @@ import {previewSpec} from './openui-codec.js';
 import {replyPolicy,timeGroups} from './chat-policy.js';
 import {actionSucceeded,clearActionFeedback} from '../action-feedback.js';
 import {StreamMarkdownView} from './stream-text.js';
+import {replyWaitHint} from '../chat-wait.js';
 
 export {userMessageText};
 function stamp(value,full=false){if(!value)return '';return new Date(value*1000).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',...(full?{year:'numeric',second:'2-digit'}:{})});}
 const replyPaths={speak:'M4 9v6h4l5 4V5L8 9z M16 8a6 6 0 0 1 0 8 M19 5a10 10 0 0 1 0 14',copy:'M9 9h11v12H9z M15 9V3H3v12h6',like:'M8 10v11H3V10z M8 10l4-8h2v7h6a2 2 0 0 1 2 2l-2 8a2 2 0 0 1-2 2H8',dislike:'M8 14V3H3v11z M8 14l4 8h2v-7h6a2 2 0 0 0 2-2l-2-8a2 2 0 0 0-2-2H8',branch:'M6 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M18 3a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 17a2 2 0 1 0 0 4 2 2 0 0 0 0-4 M6 7v10 M6 13h6a6 6 0 0 0 6-6',regenerate:'M20 7a9 9 0 1 0 1 8 M20 2v5h-5',share:'M12 16V3 M7 8l5-5 5 5 M5 12v9h14v-9',previous:'m14 6-6 6 6 6',next:'m10 6 6 6-6 6',save:'M5 3h14v19l-7-4-7 4z'};
 function replyAction(action,label){const b=button('',null,'button small plain reply-action');b.setAttribute('aria-label',label);b.title=label;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),path=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.6');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');path.setAttribute('d',replyPaths[action]);svg.append(path);b.append(svg);return b;}
+function messageInteraction(record,message,options){
+  const quote=message.reply_to,quoteKey=JSON.stringify(quote);
+  if(record.quoteKey!==quoteKey){record.quoteKey=quoteKey;record.reference?.remove();record.reference=null;if(quote){const reference=el('button','message-reference');reference.type='button';reference.dataset.chatAction='jump-message';reference.dataset.id=quote.message_id||'';reference.append(el('strong','',quote.role==='assistant'?'引用小信使':'引用我的消息'),el('span','',quote.excerpt||''));reference.setAttribute('aria-label','查看引用的原消息');record.article.insertBefore(reference,record.content);record.reference=reference;}}
+  if(!record.quick){record.quick=el('div','message-quick-tools');for(const [action,label,path] of [['quote','引用这条消息','M4 5h16v12H8l-4 4z M8 9h8m-8 4h5'],['emoji-reaction','给这条消息加表情','M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0 M8 14q4 5 8 0 M8 8h.01M16 8h.01']]){const control=replyAction('copy',label);control.querySelector('path').setAttribute('d',path);control.dataset.chatAction=action;control.dataset.id=message.id;record.quick.append(control);}record.footer.prepend(record.quick);}
+  record.quick.hidden=!!options.readOnly||message.status!=='complete';
+  const emojiKey=JSON.stringify(message.emojis||[]);if(record.emojiKey!==emojiKey){record.emojiKey=emojiKey;record.emojis?.remove();record.emojis=null;if(message.emojis?.length){const list=el('div','message-emojis');for(const emoji of message.emojis){const control=button(emoji,null,'');control.dataset.chatAction='emoji-reaction';control.dataset.id=message.id;control.setAttribute('aria-label','已添加表情 '+emoji+'，修改表情');list.append(control);}record.article.insertBefore(list,record.footer);record.emojis=list;}}
+  record.pending?.remove();record.pending=null;if(message._outbox){const item=message._outbox;record.pending=el('div','message-pending-receipt'+(['uncertain','failed','paused'].includes(item.state)?' is-uncertain':''),{queued:'等待发送',sending:'正在确认收件',uncertain:'尚未确认收下，消息已保留',failed:'尚未发送成功',paused:'已暂停发送'}[item.state]||'待确认');record.pending.title=item.error||'';record.content.after(record.pending);}
+}
 function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],openCitation:number=>record.citationView?.open(number),hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
 export class ConversationView{
   constructor(container,options){this.container=container;this.options=options;this.records=new Map();}
@@ -69,6 +77,8 @@ export class ConversationView{
         if(message.role==='user')label.hidden=true;else{const img=el('img');img.src='/static/assets/luojia-messenger-reading.png';img.alt='';img.width=28;img.height=28;const badge=el('span','ai-badge','AI 生成');badge.title='这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';label.append(img,document.createTextNode('珞珈小信使'),badge,status);}
         article.append(label,content,citations,error,footer);r={article,label,status,content,citations,error,footer};this.records.set(message.id,r);
       }
+      r.article.dataset.status=message.status;
+      messageInteraction(r,message,this.options);
       const grouping=groups.get(message.id);
       if(grouping){if(!r.separator){r.separator=el('div','chat-time-separator');r.separator.append(el('time'));}const time=r.separator.firstChild;time.textContent=grouping.label;time.dateTime=new Date(grouping.at*1000).toISOString();time.title=stamp(grouping.at,true);}
       const nodes=grouping?[r.separator,r.article]:[r.article];
@@ -88,7 +98,7 @@ export class ConversationView{
         if(r.userKey!==key){r.userKey=key;r.content.replaceChildren(document.createTextNode(text));const selections=message.interaction?.selections;
           if(selections?.length){const details=el('details','message-selection-context'),summary=el('summary','','附带当前界面选择 · '+selections.length+' 项'),list=el('dl');for(const item of selections){const row=el('div');row.append(el('dt','',item.label),el('dd','',item.display??(typeof item.value==='object'?JSON.stringify(item.value):String(item.value??'未选择'))));list.append(row);}details.append(summary,list);if(message.interaction.checkpoint?.status==='conflict')details.append(el('p','','这些选择已用于本次问题。旧界面在另一页面有较新进度，已保留那份进度。'));r.content.append(details);}
         }
-        r.citations.hidden=r.error.hidden=r.footer.hidden=true;return nodes;
+        r.citations.hidden=r.error.hidden=true;r.footer.hidden=!!this.options.readOnly||message.status!=='complete';return nodes;
       }
       const policy=replyPolicy(messages,message,this.options);
       const fixedReply=message.grounding?.planning_mode==='host_acknowledgement',badge=r.label.querySelector('.ai-badge');if(badge){badge.textContent=fixedReply?'系统回复':'AI 生成';badge.title=fixedReply?'系统回复':'这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';}
@@ -121,8 +131,9 @@ export class ConversationView{
           r.renderer?.dispose();r.renderer=null;r.content.classList.remove('gu-message');r.plainProse??=new StreamMarkdownView(r.content);r.plainProse.render(previewing?(message._preview??message.preview.text).replace(/\[E\d+\]/g,''):(message.genui?this.copy(message):message.content||''),{streaming:active});
         }
       }
-      const waiting=message.status==='processing'&&!((message._preview||message.preview?.text||message.genui?.raw||message.content||'').length)&&!message.preview?.ui&&!(message._work?.length||message.grounding?.steps?.length);
-      if(waiting&&!r.waiting){r.waiting=el('div','thinking');const visual=el('span');visual.innerHTML=brandMotion('mesh','',{priority:3});r.waiting.append(visual,el('span','','正在结合材料整理回复…'));r.article.insertBefore(r.waiting,r.citations);}else if(!waiting&&r.waiting){r.waiting.remove();r.waiting=null;}if(r.waiting)r.waiting.lastChild.textContent=message._phaseLabel||'正在结合材料整理回复…';
+      const waitHint=active?replyWaitHint(message):'';
+      if(waitHint){if(!r.waitHint){r.waitHint=el('p','message-wait-hint');r.waitHint.setAttribute('role','status');r.waitHint.setAttribute('aria-live','polite');r.article.insertBefore(r.waitHint,r.citations);}if(r.waitHint.textContent!==waitHint)r.waitHint.textContent=waitHint;}
+      else if(r.waitHint){r.waitHint.remove();r.waitHint=null;}
       if(!r.citationView)r.citationView=new CitationView(r.content,r.citations,this.options);r.citationView.update(message,this.options);
       r.citations.hidden=!r.citations.childNodes.length;
       r.memoryNotice?.remove();r.memoryNotice=null;

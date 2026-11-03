@@ -11,7 +11,7 @@ import time
 from email.message import Message
 from pathlib import PurePosixPath
 from typing import Literal
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 
 import httpx
 from fastapi import Depends, HTTPException
@@ -28,6 +28,8 @@ from .security import rate_limit
 
 TABLES = {'notice_dispositions', 'notice_link_previews', 'notice_source_origins', 'notice_submissions'}
 ATTACHMENT_READ_SECONDS = 25
+AUTO_ATTACHMENT_KINDS={'pdf','doc','docx','xls','xlsx','csv','txt','md','png','jpg','jpeg','webp'}
+AUTO_ATTACHMENT_PATTERN=r'\.(?:'+ '|'.join(sorted(AUTO_ATTACHMENT_KINDS)) + r')(?:[?#]|$)'
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS notice_dispositions(
  notice_id TEXT PRIMARY KEY REFERENCES notices(id) ON DELETE CASCADE,
@@ -67,6 +69,8 @@ class IntakePage(PageText):
     def __init__(self, url):
         super().__init__()
         self.url, self.attachments, self.has_media = url, [], False
+        self.related_links=[]
+        self.link=None
 
     def handle_starttag(self, tag, attrs):
         super().handle_starttag(tag, attrs)
@@ -75,9 +79,20 @@ class IntakePage(PageText):
             self.has_media = True
         if tag == 'a':
             url = public_url(urljoin(self.url, attrs.get('href', '')))
-            if url and re.search(r'\.(pdf|docx?|xlsx?|zip|png|jpe?g)(?:[?#]|$)', url, re.I):
+            self.link={'url':url,'title':''} if url else None
+            if url and re.search(r'\.(pdf|docx?|xlsx?|csv|txt|md|zip|png|jpe?g|webp)(?:[?#]|$)', url, re.I):
                 if url not in self.attachments and len(self.attachments) < 30:
                     self.attachments.append(url)
+
+    def handle_data(self,data):
+        super().handle_data(data)
+        if self.link:self.link['title']=(self.link['title']+data)[:300]
+
+    def handle_endtag(self,tag):
+        super().handle_endtag(tag)
+        if tag=='a' and self.link:
+            if len(self.related_links)<100:self.related_links.append(self.link)
+            self.link=None
 
 
 async def read_link(url):
@@ -85,7 +100,11 @@ async def read_link(url):
     return await _read_link(url)
 
 
-async def _read_link(url, allowed_host=None):
+async def _read_link(url, allowed_host=None, referrer=None):
+    # Public CMS attachment handlers often require their actual parent article.
+    # This comes from our saved provenance, never from browser history. Strip
+    # query/fragment values and send only to that same public source host.
+    parent=urlsplit(referrer) if referrer and public_url(referrer) else None
     try:
         async with asyncio.timeout(20), httpx.AsyncClient(transport=PublicHTTPTransport(), trust_env=False,
                 follow_redirects=False, timeout=httpx.Timeout(15, connect=5)) as client:
@@ -94,8 +113,11 @@ async def _read_link(url, allowed_host=None):
                     raise HTTPException(422, '链接跳转到了非公开地址，未读取')
                 if allowed_host and urlsplit(url).hostname != allowed_host:
                     raise HTTPException(422, '附件跳转出了通知来源域名，未读取')
-                async with client.stream('GET', url, headers={'User-Agent': 'LuojiaNoticeReader/1.0',
-                        'Accept': 'text/html,text/plain,application/pdf,application/octet-stream'}) as response:
+                headers={'User-Agent': 'LuojiaNoticeReader/1.0',
+                         'Accept': 'text/html,text/plain,application/pdf,application/octet-stream'}
+                if parent and parent.hostname==urlsplit(url).hostname:
+                    headers['Referer']=urlunsplit((parent.scheme,parent.netloc,parent.path or '/', '', ''))
+                async with client.stream('GET', url, headers=headers) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         url = urljoin(url, response.headers.get('location', ''))
                         continue
@@ -104,6 +126,9 @@ async def _read_link(url, allowed_host=None):
                     mime = response.headers.get('content-type', '').split(';')[0].lower().strip()
                     content = bytearray()
                     limit = 1_500_000 if mime in {'text/html', 'application/xhtml+xml'} else MAX_FILE
+                    declared=response.headers.get('content-length','')
+                    if declared.isascii() and declared.isdecimal() and int(declared)>limit:
+                        raise HTTPException(413, '链接内容超过读取上限，请下载后按事项分别上传；未截断')
                     async for chunk in response.aiter_bytes():
                         content.extend(chunk)
                         if len(content) > limit:
@@ -140,7 +165,7 @@ async def _read_link(url, allowed_host=None):
                         if parser.attachments:
                             warnings.append('原文含外链附件，请核对并补上传关键附件')
                         origin = {'url': url, 'retrieved_at': int(time.time()), 'attachments': parser.attachments,
-                                  'warnings': warnings}
+                                  'warnings': warnings,'related_links':official.get('related_links',[]) if official else parser.related_links}
                         if official:
                             origin.update({key: official[key] for key in ('title', 'published_at',
                                 'published_at_precision', 'attachment_names', 'parser_id')})
@@ -153,7 +178,16 @@ async def _read_link(url, allowed_host=None):
                             name += '.pdf'
                         if mime == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' and not name.lower().endswith('.docx'):
                             name += '.docx'
-                        source = await run_in_threadpool(file_source, name, bytes(content))
+                        if mime == 'application/msword' and not name.lower().endswith('.doc'):
+                            name += '.doc'
+                        if mime == 'application/vnd.ms-excel' and not name.lower().endswith('.xls'):
+                            name += '.xls'
+                        try:
+                            source = await run_in_threadpool(file_source, name, bytes(content))
+                        except ValueError as exc:
+                            # The download succeeded; format/budget rejection is
+                            # not a transport failure and must remain actionable.
+                            raise HTTPException(422, str(exc)) from None
                         title = PurePosixPath(source['name']).stem[:160]
                         origin = {'url': url, 'retrieved_at': int(time.time()), 'attachments': [],
                                   'warnings': [source['warning']] if source['warning'] else []}
@@ -167,7 +201,7 @@ async def _read_link(url, allowed_host=None):
 
 
 async def read_notice_materials(source, read=None):
-    """Best-effort same-host PDF/DOCX intake; always retain the original text.
+    """Bounded same-host document/table/text/image attachments, keeping originals.
 
     Only an explicit subscription caller uses this helper. Link previews remain
     one exact snapshot and never recursively fetch attachments.
@@ -177,13 +211,16 @@ async def read_notice_materials(source, read=None):
     origin = primary['origin']
     warnings = list(origin.get('warnings', []))
     origin['warnings'] = warnings
-    materials, attempted, received = [primary], 0, []
+    materials, received = [primary], []
     total_bytes = len(source.get('content') or b'')
     host = urlsplit(origin.get('url', '')).hostname
     names = origin.get('attachment_names', {})
     attachments = list(dict.fromkeys(origin.get('attachments', [])))
     if not host or not attachments:
         return materials
+    readings = [{'url': url, 'label': (names.get(url) or unquote(PurePosixPath(urlsplit(url).path).name) or '附件').strip(),
+                 'state': 'pending', 'reason': ''} for url in attachments]
+    origin['attachment_reads'] = readings
 
     def warn(message):
         if message not in warnings:
@@ -191,45 +228,58 @@ async def read_notice_materials(source, read=None):
 
     try:
         async with asyncio.timeout(ATTACHMENT_READ_SECONDS):
-            for url in attachments:
-                label = names.get(url) or unquote(PurePosixPath(urlsplit(url).path).name) or '附件'
-                supported = re.search(r'\.(pdf|docx)(?:[?#]|$)', url, re.I) or re.search(r'\.(pdf|docx)$', label, re.I)
+            for item in readings:
+                url, label = item['url'], item['label']
+                supported = re.search(AUTO_ATTACHMENT_PATTERN,url,re.I) or re.search(AUTO_ATTACHMENT_PATTERN,label,re.I)
                 if not supported:
+                    item.update(state='unsupported', reason='附件格式暂不支持自动解析，需提供新版或文字版')
                     warn('部分附件格式暂不自动读取，请核对并补上传关键附件')
                     continue
                 if not public_url(url) or urlsplit(url).hostname != host:
+                    item.update(state='out_of_scope', reason='附件不在已授权通知来源域名内，未自动读取')
                     warn('部分附件不在通知来源域名内，未自动读取，请核对并补上传')
                     continue
-                if attempted >= 4:
-                    warn('每则通知最多自动读取 4 份附件，其余请核对并补上传')
-                    break
-                if total_bytes >= MAX_FILE or total_chars(materials) >= MAX_CHARS:
+                if (len(materials) >= 6 or sum(s['kind'] != 'text' for s in materials) >= 5
+                        or total_bytes >= MAX_FILE or total_chars(materials) >= MAX_CHARS):
+                    item.update(state='budget', reason='正文与已收附件已达到完整解析预算，本附件未读取')
                     warn('正文与已收附件达到材料大小上限，剩余附件未读取，请拆分或补充关键内容')
-                    break
-                attempted += 1
+                    continue
                 try:
                     if reader is read_link:
-                        attachment, _ = await _read_link(url, allowed_host=host)
+                        attachment, _ = await _read_link(url, allowed_host=host,referrer=origin.get('url'))
                     else:
                         attachment, _ = await reader(url)
                     if urlsplit(attachment.get('origin', {}).get('url', url)).hostname != host:
                         raise HTTPException(422, '附件跳转出了通知来源域名，未接收')
-                    if attachment.get('kind') not in {'pdf', 'docx'}:
-                        raise HTTPException(422, '返回内容不是可读取的 PDF/DOCX 附件')
+                    kind=attachment.get('kind')
+                    plain=kind=='text' and (re.search(r'\.(txt|md|csv)(?:[?#]|$)',url,re.I) or re.search(r'\.(txt|md|csv)$',label,re.I))
+                    if kind not in AUTO_ATTACHMENT_KINDS and not plain:
+                        raise HTTPException(422, '返回内容不是声明的可读取附件，未作为已读材料')
                     size = len(attachment.get('content') or b'')
                     if total_bytes + size > MAX_FILE or total_chars(materials + [attachment]) > MAX_CHARS:
+                        item.update(state='budget', reason='该附件加入后超过完整解析预算，未截断加入')
                         warn(f'{label}：加入后超过材料大小上限，主文已保留，请按事项拆分附件')
                         continue
                     materials.append(attachment)
+                    attachment['origin']={**attachment.get('origin',{}),'parent_url':origin['url'],
+                        'relationship':'attachment','relationship_verified':True}
                     total_bytes += size
                     received.append(url)
+                    item.update(state='parse_failed' if attachment.get('status') == 'failed' else
+                                'review' if attachment.get('status') != 'ok' else 'received',
+                                reason=attachment.get('warning') or '', kind=kind, bytes=size, sha256=attachment['sha256'])
                     if attachment.get('status') != 'ok':
                         warn(f'{label}：{attachment.get("warning") or "附件未完整解析，请补充文字"}')
                 except (HTTPException, OSError, ValueError, TimeoutError) as exc:
                     detail = str(exc.detail) if isinstance(exc, HTTPException) else '读取失败，请补上传原件'
+                    item.update(state='budget' if isinstance(exc, HTTPException) and exc.status_code == 413 else 'unavailable',
+                                reason=detail)
                     warn(f'{label}：{detail}')
     except TimeoutError:
         warn('附件读取达到 25 秒上限，主文及已读取附件已保留，其余请核对并补上传')
+    for item in readings:
+        if item['state'] == 'pending':
+            item.update(state='timeout', reason='本轮附件读取达到时间上限，尚未取得原件')
     origin['received_attachments'] = received
     if len(received) == len(attachments):
         warnings[:] = [w for w in warnings if w != '原文含外链附件，请核对并补上传关键附件']

@@ -23,46 +23,54 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
   let context=null,members=[],publications=[],collegeId='',editing=null,owner=null;
   let pubPage=1,pubPages=1,pubTotal=0,pubQuery='',renderSequence=0;
   const drafts=new Map();
-  const stillCurrent=(id,uid)=>id===state.renderId&&state.session?.user?.id===uid&&location.hash==='#campus';
+  const stillCurrent=(id,uid)=>id===state.renderId&&state.session?.user?.id===uid&&(/^#campus(?:\/[^/]+)?$/.test(location.hash)||(location.hash==='#dashboard'&&state.workContext==='college'));
   const ownRole=()=>context?.membership?.role;
-  const canManage=()=>!!context?.site_admin||ownRole()==='college_admin';
-  const canPublish=()=>['college_admin','counselor'].includes(ownRole());
+  const siteMode=()=>state.workContext==='system'&&!!context?.site_admin;
+  const canManage=()=>siteMode()||ownRole()==='college_admin';
+  const canPublish=()=>state.workContext==='college'&&['college_admin','counselor'].includes(ownRole());
 
-  async function render(id=state.renderId){
+  async function render(id=state.renderId,section=location.hash.startsWith('#campus/')?location.hash.split('/')[1]:'home'){
+    if(section==='home'){pubPage=1;pubQuery='';}
     const uid=state.session?.user?.id,sequence=++renderSequence;
     const current=()=>sequence===renderSequence&&stillCurrent(id,uid);
     if(owner!==uid){drafts.clear();owner=uid;collegeId='';editing=null;pubPage=1;pubQuery='';}
     const next=await api('/campus/context');if(!current())return;context=next;
     state.session.user.campus_membership=context.membership?{role:context.membership.role,college_name:context.membership.college_name}:null;
     updateAccount();
-    if(!context.site_admin)collegeId=context.membership?.college_id||'';
+    if(!siteMode())collegeId=context.membership?.college_id||'';
     else if(!collegeId || !context.colleges.some(c=>c.id===collegeId))collegeId=context.membership?.college_id||context.colleges[0]?.id||'';
     const canRead=canManage()||ownRole()==='counselor';
     const [memberResult,pubResult,auditResult]=await Promise.all([
-      canRead&&collegeId?api('/campus/members?college_id='+encodeURIComponent(collegeId)):Promise.resolve({members:[]}),
-      canPublish()?api('/campus/publications?page='+pubPage+'&page_size=20&q='+encodeURIComponent(pubQuery)):Promise.resolve({items:[]}),
-      canManage()&&collegeId?api('/campus/audit?college_id='+encodeURIComponent(collegeId)):Promise.resolve({items:[]})
+      canRead&&collegeId&&['home','members','publish'].includes(section)?api('/campus/members?college_id='+encodeURIComponent(collegeId)):Promise.resolve({members:[]}),
+      canPublish()&&['home','records'].includes(section)?api('/campus/publications?page='+pubPage+'&page_size=20&q='+encodeURIComponent(pubQuery)):Promise.resolve({items:[]}),
+      canManage()&&collegeId&&section==='audit'?api('/campus/audit?college_id='+encodeURIComponent(collegeId)):Promise.resolve({items:[]})
     ]);
     if(!current())return;
     members=memberResult.members;publications=pubResult.items;
+    if(ownRole()==='counselor'&&!siteMode())members=members.filter(m=>m.role==='student'&&context.membership.scopes.some(s=>s.all_college||s.grade===m.grade&&(!s.class_name||s.class_name===m.class_name)));
     pubPage=pubResult.page||1;pubPages=pubResult.pages||1;pubTotal=pubResult.total||0;
     const own=context.membership;
     const membership=own?`<strong>${esc(roles[own.role])}</strong> · ${esc(own.college_name)}${own.role==='student'?` · ${esc(own.grade)} / ${esc(own.class_name)}`:''}${own.role==='counselor'?`<p class="small muted">负责范围：${esc(own.scopes.map(scopeText).join('、'))}</p>`:''}`:
-      '<span>尚未分配学院身份，请联系学院管理员。你的个人通知和待办可以继续使用。</span>';
-    $('#content').innerHTML=`<div class="page-title"><h1>学院工作台</h1></div>
-      <section class="campus-section"><h2>我的学院身份</h2><p>${membership}</p>${context.site_admin?'<p class="small muted">你也是系统管理员，可以指定学院管理员；学院发布权限需要另行分配。</p>':''}${own?.role==='student'?'<a class="button small" href="#notices">查看我的通知</a>':''}</section>
-      ${context.site_admin&&context.colleges.length>1?`<label class="field campus-college-picker">管理学院<select id="campus-college">${context.colleges.map(c=>`<option value="${esc(c.id)}" ${c.id===collegeId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>`:''}
-      ${canPublish()||canRead?`<nav class="campus-shortcuts row wrap" aria-label="学院工作台快捷入口">${canPublish()?'<button class="button small" type="button" data-campus-action="jump-compose">发布通知</button><button class="button small" type="button" data-campus-action="jump-published">发布记录</button>':''}${canManage()?'<button class="button small" type="button" data-campus-action="jump-manage">设置身份</button>':''}${canRead?'<button class="button small" type="button" data-campus-action="jump-roster">查看成员</button>':''}</nav>`:''}
-      ${canPublish()?publicationForm()+publicationList():''}
-      ${canManage()?memberForm():''}
-      ${canRead?memberList(memberResult.can_manage):''}
-      ${canManage()?auditList(auditResult.items):''}`;
+      siteMode()?`<span>系统管理员 · ${esc(context.colleges.find(c=>c.id===collegeId)?.name||'学院权限管理')}</span>`:'<span>尚未分配学院身份，请联系学院管理员。你的个人通知和待办可以继续使用。</span>';
+    const available=[['home','概览'],...(canPublish()?[['publish','发布通知'],['records','发布记录']]:[]),...(canRead?[['members',siteMode()?'学院与权限':'学院成员']]:[]),...(canManage()?[['audit','权限记录']]:[])];
+    if(!available.some(([key])=>key===section))section='home';
+    const failed=publications.reduce((sum,p)=>sum+Number(p.delivery?.failed||0),0);
+    const home=`<section class="role-home" data-home-context="college"><header class="home-heading"><div><h1>${own?.role==='counselor'?'学院事务':'学院管理'}</h1><div class="home-context">${membership}</div></div>${canPublish()?'<a class="button primary small" href="#campus/publish">发布通知</a>':''}</header><div class="home-counts"><span>负责范围成员 <b>${members.length}</b></span><span>已发布 <b>${pubTotal}</b></span>${canPublish()?`<span>本页未送达 <b>${failed}</b></span>`:''}</div><section class="home-section"><h2>常用操作</h2><div class="home-link-list">${canPublish()?'<a href="#campus/publish"><span>准备通知与核对接收范围</span><span>→</span></a><a href="#campus/records"><span>送达、更正与撤回</span><span>→</span></a>':''}${canRead?'<a href="#campus/members"><span>查看负责范围内的成员</span><span>→</span></a>':''}${canManage()?'<a href="#campus/audit"><span>查看权限调整记录</span><span>→</span></a>':''}</div></section>${!canRead?'<p class="small muted">你的个人通知和待办在“我的事务”中查看。</p><a class="button small" href="#notices">查看我的通知</a>':''}</section>`;
+    $('#content').innerHTML=`<div class="campus-workspace">${section==='home'?'':`<h1 class="sr-only">${esc(available.find(([key])=>key===section)?.[1]||'学院事务')}</h1>`}
+      ${section==='home'?home:`<header class="campus-context-line"><div>${membership}</div><a class="button small plain" href="#dashboard">首页</a></header>`}
+      ${siteMode()&&context.colleges.length>1?`<label class="field campus-college-picker">管理学院<select id="campus-college">${context.colleges.map(c=>`<option value="${esc(c.id)}" ${c.id===collegeId?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>`:''}
+      ${section!=='home'?`<nav class="campus-sections" aria-label="学院事务">${available.filter(([key])=>key!=='home').map(([key,label])=>`<a href="#campus/${key}" ${section===key?'aria-current="page"':''}>${label}</a>`).join('')}</nav>`:''}
+      ${section==='publish'&&canPublish()?publicationForm():''}
+      ${section==='records'&&canPublish()?publicationList():''}
+      ${section==='members'&&canManage()?`<details class="campus-member-editor" ${editing?'open':''}><summary>${editing?'调整成员身份':'添加成员 / 分配学院身份'}</summary>${memberForm()}</details>`:''}
+      ${section==='members'&&canRead?memberList(memberResult.can_manage):''}
+      ${section==='audit'&&canManage()?auditList(auditResult.items):''}</div>`;
     syncMemberFields();syncAudienceFields();
   }
 
   function memberForm(){
     const item=editing;
-    const allowed=context.site_admin?['student','counselor','college_admin']:['student','counselor'];
+    const allowed=siteMode()?['student','counselor','college_admin']:['student','counselor'];
     const selected=item?.role||'student';
     const scopes=(item?.scopes||[]).map(scope=>scope.all_college?'全院':scope.grade+(scope.class_name?' / '+scope.class_name:'')).join('\n');
     return `<section class="campus-section" id="campus-manage"><div class="between wrap"><h2>${item?'调整学院身份':'设置学院身份'}</h2>${item?'<button class="button small plain" type="button" data-campus-action="cancel-member">取消编辑</button>':''}</div>
@@ -78,9 +86,9 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
   }
 
   function memberList(canEdit){
-    return `<section class="campus-section" id="campus-roster"><h2>${ownRole()==='counselor'&&!context.site_admin?'我负责的学生':'学院成员'}</h2>
+    return `<section class="campus-section" id="campus-roster"><h2>${ownRole()==='counselor'&&!siteMode()?'我负责的学生':'学院成员'}</h2>
       <p class="small muted">这里只显示组织身份，不显示个人待办、对话或附件。</p>
-      ${members.length?`<div class="campus-search"><label class="field">查找成员<input id="campus-member-search" type="search" placeholder="姓名、账号、年级或班级"></label><span class="small muted" id="campus-member-count" role="status">共 ${members.length} 人</span></div><div class="campus-list">${members.map(m=>`<article class="campus-row" data-campus-member-row data-campus-search="${esc([m.display_name,m.username,roles[m.role],m.grade,m.class_name,...m.scopes.map(scopeText)].join(' ').toLocaleLowerCase())}"><div><strong>${esc(m.display_name)}</strong> <span class="small muted">${esc(m.username)}</span><p class="small">${esc(roles[m.role])}${m.role==='student'?' · '+esc(m.grade)+' / '+esc(m.class_name):m.role==='counselor'?' · '+esc(m.scopes.map(scopeText).join('、')):''}</p></div>${canEdit&&(context.site_admin||m.role!=='college_admin')?`<div class="row wrap"><button class="button small" type="button" data-campus-action="edit-member" data-username="${esc(m.username)}">调整</button><button class="button small plain danger" type="button" data-campus-action="remove-member" data-username="${esc(m.username)}">移除</button></div>`:''}</article>`).join('')}</div>`:'<p class="muted">暂无成员。</p>'}</section>`;
+      ${members.length?`<div class="campus-search"><label class="field">查找成员<input id="campus-member-search" type="search" placeholder="姓名、账号、年级或班级"></label><span class="small muted" id="campus-member-count" role="status">共 ${members.length} 人</span></div><div class="campus-list">${members.map(m=>`<article class="campus-row" data-campus-member-row data-campus-search="${esc([m.display_name,m.username,roles[m.role],m.grade,m.class_name,...m.scopes.map(scopeText)].join(' ').toLocaleLowerCase())}"><div><strong>${esc(m.display_name)}</strong> <span class="small muted">${esc(m.username)}</span><p class="small">${esc(roles[m.role])}${m.role==='student'?' · '+esc(m.grade)+' / '+esc(m.class_name):m.role==='counselor'?' · '+esc(m.scopes.map(scopeText).join('、')):''}</p></div>${canEdit&&(siteMode()||m.role!=='college_admin')?`<div class="row wrap"><button class="button small" type="button" data-campus-action="edit-member" data-username="${esc(m.username)}">调整</button><button class="button small plain danger" type="button" data-campus-action="remove-member" data-username="${esc(m.username)}">移除</button></div>`:''}</article>`).join('')}</div>`:'<p class="muted">暂无成员。</p>'}</section>`;
   }
 
   function audienceOptions(){
@@ -104,7 +112,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     return `<section class="campus-section" id="campus-compose"><h2>发布学院通知</h2><p class="small muted">发送给当前已加入对应范围的成员。个人待办和办理记录不会开放给发布者。</p>
       <form class="stack" data-workspace-form="campus-publish" data-request-id="${esc(draft.requestId||'')}" data-missing-files="${draft.fileNames?.length?'1':''}">${audienceFields(draft)}
         <div class="row wrap"><button class="button small" type="button" data-campus-action="preview">查看接收范围</button><span class="small muted" id="campus-audience-preview" role="status"></span></div>
-        <label class="field">标题<input name="title" required maxlength="160" value="${esc(draft.title||'')}"></label><label class="field">通知正文<textarea name="body" required maxlength="10000" rows="6">${esc(draft.body||'')}</textarea></label>
+        <label class="field">标题<input name="title" required maxlength="160" value="${esc(draft.title||'')}"></label><label class="field">通知正文<textarea name="body" required maxlength="10000" rows="4">${esc(draft.body||'')}</textarea></label>
         <label class="field">附件（选填，最多 3 份）<input type="file" name="files" multiple accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.png,.jpg,.jpeg,.webp"></label>
         ${missing}
         <p class="small muted">单份不超过 5 MB，合计不超过 8 MB。发布后进入对方的通知资料，仍由本人核对；后来加入的成员可在发布记录中补发，补发时也会重试当前范围内未送达的记录。</p>
@@ -137,6 +145,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const form=$('[data-workspace-form="campus-publish"]');if(!form)return;
     const target=form.elements.audience.value;
     $('[data-campus-grade]',form).hidden=!['grade','class'].includes(target);
+    $('[data-campus-grade]',form).closest('.form-grid').hidden=!['grade','class'].includes(target);
     $('[data-campus-class]',form).hidden=target!=='class';
     $('[data-campus-match]',form).hidden=!['grade','class'].includes(target);
     form.elements.grade.required=['grade','class'].includes(target);form.elements.class_name.required=target==='class';
@@ -250,7 +259,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       if(!view.sameUser())return;
       if(kind==='campus-publish'){pubPage=1;pubQuery='';}
       if(['campus-correct','campus-withdraw'].includes(kind)&&view.sameDialog())$('#dialog').close();
-      if(view.sameRoute()){editing=null;await render();}
+      if(view.sameRoute()){editing=null;if(kind==='campus-publish')location.hash='#campus/records';else await render();}
       if(kind==='campus-member')toast('学院身份已保存');
       else toast(`已处理：站内收件 ${result.delivery.delivered}/${result.delivery.total}${result.delivery.failed?'，未送达 '+result.delivery.failed+'，可在发布记录重试':''}${result.delivery.students===0?'；当前范围没有学生':''}`,!!result.delivery.failed);
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;finish();}

@@ -62,8 +62,16 @@ def main():
         port=reserved.getsockname()[1]
     origin=f'http://127.0.0.1:{port}'
     database=Database(temporary/'data'/'campus.sqlite3')
-    invitations=[new_invite(database) for _ in range(USERS)]
     password='Runtime-test-'+secrets.token_urlsafe(20)
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    from app.config import Settings
+    from synthetic_auth import verified_registration
+    fixture_app=create_app(Settings(temporary/'data',origin=origin,ai_api_key=''))
+    with TestClient(fixture_app,base_url=origin,headers={'Origin':origin,'X-Requested-With':'campus-notice'}) as fixture:
+        for index in range(USERS):
+            verified_registration(fixture,{'username':f'runtime_{index}','display_name':f'并发测试账号 {index}',
+                'password':password,'accepted_terms':True})
     clients=[]
     metrics=[]
     mutex=threading.Lock()
@@ -112,7 +120,8 @@ def main():
         # desktop mode instead prefers the user's maintained .env credential.
         environment={**os.environ,'PYTHONUTF8':'1','DATA_DIR':str(data_dir),'APP_ENV':'test',
                      'APP_HOST':'127.0.0.1','APP_PORT':str(port),'APP_ORIGIN':origin,'MIMO_API_KEY':'',
-                     'QQ_BOT_SECRET':'','WECHAT_PUBLISHER_SECRET':'','REGISTRATION_MODE':'invite'}
+                     'QQ_BOT_SECRET':'','WECHAT_PUBLISHER_SECRET':'','REGISTRATION_MODE':'invite',
+                     'ALIYUN_ACCESS_KEY_ID':'','ALIYUN_ACCESS_KEY_SECRET':'','SMS_SIGN_NAME':'','MAIL_SENDER':''}
         worker=subprocess.Popen([sys.executable,str(ROOT/'manage.py'),'serve'],cwd=ROOT,
                                 env=environment,stdin=subprocess.DEVNULL,stdout=log,stderr=log,
                                 creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
@@ -136,9 +145,7 @@ def main():
 
     def user_flow(index):
         client=clients[index]
-        request(client,'POST','/api/auth/register',json={
-            'invite':invitations[index],'username':f'runtime_{index}',
-            'display_name':f'并发测试账号 {index}','password':password,'accepted_terms':True})
+        request(client,'POST','/api/auth/login',json={'username':f'runtime_{index}','password':password})
         session(client)
         day=(datetime.now(timezone.utc)+timedelta(days=7)).date().isoformat()
         first_notice=None

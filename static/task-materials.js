@@ -81,5 +81,14 @@ export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onS
     if(event.target.closest('[data-record-submission]')){try{onSubmission(collect());}catch(error){message(error.message,true);}}
   });
   syncMode();load();
-  return {collect,snapshot};
+  async function addDraft(draft){
+    if(!current()||busy)throw Error('请等待当前材料操作完成');
+    const data=new FormData();data.set('file',new File([draft.text],draft.filename,{type:'text/plain'}));
+    data.set('task_version',String(draft.task_version));data.set('notice_version',String(draft.notice_version));
+    data.set('workflow_version',String(draft.workflow_version));data.set('requirement',draft.purpose==='material'?draft.requirement:'');data.set('request_id',draft.uploadId);
+    busy=true;
+    try{const result=await api(`/tasks/${task.id}/materials`,{method:'POST',body:data});if(!current())return;bundle=result;render();restoreDraft(submissionDraft);syncMode();onChange();}
+    finally{busy=false;}
+  }
+  return {collect,snapshot,addDraft};
 }

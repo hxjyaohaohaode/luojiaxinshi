@@ -8,7 +8,7 @@ export function createNoticeMatters({state,api,esc,showDialog,toast,refreshData}
   function decorate(notice){
     const prior=document.querySelector('#notice-matters');prior?.remove();
     const anchor=document.querySelector('.notice-primary');if(!anchor)return;
-    const host=document.createElement('section');host.id='notice-matters';host.className='panel notice-matters';anchor.insertAdjacentElement('afterend',host);
+    const host=document.createElement('section');host.id='notice-matters';host.className='panel notice-matters';const metadata=document.querySelector('.notice-context-body');if(metadata)metadata.append(host);else anchor.insertAdjacentElement('afterend',host);
     let memberIds=new Set([notice.id]);
     const ticket=++sequence,session=state.session,route=state.renderId;
     const current=()=>ticket===sequence&&session===state.session&&route===state.renderId&&host.isConnected;

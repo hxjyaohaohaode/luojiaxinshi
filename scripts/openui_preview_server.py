@@ -23,6 +23,21 @@ DATA.mkdir(parents=True,exist_ok=True)
 settings=Settings(DATA,origin=f'http://127.0.0.1:{PORT}',ai_api_key='synthetic-no-network',
                   ai_model='offline-openui-fixture',ai_daily_limit=10000,agent_enabled=True,ai_grounding=True)
 app=create_app(settings)
+REVIEW_GATE=os.getenv('OPENUI_REVIEW_GATE')=='1'
+review_gate=asyncio.Event()
+review_gate.set()
+if REVIEW_GATE:
+    from pydantic import BaseModel,ConfigDict
+
+    class ReviewGate(BaseModel):
+        model_config=ConfigDict(extra='forbid')
+        hold:bool
+
+    @app.post('/api/fixture/review-gate')
+    async def control_review_gate(payload:ReviewGate):
+        if payload.hold:review_gate.clear()
+        else:review_gate.set()
+        return {'synthetic':True,'held':not review_gate.is_set()}
 replay=os.getenv('OPENUI_REPLAY_FILE','')
 if replay:
     replay_path=Path(replay).resolve()
@@ -57,7 +72,10 @@ class FixtureProvider:
 app.state.agent_service.provider_factory=lambda *_:FixtureProvider()
 
 async def review(settings,result,sources,question,context):
-    await asyncio.sleep(float(os.getenv('OPENUI_REVIEW_DELAY','1.2')))
+    if REVIEW_GATE:
+        await asyncio.wait_for(review_gate.wait(),timeout=45)
+    else:
+        await asyncio.sleep(float(os.getenv('OPENUI_REVIEW_DELAY','1.2')))
     return [],{},grounding.check_result(result,sources)
 
 async def fixture_writer(_settings,sources,_messages,profile,_tier):

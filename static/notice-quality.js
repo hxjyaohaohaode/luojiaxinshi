@@ -13,6 +13,7 @@ export function qualityPanel(quality,tasks,resolution,esc,options={}){
   if(!quality||quality.status==='not_run')return '<p class="small muted">这份草稿还没让 AI 自查过，保存前对照原文看一遍吧。</p>';
   const issues=quality.issues||[],required=needsQualityResolution(quality);
   const title=quality.status==='passed'?'AI 自查了一遍，没发现明显问题':quality.status==='unavailable'?'AI 自查没做完':`AI 自查发现 ${issues.length} 处要看看`;
+  if(quality.status==='passed')return `<details class="notice-quality quality-passed" aria-label="AI 自查"><summary>${quality.auto_repair?.outcome==='corrected'?'已补正并再次核对办理要求':'已对照原文核对办理要求'}</summary><p class="small muted">${esc(title)}。请对照实际情况，确认没问题再保存。</p>${sourceRecords(quality.source_checks,esc)}</details>`;
   return `<section class="notice-quality ${required?'alert':''}" aria-label="AI 自查"><strong>${esc(title)}</strong>
     <p class="small muted">AI 也可能看漏或看错。对照原文看看谁来办、必办还是可选、手续、材料和前置条件，确认没问题再保存。</p>
     ${sourceRecords(quality.source_checks,esc)}

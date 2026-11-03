@@ -25,8 +25,8 @@ def public_metrics(value,*,nested=False):
     if not nested and isinstance(value.get('calls'),list):
         from .model_catalog import TEXT_MODELS
         calls=[]
-        for call in value['calls'][:2]:
-            if not isinstance(call,dict) or call.get('model') not in TEXT_MODELS or call.get('purpose') not in {'extraction','semantic_review'}:
+        for call in value['calls'][:4]:
+            if not isinstance(call,dict) or call.get('model') not in TEXT_MODELS or call.get('purpose') not in {'extraction','semantic_review','notice_repair','repair_review','format_repair','review_format_repair'}:
                 continue
             if call.get('status') not in {'succeeded','failed','skipped'}:continue
             calls.append({**public_metrics(call,nested=True),'purpose':call['purpose'],'model':call['model'],
@@ -49,11 +49,15 @@ class Trace:
         return time.monotonic() - self.started
 
     def phase(self, name):
-        if name not in {'extracting', 'receiving', 'verifying','reviewing'} or name == self.stage:
+        if name not in {'extracting', 'receiving', 'verifying','reviewing','correcting'} or name == self.stage:
             return
         self.stage = name
         if self.on_phase:
             self.on_phase(name)
+
+    def checkpoint(self):
+        """Check a new paid call even when the visible phase is unchanged."""
+        if self.on_phase:self.on_phase(self.stage)
 
     def answer(self):
         if 'first_answer_seconds' not in self.metrics:

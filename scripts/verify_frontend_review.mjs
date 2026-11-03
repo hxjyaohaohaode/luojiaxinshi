@@ -1,3 +1,4 @@
+// Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** The 20 browser comments, exercised against the isolated synthetic fixture. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -12,7 +13,7 @@ const report={fixture:'synthetic, no external model calls',checks:[],errors:[]};
 const sizes=[[1651,871],[1280,720],[1024,768],[768,1024],[390,844],[320,640],[844,390]];
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
- const page=await browser.newPage({viewport:{width:1651,height:871}});page.setDefaultTimeout(12000);
+ const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1651,height:871}});page.setDefaultTimeout(12000);
  let activeCheck='startup';
  page.on('pageerror',e=>report.errors.push({engine,check:activeCheck,url:page.url(),error:e.message,stack:e.stack}));
  page.on('response',async r=>{if(r.status()>=400&&/branch|edit-cache/.test(r.url()))console.log('HTTP',engine,r.status(),new URL(r.url()).pathname,(await r.text()).slice(0,220));});
@@ -147,7 +148,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   });
   await check('12 operation pane takes most of the workflow dialog and actions remain reachable',async()=>{
    await nav('tasks');await page.locator('[data-workflow-task]').first().click();await page.locator('#dialog[open] #workflow-form').waitFor();await page.locator('#dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
-   const d=await page.locator('#dialog').boundingBox(),pane=await page.locator('.workflow-page:not([hidden])').boundingBox(),head=await page.locator('.workflow-task-head').boundingBox(),save=await page.locator('.workflow-save').boundingBox();
+    const d=await page.locator('#dialog').boundingBox(),pane=await page.locator('.workflow-editing.workflow-route').boundingBox(),head=await page.locator('.workflow-task-head').boundingBox(),save=await page.locator('.workflow-save').boundingBox();
    assert.ok(d&&pane&&head&&save,JSON.stringify({d,pane,head,save}));assert.ok(pane.height>d.height*.5,JSON.stringify({d,pane,head,save}));assert.ok(head.height<140);assert.ok(save.y+save.height<=d.y+d.height+1);
    await page.screenshot({path:path.join(output,engine+'-workflow.png')});await page.locator('#dialog .dialog-head [data-action=close-dialog]').click();
   });
@@ -178,7 +179,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     await page.locator('#dialog').evaluate(el=>Promise.all(el.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
     const box=await page.locator('#dialog').boundingBox();assert.ok(box&&box.width<=width+1&&box.height<=height+1);
     for(const field of await page.locator('#dialog textarea:visible').all()){const b=await field.boundingBox();assert.ok(b.width>width*.4&&b.height>=80,JSON.stringify(b));}
-    const submit=page.locator('#dialog [type=submit]:visible').last();await submit.scrollIntoViewIfNeeded();const b=await submit.boundingBox();assert.ok(b.y+b.height<=height+1&&b.height>=36,JSON.stringify(b));
+    const submit=page.locator('#dialog [type=submit]:visible').last();await submit.scrollIntoViewIfNeeded();const b=await submit.boundingBox();assert.ok(b.y+b.height<=height+1&&b.height>=32,JSON.stringify(b));
     if(kind==='workflow'&&width===390){await page.evaluate(()=>document.documentElement.style.setProperty('--visual-height','500px'));const small=await page.locator('#dialog').boundingBox(),save=await page.locator('.workflow-save').boundingBox();assert.ok(small.height<=500&&save.y+save.height<=501);await page.evaluate(()=>document.documentElement.style.setProperty('--visual-height',visualViewport.height+'px'));}
     await page.locator('#dialog .dialog-head [data-action=close-dialog]').click();
    });

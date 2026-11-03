@@ -50,6 +50,8 @@ def public_configuration(settings):
     return {'configured':bool(settings.ai_api_key),'model':settings.ai_model,'composition_model':settings.ai_composition_model,
         'context_tokens':settings.ai_context_tokens,'max_output_tokens':settings.ai_output_tokens,'thinking':'enabled',
         'notice_review_enabled':settings.notice_semantic_review,'notice_review_model':settings.notice_review_model,
+        'notice_auto_repair':settings.notice_auto_repair and settings.notice_semantic_review,
+        'notice_maximum_requests':(4 if settings.notice_auto_repair else 2) if settings.notice_semantic_review else 1,
         'notice_modes':notice_processing_modes(settings),
         'provider':'Xiaomi MiMo','billing_channel':kind,'billing_label':'Token Plan 订阅通道' if kind=='token_plan' else '普通 API 按量通道',
         'catalog_verified_at':VERIFIED_AT,'available_text_models':sorted(TEXT_MODELS-({'mimo-v2.6-pro-ultraspeed'} if kind=='token_plan' else set())),
@@ -57,8 +59,11 @@ def public_configuration(settings):
 
 
 def notice_processing_modes(settings):
-    modes=[{'id':'configured','label':'使用当前配置','description':'按服务设置完成提取与核对。' if settings.notice_semantic_review else '按服务设置提取；原文复核已由维护者关闭，须本人核对。',
+    modes=[{'id':'configured','label':'仔细研读 · 当前配置','description':'深度分析后对照原文核对，复杂材料耗时较长。' if settings.notice_semantic_review else '按服务设置提取；原文复核已由维护者关闭，须本人核对。',
             'model':settings.ai_model,'review_model':settings.notice_review_model if settings.notice_semantic_review else None}]
+    if settings.notice_daily_enabled and settings.notice_semantic_review:
+        modes.append({'id':'daily','label':'简短通知 · 快速整理','description':'快速整理并独立复核，发现问题后使用已配置的撰写模型深入补正；复杂多附件材料建议仔细研读。',
+            'model':'mimo-v2.6-flash','review_model':'mimo-v2.6-flash','thinking':'disabled'})
     if settings.notice_fast_enabled and channel(settings.ai_base_url)=='pay_as_you_go':
         modes.append({'id':'fast','label':'速度优先 · 费用较高','description':'使用 UltraSpeed 加速，保留原文复核和全部校验。' if settings.notice_semantic_review else '使用 UltraSpeed 加速提取；原文复核已由维护者关闭，须本人核对。',
             'model':'mimo-v2.6-pro-ultraspeed','review_model':'mimo-v2.6-pro-ultraspeed' if settings.notice_semantic_review else None,
@@ -69,6 +74,9 @@ def notice_processing_modes(settings):
 
 def notice_settings(settings,mode):
     if mode=='configured':return settings
+    if mode=='daily' and any(item['id']==mode for item in notice_processing_modes(settings)):
+        return replace(settings,ai_model='mimo-v2.6-flash',notice_review_model='mimo-v2.6-flash',
+            notice_thinking='disabled',ai_output_tokens=min(settings.ai_output_tokens,32768))
     if mode!='fast' or not any(item['id']==mode for item in notice_processing_modes(settings)):
         raise ValueError('当前服务未启用速度优先，或当前订阅通道不支持；请选择当前配置。')
     return replace(settings,ai_model='mimo-v2.6-pro-ultraspeed',notice_review_model='mimo-v2.6-pro-ultraspeed')

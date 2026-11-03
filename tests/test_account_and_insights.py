@@ -19,6 +19,8 @@ def client(tmp_path, **overrides):
 
 
 def register(c, username='consent.user', accepted=True, **extra):
+    from verification_helpers import proof
+    if accepted:extra['verification_token']=proof(c,destination=username+'@example.invalid')
     r = c.post('/api/auth/register', json={'username': username, 'password': 'Synthetic-Password-2026', 'display_name': '合成用户',
                                            'accepted_terms': accepted, **extra})
     if r.status_code == 200:

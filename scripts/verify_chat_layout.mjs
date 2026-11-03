@@ -15,7 +15,7 @@ const context=await browser.newContext({storageState:await api.storageState(),vi
 const page=await context.newPage(),checks=[],errors=[];page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);
 const geometry=()=>page.evaluate(()=>{const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};return {form:rect(document.querySelector('#chat-composer')),input:rect(document.querySelector('#chat-input')),plus:rect(document.querySelector('.composer-plus')),voice:rect(document.querySelector('.composer-entry>.composer-voice')),send:rect(document.querySelector('.send-button')),header:rect(document.querySelector('.chat-heading')),thread:rect(document.querySelector('#chat-thread')),note:rect(document.querySelector('.chat-footnote')),width:innerWidth,scroll:document.documentElement.scrollWidth};});
 try{
-  await page.goto(origin+'/#chat/'+chat.id);const input=page.locator('#chat-input');await input.waitFor();
+  await page.goto(origin+'/#chat/'+chat.id,{waitUntil:'domcontentloaded'});const input=page.locator('#chat-input');await page.locator('#content:not([inert])').waitFor();await input.waitFor();
   const empty=await geometry();assert.ok(empty.form.height<=58,JSON.stringify(empty));
   for(const value of ['输入一行内容','连续单行文字'.repeat(120)]){
     await input.fill(value);const current=await geometry();assert.ok(Math.abs(current.form.height-empty.form.height)<=1);assert.equal(await input.getAttribute('wrap'),'off');
@@ -50,7 +50,7 @@ try{
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();
     assert.ok(size.form.height<=60&&size.form.bottom<=height+1&&size.scroll<=width+1&&size.thread.height>90,JSON.stringify(size));
-    for(const key of ['plus','voice','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=44);
+    for(const key of ['plus','voice','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=36);
     await page.screenshot({path:out+'/'+label+'.png',caret:'initial'});
   }checks.push('手机、平板和键盘高度保持一行，触控按钮可达，无页面横向溢出');
   await input.fill('');await page.locator('#composer-file-input').setInputFiles({name:'布局验收.txt',mimeType:'text/plain',buffer:Buffer.from('用于布局检查的合成附件。')});

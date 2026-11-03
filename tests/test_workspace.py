@@ -40,22 +40,24 @@ def fixture_answer(settings,sources,messages,profile):
 def test_public_registration_is_not_administrator_and_recovery_is_single_use(env):
     app,_=env;c=TestClient(app,base_url=ORIGIN,headers={'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     body={'username':'20269990001','display_name':'测试师生','password':PASSWORD,'accepted_terms':True,'account_kind':'student_id','campus_role':'student'}
+    from verification_helpers import proof,advance_cooldown
+    body['verification_token']=proof(c,destination='student@example.invalid')
     result=c.post('/api/auth/register',json=body);assert result.status_code==200,result.text
-    code=result.json()['recovery_code'];session=c.get('/api/session').json()
+    session=c.get('/api/session').json()
     assert session['user']['role']=='user'
     assert session['user']['profile']['student_id']==body['username']
     c.headers['X-CSRF-Token']=session['csrf']
     assert c.post('/api/admin/invites').status_code==403
     assert c.post('/api/auth/register',json=body).status_code==409
     c.post('/api/auth/logout')
-    reset={'username':body['username'],'password':'Another-Test-Password-2026','recovery_code':code}
+    advance_cooldown(app)
+    reset={'username':body['username'],'password':'Another-Test-Password-2026','verification_token':proof(c,'recover','student@example.invalid',username=body['username'])}
     recovered=c.post('/api/auth/recover',json=reset);assert recovered.status_code==200
-    assert recovered.json()['recovery_code']!=code
     assert c.post('/api/auth/recover',json=reset).status_code==400
     assert c.post('/api/auth/login',json={'username':body['username'],'password':PASSWORD}).status_code==401
     assert c.post('/api/auth/login',json={'username':body['username'],'password':reset['password']}).status_code==200
     with app.state.db.connect() as db:
-        assert db.execute('SELECT code_hash FROM account_recovery').fetchone()[0]!=code
+        assert db.execute('SELECT COUNT(*) FROM account_recovery').fetchone()[0]==0
 
 
 def test_registration_terms_phone_and_forged_admin(env):
@@ -66,7 +68,10 @@ def test_registration_terms_phone_and_forged_admin(env):
     assert c.post('/api/auth/register',json=body).status_code==422
     body['username']='13800000000';body['role']='admin'
     assert c.post('/api/auth/register',json=body).status_code==422
-    del body['role'];assert c.post('/api/auth/register',json=body).status_code==200
+    del body['role']
+    from verification_helpers import proof
+    body['verification_token']=proof(c,channel='sms',destination=body['username'])
+    assert c.post('/api/auth/register',json=body).status_code==200
 
 
 def test_unconfigured_reply_persists_question_and_idempotent_replay(env):
@@ -162,7 +167,7 @@ def test_sources_catalog_is_private_and_does_not_claim_sync(env):
     a=account(env);b=account(env,'bob');body={'name':'工程测试公众号','platform':'wechat_public','followed':True,'semester':'测试学期'}
     sid=a.post('/api/source-catalog',json=body).json()['id']
     assert b.get('/api/source-catalog').json()==[]
-    assert a.get('/api/source-catalog').json()[0]['data']=={**body,'institution':'','purpose':'','url':''}
+    assert a.get('/api/source-catalog').json()[0]['data']=={**body,'institution':'','purpose':'','url':'','wechat_id':''}
     assert b.put('/api/source-catalog/'+sid,json={**body,'version':1}).status_code==404
     assert a.put('/api/source-catalog/'+sid,json={**body,'version':1,'url':'javascript:alert(1)'}).status_code==422
     assert a.put('/api/source-catalog/'+sid,json={**body,'version':1,'purpose':'跟进通知'}).status_code==200

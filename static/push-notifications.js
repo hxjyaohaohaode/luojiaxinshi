@@ -1,9 +1,10 @@
+import {installationAdvice} from './pwa.js';
 /* Push delivery is opt-in per device. Account identity is also checked by the worker. */
 const WORKER_PATH='/notification-worker.js';
 export function decodePublicKey(value){const text=atob(String(value).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(text,c=>c.charCodeAt(0));}
 export function pushUnavailable(env=globalThis){
   if(!env.isSecureContext)return '关闭页面提醒需要 HTTPS 或本机安全地址。';
-  if(!env.navigator?.serviceWorker||!env.PushManager||!env.Notification)return '当前浏览器不支持关闭页面提醒；可使用支持推送的浏览器。';
+  if(!env.navigator?.serviceWorker||!env.PushManager||!env.Notification)return '当前环境暂不支持关闭页面提醒。'+installationAdvice(env);
   return '';
 }
 export function localPushDevice(status,subscription){return (status?.devices||[]).find(device=>device.endpoint===subscription?.endpoint&&device.enabled!==false&&device.enabled!==0)||null;}
@@ -34,6 +35,9 @@ export function createPushNotifications({state,api,esc,toast}){
     if(!reg)return null;
     let disabled=false;
     try{const result=await message(reg,'CAMPUS_PUSH_DISABLE',{user_id:uid});if(result?.enabled&&result.user_id!==uid)return null;disabled=!result?.enabled;}catch{}
+    // Querying an unpermitted PushManager stalls some WebKit hosts. A cleared
+    // worker binding already prevents display; otherwise remove the worker.
+    if(Notification.permission!=='granted'){if(!disabled)await reg.unregister();return null;}
     let sub=null,known=false;try{sub=await reg.pushManager.getSubscription();known=true;}catch{}
     // A successful unsubscribe prevents delivery even when IndexedDB is unavailable.
     let unsubscribed=known&&!sub;try{if(sub)unsubscribed=await sub.unsubscribe();}catch{}
@@ -49,7 +53,7 @@ export function createPushNotifications({state,api,esc,toast}){
       try{
         const reg=supported()?await registered():null;
         if(!current(session,version))return null;
-        const sub=reg?await reg.pushManager.getSubscription():null;
+        const sub=reg&&Notification.permission==='granted'?await reg.pushManager.getSubscription():null;
         const saved=reg?await message(reg,'CAMPUS_PUSH_STATUS'):null;
         if(!current(session,version))return null;
         if(saved?.enabled&&saved.user_id!==owner){await revokeLocal(reg,saved.user_id);if(!current(session,version))return null;}

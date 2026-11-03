@@ -40,7 +40,10 @@ def pack_history(messages, budget=HISTORY_BYTES):
     raw = [context_text(m) for m in messages]
     rendered = [dict(m, content=raw[i]) for i,m in enumerate(messages)]
     # context_text has already materialized UI selections; never append them twice.
-    for message in rendered:
+    for original_message,message in zip(messages,rendered):
+        if original_message.get('reply_to') or original_message.get('_quote_materialized'):
+            message['_evidence_content']=context_text(original_message,include_quote=False)
+            message['_quote_materialized']=True
         message.pop('interaction', None)
     size = lambda m: len(m['content'].encode('utf-8')) + 80
     original = sum(size(m) for m in rendered)

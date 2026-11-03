@@ -1,6 +1,7 @@
 from dataclasses import dataclass,field
 import json
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -61,6 +62,10 @@ class Settings:
     notice_input_tokens: int = 868928
     ai_stage_summaries: bool = False
     notice_semantic_review: bool = True
+    notice_auto_repair: bool = True
+    notice_daily_enabled: bool = True
+    # Request-local setting; configured mode retains deep thinking.
+    notice_thinking: str = 'enabled'
     notice_review_model: str = 'mimo-v2.6-flash'
     notice_fast_enabled: bool = False
     agent_enabled: bool = True
@@ -76,6 +81,19 @@ class Settings:
     usage_limits: UsageLimits = field(default_factory=UsageLimits)
     operator_name: str = '珞珈信使项目团队'
     operator_contact: str = ''
+    aliyun_access_key_id: str = ''
+    aliyun_access_key_secret: str = ''
+    sms_sign_name: str = ''
+    sms_scheme_name: str = 'luojia-web'
+    mail_sender: str = ''
+    mail_region: str = 'cn-hangzhou'
+    mail_provider: str = 'aliyun'
+    smtp_username: str = ''
+    smtp_authorization_code: str = ''
+    otp_sms_daily_limit: int = 100
+    otp_mail_daily_limit: int = 200
+    notification_mail_daily_limit: int = 200
+    push_contact: str = ''
 
     @classmethod
     def from_env(cls):
@@ -91,6 +109,23 @@ class Settings:
         result.registration_mode=os.getenv('REGISTRATION_MODE','public').strip().lower()
         result.operator_name=os.getenv('OPERATOR_NAME',cls.operator_name).strip()[:80] or cls.operator_name
         result.operator_contact=os.getenv('OPERATOR_CONTACT','').strip()[:120]
+        for attr, variable in (('aliyun_access_key_id','ALIYUN_ACCESS_KEY_ID'),
+                ('aliyun_access_key_secret','ALIYUN_ACCESS_KEY_SECRET'),('sms_sign_name','SMS_SIGN_NAME'),
+                ('sms_scheme_name','SMS_SCHEME_NAME'),('mail_sender','MAIL_SENDER'),
+                ('mail_region','MAIL_REGION'),('mail_provider','MAIL_PROVIDER'),
+                ('smtp_username','SMTP_USERNAME'),('smtp_authorization_code','SMTP_AUTHORIZATION_CODE'),
+                ('push_contact','PUSH_CONTACT')):
+            setattr(result,attr,os.getenv(variable,getattr(result,attr)).strip())
+        if result.mail_provider not in {'aliyun','qq_smtp'}:
+            raise ValueError('MAIL_PROVIDER 仅支持 aliyun 或 qq_smtp')
+        if result.mail_provider=='qq_smtp' and result.smtp_username and not re.fullmatch(r'[A-Za-z0-9_.+-]+@(?:qq|foxmail)\.com',result.smtp_username,re.I):
+            raise ValueError('SMTP_USERNAME 须为已开通 SMTP 的 QQ 或 Foxmail 邮箱')
+        for attr in ('otp_sms_daily_limit','otp_mail_daily_limit','notification_mail_daily_limit'):
+            value=int(os.getenv(attr.upper(),str(getattr(result,attr))))
+            if not 1<=value<=10000:raise ValueError(attr.upper()+' 须为 1—10000')
+            setattr(result,attr,value)
+        if result.mail_region not in {'cn-hangzhou','ap-southeast-1','ap-southeast-2','us-east-1','eu-central-1'}:
+            raise ValueError('MAIL_REGION 不是邮件推送支持的区域')
         result.voice_clone_enabled=os.getenv('VOICE_CLONE_ENABLED','false').strip().lower() in {'true','1','yes'}
         result.agent_enabled=os.getenv('AGENT_ENABLED','true').strip().lower() in {'true','1','yes'}
         result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES',str(cls.agent_context_bytes)))
@@ -109,6 +144,8 @@ class Settings:
             raise ValueError('REGISTRATION_MODE 须为 public 或 invite')
         result.notice_input_tokens=int(os.getenv('NOTICE_INPUT_TOKENS',str(cls.notice_input_tokens)))
         result.notice_semantic_review=os.getenv('NOTICE_SEMANTIC_REVIEW','true').lower() in {'true','1','yes'}
+        result.notice_auto_repair=os.getenv('NOTICE_AUTO_REPAIR','true').lower() in {'true','1','yes'}
+        result.notice_daily_enabled=os.getenv('NOTICE_DAILY_ENABLED','true').lower() in {'true','1','yes'}
         result.notice_review_model=os.getenv('MIMO_NOTICE_REVIEW_MODEL',cls.notice_review_model).strip()
         fast_option=os.getenv('NOTICE_FAST_ENABLED','false').strip().lower()
         if fast_option not in {'true','false','1','0','yes','no'}:raise ValueError('NOTICE_FAST_ENABLED 须为 true 或 false')

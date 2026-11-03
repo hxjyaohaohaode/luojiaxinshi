@@ -8,8 +8,9 @@ from app.notice_semantics import prepare,validate
 from test_workflow import env,account,notice,raw_ai
 
 
-def install_provider(env,monkeypatch,*,issue=True,second_status=200,invalid=False,expected_review_model=None):
+def install_provider(env,monkeypatch,*,issue=True,second_status=200,invalid=False,expected_review_model=None,expected_thinking='enabled',expected_output=None):
     c=account(env);n=notice(c);cfg=env[1];cfg.ai_api_key='synthetic-only';cfg.notice_semantic_review=True
+    cfg.notice_auto_repair=False  # This fixture exercises the original two-stage/manual-resolution contract.
     original=httpx.Client;seen=[]
     def provider(request):
         payload=json.loads(request.content);seen.append(payload)
@@ -17,8 +18,8 @@ def install_provider(env,monkeypatch,*,issue=True,second_status=200,invalid=Fals
             result=raw_ai(n);result['tasks'][0]['title']='缴纳未规定的申请费'
             usage={'prompt_tokens':100,'completion_tokens':50,'completion_tokens_details':{'reasoning_tokens':20}}
         else:
-            assert len(seen)==2 and payload['model']==(expected_review_model or cfg.notice_review_model) and payload['thinking']['type']=='enabled'
-            assert payload['max_completion_tokens']==cfg.ai_output_tokens
+            assert len(seen)==2 and payload['model']==(expected_review_model or cfg.notice_review_model) and payload['thinking']['type']==expected_thinking
+            assert payload['max_completion_tokens']==(expected_output or cfg.ai_output_tokens)
             if second_status!=200:return httpx.Response(second_status,json={'message':'PROVIDER_PRIVATE_BODY'})
             body=json.loads(payload['messages'][1]['content']);ref=body['sources'][0]['sections'][0]['ref']
             result={'source_checks':[{'source_index':0,'requirements_summary':'原文要求本人提交申请表。','evidence_refs':[ref],'coverage':'covered'}],

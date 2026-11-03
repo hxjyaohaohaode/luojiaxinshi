@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {batchEntry,prepareEntry,noticeState,isNoticeOpen} from '../static/notice-intake.js';
+import {batchEntry,prepareEntry,noticeState,isNoticeOpen,shouldOfferHistoricalSummary,historicalBoundaryLabel} from '../static/notice-intake.js';
 import {stageOptions,workflowStage} from '../static/workflow-kinds.js';
 import {filterNotices} from '../static/library.js';
 
@@ -10,6 +10,22 @@ test('informational notices leave pending filters without manufacturing a task',
   assert.equal(isNoticeOpen(a),false);assert.equal(noticeState(a)[0],'仅存资料');
   assert.deepEqual(filterNotices([a,b],{status:'received'}).map(n=>n.id),['b']);
   assert.deepEqual(filterNotices([a,b],{status:'reference'}).map(n=>n.id),['a']);
+});
+test('retired entry summaries reopen the original steps after an explicit correction',()=>{
+  const item={tracking:{state:'entry_closed'},status:'draft',feedback:{mode:'auto'},tasks:[]};
+  assert.equal(shouldOfferHistoricalSummary(item),true);
+  assert.equal(noticeState(item)[0],'报名或申报期限已过');
+  assert.equal(shouldOfferHistoricalSummary({...item,feedback:{mode:'include'}}),false);
+  assert.equal(shouldOfferHistoricalSummary({...item,tasks:[{status:'pending'}]}),false);
+  assert.equal(shouldOfferHistoricalSummary({...item,status:'confirmed'}),false);
+});
+test('history shows original date-only deadlines and preserves explicit midnight and clock times',()=>{
+  const midnight=Date.parse('2026-05-01T00:00:00+08:00')/1000;
+  assert.equal(historicalBoundaryLabel({at:midnight,date_only:true}),'2026/4/30');
+  assert.match(historicalBoundaryLabel({at:midnight,date_only:false}),/2026\/5\/1.*00:00/);
+  const precise=Date.parse('2026-08-31T17:00:00+08:00')/1000;
+  assert.match(historicalBoundaryLabel({at:precise,date_only:false}),/2026\/8\/31.*17:00/);
+  assert.equal(historicalBoundaryLabel({at:NaN,date_only:true}),'原文期限待核实');
 });
 test('every batch entry owns its submission identity and exact materials',()=>{
   const a={...batchEntry(),title:'讲座',link_preview:'preview-one'},b=batchEntry();

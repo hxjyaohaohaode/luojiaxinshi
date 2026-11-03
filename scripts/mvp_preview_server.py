@@ -1,4 +1,5 @@
-"""Local-only synthetic acceptance environment. Real data/ is never read."""
+"""Local-only synthetic data; opt-in real AI, no real messaging channels."""
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
@@ -9,14 +10,24 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 from app.config import Settings
 from app.main import create_app
+from synthetic_auth import verified_registration
 from app.models import TaskData
 
 PORT=int(os.getenv('MVP_PORT','8780'))
 assert 1024<=PORT<=65535
-ORIGIN = f'http://127.0.0.1:{PORT}'
+ORIGIN = os.getenv('MVP_ORIGIN',f'http://127.0.0.1:{PORT}')
+assert ORIGIN in {f'http://127.0.0.1:{PORT}',f'http://localhost:{PORT}'}, 'Demo origin must match the loopback port'
 DATA = Path(os.getenv('MVP_DATA_DIR',str(ROOT / 'artifacts/mvp-acceptance/data'))).resolve()
 assert DATA.is_relative_to((ROOT/'artifacts').resolve()), 'Synthetic fixture data must stay in artifacts/'
-app = create_app(Settings(DATA, origin=ORIGIN, ai_api_key='', ai_grounding=False))
+LIVE_MODEL = os.getenv('MVP_LIVE_MODEL','0')=='1'
+if LIVE_MODEL:
+    config=replace(Settings.from_env(),data_dir=DATA,origin=ORIGIN,production=False,
+        aliyun_access_key_id='',aliyun_access_key_secret='',smtp_username='',smtp_authorization_code='',mail_sender='',
+        qq_bot_app_id='',qq_bot_secret='',wechat_publisher_app_id='',wechat_publisher_secret='',
+        agent_mcp_servers={},agent_sandbox_image='')
+    if not config.ai_api_key:raise RuntimeError('Live demo requested but no model is configured')
+else:config=Settings(DATA, origin=ORIGIN, ai_api_key='', ai_grounding=False)
+app = create_app(config)
 USERNAME = 'workflow.demo'
 PASSWORD = 'Mvp-Verification-Only-2026'
 
@@ -49,7 +60,7 @@ def seed():
         prepare_memory()
         return
     c = TestClient(app, base_url=ORIGIN, headers={'Origin': ORIGIN, 'X-Requested-With': 'campus-notice'})
-    r = c.post('/api/auth/register', json={'username': USERNAME, 'password': PASSWORD,
+    r = verified_registration(c,{'username': USERNAME, 'password': PASSWORD,
                 'display_name': '虚构验收同学', 'accepted_terms': True})
     assert r.status_code == 200, r.text
     c.headers['X-CSRF-Token'] = c.get('/api/session').json()['csrf']
@@ -85,5 +96,6 @@ def seed():
 if __name__ == '__main__':
     import uvicorn
     seed()
-    print('Synthetic acceptance environment; no model credentials; loopback only.', flush=True)
+    print('Synthetic records; actual AI enabled.' if LIVE_MODEL else 'Synthetic acceptance environment; no model credentials.',flush=True)
+    print('External SMS/email/QQ/WeChat disabled; loopback only.',flush=True)
     uvicorn.run(app, host='127.0.0.1', port=PORT, access_log=False)

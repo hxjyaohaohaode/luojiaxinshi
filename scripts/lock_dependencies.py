@@ -2,8 +2,8 @@ from importlib.metadata import distribution
 from pathlib import Path
 from packaging.requirements import Requirement
 
-roots=['fastapi','uvicorn','python-multipart','pypdf','defusedxml','httpx','python-dotenv','icalendar',
-       'Pillow','cryptography','opentelemetry-api','av','pywebpush']
+roots=['fastapi','uvicorn','python-multipart','pypdf','pypdfium2','defusedxml','httpx','python-dotenv','icalendar',
+       'Pillow','cryptography','opentelemetry-api','av','pywebpush','alibabacloud-dypnsapi20170525','alibabacloud-dm20151123']
 seen={}
 pending=list(roots)
 while pending:

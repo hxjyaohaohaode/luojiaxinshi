@@ -21,3 +21,30 @@
 .notice-card-content .student-notice-excerpt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:normal;color:var(--muted,#65716b)}
 .student-list-meta{margin:0 16px 12px 54px;color:var(--muted,#65716b);font-size:12px;line-height:1.5}
 @media(max-width:650px){.student-source-panel{padding:12px;margin-bottom:12px}.student-source-list{gap:10px}.student-source-status{flex:1 1 180px}.student-inbox-controls{align-items:stretch}.student-inbox-controls .field{flex:1 1 140px;max-width:none}.student-inbox-controls p{flex-basis:100%;margin:0}.student-list-meta{margin-left:12px}}
+
+/* The first screen shows information; uncommon filters and source diagnostics expand in place. */
+#library-summary.inbox-intents{display:flex;align-items:center;gap:6px;margin:0 0 10px;padding:0;flex-wrap:wrap}
+#library-summary .collection-stat{display:flex;flex-direction:row;align-items:center;gap:7px;min-width:0;min-height:42px;padding:8px 10px;border-radius:9px;background:transparent;flex:0 1 auto}
+#library-summary .collection-stat[aria-pressed=true]{background:var(--green-wash,#edf5ee);color:var(--green,#0b6546)}
+#library-summary .collection-stat strong{font-size:14px;line-height:1.2;font-weight:600;color:inherit}
+#library-summary .collection-stat>span{font-size:13px;color:inherit}
+.library-intent-picker{min-width:0;margin-left:auto;flex:0 1 150px}
+.library-intent-picker select{min-height:42px;width:100%;font-size:13px;padding:8px;border-color:transparent;background:transparent}
+.library-refine .student-inbox-controls{margin-top:12px}
+.library-refine .student-source-panel{margin:12px 0 0}
+.library-refine .student-unreviewed-note{margin:10px 0 0}
+.library-refine .library-date{display:inline-block;margin:8px 10px 8px 0}
+.library-refine .library-view-toggle{display:inline-flex;vertical-align:middle;margin:8px 0}
+body .library-toolbar{padding:0;border:0;background:none;margin-bottom:8px}
+body .library-toolbar>.library-search{max-width:none;flex-basis:100%}
+body .library-refine{margin-bottom:10px}
+@media(max-width:420px){.library-intent-picker{flex-basis:130px}#library-summary .collection-stat{gap:5px;padding-inline:8px}}
+
+.proactive-decision{gap:10px}
+.proactive-decision>p,.proactive-decision>ul{margin:0;line-height:1.55}
+.proactive-decision>.details{margin:0;padding:0;border:0}
+.proactive-decision>.details>summary{min-height:40px;padding:8px 0;line-height:1.5}
+.proactive-decision #proactive-feedback{gap:10px;margin:4px 0 0}
+.proactive-decision #proactive-feedback .field{gap:6px;margin:0}
+.proactive-decision #proactive-feedback>p{margin:0;line-height:1.5}
+.proactive-decision #proactive-feedback .form-footer{margin-top:4px}

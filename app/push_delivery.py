@@ -107,6 +107,8 @@ def _stamp(value):
 
 def candidates(conn, uid, now):
     """Current truth, recomputed before sending; stored jobs are never the truth."""
+    from .proactive_policy import preferences,assess,delivery_slot
+    from .proactive_feedback import saved,apply as apply_feedback
     from .workflow import enrich_tasks
     from .insights import deadline_of
     tasks = []
@@ -176,25 +178,44 @@ def candidates(conn, uid, now):
             at = _stamp(slot['start_date'] + 'T' + slot['start_time'] + '+08:00')
             if at and at > now:
                 add(f'event:{tid}:{at}', at - 900, title, f"活动开始：{slot['start_date']} {slot['start_time']}，请查看地点和准备事项", url, 'task:' + tid)
+    from .notice_automation import profile_hash
+    saved_profile=conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0]
+    user_profile=profile_hash(saved_profile);notification_pref=preferences(saved_profile)
+    chosen={t['notice_id'] for t in tasks if t['data'].get('scope')=='personal' and t['status']!='cancelled' and not t.get('action_excluded')}
     for update in conn.execute("SELECT u.id,u.created_at,n.id AS notice_id,n.title FROM notice_ingest_updates u JOIN notices n ON n.id=u.notice_id WHERE n.user_id=? AND u.state='pending'", (uid,)):
-        add('intake-change:' + update['id'], update['created_at'], update['title'], '来源内容已更新，已有办理进度已保留，请核对变化', '/#notice/' + update['notice_id'], 'notice:' + update['notice_id'])
+        if update['notice_id'] in chosen:
+            add('intake-change:' + update['id'], update['created_at'], update['title'], '来源内容已更新，已有办理进度已保留，请核对变化', '/#notice/' + update['notice_id'], 'notice:' + update['notice_id'])
+            continue
+        # Unchosen information must not bypass the personalized receipt policy
+        # merely because a source fetched a new attachment/related candidate.
+        notice=conn.execute('SELECT * FROM notices WHERE id=? AND user_id=?',(update['notice_id'],uid)).fetchone()
+        check=conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?',(update['notice_id'],)).fetchone()
+        current=notice['status']=='draft' and notice['draft_version']==notice['version'] and check and check['notice_version']==notice['version'] and check['profile_hash']==user_profile
+        decision=apply_feedback(assess(dict(notice),current_draft=bool(current),pref=notification_pref,now=now),saved(conn,uid,notice['id']))
+        if decision['feedback']['mode']!='include':
+            if not current or decision['quality']!='passed' or not decision['recommended']:continue
+            if decision['relevance']!='matches_known' and not decision['interest_match'] and notification_pref.mode!='all':continue
+        slot=delivery_slot(max(update['created_at'],notice['updated_at']),decision,notification_pref)
+        if slot:
+            add('intake-change:' + update['id'],slot[1],update['title'],'你关注的信息有可核对的新内容，可以查看是否需要加入待办','/#notice/'+update['notice_id'],'notice:'+update['notice_id'],update['created_at'])
     # Group new external receipts into two-minute digests, rather than pushing
     # every forwarded message or replaying the whole library on first enable.
     buckets = {}
-    from .notice_automation import profile_hash
-    user_profile = profile_hash(conn.execute('SELECT profile FROM users WHERE id=?', (uid,)).fetchone()[0])
     automation = conn.execute('SELECT enabled FROM notice_automation_settings WHERE user_id=?', (uid,)).fetchone()
     rows = conn.execute("""SELECT DISTINCT n.* FROM notices n JOIN notice_ingest_receipts r ON r.notice_id=n.id
         LEFT JOIN notice_dispositions d ON d.notice_id=n.id
         WHERE n.user_id=? AND n.created_at>=? AND COALESCE(d.disposition,'inbox')='inbox'
         AND n.status!='confirmed'
-        AND r.external_key NOT LIKE 'manual:%' AND r.external_key NOT LIKE 'conversation:%'""", (uid, now - 86400))
+        AND NOT EXISTS(SELECT 1 FROM notice_delivery_suppressions s WHERE s.notice_id=n.id)
+        AND r.external_key NOT LIKE 'manual:%' AND r.external_key NOT LIKE 'conversation:%'""", (uid, now - 3*86400))
     for row in rows:
         check = conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?', (row['id'],)).fetchone()
         current_draft = (row['status'] == 'draft' and row['draft_version'] == row['version'] and check
                          and check['notice_version'] == row['version'] and check['profile_hash'] == user_profile)
-        relevance = json.loads(row['draft']).get('applicability') if current_draft else 'needs_review'
-        if relevance == 'not_matching':
+        decision=assess(dict(row),current_draft=bool(current_draft),pref=notification_pref,now=now)
+        decision=apply_feedback(decision,saved(conn,uid,row['id']))
+        relevance=decision['relevance']
+        if relevance == 'not_matching' and decision['feedback']['mode']!='include':
             continue
         if not current_draft and automation and automation['enabled']:
             job = conn.execute('''SELECT state,created_at FROM notice_automation_jobs
@@ -206,13 +227,24 @@ def candidates(conn, uid, now):
                 continue
             if not job and now - row['created_at'] < 30:
                 continue
-        buckets.setdefault(row['created_at'] // 120, []).append(
-            {'id': row['id'], 'created_at': row['created_at'], 'relevance': relevance})
-    for bucket, notices in buckets.items():
-        add('received:' + str(bucket), (bucket + 1) * 120, '新收到的通知', receipt_summary(notices), '/#notices', 'notice-inbox', max(n['created_at'] for n in notices))
-        key = 'received:' + str(bucket)
+        assessed=current_draft and decision['quality']=='passed'
+        decision_at=max(row['created_at'],row['updated_at']) if assessed else row['created_at']
+        slot=delivery_slot(decision_at,decision,notification_pref)
+        if slot is None:continue
+        bucket,due=slot
+        if assessed and decision['delivery']=='near_term':bucket='ready:'+bucket
+        receipt_ref=row['id']+':'+str(row['version'])+':'+user_profile+(':'+decision['quality'] if assessed else ':review')
+        group=buckets.setdefault(bucket,{'due':due,'notices':[]})
+        group['due']=max(group['due'],due)
+        group['notices'].append({'id':row['id'],'created_at':row['created_at'],'relevance':relevance,
+                                'priority':decision['priority'],'quality':decision['quality'],'ref':receipt_ref})
+    for bucket, group in buckets.items():
+        notices=group['notices'];key='received:'+str(bucket)
+        add(key,group['due'],'新收到的通知',receipt_summary(notices),'/#notices','notice-inbox',max(n['created_at'] for n in notices))
         if key in items:
-            items[key]['received_items'] = notices
+            items[key]['received_items']=notices
+            items[key]['payload']['priority']=min((n['priority'] for n in notices),default='R')
+            items[key]['payload']['policy_version']='proactive-policy-v1'
     return items
 
 
@@ -224,21 +256,24 @@ def receipt_summary(notices):
 
 
 def reconcile(conn, uid, now):
+    from .proactive_policy import delivered_refs,receipt_payload
     current = candidates(conn, uid, now)
     devices = conn.execute('SELECT * FROM push_devices WHERE user_id=? AND enabled=1', (uid,)).fetchall()
     device_keys = {device['id']: set() for device in devices}
     for device in devices:
+        seen=delivered_refs(conn,'push_outbox',uid,device['id'])
         for key, value in current.items():
             payload = value['payload']
             if key.startswith('received:'):
-                received = [item for item in value['received_items'] if item['created_at'] >= device['created_at']]
+                received = [item for item in value['received_items'] if item['created_at'] >= device['created_at'] and item.get('ref') not in seen]
                 if not received:
                     continue
-                payload = {**payload, 'body': receipt_summary(received)}
+                payload = receipt_payload(payload,received)
             device_keys[device['id']].add(key)
             conn.execute('''INSERT INTO push_outbox(id,user_id,device_id,event_key,payload,due_at,created_at)
                 VALUES(?,?,?,?,?,?,?) ON CONFLICT(device_id,event_key) DO UPDATE SET
                 payload=CASE WHEN push_outbox.state IN ('pending','failed','cancelled') THEN excluded.payload ELSE push_outbox.payload END,
+                due_at=CASE WHEN push_outbox.state IN ('pending','failed','cancelled') THEN excluded.due_at ELSE push_outbox.due_at END,
                 state=CASE WHEN push_outbox.state='cancelled' THEN 'pending' ELSE push_outbox.state END''',
                 (ident(), uid, device['id'], key, dumps(payload), value['due_at'], now))
     for job in conn.execute("SELECT id,device_id,event_key,due_at FROM push_outbox WHERE user_id=? AND state IN ('pending','leased','failed')", (uid,)).fetchall():
@@ -274,11 +309,11 @@ def deliver(device, payload, config):
     from pywebpush import webpush
     return webpush({'endpoint': device['endpoint'], 'keys': json.loads(device['keys_json'])},
                    data=dumps(payload), vapid_private_key=Vapid02.from_raw(config['private_key'].encode()),
-                   vapid_claims={'sub': 'mailto:notice-operator@localhost'}, ttl=300, timeout=10,
+                   vapid_claims={'sub': config['subject']}, ttl=3600, timeout=10,
                    headers={'Urgency': 'normal'}, requests_session=PublicPushSession())
 
 
-def tick(db, now=None):
+def tick(db, now=None, settings=None):
     fixed_now = now
     def clock():
         return int(fixed_now if fixed_now is not None else time.time())
@@ -304,6 +339,7 @@ def tick(db, now=None):
             # Reconcile may have refreshed the title, count or other payload
             # fields without changing the event identity.
             job = dict(conn.execute('SELECT * FROM push_outbox WHERE id=?', (job['id'],)).fetchone())
+            if job['due_at']>now:continue
             device = dict(conn.execute('SELECT * FROM push_devices WHERE id=? AND enabled=1', (job['device_id'],)).fetchone())
             try:
                 payload = json.loads(job['payload'])
@@ -315,6 +351,7 @@ def tick(db, now=None):
             lease_until, attempt = now + 60, job['attempts'] + 1
             conn.execute("UPDATE push_outbox SET state='leased',lease_until=?,attempts=attempts+1 WHERE id=?", (lease_until, job['id']))
             config = configuration(conn)
+            config['subject']=(settings.push_contact or settings.origin) if settings else 'https://example.invalid'
         code, error = 0, ''
         try:
             response = deliver(device, payload, config)
@@ -340,10 +377,10 @@ def tick(db, now=None):
                 conn.execute('UPDATE push_devices SET enabled=?,error=? WHERE id=?', (0 if expired else 1, error, device['id']))
 
 
-async def run_worker(db):
+async def run_worker(db,settings=None):
     while True:
         try:
-            await run_in_threadpool(tick, db)
+            await run_in_threadpool(tick, db,settings=settings)
         except asyncio.CancelledError:
             raise
         except Exception as exc:

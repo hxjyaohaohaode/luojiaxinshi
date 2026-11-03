@@ -20,6 +20,25 @@ from test_genui_transport import events, payload
 FIXTURE=Path(__file__).resolve().parent.parent/'fixtures/genui/openui-planner.json'
 UI=json.loads(FIXTURE.read_text(encoding='utf-8'))
 
+def test_wrapping_labels_keep_human_names_and_exclude_option_and_editor_values():
+    ui={**UI,'html':['<label><span>学习小时</span><input id="hours" type="number" value="8"></label>',
+        '<label>选择方案<select id="plan"><option value="a">方案一</option><option value="b">方案二</option></select></label>',
+        '<label for="notes">我的补充</label><textarea id="notes">不能进入字段标签的正文</textarea>']}
+    _,doc=validate_ui(ui)
+    assert doc.controls['hours']['label']=='学习小时'
+    assert doc.controls['plan']['label']=='选择方案'
+    assert doc.controls['notes']['label']=='我的补充'
+
+def test_numeric_drafts_remain_editable_but_invalid_values_are_explicit():
+    from app.openui import control_validity
+    _,doc=validate_ui({**UI,'html':['<label>小时<input id="hours" type="number" min="2" max="20" step="2" value="8"></label>']})
+    control=doc.controls['hours']
+    assert control_validity(control,'8') is None
+    assert control_validity(control,'')['state']=='unknown'
+    for value in ('1','21','3','NaN','Infinity'):
+        assert control_validity(control,value)['state']=='invalid'
+    assert control_validity({'type':'number','value':'0.1','step':'0.2'},'0.3') is None
+
 
 @pytest.mark.parametrize('escaped',[True,False])
 def test_ui_really_streams_before_document_and_js_complete(escaped):
@@ -162,12 +181,14 @@ def test_frame_csp_is_isolated_from_application(env):
     assert "'unsafe-inline'" not in client.get('/').headers['content-security-policy']
 
 
-def test_dedicated_ui_writer_is_fast_model_with_no_effectful_tools(env,monkeypatch):
+@pytest.mark.parametrize('discover',[False,True],ids=['preloaded','discovered'])
+def test_dedicated_ui_writer_is_fast_model_with_no_effectful_tools(env,monkeypatch,discover):
     from app import grounding
     from test_agent_runtime import Script,answer,call
     cfg=env[1];cfg.agent_enabled=cfg.ai_grounding=True;cfg.ai_api_key='synthetic'
     owner=account(env);chat=conversation(owner)
-    main=Script([answer('',[call('compose_interface',{'brief':'生成可调整时间的试算工具'})])])
+    main=Script(([answer('',[call('openui_capabilities',{})])] if discover else [])+
+                [answer('',[call('compose_interface',{'brief':'生成可调整时间的试算工具'})])])
     env[0].state.agent_service.provider_factory=lambda *_:main
     requests=[];value={'answer':'合成验收工具。','ui':UI,'claims':[{'kind':'interface','text':'输入更新计算与筛选'}]}
     raw=json.dumps(value,ensure_ascii=False)
@@ -180,15 +201,21 @@ def test_dedicated_ui_writer_is_fast_model_with_no_effectful_tools(env,monkeypat
     monkeypatch.setattr(genui_ai.httpx,'AsyncClient',lambda **kwargs:client(transport=httpx.MockTransport(transport),**kwargs))
     async def verify(settings,result,sources,*_):return [],{},grounding.check_result(result,sources)
     monkeypatch.setattr(grounding,'verify',verify)
-    packets=events(owner.post('/api/conversations/'+chat['id']+'/messages/stream',json=payload(chat,content='用互动界面制作准备时间试算工具，每天2小时、7天。')))
+    question='用HTML/CSS/JS做一个准备时间试算工具，每天2小时、7天。' if discover else '用互动界面制作准备时间试算工具，每天2小时、7天。'
+    packets=events(owner.post('/api/conversations/'+chat['id']+'/messages/stream',json=payload(chat,content=question)))
     message=packets[-1]['data']['conversation']['messages'][-1]
     assert message['status']=='complete',message['error']
-    assert len(main.inputs)==1 and len(requests)==1
+    assert len(main.inputs)==(2 if discover else 1) and len(requests)==1
+    if discover:
+        tools={item['function']['name']:item['function'] for item in main.inputs[0][1]}
+        assert 'compose_interface' not in tools and 'compose_interface' in tools['openui_capabilities']['description']
+        capabilities=[json.loads(m['content']) for m in main.inputs[-1][0] if m.get('role')=='tool']
+        assert any(c.get('preferred_submit')=='compose_interface' for c in capabilities)
     assert requests[0]['model']==cfg.ai_ui_model and requests[0]['thinking']=={'type':'disabled'}
     assert 'tools' not in requests[0] and requests[0]['max_completion_tokens']==cfg.ai_output_tokens
     assert message['grounding']['models']['composition']==cfg.ai_ui_model
     assert message['grounding']['model_modes']['composition']=='disabled'
-    assert message['grounding']['agent_execution']['model_calls']==2
+    assert message['grounding']['agent_execution']['model_calls']==(3 if discover else 2)
     assert any(p['type']=='ui_preview' and p['data']['content'].get('localReady') for p in packets)
 
 

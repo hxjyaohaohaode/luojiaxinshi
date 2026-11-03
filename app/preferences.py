@@ -1,5 +1,15 @@
 """Only validated presentation preferences influence the system instructions."""
 PERSONAL_KEYS={'campus_role','school','level','grade','college','major','semester','goals','campus_area','interests','available_time','preferred_name','response_preferences'}
+LOCAL_ONLY_KEYS={'notification_preferences'}
+
+
+def personal_profile(profile):
+    """Exactly the personal fields supplied to notice/preparation models.
+
+    Presentation and local delivery changes must not invalidate an in-flight
+    extraction or trigger a second paid preparation request.
+    """
+    return {key:value for key,value in profile.items() if key in PERSONAL_KEYS}
 
 
 def presentation_prompt(profile):

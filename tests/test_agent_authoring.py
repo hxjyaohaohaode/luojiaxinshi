@@ -37,6 +37,26 @@ def test_direct_answer_uses_one_agent_call_and_existing_review(env, monkeypatch)
     assert m['grounding']['work_summary']['tool_calls']==0
 
 
+def test_text_only_turn_keeps_stable_rules_before_fresh_clock_and_no_ui_tool_advice(env,monkeypatch):
+    c=account(env);forbid_writer(monkeypatch)
+    model=Script([draft('你好。'),draft('收到。')]);env[0].state.agent_service.provider_factory=lambda *_:model
+    from app.agent_runtime import clock
+    original=clock.current_time;calls=[]
+    def ticking():
+        result=original();result['unix_seconds']+=len(calls);calls.append(result['unix_seconds']);return result
+    monkeypatch.setattr(clock,'current_time',ticking)
+    for text in ('纯文字，不生成界面，打个招呼。','纯文字，不生成界面，回应收到。'):
+        message=final(send(c,conversation(c),text));assert message['status']=='complete',message['error']
+    systems=[messages[0]['content']for messages,_ in model.inputs]
+    assert len(systems)==2 and systems[0].split('\n可信系统时钟：')[0]==systems[1].split('\n可信系统时钟：')[0]
+    assert systems[0].split('\n可信系统时钟：')[1]!=systems[1].split('\n可信系统时钟：')[1]
+    for messages,catalog in model.inputs:
+        names={tool['function']['name']for tool in catalog}
+        assert 'compose_interface' not in names and 'openui_capabilities' not in names
+        submit=next(tool['function']for tool in catalog if tool['function']['name']=='submit_answer')
+        assert 'compose_interface' not in submit['description']
+
+
 def test_tool_receipt_is_cited_by_same_agent_and_real_work_is_recorded(env, monkeypatch):
     c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
     def finish(messages, tools):
@@ -89,6 +109,22 @@ def test_evidence_refs_remain_stable_across_additional_searches():
     assert result['citations'][0]['source_id']=='a'
 
 
+def test_full_evidence_window_does_not_lose_a_later_current_task_fact():
+    bulk=grounding.source('bulk','长资料',[{'locator':f'第{i}段','text':f'原文事实{i}。'}for i in range(120)],'material')
+    entries=[];extend_index(entries,[bulk]);first=dict(entries[0])
+    current=grounding.source('workspace-current','当前本人待办',[
+        {'locator':'记录 task-1 状态核对','text':'本人已标记完成；个人跟进时间为2027-11-05 12:00，不是正式截止。'}],'execution')
+    sources=[bulk,current];extend_index(entries,[current]);late=entries[-1]
+    assert len(entries)==121 and late['ref']=='E121' and entries[0]==first
+    profile={'_authoring_evidence_index':entries}
+    assert len(genui_ai.authoring_index(sources,profile))==121
+    window=genui_ai.prompt_authoring_index(sources,profile)
+    assert len(window)<=120 and late in window and entries[0]==first
+    result=compile_answer(json.dumps({'answer':'本人已标记完成[E121]','claims':[
+        {'kind':'fact','text':'本人已标记完成','evidence_refs':['E121']}]}),sources,entries)
+    assert result['citations'][0]['source_id']=='workspace-current'
+
+
 def test_stream_previews_only_answer_and_assembles_tool_arguments():
     class Response:
         async def aiter_bytes(self):
@@ -108,6 +144,66 @@ def test_stream_does_not_accept_unfinished_calls():
         async def aiter_bytes(self):yield b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{"}}]}}]}\n\n'
     result=asyncio.run(stream_message(Response(),lambda _:None))
     assert result['choices'][0]['finish_reason'] is None  # Provider rejects before execution.
+
+
+def test_terminal_done_releases_a_stream_that_keeps_the_connection_open():
+    class Response:
+        async def aiter_bytes(self):
+            packets=[{'choices':[{'index':0,'delta':{'content':'完整答复'},'finish_reason':'stop'}]},
+                     {'choices':[],'usage':{'prompt_tokens':7,'completion_tokens':3}}]
+            raw=(''.join('data: '+json.dumps(p,ensure_ascii=False)+'\n\n'for p in packets)+'data: [DONE]\n\n: keepalive\n\n').encode()
+            for start in range(0,len(raw),7):yield raw[start:start+7]
+            raise AssertionError('Do not wait for another network frame after terminal DONE')
+    shown=[];result=asyncio.run(stream_message(Response(),shown.append))
+    assert ''.join(shown)=='完整答复'
+    assert result['choices'][0]['finish_reason']=='stop' and result['usage']['completion_tokens']==3
+
+
+def test_terminal_done_does_not_make_an_unfinished_tool_executable():
+    class Response:
+        async def aiter_bytes(self):
+            yield b'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{"}}]}}]}\n\ndata: [DONE]\n\n'
+            raise AssertionError('Terminal DONE must end consumption even for an invalid result')
+    result=asyncio.run(stream_message(Response(),lambda _:None))
+    assert result['choices'][0]['finish_reason'] is None
+
+
+def test_stream_timing_survives_usage_projection_without_private_reasoning(monkeypatch):
+    from app.agent_runtime.providers import response_usage
+    from app.agent_runtime import providers
+    from app.harness import Trace,CURRENT,start_call,finish_call
+    from itertools import count
+    from types import SimpleNamespace
+    # Exercise the projection with ordered timestamps, independently of the
+    # Windows clock tick and event-loop scheduling under the full suite.
+    ticks=count(100,.01)
+    monkeypatch.setattr(providers,'time',SimpleNamespace(monotonic=lambda:next(ticks)))
+    class Response:
+        async def aiter_bytes(self):
+            yield b'data: {"choices":[{"delta":{"reasoning_content":"PRIVATE-REASONING"}}]}\n\n'
+            yield b'data: {"choices":[{"delta":{"content":"answer"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n'
+    result=asyncio.run(stream_message(Response(),lambda _:None,retain_reasoning=True))
+    usage=response_usage(result);timing=usage['transport']
+    assert timing['first_reasoning_seconds'] < timing['first_content_seconds']
+    assert timing['terminal_received'] and timing['finish_reason']=='stop' and timing['events']==2
+    trace=Trace();token=CURRENT.set(trace)
+    try:
+        call=start_call({'model':'test'});finish_call(call,usage)
+        assert trace.snapshot()['calls'][0]['transport']==timing
+        assert 'PRIVATE-REASONING' not in json.dumps(trace.snapshot())
+    finally:CURRENT.reset(token)
+
+
+def test_provider_error_frame_stops_without_publishing_internal_error_text():
+    from app.agent_runtime.types import AgentError
+    class Response:
+        async def aiter_bytes(self):
+            yield b'data: {"error":{"message":"PRIVATE-PROVIDER-DETAIL"},"usage":{"prompt_tokens":7}}\n\n'
+            raise AssertionError('Do not continue after provider error')
+    with pytest.raises(AgentError) as error:asyncio.run(stream_message(Response(),lambda _:None))
+    assert error.value.finish_reason=='provider_error' and error.value.usage['prompt_tokens']==7
+    assert 'PRIVATE-PROVIDER-DETAIL' not in str(error.value)
+    assert error.value.usage['transport']['finish_reason']=='provider_error'
 
 
 def test_serialized_presentation_gets_full_validation_and_effect_inputs_stay_strict():

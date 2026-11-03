@@ -179,17 +179,20 @@ def document(url, text='附件内容', content=b'%PDF-test'):
 
 def test_materials_are_same_host_bounded_nonrecursive_and_partial_failures_keep_text():
     calls = []
-    urls = ['https://other.example.org/out.pdf'] + [f'https://www.whu.edu.cn/{i}.pdf' for i in range(6)]
+    urls = ['https://other.example.org/out.pdf'] + [f'https://www.whu.edu.cn/{i}.pdf' for i in range(7)]
     async def read(url):
         calls.append(url)
         if url.endswith('/1.pdf'):
             raise HTTPException(422, '附件暂时不可用')
         return document(url)
     result = asyncio.run(notice_intake.read_notice_materials(primary(urls), read=read))
-    assert len(calls) == 4 and all('nested' not in url for url in calls)
-    assert len(result) == 4 and result[0]['sections'][0]['text'] == '通知正文'
+    # A failed attempt does not consume one of the five retained-file slots.
+    # The sixth successful file is explicitly left unread under that budget.
+    assert len(calls) == 6 and all('nested' not in url for url in calls)
+    assert len(result) == 6 and result[0]['sections'][0]['text'] == '通知正文'
     warnings = ' '.join(result[0]['origin']['warnings'])
-    assert '来源域名' in warnings and '暂时不可用' in warnings and '最多自动读取 4' in warnings
+    assert '来源域名' in warnings and '暂时不可用' in warnings and '上限' in warnings
+    assert result[0]['origin']['attachment_reads'][-1]['state']=='budget'
 
 
 @pytest.mark.parametrize(('text', 'content'), [('字' * MAX_CHARS, b'%PDF-test'), ('短文', b'x' * (MAX_FILE + 1))], ids=['character-limit', 'byte-limit'])

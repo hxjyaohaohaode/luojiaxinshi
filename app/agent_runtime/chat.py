@@ -25,6 +25,7 @@ from .tools import REGISTRY
 from .types import AgentError, Query, StartTurn
 from .types import Empty
 from . import workspace as personal_workspace
+from .briefing import prepare_briefing,requested_attention_count
 
 
 class LocalQuery(Query):
@@ -175,18 +176,18 @@ class ComposeInterface(Strict):
 class ChatRun(Run):
     protected_tools = Run.protected_tools | {'ui_capabilities', 'openui_capabilities', 'memory_capabilities'}
     registry = {**REGISTRY,
-        'workspace_read': (personal_workspace.WorkspaceRead, '读取本人日历、待办或当前对话的真实操作回执，含可修改的 ID/version；支持查询与分页。', False, True, True),
+        'workspace_read': (personal_workspace.WorkspaceRead, '统一读取本人日历、待办和操作回执。仅根据已保存状态查询待办数量或优先几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计），单独调用，生成含期限/前置/材料/变更/跟进与并列依据的候选后独立复核。涉及附件原文、校规、课表、自定排序或实际修改等才用 reply=records 继续分析。返回真实 ID/version，支持筛选与分页。', False, True, True),
         'workspace_capabilities': (Empty, '加载本人日历和待办的直接操作工具。创建、改期、完成、取消、删除或撤销无需重复审批；只读范围不能写入。', False, True, False),
         'campus_search': (LocalQuery, '按查询读取本账号已授权资料。scopes 仅选本次所需的库、日程、个人条件；不能扩大实际权限。', False, True, True),
         'public_search': (Query, '检索公开原发布来源；仅使用公开机构、事项、年份，不能发送个人资料。', False, True, True),
-        'read_source': (ReadSource, '读取本轮已登记来源的原文片段，ID 和 locator 必须来自工具结果。', False, True, True),
+        'read_source': (ReadSource, '读取本轮已登记来源的原文片段，ID 和 locator 必须来自工具结果。遇到PDF图像待核对页或图片时，此工具按权限加载原件像素和页码证据供本轮模型核对，不把定位说明当作OCR。文字offset从原段落第0个字符起，检索片段位置见sources.retrieval_windows。', False, True, True),
         'research_complete': (ResearchComplete, '资料已够用或缺口已明确时结束采集。先等待子任务结束。回答随后独立生成并复核。', False, False, False),
         'ui_capabilities': (UICapabilities, '按需读取组件与动作的准确字段，用于自由编排最终 ui；include_memory 可取得记忆操作协议。', False, True, False),
         'memory_capabilities': (MemoryCapabilities, '读取原有记忆系统的操作协议或当前上下文。有新事实、偏好、目标、纠错时按当前模式自主维护；纯文字也可用。操作随最终答复提交，保存回执由原系统产生。', False, True, False),
         'submit_answer': (SubmitAnswer, '单独调用此工具提交本轮最终答复，随后独立核验。answer 是用户看到的 Markdown，ui 为按需自由编排的界面；claims 使用 kind/text/evidence_refs。用户要求纯文字时仍用本工具，ui=null。', False, False, False),
         'submit_interface': (SubmitInterface, '单独提交互动答复。lead 仅一句必要导语，主要回答和操作写在 nodes；所有事实在对应节点引用。提交后独立复核，不能与其他工具同批。', False, False, False),
         'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
-        'openui_capabilities': (Empty, '生成互动界面前读取一次流式 HTML/CSS/JS 协议与宿主桥，然后使用 generateSandboxedUi。简单问答不用调用。', False, True, False),
+        'openui_capabilities': (Empty, '按需加载互动界面编排能力。加载后优先用 compose_interface 提交简短目标，由专用生成器处理完整 HTML/CSS/JS；已有完整代码的直接提交仍兼容。简单问答不用调用。', False, True, False),
         'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，宿主处理代码与排版；不调用业务工具，不可与其他工具同批。', False, False, False),
     }
 
@@ -219,19 +220,26 @@ class ChatRun(Run):
         self.receipt_count = 0
         self.loaded_skills = set()
         self.evidence_entries, self.candidate, self.candidate_raw = [], None, None
+        self.workspace_reply = None
         self.answer_errors = []
         self.answer_normalizations = []
         self.ui_normalizations = []
         self.memory_contract_loaded = False
+        self.file_contract_loaded = False
         self.ui_protocol_loaded = False
         self.read_cache = {}
+        self.read_locks = {}
+        self.read_epoch = 0
+        self.retrieval_metrics = []
         from ..response_contract import response_contract
         from ..genui_ai import choose_tier
-        self.allow_ui = not response_contract(messages).get('no_ui') and choose_tier(service.settings) == 1
+        contract=response_contract(messages)
+        self.allow_ui = not contract.get('no_ui') and choose_tier(service.settings) == 1
+        self.requested_attention_count=requested_attention_count(contract.get('latest_user_request',''))
         latest_question=next((m['content'] for m in reversed(messages) if m['role']=='user'),'')
         from ..visual_evidence import image_sources
         self.focused_visual=bool(self.access.get('attachments') and image_sources(self.original)
-            and len(image_sources(self.original))==len(self.original) and len(latest_question)<=160
+            and len({s['id'] for s in image_sources(self.original)})==len(self.original) and len(latest_question)<=160
             and re.search(r'看|读取|读一下|解读|识别|提取|解释|分析|描述|总结',latest_question)
             and not re.search(r'联网|搜索|研究|资料库|日历|日程|待办|记住|记忆|偏好|保存|删除|创建|添加|安排|导出|文件|生成|制作|界面|图表|交互|互动|比较|结合|对比|判断|规划|提醒|之前|上次|长期|以后|将来|应该|建议|下一步|怎么|如何|为什么|方案|计划|是否|能否|能不能|实现|开发|编程|设计|网页|程序|项目|帮.{0,8}做|做个|做一个|今天|明天|后天|现在|本周|下周|上周|这周|本月|冲突|空闲',latest_question))
         self.openui_preloaded=bool(self.allow_ui and service.settings.ai_context_tokens>=65536 and self.context_bytes>=96000
@@ -306,7 +314,10 @@ class ChatRun(Run):
             detail = '；'.join(args.gaps)
         elif name == 'mcp_call':summary = '外部工具已返回：' + args.tool
         elif name == 'current_time':summary = '当前日期：' + result['date']
-        elif name == 'workspace_read':summary = f'读取 {len(result["records"])} 项记录，共 {result["total"]} 项匹配'
+        elif name == 'workspace_read':
+            summary = (f'已按 {result["matched_records"]} 项匹配记录整理简报，等待核验'
+                       if result.get('status')=='prepared_for_review'
+                       else f'读取 {len(result["records"])} 项记录，共 {result["total"]} 项匹配')
         elif name == 'workspace_capabilities':summary = '已取得本人日历与待办操作协议'
         elif name in personal_workspace.WRITE_TOOLS:
             label = {'calendar.create':'已添加日历安排','calendar.update':'已修改日历安排','calendar.delete':'已删除日历安排',
@@ -333,20 +344,36 @@ class ChatRun(Run):
                 'evidence_index': [e for e in self.evidence_entries if e['source_id'] in ids]}
 
     async def local(self, query, scopes):
-        from ..grounding import retrieve, snapshots
+        from ..grounding import retrieve
         allowed = [key for key in scopes if self.access.get(key)]
         self.used_scopes.update(allowed)
-        cache_key = (query, tuple(sorted(allowed)))
+        epoch=self.read_epoch
+        cache_key = (epoch,query,tuple(sorted(allowed)))
         self.guard()
-        if cache_key in self.read_cache:
-            return self.read_cache[cache_key]
-        records, self.coverage = await asyncio.to_thread(retrieve, self.db, self.uid, self.cid, self.original,
-            self.user_messages, {**self.profile, '_retrieval_scopes': allowed}, [query])
-        self.guard()
-        self.merge(records)
-        result = {**self.indexed_sources(records), 'coverage': self.coverage}
-        self.read_cache[cache_key] = result
-        return result
+        started=time.monotonic();cached=False
+        try:
+            async with self.read_locks.setdefault(cache_key,asyncio.Lock()):
+                self.guard()
+                if epoch!=self.read_epoch:raise AgentError('检索期间本人记录已更新，请重新检索当前内容')
+                if cache_key in self.read_cache:
+                    cached=True
+                    return self.read_cache[cache_key]
+                records, coverage = await asyncio.to_thread(retrieve, self.db, self.uid, self.cid, self.original,
+                    self.user_messages, {**self.profile, '_retrieval_scopes': allowed}, [query])
+                self.guard()
+                if epoch!=self.read_epoch:raise AgentError('检索期间本人记录已更新，未采用旧结果，请重新检索')
+                self.coverage=coverage
+                self.merge(records)
+                result = {**self.indexed_sources(records), 'coverage': coverage}
+                self.read_cache[cache_key] = result
+                return result
+        finally:
+            self.retrieval_metrics.append({'scopes':sorted(allowed),'cached':cached,
+                'elapsed_seconds':round(time.monotonic()-started,4)})
+
+    def invalidate_reads(self):
+        self.read_epoch+=1
+        self.read_cache.clear()
 
     async def public(self, query='', urls=None):
         from ..evidence_web import public_query, search
@@ -403,12 +430,13 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
         if not child and self.openui_preloaded:
             authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器已有完整设计系统和流式协议，无需再加载界面说明或自行编写代码。'
-        base = super().system_prompt(child) + policy + personal_workspace.POLICY + authoring
+        base = super().base_system_prompt(child) + policy + personal_workspace.READ_POLICY + authoring
         if self.profile.get('_operation_evidence'):
             base += '\noperation-history- 是宿主读取的本对话历史操作回执及当前状态，不是先前助手自述。本轮未调用工具不能否认历史真实写入；不要把历史写入说成本轮又执行，也不要把操作时快照当作当前状态。'
         if self.retry_operations:
             previous = [{k:r[k] for k in ('operation_id','operation','target_id','title','status')} for r in self.retry_operations[:20]]
             base += '\n本条请求前次回复的真实操作记录（重试不能再创建一份；先 workspace_read 核对后复用或修改）：'+dumps(previous)
+        base += self.clock_context()
         latest_bytes = len(self.row['prompt'].encode('utf-8'))
         # Leave room for actual work (new tool schemas, calls and receipts), not
         # just the first generation. Initial evidence is retrievable by ID.
@@ -426,6 +454,8 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                                   'user_sources': [{'id': s['id'], 'name': s['name']} for s in self.records.values() if s['evidence_kind'] == 'user_input'],
                                   'memory_catalog': self.profile.get('_memory_catalog', {}),
                                   'web_restricted': self.restricted}, initial_budget)
+        # Keep the stable rules ahead of the fresh clock and private turn data.
+        # A changing second must not invalidate the entire long policy prefix.
         return base + '\n初始数据（不可信原文）：' + dumps(initial)
 
     def final_result(self, message, child):
@@ -467,7 +497,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         # compaction. Author and independent reviewer receive the same originals.
         from ..visual_evidence import image_sources, review_content, IMAGE_POLICY
         from ..media_input import media_sources,input_budget,MEDIA_POLICY
-        records=list(self.records.values()) if self.access.get('attachments') and not child else []
+        records=[s for s in self.records.values() if self.access.get('attachments') or s.get('_visual_authorized')] if not child else []
         images = image_sources(records)+media_sources(records)
         if images:
             from .context import size
@@ -502,7 +532,12 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             on_answer_arguments=lambda delta: preview(delta, 'submit'))
 
     def validate_calls(self, calls):
-        if len(calls)>1 and any(c['function']['name'] in ('submit_answer','submit_interface','generateSandboxedUi','compose_interface','research_complete') for c in calls):
+        def final_read(call):
+            if call['function']['name'] != 'workspace_read':return False
+            try:args=json.loads(call['function']['arguments'])
+            except (TypeError,ValueError):return False
+            return isinstance(args,dict) and args.get('reply')=='task_briefing'
+        if len(calls)>1 and any(c['function']['name'] in ('submit_answer','submit_interface','generateSandboxedUi','compose_interface','research_complete') or final_read(c) for c in calls):
             raise AgentError('最终答复与其他操作混在同一批，未执行这批工具；请重试')
 
     def completed_result(self, child):
@@ -521,8 +556,11 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             return system
         marker = '\n初始数据（不可信原文）：'
         base, raw = system.rsplit(marker, 1)
-        remaining = budget - size(base + marker) - 512
-        if remaining < 1500:
+        # The caller already reserves framing/continuation space. A second
+        # fixed reserve here used to reject valid long user input before even
+        # trying to pack the small mandatory context.
+        remaining = budget - size(base + marker)
+        if remaining <= 0:
             return system  # compact() reports the real hard limit below.
         return base + marker + dumps(initial_context(json.loads(raw), remaining))
 
@@ -531,6 +569,19 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         registry = {**self.registry, **personal_workspace.WRITE_TOOLS} if 'workspace_capabilities' in upcoming else self.registry
         catalog = specs(child, registry)
         for item in catalog:
+            if item['function']['name']=='workspace_read':
+                parameters=item['function']['parameters']
+                if child:
+                    parameters['properties']['reply']={'const':'records','type':'string','default':'records'}
+                else:
+                    # The first read must choose between returning facts for
+                    # further reasoning and preparing a narrow reviewed reply.
+                    # This avoids two competing tools with near-identical names.
+                    parameters.setdefault('required',[]).append('reply')
+                    parameters['properties']['reply'].pop('default',None)
+                    if self.requested_attention_count is not None:
+                        parameters['properties']['count']['const']=self.requested_attention_count
+                        parameters['properties']['count']['default']=self.requested_attention_count
             if item['function']['name'] in ('list_files','read_file'):
                 item['function']['description']+=' 仅限工具生成的工作文件；上传附件在 evidence_index，可直接使用摘录或用 read_source 读取，不能按附件名调用本工具。'
         if child:
@@ -540,11 +591,13 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 item['function']['parameters']['properties'].pop('memory_actions', None)
             if item['function']['name'] == 'submit_answer':
                 fn = item['function']
-                fn['description'] = '单独提交纯文字答复，answer 写完整正文；要自由生成互动内容，调用 generateSandboxedUi。'
+                fn['description'] = ('单独提交纯文字答复，answer 写完整正文；需要互动内容时优先用 compose_interface，尚未加载则先用 openui_capabilities。'
+                    if self.allow_ui else '单独提交本轮文字答复，answer 写完整正文，claims 使用实际证据；本轮不生成界面。')
                 fn['parameters']['properties'].pop('ui', None)
                 fn['parameters'].get('$defs', {}).pop('UIEnvelope', None)
         return [item for item in catalog
-                if (item['function']['name'] != 'submit_interface' or self.allow_ui and (self.ui_protocol_loaded or 'ui_capabilities' in upcoming))
+                if (item['function']['name'] not in ('read_file','write_file') or self.file_contract_loaded)
+                and (item['function']['name'] != 'submit_interface' or self.allow_ui and (self.ui_protocol_loaded or 'ui_capabilities' in upcoming))
                 and (item['function']['name'] != 'generateSandboxedUi' or self.allow_ui and (getattr(self,'openui_protocol_loaded',False) or 'openui_capabilities' in upcoming))
                 and (item['function']['name'] != 'openui_capabilities' or self.allow_ui and not self.openui_preloaded and not self.openui_protocol_loaded)
                 and (item['function']['name'] != 'compose_interface' or self.allow_ui and (self.openui_preloaded or self.openui_protocol_loaded or 'openui_capabilities' in upcoming))
@@ -569,11 +622,22 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 result['evidence_index'] = [{'ref':e['ref']} for e in result['evidence_index']]
                 result['details_deferred'] = '用 workspace_read 查询当前字段；完整回执已保存'
             if size(dumps(result)) <= limit:return result
+        if name == 'workspace_read' and result.get('status')=='prepared_for_review':
+            return super().bound_tool_result(name,result,limit)
         if name == 'workspace_read':
             # Page whole records, never cut a record's JSON or repeat its body
             # in the evidence index. Full evidence remains in the server ledger.
+            def reference(entry):
+                value={key:entry[key]for key in ('ref','source_id','locator')}
+                # Show the exact small status/count/time anchor. Otherwise the
+                # model must guess which fields an opaque locator actually
+                # covers, even though the full record is right beside it.
+                quote=entry.get('quote')
+                if (entry['locator']=='查询范围' or entry['locator'].endswith(' 状态核对')) and isinstance(quote,str) and 0<len(quote)<=1400:
+                    value['quote']=quote
+                return value
             page = {**result, 'records': list(result['records']),
-                    'evidence_index': [{k:e[k] for k in ('ref','source_id','locator')} for e in result.get('evidence_index', [])]}
+                    'evidence_index': [reference(entry)for entry in result.get('evidence_index', [])]}
             page.pop('sources', None)
             entries = page['evidence_index']
             def page_index():
@@ -618,13 +682,24 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             if not self.access.get('schedule'):
                 raise AgentError('本轮不允许访问本人日历与待办')
             if name == 'workspace_read':
+                if not child:self.workspace_reply='records'
+                if args.reply=='task_briefing':
+                    if child:raise AgentError('子任务不能提交面向用户的最终简报，请用 reply=records')
+                    if await self.completion_needs_followup():raise AgentError('仍有子任务尚待核对，不能提前完成简报')
+                    requested=self.requested_attention_count
+                    if requested is not None and args.count!=requested:
+                        self.answer_normalizations.append({'field':'workspace_read.count','model_value':args.count,
+                            'effective_value':requested,'reason':'latest_explicit_shortlist_count'})
+                        args=args.model_copy(update={'count':requested})
+                    args=args.model_copy(update={'limit':1 if args.count==0 else 50})
                 with self.db.connect() as conn:
                     result = personal_workspace.read(conn, self.uid, self.cid, args)
             elif name == 'workspace_capabilities':
                 if not self.mutate_context or not personal_workspace.write_allowed(self.user_messages):
                     raise AgentError('本轮未要求实际操作，或明确要求只读；请按用户要求分析或提供建议')
                 self.registry.update(personal_workspace.WRITE_TOOLS)
-                return {'available_tools': list(personal_workspace.WRITE_TOOLS), 'scope': '本人本站日历和待办；仅已提交回执证明完成'}
+                return {'available_tools': list(personal_workspace.WRITE_TOOLS), 'scope': '本人本站日历和待办；仅已提交回执证明完成',
+                        'policy':personal_workspace.POLICY}
             else:
                 if child or not self.mutate_context or not personal_workspace.write_allowed(self.user_messages):
                     raise AgentError('当前请求没有授权此写入操作')
@@ -635,7 +710,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 try:result = self.mutate_context(change)
                 except HTTPException as exc:raise AgentError(str(exc.detail)) from None
                 except ValueError as exc:raise AgentError(str(exc)) from None
-                self.read_cache.clear()
+                self.invalidate_reads()
                 self.receipt_count += 1
             from ..grounding import source
             sid = 'workspace-' + hashlib.sha256(dumps([name, args.model_dump(), result]).encode()).hexdigest()[:24]
@@ -643,14 +718,26 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 personal_workspace.evidence_sections(result),
                 'execution', operation_completed=name != 'workspace_read')])
             self.used_scopes.add('schedule')
-            return {**result, **self.indexed_sources([self.records[sid]])}
+            result={**result, **self.indexed_sources([self.records[sid]])}
+            if name=='workspace_read' and args.reply=='task_briefing':
+                from ..grounding import CST
+                candidate=prepare_briefing(result,args.count,datetime.now(CST))
+                if candidate is None:return {**result,'briefing_deferred':'当前结果需要继续完整读取或综合分析，不能提前结束'}
+                if self.final_result({'content':dumps(candidate)},False)is None:
+                    raise AgentError('简报未通过答复协议检查，继续完整分析')
+                self.workspace_reply='task_briefing'
+                return {'status':'prepared_for_review','matched_records':result['total'],
+                        'scope':'仅本人已保存待办；尚未通过独立核验，不是学校受理证明'}
+            return result
         if name in ('submit_answer', 'submit_interface', 'generateSandboxedUi', 'compose_interface', 'research_complete') and await self.completion_needs_followup():
             raise AgentError('子任务仍在运行或有新结果尚未核对；先读取新的完成、失败或取消状态，再提交答复')
         if name == 'openui_capabilities':
             if not self.allow_ui:raise AgentError('本轮要求纯文字，不加载界面协议')
             from ..openui_prompt import OPEN_UI_RULES
             self.openui_protocol_loaded=True
-            return {'renderer':'open_generative_ui','rules':OPEN_UI_RULES}
+            return {'renderer':'open_generative_ui','preferred_submit':'compose_interface',
+                    'next_step':'证据够用后调用 compose_interface，只写简短目标、阅读顺序和必要交互。专用生成器已有本轮用户要求、证据和完整协议，无需在主模型中重复编写代码；输出仍经原有独立复核。直接生成协议仅保留兼容。',
+                    'rules':OPEN_UI_RULES}
         if name == 'compose_interface':
             if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
             if self.calls>=24:raise AgentError('本轮模型调用次数已达上限，请缩小任务')
@@ -747,27 +834,59 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             if not source:
                 raise AgentError('来源尚未在本轮工具结果中登记，请先检索')
             sections = source['sections']
+            storage_kind=source.get('_original_evidence_kind',source['evidence_kind'])
             # A retrieved material may have a clipped paragraph. Read the
             # owner's stored original, still within this turn's immutable scope.
             with self.db.connect() as conn:
                 row = None
-                if source['evidence_kind'] == 'material':
-                    row = conn.execute('''SELECT s.conversation_id,s.sections,l.full_sections FROM conversation_sources s
+                if storage_kind == 'material':
+                    row = conn.execute('''SELECT s.conversation_id,s.sections,l.full_sections,s.kind,s.content,s.status,s.warning,s.sha256 FROM conversation_sources s
                         JOIN conversations c ON c.id=s.conversation_id LEFT JOIN material_library l ON l.source_id=s.id
                         WHERE s.id=? AND c.user_id=?''', (args.source_id, self.uid)).fetchone()
                     if row and not (self.access.get('library') or self.access.get('attachments') and row['conversation_id'] == self.cid):
                         raise AgentError('原文不在本轮资料范围内')
-                elif source['evidence_kind'] == 'notice' and self.access.get('library'):
-                    row = conn.execute('''SELECT s.sections,NULL AS full_sections FROM sources s JOIN notices n ON n.id=s.notice_id
+                elif storage_kind == 'notice' and self.access.get('library'):
+                    row = conn.execute('''SELECT s.sections,NULL AS full_sections,s.kind,s.content,s.status,s.warning,s.sha256 FROM sources s JOIN notices n ON n.id=s.notice_id
                         WHERE s.id=? AND n.user_id=? AND s.active=1''', (args.source_id, self.uid)).fetchone()
                 if row:sections = json.loads(row['full_sections'] or row['sections'])
-            sections = [p for p in sections if not args.locator or p['locator'] == args.locator]
+            from ..visual_evidence import register_images,is_visual_reference,IMAGE_MIME
+            from ..pdf_visual import pending_pages,PAGE_MARKER,visual_locator
+            if row and row['kind'] in {*IMAGE_MIME,'pdf'}:
+                document={**source,**{key:row[key] for key in ('kind','content','status','warning','sha256')},'sections':sections}
+                if document['status']!='failed' and (document['kind'] in IMAGE_MIME or pending_pages(document)):
+                    try:opened=(await asyncio.to_thread(register_images,[document]))[0]
+                    except AIError as error:raise AgentError(str(error)) from error
+                    self.guard()
+                    with self.db.connect() as conn:
+                        if storage_kind=='material':
+                            latest=conn.execute('SELECT s.sha256,s.status FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id WHERE s.id=? AND c.user_id=?',(args.source_id,self.uid)).fetchone()
+                        else:
+                            latest=conn.execute('SELECT s.sha256,s.status FROM sources s JOIN notices n ON n.id=s.notice_id WHERE s.id=? AND n.user_id=? AND s.active=1',(args.source_id,self.uid)).fetchone()
+                    if not latest or latest['sha256']!=row['sha256'] or latest['status']!=row['status']:
+                        raise AgentError('原件已删除、撤回或改变，未将旧页面发送给模型，请重新检索')
+                    opened['_visual_authorized']=True
+                    opened['_original_evidence_kind']=storage_kind
+                    self.merge([opened]);source=self.records[args.source_id];sections=source['sections']
+            locator=args.locator
+            selected=next((p for p in source['sections'] if p['locator']==locator),None)
+            if selected:locator=selected.get('_original_locator',locator)
+            if match:=PAGE_MARKER.fullmatch(locator):locator=visual_locator(int(match[1]))
+            sections = [p for p in sections if not locator or p['locator'] == locator]
             if not sections:
                 raise AgentError('该原文位置不存在，请使用检索结果中的准确位置')
+            if is_visual_reference(source['id'],sections[0]['locator'],[source]):
+                part=sections[0]
+                if args.offset:raise AgentError('这是图像页定位，不是可逐字分页的OCR；请直接核对随请求提供的页面')
+                return {'source_id':source['id'],'name':source['name'],'kind':'image','sections':[part],
+                    'evidence_index':[e for e in self.evidence_entries if e['source_id']==source['id'] and e['locator']==part['locator']],
+                    'original_locator':part['locator'],'next_offset':len(part['text']),'has_more':False,
+                    'locators':[p['locator'] for p in source['sections']],
+                    'visual_input':{'source_id':source['id'],'pdf_pages':pending_pages(source),'ocr':False}}
             # One paragraph per call; the response exposes positions for paging.
             part = sections[0];text = part['text'][args.offset:args.offset+args.limit]
             if not text:raise AgentError('请求位置超出原文范围')
-            excerpt = {'locator': part['locator'] + f'（字符 {args.offset+1}—{args.offset+len(text)}）', 'text': text}
+            excerpt = {'locator': part['locator'] + f'（字符 {args.offset+1}—{args.offset+len(text)}）', 'text': text,
+                '_original_locator':part['locator'],'_retrieval_offset':args.offset,'_original_length':len(part['text'])}
             self.merge([{**source, 'sections': [excerpt]}])
             return {'source_id': source['id'], 'name': source['name'], 'kind': source['evidence_kind'], 'sections': [excerpt],
                     'evidence_index': [e for e in self.evidence_entries if e['source_id'] == source['id'] and e['locator'] == excerpt['locator']],
@@ -777,9 +896,10 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             if not self.access.get('memory'):
                 raise AgentError('本轮未授权记忆')
             from ..memory import recall
-            memories, info = recall(self.db, self.uid, self.cid, args.query, self.access, queries=[args.query])
+            memories, info = await asyncio.to_thread(recall,self.db,self.uid,self.cid,args.query,self.access,queries=[args.query])
+            self.guard()
             self.bind_memory(memories, info)
-            self.read_cache.clear()
+            self.invalidate_reads()
             await self.local(args.query, [])
             return {'memories': memories, 'selection': info}
         if name == 'research_complete':
@@ -795,7 +915,9 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             # A server receipt proves only that this operation ran, never the
             # truth of draft content or an external institution's policy.
             receipt = {k: v for k, v in result.items() if k in ('path', 'sha256', 'bytes', 'exit_code', 'output', 'error')} if isinstance(result, dict) else {}
-            if name == 'list_files':receipt.update(file_count=len(result), files=result)
+            if name == 'list_files':
+                self.file_contract_loaded=True
+                receipt.update(file_count=len(result), files=result)
             if name == 'read_file':receipt.update(content=result['content'])
             if name == 'mcp_call':receipt.update(response=bounded_result(result, 16000), authority='外部工具返回，未独立验证；不可作为学校正式事实')
             receipt.update(tool=name, operation_completed=True, authority='只证明工具执行结果；不证明文件内容、外部事实或学校手续已完成')
@@ -838,7 +960,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                'queries': self.public_queries, 'rounds': self.web_reports,
                'source_count': sum(s['evidence_kind'] in ('web_page', 'web_summary') for s in records),
                'pages_read': sum(s['evidence_kind'] == 'web_page' for s in records)}
-        return {'plan': self.plan, 'sources': records, 'retrieval': {**self.coverage, **selection}, 'web': web, 'host_activity': activity,
+        return {'plan': self.plan, 'sources': records, 'retrieval': {**self.coverage, **selection,'local_calls':self.retrieval_metrics}, 'web': web, 'host_activity': activity,
                 'candidate': self.candidate, 'candidate_raw': self.candidate_raw, 'evidence_entries': self.evidence_entries,
                 'composition_model':self.ui_composition_model,
                 'composition_thinking':'enabled' if not self.ui_composition_model or self.settings.ai_ui_thinking else 'disabled',
@@ -849,6 +971,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                     'compactions': self.context_events, 'ui_normalizations': self.ui_normalizations,
                     'answer_normalizations': self.answer_normalizations,
                     'focused_visual': self.focused_visual,
+                    'workspace_reply':self.workspace_reply,
                     'answer_repairs': len(self.answer_errors), 'gaps': self.plan['gaps']}}
 
 

@@ -1,0 +1,43 @@
+.review-grid { grid-template-columns: minmax(0,1fr); }
+.review-grid > .source-pane { max-height: none; overflow: visible; }
+.handling-route-card { background: var(--paper); padding: 18px; margin-block: 14px; border: 1px solid var(--line); border-radius: 12px; }
+.handling-route-card .editor-head { margin-bottom: 8px; }
+.route-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.route-heading h3 { font-size: 17px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
+.route-heading .pill { flex-shrink: 0; }
+.route-description { font-size: 14px; line-height: 1.75; margin: 10px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.route-facts { margin: 12px 0; display: grid; gap: 7px; font-size: 14px; }
+.route-facts > div { display: grid; grid-template-columns: 5em minmax(0,1fr); gap: 10px; }
+.route-facts dt { color: var(--muted); }
+.route-facts dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.route-prerequisite,.route-unknown { font-size: 13px; line-height: 1.7; color: var(--muted); overflow-wrap: anywhere; }
+.handling-route-card .route-fields { border-top: 1px solid var(--line); padding-top: 2px; margin-top: 14px; margin-bottom: 0; }
+.route-fields > summary { color: var(--green); font-size: 13px; }
+.route-fields > .stack { margin-top: 10px; }
+.handling-guide { padding: 16px; border-radius: 12px; border: 1px solid #d7e8df; background: #f4f9f6; }
+.handling-guide h3 { font-size: 18px; margin: 4px 0 8px; }
+.handling-guide p { margin: 8px 0; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.route-eyebrow { color: var(--green); font-size: 12px; font-weight: 600; }
+.handling-assistant { border: 1px solid var(--line); border-radius: 10px; padding: 0 14px; }
+.handling-assistant > summary { min-height: 48px; padding-block: 12px; cursor: pointer; color: var(--green); font-weight: 600; }
+.handling-assistant > .stack { padding-bottom: 14px; }
+.assistance-preview { border-top: 1px solid var(--line); padding-top: 16px; }
+.assistance-preview textarea { min-height: 200px; resize: vertical; }
+.assistance-preview blockquote { margin: 12px 0; padding: 8px 12px; border-left: 2px solid var(--line); font-size: 13px; }
+#dialog:has(#workflow-form) .dialog-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+#dialog .workflow-form.stack { gap: 0; flex: 1; min-height: 0; max-height: none; height: 100%; }
+#workflow-form .workflow-editing.workflow-route { display: flex; flex-direction: column; gap: 18px; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 2px 4px 8px; margin-inline: -4px; }
+#workflow-form .workflow-save { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 8px; gap: 8px; flex-wrap: wrap; }
+#workflow-form .workflow-route > .field { width: 100%; }
+#workflow-form .workflow-advanced { background: transparent; }
+#workflow-form .workflow-advanced > .stack { padding-block: 12px; }
+#workflow-form .workflow-task-head { padding-bottom: 0; }
+#workflow-form .workflow-task-head p { display: none; }
+@media(max-width:600px) {
+  .handling-route-card { padding: 14px; }
+  .route-heading { flex-wrap: wrap; gap: 6px; }
+  .route-facts > div { grid-template-columns: 4.5em minmax(0,1fr); gap: 8px; }
+  .notice-steps { flex-wrap: wrap; row-gap: 8px; }
+  .handling-assistant .form-grid { grid-template-columns: minmax(0,1fr); }
+  #workflow-form .workflow-save .button { flex: 1 1 auto; }
+}

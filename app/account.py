@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .security import DUMMY_PASSWORD, rate_limit, verify_password
 
 # 版本用于展示内容与记录同意时的原文版本；更新不会触发登录后的重复确认。
-POLICY_VERSION = '2026-10-25'
+POLICY_VERSION = '2026-11-02'
 CONFIRM_PHRASE = '注销账号'
 
 SCHEMA = """
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS account_consents(
 
 class DeleteAccount(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    password: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=256)
     confirm: str = Field(max_length=20)
 
 

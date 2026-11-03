@@ -16,7 +16,7 @@ function Get-TaskConfiguration {
     return ($json | ConvertFrom-Json)
 }
 
-function Get-OwnedTaskProcess($configuration) {
+function Get-OwnedTaskProcess($configuration, [switch]$AllowStalePid) {
     $runtimeFile = Join-Path $configuration.data_dir 'campus-runtime.json'
     if (-not (Test-Path -LiteralPath $runtimeFile)) { return $null }
     $runtime = Get-Content -LiteralPath $runtimeFile -Encoding UTF8 -Raw | ConvertFrom-Json
@@ -26,6 +26,9 @@ function Get-OwnedTaskProcess($configuration) {
     # Verify identity before stopping or reusing a PID, which Windows can recycle.
     if ($process.CommandLine -notlike ('*"' + $taskManage + '" serve*') -and
         $process.CommandLine -notlike ('*' + $taskManage + ' serve*')) {
+        # Starting may recover from a recycled PID after an interrupted run.
+        # Stop/restart retain the strict guard and never touch that process.
+        if ($AllowStalePid) { return $null }
         throw 'Runtime PID no longer identifies this application. No process was changed.'
     }
     return $process

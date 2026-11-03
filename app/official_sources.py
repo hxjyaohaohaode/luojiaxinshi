@@ -33,7 +33,7 @@ _HOSTS = {'sres.whu.edu.cn': 'whu-sres-notices', 'www.whu.edu.cn': 'whu-notices'
 _VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 _BLOCKED = {'script', 'style', 'noscript', 'svg', 'iframe', 'template'}
 _BLOCKS = {'p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'h4', 'tr', 'article', 'section'}
-_FILES = re.compile(r'\.(pdf|docx?|xlsx?|zip|png|jpe?g)(?:[?#]|$)', re.I)
+_FILES = re.compile(r'\.(pdf|docx?|xlsx?|csv|txt|md|zip|png|jpe?g|webp)(?:[?#]|$)', re.I)
 _PERMISSION = re.compile(r'(?:您|你)?(?:无权|没有权限|无权限)访问|暂无权限|(?:仅限|只限)校内|(?:请|需要|须)(?:先)?登录(?:后)?(?:查看|访问|阅读)|访问受限|权限不足|校外(?:用户)?(?:无法|不能)访问')
 
 
@@ -256,6 +256,8 @@ def parse_official_article(text, url):
     return {'text': body_text, 'title': title[:160], 'published_at': published,
             'published_at_precision': 'date' if published else None,
             'attachments': attachments, 'attachment_names': names,
+            'related_links':[{'url':target,'title':_clean(link.text())[:300]} for link in material_area.walk() if link.tag=='a'
+                if (target:=public_url(urldefrag(urljoin(url,link.attrs.get('href','')))[0])) and target not in attachments][:100],
             'has_media': has_media, 'attachment_only': attachment_only,
             'warnings': ['网页正文以附件形式发布，当前文字仅为标题；请核对附件读取结果'] if attachment_only else [],
             'parser_id': preset_id}

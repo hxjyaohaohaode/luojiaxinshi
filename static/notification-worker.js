@@ -36,3 +36,8 @@ self.addEventListener('notificationclick',event=>{event.notification.close();eve
   const client=windows.find(client=>new URL(client.url).origin===self.location.origin);
   if(client){await client.navigate(url);await client.focus();}else await self.clients.openWindow(url);
 }).catch(()=>{}));});
+
+// Only this generic offline page is cached. Never cache authenticated routes or API responses.
+const OFFLINE_CACHE="campus-offline-v1";
+self.addEventListener("install",event=>event.waitUntil(caches.open(OFFLINE_CACHE).then(cache=>cache.addAll(["/static/offline.html","/static/offline.css"]))));
+self.addEventListener("fetch",event=>{const url=new URL(event.request.url);if(event.request.mode==="navigate"&&url.origin===self.location.origin&&url.pathname==="/")event.respondWith(fetch(event.request).catch(()=>caches.match("/static/offline.html")));else if(url.origin===self.location.origin&&url.pathname==="/static/offline.css")event.respondWith(fetch(event.request).catch(()=>caches.match(event.request)));});

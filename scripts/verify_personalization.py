@@ -15,6 +15,7 @@ from app.config import Settings
 from app.console import configure_text_output
 from app.db import ident
 from app.main import create_app
+from synthetic_auth import verified_registration
 from fastapi.testclient import TestClient
 
 
@@ -34,7 +35,7 @@ def run():
         settings=replace(settings,data_dir=Path(tmp),origin='http://127.0.0.1:8791',production=False,ai_grounding=True,ai_workflow_timeout=300,registration_mode='public')
         app=create_app(settings)
         with TestClient(app,base_url=settings.origin,headers={'Origin':settings.origin,'X-Requested-With':'campus-notice'}) as c:
-            r=c.post('/api/auth/register',json={'username':'synthetic.context','display_name':'虚构验收用户','password':'Synthetic-Verification-Only-2026','accepted_terms':True});assert r.status_code==200,r.status_code
+            r=verified_registration(c,{'username':'synthetic.context','display_name':'虚构验收用户','password':'Synthetic-Verification-Only-2026','accepted_terms':True});assert r.status_code==200,r.status_code
             c.headers['X-CSRF-Token']=c.get('/api/session').json()['csrf']
             chat=c.post('/api/conversations',json={}).json();cid=chat['id']
             p=c.post('/api/memory/projects',json={'name':'青禾课程项目'}).json()

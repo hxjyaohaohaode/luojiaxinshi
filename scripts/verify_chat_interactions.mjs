@@ -1,3 +1,4 @@
+// Request routing is isolated from service workers; worker delivery has its own real-browser suite.
 // Native application modules and real browser gestures; synthetic, isolated data.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
@@ -18,9 +19,10 @@ const latest={...previous,id:'d'.repeat(32),content:content('当前版',18),crea
 const versions=[previous,latest];let selected=latest;
 const snapshot=()=>({...chat,processing:false,messages:[{id:a1.parent_id,role:'user',status:'complete',content:'请读取合成材料',created_at:at},a1,{id:latest.parent_id,role:'user',status:'complete',content:'请整理执行结果',created_at:at+1500},{...selected,versions,version_index:versions.findIndex(v=>v.id===selected.id)}]});
 const browser=await engine.launch({headless:true,...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})});
-const context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871}});
+const context=await browser.newContext({serviceWorkers:'block',storageState:await api.storageState(),viewport:{width:1651,height:871}});
 await context.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async()=>{},writeText:async text=>{window.__copied=text;}}});});
 const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',error=>errors.push(String(error)));
+page.on('response',async response=>{if(response.status()>=400&&response.url().includes('/api/'))console.log('HTTP',response.status(),new URL(response.url()).pathname,(await response.text()).slice(0,250));});
 async function routes(target){
   await target.route(origin+'/api/conversations/'+chat.id,route=>route.fulfill({json:snapshot()}));
   await target.route(new RegExp('/api/conversations/'+chat.id+'/messages/[^/]+/select$'),route=>{selected=versions.find(v=>route.request().url().includes('/'+v.id+'/'));return route.fulfill({json:snapshot()});});
@@ -34,7 +36,7 @@ try{
   assert.equal(await page.locator('.chat-time-separator').count(),2,'Slow model replies do not add timestamp separators');
   assert.equal(await page.locator('.message-assistant').first().locator('[data-chat-action=regenerate]').count(),0);
   assert.equal(await currentReply().locator('[data-chat-action=regenerate]').count(),1);
-  assert.equal(await page.locator('.message-user .message-footer:visible').count(),0);
+  for(const footer of await page.locator('.message-user .message-footer:visible').all()){assert.equal(await footer.locator('[data-chat-action=quote]').count(),1);assert.equal(await footer.locator('[data-chat-action=emoji-reaction]').count(),1);}
   assert.ok(await page.locator('.chat-time-separator').evaluateAll(nodes=>nodes.every(node=>{const a=node.getBoundingClientRect(),b=node.firstChild.getBoundingClientRect();return Math.abs(b.x+b.width/2-a.x-a.width/2)<1&&parseFloat(getComputedStyle(node).fontSize)<=12;})));
   checks.push('旧回复无重生成；同轮迟到回复不新增时间，5分钟用户发送分组居中显示');
   const work=currentReply().locator('.work-summary'),toggle=work.locator('.work-summary-toggle');
@@ -64,8 +66,10 @@ try{
   checks.push('流式只晕染新字符，段落节点保留，最终文字不重播；减少动态效果生效，尾字保护不改变复制内容');
   await page.locator('#chat-thread').evaluate(n=>n.scrollTop=340);await settle();
   const anchor=await page.evaluate(()=>{const reader=document.querySelector('#chat-thread'),top=reader.getBoundingClientRect().top;const node=[...reader.querySelectorAll('p')].find(n=>n.getBoundingClientRect().top>=top+10);window.__anchor=node;return {top:node.getBoundingClientRect().top,width:reader.clientWidth};});
-  await page.getByRole('button',{name:'查看本次材料',exact:true}).click();await page.waitForTimeout(100);
-  const midWidth=await page.locator('#chat-thread').evaluate(n=>n.clientWidth);await settle();const expanded=await page.locator('#chat-thread').evaluate(n=>n.clientWidth);
+  await page.getByRole('button',{name:'查看本次材料',exact:true}).click();
+  // Sample the real transition at its midpoint instead of relying on a loaded
+  // CI machine to schedule a timer before the short transition has finished.
+  const midWidth=await page.locator('.chat-workspace').evaluate(node=>{node.getBoundingClientRect();const transition=node.getAnimations().find(a=>a.transitionProperty==='grid-template-columns');if(!transition)throw Error('Material grid transition did not start');transition.pause();transition.currentTime=Number(transition.effect.getTiming().duration)/2;const width=node.querySelector('#chat-thread').clientWidth;transition.play();return width;});await settle();const expanded=await page.locator('#chat-thread').evaluate(n=>n.clientWidth);
   assert.ok(midWidth<anchor.width&&midWidth>expanded,'Material grid should interpolate');assert.ok(Math.abs(await page.evaluate(()=>window.__anchor.getBoundingClientRect().top)-anchor.top)<30);
   await page.getByRole('button',{name:'收起材料',exact:true}).click();await settle();assert.ok(Math.abs(await page.evaluate(()=>window.__anchor.getBoundingClientRect().top)-anchor.top)<3);
   await page.getByRole('button',{name:'回到最新 ↓',exact:true}).click();await settle();assert.ok(await page.locator('#chat-thread').evaluate(n=>n.scrollHeight-n.scrollTop-n.clientHeight<3),'An explicit jump releases the previous reflow anchor');
@@ -94,7 +98,7 @@ try{
   checks.push('提醒按日程和截止事项归类，已读、批量归档、恢复未读及方向键切换可用');
   }
   if(name==='chromium'){
-    const mobile=await browser.newContext({storageState:await api.storageState(),viewport:{width:390,height:844},hasTouch:true,isMobile:true});const touchPage=await mobile.newPage();await routes(touchPage);await touchPage.goto(origin+'/#chat/'+chat.id);await touchPage.locator('#chat-input').waitFor();await touchPage.locator('#chat-thread').evaluate(n=>n.scrollTop=n.scrollHeight);await touchPage.waitForTimeout(350);
+    const mobile=await browser.newContext({serviceWorkers:'block',storageState:await api.storageState(),viewport:{width:390,height:844},hasTouch:true,isMobile:true});const touchPage=await mobile.newPage();await routes(touchPage);await touchPage.goto(origin+'/#chat/'+chat.id);await touchPage.locator('#chat-input').waitFor();await touchPage.locator('#chat-thread').evaluate(n=>n.scrollTop=n.scrollHeight);await touchPage.waitForTimeout(350);
     const bounds=await touchPage.locator('#chat-thread').boundingBox(),paragraph=await touchPage.locator('.message-assistant').last().locator('.gu-markdown p').last().boundingBox(),cdp=await mobile.newCDPSession(touchPage),x=bounds.x+bounds.width/2,y=Math.min(bounds.y+bounds.height-32,paragraph.y+paragraph.height/2);
     assert.equal(await touchPage.evaluate(({x,y})=>!!document.elementFromPoint(x,y)?.closest('button,a,input,textarea,select'),{x,y}),false,'Touch starts in prose, not a wrapped footer control');
     await touchPage.evaluate(()=>{window.__touchDebug=[];for(const type of ['touchstart','touchmove','touchend','touchcancel'])document.addEventListener(type,event=>{const point=event.touches[0],target=event.target;queueMicrotask(()=>{const reader=document.querySelector('#chat-thread'),button=document.querySelector('.chat-end-gesture');window.__touchDebug.push({type,y:point?.clientY,target:target.tagName,class:target.className,remaining:reader.scrollHeight-reader.scrollTop-reader.clientHeight,progress:button?.style.getPropertyValue('--end-progress'),armed:button?.dataset.armed,selection:window.getSelection()?.type,prevented:event.defaultPrevented});});},{capture:true});});
@@ -104,5 +108,5 @@ try{
     await pullTouch();await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await touchPage.waitForURL('**/#chat/new');await touchPage.locator('#chat-composer[data-cache-key="chat-new"]').waitFor();await mobile.close();checks.push('原生手机触摸整段文字上移；回拉与释放后取消均有效，确认窗口结束才新建');
   }
   assert.deepEqual(errors,[]);await writeFile(out+'/report.json',JSON.stringify({passed:true,browser:name,checks,errors},null,2));console.log(JSON.stringify({passed:true,browser:name,checks,errors},null,2));
-}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});const gesture=await page.evaluate(()=>({wheels:window.__wheelDebug,button:document.querySelector('.chat-end-gesture')?.outerHTML,processing:!!document.querySelector('.is-streaming')})).catch(()=>null);await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors,gesture},null,2));throw error;}
+}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});const gesture=await page.evaluate(()=>({wheels:window.__wheelDebug,button:document.querySelector('.chat-end-gesture')?.outerHTML,processing:!!document.querySelector('.is-streaming'),reply:document.querySelector('.message-assistant:last-child')?.textContent?.slice(-600),toast:document.querySelector('#toast')?.textContent})).catch(()=>null);await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors,gesture,selectedVersion:selected?.id},null,2));throw error;}
 finally{await context.close();await browser.close();await api.dispose();}

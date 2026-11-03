@@ -18,11 +18,11 @@ test('capability, current device and delivery labels do not overstate availabili
 function harness(t,{postWait=null,deleteFails=false}={}){
  const names=['document','location','navigator','isSecureContext','Notification','PushManager','MessageChannel','CustomEvent'];const saved=names.map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]);
  const doc=new EventTarget();doc.querySelector=()=>null;doc.hidden=false;
- let binding={enabled:false,user_id:null},sub=null,permissionRequests=0,registrations=0,subscribes=0,unsubscribes=0;
+ let binding={enabled:false,user_id:null},sub=null,permissionRequests=0,registrations=0,subscribes=0,unsubscribes=0,subscriptionReads=0;
  const posts=[],toasts=[],session={user:{id:'alice'}};const state={session};
  const subscription={endpoint:'https://push.services.mozilla.com/test',toJSON(){return {endpoint:this.endpoint,keys:{p256dh:'pub',auth:'secret'}};},async unsubscribe(){unsubscribes++;sub=null;return true;}};
  const worker={scriptURL:'https://campus.example/notification-worker.js',state:'activated',postMessage(msg,ports){if(msg.type==='CAMPUS_PUSH_ENABLE')binding={enabled:true,user_id:msg.user_id};else if(msg.type==='CAMPUS_PUSH_DISABLE'&&(!binding.user_id||binding.user_id===msg.user_id))binding={enabled:false,user_id:null};queueMicrotask(()=>ports[0].postMessage({ok:true,binding}));}};
- const reg={active:worker,pushManager:{async getSubscription(){return sub;},async subscribe(){subscribes++;sub=subscription;return sub;}},async unregister(){}};
+ const reg={active:worker,pushManager:{async getSubscription(){subscriptionReads++;return sub;},async subscribe(){subscribes++;sub=subscription;return sub;}},async unregister(){}};
  class Channel{constructor(){this.port1={onmessage:null,close(){}};this.port2={postMessage:data=>this.port1.onmessage?.({data})};}}
  function Notice(){}Notice.permission='granted';Notice.requestPermission=async()=>{permissionRequests++;return 'granted';};
  const values={document:doc,location:{origin:'https://campus.example'},navigator:{serviceWorker:{async getRegistration(){return registrations?reg:null;},async register(){registrations++;return reg;}}},isSecureContext:true,Notification:Notice,PushManager:function(){},MessageChannel:Channel,CustomEvent:class extends Event{constructor(type,o){super(type);this.detail=o.detail;}}};
@@ -33,8 +33,15 @@ function harness(t,{postWait=null,deleteFails=false}={}){
  const push=createPushNotifications({state,api,esc:String,toast:(...x)=>toasts.push(x)});
  const click=action=>{const control={disabled:false,dataset:{pushAction:action}};const event=new Event('click');Object.defineProperty(event,'target',{value:{closest:()=>control}});doc.dispatchEvent(event);};
  t.after(async()=>{push.stop();await settle();for(const [name,descriptor] of saved)descriptor?Object.defineProperty(globalThis,name,descriptor):delete globalThis[name];});
- return {push,state,posts,click,Notice,get binding(){return binding;},counts:()=>({permissionRequests,registrations,subscribes,unsubscribes})};
+ return {push,state,posts,click,Notice,get binding(){return binding;},get subscriptionReads(){return subscriptionReads;},counts:()=>({permissionRequests,registrations,subscribes,unsubscribes})};
 }
+
+test('a previously registered worker with revoked permission never queries the native subscription on refresh or logout',async t=>{
+ const h=harness(t);h.push.start();await h.push.refresh();h.click('enable');await settle();
+ assert.equal(h.binding.enabled,true);h.Notice.permission='default';const reads=h.subscriptionReads;
+ await h.push.refresh();assert.equal(h.push.enabled(),false);assert.equal(h.subscriptionReads,reads);
+ await h.push.detachForLogout();assert.equal(h.binding.enabled,false);assert.equal(h.subscriptionReads,reads);
+});
 test('starting only reads status; enabling and test delivery require explicit buttons',async t=>{
  const h=harness(t);h.push.start();await h.push.refresh();assert.deepEqual(h.counts(),{permissionRequests:0,registrations:0,subscribes:0,unsubscribes:0});assert.equal(h.posts.length,0);
  h.click('enable');await settle();assert.equal(h.push.enabled(),true);assert.equal(h.binding.user_id,'alice');assert.equal(h.posts.filter(x=>x.path==='/push/test').length,0);

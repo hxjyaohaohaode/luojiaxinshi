@@ -47,6 +47,28 @@ def test_subscription_discovers_updates_and_deduplicates_with_owner_isolation(en
     assert len(a.get('/api/notices').json())==1
 
 
+def test_initial_website_snapshot_stays_readable_but_only_later_notices_are_announced(env,monkeypatch):
+    import time
+    from app.push_delivery import candidates
+    a=account(env);sid=website(a);enable(a,sid)
+    entries=[{'url':'https://school.example.edu.cn/info/old.htm','title':'历史通知','published_at':None}]
+    async def index(config):return entries
+    async def read(url):
+        source=text_source('合成公开正文 '+url);source['origin']={'url':url,'attachments':[],'warnings':[]}
+        return source,'合成公告'
+    monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
+    assert a.post('/api/source-catalog/'+sid+'/refresh').status_code==200
+    old=a.get('/api/notices').json()[0]['id'];uid=a.get('/api/session').json()['user']['id']
+    with env[0].state.db.connect() as conn:assert not candidates(conn,uid,int(time.time())+121)
+    entries.append({'url':'https://school.example.edu.cn/info/new.htm','title':'新发布通知','published_at':None})
+    assert a.post('/api/source-catalog/'+sid+'/refresh').status_code==200
+    with env[0].state.db.connect() as conn:
+        events=candidates(conn,uid,int(time.time())+121)
+        announced={item['id'] for event in events.values() for item in event.get('received_items',[])}
+    assert len(a.get('/api/notices').json())==2
+    assert len(announced)==1 and old not in announced
+
+
 def test_subscription_error_pause_and_no_stale_write(env,monkeypatch):
     a=account(env);sid=website(a);enable(a,sid)
     async def broken(config):raise HTTPException(502,'来源维护中')

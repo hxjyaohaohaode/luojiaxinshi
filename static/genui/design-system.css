@@ -24,3 +24,7 @@ svg :is(.c-purple,.c-teal,.c-coral,.c-pink,.c-gray,.c-blue,.c-green,.c-amber,.c-
 /* Preserve the semantic heading scale when authors also apply a field label;
  * stack owns spacing, so browser paragraph margins must not double the gap. */
 h1.ui-label{font-size:clamp(24px,4cqi,32px);color:var(--p)}h2.ui-label{font-size:clamp(20px,3cqi,26px);color:var(--p)}h3.ui-label{font-size:17px;color:var(--p)}.ui-stack>*{margin-block:0}
+
+/* Priorities identify actual results and evidenced risks, without large hero blocks. */
+.ui-priority,[data-ui-priority="primary"]{padding:12px 14px;background:color-mix(in srgb,var(--color-accent) 7%,var(--color-background-primary));border-radius:var(--border-radius-md);min-width:0}.ui-priority h1,.ui-priority h2,[data-ui-priority="primary"] h1,[data-ui-priority="primary"] h2{font-size:19px;margin:0 0 6px}[data-ui-priority="warning"]{padding:10px 12px;background:#fff1df;color:#794500;border-radius:var(--border-radius-md)}.ui-keyline{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px}.ui-keyline strong{font-size:20px;color:var(--color-accent)}
+@container(max-width:560px){.ui-priority,[data-ui-priority="primary"]{padding:10px 12px}.ui-priority h1,.ui-priority h2,[data-ui-priority="primary"] h1,[data-ui-priority="primary"] h2{font-size:18px}}

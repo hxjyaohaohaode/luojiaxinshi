@@ -1,13 +1,13 @@
-const labels={extracting:'正在读通知、整理要点',receiving:'正在接收整理结果',verifying:'正在对照原文核对',reviewing:'正在让 AI 自查一遍'};
+const labels={extracting:'正在读通知、整理办理路径',receiving:'正在接收整理结果',verifying:'正在对照原文核对',reviewing:'正在核对办理要求',correcting:'正在补正发现的问题'};
 
 export function processingStages(stage){
-  return [['extracting','整理通知'],['receiving','接收结果'],['verifying','对照原文'],['reviewing','AI 自查']]
+  return [['extracting','整理通知'],['receiving','接收结果'],['verifying','对照原文'],['reviewing','核对要求'],...(stage==='correcting'?[['correcting','补正方案']]:[])]
     .map(([key,label],index)=>`<li${key===stage?' aria-current="step"':''}><span aria-hidden="true">${index+1}</span><strong>${label}</strong>${key===stage?'<span class="sr-only">当前阶段</span>':''}</li>`).join('');
 }
 
 export function noticeProgressPanel(n,{esc,brandMotion,button}){
   const title=labels[n.execution?.stage]||'正在准备处理';
-  return `<div class="panel busy-panel" data-notice-progress="${esc(n.id)}" role="status" aria-live="polite">${brandMotion('routing','',{priority:3})}<h3 data-notice-phase>${title}</h3><p>材料已经存好了。整理完会自动显示草稿和 AI 的意见，到时逐项看看就行。</p><ol class="processing-stages" data-processing-stages aria-label="整理进度">${processingStages(n.execution?.stage)}</ol><p class="footnote" data-notice-elapsed>正在处理，可以先去忙别的，回来再看。</p>${button('刷新看看','refresh-notice','small')}</div>`;
+  return `<div class="panel busy-panel" data-notice-progress="${esc(n.id)}" role="status" aria-live="polite">${brandMotion('routing','',{priority:3})}<h3 data-notice-phase>${title}</h3><p>原件已保存。AI 会整理办理步骤、材料与入口，并先补正能自行核实的问题。</p><ol class="processing-stages" data-processing-stages aria-label="整理进度">${processingStages(n.execution?.stage)}</ol><p class="footnote" data-notice-elapsed>可以离开当前页面，返回后继续查看。</p>${button('刷新进度','refresh-notice','small')}</div>`;
 }
 
 export function createNoticeProgress({state,api,refresh,root=document,schedule=setTimeout,unschedule=clearTimeout}){

@@ -1,4 +1,4 @@
-const names={dashboard:'工作台',settings:'个人与账号',memory:'我的记忆',notices:'通知资料',notice:'通知详情',new:'通知资料',sources:'通知来源',tasks:'待办',calendar:'日历',chat:'对话'};
+const names={dashboard:'首页',settings:'我的',memory:'我的记忆',notices:'通知',notice:'通知详情',new:'通知资料',sources:'订阅与来源',tasks:'待办',calendar:'日程',chat:'对话'};
 const parents={memory:'#settings',notice:'#notices',new:'#notices'};
 function parentOf(hash){
   const [page,id]=hash.replace(/^#/,'').split('/');

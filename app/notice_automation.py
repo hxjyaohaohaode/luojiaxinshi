@@ -16,6 +16,7 @@ from .usage_limits import limits_for
 from .db import dumps, ident
 from .models import Generate, Strict
 
+POLL_SECONDS=15
 PROFILE_KEYS={'campus_role','school','level','grade','college','major','semester','goals','campus_area','interests','available_time'}
 TABLES={'notice_automation_settings','notice_automation_jobs','notice_profile_checks','notice_automation_attempts'}
 SCHEMA="""
@@ -105,17 +106,50 @@ def eligible(conn,notice,settings):
     return authorized_source(conn,notice['user_id'],notice['id'],settings)
 
 
+def retire_obsolete(conn,settings,only_uid=None):
+    """Retire unused work even when its owner has exhausted today's quota.
+
+    Cleanup never calls a model, consumes an attempt or retries a failed call.
+    Keeping superseded inputs queued inflated the UI backlog and hid revoked
+    source permissions until a paid execution slot became available.
+    """
+    params=(only_uid,) if only_uid else ()
+    rows=conn.execute("SELECT j.*,u.profile FROM notice_automation_jobs j JOIN users u ON u.id=j.user_id WHERE j.state='queued'"+
+        (' AND j.user_id=?' if only_uid else ''),params).fetchall()
+    now=int(time.time())
+    for row in rows:
+        notice=conn.execute('SELECT * FROM notices WHERE id=? AND user_id=?',(row['notice_id'],row['user_id'])).fetchone()
+        if not notice or notice['version']!=row['input_version'] or profile_hash(row['profile'])!=row['profile_hash']:
+            state,error='stale','通知或个人条件已有新版本，本次未调用模型'
+        else:
+            pref=conn.execute('SELECT enabled,consented_at FROM notice_automation_settings WHERE user_id=?',(row['user_id'],)).fetchone()
+            if pref and pref['enabled'] and pref['consented_at'] and eligible(conn,notice,settings):continue
+            state,error='cancelled','自动整理已停用、来源授权已撤回或事项已处理'
+        conn.execute('UPDATE notice_automation_jobs SET state=?,error=?,finished_at=?,lease_until=NULL WHERE id=? AND state=\'queued\'',
+            (state,error,now,row['id']))
+
+
 def queue_ready(conn,settings,only_uid=None):
+    from .ai import EXTRACTION_VERSION
+    retire_obsolete(conn,settings,only_uid)
     params=(only_uid,) if only_uid else ()
     users=conn.execute('SELECT u.* FROM users u JOIN notice_automation_settings a ON a.user_id=u.id WHERE a.enabled=1 AND a.consented_at IS NOT NULL'+(' AND u.id=?' if only_uid else ''),params).fetchall()
     for user in users:
         digest=profile_hash(user['profile'])
+        # Initial website snapshots stay silent for delivery, but still need
+        # automatic age/relevance analysis after global AI consent. Otherwise
+        # every historical opportunity remains an unclassified user chore.
         for notice in conn.execute("SELECT * FROM notices WHERE user_id=? AND status IN ('received','draft','failed')",(user['id'],)).fetchall():
-            if not eligible(conn,notice,settings):continue
             profile=conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?',(notice['id'],)).fetchone()
             if notice['status']=='draft' and notice['draft_version']==notice['version']:
-                # Existing human-edited / old untracked drafts are not replaced.
-                if not profile or profile['profile_hash']==digest:continue
+                # Manual drafts remain under the owner's control. Legacy AI
+                # drafts with no profile fingerprint need a current analysis;
+                # treating them as permanent human work leaves old items stuck.
+                prior=json.loads(notice['draft'] or '{}')
+                generated=isinstance(prior.get('quality'),dict)
+                upgrade=generated and prior['quality'].get('status')=='needs_review' and prior.get('extraction_version')!=EXTRACTION_VERSION
+                if not profile and not generated or profile and profile['profile_hash']==digest and not upgrade:continue
+            if not eligible(conn,notice,settings):continue
             now=int(time.time())
             conn.execute("INSERT OR IGNORE INTO notice_automation_jobs(id,user_id,notice_id,input_version,profile_hash,state,created_at) VALUES(?,?,?,?,?,'queued',?)",
                          (ident(),user['id'],notice['id'],notice['version'],digest,now))
@@ -136,7 +170,11 @@ def run_once(app,db,settings):
         rows=conn.execute("""SELECT j.* FROM notice_automation_jobs j WHERE j.state='queued'
             AND NOT EXISTS(SELECT 1 FROM notice_automation_settings a WHERE a.user_id=j.user_id
                 AND (SELECT count(*) FROM notice_automation_attempts t WHERE t.user_id=j.user_id AND t.started_at>=?)>=MIN(a.daily_limit,?))
-            ORDER BY j.created_at,j.rowid LIMIT 50""",(today_start(),limits_for(conn).automation_daily_max)).fetchall()
+            ORDER BY CASE WHEN EXISTS(SELECT 1 FROM notice_ingest_updates u WHERE u.notice_id=j.notice_id AND u.state='pending') THEN 0
+                WHEN EXISTS(SELECT 1 FROM notice_delivery_suppressions s WHERE s.notice_id=j.notice_id) THEN 2 ELSE 1 END,
+                COALESCE((SELECT MAX(a.started_at) FROM notice_automation_attempts a WHERE a.user_id=j.user_id),0),
+                COALESCE((SELECT n.published_at FROM notices n WHERE n.id=j.notice_id),'') DESC,
+                j.created_at,j.rowid LIMIT 50""",(today_start(),limits_for(conn).automation_daily_max)).fetchall()
         selected=None
         for row in rows:
             pref=conn.execute('SELECT * FROM notice_automation_settings WHERE user_id=?',(row['user_id'],)).fetchone()
@@ -178,10 +216,15 @@ async def run_worker(app,db,settings):
     with db.connect(write=True) as conn:
         conn.execute("UPDATE notice_automation_jobs SET state='failed',error='服务重启中断了上次整理，请核对后决定是否重试',finished_at=?,lease_until=NULL WHERE state='running'",(int(time.time()),))
     while True:
-        try:await run_in_threadpool(run_once,app,db,settings)
+        try:
+            result=await run_in_threadpool(run_once,app,db,settings)
+            # One bounded background slot, leaving interactive notice capacity
+            # available. Drain ready work immediately; the polling interval is
+            # for an idle queue, not a compulsory delay after each paid result.
+            if result is not None:continue
         except asyncio.CancelledError:raise
         except Exception:logging.getLogger('campus').error('notice_automation_worker_failed')
-        await asyncio.sleep(15)
+        await asyncio.sleep(POLL_SECONDS)
 
 
 class AutomationSettings(Strict):

@@ -26,15 +26,16 @@ def file_source(filename, data):
     if suffix in {'mp4','webm'}:
         from .chat_media import chat_file_source
         return chat_file_source(filename,data)
-    if suffix not in {'pdf','docx','txt','md','csv','xlsx','png','jpg','jpeg','webp'}:
-        raise ValueError('支持 PDF、DOCX、XLSX、CSV、TXT、Markdown、图片、MP4 和 WebM；DOC / XLS 请另存为新版格式')
+    if suffix not in {'pdf','doc','docx','txt','md','csv','xls','xlsx','png','jpg','jpeg','webp'}:
+        raise ValueError('支持 PDF、DOC、DOCX、XLS、XLSX、CSV、TXT、Markdown、图片、MP4 和 WebM')
     if not data or len(data)>MAX_FILE:
         raise ValueError('每份附件须大于 0 字节且不超过 5 MB')
     if not PARSER_SLOTS.acquire(timeout=2):
         return {'id':ident(),'name':name,'kind':suffix,'content':data,'sha256':hashlib.sha256(data).hexdigest(),
                 'sections':[],'status':'failed','warning':'附件解析当前繁忙，请稍后补传；原件已保存'}
     try:
-        proc = subprocess.run([sys.executable,'-m','app.parser_worker',suffix], input=data, capture_output=True,
+        worker='app.legacy_office_worker' if suffix in {'doc','xls'} else 'app.parser_worker'
+        proc = subprocess.run([sys.executable,'-m',worker,suffix], input=data, capture_output=True,
                               timeout=20, cwd=ROOT, creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if proc.returncode or len(proc.stdout)>300000:
             raise ValueError('解析程序未正常返回')

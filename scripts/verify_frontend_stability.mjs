@@ -1,3 +1,4 @@
+// Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Regression cases for the five v9 browser comments. Mutations use a synthetic service only. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -8,7 +9,8 @@ const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/frontend-v9-bro
 const report={fixture:'Synthetic UI and speech responses; no external provider calls',checks:[],errors:[]};
 const wave=Buffer.alloc(44+16000*2*5);wave.write('RIFF');wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(16000,24);wave.writeUInt32LE(32000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(wave.length-44,40);
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});const page=await browser.newPage({viewport:{width:1413,height:871}});page.setDefaultTimeout(10000);
+ const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
+ const settleReader=async()=>{await page.evaluate(async()=>{window.__chatViewportHeld=(await import('/static/chat-viewport.js')).chatViewportHeld;});await page.waitForFunction(()=>!window.__chatViewportHeld(document.querySelector('#chat-thread')));};
  page.on('pageerror',e=>report.errors.push({engine,error:e.message}));
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(e){report.checks.push({engine,name,ok:false,error:e.message});console.log('FAIL',engine,name,e.message.slice(0,350));await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  const nav=async route=>{await page.goto(origin+'/#'+route);await page.locator('#content:not([inert])').waitFor();};
@@ -62,7 +64,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    assert.ok((await page.locator('.reply-audio').boundingBox()).height<70);
   });
   for(const width of [1413,1024,1651])await check(`source reflow keeps nodes font draft audio and visible content ${width}`,async()=>{
-   await page.setViewportSize({width,height:871});await page.waitForFunction(async()=>{const {chatViewportHeld}=await import('/static/chat-viewport.js');return !chatViewportHeld(document.querySelector('#chat-thread'));});await page.locator('#chat-input').fill('未发送的输入不能丢失');await page.locator('#chat-thread').evaluate(n=>n.scrollTop=n.scrollHeight*.4);
+   await page.setViewportSize({width,height:871});await page.waitForFunction(width=>innerWidth===width&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-871)<1,width);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await settleReader();await page.locator('#chat-input').fill('未发送的输入不能丢失');await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));await settleReader();await page.locator('#chat-thread').evaluate(n=>n.scrollTop=n.scrollHeight*.4);await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    await page.evaluate(()=>{window.__v9nodes=['#chat-workspace','.chat-main','#chat-thread','.message-assistant .message-content','#chat-input','.reply-audio audio'].map(s=>document.querySelector(s));window.__v9font=getComputedStyle(document.querySelector('.message-assistant .message-content')).fontSize;window.__v9scroll=document.querySelector('#chat-thread').scrollTop;});
    const before=await page.locator('.chat-main').boundingBox();await page.locator('.source-pill').last().evaluate(n=>n.click());await page.locator('.reply-sources-panel').waitFor();await page.locator('#chat-workspace').evaluate(node=>Promise.all(node.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));
    const during=await page.locator('.chat-main').boundingBox();assert.ok(during.width<before.width-200);
@@ -70,7 +72,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    assert.equal(await page.evaluate(()=>['#chat-workspace','.chat-main','#chat-thread','.message-assistant .message-content','#chat-input','.reply-audio audio'].every((s,i)=>document.querySelector(s)===window.__v9nodes[i])),true);
    assert.equal(await page.locator('#chat-input').inputValue(),'未发送的输入不能丢失');assert.equal(await page.locator('.message-assistant .message-content').first().evaluate(n=>getComputedStyle(n).fontSize),await page.evaluate(()=>window.__v9font));
    const visible=await page.locator('#chat-thread').evaluate(n=>{const r=n.getBoundingClientRect();return [...n.querySelectorAll('.message-content p')].filter(p=>{const b=p.getBoundingClientRect();return b.bottom>r.top&&b.top<r.bottom;}).map(p=>p.textContent);});assert.ok(visible.length);
-   await page.locator('[aria-label="关闭回答来源"]').click();await page.locator('#chat-workspace').evaluate(node=>Promise.all(node.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));assert.ok(Math.abs((await page.locator('.chat-main').boundingBox()).width-before.width)<2);const after=await page.locator('#chat-thread').evaluate(n=>n.scrollTop),initial=await page.evaluate(()=>window.__v9scroll);assert.ok(Math.abs(after-initial)<35,JSON.stringify({initial,after}));
+   await page.locator('[aria-label="关闭回答来源"]').click();await page.locator('#chat-workspace').evaluate(node=>Promise.all(node.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{}))));assert.ok(Math.abs((await page.locator('.chat-main').boundingBox()).width-before.width)<2);await settleReader();const after=await page.locator('#chat-thread').evaluate(n=>n.scrollTop),initial=await page.evaluate(()=>window.__v9scroll);assert.ok(Math.abs(after-initial)<35,JSON.stringify({initial,after}));
   });
   await page.locator('.reply-audio [aria-label="关闭播放器"]').click();await page.screenshot({path:path.join(out,engine+'-chat.png')});
   await check('used memory appears as a small accessible SVG',async()=>{

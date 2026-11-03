@@ -7,6 +7,28 @@ CST=timezone(timedelta(hours=8))
 ANCHOR=re.compile(r'(?P<full>(?<!\d)(?P<y>20\d{2})[年./-]\s*(?P<m>\d{1,2})[月./-]\s*(?P<d>\d{1,2})日?(?!\d))|(?P<partial>(?<!\d)\d{1,2}月\s*\d{1,2}日)|(?P<relative>通知发布当天|通知发布次日|发布当天|发布次日|今天|今日|明天|后天|当天|次日)')
 CLOCK=re.compile(r'(?<!\d)(?P<period>凌晨|清晨|早上|上午|中午|下午|傍晚|晚上|晚间)?\s*(?P<h>\d{1,2})(?:[:：](?P<minute>\d{1,2})(?!\d)|[点时](?:(?P<cnminute>\d{1,2})分?|(?P<half>半)|整)?)(?!\d)')
 RELATIVE={'今天':0,'今日':0,'明天':1,'后天':2,'通知发布当天':0,'发布当天':0,'通知发布次日':1,'发布次日':1}
+DATE_RANGE=re.compile(r'(?P<start>(?<!\d)(?P<ry>20\d{2})[年./-]\s*(?P<rm>\d{1,2})[月./-]\s*(?P<rd>\d{1,2})日?(?!\d))(?P<link>\s*(?:至|到|—{1,2}|－|～|~|-)\s*)(?P<end>(?:(?P<ey>20\d{2})年|(?P<next>次年))?\s*(?:(?P<em>\d{1,2})月)?\s*(?P<ed>\d{1,2})日)')
+
+
+def range_context(quote):
+    """Resolve only a syntactically joined range, never a publication's year.
+
+    Normalization is internal to the date parser. Saved evidence stays exactly
+    as published. Cross-year rollover needs an explicit end year or 次年.
+    """
+    days=set();invalid=False
+    def expand(match):
+        nonlocal invalid
+        try:
+            start=date(int(match['ry']),int(match['rm']),int(match['rd']))
+            end=date(int(match['ey']) if match['ey'] else start.year+bool(match['next']),
+                     int(match['em']) if match['em'] else start.month,int(match['ed']))
+            if end<start:raise ValueError('reversed or ambiguous year')
+        except ValueError:
+            invalid=True;return match[0]
+        days.update((start,end))
+        return match['start']+match['link']+f'{end.year}年{end.month}月{end.day}日'
+    return DATE_RANGE.sub(expand,quote),days,invalid
 
 
 def clocks(text):
@@ -47,7 +69,12 @@ def analyze(quotes,published_at=None):
     if published_at:
         value=datetime.fromisoformat(published_at)
         if value.tzinfo is not None:reference=value.astimezone(CST).date()
-    for quote in quotes:
+    prepared=[range_context(quote) for quote in quotes]
+    range_days={}
+    for _,days,_ in prepared:
+        for day in days:range_days.setdefault((day.month,day.day),set()).add(day)
+    for quote,_,invalid in prepared:
+        if invalid:unknown=True
         anchors=list(ANCHOR.finditer(quote))
         if not anchors:
             floating.extend(clocks(quote));continue
@@ -58,12 +85,16 @@ def analyze(quotes,published_at=None):
                 except ValueError:pass
             elif anchor['relative'] in RELATIVE and reference:
                 day=reference+timedelta(days=RELATIVE[anchor['relative']])
+            elif anchor['partial']:
+                month,number=map(int,re.findall(r'\d+',anchor['partial']))
+                options=range_days.get((month,number),set())
+                if len(options)==1:day=next(iter(options))
             if day is None:unknown=True;continue
             result.days.add(day.isoformat())
             # A new date (even without a year), relative event or sentence ends this binding.
             end=anchors[i+1].start() if i+1<len(anchors) else len(quote)
             tail=re.split(r'[。；;\n]',quote[anchor.end():end],maxsplit=1)[0]
-            for hour,minute in clocks(tail):
+            for hour,minute in ([] if invalid else clocks(tail)):
                 target=day
                 if hour==24:
                     result.end_of_day.add(day.isoformat());target+=timedelta(days=1);hour=0

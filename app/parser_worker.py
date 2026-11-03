@@ -54,6 +54,8 @@ def extract(data, kind):
             text = page.extract_text() or ''
             add(f'第 {i} 页', text)
             if len(text.strip()) < 8:
+                from .pdf_visual import page_marker
+                sections.append(page_marker(i))
                 warnings.append(f'第 {i} 页没有足够的可提取文字，可能是扫描件或空白页，请核对')
     elif kind == 'docx':
         with zipfile.ZipFile(io.BytesIO(data)) as archive:

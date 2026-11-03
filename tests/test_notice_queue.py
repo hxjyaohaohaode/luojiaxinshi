@@ -51,7 +51,7 @@ def test_profile_change_invalidates_irrelevant_filter_and_other_accounts_see_not
     c,other=account(env),account(env,'another');db=env[0].state.db
     n=manual(c,notice(c,'本校某学院通知'))
     with db.connect(write=True) as conn:
-        draft=n['draft'];draft['applicability']='not_matching'
+        draft=n['draft'];draft['applicability']='not_matching';draft['quality']={'status':'passed'}
         conn.execute('UPDATE notices SET draft=? WHERE id=?',(json.dumps(draft),n['id']))
     assert category(c,n['id'])['intent']=='irrelevant'
     uid=c.get('/api/session').json()['user']['id']

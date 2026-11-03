@@ -31,6 +31,11 @@ def test_spreadsheet_bounds_and_no_formula_execution():
 
 def test_profile_preferences_reach_model_but_contacts_do_not(env):
     c=account(env);profile=Profile(preferred_name='同学',response_detail='concise',response_style='direct',campus_area='文理学部',phone='18800000000',student_id='private-id').model_dump()
+    from verification_helpers import proof,advance_cooldown
+    advance_cooldown(env[0])
+    old=proof(c,'contact_authorize','alice@example.invalid')
+    new=proof(c,'contact_bind',profile['phone'],'sms')
+    assert c.post('/api/account/contacts',json={'authorization_token':old,'verification_token':new}).status_code==200
     assert c.put('/api/profile',json=profile).status_code==200
     request=payload(env[1],[],[],profile,1)
     assert '简明' in request['messages'][0]['content'] and '直接清楚' in request['messages'][0]['content']

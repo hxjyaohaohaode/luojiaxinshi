@@ -155,11 +155,16 @@ def create_app(settings=None):
         memory_worker=asyncio.create_task(memory_maintenance())
         source_worker=asyncio.create_task(source_sync.run_worker(db,settings))
         from .push_delivery import run_worker as run_push_worker
-        push_worker=asyncio.create_task(run_push_worker(db))
+        push_worker=asyncio.create_task(run_push_worker(db,settings))
+        from .mail_delivery import run_worker as run_mail_worker
+        mail_worker=asyncio.create_task(run_mail_worker(db,settings))
         from .notice_automation import run_worker as run_notice_automation
         automation_worker=asyncio.create_task(run_notice_automation(application,db,settings))
         from .group_delivery import run_worker as run_group_delivery
         group_worker=asyncio.create_task(run_group_delivery(db,settings))
+        application.state.worker_tasks={'backups':worker,'execution':lease_worker,'knowledge':memory_worker,
+            'sources':source_worker,'web_push':push_worker,'email':mail_worker,
+            'notice_analysis':automation_worker,'groups':group_worker}
         try:
             yield
         finally:
@@ -178,11 +183,13 @@ def create_app(settings=None):
             push_worker.cancel()
             automation_worker.cancel()
             group_worker.cancel()
-            await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,group_worker,return_exceptions=True)
+            mail_worker.cancel()
+            await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,group_worker,mail_worker,return_exceptions=True)
             await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
     app.state.db, app.state.settings = db, settings
+    app.state.worker_tasks={}
     app.state.execution=runtime
     app.add_middleware(RequestGuard,origin=settings.origin,production=settings.production)
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=[urlparse(settings.origin).hostname])
@@ -312,6 +319,10 @@ def create_app(settings=None):
         record['quality_resolution_contract']=1
         record['review_observation_contract']=1
         record['quality_receipt']=receipt(conn,nid) if record['status']=='confirmed' else None
+        from .notice_queue import annotate
+        record['disposition']=record['handling']['disposition']
+        record['pending_intake_updates']=sum(u['state']=='pending' for u in record.get('intake_updates',[]))
+        annotate(conn,uid,[record])
         return record
 
     def session_response(uid, extra=None):
@@ -324,6 +335,11 @@ def create_app(settings=None):
         response=JSONResponse({'ok':True,**(extra or {})})
         response.set_cookie('campus_session',token,max_age=7*86400,httponly=True,secure=settings.production,samesite='strict',path='/')
         return response
+
+    from . import verification
+    verification.install(app,db,settings,user,session_response)
+    from .mail_delivery import install as install_mail_delivery
+    install_mail_delivery(app,db,settings,user)
 
     @app.get('/api/health')
     def health():
@@ -339,8 +355,9 @@ def create_app(settings=None):
             genui=feature_settings(conn,current['id'],settings)
             consent=consent_state(conn,current['id'])
             affiliation=campus_membership(conn,current['id'])
+            verified_contacts=verification.contacts(conn,current['id'])
         return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
-                        'role':current['role'],'profile':json.loads(current['profile']),
+                        'role':current['role'],'profile':json.loads(current['profile']),'verified_contacts':verified_contacts,
                         'campus_membership':{'role':affiliation['role'],'college_name':affiliation['college_name']} if affiliation else None},'csrf':current['csrf'],
                 'ai':public_configuration(settings),'genui':genui,'consent':consent,
                 'environment':'production' if settings.production else 'local','task_board_contract':1}
@@ -351,7 +368,7 @@ def create_app(settings=None):
         rate_limit(db,'login-ip:'+ip,30,900)
         rate_limit(db,'login-user:'+payload.username.lower(),10,900)
         with db.connect() as conn:
-            record=conn.execute('SELECT * FROM users WHERE username=?',(payload.username.lower(),)).fetchone()
+            record=verification.find_account(conn,payload.username)
         valid=verify_password(payload.password,record['password'] if record else DUMMY_PASSWORD)
         if not valid or record is None:
             raise HTTPException(401,'用户名或密码错误')
@@ -359,7 +376,8 @@ def create_app(settings=None):
 
     @app.get('/api/auth/policy')
     def registration_policy():
-        return {'registration_mode': settings.registration_mode}
+        return {'registration_mode': settings.registration_mode,'verification_required':True,
+                'channels':{channel:app.state.verification.provider.available(channel) for channel in ('sms','email')}}
 
     @app.post('/api/auth/register')
     def register(payload: Register, request: Request):
@@ -369,7 +387,6 @@ def create_app(settings=None):
         password=hash_password(payload.password)
         uid=ident()
         now=int(time.time())
-        recovery=secrets.token_urlsafe(24)
         if not payload.accepted_terms:
             raise HTTPException(422,'请先阅读并同意《隐私政策》和《用户协议》')
         if payload.account_kind=='phone' and not re.fullmatch(r'\+?[0-9]{7,15}',payload.username):
@@ -382,30 +399,38 @@ def create_app(settings=None):
                 raise HTTPException(503,'本站账号容量已满，请联系管理员')
             if conn.execute('SELECT 1 FROM users WHERE username=?',(payload.username.lower(),)).fetchone():
                 raise HTTPException(409,'该用户名已被使用')
+            proof=verification.consume(conn,payload.verification_token,'register')
+            verification.available_contact(conn,proof['channel'],proof['destination'])
+            verification.available_alias(conn,payload.username.lower())
+            if payload.account_kind=='phone' and (proof['channel']!='sms' or verification.normalize('sms',payload.username)!=proof['destination']):
+                raise HTTPException(422,'手机号账号必须验证同一个手机号')
             profile=Profile(campus_role=payload.campus_role).model_dump()
             if payload.account_kind!='username':
                 profile[payload.account_kind]=payload.username
+            if proof['channel']=='sms':profile['phone']=proof['destination']
             conn.execute('INSERT INTO users(id,username,password,display_name,role,profile,created_at) VALUES(?,?,?,?,?,?,?)',
                          (uid,payload.username.lower(),password,payload.display_name,invite['role'] if invite else 'user',dumps(profile),now))
-            conn.execute('INSERT INTO account_recovery VALUES(?,?)',(uid,token_hash(recovery)))
+            conn.execute('INSERT INTO verified_contacts VALUES(?,?,?,?)',(uid,proof['channel'],proof['destination'],now))
+            conn.execute('DELETE FROM auth_challenges WHERE id=?',(proof['id'],))
             record_consent(conn,uid,now)
             if invite:
                 conn.execute('UPDATE invites SET used_at=? WHERE token_hash=?',(now,token_hash(payload.invite)))
-        return session_response(uid,{'recovery_code':recovery})
+        return session_response(uid)
 
     @app.post('/api/auth/recover')
     def recover(payload:Recover,request:Request):
         rate_limit(db,'recover:'+(request.client.host if request.client else 'unknown'),5,900)
         rate_limit(db,'recover-user:'+payload.username.lower(),5,900)
-        new_code=secrets.token_urlsafe(24)
         with db.connect(write=True) as conn:
-            record=conn.execute('SELECT u.id,r.code_hash FROM users u JOIN account_recovery r ON r.user_id=u.id WHERE u.username=?',(payload.username.lower(),)).fetchone()
-            if not record or not secrets.compare_digest(record['code_hash'],token_hash(payload.recovery_code)):
-                raise HTTPException(400,'账号或恢复码不正确，密码未修改')
+            record=verification.find_account(conn,payload.username)
+            proof=verification.consume(conn,payload.verification_token,'recover')
+            if not record or proof['user_id']!=record['id']:
+                raise HTTPException(400,'账号与验证信息不匹配，密码未修改')
             conn.execute('UPDATE users SET password=? WHERE id=?',(hash_password(payload.password),record['id']))
-            conn.execute('UPDATE account_recovery SET code_hash=? WHERE user_id=?',(token_hash(new_code),record['id']))
+            conn.execute('DELETE FROM account_recovery WHERE user_id=?',(record['id'],))
+            conn.execute('DELETE FROM auth_challenges WHERE user_id=?',(record['id'],))
             conn.execute('DELETE FROM sessions WHERE user_id=?',(record['id'],))
-        return session_response(record['id'],{'recovery_code':new_code})
+        return session_response(record['id'])
 
     @app.post('/api/auth/logout')
     def logout(current=Depends(user)):
@@ -421,13 +446,18 @@ def create_app(settings=None):
         if not verify_password(payload.old_password,current['password']):
             raise HTTPException(400,'原密码不正确')
         with db.connect(write=True) as conn:
+            verification.consume(conn,payload.verification_token,'password',current['id'])
             conn.execute('UPDATE users SET password=? WHERE id=?',(hash_password(payload.new_password),current['id']))
+            conn.execute('DELETE FROM auth_challenges WHERE user_id=?',(current['id'],))
+            conn.execute('DELETE FROM account_recovery WHERE user_id=?',(current['id'],))
             conn.execute('DELETE FROM sessions WHERE user_id=?',(current['id'],))
         return session_response(current['id'])
 
     @app.put('/api/profile')
     def profile(payload:Profile,current=Depends(user)):
         with db.connect(write=True) as conn:
+            saved=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
+            if payload.phone!=saved.get('phone',''):raise HTTPException(422,'请在账号安全中验证后修改手机号')
             conn.execute('UPDATE users SET profile=? WHERE id=?',(payload.model_dump_json(),current['id']))
         return {'ok':True}
 
@@ -440,6 +470,7 @@ def create_app(settings=None):
             if row is None:
                 raise HTTPException(401,'请重新登录')
             saved=Profile.model_validate_json(row['profile']).model_dump()
+            if 'phone' in changes and changes['phone']!=saved['phone']:raise HTTPException(422,'请在账号安全中验证后修改手机号')
             conflicts=[key for key,value in changes.items() if saved[key]!=expected[key] and saved[key]!=value]
             if conflicts:
                 raise HTTPException(409,{'code':'profile_conflict','message':'这些资料已在另一处修改。本次填写已保留，请先核对最新值。',
@@ -689,8 +720,10 @@ def create_app(settings=None):
             from .chat_media import VIDEO_MIME,video_response
             if source['kind'] in VIDEO_MIME and source['status']!='failed':return video_response(source['content'],source['kind'],source['name'],request.headers.get('range') if preview else None,preview)
             from .chat_ai import IMAGE_MIME
-            inline=preview and source['kind'] in IMAGE_MIME and source['status']!='failed'
-            return Response(source['content'],media_type=IMAGE_MIME[source['kind']] if inline else 'application/octet-stream',headers={'Content-Disposition':("inline" if inline else "attachment")+"; filename*=UTF-8''"+quote(source['name'],safe='')})
+            native_pdf=source['kind']=='pdf' and source['content'].startswith(b'%PDF-')
+            inline=preview and (source['kind'] in IMAGE_MIME and source['status']!='failed' or native_pdf)
+            mime='application/pdf' if native_pdf else IMAGE_MIME[source['kind']] if inline else 'application/octet-stream'
+            return Response(source['content'],media_type=mime,headers={'Content-Disposition':("inline" if inline else "attachment")+"; filename*=UTF-8''"+quote(source['name'],safe='')})
 
     @app.post('/api/notices/{nid}/conversation')
     def notice_conversation(nid:str,payload:Version,current=Depends(user)):
@@ -720,6 +753,7 @@ def create_app(settings=None):
             from .notice_intake import require_open
             require_open(conn,nid)
             draft={'title':record['title'],'summary':'手工整理，请对照左侧原文填写本人事项。',
+                   'origin':'manual',
                    'applicability':'needs_review','applicability_reason':'手工确认本人适用条件','facts':{},'tasks':[],
                    'warnings':['手工填写结果不计作 AI 提取成功']}
             conn.execute("UPDATE notices SET draft=?,version=version+1,draft_version=version+1,status='draft',error=NULL,processing_token=NULL,updated_at=? WHERE id=?",(dumps(draft),int(time.time()),nid))
@@ -759,9 +793,9 @@ def create_app(settings=None):
                 if notice_processing(conn,record,settings.ai_timeout):
                     raise HTTPException(409,'该通知正在生成，请等待当前请求完成')
                 sources=get_sources(conn,nid,True,include_content=True)
-                images=[s for s in sources if s['kind'] in {'png','jpg','jpeg','webp'} and s['status']!='failed']
-                if len(images)>4:
-                    raise HTTPException(422,'一次最多识别 4 张图片，请先整理当前材料；未静默忽略图片')
+                from .visual_evidence import image_sources
+                try:images=image_sources(sources)
+                except ai.AIError as exc:raise HTTPException(422,str(exc)) from None
                 if not sources or (total_chars(sources)==0 and not images) or total_chars(sources)>MAX_CHARS:
                     raise HTTPException(422,'当前材料没有可处理文字或合计超过 10000 字')
                 try:
@@ -782,15 +816,16 @@ def create_app(settings=None):
                 stage(conn,call_id,'extracting')
                 audit(conn,current['id'],nid,'ai_processing_consent',after={'model':run_settings.ai_model,
                     'review_model':run_settings.notice_review_model if run_settings.notice_semantic_review else None,
-                    'processing_mode':payload.processing_mode,'maximum_requests':2 if run_settings.notice_semantic_review else 1,
-                    'source_ids':[s['id'] for s in sources],'profile':json.loads(current['profile'])})
+                    'processing_mode':payload.processing_mode,'maximum_requests':(4 if run_settings.notice_auto_repair else 2) if run_settings.notice_semantic_review else 1,
+                    'thinking':run_settings.notice_thinking,
+                    'source_ids':[s['id'] for s in sources],'profile':ai.personal_profile(json.loads(current['profile']))})
             try:
                 from .notice_progress import CURRENT,Trace,save
                 def progress(name):
                     with db.connect(write=True) as conn:
                         live=conn.execute('SELECT n.version,n.processing_token,u.profile FROM notices n JOIN users u ON u.id=n.user_id WHERE n.id=? AND n.user_id=?',(nid,current['id'])).fetchone()
                         if (not live or live['version']!=payload.version or live['processing_token']!=job
-                            or json.loads(live['profile'])!=json.loads(current['profile'])
+                            or ai.personal_profile(json.loads(live['profile']))!=ai.personal_profile(json.loads(current['profile']))
                             or not notice_processing(conn,{'id':nid,'processing_token':job},settings.ai_timeout)):
                             raise ai.AIContextChanged('材料、个人条件或本次执行状态已变化，已停止旧结果处理；请核对当前内容后重新整理。')
                         stage(conn,call_id,name)
@@ -798,6 +833,7 @@ def create_app(settings=None):
                 trace=Trace(progress);trace_token=CURRENT.set(trace)
                 try:
                     draft,usage=ai.generate(run_settings,record,sources,json.loads(current['profile']))
+                    draft['extraction_version']=ai.EXTRACTION_VERSION
                 finally:
                     CURRENT.reset(trace_token)
                     with db.connect(write=True) as conn:save(conn,call_id,trace)
@@ -812,7 +848,7 @@ def create_app(settings=None):
             with db.connect(write=True) as conn:
                 conn.execute("UPDATE ai_calls SET status='succeeded',input_tokens=?,output_tokens=? WHERE id=?",(usage['input_tokens'],usage['output_tokens'],call_id))
                 profile_row=conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()
-                if profile_row and json.loads(profile_row['profile'])!=json.loads(current['profile']):
+                if profile_row and ai.personal_profile(json.loads(profile_row['profile']))!=ai.personal_profile(json.loads(current['profile'])):
                     conn.execute("UPDATE notices SET version=version+1,status='failed',error='生成期间个人条件已变化，请核对后重新整理。',processing_token=NULL WHERE id=? AND processing_token=?",(nid,job))
                 cursor=conn.execute("UPDATE notices SET draft=?,draft_version=version+1,version=version+1,status='draft',processing_token=NULL,updated_at=? WHERE id=? AND user_id=? AND version=? AND processing_token=?",
                                     (dumps(draft),int(time.time()),nid,current['id'],payload.version,job))
@@ -1020,10 +1056,15 @@ def create_app(settings=None):
             material_archive=export_task_materials(conn,current['id'])
             from .notice_matters import export_groups
             matters=export_groups(conn,current['id'])
+            account_records={'contacts':verification.contacts(conn,current['id']),
+                'consents':[dict(r) for r in conn.execute('SELECT version,accepted_at FROM account_consents WHERE user_id=?',(current['id'],))],
+                'mail_deliveries':[dict(r) for r in conn.execute('SELECT state,created_at,finished_at,error FROM mail_outbox WHERE user_id=? ORDER BY created_at',(current['id'],))]}
         result={'format_version':1,'exported_at':datetime.now(CST).isoformat(),'profile':json.loads(current['profile']),
                 'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'memory_archive':memory_archive,'note':'含记忆来源与历史、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
         result['task_material_archive']=material_archive
         result['notice_matters']=matters
+        result['account_records']=account_records
+        result['note']+=' 联系方式与邮件投递记录仅作本人数据导出；导入不会恢复身份验证或提醒授权。'
         result['note']+=' 本人办理材料及固定提交版本的目录与记录已附带；二进制文件请在对应待办下载。完整恢复请使用数据库备份。'
         return Response(dumps(result),media_type='application/json',headers={'Content-Disposition':'attachment; filename="campus-data.json"'})
 
@@ -1056,16 +1097,22 @@ def create_app(settings=None):
     install_matters(app,db,user)
     install_speech(app,db,settings,user,heavy_lock)
     install_schedule(app,db,user)
+    from .campus_imports import install as install_campus_imports
+    install_campus_imports(app,db,settings,user)
     install_workflow(app, db, user, own_notice, own_task, expect_version, serialize_task,
                      get_sources, store_source, invalidate, validate_task, update_task_record)
     from .task_materials import install_task_materials
     install_task_materials(app,db,settings,user,own_task,expect_version)
+    from .handling_assistant import install_handling_assistant
+    install_handling_assistant(app,db,settings,user,own_task,own_notice,get_sources,expect_version,notice_lock)
     from .push_delivery import install as install_push
     install_push(app,db,user)
     from .notice_automation import install as install_notice_automation
     install_notice_automation(app,db,settings,user)
     from .campus import install as install_campus
     install_campus(app,db,user)
+    from .proactive import install as install_proactive
+    install_proactive(app,db,settings,user)
 
     @app.get('/notification-worker.js')
     def notification_worker():

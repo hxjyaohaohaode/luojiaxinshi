@@ -34,7 +34,8 @@ def main():
     results=[]
     verify_script=os.getenv('OPENUI_VERIFY_SCRIPT','scripts/verify_openui.mjs')
     if verify_script not in ('scripts/verify_openui.mjs','scripts/verify_openui_generated.mjs','scripts/verify_chat_layout.mjs','scripts/verify_chat_interactions.mjs','scripts/verify_task_board.mjs','scripts/verify_chat_recovery.mjs'):raise ValueError('Unknown OpenUI verification script')
-    if verify_script=='scripts/verify_chat_recovery.mjs':env['OPENUI_REVIEW_DELAY']='4'
+    env.pop('OPENUI_REVIEW_GATE',None)
+    if verify_script=='scripts/verify_chat_recovery.mjs':env['OPENUI_REVIEW_GATE']='1'
     if verify_script=='scripts/verify_task_board.mjs':env.update(CAMPUS_VERIFY_ORIGIN='http://127.0.0.1:8794',CAMPUS_VERIFY_USER='openui-preview',CAMPUS_VERIFY_PASSWORD='OpenUIFixture2026!')
     scratch=tempfile.TemporaryDirectory(prefix='fixture-',dir=OUT)
     try:

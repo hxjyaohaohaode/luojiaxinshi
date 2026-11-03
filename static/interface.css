@@ -351,22 +351,10 @@ dialog::backdrop { background: #1a322b59; backdrop-filter: blur(4px); }
   .chat-heading .button { padding: 8px; }
   .chat-reading-area > .chat-thread { padding: 18px 32px 20px 0; }
   .chat-reading-area:has(.chat-turn-rail[hidden]) > .chat-thread { padding-inline: 0; }
-  .chat-main .chat-composer { width: 100%; margin: 0 auto !important; padding: 5px !important; border-radius: 16px !important; }
+  .chat-main .chat-composer { width: 100%; margin: 0 auto !important; padding: 5px; border-radius: 16px !important; }
   .chat-main .chat-footnote { margin: 7px auto 0 !important; font-size: 12px; }
   .chat-welcome { padding: 24px 0; }
   .chat-welcome h2 { font-size: 24px; }
-  .calendar-toolbar { display: grid !important; grid-template-columns: minmax(0, 1fr) 88px; padding: 4px 8px 4px 52px !important; gap: 0 !important; }
-  .calendar-toolbar .calendar-navigation { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; width: 100%; padding: 0; gap: 0 !important; }
-  .calendar-toolbar .calendar-navigation > button[data-calendar-action=previous] { grid-column: 1; grid-row: 1; }
-  .calendar-toolbar .calendar-navigation > button[data-calendar-action=next] { grid-column: 3; grid-row: 1; }
-  .calendar-toolbar .calendar-navigation > h2 { grid-column: 2; grid-row: 1; min-width: 0; width: 100%; margin: 0 !important; }
-  .calendar-toolbar .calendar-navigation > .calendar-today { display: none; }
-  .calendar-toolbar .calendar-navigation > .icon-button, .calendar-toolbar .calendar-tools > .icon-button { width: 44px; height: 44px; min-width: 44px; min-height: 44px; max-width: none; }
-  .calendar-toolbar .calendar-date-trigger { box-sizing: border-box; width: 100%; min-height: 44px; text-align: center; font-size: 13px; }
-  .calendar-toolbar .calendar-date-trigger:not(:has(.calendar-term)) { white-space: normal; line-height: 1.4; overflow-wrap: anywhere; }
-  .calendar-toolbar .calendar-tools { display: grid; grid-template-columns: 44px 44px; margin: 0; padding: 0; gap: 0; }
-  .calendar-toolbar .calendar-view-tabs { grid-column: 1/-1; margin-left: -44px !important; width: calc(100% + 44px) !important; padding: 2px 0 !important; }
-  .calendar-toolbar .calendar-view-tabs .tab { min-height: 44px; flex: 1; padding: 5px 10px; }
   .shell:has(.calendar-workspace) .workspace-chrome-toggle { top: 4px !important; left: 4px !important; width: 44px; height: 44px; min-height: 44px; }
 }
 @media (max-width: 600px) {

@@ -58,11 +58,28 @@ def test_image_only_notice_reaches_model_and_keeps_visual_dates_unconfirmed(env,
 
 def test_all_images_are_counted_no_silent_truncation(env, monkeypatch):
     c = account(env); env[1].ai_api_key = 'synthetic'
+    env[1].notice_semantic_review=False
     files = [('files', (f'notice-{i}.png', png(color), 'image/png')) for i, color in enumerate(['white', 'red', 'green', 'blue', 'yellow'])]
     n = notice(c, text='', files=files)
-    monkeypatch.setattr(ai, 'generate', lambda *args: (_ for _ in ()).throw(AssertionError('must reject before provider')))
+    original=httpx.Client;seen=[]
+    def provider(request):
+        body=json.loads(request.content);seen.append(body)
+        pictures=[p for p in body['messages'][1]['content'] if p['type']=='image_url']
+        assert len(pictures)==5
+        assert {base64.b64decode(p['image_url']['url'].split(',')[1])for p in pictures}=={png(color)for color in ['white','red','green','blue','yellow']}
+        raw={'title':'五张合成图片','summary':'仅用于完整输入验收','applicability':'needs_review','applicability_reason':'需核对实际内容',
+             'facts':{k:{'value':'','evidence':[]}for k in ai.FACT_KEYS},'tasks':[],'warnings':[]}
+        return httpx.Response(200,json={'choices':[{'finish_reason':'stop','message':{'content':json.dumps(raw)}}],'usage':{}})
+    monkeypatch.setattr(ai.httpx,'Client',lambda **kwargs:original(transport=httpx.MockTransport(provider),**kwargs))
     r = c.post('/api/notices/'+n['id']+'/generate', json={'version': n['version'], 'allow_external_processing': True})
-    assert r.status_code == 422 and '4 张' in r.text
+    assert r.status_code==200,r.text
+    assert len(seen)==1
+    # All images count towards the real input budget. Reject before the provider
+    # when the budget is too small, rather than silently dropping image five.
+    env[1].notice_input_tokens=128
+    other=notice(c,text='',files=files)
+    blocked=c.post('/api/notices/'+other['id']+'/generate',json={'version':other['version'],'allow_external_processing':True})
+    assert blocked.status_code==422 and '预算' in blocked.text and len(seen)==1
 
 
 def test_images_cannot_fabricate_verbatim_quotes():

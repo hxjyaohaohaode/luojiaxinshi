@@ -75,8 +75,11 @@ def full_extract(data,kind):
     if kind in {'mp4','webm','mov','avi','wmv','mp3','wav','m4a','ogg','flac'}:
         from .media_input import inspect_media
         return inspect_media(data,kind)
-    if kind in {'doc','xls','ppt'}:
-        return {'sections':[],'status':'review','warning':'原件已保存，可下载；尚未读取正文。请另存为 DOCX / XLSX / PPTX 后上传。'}
+    if kind in {'doc','xls'}:
+        from .legacy_office import extract
+        return extract(data,kind,max_chars=MAX_PREVIEW)
+    if kind=='ppt':
+        return {'sections':[],'status':'review','warning':'原件已保存，可下载；尚未读取正文。请另存为 PPTX 后上传。'}
     if kind in {'gif','bmp','tif','tiff'}:
         from PIL import Image
         Image.MAX_IMAGE_PIXELS=20000000
@@ -103,7 +106,10 @@ def library_file(filename,data,path=None):
     path=safe_path(path or filename);name=PurePosixPath(path).name[:160];kind=PurePosixPath(name).suffix.lower().lstrip('.')
     if kind not in FORMATS:raise ValueError(f'{name}：暂不支持这个格式，请转换为 PDF、文字或新版 Office')
     if not data or len(data)>MAX_UPLOAD:raise ValueError(f'{name}：每份文件应为 1 字节至 20 MB')
-    if not PARSER_SLOTS.acquire(timeout=2):raise ValueError('正在读取其他材料，请稍后重新上传')
+    # The composer sends three files concurrently, while only two isolated
+    # parsers may run. Allow one bounded parser turn (25s) plus startup margin
+    # instead of rejecting the third upload during ordinary contention.
+    if not PARSER_SLOTS.acquire(timeout=30):raise ValueError('正在读取其他材料，请稍后重新上传')
     try:
         proc=subprocess.run([sys.executable,'-m','app.material_files',kind],input=data,capture_output=True,timeout=25,cwd=ROOT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if proc.returncode or len(proc.stdout)>8*1024*1024:raise ValueError('解析未正常返回')

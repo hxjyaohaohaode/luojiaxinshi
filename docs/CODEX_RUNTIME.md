@@ -224,3 +224,5 @@ JSON-RPC 协议标识为 `campus-agent/1`，响应明确返回 `codex_wire_compa
 ## 历次参考的共同融合核查
 
 更早的开源执行框架、13 个记忆仓库和前端资料的采用、未采用及验证边界见 [REFERENCE_FUSION_AUDIT.md](REFERENCE_FUSION_AUDIT.md)，目录与源码哈希见 [REFERENCE_FUSION_MANIFEST.json](REFERENCE_FUSION_MANIFEST.json)。该清单明确区分原则适配和完整框架移植。
+
+2026-11-02 的主动采集、证据链、时效、可逆纠正、聊天检索和运行控制核查见 [主动链路与 Harness 技术说明](proactive/RUNTIME.md)，逐项要求见 [验收账本](proactive/ACCEPTANCE.md)。

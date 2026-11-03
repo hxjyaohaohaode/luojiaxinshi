@@ -11,6 +11,7 @@ from .ai import AIError, check_evidence
 from .models import Strict, Evidence
 from .genui_state import context_text
 from .memory_learning import MemoryAction, AGENT_POLICY
+from .visual_evidence import image_sources,register_images,IMAGE_POLICY
 
 IMAGE_MIME={'png':'image/png','jpg':'image/jpeg','jpeg':'image/jpeg','webp':'image/webp'}
 MAX_CITATIONS = 120  # Matches the bounded server evidence index for long, sourced answers.
@@ -49,6 +50,7 @@ PROMPT='''你是珞珈信使，服务武汉大学师生，温和、清楚、具�
 def reply(settings,sources,messages,profile):
     if not settings.ai_api_key:
         raise AIError('问题和材料已保存。AI 尚未配置，填写 API 后可点击重试。')
+    sources=register_images(sources)
     from .context_engine import pack_history
     messages,_,_=pack_history(messages)
     context={'personal_conditions':{k:v for k,v in profile.items() if k in PERSONAL_KEYS},
@@ -58,11 +60,11 @@ def reply(settings,sources,messages,profile):
              'materials':[{'id':s['id'],'name':s['name'],'status':s['status'],'warning':s['warning'],'sections':s['sections'],
                            'evidence_kind':s.get('evidence_kind','material')} for s in sources]}
     materials=[{'type':'text','text':json.dumps(context,ensure_ascii=False)}]
-    for source in sources:
-        if source['kind'] in IMAGE_MIME and source['content'] and source['status']!='failed':
-            materials.extend([{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
-                              {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}])
-    payload={'model':settings.ai_model,'messages':[{'role':'system','content':PROMPT+AGENT_POLICY+presentation_prompt(profile)+json.dumps(ChatAnswer.model_json_schema(),ensure_ascii=False)},
+    images=image_sources(sources)
+    for source in images:
+        materials.extend([{'type':'text','text':'以下图片 source_id='+source['id']+'，名称='+source['name']},
+                          {'type':'image_url','image_url':{'url':'data:'+IMAGE_MIME[source['kind']]+';base64,'+base64.b64encode(source['content']).decode()}}])
+    payload={'model':settings.ai_model,'messages':[{'role':'system','content':PROMPT+(IMAGE_POLICY if images else '')+AGENT_POLICY+presentation_prompt(profile)+json.dumps(ChatAnswer.model_json_schema(),ensure_ascii=False)},
              {'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
              'response_format':{'type':'json_object'},'thinking':{'type':'enabled'},'max_completion_tokens':settings.ai_output_tokens}
     try:
@@ -83,7 +85,7 @@ def reply(settings,sources,messages,profile):
             raise AIError('模型回复未完整结束，请重试或缩小问题。')
         result=ChatAnswer.model_validate_json(choice['message']['content'])
         check_evidence(result.citations,sources)
-        available={s['id'] for s in sources if s['kind'] in IMAGE_MIME and s['status']!='failed'}
+        available={s['id'] for s in images}
         if any(sid not in available for sid in result.image_sources):
             raise ValueError('无效图片引用')
         usage=data.get('usage',{})

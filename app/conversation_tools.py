@@ -171,6 +171,12 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                 interaction=conn.execute('SELECT * FROM genui_interactions WHERE message_id=?',(m['id'],)).fetchone()
                 if interaction and interaction['origin_message_id'] in mapping:
                     conn.execute('INSERT INTO genui_interactions VALUES(?,?,?)',(mapping[m['id']],mapping[interaction['origin_message_id']],dumps(remap(json.loads(interaction['context'])))))
+            # References point only into the new branch. Preserve quote text
+            # exactly; an unselected old revision becomes a detached snapshot.
+            for m in selected[:index+1]:
+                quote=m.get('reply_to')
+                if quote:conn.execute('INSERT INTO message_quotes VALUES(?,?,?,?,?)',(mapping[m['id']],mapping.get(quote['message_id']),quote['role'],quote['excerpt'],now))
+                for emoji in m.get('emojis',[]):conn.execute('INSERT INTO message_emojis VALUES(?,?,?)',(mapping[m['id']],emoji,now))
             return detail(conn,new,current['id'],settings)
 
     @app.post('/api/conversations/{cid}/messages/{mid}/share')
@@ -197,6 +203,34 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
         with db.connect(write=True) as conn:
             own(conn,cid,current['id']);conn.execute('DELETE FROM reply_shares WHERE conversation_id=? AND token_hash=?',(cid,hashlib.sha256(token.encode()).hexdigest()))
         return {'ok':True}
+
+    def pdf_pages(cid,sid,uid):
+        with db.connect() as conn:
+            own(conn,cid,uid)
+            row=conn.execute("SELECT kind,content FROM conversation_sources WHERE conversation_id=? AND id=?",(cid,sid)).fetchone()
+            if not row or row['kind']!='pdf':raise HTTPException(404,'PDF 原件不存在')
+            source=dict(row)
+        from .pdf_visual import render_pages
+        try:pages=render_pages(source,force=True)
+        except ValueError as error:raise HTTPException(422,str(error)) from None
+        # Rendering can finish after deletion or account-side withdrawal.
+        with db.connect() as conn:
+            own(conn,cid,uid)
+            live=conn.execute('SELECT content FROM conversation_sources WHERE conversation_id=? AND id=?',(cid,sid)).fetchone()
+            if not live or live['content']!=source['content']:raise HTTPException(404,'PDF 原件已移除或变化，请刷新后查看')
+        return pages
+
+    @app.get('/api/conversations/{cid}/sources/{sid}/pdf-preview')
+    def pdf_preview(cid:str,sid:str,current=Depends(user)):
+        pages=pdf_pages(cid,sid,current['id'])
+        return {'page_count':len(pages),'pages':[{'page':p['page'],'url':f'/api/conversations/{cid}/sources/{sid}/pdf-pages/{p["page"]}'} for p in pages]}
+
+    @app.get('/api/conversations/{cid}/sources/{sid}/pdf-pages/{page}')
+    def pdf_page(cid:str,sid:str,page:int,current=Depends(user)):
+        if not 1<=page<=50:raise HTTPException(404,'PDF 页码不存在')
+        pages=pdf_pages(cid,sid,current['id'])
+        if page>len(pages):raise HTTPException(404,'PDF 页码不存在')
+        return Response(pages[page-1]['content'],media_type='image/jpeg')
 
     @app.get('/api/conversations/{cid}/sources/{sid}/preview')
     def preview(cid:str,sid:str,page:int=1,q:str='',current=Depends(user)):
@@ -257,7 +291,8 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                     with Image.open(io.BytesIO(data)) as picture:
                         if getattr(picture,'n_frames',1)>1:raise HTTPException(422,'检索图片含多页或多帧，请选取要查找的那一页另存为 PNG 或 JPG')
                         out=io.BytesIO();picture.convert('RGB').save(out,format='PNG');source.update(kind='png',content=out.getvalue())
-                if source['kind'] in chat_ai.IMAGE_MIME:
+                from .visual_evidence import image_sources
+                if await run_in_threadpool(image_sources,[source]):
                     if not settings.ai_api_key:raise HTTPException(409,'图片检索需要视觉模型。请在设置中配置模型，或改用文字关键词。')
                     if not heavy_lock.acquire(blocking=False):raise HTTPException(429,'模型正在处理其他请求，请稍后重新检索')
                     try:

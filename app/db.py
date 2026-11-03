@@ -230,6 +230,17 @@ class Database:
                 version=conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
                 if version is None or version[0] not in {'1','2','3','4','5'}:
                     raise RuntimeError('数据库版本不兼容，禁止直接降级')
+                from .verification import TABLES as VERIFICATION_TABLES
+                from .mail_delivery import TABLES as MAIL_TABLES
+                from .delivery_policy import TABLES as DELIVERY_POLICY_TABLES
+                from .campus_imports import TABLES as IMPORT_TABLES
+                for key,required in (('verification_schema_version',VERIFICATION_TABLES),('mail_delivery_schema_version',MAIL_TABLES),('delivery_policy_schema_version',DELIVERY_POLICY_TABLES)):
+                    current=conn.execute('SELECT value FROM meta WHERE key=?',(key,)).fetchone()
+                    if current and (current[0]!='1' or not required.issubset(tables)):
+                        raise RuntimeError('账号或提醒数据版本不兼容或数据表缺失，未修改数据库：'+key)
+                current=conn.execute("SELECT value FROM meta WHERE key='campus_import_schema_version'").fetchone()
+                if current and (current[0]!='1' or not IMPORT_TABLES.issubset(tables)):
+                    raise RuntimeError('校园导入记录版本不兼容或数据表缺失，未修改数据库')
                 workflow_version = conn.execute("SELECT value FROM meta WHERE key='workflow_schema_version'").fetchone()
                 if workflow_version and workflow_version[0] not in {'1','2','3'}:
                     raise RuntimeError('办理工作流版本不兼容，禁止直接降级')
@@ -237,6 +248,10 @@ class Database:
                 from .task_materials import TABLES as MATERIAL_TABLES
                 if material_version and (material_version[0]!='1' or not MATERIAL_TABLES.issubset(tables)):
                     raise RuntimeError('本人材料版本不兼容或数据表缺失，未修改数据库')
+                assistance_version=conn.execute("SELECT value FROM meta WHERE key='handling_assistance_schema_version'").fetchone()
+                from .handling_assistant import TABLES as ASSISTANCE_TABLES
+                if assistance_version and (assistance_version[0]!='1' or not ASSISTANCE_TABLES.issubset(tables)):
+                    raise RuntimeError('办理准备草稿版本不兼容或数据表缺失，未修改数据库')
                 intake_version = conn.execute("SELECT value FROM meta WHERE key='notice_intake_schema_version'").fetchone()
                 from .notice_intake import TABLES as INTAKE_TABLES
                 if intake_version and (intake_version[0] != '1' or not INTAKE_TABLES.issubset(tables)):
@@ -293,6 +308,8 @@ class Database:
             conn.executescript('BEGIN IMMEDIATE;'+AGENT_SCHEMA+'COMMIT;')
             from .task_materials import SCHEMA as MATERIAL_SCHEMA
             conn.executescript('BEGIN IMMEDIATE;'+MATERIAL_SCHEMA+'COMMIT;')
+            from .handling_assistant import SCHEMA as ASSISTANCE_SCHEMA
+            conn.executescript('BEGIN IMMEDIATE;'+ASSISTANCE_SCHEMA+'COMMIT;')
             from .notice_ingest import initialize as initialize_ingest
             initialize_ingest(conn)
             from .notice_matters import initialize as initialize_matters
@@ -305,8 +322,20 @@ class Database:
             init_push(conn)
             from .notice_automation import initialize as init_notice_automation
             init_notice_automation(conn)
+            from .message_interactions import initialize as init_message_interactions
+            init_message_interactions(conn)
+            from .proactive_feedback import initialize as init_proactive_feedback
+            init_proactive_feedback(conn)
             from .campus import initialize as init_campus
             init_campus(conn)
+            from .verification import initialize as init_verification
+            from .campus_imports import initialize as init_imports
+            init_imports(conn)
+            init_verification(conn)
+            from .mail_delivery import initialize as init_mail
+            init_mail(conn)
+            from .delivery_policy import initialize as init_delivery_policy
+            init_delivery_policy(conn)
 
     @contextmanager
     def connect(self, write=False):

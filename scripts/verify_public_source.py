@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 from app.config import Settings
 from app.main import create_app
+from synthetic_auth import verified_registration
 from app.security import new_invite
 
 
@@ -44,7 +45,7 @@ def main():
             return response.json()
 
         try:
-            request('POST', '/auth/register', json={
+            verified_registration(client,{
                 'invite': new_invite(app.state.db), 'username': 'public.source.verification',
                 'password': 'Synthetic-Verification-Only-2026',
                 'display_name': '公开来源隔离验收', 'accepted_terms': True})

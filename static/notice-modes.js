@@ -16,4 +16,6 @@ export function updateNoticeMode(root,ai){
   root.querySelector('[data-notice-mode-price-link]').href=mode.price_source||'https://mimo.mi.com';
   const consent=root.querySelector('#ai-consent');
   if(consent)consent.checked=false;
+  const intakeConsent=root.querySelector('[name=prepare_consent]');
+  if(intakeConsent)intakeConsent.checked=false;
 }

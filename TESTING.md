@@ -1,5 +1,13 @@
 # 验证记录
 
+## 账号验证、邮件与校园导入
+
+`tests/test_verification.py`、`tests/verification.test.mjs` 和 `tests/auth-feedback.test.mjs` 覆盖验证码用途及账号绑定、有效期、限流、尝试次数、一次性消费、改密和联系方式变更，以及注册分步过程中保留已完成的验证。`tests/test_mail_delivery.py` 覆盖经本人验证并授权的收件地址、持久队列、撤回、限额与不确定投递；这些测试不向真实手机或邮箱发送消息。
+
+`tests/test_campus_imports.py` 与 `tests/campus-imports.test.mjs` 覆盖课表及公众号清单识别的同意、预览、核对保存、周次日期、去重、回执、账号隔离、超额回滚和同名学校来源筛选。真实模型联调用合成CSV及截图输入，响应布局另经浏览器界面检查；真实教务导出、本人关注列表、手机桌面安装与锁屏提醒仍需实际参与者核验。
+
+源码交付包会检查 Web App Manifest、离线页和安装图标是否存在；实验性创空间部署须先通过本地持久磁盘条件检查。依赖审计、合成工程测试和配置字段齐全均不构成比赛结项或公网可用性的证明。
+
 ## 对话动作、执行轨迹与可取消的新建手势
 
 `OPENUI_VERIFY_SCRIPT=scripts/verify_chat_interactions.mjs` 配合 `python scripts/run_openui_browser_checks.py` 以隔离账号和合成回复检查三种浏览器。覆盖旧轮次无重生成、最后一轮状态检查、按用户发送时间进行 5 分钟分组、执行轨迹和真实耗时、默认收起与 CSS 网格反复展开、等宽数字、重复点击的 5 秒反馈环、增量文字晕染与减少动态效果、尾字保护、材料面板重排锚点、长短回复版本切换、末尾空白，以及间断滚轮、取消窗口和 Chromium 原生触摸上滑。记录在 `artifacts/chat-interactions/{browser}/`，已加入 CI。轮次、时间和复现文字为合成夹具；执行轨迹在实际产品中只读取该回复已有的工具记录和计时，不追加模型调用，也不展示模型私有推理。
@@ -99,7 +107,7 @@ npm ci --ignore-scripts
 - 真实手机提醒：在目标手机开启持久推送并验证关闭页面、锁屏、到期、改期及撤销；分别记录服务商接收和设备实际显示。另行导入 `.ics`，验证新建、重复导入、改期和取消。尚未开启持久推送时，页面提醒仅在页面打开期间运行。
 - 真机多浏览器：Android、iOS、HarmonyOS 实机及其软键盘、系统音频、触摸手感和录音兼容性。目前只有桌面浏览器引擎和模拟视口的结果。
 - 真实学生试点：真实学生在真实通知上的完整流程、使用日记录和效果对比。原方案要求的样本量和对照条件见 [办理闭环与演进契约](docs/MVP_WORKFLOW.md)。
-- 校方统一认证：学号、工号和手机号目前只是自填账号名，没有接入学校统一身份认证或短信验证。
+- 校方统一认证：学号、工号目前仍是自填信息，没有接入学校统一身份认证。短信验证码已实现并有本人收码记录；邮箱验证码已实现发送适配，仍须完成真实送达验证。这些验证不授予学校身份或学院权限。
 - 生产部署容量：公网 HTTPS、反向代理、真实服务器的容量、监控、备份恢复演练。当前仅适合单实例小规模部署，`verify_local_runtime.py` 的合成负载不是容量上限。
 
 此外，模型真实准确率、延迟和费用，声音复刻（默认关闭）的授权流程与效果，QQ / 公众号的真实平台授权联调，以及隐私政策、用户协议和 AI 标识是否满足适用规定，都需要在实际配置下另行确认。
@@ -128,8 +136,17 @@ npm ci --ignore-scripts
 
 - `tests/test_reply_preview.py`：生成/核验中连续 GET、改稿清空旧 UI、失败稿恢复、账号隔离、主动选择版本持久化，以及未完成稿不进入后续模型上下文。
 - `tests/test_chat_continuity.py`：同账号同对话的真实操作回执、当前状态与撤销状态；作者和审核者同步取得回执；纯表扬零模型调用且不冒充业务操作，授权和后续任务不走捷径。
-- `OPENUI_VERIFY_SCRIPT=scripts/verify_chat_recovery.mjs .venv/Scripts/python.exe scripts/run_openui_browser_checks.py`：三个浏览器在真实 SSE 核验等待期间刷新，检查最新 UI 恢复、最终原文一致以及旧版/最新版选择后的再次刷新。模型边界仍使用合成输入，四秒等待仅用于制造可重复的刷新窗口，不是速度基准。
+- `OPENUI_VERIFY_SCRIPT=scripts/verify_chat_recovery.mjs .venv/Scripts/python.exe scripts/run_openui_browser_checks.py`：三个浏览器在真实 SSE 核验等待期间刷新，检查最新 UI 恢复、最终原文一致以及旧版/最新版选择后的再次刷新。模型边界仍使用合成输入，专用夹具显式保持核验阶段，在检查完刷新恢复后才释放；45 秒未释放时失败。这是可重复的状态验收，不是速度基准。
 - `scripts/verify_chat_layout.mjs` 验证顶栏显隐采用浮层透明度/位移动画；显隐和空闲恢复前后阅读区域的高度、位置、滚动位置一致。
 - `scripts/verify_chat_interactions.mjs` 验证执行摘要没有内嵌时间线，完整轨迹通过独立窗口打开，搜索和真实详情仍可使用。
 
 实质性事实和互动代码继续执行原有程序检查与独立模型审查；模型仍使用配置的完整思考和输出上限，不用合成计时承诺真实服务延迟。
+
+
+## 完整一轮与 main 交付（2026-11-03）
+
+最后一次代码修改后重新执行全部检查，以同一份源码为基础。整轮之间修改代码，原批次只保留为诊断记录，不计为冻结版本通过。完整入口和范围见 [main 整轮验收](docs/proactive/MAIN_SYNC.md)，CI 的全部任务见 `.github/workflows/checks.yml`。
+
+后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、十二组通用浏览器、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
+
+本地完整一轮通过后再正常推送，检查新 main 提交实际触发的 Actions 全部 jobs，再确认功能分支已合入并清理。旧提交、局部补跑、离线模型夹具及桌面模拟视口不替代当前 main CI、真实渠道或真实试点验收。

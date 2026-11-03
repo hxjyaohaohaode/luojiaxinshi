@@ -1,0 +1,1700 @@
+{
+  "verified_at_utc": "2026-11-02",
+  "repositories": {
+    "dgtlmoon/changedetection.io": {
+      "repo": "dgtlmoon/changedetection.io",
+      "stars": 35460,
+      "archived": false,
+      "license": "Apache-2.0",
+      "pushed": "2026-11-02T14:03:53Z",
+      "sha": "ec81dce7828996242723466299fb651ac6e9fafe",
+      "release": {
+        "tag": "0.60.10",
+        "published": "2026-10-26T12:00:07Z",
+        "url": "https://github.com/dgtlmoon/changedetection.io/releases/tag/0.60.10",
+        "prerelease": false
+      },
+      "ci": [
+        {
+          "name": "Publish Python 🐍distribution 📦 to PyPI and TestPyPI",
+          "sha": "ec81dce7828996242723466299fb651ac6e9fafe",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421551"
+        },
+        {
+          "name": "Build and push containers",
+          "sha": "ec81dce7828996242723466299fb651ac6e9fafe",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421218"
+        },
+        {
+          "name": "ChangeDetection.io App Test",
+          "sha": "ec81dce7828996242723466299fb651ac6e9fafe",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302"
+        }
+      ],
+      "code_checks": [
+        {
+          "name": "test-application-3-11 / playwright-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323343043"
+        },
+        {
+          "name": "test-application-3-11 / upgrade-path-test",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323343004"
+        },
+        {
+          "name": "test-application-3-11 / pyppeteer-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342989"
+        },
+        {
+          "name": "test-application-3-11 / unit-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342931"
+        },
+        {
+          "name": "test-application-3-11 / container-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342805"
+        },
+        {
+          "name": "test-application-3-11 / processor-plugin-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342785"
+        },
+        {
+          "name": "test-application-3-11 / selenium-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342723"
+        },
+        {
+          "name": "test-application-3-11 / custom-browser-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342714"
+        },
+        {
+          "name": "test-application-3-11 / proxy-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342694"
+        },
+        {
+          "name": "test-application-3-11 / signal-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342642"
+        },
+        {
+          "name": "test-application-3-11 / nginx-reverse-proxy",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342624"
+        },
+        {
+          "name": "test-application-3-11 / smtp-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342616"
+        },
+        {
+          "name": "test-application-3-11 / basic-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125323342505"
+        },
+        {
+          "name": "test-application-3-14 / upgrade-path-test",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322394247"
+        },
+        {
+          "name": "test-application-3-14 / smtp-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393965"
+        },
+        {
+          "name": "test-application-3-14 / proxy-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393771"
+        },
+        {
+          "name": "test-application-3-14 / basic-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393723"
+        },
+        {
+          "name": "test-application-3-14 / selenium-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393610"
+        },
+        {
+          "name": "test-application-3-14 / unit-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393550"
+        },
+        {
+          "name": "test-application-3-14 / container-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393506"
+        },
+        {
+          "name": "test-application-3-14 / signal-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393468"
+        },
+        {
+          "name": "test-application-3-14 / custom-browser-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393435"
+        },
+        {
+          "name": "test-application-3-14 / nginx-reverse-proxy",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393434"
+        },
+        {
+          "name": "test-application-3-14 / playwright-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393429"
+        },
+        {
+          "name": "test-application-3-14 / processor-plugin-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393378"
+        },
+        {
+          "name": "test-application-3-14 / pyppeteer-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322393335"
+        },
+        {
+          "name": "test-application-3-13 / pyppeteer-tests",
+          "status": "completed",
+          "result": "skipped",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322328746"
+        },
+        {
+          "name": "test-application-3-13 / container-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326494"
+        },
+        {
+          "name": "test-application-3-13 / nginx-reverse-proxy",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326386"
+        },
+        {
+          "name": "test-application-3-13 / proxy-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326384"
+        },
+        {
+          "name": "test-application-3-13 / custom-browser-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326347"
+        },
+        {
+          "name": "test-application-3-13 / processor-plugin-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326269"
+        },
+        {
+          "name": "test-application-3-13 / signal-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326264"
+        },
+        {
+          "name": "test-application-3-13 / upgrade-path-test",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326263"
+        },
+        {
+          "name": "test-application-3-13 / selenium-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326216"
+        },
+        {
+          "name": "test-application-3-13 / basic-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326148"
+        },
+        {
+          "name": "test-application-3-13 / smtp-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326140"
+        },
+        {
+          "name": "test-application-3-13 / playwright-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326134"
+        },
+        {
+          "name": "test-application-3-13 / unit-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125322326078"
+        },
+        {
+          "name": "test-application-3-12 / pyppeteer-tests",
+          "status": "completed",
+          "result": "skipped",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321987362"
+        },
+        {
+          "name": "test-application-3-12 / container-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985619"
+        },
+        {
+          "name": "test-application-3-12 / upgrade-path-test",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985584"
+        },
+        {
+          "name": "test-application-3-12 / nginx-reverse-proxy",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985482"
+        },
+        {
+          "name": "test-application-3-12 / smtp-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985462"
+        },
+        {
+          "name": "test-application-3-12 / custom-browser-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985409"
+        },
+        {
+          "name": "test-application-3-12 / selenium-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985403"
+        },
+        {
+          "name": "test-application-3-12 / processor-plugin-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985373"
+        },
+        {
+          "name": "test-application-3-12 / unit-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985328"
+        },
+        {
+          "name": "test-application-3-12 / signal-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985276"
+        },
+        {
+          "name": "test-application-3-12 / proxy-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985261"
+        },
+        {
+          "name": "test-application-3-12 / basic-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985260"
+        },
+        {
+          "name": "test-application-3-12 / playwright-tests",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321985255"
+        },
+        {
+          "name": "Test the built package works basically.",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421551/job/125321159018"
+        },
+        {
+          "name": "test-application-3-14 / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321125233"
+        },
+        {
+          "name": "test-application-3-12 / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321125208"
+        },
+        {
+          "name": "test-application-3-11 / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321125003"
+        },
+        {
+          "name": "test-application-3-13 / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125321124968"
+        },
+        {
+          "name": "build-push-containers",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421218/job/125320959609"
+        },
+        {
+          "name": "lint-code",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125320957222"
+        },
+        {
+          "name": "lint-translations",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125320957120"
+        },
+        {
+          "name": "lint-template-i18n",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421302/job/125320956668"
+        },
+        {
+          "name": "Build distribution 📦",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/dgtlmoon/changedetection.io/actions/runs/41458421551/job/125320956106"
+        }
+      ],
+      "non_test_checks": [
+        "Publish Python 🐍 distribution 📦 to PyPI",
+        "metadata"
+      ]
+    },
+    "DIYgod/RSSHub": {
+      "repo": "DIYgod/RSSHub",
+      "stars": 46773,
+      "archived": false,
+      "license": "AGPL-3.0",
+      "pushed": "2026-11-02T14:57:54Z",
+      "sha": "ac5576010abd4fc0dec3a0e6fb08f674eb68065a",
+      "release": {
+        "tag": "v2026.11.02-8530.ac55760",
+        "published": "2026-11-02T14:57:55Z",
+        "url": "https://github.com/DIYgod/RSSHub/releases/tag/v2026.11.02-8530.ac55760",
+        "prerelease": false
+      },
+      "ci": [
+        {
+          "name": "CodeQL",
+          "sha": "ac5576010abd4fc0dec3a0e6fb08f674eb68065a",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876831"
+        },
+        {
+          "name": "Docker Release",
+          "sha": "ac5576010abd4fc0dec3a0e6fb08f674eb68065a",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876789"
+        },
+        {
+          "name": "Format",
+          "sha": "ac5576010abd4fc0dec3a0e6fb08f674eb68065a",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465877038"
+        }
+      ],
+      "code_checks": [
+        {
+          "name": "Workers Builds: rsshub",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/runs/125350332597"
+        },
+        {
+          "name": "Prune old CodeQL databases",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876831/job/125349599958"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465877159/job/125346492624"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876831/job/125346491530"
+        },
+        {
+          "name": "Vitest Playwright on Node lts/* with Chrome from Google",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876921/job/125346491102"
+        },
+        {
+          "name": "release (linux/amd64, ubuntu-latest)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876789/job/125346491061"
+        },
+        {
+          "name": "Vitest on Node lts/*",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876921/job/125346491044"
+        },
+        {
+          "name": "Vitest Playwright on Node latest with Chrome from Google",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876921/job/125346490908"
+        },
+        {
+          "name": "Vitest on Node latest",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876921/job/125346490828"
+        },
+        {
+          "name": "Build assets",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876783/job/125346490674"
+        },
+        {
+          "name": "Auto format",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465877038/job/125346490649"
+        },
+        {
+          "name": "Build radar and maintainer on Node 26",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/DIYgod/RSSHub/actions/runs/41465876921/job/125346490449"
+        }
+      ],
+      "non_test_checks": [
+        "github-release",
+        "description",
+        "merge",
+        "automerge",
+        "Validate PR title",
+        "Pull Request Labeler",
+        "AgentScan",
+        "Anti Slop",
+        "Vouch check PR",
+        "Scan",
+        "release (linux/arm64, ubuntu-26.04-arm)",
+        "npm publish"
+      ]
+    },
+    "langchain-ai/langgraph": {
+      "repo": "langchain-ai/langgraph",
+      "stars": 44337,
+      "archived": false,
+      "license": "MIT",
+      "pushed": "2026-11-02T16:03:58Z",
+      "sha": "ee3c043bddcc514012885167dd5916b15d6e4731",
+      "release": {
+        "tag": "1.2.19",
+        "published": "2026-10-30T22:23:43Z",
+        "url": "https://github.com/langchain-ai/langgraph/releases/tag/1.2.19",
+        "prerelease": false
+      },
+      "ci": [
+        {
+          "name": "Tag External Issues",
+          "sha": "ee3c043bddcc514012885167dd5916b15d6e4731",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41478076016"
+        },
+        {
+          "name": "Tag External Issues",
+          "sha": "ee3c043bddcc514012885167dd5916b15d6e4731",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41465077971"
+        },
+        {
+          "name": "Tag External Issues",
+          "sha": "ee3c043bddcc514012885167dd5916b15d6e4731",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41464862744"
+        }
+      ],
+      "code_checks": [
+        {
+          "name": "CI Success",
+          "status": "completed",
+          "result": "failure",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125098305545"
+        },
+        {
+          "name": "sdk-py integration test",
+          "status": "completed",
+          "result": "skipped",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096499147"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498727"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498702"
+        },
+        {
+          "name": "cd libs/checkpoint / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498697"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498682"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498675"
+        },
+        {
+          "name": "cd libs/sdk-py / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498666"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498654"
+        },
+        {
+          "name": "cd libs/prebuilt / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498646"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498642"
+        },
+        {
+          "name": "cd libs/cli / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498636"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498635"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498631"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498628"
+        },
+        {
+          "name": "cd libs/cli / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498624"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498605"
+        },
+        {
+          "name": "cd libs/cli / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498597"
+        },
+        {
+          "name": "cd libs/cli / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498580"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498575"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498570"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498566"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498550"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498525"
+        },
+        {
+          "name": "cd libs/cli / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498502"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498484"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498464"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498459"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498435"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498433"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498432"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498424"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498404"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498395"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498389"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498380"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498358"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498355"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498318"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498313"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498287"
+        },
+        {
+          "name": "cd libs/langgraph / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498278"
+        },
+        {
+          "name": "cd libs/cli / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498272"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498264"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, C, libs/cli/examples/graphs_reqs_a, langgraph-test-c)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498262"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498233"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, D, libs/cli/examples/graphs_reqs_b, langgraph-test-d)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498185"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, B, libs/cli/examples/graphs, langgraph-test-b)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498130"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, B, libs/cli/examples/graphs, langgraph-test-b)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498074"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, C, libs/cli/examples/graphs_reqs_a, langgraph-test-c)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498072"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, A, libs/cli/examples, langgraph-test-a)",
+          "status": "completed",
+          "result": "cancelled",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498033"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, A, libs/cli/examples, langgraph-test-a)",
+          "status": "completed",
+          "result": "failure",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096498016"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, D, libs/cli/examples/graphs_reqs_b, langgraph-test-d)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497989"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497937"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497928"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.11",
+          "status": "completed",
+          "result": "cancelled",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497926"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.13",
+          "status": "completed",
+          "result": "cancelled",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497923"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.14",
+          "status": "completed",
+          "result": "failure",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389142335/job/125096497919"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41389141235/job/125096470109"
+        }
+      ],
+      "non_test_checks": [
+        "backfill",
+        "tag-external",
+        "backfill",
+        "tag-external",
+        "backfill",
+        "tag-external",
+        "backfill",
+        "tag-external",
+        "backfill",
+        "tag-external",
+        "backfill",
+        "tag-external",
+        "deploy",
+        "Dependabot",
+        "Check SDK methods matching",
+        "Check CLI schema hasn't changed #3.13",
+        "update-uv-graph",
+        "Socket Security: Project Report",
+        "Analyze (actions)",
+        "Analyze (python)",
+        "changes",
+        "benchmark"
+      ],
+      "stable_sha": "5bd231cbfd913e05ebc662f519eb9a655bc766df",
+      "stable_checks": [
+        {
+          "name": "test-pypi-publish / publish",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41137330358/job/124344242361"
+        },
+        {
+          "name": "test-pypi-publish / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41137330358/job/124344089236"
+        },
+        {
+          "name": "CI Success",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124343808425"
+        },
+        {
+          "name": "test-pypi-publish / publish",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136981173/job/124342370163"
+        },
+        {
+          "name": "test-pypi-publish / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136981173/job/124342303899"
+        },
+        {
+          "name": "test-pypi-publish / publish",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136984772/job/124342139072"
+        },
+        {
+          "name": "test-pypi-publish / build",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136984772/job/124342069798"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205627"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205584"
+        },
+        {
+          "name": "cd libs/cli / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205581"
+        },
+        {
+          "name": "cd libs/cli / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205560"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205516"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205507"
+        },
+        {
+          "name": "cd libs/cli / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205503"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205499"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205485"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205471"
+        },
+        {
+          "name": "cd libs/cli / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205462"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205458"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205456"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205455"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205449"
+        },
+        {
+          "name": "cd libs/cli / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205448"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205415"
+        },
+        {
+          "name": "cd libs/prebuilt / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205409"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205403"
+        },
+        {
+          "name": "cd libs/checkpoint / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205398"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205394"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205354"
+        },
+        {
+          "name": "cd libs/sdk-py / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205326"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205323"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205314"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205278"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205277"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205236"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205206"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205178"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205169"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205157"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205124"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205114"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205082"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, D, libs/cli/examples/graphs_reqs_b, langgraph-test-d)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205057"
+        },
+        {
+          "name": "cd libs/langgraph / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341205052"
+        },
+        {
+          "name": "cd libs/prebuilt / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204971"
+        },
+        {
+          "name": "cd libs/checkpoint / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204912"
+        },
+        {
+          "name": "cd libs/cli / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204908"
+        },
+        {
+          "name": "cd libs/checkpoint-postgres / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204888"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, A, libs/cli/examples, langgraph-test-a)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204830"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, A, libs/cli/examples, langgraph-test-a)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204801"
+        },
+        {
+          "name": "cd libs/checkpoint-sqlite / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204774"
+        },
+        {
+          "name": "cd libs/sdk-py / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204754"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, C, libs/cli/examples/graphs_reqs_a, langgraph-test-c)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204744"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, B, libs/cli/examples/graphs, langgraph-test-b)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204743"
+        },
+        {
+          "name": "cd libs/checkpoint-conformance / lint #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204711"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, D, libs/cli/examples/graphs_reqs_b, langgraph-test-d)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204705"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.14, C, libs/cli/examples/graphs_reqs_a, langgraph-test-c)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204704"
+        },
+        {
+          "name": "CLI integration test / CLI integration test (3.10, B, libs/cli/examples/graphs, langgraph-test-b)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204688"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.12",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204616"
+        },
+        {
+          "name": "sdk-py integration test / sdk-py integration",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204614"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.11",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204570"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.14",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204538"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.10",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204536"
+        },
+        {
+          "name": "cd libs/langgraph / test #3.13",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136797808/job/124341204528"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/langchain-ai/langgraph/actions/runs/41136796261/job/124341133164"
+        }
+      ],
+      "adoption": "reference stable 1.2.19; development head excluded because CI failed"
+    },
+    "openai/openai-agents-python": {
+      "repo": "openai/openai-agents-python",
+      "stars": 30459,
+      "archived": false,
+      "license": "MIT",
+      "pushed": "2026-11-01T04:56:10Z",
+      "sha": "e355d69152d4f4730dfb03b63dbce53e8d9f5d8c",
+      "release": {
+        "tag": "v0.24.0",
+        "published": "2026-10-15T02:20:12Z",
+        "url": "https://github.com/openai/openai-agents-python/releases/tag/v0.24.0",
+        "prerelease": false
+      },
+      "ci": [
+        {
+          "name": "Close inactive issues",
+          "sha": "e355d69152d4f4730dfb03b63dbce53e8d9f5d8c",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41372881781"
+        },
+        {
+          "name": "Release Candidate unrelated",
+          "sha": "e355d69152d4f4730dfb03b63dbce53e8d9f5d8c",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41275665385"
+        },
+        {
+          "name": "Release Candidate unrelated",
+          "sha": "e355d69152d4f4730dfb03b63dbce53e8d9f5d8c",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41275638279"
+        }
+      ],
+      "code_checks": [
+        {
+          "name": "CodeQL (actions)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123080167/job/124294410656"
+        },
+        {
+          "name": "CodeQL (python)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123080167/job/124294410344"
+        },
+        {
+          "name": "build-docs",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409925"
+        },
+        {
+          "name": "tests (3.14)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409899"
+        },
+        {
+          "name": "lint",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409762"
+        },
+        {
+          "name": "tests (3.12)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409698"
+        },
+        {
+          "name": "tests-windows (3.13)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409663"
+        },
+        {
+          "name": "tests (3.10)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409630"
+        },
+        {
+          "name": "typecheck",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409603"
+        },
+        {
+          "name": "tests (3.13)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409585"
+        },
+        {
+          "name": "tests-windows (3.10)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409492"
+        },
+        {
+          "name": "tests (3.11)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41123079381/job/124294409474"
+        },
+        {
+          "name": "tests (3.11)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288864254"
+        },
+        {
+          "name": "tests (3.12)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288864124"
+        },
+        {
+          "name": "tests-windows (3.10)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288864076"
+        },
+        {
+          "name": "tests-windows (3.13)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288864043"
+        },
+        {
+          "name": "tests (3.10)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288864022"
+        },
+        {
+          "name": "lint",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288863997"
+        },
+        {
+          "name": "build-docs",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288863995"
+        },
+        {
+          "name": "tests (3.14)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288863939"
+        },
+        {
+          "name": "typecheck",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288863908"
+        },
+        {
+          "name": "tests (3.13)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601287/job/124288863878"
+        },
+        {
+          "name": "CodeQL (python)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601263/job/124288863836"
+        },
+        {
+          "name": "CodeQL (actions)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/openai/openai-agents-python/actions/runs/41121601263/job/124288863565"
+        }
+      ],
+      "non_test_checks": [
+        "close-issues",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "Dependabot",
+        "close-issues",
+        "close-issues",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "contract",
+        "update",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "update",
+        "contract",
+        "discover",
+        "packaged-contract (3.14)",
+        "packaged-contract-windows",
+        "packaged-contract (3.10)",
+        "Analyze (python)",
+        "mcp-v1-compat",
+        "native-macos-sandbox",
+        "prospective-release-contract",
+        "mypy-win32",
+        "containers",
+        "release-pr",
+        "packaged-contract (3.10)",
+        "packaged-contract-windows",
+        "packaged-contract (3.14)",
+        "native-macos-sandbox",
+        "prospective-release-contract",
+        "mcp-v1-compat",
+        "mypy-win32",
+        "Release readiness",
+        "containers"
+      ]
+    },
+    "novuhq/novu": {
+      "repo": "novuhq/novu",
+      "stars": 40249,
+      "archived": false,
+      "license": "NOASSERTION",
+      "pushed": "2026-11-02T16:17:08Z",
+      "sha": "2961dd456141739d9c5b02b5101a4c1a820ed2c1",
+      "release": {
+        "tag": "@novu/framework@v2.14.0",
+        "published": "2026-09-28T15:43:34Z",
+        "url": "https://github.com/novuhq/novu/releases/tag/%40novu/framework%40v2.14.0",
+        "prerelease": false
+      },
+      "ci": [
+        {
+          "name": "Deploying to api, worker, on staging",
+          "sha": "2961dd456141739d9c5b02b5101a4c1a820ed2c1",
+          "status": "in_progress",
+          "result": null,
+          "url": "https://github.com/novuhq/novu/actions/runs/41479913528"
+        },
+        {
+          "name": "Prepare Cloud Release",
+          "sha": "2961dd456141739d9c5b02b5101a4c1a820ed2c1",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/novuhq/novu/actions/runs/41479848037"
+        },
+        {
+          "name": "Linear Release - Community Edition",
+          "sha": "2961dd456141739d9c5b02b5101a4c1a820ed2c1",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/novuhq/novu/actions/runs/41479826760"
+        }
+      ],
+      "code_checks": [
+        {
+          "name": "build (api)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/novuhq/novu/actions/runs/41479913528/job/125396447254"
+        },
+        {
+          "name": "build (worker)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/novuhq/novu/actions/runs/41479913528/job/125396447193"
+        },
+        {
+          "name": "Analyze (typescript)",
+          "status": "completed",
+          "result": "success",
+          "url": "https://github.com/novuhq/novu/actions/runs/41479826620/job/125395162778"
+        }
+      ],
+      "non_test_checks": [
+        "webhook_notification",
+        "sentry_release (worker)",
+        "Linear Release (Cloud)",
+        "new_relic_release (staging-eu, worker)",
+        "sync_novu_state",
+        "sentry_release (api)",
+        "new_relic_release (staging-eu, api)",
+        "deploy (staging-eu, worker-cluster, worker-container, worker-service-process-subscriber, worker-t...",
+        "deploy (staging-eu, worker-cluster, worker-container, worker-service-inbound-parse-mail, worker-t...",
+        "deploy (staging-eu, worker-cluster, worker-container, worker-service-trigger-handler, worker-task...",
+        "deploy (staging-eu, api-cluster, api-internal-container, api-internal-service, api-internal-task,...",
+        "deploy (staging-eu, api-cluster, api-container, api-service, api-task, api)",
+        "deploy (staging-eu, worker-cluster, worker-container, worker-service-standard, worker-task-standa...",
+        "Deploy thalamus-observer (${{ needs.prepare-matrix.outputs.thalamus_wrangler_env }})",
+        "run-clickhouse-migrations (staging-eu)",
+        "prepare-matrix",
+        "Analyze (javascript)",
+        "prepare-cloud-release",
+        "validate-submodule-sync",
+        "validate-submodule-sync",
+        "Socket Security: Project Report",
+        "Sync to Linear (Enterprise)",
+        "Refresh or rebake base",
+        "Sync to Linear (Community)",
+        "trigger-deploy-workflow",
+        "Check if submodule token exists",
+        "Check if submodule token exists",
+        "Mintlify Deployment"
+      ]
+    }
+  },
+  "policy": {
+    "primary": [
+      "dgtlmoon/changedetection.io",
+      "DIYgod/RSSHub",
+      "openai/openai-agents-python",
+      "langchain-ai/langgraph@1.2.19"
+    ],
+    "architecture_reference_only": [
+      "novuhq/novu"
+    ],
+    "wechat_lab_only": [
+      "rachelos/we-mp-rss"
+    ],
+    "excluded_archived": [
+      "cooderl/wewe-rss",
+      "hellodword/wechat-feeds"
+    ],
+    "new_runtime_dependencies": []
+  }
+}

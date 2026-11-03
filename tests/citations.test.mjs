@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {citationEntries,citationPreview,citationTarget,readableSnapshot} from '../static/genui/citations.js';
+import {citationEntries,citationPreview,citationTarget,readableSnapshot,citationPdfPage} from '../static/genui/citations.js';
 import {elapsedLabel} from '../static/genui/work-view.js';
 test('source panel groups repeated citations without changing inline numbering',()=>{
   const message={citations:[{source_id:'web',quote:'first',locator:'段1'},{source_id:'user',quote:'hours',locator:'问题1'},{source_id:'web',quote:'second',locator:'段2'}],evidence_sources:[{id:'web',name:'官网',url:'https://www.whu.edu.cn',evidence_kind:'web_page'},{id:'user',name:'你提供的条件'},{id:'uncited',name:'其他检索结果',url:'https://uc.whu.edu.cn',evidence_kind:'web_page'}]};
@@ -9,6 +9,12 @@ test('source panel groups repeated citations without changing inline numbering',
   assert.equal(citationEntries({evidence_sources:[{id:'private',name:'本地文件',evidence_kind:'material'}]}).length,0);
 });
 test('elapsed work time uses actual timestamps and never goes negative',()=>{assert.equal(elapsedLabel(100,161),'1分1秒');assert.equal(elapsedLabel(100,99),'0秒');});
+
+test('PDF evidence opens its actual referenced page and rejects arbitrary page fragments',()=>{
+ const entry={quotes:[{number:1,locator:'PDF 第 2 页（图像观察，非 OCR）'},{number:2,locator:'PDF 第 6 页（图像观察，非 OCR）'}]};
+ assert.equal(citationPdfPage(entry,2),6);assert.equal(citationPdfPage(entry),2);
+ for(const locator of ['PDF 第 0 页（图像观察，非 OCR）','PDF 第 99 页（图像观察，非 OCR）','javascript:alert(1)','第 2 页正文'])assert.equal(citationPdfPage({quotes:[{number:1,locator}]},1),null);
+});
 
 test('private record quotes keep meaningful values without exposing protocol and database fields',()=>{
  const text=JSON.stringify({record_type:'internal',values:{title:'提交材料',due_date:'2026-10-25',due_time:'17:00',deadline_confirmed:false,scope:'personal',materials:['申请表'],notes:'已核对'},version:3,updated_at:'internal',status:'pending',workflow:{data:{stage:'submitted',receipt:'回执已保存',next_step:'查询结果'}}});

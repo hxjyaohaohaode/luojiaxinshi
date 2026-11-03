@@ -222,12 +222,14 @@ def install_task_materials(app,db,settings,user,own_task,expect_version):
     async def upload_material(tid:str,request:Request,current=Depends(user)):
         with db.connect() as conn:own_task(conn,tid,current['id'])
         rate_limit(db,'personal-material:'+current['id'],60,3600)
-        form=await request.form(max_files=1,max_fields=7,max_part_size=10000)
+        form=await request.form(max_files=1,max_fields=9,max_part_size=10000)
         try:
-            if set(form.keys())-{'file','requirement','task_version','material_id','expected_version','request_id'}:
+            if set(form.keys())-{'file','requirement','task_version','notice_version','workflow_version','material_id','expected_version','request_id'}:
                 raise HTTPException(422,'包含不支持的材料字段')
             try:
                 task_version=int(form.get('task_version','0'));expected=int(form.get('expected_version','0'))
+                notice_version=int(form['notice_version']) if 'notice_version' in form else None
+                workflow_version=int(form['workflow_version']) if 'workflow_version' in form else None
             except (ValueError,TypeError):raise HTTPException(422,'请刷新后重试上传') from None
             requirement=str(form.get('requirement','')).strip();mid=str(form.get('material_id','')).strip();rid=str(form.get('request_id','')).strip()
             if len(requirement)>500 or len(mid)>40 or not 16<=len(rid)<=80 or not all(c.isascii() and (c.isalnum() or c in '_-') for c in rid):
@@ -239,7 +241,8 @@ def install_task_materials(app,db,settings,user,own_task,expect_version):
             try:source=await run_in_threadpool(file_source,upload.filename or '',content)
             except ValueError as exc:raise HTTPException(422,str(exc)) from None
         finally:await form.close()
-        digest=hashlib.sha256(dumps({'sha256':source['sha256'],'name':source['name'],'requirement':requirement,'material_id':mid,'expected_version':expected,'task_version':task_version}).encode()).hexdigest()
+        digest=hashlib.sha256(dumps({'sha256':source['sha256'],'name':source['name'],'requirement':requirement,'material_id':mid,'expected_version':expected,'task_version':task_version,
+            **({'notice_version':notice_version} if notice_version is not None else {}),**({'workflow_version':workflow_version} if workflow_version is not None else {})}).encode()).hexdigest()
         with db.connect(write=True) as conn:
             task=own_task(conn,tid,current['id'])
             previous=conn.execute('SELECT * FROM task_material_receipts WHERE user_id=? AND request_id=?',(current['id'],rid)).fetchone()
@@ -247,6 +250,12 @@ def install_task_materials(app,db,settings,user,own_task,expect_version):
                 if previous['task_id']!=tid or previous['digest']!=digest:raise HTTPException(409,'上传标识对应的文件已变化，请重新选择文件')
                 return material_bundle(conn,task,current['id'])
             expect_version(task,task_version)
+            if notice_version is not None:
+                notice=conn.execute('SELECT version FROM notices WHERE id=? AND user_id=?',(task['notice_id'],current['id'])).fetchone()
+                expect_version(notice,notice_version)
+            if workflow_version is not None:
+                workflow=conn.execute('SELECT version FROM task_workflows WHERE task_id=?',(tid,)).fetchone()
+                expect_version(workflow or {'version':0},workflow_version)
             if task['status']=='cancelled':raise HTTPException(422,'事项已取消，不能上传新材料')
             requirements=json.loads(task['data'])['materials']
             if requirement and requirement not in requirements:raise HTTPException(422,'材料要求已变化，请选择当前要求或其他补充材料')

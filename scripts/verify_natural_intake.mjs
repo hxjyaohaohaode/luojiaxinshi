@@ -1,3 +1,4 @@
+// Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Synthetic loopback application integration. No paid model or real accounts. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -9,7 +10,7 @@ const out=path.resolve('artifacts/natural-intake-browser');await fs.mkdir(out,{r
 const report={synthetic:true,live_model_calls:0,origin,checks:[],errors:[]};
 for(const name of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  const engine={chromium,firefox,webkit}[name],browser=await engine.launch({headless:true,executablePath:engine.executablePath()});
- const page=await browser.newPage({viewport:{width:1440,height:900}});page.setDefaultTimeout(10000);
+ const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1440,height:900}});page.setDefaultTimeout(10000);
  page.on('pageerror',error=>report.errors.push({engine:name,error:error.message}));
  const api=(url)=>page.evaluate(async url=>{const r=await fetch('/api'+url);if(!r.ok)throw Error(await r.text());return r.json();},url);
  const nav=async route=>{await page.goto(origin+'/#'+route);await page.waitForFunction(route=>document.querySelector('#content')?.dataset.page===route&&!document.querySelector('#content').inert,route);};

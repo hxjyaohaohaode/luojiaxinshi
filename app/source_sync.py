@@ -17,11 +17,13 @@ from pydantic import Field, field_validator, model_validator
 from .db import dumps, ident
 from .evidence_web import decode_page, public_url
 from .models import Strict
-from .notice_intake import read_link, read_notice_materials
+from .notice_intake import read_link
 from .official_sources import PRESETS, get_preset, parse_official_index
 from .public_http import PublicHTTPTransport
 from .security import rate_limit
 
+POLL_SECONDS = 30
+MAX_CONCURRENT_SOURCES = 2
 TABLES = {'source_subscriptions', 'source_subscription_items'}
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS source_subscriptions(
@@ -203,6 +205,13 @@ def status(conn, sid, uid):
     return result
 
 
+def retry_delay(snapshot,config,*,pending,failed):
+    base=config['interval_minutes']*60
+    if not failed:return 60 if pending else base
+    previous=max(base,(snapshot.get('next_poll') or 0)-(snapshot.get('checked_at') or 0))
+    return min(base*8,previous*2) if snapshot.get('error') else base
+
+
 async def sync_source(db, sid, uid=None, force=False):
     from .notice_ingest import ingest_notice
     now = int(time.time())
@@ -222,13 +231,18 @@ async def sync_source(db, sid, uid=None, force=False):
             conn.execute("UPDATE source_subscriptions SET enabled=0,running_until=0,error='来源已改变，请重新确认订阅范围' WHERE source_id=?",(sid,))
             return status(conn,sid,snapshot['user_id'])
     errors, created, updated = [], 0, 0
+    index_succeeded=False
     def unchanged(conn):
         return conn.execute('SELECT 1 FROM source_subscriptions s JOIN source_catalog c ON c.id=s.source_id WHERE s.source_id=? AND s.enabled=1 AND s.version=? AND c.version=?', (sid, snapshot['version'],snapshot['catalog_version'])).fetchone()
     try:
         entries = await fetch_index(config)
+        index_succeeded=True
         with db.connect(write=True) as conn:
             if not unchanged(conn):
                 return None
+            if not conn.execute('SELECT 1 FROM source_baseline_runs WHERE source_id=?',(sid,)).fetchone():
+                conn.executemany('INSERT OR IGNORE INTO source_baseline_items VALUES(?,?)',[(sid,e['url']) for e in entries])
+                conn.execute('INSERT INTO source_baseline_runs VALUES(?,?)',(sid,now))
             for entry in entries:
                 conn.execute('INSERT INTO source_subscription_items(source_id,url,title,published_at,discovered_at) VALUES(?,?,?,?,?) ON CONFLICT(source_id,url) DO UPDATE SET title=excluded.title,published_at=COALESCE(excluded.published_at,source_subscription_items.published_at)',
                              (sid, entry['url'], entry['title'], entry['published_at'], now))
@@ -250,17 +264,27 @@ async def sync_source(db, sid, uid=None, force=False):
                     source['origin']['listed_published_at'] = item['published_at']
                     source['origin'].setdefault('warnings', []).append(
                         f"列表日期 {item['published_at'][:10]} 与正文日期 {article_date[:10]} 不同，已保留两者并采用正文日期，请核对原文")
-                materials = await read_notice_materials(source, read=read_link) if config.get('preset_id') else [source]
+                from .notice_network import read_network,retain_unavailable
+                materials = await read_network(source,config,entries,read=read_link)
                 published = article_date or item['published_at']
                 with db.connect(write=True) as conn:
                     if not unchanged(conn):
                         return None
-                    result = ingest_notice(conn, snapshot['user_id'], title=item['title'], sources=materials,
+                    key='website:'+sid+':'+item['url']
+                    materials=retain_unavailable(conn,snapshot['user_id'],key,materials)
+                    result = ingest_notice(conn, snapshot['user_id'], title=source.get('origin',{}).get('title') or item['title'], sources=materials,
                         source_label=catalog['name'], source_url=item['url'], published_at=published,
                         external_key='website:' + sid + ':' + item['url'], materials_complete=False,observed_at=time.time())
                     created += bool(result.get('created'))
+                    if result.get('created') and conn.execute('SELECT 1 FROM source_baseline_items WHERE source_id=? AND url=?',(sid,item['url'])).fetchone():
+                        conn.execute('INSERT OR IGNORE INTO notice_delivery_suppressions VALUES(?,?)',(result['notice_id'],'initial_website_snapshot'))
                     updated += bool(result.get('updated'))
-                    conn.execute('UPDATE source_subscription_items SET checked_at=?,error=? WHERE source_id=? AND url=?', (int(time.time()), '', sid, item['url']))
+                    origin=materials[0].get('origin',{})
+                    from .source_coverage import coverage
+                    incomplete=any(coverage(material)['reading_incomplete'] for material in materials)
+                    article_error='部分附件或关联内容未完整复查；已有正文和旧证据已保留' if incomplete else ''
+                    if article_error:errors.append(article_error)
+                    conn.execute('UPDATE source_subscription_items SET checked_at=?,error=? WHERE source_id=? AND url=?', (int(time.time()), article_error, sid, item['url']))
             except HTTPException as exc:
                 errors.append(str(exc.detail))
                 with db.connect(write=True) as conn:
@@ -277,13 +301,32 @@ async def sync_source(db, sid, uid=None, force=False):
         with db.connect(write=True) as conn:
             if unchanged(conn):
                 pending_count = conn.execute('SELECT count(*) FROM source_subscription_items WHERE source_id=? AND checked_at=0', (sid,)).fetchone()[0]
-                delay = 60 if pending_count and not errors else config['interval_minutes'] * 60
+                failed_count=conn.execute("SELECT count(*) FROM source_subscription_items WHERE source_id=? AND error<>''",(sid,)).fetchone()[0]
+                if failed_count:errors.append(f'{failed_count} 篇正文仍未成功读取，请在来源状态中核对')
+                # An old login-restricted article must not progressively defer
+                # discovery of NEW public notices for the entire column.
+                # Retain its visible failure, while the successful index keeps
+                # its ordinary interval (or drains undiscovered articles).
+                delay = retry_delay(snapshot,config,pending=bool(pending_count),failed=bool(errors) and not index_succeeded)
                 conn.execute('UPDATE source_subscriptions SET running_until=0,next_poll=?,error=?,succeeded_at=CASE WHEN ? THEN succeeded_at ELSE ? END,received_count=received_count+?,updated_count=updated_count+? WHERE source_id=?',
                              (int(time.time()) + delay, '；'.join(dict.fromkeys(errors))[:1000], bool(errors), int(time.time()), created, updated, sid))
             else:
                 conn.execute("UPDATE source_subscriptions SET enabled=0,running_until=0,error='来源设置已变化，请重新确认订阅' WHERE source_id=? AND version=?",(sid,snapshot['version']))
     with db.connect() as conn:
         return status(conn, sid, snapshot['user_id']) if conn.execute('SELECT 1 FROM source_catalog WHERE id=?', (sid,)).fetchone() else None
+
+
+async def poll_batch(db,rows):
+    """A free worker starts the next source immediately; failures stay scoped."""
+    slots=asyncio.Semaphore(MAX_CONCURRENT_SOURCES)
+    async def poll(sid):
+        async with slots:
+            try:await sync_source(db,sid)
+            except HTTPException:
+                # A source can be removed or paused after the due list is read.
+                logging.getLogger('campus').info('source_subscription_changed_during_poll')
+    async with asyncio.TaskGroup() as tasks:
+        for row in rows:tasks.create_task(poll(row['source_id']))
 
 
 async def run_worker(db, settings=None):
@@ -297,13 +340,12 @@ async def run_worker(db, settings=None):
                 await run_in_threadpool(sync_due,db,publisher)
             with db.connect() as conn:
                 rows = conn.execute('SELECT source_id FROM source_subscriptions WHERE enabled=1 AND next_poll<=? AND running_until<=? ORDER BY next_poll LIMIT 8', (int(time.time()), int(time.time()))).fetchall()
-            for offset in range(0,len(rows),2):
-                await asyncio.gather(*(sync_source(db,row['source_id']) for row in rows[offset:offset+2]))
+            await poll_batch(db,rows)
         except asyncio.CancelledError:
             raise
         except Exception:
             logging.getLogger('campus').error('source_subscription_worker_failed')
-        await asyncio.sleep(30)
+        await asyncio.sleep(POLL_SECONDS)
 
 
 def install(app, db, user):

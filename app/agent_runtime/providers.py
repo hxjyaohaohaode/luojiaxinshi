@@ -1,6 +1,7 @@
 """Bounded OpenAI-compatible tool protocol; explicit MiMo/loopback OSS selection."""
 import ipaddress
 import json
+import time
 from contextlib import asynccontextmanager
 from urllib.parse import urlsplit
 
@@ -23,6 +24,9 @@ def response_usage(data):
                               ('completion_tokens_details','reasoning_tokens','completion_tokens')):
         if isinstance(usage.get(field),dict) and detail in usage[field]:
             safe[field] = {detail:min(safe[total],max(0,int(usage[field][detail] or 0)))}
+    from ..harness import transport_metrics
+    transport=transport_metrics(data.get('stream_metrics'))
+    if transport:safe['transport']=transport
     return safe
 
 
@@ -108,13 +112,15 @@ class Provider:
         if on_text:
             payload.update(stream=True, stream_options={'include_usage': True})
         headers = {'Authorization': 'Bearer ' + self.key} if self.key else {}
+        started=time.monotonic()
         try:
             async with self.client() as client:
                 async with client.stream('POST', self.url + '/chat/completions', json=payload, headers=headers) as response:
                     if response.status_code != 200:
                         raise AgentError(f'模型服务返回 HTTP {response.status_code}；未自动重试，请核对配置与额度')
                     if on_text:
-                        data = await stream_message(response, on_text, on_answer_arguments, retain_reasoning=self.kind == 'mimo')
+                        data = await stream_message(response, on_text, on_answer_arguments,
+                                                    retain_reasoning=self.kind == 'mimo', started_at=started)
                     else:
                         body = bytearray()
                         async for chunk in response.aiter_bytes():
@@ -165,7 +171,7 @@ class Provider:
             raise AgentError('模型未返回兼容的完整工具协议；未执行本次工具') from None
 
 
-async def stream_message(response, on_text, on_answer_arguments=None, *, retain_reasoning=False):
+async def stream_message(response, on_text, on_answer_arguments=None, *, retain_reasoning=False, started_at=None):
     """Buffer tools until a complete finish; optionally decode submit's answer.
 
 The argument callback feeds AnswerDecoder, never the raw UI or other tools.
@@ -175,9 +181,12 @@ Nothing is executed or published by either preview callback.
     decoder = codecs.getincrementaldecoder('utf-8')()
     buffer, content, calls, usage, finish, size = '', '', {}, {}, None, 0
     previewed_arguments = 0
-    reasoning, model = [], None
+    reasoning, model, terminal = [], None, False
+    started=time.monotonic() if started_at is None else started_at
+    metrics={'chunks':0,'events':0}
     async for chunk in response.aiter_bytes():
         size += len(chunk)
+        metrics['chunks']+=1
         if size > MAX_STREAM_BYTES:
             raise AgentError('模型流超过大小限制')
         buffer += decoder.decode(chunk)
@@ -187,8 +196,20 @@ Nothing is executed or published by either preview callback.
             line, buffer = buffer.split('\n', 1)
             if not line.startswith('data:'):continue
             value = line[5:].strip()
-            if value == '[DONE]':continue
+            if value == '[DONE]':
+                terminal=True
+                break
             packet = json.loads(value)
+            if not isinstance(packet,dict):raise ValueError('stream_packet')
+            metrics['events']+=1
+            metrics.setdefault('first_event_seconds',time.monotonic()-started)
+            if packet.get('error'):
+                metrics.update(bytes=size,stream_seconds=time.monotonic()-started,
+                               terminal_received=False,finish_reason='provider_error')
+                error=AgentError('模型服务在流式响应中终止了本轮，未执行其中不完整的工具；可稍后重试')
+                error.finish_reason='provider_error'
+                error.usage=response_usage({'usage':packet.get('usage') or usage,'stream_metrics':metrics})
+                raise error
             if isinstance(packet.get('model'), str):model = packet['model']
             usage = packet.get('usage') or usage
             for choice in packet.get('choices', []):
@@ -198,13 +219,16 @@ Nothing is executed or published by either preview callback.
                 if retain_reasoning and delta.get('reasoning_content'):
                     if not isinstance(delta['reasoning_content'], str):raise ValueError('reasoning')
                     reasoning.append(delta['reasoning_content'])
+                    metrics.setdefault('first_reasoning_seconds',time.monotonic()-started)
                 text = delta.get('content') or ''
                 if not isinstance(text, str):raise ValueError('content')
                 if text:
+                    metrics.setdefault('first_content_seconds',time.monotonic()-started)
                     content += text
                     if len(content.encode()) > 1048576:raise ValueError('content_limit')
                     on_text(text)
                 for part in delta.get('tool_calls') or []:
+                    metrics.setdefault('first_tool_seconds',time.monotonic()-started)
                     index = part['index']
                     if type(index) is not int or not 0 <= index < 8:raise ValueError('call_limit')
                     call = calls.setdefault(index, {'id': '', 'type': 'function', 'function': {'name': '', 'arguments': ''}})
@@ -219,6 +243,12 @@ Nothing is executed or published by either preview callback.
                         if len(arguments) > previewed_arguments:
                             on_answer_arguments(arguments[previewed_arguments:])
                             previewed_arguments = len(arguments)
-    if decoder.decode(b'', final=True) or buffer.strip():raise ValueError('incomplete_stream')
+        # DONE is the protocol boundary, not a request to wait for TCP EOF.
+        # The caller's response context closes the transport after this return.
+        if terminal:break
+    if not terminal and (decoder.decode(b'', final=True) or buffer.strip()):raise ValueError('incomplete_stream')
+    metrics.update(bytes=size,stream_seconds=time.monotonic()-started,terminal_received=terminal,
+                   finish_reason=finish or 'incomplete')
     return {'choices': [{'finish_reason': finish, 'message': {'content': content, 'tool_calls': [calls[k] for k in sorted(calls)],
-        **({'reasoning_content': ''.join(reasoning)} if retain_reasoning else {})}}], 'usage': usage, **({'model': model} if model else {})}
+        **({'reasoning_content': ''.join(reasoning)} if retain_reasoning else {})}}], 'usage': usage,
+        'stream_metrics':metrics, **({'model': model} if model else {})}

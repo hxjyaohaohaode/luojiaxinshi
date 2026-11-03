@@ -155,3 +155,53 @@ def test_failed_real_status_is_not_retried_but_changed_profile_gets_new_job(env,
     generator(env,monkeypatch,calls)
     assert notice_automation.run_once(env[0],env[0].state.db,env[1])['state']=='succeeded'
     assert len(calls)==2
+
+
+def test_initial_history_is_analyzed_automatically_with_consent_but_not_reannounced(env,monkeypatch):
+    from app.push_delivery import candidates
+    import time
+    c=account(env);nid,sid,uid=incoming(env,c);calls=[];generator(env,monkeypatch,calls)
+    with env[0].state.db.connect(write=True) as conn:
+        conn.execute('INSERT INTO notice_delivery_suppressions VALUES(?,?)',(nid,'initial_source_snapshot'))
+    permit(c)
+    result=notice_automation.run_once(env[0],env[0].state.db,env[1])
+    assert result['state']=='succeeded' and len(calls)==1
+    with env[0].state.db.connect() as conn:
+        assert not any(key.startswith('received:') for key in candidates(conn,uid,int(time.time())))
+
+
+def test_legacy_ai_draft_without_profile_check_is_refreshed_but_manual_draft_is_kept(env,monkeypatch):
+    c=account(env);nid,_,uid=incoming(env,c);calls=[];generator(env,monkeypatch,calls)
+    with env[0].state.db.connect(write=True) as conn:
+        conn.execute("UPDATE notices SET status='draft',draft_version=version,draft=? WHERE id=?",(json.dumps({'quality':{'status':'passed'},'tasks':[]}),nid))
+    permit(c);assert notice_automation.run_once(env[0],env[0].state.db,env[1])['state']=='succeeded'
+    second,_,_=incoming(env,c,key='2');manual(c,c.get('/api/notices/'+second).json())
+    assert notice_automation.run_once(env[0],env[0].state.db,env[1]) is None and len(calls)==1
+
+
+def test_review_draft_is_rechecked_once_after_parser_upgrade_not_on_every_poll(env,monkeypatch):
+    from app.ai import EXTRACTION_VERSION
+    c=account(env);nid,_,uid=incoming(env,c);db=env[0].state.db;calls=[];generator(env,monkeypatch,calls)
+    with db.connect(write=True) as conn:
+        conn.execute("UPDATE notices SET status='draft',draft_version=version,draft=? WHERE id=?",(json.dumps({'quality':{'status':'needs_review'},'extraction_version':'old-engine','tasks':[]}),nid))
+        n=conn.execute('SELECT version FROM notices WHERE id=?',(nid,)).fetchone()
+        notice_automation.mark_profile(conn,nid,uid,n['version'],conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0])
+    permit(c);assert notice_automation.run_once(env[0],db,env[1])['state']=='succeeded'
+    with db.connect(write=True) as conn:
+        n=conn.execute('SELECT draft FROM notices WHERE id=?',(nid,)).fetchone();d=json.loads(n['draft'])
+        d.update(quality={'status':'needs_review'},extraction_version=EXTRACTION_VERSION)
+        conn.execute('UPDATE notices SET draft=? WHERE id=?',(json.dumps(d),nid))
+    assert notice_automation.run_once(env[0],db,env[1]) is None and len(calls)==1
+
+
+def test_current_source_dates_precede_old_history_and_queue_is_not_a_user_chore(env,monkeypatch):
+    c=account(env);old,_,uid=incoming(env,c,key='old',body='历史课程通知，请核对资格');new,_,_=incoming(env,c,key='new',body='近期课程通知，请核对资格');calls=[];generator(env,monkeypatch,calls)
+    with env[0].state.db.connect(write=True) as conn:
+        conn.execute("UPDATE notices SET published_at='2025-12-01' WHERE id=?",(old,))
+        conn.execute("UPDATE notices SET published_at='2026-11-02' WHERE id=?",(new,))
+        for nid in [old,new]:conn.execute('INSERT INTO notice_delivery_suppressions VALUES(?,?)',(nid,'initial_source_snapshot'))
+    permit(c)
+    before={n['id']:n for n in c.get('/api/notices').json()}
+    assert before[old]['intent']=='tracking' and before[new]['automation_state']=='queued'
+    result=notice_automation.run_once(env[0],env[0].state.db,env[1])
+    assert result['notice_id']==new

@@ -16,7 +16,8 @@ const browser=await engine.launch({headless:true,...(name==='chromium'&&process.
 page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(String(e)));
 let pending;
 try{
-  await page.goto(origin+'/#chat/'+chat.id);await page.locator('iframe.openui-frame').waitFor();
+  await page.goto(origin+'/#chat/'+chat.id,{waitUntil:'domcontentloaded'});await page.locator('iframe.openui-frame').waitFor();
+  assert.equal((await api.post('/api/fixture/review-gate',{headers,data:{hold:true}})).status(),200);
   pending=send({content:'',regenerate_message_id:old});let live;
   for(let i=0;i<100;i++){
     live=await(await api.get(url)).json();
@@ -24,17 +25,18 @@ try{
     await new Promise(r=>setTimeout(r,80));
   }
   const current=live.messages.at(-1);assert.notEqual(current.id,old);assert.equal(current.status,'processing');assert.ok(current.preview.ui.localReady);
-  await page.reload();const reply=page.locator('.message-assistant').last();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);
+  await page.reload({waitUntil:'domcontentloaded'});const reply=page.locator('.message-assistant').last();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);
   const frame=page.frameLocator('iframe.openui-frame');await frame.locator('input').first().waitFor();
   assert.equal(await reply.locator('[data-chat-action=regenerate]').count(),0);assert.match(await reply.locator('.message-state').innerText().catch(()=>reply.locator('.message-label').innerText()),/核验中|处理/);
   await page.screenshot({path:out+'/review-restored.png'});checks.push('核验期间刷新，恢复最新版本的文字和互动界面，未退回上一版；生成状态与动作权限正确');
+  assert.equal((await api.post('/api/fixture/review-gate',{headers,data:{hold:false}})).status(),200);
   assert.equal((await pending).status(),200);pending=null;
   await page.waitForFunction(()=>!document.querySelector('.message-assistant:last-child')?.classList.contains('is-streaming'));
   live=await(await api.get(url)).json();const final=live.messages.at(-1);assert.equal(final.id,current.id);assert.equal(final.status,'complete');assert.ok(final.genui.validated);assert.equal(final.preview,undefined);
-  await page.reload();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.frameLocator('iframe.openui-frame').locator('input').first().waitFor();
+  await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.frameLocator('iframe.openui-frame').locator('input').first().waitFor();
   assert.equal((await(await api.get(url)).json()).messages.at(-1).genui.raw,final.genui.raw);checks.push('完成后刷新，最终正文与界面原文完全一致，预览检查点清除');
-  await page.locator('.message-assistant').last().getByRole('button',{name:'上一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);await page.reload();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);
-  await page.locator('.message-assistant').last().getByRole('button',{name:'下一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.reload();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);checks.push('主动切换旧版和最新版都持久化，刷新后保持所选版本');
+  await page.locator('.message-assistant').last().getByRole('button',{name:'上一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);
+  await page.locator('.message-assistant').last().getByRole('button',{name:'下一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);checks.push('主动切换旧版和最新版都持久化，刷新后保持所选版本');
   await page.screenshot({path:out+'/latest-restored.png'});assert.deepEqual(errors,[]);await writeFile(out+'/report.json',JSON.stringify({passed:true,browser:name,checks,errors},null,2));console.log(JSON.stringify({passed:true,browser:name,checks},null,2));
 }catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors},null,2));throw error;}
-finally{if(pending)await pending.catch(()=>{});await context.close();await browser.close();await api.dispose();}
+finally{await api.post('/api/fixture/review-gate',{headers,data:{hold:false}}).catch(()=>{});if(pending)await pending.catch(()=>{});await context.close();await browser.close();await api.dispose();}

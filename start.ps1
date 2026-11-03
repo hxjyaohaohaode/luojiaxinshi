@@ -20,7 +20,7 @@ $configuration = Get-TaskConfiguration
 $expectedVersion = (& $taskPython -c "from app.version import VERSION; print(VERSION)").Trim()
 if ($configuration.production) { throw 'Use OPERATIONS.md for production HTTPS deployment.' }
 if ($Restart) { Stop-OwnedTask $configuration }
-$existing = Get-OwnedTaskProcess $configuration
+$existing = Get-OwnedTaskProcess $configuration -AllowStalePid
 if (-not $existing) {
     $listener = Get-NetTCPConnection -State Listen -LocalPort $configuration.port -ErrorAction SilentlyContinue
     if ($listener) { throw ('Port ' + $configuration.port + ' is occupied. Change APP_PORT and APP_ORIGIN together.') }

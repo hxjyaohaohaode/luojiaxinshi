@@ -1,6 +1,7 @@
 """Run browser suites against synthetic, loopback-only application data."""
 import argparse
 from contextlib import closing
+import json
 import os
 from pathlib import Path
 import socket
@@ -78,6 +79,7 @@ def main():
                     raise RuntimeError('Synthetic fixture did not become ready within 45 seconds.')
                 time.sleep(.15)
             failed = False
+            results = []
             for script, folder in SUITES:
                 if selected and script not in selected:
                     continue
@@ -85,11 +87,17 @@ def main():
                 (ROOT/'artifacts'/folder/'report.json').unlink(missing_ok=True)
                 print('Running '+script, flush=True)
                 with (OUT / (script+'.log')).open('w', encoding='utf-8') as output:
-                    result = subprocess.run(['node', 'scripts/'+script], cwd=ROOT, env=env,
-                                            stdout=output, stderr=subprocess.STDOUT)
-                failed |= result.returncode != 0
-                print(script+': '+('passed' if result.returncode == 0 else 'FAILED'), flush=True)
-                if result.returncode:
+                    try:
+                        code = subprocess.run(['node', 'scripts/'+script], cwd=ROOT, env=env,
+                                              stdout=output, stderr=subprocess.STDOUT, timeout=360).returncode
+                    except subprocess.TimeoutExpired:
+                        output.write('\nBrowser suite exceeded the 360-second deadline.\n')
+                        code = 124
+                failed |= code != 0
+                results.append({'script': script, 'returncode': code})
+                (OUT/'results.json').write_text(json.dumps(results, indent=2), encoding='utf-8')
+                print(script+': '+('passed' if code == 0 else 'FAILED'), flush=True)
+                if code:
                     # These are owned synthetic fixture logs. Surface diagnostics
                     # in the job itself so a failed run does not require downloading
                     # every screenshot before its cause can be investigated.

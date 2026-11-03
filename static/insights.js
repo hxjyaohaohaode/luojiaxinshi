@@ -1,4 +1,4 @@
-// 数据看板：个人完成情况、期限分布、来源与相关性；管理员另有全站匿名计数。
+// Personal handling statistics. Global anonymous counts belong to system maintenance.
 import {numberMarkup, ringMarkup} from './experience-system.js';
 
 const RELEVANCE = [
@@ -56,7 +56,7 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
     const noticeFlow=(dimensions.notices||[]).filter(row=>row.key!=='all'&&row.count>0);
     const taskTotal=taskStates.reduce((sum,row)=>sum+row.count,0);
     const segments=taskStates.map((row,index)=>[row.key,row.label,colors[index%colors.length],row.count]);
-    return `<div class="insight-toolbar"><div><h1>数据看板</h1><p class="small muted">更新于 <time>${esc(new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(data.generated_at)))}（北京时间）</time></p></div><button type="button" class="button" data-insight-refresh>${icon('history')}刷新数据</button></div><p data-insight-status role="status" class="small muted"></p>
+    return `<div class="insight-toolbar"><div><h1>办理统计</h1><p class="small muted">更新于 <time>${esc(new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(data.generated_at)))}（北京时间）</time></p></div><button type="button" class="button" data-insight-refresh>${icon('history')}刷新数据</button></div><p data-insight-status role="status" class="small muted"></p>
     <div class="insight-key-metrics">${top.map(([group,key,label])=>`<button type="button" class="insight-key-metric" data-insight-selection="${group}:${key}"><span>${label}</span><strong>${numberMarkup(find(group,key).count)}</strong>${icon('arrow')}</button>`).join('')}</div>
     <div class="insight-chart-grid">
       <section class="insight-chart"><header><h2>近 8 周完成</h2><span>本人事项</span></header>${trendChart(data.trend)}</section>
@@ -68,16 +68,6 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
     </div>`;
   }
 
-  function site(data) {
-    return `<section class="insight-site"><header><h3>全站概况</h3><span class="small muted">管理员可见 · 只有匿名计数，不含任何人的通知内容</span></header>
-      <div class="insight-grid">
-        <article class="insight-card"><h3>注册账号</h3><p class="insight-number">${numberMarkup(data.users.total)}</p><p class="small muted">近 7 天活跃 ${data.users.active_7d}</p></article>
-        <article class="insight-card"><h3>收录通知</h3><p class="insight-number">${numberMarkup(data.notices.total)}</p><p class="small muted">近 30 天 ${data.notices.last_30d} · 已转办 ${data.notices.confirmed}</p></article>
-        <article class="insight-card"><h3>待办完成率</h3><p class="insight-number">${percent(data.tasks.done, data.tasks.done + data.tasks.pending)}<small>%</small></p><p class="small muted">${data.tasks.done} 已完成 · ${data.tasks.pending} 进行中</p></article>
-        <article class="insight-card"><h3>近 30 天 AI 整理</h3><p class="insight-number">${numberMarkup(data.ai_30d.calls)}</p><p class="small muted">${data.ai_30d.failed ? data.ai_30d.failed + ' 次没成功' : '都顺利完成'}</p></article>
-      </div></section>`;
-  }
-
   async function render(renderId=state.renderId) {
     if($('#content')?.dataset.page!=='insights'||renderId!==state.renderId)return;
     const ticket=++requestId,owner=state.session;
@@ -85,10 +75,10 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
     const button=$('[data-insight-refresh]');if(button)button.setAttribute('aria-busy','true');
     const status=$('[data-insight-status]');if(status)status.textContent='正在更新…';
     try {
-      const [mine,all]=await Promise.all([api('/insights'),owner.user.role==='admin'?api('/admin/insights').catch(()=>null):null]);
+      const mine=await api('/insights');
       if(ticket!==requestId||renderId!==state.renderId||owner!==state.session||$('#content')?.dataset.page!=='insights')return;
       snapshot=mine;
-      const signature=JSON.stringify([{...mine,generated_at:null},all?{...all,generated_at:null}:null]);
+      const signature=JSON.stringify([{...mine,generated_at:null}]);
       if(signature===renderedSnapshot&&$('.insight-page [data-insight-refresh]')&&$('.insight-toolbar time')){
         $('.insight-toolbar time').textContent=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date(mine.generated_at));
         $('[data-insight-status]').textContent='';return;
@@ -96,7 +86,7 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
       const content=$('#content'),scroll=content.scrollTop,windowY=window.scrollY;
       const focused=document.activeElement?.closest('[data-insight-selection],[data-insight-refresh]');
       const focusKey=focused?.dataset.insightSelection,focusRefresh=focused?.hasAttribute('data-insight-refresh');
-      $('#content').innerHTML=`<div class="insight-page">${personal(mine)}${all?site(all):''}</div>`;
+      $('#content').innerHTML=`<div class="insight-page">${personal(mine)}</div>`;
       renderedSnapshot=signature;
       const page=$('#content .insight-page');
       page.querySelectorAll('[data-i]').forEach(node=>node.style.setProperty('--i',node.dataset.i));
@@ -109,7 +99,7 @@ export function createInsightsUI({state, api, esc, icon, companion}) {
       restore?.focus({preventScroll:true});content.scrollTop=scroll;window.scrollTo({top:windowY,left:window.scrollX,behavior:'instant'});
     } catch(error) {
       if(ticket!==requestId||renderId!==state.renderId||owner!==state.session||$('#content')?.dataset.page!=='insights')return;
-      if(!$('.insight-page'))$('#content').innerHTML='<div class="insight-page"><h1>数据看板</h1><p data-insight-status role="status"></p><button type="button" class="button" data-insight-refresh>重试</button></div>';
+      if(!$('.insight-page'))$('#content').innerHTML='<div class="insight-page"><h1>办理统计</h1><p data-insight-status role="status"></p><button type="button" class="button" data-insight-refresh>重试</button></div>';
       $('[data-insight-status]').textContent='更新失败：'+error.message+'；已显示的数据未改动。';
     } finally {
       if(ticket===requestId&&owner===state.session){const current=$('[data-insight-refresh]');if(current){current.disabled=false;current.removeAttribute('aria-busy');}}

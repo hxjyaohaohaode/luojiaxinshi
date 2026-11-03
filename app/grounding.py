@@ -234,7 +234,7 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
     start=message_scope_start(messages)
     if start is not None:
         scoped=messages[start:]
-        sections=[{'locator':message_locator(m,i,'限定范围内的用户补充'),'text':context_text(m)} for i,m in enumerate(scoped) if m['role']=='user']
+        sections=[{'locator':message_locator(m,i,'限定范围内的用户补充'),'text':context_text(m,include_quote=False)} for i,m in enumerate(scoped) if m['role']=='user']
         records.append(source('user-input','你在限定消息中提供的信息',sections,'user_input',current=True))
         if re.search(r'附件|附图|图片|上传的|文档',scoped[0]['content']):
             records.extend({**s,'evidence_kind':'material','current':True} for s in original)
@@ -242,14 +242,11 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
         selected,coverage=select_sections(register_images(records),queries,46000);counts['sections']=coverage['scanned_sections']
         return register_images(selected),{'scanned':counts,**coverage,'local_scope':'message','scope':'仅使用本条用户消息及后续补充；明确指定附件时包含本会话附件，不检索资料库、日程或个人档案。'}
     with db.connect() as conn:
-        from .action_review import public_review
-        task_reviews={r['task_id']:public_review(r) for r in conn.execute('SELECT r.* FROM task_reviews r JOIN tasks t ON t.id=r.task_id WHERE t.user_id=?',(uid,))} if access['schedule'] else {}
-        task_workflows={r['task_id']:{'version':r['version'],'data':json.loads(r['data'])} for r in conn.execute('SELECT w.* FROM task_workflows w JOIN tasks t ON t.id=w.task_id WHERE t.user_id=?',(uid,))} if access['schedule'] else {}
-        pending_changes={}
+        task_states={}
         if access['schedule']:
-            for r in conn.execute("SELECT id,notice_id,data FROM notice_changes WHERE user_id=? AND state='pending'",(uid,)):
-                change=json.loads(r['data'])
-                pending_changes.setdefault(r['notice_id'],[]).append({'id':r['id'],'kind':change['kind'],'targets':{t['task_id'] for t in change['targets']}})
+            from .workflow import enrich_tasks
+            owned_tasks=[{**dict(row),'data':json.loads(row['data'])} for row in conn.execute('SELECT * FROM tasks WHERE user_id=?',(uid,))]
+            task_states={task['id']:task for task in enrich_tasks(conn,owned_tasks)}
         for row in (conn.execute('SELECT s.id,s.name,s.kind,s.status,s.sections,s.warning,s.conversation_id,l.path,l.full_sections FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id LEFT JOIN material_library l ON l.source_id=s.id WHERE c.user_id=? ORDER BY c.updated_at DESC,s.rowid', (uid,)) if access['library'] else ()):
             r = dict(row)
             counts['materials'] += 1
@@ -270,27 +267,21 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
                          'values': data, 'version': r['version'], 'updated_at': datetime.fromtimestamp(r['updated_at'], CST).isoformat()}
                 if 'status' in r:
                     value['status'] = r['status']
-                if kind=='task' and r['id'] in task_workflows:
-                    value['workflow']=task_workflows[r['id']]
-                    value['workflow_authority']='本人记录的办理进度与回执，未经学校系统自动核验；与个人完成标记独立。'
-                    from .action_plans import gate_issues
-                    gates=gate_issues(task_workflows[r['id']]['data'])
-                    if gates:
-                        value['execution_issues']=gates
-                        value['execution_warning']='参加意愿或外部条件尚未满足；不能把旧完成、回执或计划当作现在已具备办理条件。'
                 if kind=='task':
-                    unresolved=[{'id':c['id'],'kind':c['kind']} for c in pending_changes.get(r['notice_id'],[]) if not c['targets'] or r['id'] in c['targets']]
-                    if unresolved:
-                        value['pending_changes']=unresolved
+                    current_task=task_states[r['id']]
+                    for key in ('workflow','handling_state','execution_issues','pending_changes','change_review','followup_due','action_excluded'):
+                        value[key]=current_task[key]
+                    value['workflow_authority']='本人记录的办理进度与回执，未经学校系统自动核验；与个人完成标记独立。'
+                    if current_task['execution_issues']:
+                        value['execution_warning']='参加意愿或外部条件尚未满足；不能把旧完成、回执或计划当作现在已具备办理条件。'
+                    if current_task['pending_changes']:
                         value['pending_change_warning']='收到尚未确认的新变更；以下保留的是最近已核实要求，请回查原通知核实，不把线索当作已生效事实。'
-                if kind=='task' and r['id'] in task_reviews:
-                    value['change_review']=task_reviews[r['id']]
-                    if task_reviews[r['id']]['state']=='pending':
+                    if (current_task['change_review'] or {}).get('state')=='pending':
                         value['completion_warning']='原完成或提交记录保留，但新要求下是否仍有效尚待本人复核，不能作为已满足前提。'
                 records.append(source(kind[:4] + '-' + r['id'], data.get('title', '个人记录'), [{'locator': '记录快照', 'text': dumps(value)}], kind,
                                       href=('#tasks/' if kind == 'task' else '#calendar/')+r['id'], version=r['version'], updated_at=r['updated_at']))
     # Only the user's own words are evidence. Earlier model answers are context, never facts.
-    user_sections = [{'locator': message_locator(m,i,'用户提问'), 'text': context_text(m)} for i, m in enumerate(messages) if m['role'] == 'user']
+    user_sections = [{'locator': message_locator(m,i,'用户提问'), 'text': context_text(m,include_quote=False)} for i, m in enumerate(messages) if m['role'] == 'user']
     if user_sections:
         records.append(source('user-input', '你在本次对话中提供的信息', list(reversed(user_sections[-6:])), 'user_input', current=True))
     personal = {k: v for k, v in profile.items() if k in PERSONAL_KEYS and v not in ('', None, [])}
@@ -331,6 +322,7 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
 
 def select_sections(records, queries, budget):
     from .conversation_tools import keywords
+    from .retrieval_excerpt import excerpt
     terms = keywords(' '.join(queries))
     candidates = []
     scanned = 0
@@ -341,7 +333,8 @@ def select_sections(records, queries, budget):
         for index, section in enumerate(s['sections']):
             scanned += 1
             text = section['text']
-            score = title_score + sum(min(4, text.lower().count(t)) for t in terms)
+            lower=text.lower()
+            score = title_score + sum(min(4, lower.count(t)) for t in terms)
             # Current files and calendar records remain inspectable for broad/implicit queries.
             score += 4 if s.get('current') else 2 if s['evidence_kind'] in ('task', 'arrangement') else 0
             if s['evidence_kind']=='user_input':score+=1000
@@ -357,16 +350,24 @@ def select_sections(records, queries, budget):
         # Keep exact text; don't invent sentence completion at the context boundary.
         is_user = records[position]['evidence_kind']=='user_input'
         allowance = min(6000, budget-used, max(0,8000-user_chars) if is_user else budget)
-        text = section['text'][:allowance]
+        text,offset = excerpt(section['text'],[] if is_user else terms,allowance)
         if not text:
             continue
-        chosen.setdefault(position, []).append((index, {**section, 'text': text, '_retrieval_score': score}))
+        original=section.get('_original_locator',section['locator'])
+        absolute=section.get('_retrieval_offset',0)+offset
+        full_length=section.get('_original_length',len(section['text']))
+        locator=original+f'（字符 {absolute+1}—{absolute+len(text)}）' if absolute or len(text)<full_length else original
+        chosen.setdefault(position, []).append((index, {**section, 'locator':locator,'text': text, '_retrieval_score': score,
+            '_original_locator':original,'_retrieval_offset':absolute,'_original_length':full_length}))
         used += len(text)
         if is_user:user_chars += len(text)
     result = [{**records[p], 'sections': [s for _, s in sorted(sections)]} for p, sections in chosen.items()]
+    for record in result:
+        record['retrieval_windows']=[{'locator':s['locator'],'original_locator':s['_original_locator'],
+            'offset':s['_retrieval_offset'],'length':len(s['text']),'total_length':s['_original_length']} for s in record['sections']]
     return result, {'scanned_sections': scanned, 'selected_sections': sum(len(s['sections']) for s in result),
                     'selected_sources': len(result), 'characters': used, 'context_limited': len(candidates) > sum(len(s['sections']) for s in result) or used >= budget,
-                    'retrieval_method': '主题扩展后逐段关键词排序；可能遗漏隐含语义，请勿声称已逐字读完全部资料。'}
+                    'retrieval_method': '主题扩展后逐段关键词排序，长段落返回命中位置附近原文；可能遗漏隐含语义，请勿声称已逐字读完全部资料。'}
 
 
 def snapshots(sources):
@@ -601,6 +602,9 @@ program_checks 已检查引文字面、编号、协议和输出约束。不要�
         prompt += "\n网页摘要不能证明现行规则；检查来源日期与适用范围，不把版权年份当生效日期。只有适用范围重叠且规则不兼容才报告冲突。登记的网页 url 可以支持页面入口链接，不要求正文再次出现完整网址；链接引用应指向该网页本身。来源覆盖有限时不能声称已查全。"
     prompt += '\n若提供 host_activity，它是宿主程序生成的本轮执行范围记录，不是模型自述。public_search_rounds=0 且 other_external_execution_attempted=false 可支持本阶段未访问外部网页；retrieval_scopes 不含 library 可支持本阶段未检索资料库。它不证明业务操作成功，也不能证明后续自动记忆维护未发生。没有必要要求回答追加这些合规说明；未声称的事项不作为缺失问题。'
     prompt += '\noperation-history- 来源是服务器按当前账号与本对话读取的历史操作回执，committed/undone 和当前状态必须区分。本轮未调用工具不能否认历史写入；历史写入也不能证明本轮又执行或当前仍有效。只核验本次答复，不重复完成此前任务。每个不同事实只核对一次，结论确定后立即返回两字段 JSON，不反复推演已通过的语法、保留未知或相同表述。'
+    if any(s.get('evidence_kind') in ('task','execution') for s in sources):
+        from .agent_runtime.workspace import TASK_STATE_POLICY
+        prompt += '\n'+TASK_STATE_POLICY
     audit_context={key:context[key] for key in ('now','timezone','response_contract','host_activity') if key in context}
     if has_ui:audit_context['ui_contract']=context.get('ui_contract',{})
     request={'model': settings.ai_model, **review_options(settings, result, sources),

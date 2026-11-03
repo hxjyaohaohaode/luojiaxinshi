@@ -1,6 +1,6 @@
 // Local selection queue inspired by the handbook's Kokonut File Upload pattern.
 // Files are only uploaded when the enclosing form is submitted.
-export const noticeFileExtensions = ['pdf','docx','xlsx','csv','md','txt','png','jpg','jpeg','webp','mp4','webm'];
+export const noticeFileExtensions = ['pdf','doc','docx','xls','xlsx','csv','md','txt','png','jpg','jpeg','webp','mp4','webm'];
 const fileKey = file => [file.name,file.size,file.lastModified].join('\0');
 export function selectNoticeFiles(previous, incoming) {
   const files = [...previous], keys = new Set(files.map(fileKey));

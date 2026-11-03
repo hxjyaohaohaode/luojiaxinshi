@@ -282,10 +282,29 @@ def validation_failure(reason,raw):
 def authoring_index(sources,profile):
     entries=profile.get('_authoring_evidence_index')
     if entries is None:return evidence_index(sources)
-    if not isinstance(entries,list) or len(entries)>MAX_CITATIONS or len({e.get('ref') for e in entries if isinstance(e,dict)})!=len(entries):raise ValueError('invalid_authoring_index')
+    if not isinstance(entries,list) or len({e.get('ref') for e in entries if isinstance(e,dict)})!=len(entries):raise ValueError('invalid_authoring_index')
     if any(not isinstance(e,dict) or not re.fullmatch(r'E[1-9][0-9]*',str(e.get('ref',''))) for e in entries):raise ValueError('invalid_authoring_index')
     check_evidence([{key:e[key] for key in ('source_id','locator','quote')} for e in entries],sources)
     return entries
+
+
+def prompt_authoring_index(sources,profile):
+    """A bounded working set, keeping the ledger's existing reference IDs."""
+    entries=authoring_index(sources,profile)
+    if len(entries)<=MAX_CITATIONS:return entries
+    kinds={source['id']:source.get('evidence_kind')for source in sources}
+    critical=[entry for entry in reversed(entries)if
+              kinds.get(entry['source_id'])=='system_clock' or
+              kinds.get(entry['source_id'])=='execution' and
+              (entry['locator']=='查询范围' or entry['locator'].endswith((' 状态核对',' 回执')))]
+    original={(entry['source_id'],entry['locator'],entry['quote']):entry for entry in entries}
+    balanced=[original[key]for entry in evidence_index(sources)
+              if (key:=(entry['source_id'],entry['locator'],entry['quote']))in original]
+    selected=[];seen=set()
+    for entry in critical+balanced:
+        if entry['ref']not in seen:selected.append(entry);seen.add(entry['ref'])
+        if len(selected)==MAX_CITATIONS:break
+    return selected
 
 
 def payload(settings, sources, messages, profile, tier):
@@ -302,9 +321,10 @@ def payload(settings, sources, messages, profile, tier):
         context['memories']=profile.get('_memory_entries',[])
     if profile.get('_grounding_context'):
         context['grounding_context']=profile['_grounding_context']
-        context['evidence_index']=authoring_index(sources,profile)
+        context['evidence_index']=prompt_authoring_index(sources,profile)
         context['evidence_index_scope']={'selected_spans':len(context['evidence_index']),'maximum_spans':MAX_CITATIONS,
-            'method':'相关性排序、去除网页重复段落、按来源轮流保留；有上限，未登记片段不能据此引用。'}
+            'registered_spans':len(profile.get('_authoring_evidence_index') or context['evidence_index']),
+            'method':'当前状态/操作回执优先，其余按相关性与来源轮流保留；这是有上限的本次窗口，不代表已读完整登记库，未提供片段须继续读取。'}
         # The index holds the exact evidence text; do not duplicate paragraphs in the prompt.
         for source in context['materials']:source.pop('sections',None)
     from .visual_evidence import review_content
@@ -432,7 +452,8 @@ async def _stream_reply(settings, sources, messages, profile, tier):
             result=answer_model(tier,profile).model_validate_json(raw)
             if profile.get('_ui_composition_only') and not result.ui:
                 raise ValueError('openui_missing_document:本轮专门生成互动界面，须提供完整ui，不能仅用正文替代')
-            available={s['id'] for s in sources if s['kind'] in IMAGE_MIME and s['status']!='failed'}
+            from .visual_evidence import image_sources
+            available={s['id'] for s in image_sources(sources)}
             preview_text=answer.output.lstrip('\ufeff').strip() if normalized=='markdown' else answer.output
             if normalized=='serialized_json' and not answer.output:
                 preview_text=result.answer

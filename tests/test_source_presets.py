@@ -70,7 +70,7 @@ def test_preset_sync_keeps_date_materials_and_duplicate_identity(env, monkeypatc
         return [source, text_source('附件说明：材料清单。', '附件说明')]
     monkeypatch.setattr(source_sync, 'fetch_index', index)
     monkeypatch.setattr(source_sync, 'read_link', read)
-    monkeypatch.setattr(source_sync, 'read_notice_materials', materials)
+    monkeypatch.setattr('app.notice_network.read_notice_materials', materials)
     endpoint = '/api/source-catalog/' + saved['source_id'] + '/refresh'
     assert client.post(endpoint).json()['received_count'] == 1
     assert client.post(endpoint).json()['received_count'] == 1

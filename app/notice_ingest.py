@@ -59,7 +59,12 @@ def normalized_text(source):
 
 def fingerprint(sources):
     parts = []
+    related_bundle=any((s.get('origin') or {}).get('relationship') in {'linked_candidate','index_candidate'} for s in sources)
     for source in sources:
+        # A and B may each discover the other as a related candidate. Equal
+        # unordered evidence sets do not make their primary notices duplicates.
+        if related_bundle and 'related_search' in (source.get('origin') or {}):
+            parts.append('primary:'+source['sha256'])
         if source['kind'] == 'text' and normalized_text(source):
             parts.append('text:' + hashlib.sha256(normalized_text(source).encode()).hexdigest())
         else:
@@ -87,7 +92,7 @@ def personal_storage_bytes(conn, uid):
 
 
 def _distinct_round(record, title, published_at):
-    for pattern in (r'(?:19|20)\d{2}', r'第[一二三四五六七八九十百\d]+(?:批|轮|期)', r'(?:春季|秋季|上学期|下学期|第一学期|第二学期)'):
+    for pattern in (r'(?:19|20)\d{2}', r'第[零〇一二两三四五六七八九十百千\d]+(?:批|轮|期|届|讲|次|场)', r'(?:春季|秋季|上学期|下学期|第一学期|第二学期)'):
         old, new = set(re.findall(pattern, record['title'])), set(re.findall(pattern, title))
         if old and new and old != new:
             return True
@@ -108,6 +113,39 @@ def _find_duplicate(conn, uid, sources, digest, title, published_at):
     return None
 
 
+def _refresh_origins(conn, uid, nid, sources):
+    """Refresh observations of the same owned, active bytes and provenance edge.
+
+    Diagnostics are not notice facts: successful retry must clear an old gap
+    without invalidating a reviewed plan or starting another paid analysis.
+    Forwarded copies cannot replace the original publisher's provenance.
+    """
+    before, after = {}, {}
+    for source in sources:
+        incoming = source.get('origin') or {}
+        if not incoming.get('url'):
+            continue
+        for row in conn.execute('''SELECT s.id,o.data FROM sources s
+                JOIN notices n ON n.id=s.notice_id JOIN notice_source_origins o ON o.source_id=s.id
+                WHERE s.notice_id=? AND n.user_id=? AND s.active=1 AND s.kind=? AND s.sha256=?''',
+                (nid, uid, source['kind'], source['sha256'])).fetchall():
+            old = json.loads(row['data'])
+            if any(old.get(key) != incoming.get(key) for key in ('url', 'parent_url', 'relationship')):
+                continue
+            # Retained snapshots keep their last successful observation time.
+            old_time, new_time = old.get('retrieved_at'), incoming.get('retrieved_at')
+            if isinstance(old_time, (int, float)) and isinstance(new_time, (int, float)) and new_time < old_time:
+                continue
+            new = {**incoming, 'first_retrieved_at': old.get('first_retrieved_at', old.get('retrieved_at'))}
+            ignored = {'retrieved_at', 'first_retrieved_at'}
+            if {k:v for k,v in old.items() if k not in ignored} != {k:v for k,v in new.items() if k not in ignored}:
+                before[row['id']], after[row['id']] = old, new
+            conn.execute('UPDATE notice_source_origins SET data=? WHERE source_id=?', (dumps(new), row['id']))
+    if after:
+        audit(conn, uid, nid, 'source_acquisition_updated', before=before, after=after)
+    return bool(after)
+
+
 def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='', external_key='',
                   published_at=None, materials_complete=False, allow_duplicate=False, observed_at=None):
     """Call within a write transaction. No network, model, or outgoing message."""
@@ -117,6 +155,7 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
         raise HTTPException(422, '通知正文与附件合计超过 10000 字，请按事项拆分；未截断')
     if sum(s['kind'] != 'text' for s in sources) > 5:
         raise HTTPException(422, '单则通知最多保留 5 份当前附件，请按事项拆分')
+    explicit_title=bool(title.strip())
     title = title.strip() or infer_title(sources)
     source_url = safe_url(source_url)
     if len(title) > 160 or len(source_label) > 100 or len(external_key) > 2400:
@@ -127,15 +166,33 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
         raise HTTPException(422, '来源版本时间无效')
     key = external_key or 'manual:' + ident()
     previous = conn.execute('SELECT * FROM notice_ingest_receipts WHERE user_id=? AND external_key=? ORDER BY created_at DESC,rowid DESC LIMIT 1', (uid, key)).fetchone()
-    if previous and previous['fingerprint'] == digest:
-        conn.execute('UPDATE notice_ingest_receipts SET observed_at=MAX(observed_at,?) WHERE id=?', (observation,previous['id']))
-        return {'notice_id': previous['notice_id'], 'created': False, 'updated': False, 'duplicate': True}
+    prior_record=conn.execute('SELECT title,published_at,source_url,fingerprint FROM notices WHERE id=? AND user_id=?',(previous['notice_id'],uid)).fetchone() if previous else None
+    # A publisher can correct only its title/publication metadata. Still retire
+    # the old judgement, but do not let a duplicate forwarding channel oscillate
+    # the canonical title/date on every poll.
+    metadata_changed=bool(previous and prior_record and previous['source_url']==prior_record['source_url'] and
+        (explicit_title and title!=prior_record['title'] or published_at is not None and published_at!=prior_record['published_at']))
     # An event may be redelivered out of order after a newer version. A receipt
     # of that old fingerprint must never roll current facts back.
     if previous and observation <= previous['observed_at']:
         return {'notice_id': previous['notice_id'], 'created': False, 'updated': False, 'duplicate': True, 'stale': True}
-    changed = bool(previous)
-    duplicate = None if changed or allow_duplicate else _find_duplicate(conn, uid, sources, digest, title, published_at)
+    if previous and prior_record and source_url and source_url == prior_record['source_url']:
+        # Two configured collectors may refer to the same publisher URL. A late
+        # event from one collector cannot overwrite a newer observation by the
+        # other, even though their external receipt keys differ.
+        newest=conn.execute('SELECT max(observed_at) FROM notice_ingest_receipts WHERE notice_id=? AND user_id=? AND source_url=?',
+                            (previous['notice_id'],uid,source_url)).fetchone()[0]
+        if newest is not None and observation <= newest:
+            return {'notice_id': previous['notice_id'], 'created': False, 'updated': False, 'duplicate': True, 'stale': True}
+    same_current = bool(previous and prior_record['fingerprint'] == digest and not metadata_changed)
+    if same_current and previous['fingerprint'] == digest:
+        refreshed = _refresh_origins(conn, uid, previous['notice_id'], sources)
+        conn.execute('UPDATE notice_ingest_receipts SET observed_at=? WHERE id=?', (observation,previous['id']))
+        return {'notice_id': previous['notice_id'], 'created': False, 'updated': False,
+                'duplicate': True, 'provenance_updated': refreshed}
+    changed = bool(previous and not same_current)
+    duplicate = ({'id': previous['notice_id']} if same_current else
+                 None if changed or allow_duplicate else _find_duplicate(conn, uid, sources, digest, title, published_at))
     if changed:
         nid = previous['notice_id']
     elif duplicate:
@@ -150,6 +207,9 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
     if created:
         conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,published_at,materials_complete,fingerprint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
                      (nid, uid, title, source_label, source_url, published_at, bool(materials_complete), digest, now, now))
+    prior_source_ids = [s[0] for s in conn.execute('SELECT id FROM sources WHERE notice_id=? AND active=1',(nid,))] if changed else []
+    if previous:
+        _refresh_origins(conn, uid, nid, sources)
     source_ids = []
     for source in sources:
         sid = existing.get(source['sha256'])
@@ -165,7 +225,9 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
     conn.execute('INSERT INTO notice_ingest_receipts VALUES(?,?,?,?,?,?,?,?,?,?)',
                  (rid, uid, nid, key, digest, source_label, source_url, dumps(source_ids), now, observation))
     if changed:
-        old_ids = json.loads(previous['source_ids'])
+        # A second collector can have advanced this notice since this key's
+        # previous receipt. Replace the actual current projection atomically.
+        old_ids = prior_source_ids
         for sid in set(old_ids) - set(source_ids):
             conn.execute('UPDATE sources SET active=0 WHERE notice_id=? AND id=?', (nid, sid))
         for sid in source_ids:
@@ -174,15 +236,17 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
                      (ident(), nid, rid, dumps(old_ids), dumps(source_ids), now))
         # Keep the previous draft and all personal task/material progress for
         # comparison. Its draft_version no longer matches, so it cannot confirm.
-        conn.execute("UPDATE notices SET version=version+1,status='received',materials_complete=0,fingerprint=?,processing_token=NULL,processing_at=NULL,error=NULL,updated_at=? WHERE id=?", (digest, now, nid))
+        conn.execute("UPDATE notices SET version=version+1,status='received',materials_complete=0,fingerprint=?,title=?,source_label=?,source_url=?,published_at=COALESCE(?,published_at),processing_token=NULL,processing_at=NULL,error=NULL,updated_at=? WHERE id=?",
+            (digest,title,source_label,source_url,published_at,now,nid))
         from .notice_intake import reopen
         reopen(conn, nid)
     elif duplicate:
         # Extra provenance does not invalidate a user's reviewed action plan.
         conn.execute('UPDATE notices SET updated_at=? WHERE id=?', (now, nid))
     audit(conn, uid, nid, 'source_update' if changed else 'create_notice' if created else 'notice_source_received',
-          after={'title': title, 'source_label': source_label, 'receipt_id': rid})
-    return {'notice_id': nid, 'created': created, 'updated': changed, 'duplicate': bool(duplicate)}
+          before=dict(prior_record) if prior_record else None,
+          after={'title': title,'published_at':published_at,'source_label': source_label, 'receipt_id': rid,'metadata_changed':metadata_changed})
+    return {'notice_id': nid, 'created': created, 'updated': changed, 'duplicate': bool(duplicate),'metadata_changed':metadata_changed}
 
 
 def intake_state(conn, nid):

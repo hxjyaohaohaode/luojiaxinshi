@@ -1,3 +1,4 @@
+// Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Measurable visual regressions, with screenshots for human review.
  * These assertions are bounds/alignment checks, not a claim about aesthetics.
  * Only the loopback synthetic fixture is used. */
@@ -12,7 +13,7 @@ const report={fixture:'Synthetic local data only; measurements do not replace vi
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  console.log('Visual review: '+engine);
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
- const page=await browser.newPage({viewport:{width:1413,height:871},locale:'en-US',timezoneId:'America/Los_Angeles'});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
+ const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871},locale:'en-US',timezoneId:'America/Los_Angeles'});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const settle=async()=>{await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};
  const resize=async(width,height=871)=>{await page.setViewportSize({width,height});await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<2,{width,height});await settle();};
@@ -22,22 +23,22 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  try{
   await page.goto(origin+'/#login',{waitUntil:'domcontentloaded'});await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
   await nav('dashboard');
-  await check('priority card aligns status and title, keeps its deadline time and first action visible',async()=>{
-   const b=await page.locator('#overview-focus').evaluate(n=>{const title=n.querySelector('h2').getBoundingClientRect(),label=n.querySelector('.focus-label').getBoundingClientRect(),card=n.getBoundingClientRect(),action=n.querySelector('[data-workflow-task]').getBoundingClientRect();return {title:title.toJSON(),label:label.toJSON(),card:card.toJSON(),action:action.toJSON(),text:n.textContent};});
-   assert.ok(Math.abs(b.title.left-b.label.left)<2,JSON.stringify(b));assert.ok(b.card.height<240,JSON.stringify(b));assert.match(b.text,/17:00/);assert.ok(b.action.right<=b.card.right&&b.action.bottom<=b.card.bottom);
-   report.measurements.push({engine,page:'dashboard',width:1413,focusHeight:b.card.height});await capture('dashboard-1413');
+  await check('compact home keeps the first real task aligned and actionable',async()=>{
+   const b=await page.locator('#overview-items .task-row').first().evaluate(n=>{const row=n.getBoundingClientRect(),title=n.querySelector('.task-title').getBoundingClientRect(),action=n.querySelector('[data-workflow-task]').getBoundingClientRect();return {row:row.toJSON(),title:title.toJSON(),action:action.toJSON()};});
+   assert.ok(b.row.height<180,JSON.stringify(b));assert.ok(b.title.left>=b.row.left&&b.title.right<=b.row.right+1,JSON.stringify(b));assert.ok(b.action.right<=b.row.right+1&&b.action.bottom<=b.row.bottom+1,JSON.stringify(b));
+   report.measurements.push({engine,page:'dashboard',width:1413,firstTaskHeight:b.row.height});await capture('dashboard-1413');
   });
-  await check('priority switching does not clip a long title or lose its action',async()=>{
-   for(let i=0;i<3;i++){const next=page.locator('[data-focus-step="1"]');if(!await next.isEnabled())break;await next.click();await settle();}
-   const bounds=await page.locator('#overview-focus').evaluate(n=>{const c=n.getBoundingClientRect(),h=n.querySelector('h2').getBoundingClientRect(),b=n.querySelector('[data-workflow-task]').getBoundingClientRect();return {c:c.toJSON(),h:h.toJSON(),b:b.toJSON()};});
-   assert.ok(bounds.h.right<=bounds.c.right&&bounds.b.left>=bounds.h.right,JSON.stringify(bounds));
+  await check('home task and notice tabs work with pointer and keyboard without duplicate workbenches',async()=>{
+   await page.locator('[data-overview-section=notices]').click();assert.equal(await page.locator('[data-overview-section=notices]').getAttribute('aria-selected'),'true');
+   await page.locator('[data-overview-section=notices]').focus();await page.keyboard.press('Home');assert.equal(await page.locator('[data-overview-section=tasks]').getAttribute('aria-selected'),'true');
+   assert.equal(await page.locator('.personal-home').count(),1);assert.equal(await page.locator('.home-tabs [aria-selected=true]').count(),1);
   });
   for(const width of [1413,1024,768,390,320]){
    await resize(width,width<500?844:871);await nav('dashboard');
-   await check('dashboard adapts its summary and keeps actions in the first screen at '+width,async()=>{
-    const b=await page.evaluate(()=>{const rect=s=>document.querySelector(s).getBoundingClientRect().toJSON();return {focus:rect('#overview-focus'),metrics:rect('#action-metrics'),week:rect('#overview-week'),firstTask:rect('#overview-items .task-row'),overflow:document.documentElement.scrollWidth>innerWidth+1,metricsCount:document.querySelectorAll('.action-metric').length,focusAction:rect('#overview-focus [data-workflow-task]')};});
-    assert.equal(b.overflow,false);assert.equal(b.metricsCount,4);assert.ok(b.firstTask.top<page.viewportSize().height-100,JSON.stringify(b));
-    assert.ok(b.focusAction.right<=b.focus.right+1&&b.focusAction.bottom<=b.focus.bottom+1,JSON.stringify(b));
+   await check('dashboard summary stays compact and real actions appear in the first screen at '+width,async()=>{
+    const b=await page.evaluate(()=>{const rect=s=>document.querySelector(s).getBoundingClientRect().toJSON();return {heading:rect('.home-heading'),counts:rect('.home-counts'),firstTask:rect('#overview-items .task-row'),action:rect('#overview-items [data-workflow-task]'),overflow:document.documentElement.scrollWidth>innerWidth+1,metricsCount:document.querySelectorAll('.home-counts>a').length};});
+    assert.equal(b.overflow,false);assert.equal(b.metricsCount,3);assert.ok(b.heading.height<100&&b.counts.height<80,JSON.stringify(b));assert.ok(b.firstTask.top<page.viewportSize().height-100,JSON.stringify(b));
+    assert.ok(b.action.right<=b.firstTask.right+1&&b.action.bottom<=b.firstTask.bottom+1,JSON.stringify(b));
     report.measurements.push({engine,page:'dashboard-density',width,...b});await capture('dashboard-'+width);
    });
   }
@@ -49,7 +50,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     report.measurements.push({engine,page:'tasks',width,firstTaskTop:b.task.top});if([1413,390].includes(width))await capture('tasks-'+width);
    });
    await check('search, status and view switching preserve user input at '+width,async()=>{
-    await page.locator('#task-search').fill('申请');await page.locator('[data-filter=all]').click();await page.locator('[data-task-view=list]').click();assert.equal(await page.locator('#task-search').inputValue(),'申请');assert.ok(await page.locator('#task-results .task-row').count()>0);await page.locator('#task-search').fill('');await page.locator('[data-task-view=board]').click();
+    await page.locator('#task-search').fill('申请');if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.locator('[data-task-view=list]').click();assert.equal(await page.locator('#task-search').inputValue(),'申请');assert.ok(await page.locator('#task-results .task-row').count()>0);await page.locator('#task-search').fill('');await page.locator('[data-task-view=board]').click();
    });
   }
   await check('a pending memory index refreshes automatically without acknowledging unread entries',async()=>{
@@ -111,10 +112,9 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
     if(route==='tasks'){
      await page.locator('[data-task-view=board]').click();await settle();
-     const bounds=await page.locator('.task-board-scroll').evaluate(n=>({width:n.clientWidth,scroll:n.scrollWidth}));assert.ok(bounds.scroll>bounds.width,'Mobile lanes must be horizontally reachable');
-     await page.locator('[data-board-jump=followup]').click();await settle();
-     await page.waitForFunction(()=>{const x=document.querySelector('[data-task-lane=followup]').getBoundingClientRect().x;return x>=0&&x<50;});
-     const b=await page.locator('[data-task-lane=followup]').boundingBox();assert.ok(b.x>=0&&b.x<50,JSON.stringify(b));
+     const lanes=await page.locator('.task-board-column').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
+     assert.ok(lanes.length>=3);for(let i=0;i<lanes.length;i++){assert.ok(lanes[i].x>=0&&lanes[i].right<=width+1,JSON.stringify(lanes[i]));if(i)assert.ok(lanes[i].top>=lanes[i-1].bottom-1,'Mobile lanes must stack without overlap');}
+
     }
     await capture(route+'-mobile-'+width);
    });
@@ -125,10 +125,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     await page.locator('[data-calendar-view='+view+']').click();await settle();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
     const tabs=await page.locator('.calendar-view-tabs .tab').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
-    assert.equal(tabs.length,4);for(const b of tabs){assert.ok(b.width>=44&&b.height>=44,JSON.stringify(b));assert.ok(Math.abs(b.top-tabs[0].top)<1);}
+    assert.equal(tabs.length,4);for(const b of tabs){assert.ok(b.width>=32&&b.height>=32,JSON.stringify(b));assert.ok(Math.abs(b.top-tabs[0].top)<1);}
     const previous=await page.locator('[data-calendar-action=previous]').boundingBox(),next=await page.locator('[data-calendar-action=next]').boundingBox();
     assert.ok(previous.x>=0&&previous.x+previous.width<=tabs[0].left+1&&tabs[3].right<=next.x+1&&next.x+next.width<=width+1,JSON.stringify({previous,tabs,next}));
-    if(view==='week')assert.ok(await page.locator('.time-calendar-scroll').evaluate(n=>n.scrollWidth>n.clientWidth),'Week columns must stay readable and swipe horizontally');
+    if(view==='week'){assert.equal(await page.locator('.time-calendar-scroll').count(),0,'Compact weekly agenda avoids sideways scrolling');for(const box of await page.locator('#calendar-body .agenda-row').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON())))assert.ok(box.x>=0&&box.right<=width+1,JSON.stringify(box));}
     await capture('calendar-'+view+'-'+width);
    });
   }

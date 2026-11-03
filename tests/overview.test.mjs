@@ -23,3 +23,13 @@ test('empty accounts and unresolved records retain accurate inventory',()=>{
     [{status:'confirmed'},{status:'received'},{status:'processing'},{status:'failed'}]);
   assert.equal(result.uncertain.length,1);assert.equal(result.notices.length,3);
 });
+test('automatic tracking stays visible without becoming a user chore',()=>{
+  const records=[{id:'queued',status:'received',intent:'tracking'},
+    {id:'updating',status:'processing',intent:'tracking',pending_intake_updates:1},
+    {id:'review',status:'draft',intent:'verify'},
+    {id:'history',status:'draft',intent:'closed',recommended:false}];
+  const value=overviewData([],records);
+  assert.deepEqual(value.notices.map(n=>n.id),['review']);
+  assert.deepEqual(value.tracking.map(n=>n.id),['queued','updating']);
+  assert.equal(value.pending.length,0);
+});

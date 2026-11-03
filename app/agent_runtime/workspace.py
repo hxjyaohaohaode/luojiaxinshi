@@ -27,6 +27,9 @@ POLICY = '''个人日历和待办使用 workspace_read 读取最新记录；需�
 这些回执只证明本站日历/待办变化；不证明已同步手机日历、触发系统闹钟、提交作业、通知他人或完成学校手续。需要外部结果时必须有对应真实业务回执。
 不确定或不知道就直接说明。不得虚构查看范围、测试通过、完成操作或未知事实。回答简要说明实际结果和未完成事项。'''
 POLICY += '\n面向用户用“已保存”“待办”“已标记完成”“已撤销”等短词，不输出 committed/pending、字段名或内部 ID。'
+READ_POLICY = '本人日历和待办统一用 workspace_read。仅根据已保存状态询问待办数量或优先关注几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计）。该简报已包含期限、前置、材料、待核变更、跟进和并列项依据，不需选择 records 再重写；服务端整理候选后仍独立核验。需要结合附件原文、校规、课表、用户另定的排序标准，或要求精确单句/实际修改时，才用 reply=records 继续完整工具链。实际修改先用 workspace_capabilities 取得协议并核对回执；分析不改记录，本站保存不代表学校手续完成。'
+TASK_STATE_POLICY = '个人待办的 status=done 表示本人已标记完成，cancelled 表示已取消；workflow.data.stage 是保留的阶段记录，不能仅因它仍为 preparing 就说已完成事项尚未完成。handling_state 是服务器依据上述独立状态计算的当前办理路径，可直接用于解释现在能做什么；不是学校受理证明。前置是否满足看 workflow.blocked，原要求变化看 pending_changes/change_review，二者分别核对。followup_at 是个人跟进安排，不是正式截止。'
+TASK_STATE_POLICY += ' query_task_status_counts 是数据库对 query_scope 匹配的全部本人待办的统计，独立于详情分页；不含日历、筛选范围外或其他账号。材料勾选表示本人准备状态，不等同于前置任务未完成。用户问哪两件待办就分别选两条，不能把多条合并冒充一件。'
 
 
 def flat_schema(schema, field, model):
@@ -50,11 +53,19 @@ def fold_fields(value, field, model):
 
 
 class WorkspaceRead(Strict):
-    kind: Literal['all', 'calendar', 'tasks', 'operations'] = 'all'
+    kind: Literal['all', 'calendar', 'tasks', 'operations'] = Field(default='all', description='tasks 同时返回当前办理阶段、前置约束、材料准备、待核实变动和跟进状态；operations 只查本对话助手操作回执，不是办理进度。')
     target_id: str = Field(default='', max_length=80)
-    query: str = Field(default='', max_length=160)
+    query: str = Field(default='', max_length=160, description='按空白分隔的关键词须全部匹配；统计与详情使用同一筛选条件。')
     offset: int = Field(default=0, ge=0, le=10000)
     limit: int = Field(default=20, ge=1, le=50)
+    reply: Literal['task_briefing', 'records'] = Field(default='records', description='task_briefing：已保存待办的数量或优先几项，含前置/材料/变更/跟进/期限与并列依据，直接整理候选后独立复核。records：需要原文、课表、自定排序或实际修改等进一步综合分析。')
+    count: int = Field(default=2, ge=0, le=50, description='task_briefing 的关注项数；0仅统计。records 时不使用。')
+
+    @model_validator(mode='after')
+    def briefing_scope(self):
+        if self.reply == 'task_briefing' and self.kind != 'tasks':
+            raise ValueError('待办简报仅支持 kind=tasks；综合日历或操作回执请用 reply=records')
+        return self
 
 
 class CalendarWrite(Strict):
@@ -172,7 +183,7 @@ def evidence_sections(result):
     """
     sections = []
     if 'records' in result:
-        sections.append({'locator': '查询范围', 'text': dumps({k: v for k, v in result.items() if k != 'records'})})
+        sections.append({'locator': '查询范围', 'text': dumps({k: v for k, v in result.items() if k not in ('records','state_semantics')}), '_retrieval_score': 5})
         records = result['records']
     else:
         records = [result]
@@ -189,6 +200,21 @@ def evidence_sections(result):
         else:
             record = item
         data = record.get('data') or {}
+        if record.get('kind') == 'tasks':
+            # A long workflow/receipt can span several citation chunks. Keep
+            # identity, personal status and both kinds of time in one short
+            # span, while retaining all original detail sections below.
+            workflow = record.get('workflow') or {}
+            workflow_data = workflow.get('data') or {}
+            anchor = {k: record[k] for k in ('id', 'status', 'version') if k in record}
+            anchor['data'] = {k: data[k] for k in ('title', 'due_date', 'due_time', 'deadline_confirmed', 'planned_at') if k in data}
+            if 'title' in anchor['data']:anchor['data']['title'] = str(anchor['data']['title'])[:160]
+            anchor['workflow'] = {k: workflow[k] for k in ('blocked',) if k in workflow}
+            anchor['workflow']['data'] = {k: workflow_data[k] for k in ('stage', 'followup_at') if k in workflow_data}
+            if 'pending_changes' in record:anchor['pending_changes_count'] = len(record['pending_changes'])
+            if 'change_review' in record:anchor['change_review_state'] = (record['change_review'] or {}).get('state')
+            if 'handling_state' in record:anchor['handling_state'] = {k: record['handling_state'][k] for k in ('kind', 'label') if k in record['handling_state']}
+            sections.append({'locator': locator + ' 状态核对', 'text': dumps(anchor), '_retrieval_score': 4})
         summary = {k:v for k,v in record.items() if k != 'data'}
         summary['data'] = {k:data[k] for k in schedule_fields if k in data}
         if summary.get('id') or data:
@@ -249,6 +275,7 @@ def read(conn, uid, cid, args):
         items = operations(conn, uid, cid)
     else:
         total, offset = 0, args.offset
+        counts = {status: 0 for status in ('pending', 'done', 'cancelled')}
         for kind in ('calendar', 'tasks'):
             if args.kind not in ('all', kind):
                 continue
@@ -259,10 +286,17 @@ def read(conn, uid, cid, args):
                 condition += ' AND id=?'
                 params.append(args.target_id)
             if args.query:
-                for term in args.query.split()[:8]:
+                for term in args.query.split():
                     condition += ' AND instr(lower(data),lower(?))>0'
                     params.append(term)
-            count = conn.execute(f'SELECT count(*) FROM {table}'+condition, params).fetchone()[0]
+            if kind == 'tasks':
+                # Aggregate the exact authorized query before pagination. Tool
+                # context budgets may later shorten the detail page, but must
+                # not change or mislabel its trustworthy query-level counts.
+                counts.update(dict(conn.execute('SELECT status,count(*) FROM tasks'+condition+' GROUP BY status',params)))
+                count = sum(counts.values())
+            else:
+                count = conn.execute(f'SELECT count(*) FROM {table}'+condition, params).fetchone()[0]
             total += count
             if offset >= count:
                 offset -= count
@@ -274,7 +308,19 @@ def read(conn, uid, cid, args):
                 value['data'] = json.loads(value['data'])
                 items.append({'kind': kind, **value})
             offset = 0
-        return {'records': items, 'total': total, 'has_more': total > args.offset+len(items), 'offset': args.offset}
+        task_items=[item for item in items if item['kind']=='tasks']
+        if task_items:
+            from ..workflow import enrich_tasks
+            # Reuse the browser's current business projection. A bare task row
+            # cannot establish submitted/blocked state or changed prerequisites.
+            for item in task_items:item['user_id']=uid
+            enrich_tasks(conn,task_items)
+            for item in task_items:item.pop('user_id',None)
+        result = {'records': items, 'total': total, 'has_more': total > args.offset+len(items), 'offset': args.offset,
+                  'query_scope': {'kind': args.kind, 'target_id': args.target_id, 'query': args.query}}
+        if args.kind in ('all', 'tasks'):
+            result.update(query_task_status_counts=counts,state_semantics=TASK_STATE_POLICY)
+        return result
     if args.target_id and args.kind == 'operations':
         items = [x for x in items if x['operation_id'] == args.target_id]
     if args.query:

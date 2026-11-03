@@ -3,6 +3,41 @@ import pytest
 
 from app.ai import FACT_KEYS,validate_extraction
 from app.documents import text_source
+from app.deadline_evidence import analyze
+
+
+@pytest.mark.parametrize('quote,end,clock',[
+    ('自查工作时间：2025年11月28至12月15日。','2025-12-15',None),
+    ('2026年11月2日至5日17:00前提交。','2026-11-05','17:00'),
+    ('2026年12月28日至次年1月5日17:00。','2027-01-05','17:00'),
+    ('2026年12月28日至2027年1月5日17:00。','2027-01-05','17:00'),
+    ('2028年2月28日至29日24:00。','2028-03-01','00:00'),
+])
+def test_explicit_range_carries_only_its_own_year_and_month(quote,end,clock):
+    support=analyze([quote])
+    assert support.supports_date(end,clock)
+    if clock:assert support.supports_time(end,clock)
+    t=extract([quote],end,clock)
+    assert t['due_date']==end and t['due_time']==clock
+    assert t['deadline_evidence'][0]['quote']==quote
+
+
+def test_range_endpoint_clock_never_moves_to_the_start_and_reference_quotes_must_disambiguate():
+    support=analyze(['2025年11月28至12月15日。','对发现问题于12月15日17:00前整改。'])
+    assert support.supports_time('2025-12-15','17:00') and not support.supports_time('2025-11-28','17:00')
+    ambiguous=analyze(['2025年11月28至12月15日。','2026年11月28至12月15日。','12月15日17:00前提交。'])
+    assert not ambiguous.pairs
+
+
+@pytest.mark.parametrize('quote,end',[
+    ('11月28至12月15日17:00。','2025-12-15'),
+    ('2026年12月28日至1月5日17:00。','2027-01-05'),
+    ('2026年11月5日至2日17:00。','2026-11-02'),
+    ('2026年2月28日至30日17:00。','2026-03-02'),
+])
+def test_unknown_year_or_reversed_invalid_range_is_never_repaired_by_guessing(quote,end):
+    result=analyze([quote],'2025-11-01T08:00:00+08:00')
+    assert not result.supports_date(end,'17:00')
 
 
 def extract(quotes,day,clock,published=None):

@@ -34,9 +34,18 @@ GitHub Actions 只在仓库检查环境中运行，不进入产品包。以下�
 | actions/checkout | v4 / 11d5960a326750d5838078e36cf38b85af677262 | MIT | 获取待检代码 |
 | actions/setup-python | v5 / a26af69be951a213d495a4c3e4e4022e16d87065 | MIT | Python 3.12 测试环境 |
 | actions/setup-node | v4 / 49933ea5288caeca8642d1e84afbd3f7d6820020 | MIT | Node.js 22 测试环境 |
+| actions/setup-java | v6.1.0 / b843ebf9b913146b38da2eaa7aeddf76074ae1ad | MIT | CI 使用 Temurin 21 验证旧 Office 解析 |
 
 参考资料中的原始文档和历史方案是用户明确指定共享的项目附件，不作为第三方 UI 库、字体或运行时依赖。两张第三方标识/建筑参考图片没有打包再分发。
 
 ## 历次参考融合核查（2026-10-22）
 
 本轮重新阅读 LangChain 工具上下文、LangMem 记忆工具、CopilotKit 宿主状态，以及 Activepieces、GenericAgent、BettaFish 的相关实现和 autoresearch 评估说明。借鉴接口边界和执行原则，使用本项目原有 Python/SQLite/原生 DOM 独立适配；未复制上述框架源码、安装其运行依赖或引入品牌素材。具体文件、读取范围和 SHA-256 见 `docs/REFERENCE_FUSION_MANIFEST.json`；采用与未采用边界见 `docs/REFERENCE_FUSION_AUDIT.md`。前端目录中的混合许可、示例代码和依赖链接不构成统一的再分发授权。
+
+## 旧 Office 本地解析工具（2026-11-03）
+
+`scripts/install_legacy_parser.py` 从官方发行地址安装 Apache Tika 4.2.0，并校验固定 SHA-512；可选 Windows Eclipse Temurin JRE 21.0.13+9 校验固定 SHA-256。发行地址与摘要保存在安装器和本机安装清单中。源码交付包不包含 `data/vendor` 的二进制；Docker 构建时下载 Tika 并保留原发行包中的 `LICENSE`、`NOTICE` 及插件许可，不在用户请求期间下载或安装工具。
+
+Apache Tika 的主许可证为 Apache-2.0，发行包中的依赖和插件仍按其各自的许可及声明处理。Temurin 的 OpenJDK 运行时按 GPLv2 with Classpath Exception 等随包许可提供，原 `legal/` 与 `NOTICE` 保留。Linux 镜像通过系统包安装 Java，不把本机 Windows JRE 复制入镜像。许可依据为对应下载发行包内的许可文件；这里的工程记录不替代其完整文本。
+
+本轮主动监控与 Harness 的上游仓库核查另见 `docs/proactive/upstream-review-2026-11-02.json`，其版本、维护时间及许可证信息带核查日期；借鉴方案与本项目运行依赖分别记录。

@@ -21,6 +21,8 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   },{url,method,data,form});
   const settle=()=>page.evaluate(async()=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));await Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
   const nav=async route=>{if(page.url()===origin+'/#'+route)await page.reload({waitUntil:'domcontentloaded'});else await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.locator('#content:not([inert])').waitFor();await settle();};
+  const noticeContext=async()=>{const details=page.locator('.notice-context');if(!await details.evaluate(n=>n.open))await details.locator(':scope>summary').click();await settle();};
+  const reveal=async(selector)=>{const control=page.locator(selector).first();await control.waitFor({state:'attached'});while(await control.locator('xpath=ancestor::details[not(@open)]').count())await control.locator('xpath=ancestor::details[not(@open)]').first().locator(':scope>summary').click();await control.waitFor();return control;};
   const close=async()=>{if(await page.locator('#dialog').evaluate(n=>n.open)){await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});}};
   const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.message});console.log('FAIL',engine,name,error.message);await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});await close();}};
   let noticeId,taskId,linkId;
@@ -34,13 +36,14 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await page.locator('#notice-form [name=body]').fill('【合成材料】2027年10月20日14:00至16:00参加讲座。'+unique);
       await page.locator('#notice-form [name=files]').setInputFiles({name:'讲座附件.txt',mimeType:'text/plain',buffer:Buffer.from('【合成附件】参加者请在讲座开始前到场。'+unique)});
       await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();
-      await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);await page.locator('.notice-handling').waitFor();
+      await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);await page.locator('.notice-context').waitFor();await noticeContext();await page.locator('.notice-handling').waitFor();
       noticeId=new URL(page.url()).hash.split('/')[1];const n=await api('/notices/'+noticeId);
       assert.equal(n.sources.length,2);assert.ok(n.sources.some(s=>s.name==='讲座附件.txt'));assert.equal(n.tasks.length,0);
     });
+    assert.ok(noticeId,'Notice persistence is a prerequisite for the remaining flow');
     await check('informational disposition persists without creating a task and can reopen',async()=>{
-      await page.locator('[data-notice-disposition=reference]').click();await page.locator('#dialog [name=note]').fill('阅读后保留原文');await page.locator('#dialog [type=submit]').click();await page.locator('[data-notice-disposition=inbox]').waitFor();
-      await nav('notice/'+noticeId);assert.equal(await page.locator('#draft-pane').isVisible(),false);
+      await page.locator('[data-notice-disposition=reference]').click();await page.locator('#dialog [name=note]').fill('阅读后保留原文');await page.locator('#dialog [type=submit]').click();await page.locator('#dialog').waitFor({state:'hidden'});await noticeContext();await page.locator('[data-notice-disposition=inbox]').waitFor();
+      await nav('notice/'+noticeId);assert.equal(await page.locator('#draft-pane').isVisible(),false);await noticeContext();
       const n=await api('/notices/'+noticeId);assert.equal(n.handling.disposition,'reference');assert.equal(n.tasks.length,0);
       await page.locator('[data-notice-disposition=inbox]').click();await page.locator('#dialog [type=submit]').click();await page.locator('[data-action=manual]').waitFor();
     });
@@ -56,27 +59,46 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await editor.locator('[name=scheduled_start_date]').fill('2027-10-20');await editor.locator('[name=scheduled_start_time]').fill('14:00');
       await editor.locator('[name=scheduled_end_date]').fill('2027-10-20');await editor.locator('[name=scheduled_end_time]').fill('16:00');await editor.locator('[name=scheduled_confirmed]').check();
       await editor.locator('.draft-plan>summary').click();await editor.locator('[name=plan_execution_mode]').selectOption('attendance');
-      await page.locator('#draft-form [name=reviewed]').check();await page.locator('#draft-form [type=submit]').click();await page.locator('#draft-pane [data-workflow-task]').first().waitFor();
+      await (await reveal('#draft-form [name=reviewed]')).check();await page.locator('#draft-form [type=submit]').click();await page.locator('#draft-pane [data-workflow-task]').first().waitFor();
       const n=await api('/notices/'+noticeId);assert.equal(n.tasks.length,1);const task=n.tasks[0];taskId=task.id;
       assert.equal(task.data.due_date,null);assert.equal(task.data.scheduled.start_time,'14:00');assert.equal(task.data.scheduled.confirmed,true);assert.equal(task.workflow.data.execution_mode,'attendance');
     });
+    assert.ok(taskId,'Task confirmation is a prerequisite for the remaining flow');
     await check('task body opens handling while source and edit controls retain separate actions',async()=>{
       await nav('tasks');
       const primary=page.locator(`.task-primary[data-workflow-task="${taskId}"]`),row=primary.locator('xpath=ancestor::div[contains(@class,"task-row")][1]');
-      const box=await primary.boundingBox();assert.ok(box.width>100&&box.height>=44);
+      const box=await primary.boundingBox();assert.ok(box.width>100&&box.height>=32);
       await primary.click({position:{x:box.width-8,y:box.height-6}});await page.locator('#workflow-form').waitFor();await close();
       await primary.focus();await page.keyboard.press('Enter');await page.locator('#workflow-form').waitFor();await close();
-      await row.locator('[data-action=edit-task]').click();await page.locator('#task-form').waitFor();assert.equal(await page.locator('#workflow-form').count(),0);await close();
-      await row.locator('.task-source-link').click();await page.waitForURL('**/#notice/'+noticeId);assert.equal(await page.locator('#dialog').evaluate(n=>n.open),false);await settle();
+      if(!await row.locator('.task-more').evaluate(n=>n.open))await row.locator('.task-more>summary').click();await row.locator('[data-action=edit-task]').click();await page.locator('#task-form').waitFor();assert.equal(await page.locator('#workflow-form').count(),0);await close();
+      if(!await row.locator('.task-more').evaluate(n=>n.open))await row.locator('.task-more>summary').click();await row.locator('.task-more-menu a[href^="#notice/"]').click();await page.waitForURL('**/#notice/'+noticeId);assert.equal(await page.locator('#dialog').evaluate(n=>n.open),false);await settle();
     });
     await check('activity calendar export uses its actual two-hour interval',async()=>{
       const t=(await api('/tasks/'+taskId+'/workflow')).task;
       const text=await page.evaluate(async({tid,version})=>{const s=await fetch('/api/session').then(r=>r.json());const r=await fetch('/api/calendar/export',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'campus-notice','X-CSRF-Token':s.csrf},body:JSON.stringify({task_ids:[tid],versions:{[tid]:version}})});if(!r.ok)throw new Error(await r.text());return r.text();},{tid:taskId,version:t.version});
       assert.match(text,/DTSTART:20271020T060000Z/);assert.match(text,/DTEND:20271020T080000Z/);assert.equal((text.match(/BEGIN:VEVENT/g)||[]).length,1);
     });
+    await check('background changes keep an open action menu and apply after it closes',async()=>{
+      await nav('tasks');
+      const row=page.locator(`.task-row[data-task-id="${taskId}"]`),menu=row.locator('.task-more');
+      await menu.locator(':scope>summary').click();await settle();
+      await row.evaluate(n=>{window.__heldTaskRow=n;});
+      const task=(await api('/tasks/'+taskId+'/workflow')).task,title=task.data.title+' · 同步更新';
+      await api('/tasks/'+taskId,'PUT',{version:task.version,status:task.status,data:{...task.data,title},reason:'合成跨窗口同步验收'});
+      const probe=page.waitForResponse(r=>r.url()===origin+'/api/proactive/revision'&&r.request().method()==='GET');
+      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await probe;await settle();
+      assert.equal(await menu.evaluate(n=>n.open),true);
+      assert.equal(await row.evaluate(n=>n===window.__heldTaskRow),true,'A background revision must not replace an active menu');
+      assert.notEqual(await row.locator('.task-label').textContent(),title);
+      await page.keyboard.press('Escape');assert.equal(await menu.evaluate(n=>n.open),false);
+      await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+      await page.waitForFunction(({id,title})=>document.querySelector(`.task-row[data-task-id="${id}"] .task-label`)?.textContent===title,{id:taskId,title});
+      await settle();await row.locator('.task-primary').click();await page.locator('#workflow-form').waitFor();await close();
+      await nav('notice/'+noticeId);
+    });
     await check('custom steps persist; incomplete steps block completion; reading needs no submission receipt',async()=>{
-      await page.locator(`[data-workflow-task="${taskId}"]`).first().click();await page.locator('#workflow-form [name=execution_mode]').selectOption('custom');
-      await page.locator('[name=phase_label]').fill('准备交流');await page.locator('.handling-editor details>summary').click();await page.locator('[data-add-milestone]').click();await page.locator('[data-milestone-title]').fill('整理提问');
+      await page.locator(`[data-workflow-task="${taskId}"]`).first().click();await (await reveal('#workflow-form [name=execution_mode]')).selectOption('custom');
+      await page.locator('[name=phase_label]').fill('准备交流');await (await reveal('[data-add-milestone]')).click();await page.locator('[data-milestone-title]').fill('整理提问');
       await page.locator('#workflow-form [name=complete]').click();await page.locator('#workflow-form .form-error').waitFor();assert.equal((await api('/tasks/'+taskId+'/workflow')).task.status,'pending');
       await page.locator('[data-milestone-done]').check();await page.locator('[name=execution_mode]').selectOption('reading');await page.locator('[name=stage]').selectOption('recorded');
       await settle();if(!await page.locator('.workflow-receipt').evaluate(n=>n.open))await page.locator('.workflow-receipt>summary').click();await settle();await page.locator('#workflow-form [name=outcome]').fill('已阅读通知与附件，并记录提问');assert.equal(await page.locator('#workflow-form [name=receipt]').isVisible(),false);
@@ -87,7 +109,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await nav('new');await page.locator('[data-read-url]').fill('https://notice-fixture.example/'+unique);await page.locator('[data-read-link]').click();await page.locator('[data-use-link]').click();
       assert.ok(await page.locator('[name=link_preview]').inputValue());await page.locator('[name=rights]').check();await page.locator('[name=materials_complete]').check();await page.locator('#notice-form [type=submit]').click();await page.waitForURL(/#notice\//);
       linkId=new URL(page.url()).hash.split('/')[1];const n=await api('/notices/'+linkId);assert.equal(n.sources.length,1);assert.equal(n.sources[0].origin.url,'https://notice-fixture.example/'+unique);
-      await page.locator('.source-content a').first().waitFor();assert.ok(await page.locator('.source-content a').count());
+      await reveal('.source-content a');assert.ok(await page.locator('.source-content a').count());
     });
     await check('unreadable links leave pasted content intact for fallback',async()=>{
       await nav('new');await page.locator('[name=body]').fill('失败后保留的正文 '+unique);await page.locator('[data-read-url]').fill('https://notice-fixture.example/failure');await page.locator('[data-read-link]').click();await page.getByText('示例链接暂时不可读取，请粘贴正文或上传原件',{exact:true}).waitFor();

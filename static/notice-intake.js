@@ -2,9 +2,26 @@ import {beginFormFeedback} from './ui-request.js';
 
 export const dispositionNames={inbox:'待处理',reference:'仅存资料',not_applicable:'与我无关',closed:'已结束'};
 export const isNoticeOpen=n=>(n.disposition||n.handling?.disposition||'inbox')==='inbox';
+export function shouldOfferHistoricalSummary(n){
+  return ['elapsed','event_date_passed','entry_closed'].includes(n.tracking?.state)
+    &&n.status!=='confirmed'&&n.feedback?.mode!=='include'
+    &&!(n.tasks||[]).some(task=>task.status==='pending');
+}
+export function historicalBoundaryLabel(item){
+  const seconds=Number(item.at),date=new Date((seconds-(item.date_only===true?1:0))*1000);
+  if(!Number.isFinite(seconds)||!Number.isFinite(date.getTime()))return '原文期限待核实';
+  // Date-only bounds are exclusive midnight on the following day internally.
+  // Show the original calendar date, without inventing a deadline clock.
+  return new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',dateStyle:'short',
+    ...(item.date_only===true?{}:{timeStyle:'short',hour12:false})}).format(date);
+}
 export function noticeState(n){
   const disposition=n.disposition||n.handling?.disposition||'inbox';
   if(disposition!=='inbox')return [dispositionNames[disposition]||'已收好',''];
+  if(n.tracking?.state==='elapsed'&&n.status!=='confirmed')return ['已过原文期限',''];
+  if(n.tracking?.state==='event_date_passed'&&n.status!=='confirmed')return ['已过原文活动日期',''];
+  if(n.tracking?.state==='entry_closed'&&n.status!=='confirmed')return ['报名或申报期限已过',''];
+  if(n.automation_state==='queued')return ['等待自动整理',''];
   return ({received:['待处理',''],draft:['待核对','orange'],processing:['处理中','blue'],confirmed:['已转为行动','green'],failed:['处理失败','red']})[n.status]||['待处理',''];
 }
 export function batchEntry(){return {id:crypto.randomUUID(),request_id:crypto.randomUUID(),title:'',body:'',source_label:'',source_url:'',published_at:'',materials_complete:false,allow_duplicate:false,target:'',target_version:null,link_preview:'',read_url:'',files:[],saved_id:'',error:''};}
@@ -96,7 +113,9 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     return `<section class="notice-handling" aria-label="通知处理方式"><div><strong>${value==='inbox'?'这则通知怎么处理':esc(dispositionNames[value])}</strong>${n.handling?.note?`<p class="small muted">${esc(n.handling.note)}</p>`:''}</div><div class="row wrap">${(value==='inbox'?['reference','not_applicable',...(n.tasks.length?['closed']:[])]:['inbox']).map(mode=>`<button type="button" class="button small" data-notice-disposition="${mode}" ${n.status==='processing'?'disabled':''}>${mode==='inbox'?'重新处理':dispositionNames[mode]}</button>`).join('')}</div></section>`;
   }
   function decorateNotice(n){
-    $('.notice-primary')?.insertAdjacentHTML('afterend',dispositionPanel(n));
+    const metadata=$('.notice-context-body');
+    if(metadata)metadata.insertAdjacentHTML('afterbegin',dispositionPanel(n));
+    else $('.notice-primary')?.insertAdjacentHTML('afterend',dispositionPanel(n));
     if(!isNoticeOpen(n)){
       const draft=$('#draft-pane');if(draft)draft.hidden=true;
       const steps=$('.notice-steps');if(steps)steps.hidden=true;
@@ -123,7 +142,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     return `<form class="panel stack intake-entry" data-intake-entry="${esc(item.id)}" data-workspace-form="intake-entry">
       <div class="between"><h2>通知 ${index+1}</h2><button type="button" class="button small plain" data-intake-remove="${esc(item.id)}">移除这一则</button></div>
       ${linkFields()}${area('正文','body',item.body,4,'maxlength="10000"')}
-      <label class="field">这一则的通知原件或截图<input type="file" name="files" multiple accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4,.webm"></label>
+      <label class="field">这一则的通知原件或截图<input type="file" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4,.webm"></label>
       <p class="field-note">本人填写件、成绩单等办理文件，请到对应待办中添加。</p>
       <div class="small" data-intake-files>${item.files.length?esc(item.files.join('、')):''}</div>
       ${item.files.length&&!fileMap.has(item.id)?'<div class="alert">附件需要重新选择。<button type="button" class="link-button" data-clear-file-record>移除附件记录</button></div>':''}

@@ -11,6 +11,7 @@ from app.config import Settings
 from app.db import dumps,ident
 from app.documents import text_source
 from app.main import create_app
+from synthetic_auth import verified_registration
 from app.notice_ingest import fingerprint
 from app.security import new_invite
 from fastapi.testclient import TestClient
@@ -23,7 +24,7 @@ def main():
         app=create_app(cfg);db=app.state.db
         client=TestClient(app,base_url=cfg.origin)
         client.headers.update({'Origin':cfg.origin,'X-Requested-With':'campus-notice'})
-        response=client.post('/api/auth/register',json={'invite':new_invite(db,'user'),'username':'capacity.synthetic',
+        response=verified_registration(client,{'invite':new_invite(db,'user'),'username':'capacity.synthetic',
             'password':'Synthetic-Capacity-2026-only!','display_name':'合成容量验收','accepted_terms':True})
         assert response.status_code==200,response.text
         session=client.get('/api/session').json();client.headers['X-CSRF-Token']=session['csrf'];uid=session['user']['id']

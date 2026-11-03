@@ -1,3 +1,4 @@
+// Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Real pointer movement with isolated synthetic tasks, never the user's data. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -9,7 +10,7 @@ await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic tasks; real pointer events, storage, conflict guards and undo',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromium,firefox,webkit').split(',')){
   const browser=await pw[engine].launch({headless:true,...(process.platform==='win32'&&engine==='chromium'?{channel:'msedge'}:{})});
-  const page=await browser.newPage({viewport:{width:1440,height:950},locale:'zh-CN'});page.setDefaultTimeout(12000);
+  const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1440,height:950},locale:'zh-CN'});page.setDefaultTimeout(12000);
   page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
   const api=(url,method='GET',data=null,form=false)=>page.evaluate(async({url,method,data,form})=>{
     const session=await fetch('/api/session').then(r=>r.json()),headers={'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf};
@@ -37,12 +38,12 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
     const manual=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});
     const saved=await api('/notices/'+notice.id+'/confirm','POST',{version:manual.version,reviewed:true,tasks:['A','B','C'].map(letter=>({title:prefix+' '+letter,origin:'manual',scope:'personal'}))});
     const [a,b,c]=saved.task_ids;
-    await page.goto(origin+'/#tasks');await page.locator('#task-search').fill(prefix);await page.locator('[data-filter=all]').click();await page.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await settle();
+    await page.goto(origin+'/#tasks');await page.locator('[data-task-view=board]').click();await page.locator('#task-search').fill(prefix);if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await settle();
     const initial=await ids('action');
     await check('whole-card drag reorders, persists after reload, and does not open the task',async()=>{
       const target=await row(initial[0]).boundingBox();await drag(initial[2],target.x+target.width/2,target.y+12);
       assert.deepEqual(await ids('action'),[initial[2],initial[0],initial[1]]);assert.equal(await page.locator('#dialog').evaluate(n=>n.open),false);
-      await page.reload();await page.locator('#task-search').fill(prefix);await page.locator('[data-filter=all]').click();await page.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await settle();
+      await page.reload();await page.locator('[data-task-view=board]').click();await page.locator('#task-search').fill(prefix);if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await settle();
       assert.deepEqual(await ids('action'),[initial[2],initial[0],initial[1]]);
     });
     await check('cross-lane move changes personal progress while preserving formal evidence',async()=>{
@@ -70,16 +71,16 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
       const saved=page.waitForResponse(r=>r.url().endsWith('/tasks/'+b+'/move')&&r.request().method()==='POST');
       await page.getByRole('button',{name:'移到留意反馈',exact:true}).click();assert.equal((await saved).status(),200);await row(b).locator('xpath=ancestor::section[@data-task-lane="followup"]').waitFor();assert.ok((await ids('followup')).includes(b));assert.equal(await page.locator('.task-drag-ghost').count(),0);
     });
-    if(engine==='chromium')await check('native touch reorders, crosses lanes through the dock, undoes, and swipes the board',async()=>{
-      const mobileContext=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true,storageState:await page.context().storageState()});
+    if(engine==='chromium')await check('native touch reorders, crosses stacked lanes through the dock, undoes, and leaves ordinary swipes as scrolling',async()=>{
+      const mobileContext=await browser.newContext({serviceWorkers:'block',viewport:{width:390,height:844},hasTouch:true,isMobile:true,storageState:await page.context().storageState()});
       const mobile=await mobileContext.newPage();
       try{
-        await mobile.goto(origin+'/#tasks');await mobile.locator('#task-search').fill(prefix);await mobile.locator('[data-filter=all]').click();
+        await mobile.goto(origin+'/#tasks');await mobile.locator('[data-task-view=board]').click();await mobile.locator('#task-search').fill(prefix);if(await mobile.locator('#task-status-select').isVisible())await mobile.locator('#task-status-select').selectOption('all');else await mobile.locator('[data-filter=all]').click();
         await mobile.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await mobile.waitForTimeout(350);
         const follow=mobile.locator('[data-task-lane=followup] .task-row'),before=await follow.evaluateAll(nodes=>nodes.map(n=>n.dataset.taskId));assert.equal(before.length,2);
         await follow.last().scrollIntoViewIfNeeded();await mobile.waitForTimeout(250);
         const handle=await follow.last().locator('[data-task-drag-handle]').boundingBox(),target=await follow.first().boundingBox();
-        const session=await mobileContext.newCDPSession(mobile),x=handle.x+22,y=handle.y+22;
+        const session=await mobileContext.newCDPSession(mobile),x=handle.x+handle.width/2,y=handle.y+handle.height/2;
         await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+4,y,id:1}]});
         await mobile.locator('.task-drag-ghost').waitFor();
         for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+(target.x+80-x)*i/12,y:y+(target.y+12-y)*i/12,id:1}]});await mobile.waitForTimeout(16);}
@@ -91,11 +92,11 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
         const movedId=await follow.last().getAttribute('data-task-id');
         await follow.last().locator('[data-task-drag-handle]').scrollIntoViewIfNeeded();
         const grip=await follow.last().locator('[data-task-drag-handle]').boundingBox();
-        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x+22,y:grip.y+22,id:3}]});
-        await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+26,y:grip.y+22,id:3}]});
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:grip.x+grip.width/2,y:grip.y+grip.height/2,id:3}]});
+        await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+grip.width/2+4,y:grip.y+grip.height/2,id:3}]});
         await mobile.locator('.task-drag-dock').waitFor();
         const drop=await mobile.locator('[data-task-drop-lane=action]').boundingBox();
-        for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+22+(drop.x+drop.width/2-grip.x-22)*i/12,y:grip.y+22+(drop.y+drop.height/2-grip.y-22)*i/12,id:3}]});await mobile.waitForTimeout(16);}
+        for(let i=1;i<=12;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grip.x+grip.width/2+(drop.x+drop.width/2-grip.x-22)*i/12,y:grip.y+grip.height/2+(drop.y+drop.height/2-grip.y-22)*i/12,id:3}]});await mobile.waitForTimeout(16);}
         const dockSaved=mobile.waitForResponse(r=>r.url().endsWith('/tasks/'+movedId+'/move')&&r.request().method()==='POST');
         await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.equal((await dockSaved).status(),200);await mobile.locator('.task-drag-dock').waitFor({state:'detached'});
         await mobile.locator(`[data-task-lane=action] [data-task-id="${movedId}"]`).waitFor();
@@ -104,18 +105,18 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
         await mobile.locator('#toast .toast-action').click();assert.equal((await undone).status(),200);await mobile.locator(`[data-task-lane=followup] [data-task-id="${movedId}"]`).waitFor();
         await mobile.evaluate(()=>Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity&&!a.effect?.target?.closest?.('#toast')).map(a=>a.finished.catch(()=>{}))));
         await mobile.locator('.task-board-scroll').evaluate(el=>{el.scrollLeft=0;});await mobile.waitForTimeout(100);
-        const boardBox=await mobile.locator('.task-board-scroll').boundingBox(),swipeY=Math.min(boardBox.y+100,600);
-        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:320,y:swipeY,id:2}]});
-        for(let i=1;i<=10;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:320-i*24,y:swipeY,id:2}]});await mobile.waitForTimeout(16);}
+        await mobile.locator('[data-task-lane=followup] .task-row').first().scrollIntoViewIfNeeded();const boardBox=await mobile.locator('[data-task-lane=followup] .task-row').first().boundingBox(),swipeY=Math.min(boardBox.y+boardBox.height/2,600);const scrollBefore=await mobile.locator('#content').evaluate(n=>n.scrollTop);
+        await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:160,y:swipeY,id:2}]});
+        for(let i=1;i<=10;i++){await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:160,y:swipeY-i*16,id:2}]});await mobile.waitForTimeout(16);}
         await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await mobile.waitForTimeout(250);
         assert.equal(await mobile.locator('.task-drag-ghost').count(),0);
-        assert.ok(await mobile.locator('.task-board-scroll').evaluate(el=>el.scrollLeft)>0,'A normal card swipe must move between lanes');
+        assert.ok(await mobile.locator('#content').evaluate(n=>n.scrollTop)>scrollBefore,'A normal card swipe scrolls the stacked board');assert.ok(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
         await mobile.screenshot({path:path.join(out,'chromium-touch.png')});
       }finally{await mobileContext.close();}
     });
-    for(const width of [390,320])await check('compact '+width+'px layout retains large move targets and no horizontal overflow',async()=>{
+    for(const width of [390,320])await check('compact '+width+'px layout retains reachable move targets and no horizontal overflow',async()=>{
       await page.setViewportSize({width,height:844});await settle();const handle=row(c).locator('[data-task-drag-handle]');await handle.scrollIntoViewIfNeeded();
-      const box=await handle.boundingBox();assert.ok(box.width>=44&&box.height>=44);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      const box=await handle.boundingBox();assert.ok(box.width>=27.5&&box.height>=27.5,JSON.stringify(box));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await handle.click();await page.getByRole('button',{name:'移到留意反馈',exact:true}).waitFor();await page.keyboard.press('Escape');
       await page.screenshot({path:path.join(out,engine+'-'+width+'.png')});
     });

@@ -11,7 +11,7 @@ def test_invited_pilot_blocks_public_signup_without_locking_out_existing_users(e
     account(env)
     settings.registration_mode = 'invite'
     client = TestClient(app, base_url=ORIGIN, headers={'Origin': ORIGIN, 'X-Requested-With': 'campus-notice'})
-    assert client.get('/api/auth/policy').json() == {'registration_mode': 'invite'}
+    assert client.get('/api/auth/policy').json()['registration_mode'] == 'invite'
     body = {'username': 'newmember', 'display_name': '受邀试点', 'password': PASSWORD, 'accepted_terms': True}
     assert client.post('/api/auth/register', json=body).status_code == 403
     assert client.post('/api/auth/login', json={'username': 'alice', 'password': PASSWORD}).status_code == 200
@@ -25,6 +25,8 @@ def test_invitation_policy_checks_token_role_and_one_time_use(env):
     body = {'username': 'newmember', 'display_name': '受邀试点', 'password': PASSWORD, 'accepted_terms': True}
     assert client.post('/api/auth/register', json={**body, 'invite': 'invalid'}).status_code == 400
     token = new_invite(app.state.db)
+    from verification_helpers import proof
+    body['verification_token']=proof(client,invite=token)
     assert client.post('/api/auth/register', json={**body, 'invite': token}).status_code == 200
     assert client.get('/api/session').json()['user']['role'] == 'user'
     assert client.post('/api/auth/register', json={**body, 'username': 'secondmember', 'invite': token}).status_code == 400

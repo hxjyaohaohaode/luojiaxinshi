@@ -217,7 +217,7 @@ def test_parallel_children_have_bounded_permissions_and_share_budget(env):
     c, model = setup(env, [])
     async def respond(messages, tools):
         prompt = messages[-1].get('content', '')
-        if messages[0]['content'].endswith('你是只读子任务，只完成分配的任务并给出证据和不确定性。'):
+        if '你是只读子任务，只完成分配的任务并给出证据和不确定性。' in messages[0]['content']:
             assert 'spawn_agent' not in {t['function']['name'] for t in tools}
             assert 'write_file' not in {t['function']['name'] for t in tools}
             await asyncio.sleep(.03)
@@ -392,7 +392,7 @@ def test_subagent_message_delivery_and_forbidden_write_are_enforced(env):
     class Coordinated:
         model = 'synthetic'
         async def complete(self, messages, tools):
-            child = messages[0]['content'].endswith('你是只读子任务，只完成分配的任务并给出证据和不确定性。')
+            child = '你是只读子任务，只完成分配的任务并给出证据和不确定性。' in messages[0]['content']
             if child:
                 child_inputs.append(messages)
                 if len(child_inputs) == 1:

@@ -29,7 +29,18 @@
     if(config.digits===undefined&&Number.isInteger(config.outputs.digits)&&!root.querySelector('#digits')){
       const {digits,...outputs}=config.outputs;config={...config,digits,outputs};
     }
-    const inputs=Object.entries(config.inputs).map(([id,rules])=>{rules=rules||{};const node=root.querySelector('#'+CSS.escape(id));if(!node||!node.matches('input,select,textarea'))throw Error('找不到输入字段：'+id);if(['min','max','step'].some(k=>rules[k]!==undefined&&!Number.isFinite(rules[k]))||rules.step!==undefined&&rules.step<=0||rules.min!==undefined&&rules.max!==undefined&&rules.min>rules.max)throw Error('字段范围配置无效：'+id);return {id,node,rules,label:node.labels?.[0]?.innerText?.trim()||node.getAttribute('aria-label')||id};});
+    const inputs=Object.entries(config.inputs).map(([id,rules])=>{
+      rules={...(rules||{})};const node=root.querySelector('#'+CSS.escape(id));
+      if(!node||!node.matches('input,select,textarea'))throw Error('找不到输入字段：'+id);
+      if(['min','max','step'].some(k=>rules[k]!==undefined&&!Number.isFinite(rules[k]))||rules.step!==undefined&&rules.step<=0)throw Error('字段范围配置无效：'+id);
+      const numeric=['number','range'].includes(node.type)||rules.type==='number';
+      if(numeric){for(const key of ['min','max','step']){const value=node.getAttribute(key);if(value!==null&&value!==''&&value!=='any'){const bound=Number(value);if(Number.isFinite(bound)){if(key==='min')rules.min=rules.min===undefined?bound:Math.max(rules.min,bound);else if(key==='max')rules.max=rules.max===undefined?bound:Math.min(rules.max,bound);else if(rules.step===undefined)rules.step=bound;}}}}
+      else if(rules.type===undefined&&['text','textarea','select-one','select-multiple','date','time','email'].includes(node.type))rules.type='text';
+      if(rules.min!==undefined&&rules.max!==undefined&&rules.min>rules.max||rules.step!==undefined&&rules.step<=0)throw Error('字段范围配置无效：'+id);
+      const initial=Number(node.getAttribute('value'));
+      const stepBase=rules.min??(node.type==='range'?0:Number.isFinite(initial)?initial:0);
+      return {id,node,rules,stepBase,label:node.labels?.[0]?.innerText?.trim()||node.getAttribute('aria-label')||id};
+    });
     const outputs=Object.entries(config.outputs).map(([id,compute])=>{const node=root.querySelector('#'+CSS.escape(id));if(!node||typeof compute!=='function')throw Error('计算结果配置无效：'+id);return {id,node,compute};});
     let errorNode=config.error?root.querySelector('#'+CSS.escape(config.error)):null;
     if(!errorNode){errorNode=document.createElement('p');errorNode.className='ui-error';errorNode.setAttribute('role','status');root.append(errorNode);}
@@ -38,23 +49,28 @@
     let current={values:{},results:{},valid:false};
     function update(){
       const values={},results={};let issue='';
-      for(const {id,node,rules,label}of inputs){
+      for(const {id,node,rules,label,stepBase}of inputs){
         const raw=node.value.trim();let value;
-        if(rules.type==='text')value=raw;
+        if(rules.type==='text'){value=raw;if(!raw&&(rules.required||node.required)&&!issue)issue=label+'不能为空';else if(node.validity?.valid===false&&!issue)issue=label+'格式不正确';}
         else if(node.type==='checkbox'||node.type==='radio')value=node.checked;
         else{
           value=raw===''?NaN:Number(raw);
-          const invalid=!Number.isFinite(value)||(rules.integer&&!Number.isInteger(value))||(rules.min!==undefined&&value<rules.min)||(rules.max!==undefined&&value>rules.max)||(rules.step!==undefined&&Number.isFinite(value)&&Math.abs((value-(rules.min??0))/rules.step-Math.round((value-(rules.min??0))/rules.step))>1e-7);
+          const invalid=!Number.isFinite(value)||node.validity?.valid===false||(rules.integer&&!Number.isInteger(value))||(rules.min!==undefined&&value<rules.min)||(rules.max!==undefined&&value>rules.max)||(rules.step!==undefined&&Number.isFinite(value)&&Math.abs((value-stepBase)/rules.step-Math.round((value-stepBase)/rules.step))>1e-7);
           if(invalid&&!issue)issue=raw===''?label+'不能为空':label+'须为'+(rules.min!==undefined&&rules.max!==undefined?rules.min+' 至 '+rules.max+' 的':'有效')+(rules.integer?'整数':'数值');
           if(invalid)node.setAttribute('aria-invalid','true');else node.removeAttribute('aria-invalid');
         }
         values[id]=value;
       }
-      if(!issue){try{for(const {id,compute}of outputs){const value=compute(Object.freeze({...values}));if(!['number','string','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value))throw Error('当前输入无法计算，请检查取值');results[id]=value;}}catch(e){issue=e.message||'当前输入无法计算';}}
+      if(!issue){try{for(const {id,compute}of outputs){const value=compute(Object.freeze({...values}));if(!['number','string','boolean'].includes(typeof value)||typeof value==='number'&&!Number.isFinite(value)||typeof value==='string'&&/^(?:NaN|[+-]?Infinity)$/i.test(value.trim()))throw Error('当前输入无法计算，请检查取值');results[id]=value;}}catch(e){issue=e.message||'当前输入无法计算';}}
       for(const {id,node}of outputs)node.textContent=issue?'—':typeof results[id]==='number'?format.format(results[id]):String(results[id]);
       errorNode.textContent=issue;errorNode.hidden=!issue;current={values,results,valid:!issue};publishText();measure();return current;
     }
     for(const {node}of inputs){nativeAdd.call(node,'input',update);nativeAdd.call(node,'change',update);}
+    // Native reset does not emit input/change. Recompute after its default
+    // action and publish the new controls, so follow-ups cannot reuse old values.
+    for(const form of new Set(inputs.map(item=>item.node.form).filter(Boolean)))nativeAdd.call(form,'reset',()=>setTimeout(()=>{update();changed();},0));
+    const initialValues=inputs.map(({node})=>({node,value:node.value,checked:node.checked}));
+    function reset(){for(const item of initialValues){item.node.value=item.value;if(['checkbox','radio'].includes(item.node.type))item.node.checked=item.checked;}update();changed();}
     if(config.prompt){
       const button=root.querySelector('#'+CSS.escape(config.prompt.id));
       if(!button||typeof config.prompt.text!=='string'||!config.prompt.text.trim())throw Error('继续提问按钮配置无效');
@@ -67,7 +83,7 @@
         finally{button.disabled=false;lockActions();publishText();}
       },true);
     }
-    update();return Object.freeze({update,values:()=>({...current.values}),results:()=>({...current.results})});
+    update();return Object.freeze({update,reset,values:()=>({...current.values}),results:()=>({...current.results})});
   }
   const api=Object.freeze({form:bindForm,sendPrompt:args=>request('sendPrompt',args),openLink:args=>request('openLink',args),hostAction:args=>request('hostAction',args)});
   Object.defineProperty(window,'CampusUI',{value:api,writable:false,configurable:false});

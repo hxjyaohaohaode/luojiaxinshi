@@ -41,7 +41,9 @@ def account(env,name='alice',role='user'):
     c=TestClient(app,base_url=ORIGIN)
     c.headers.update({'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     token=new_invite(app.state.db,role)
-    r=c.post('/api/auth/register',json={'invite':token,'username':name,'password':PASSWORD,'display_name':name,'accepted_terms':True})
+    from verification_helpers import proof
+    verified=proof(c,destination=name+'@example.invalid',invite=token)
+    r=c.post('/api/auth/register',json={'invite':token,'username':name,'password':PASSWORD,'display_name':name,'accepted_terms':True,'verification_token':verified})
     assert r.status_code==200,r.text
     c.headers['X-CSRF-Token']=c.get('/api/session').json()['csrf']
     return c
@@ -57,6 +59,17 @@ def manual(c,n):
     r=c.post(f"/api/notices/{n['id']}/manual",json={'version':n['version']})
     assert r.status_code==200,r.text
     return r.json()
+
+
+def test_explicit_manual_draft_is_persisted_without_automatically_creating_tasks(env):
+    c=account(env)
+    n=manual(c,notice(c))
+    assert n['draft']['origin']=='manual'
+    assert n['draft']['tasks']==[]
+    assert n['tasks']==[]
+    restored=c.get('/api/notices/'+n['id']).json()
+    assert restored['draft']['origin']=='manual'
+    assert restored['tasks']==[]
 
 
 def task(n,**overrides):
@@ -100,6 +113,8 @@ def test_invite_single_use_and_password_policy(env):
     body={'invite':token,'username':'alice','password':'short','display_name':'A','accepted_terms':True}
     assert c.post('/api/auth/register',json=body).status_code==422
     body['password']=PASSWORD
+    from verification_helpers import proof
+    body['verification_token']=proof(c,invite=token)
     r=c.post('/api/auth/register',json=body)
     assert r.status_code==200
     assert 'HttpOnly' in r.headers['set-cookie'] and 'SameSite=strict' in r.headers['set-cookie']
@@ -293,7 +308,10 @@ def test_password_rotation_revokes_other_sessions(env):
     c=account(env)
     other=TestClient(env[0],base_url=ORIGIN,headers={'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
     assert other.post('/api/auth/login',json={'username':'alice','password':PASSWORD}).status_code==200
-    assert c.post('/api/auth/password',json={'old_password':PASSWORD,'new_password':'New-Strong-Password-2026'}).status_code==200
+    from verification_helpers import proof,advance_cooldown
+    advance_cooldown(c.app)
+    verified=proof(c,'password',destination='alice@example.invalid')
+    assert c.post('/api/auth/password',json={'old_password':PASSWORD,'new_password':'New-Strong-Password-2026','verification_token':verified}).status_code==200
     assert other.get('/api/session').status_code==401
     assert c.get('/api/session').status_code==200
 
@@ -332,12 +350,16 @@ def test_docx_parser_and_zip_bomb_guard():
     assert file_source('large.docx',oversized.getvalue())['status']=='failed'
 
 
-def test_pdf_encrypted_and_scanned_rejected():
+def test_pdf_encrypted_is_rejected_and_image_only_pages_remain_reviewable():
     writer=PdfWriter();writer.add_blank_page(width=100,height=100)
     data=io.BytesIO();writer.write(data)
-    assert file_source('scan.pdf',data.getvalue())['status']=='failed'
+    from app.pdf_visual import page_marker
+    raw=data.getvalue();scan=file_source('scan.pdf',raw)
+    assert scan['status']=='review' and scan['content']==raw
+    assert scan['sections']==[page_marker(1)] and '扫描件' in scan['warning']
     writer.encrypt('password');data=io.BytesIO();writer.write(data)
-    assert '加密' in file_source('locked.pdf',data.getvalue())['warning']
+    locked=file_source('locked.pdf',data.getvalue())
+    assert locked['status']=='failed' and '加密' in locked['warning']
 
 
 @pytest.mark.parametrize('output_encoding',['utf-8','cp1252'])

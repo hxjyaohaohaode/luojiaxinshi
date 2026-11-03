@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from app import ai
 from app.config import Settings
 from app.main import create_app
+from synthetic_auth import verified_registration
 from app.version import VERSION
 from app.model_catalog import TEXT_MODELS,validate as validate_models,channel,notice_settings
 from app.console import configure_text_output
@@ -28,10 +29,10 @@ def main():
     configure_text_output()
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--live',action='store_true')
-    parser.add_argument('--label',choices=['baseline','verified','verified-fix','normalized','streamed','reviewed','accelerated','accelerated-dates'],default='baseline')
+    parser.add_argument('--label',choices=['baseline','verified','verified-fix','normalized','streamed','reviewed','accelerated','accelerated-dates','handling-route','handling-daily'],default='baseline')
     parser.add_argument('--extract-model',choices=sorted(TEXT_MODELS))
     parser.add_argument('--review-model',choices=sorted(TEXT_MODELS))
-    parser.add_argument('--processing-mode',choices=['configured','fast'],default='configured')
+    parser.add_argument('--processing-mode',choices=['configured','daily','fast'],default='configured')
     parser.add_argument('--keep-fixture',action='store_true',help='Keep the isolated generated draft for browser review; never use the production database.')
     args=parser.parse_args()
     if args.processing_mode=='fast' and (args.extract_model or args.review_model):parser.error('Use either the request mode or explicit model overrides')
@@ -73,12 +74,13 @@ def main():
             if args.processing_mode=='fast':settings=replace(settings,notice_fast_enabled=True)
             validate_models(settings)
             run_settings=notice_settings(settings,args.processing_mode)
+            expected['maximum_provider_requests']=(4 if run_settings.notice_auto_repair else 2) if run_settings.notice_semantic_review else 1
             report.update(processing_mode=args.processing_mode,extraction_model=run_settings.ai_model,review_model=run_settings.notice_review_model,billing_channel=channel(settings.ai_base_url),
                 configured_models_before=[settings.ai_model,settings.notice_review_model])
             if not settings.ai_api_key:raise RuntimeError('Configured credential is required')
             app=create_app(settings)
             with TestClient(app,base_url='http://testserver',headers={'Origin':'http://testserver','X-Requested-With':'campus-notice'}) as client:
-                registered=client.post('/api/auth/register',json={'username':'business.notice.fixture','password':'Isolated-Notice-Fixture-2026','display_name':'虚构参赛负责人','accepted_terms':True})
+                registered=verified_registration(client,{'username':'business.notice.fixture','password':'Isolated-Notice-Fixture-2026','display_name':'虚构参赛负责人','accepted_terms':True})
                 assert registered.status_code==200,registered.text
                 client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf']
                 profile={'school':'武汉大学','campus_role':'student','level':'全日制本科','college':'资源与环境科学学院','grade':'2025级',
@@ -117,8 +119,13 @@ def main():
                         index=stack.pop()
                         for dep in plan(index).get('depends_on',[]):
                             if dep not in ancestors:ancestors.add(dep);stack.append(dep)
+                    def inherited_conditions(index,seen=None):
+                        seen=set() if seen is None else seen
+                        if index in seen:return []
+                        seen.add(index)
+                        return plan(index).get('conditions',[])+[text for dep in plan(index).get('depends_on',[]) for text in inherited_conditions(dep,seen)]
                     report['checks'].update(consultation_is_optional=bool(consult) and all(plan(i).get('action_kind')=='optional' for i in consult),
-                        practice_requires_project_approval=bool(practice) and all('立项' in ' '.join(plan(i).get('conditions',[])) for i in practice),
+                        practice_requires_project_approval=bool(practice) and all('立项' in ' '.join(inherited_conditions(i)) for i in practice),
                         upload_depends_on_stamp_and_confirmation=bool(stamps&ancestors) and bool(confirmations&ancestors))
                     forms=matching(['下载'])|matching(['填写','报名'])
                     def predecessors(index):

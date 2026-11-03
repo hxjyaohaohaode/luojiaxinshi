@@ -2,22 +2,23 @@ import {readableSnapshot} from './record-preview.js';
 import {el,button} from './genui/dom.js';
 const images=new Set(['png','jpg','jpeg','webp']),videos=new Set(['mp4','webm']);
 export function attachmentPreview(container,source,url,options={}){
- if(options.full)return fullAttachmentPreview(container,source,url,options.api);
+ if(options.full)return fullAttachmentPreview(container,source,url,options.api,options.page);
  container.replaceChildren();container.classList.add('attachment-inline');
  const actions=el('div','preview-tabs'),download=el('a','button small','下载原件');download.href=url;download.download=source.name;actions.append(download);container.append(actions);
+  if(source.kind==='pdf'){const original=el('a','button small','查看 PDF 原件');original.href=url+'?preview=true';original.target='_blank';original.rel='noopener noreferrer';actions.append(original);}
  if(images.has(source.kind)&&source.status!=='failed'){const image=el('img');image.src=url+'?preview=true';image.alt=source.name;container.append(image);return;}
  if(videos.has(source.kind)&&source.status!=='failed'){const video=el('video');video.src=url+'?preview=true';video.controls=true;video.playsInline=true;video.preload='none';video.setAttribute('aria-label',source.name);container.append(video);if(source.warning)container.append(el('p','small muted',source.warning));return;}
  const sections=source.sections||[];let page=0;const size=['xlsx','csv'].includes(source.kind)?20:6,pages=Math.max(1,Math.ceil(sections.length/size)),content=el('div'),status=el('span','small muted');
  const previous=button('上一页',()=>{page--;draw();},'button small'),next=button('下一页',()=>{page++;draw();},'button small');
  if(pages>1)actions.append(previous,status,next);
- if(['pdf','docx','xlsx'].includes(source.kind))container.append(el('p','small muted','文字预览 · 原始排版、图片和格式请查看下载的原件'));
+ if(['pdf','doc','docx','xls','xlsx'].includes(source.kind))container.append(el('p','small muted','文字预览 · 原始排版、图片和格式请查看下载的原件'));
  if(source.warning)container.append(el('p','small muted',source.warning));container.append(content);
  function draw(){content.replaceChildren();previous.disabled=page===0;next.disabled=page===pages-1;status.textContent=`${page+1} / ${pages}`;const part=sections.slice(page*size,(page+1)*size);if(!part.length){content.append(el('p','muted','暂无可预览文字，请下载原件或补充正文。'));return;}
   if(part.every(s=>s.table)){const wrap=el('div','preview-table-scroll'),table=el('table','preview-table'),caption=el('caption','sr-only',source.name),body=el('tbody');table.append(caption,body);for(const row of part){const tr=el('tr'),locator=el('th','',row.locator);locator.scope='row';tr.append(locator);for(const cell of row.text.split('\t'))tr.append(el('td','',cell));body.append(tr);}wrap.append(table);content.append(wrap);}
   else for(const section of part){const row=el('section','source-section');row.append(el('span','locator',section.locator),el('p','preserve-lines',readableSnapshot(section.text,source.evidence_kind||source.kind,{multiline:true})));content.append(row);}
  }draw();
 }
-function fullAttachmentPreview(container,source,url,api){
+function fullAttachmentPreview(container,source,url,api,pdfPage=null){
  container.replaceChildren();container.classList.add('attachment-inline','full-preview');const actions=el('div','preview-tabs'),download=el('a','button small','下载原件');download.href=url;download.download=source.name;actions.append(download);container.append(actions);
  const visual=el('div','preview-original'),text=el('div','preview-full-text');container.append(visual,text);
  const imageKinds=new Set(['png','jpg','jpeg','webp','gif','bmp','tif','tiff']),audioKinds=new Set(['mp3','wav','m4a','ogg','flac']);
@@ -26,7 +27,28 @@ function fullAttachmentPreview(container,source,url,api){
  }
  if(videos.has(source.kind)){const video=el('video');video.src=url+'?preview=true';video.controls=true;video.playsInline=true;video.preload='metadata';visual.append(video);}
  if(audioKinds.has(source.kind)){const audio=el('audio');audio.src=url+'?preview=true';audio.controls=true;audio.preload='metadata';visual.append(audio);}
- if(source.kind==='pdf'){const frame=el('iframe','pdf-preview');frame.src=url+'?preview=true';frame.title=source.name+'完整 PDF';visual.append(frame);const native=button('原件预览',()=>{visual.hidden=false;text.hidden=true;},'button small'),plain=button('全文检索',()=>{visual.hidden=true;text.hidden=false;},'button small');actions.append(native,plain);text.hidden=true;}
+  if(source.kind==='pdf'){
+   const native=button('原件预览',()=>{visual.hidden=false;text.hidden=true;},'button small'),plain=button('全文检索',()=>{visual.hidden=true;text.hidden=false;},'button small');actions.append(native,plain);text.hidden=true;
+   const navigation=el('div','pdf-page-navigation'),count=el('span','small muted','正在读取 PDF 页面…'),image=el('img','pdf-page-image'),message=el('p','small muted');
+   let pages=[],selected=Number.isInteger(pdfPage)&&pdfPage>=1&&pdfPage<=50?pdfPage:1;
+   const previous=button('上一页 PDF',()=>{selected--;drawPage();},'button small'),next=button('下一页 PDF',()=>{selected++;drawPage();},'button small');previous.disabled=next.disabled=true;
+   const browser=el('a','button small','浏览器打开 PDF');browser.target='_blank';browser.rel='noopener noreferrer';
+   navigation.append(previous,count,next);visual.append(navigation,image,message);actions.append(browser);image.hidden=true;
+   function drawPage(){
+    const item=pages[selected-1];if(!item)return;
+    previous.disabled=selected===1;next.disabled=selected===pages.length;count.textContent=`第 ${selected} / ${pages.length} 页`;
+    image.alt=source.name+` · 原件第 ${selected} 页`;image.src=item.url;image.hidden=false;
+    browser.href=url+'?preview=true#page='+selected;message.textContent='';
+   }
+   browser.href=url+'?preview=true#page='+selected;
+   image.onerror=()=>{if(container.isConnected)message.textContent='这页暂未加载，可重试原件预览或下载原 PDF。';};
+   api(url.replace(/^\/api/,'').replace('/download','/pdf-preview')).then(result=>{
+    if(!container.isConnected)return;pages=result.pages||[];
+    if(!pages.length)throw Error('未取得 PDF 页面，原件已保留。');
+    if(selected>pages.length)throw Error('引用页码已超出原件范围，请重新核对引用。');
+    drawPage();
+   }).catch(error=>{if(container.isConnected){count.textContent='PDF 页面暂不可预览';message.textContent=error.message;}});
+  }
  if(source.warning)container.append(el('p','small muted',source.warning));
  if(imageKinds.has(source.kind)||videos.has(source.kind)||audioKinds.has(source.kind))return;
  let page=1,sequence=0,timer;const search=el('input'),searchLabel=el('label','preview-search'),status=el('span','small muted'),content=el('div','preview-content'),pager=el('div','preview-pager');search.type='search';search.placeholder='查找全文中的文字';search.setAttribute('aria-label','搜索材料全文');searchLabel.append(search);text.append(searchLabel,content,pager);const previous=button('上一页',()=>{page--;draw();},'button small'),next=button('下一页',()=>{page++;draw();},'button small');pager.append(previous,status,next);

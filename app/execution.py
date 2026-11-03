@@ -71,7 +71,7 @@ class Runtime:
 
 
 def stage(conn,key,name):
-    if name not in {'accepted','planning','retrieving','searching','coverage','writing','verifying','extracting','receiving','reviewing'}:return
+    if name not in {'accepted','planning','retrieving','searching','coverage','writing','verifying','extracting','receiving','reviewing','correcting'}:return
     conn.execute("UPDATE executions SET stage=?,updated_at=? WHERE id=? AND status='running'",(name,int(time.time()),key))
 
 

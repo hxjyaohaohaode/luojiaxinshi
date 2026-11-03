@@ -7,7 +7,7 @@ const origin='http://127.0.0.1:8793',out='artifacts/composer-browser';await mkdi
 const login=await request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin,'X-Requested-With':'campus-notice'}});
 assert.equal((await login.post('/api/auth/login',{data:{username:'agent-preview',password:'AgentPreviewFixture2026!'}})).status(),200);
 const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{}),args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--use-file-for-fake-audio-capture='+resolve('artifacts/composer-fixtures/tone.wav')]});
-const context=await browser.newContext({storageState:await login.storageState(),viewport:{width:1440,height:1000}});
+const context=await browser.newContext({serviceWorkers:'block',storageState:await login.storageState(),viewport:{width:1440,height:1000}});
 const page=await context.newPage(),errors=[],checks=[];page.on('pageerror',e=>errors.push(String(e)));
 let concurrent=0,peak=0;
 await page.route('**/api/conversations/*/sources',async route=>{
@@ -104,4 +104,8 @@ try{
   assert.equal(await page.locator('#chat-composer .composer-voice').count(),1);
   checks.push('空分段不报整段失败；故障后保留已写文字，原位唯一录音按钮完成重试');
   assert.deepEqual(errors,[]);await writeFile(out+'/results.json',JSON.stringify({synthetic:true,checks,errors,peak},null,2));console.log(JSON.stringify({checks,errors,peak},null,2));
+}catch(error){
+  const state=await page.locator('.composer-attachment').evaluateAll(nodes=>nodes.map(node=>({name:node.querySelector('.attachment-name')?.textContent,state:node.className,message:node.querySelector('.attachment-state')?.textContent}))).catch(()=>[]);
+  await writeFile(out+'/failure.json',JSON.stringify({error:String(error),url:page.url(),attachments:state,errors,peak},null,2));
+  await page.screenshot({path:out+'/failure.png'}).catch(()=>{});throw error;
 }finally{await browser.close();await login.dispose();}

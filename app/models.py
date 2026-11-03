@@ -10,11 +10,13 @@ class Strict(BaseModel):
 
 
 class Login(Strict):
-    username: str = Field(min_length=3, max_length=40, pattern=r'^[a-zA-Z0-9_.@+-]+$')
-    password: str = Field(min_length=1, max_length=128)
+    username: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=1, max_length=256)
 
 
 class Register(Login):
+    username: str = Field(min_length=3, max_length=40, pattern=r'^[a-zA-Z0-9_.@+-]+$')
+    verification_token: str = Field(default='', max_length=100)
     invite: str = Field(default='', max_length=100)
     display_name: str = Field(min_length=1, max_length=40)
     account_kind: Literal['username','student_id','employee_id','phone'] = 'username'
@@ -27,6 +29,33 @@ class Register(Login):
         if len(value) < 12:
             raise ValueError('密码至少 12 个字符')
         return value
+
+
+class NotificationPreferences(Strict):
+    mode: Literal['focused','all','digest'] = 'focused'
+    digest_hour: int = Field(default=18,ge=0,le=23,strict=True)
+    quiet_start: str = Field(default='',max_length=5)
+    quiet_end: str = Field(default='',max_length=5)
+    interest_terms: list[Annotated[str,Field(min_length=1,max_length=40)]] = Field(default_factory=list,max_length=20)
+    muted_terms: list[Annotated[str,Field(min_length=1,max_length=40)]] = Field(default_factory=list,max_length=20)
+
+    @field_validator('interest_terms','muted_terms')
+    @classmethod
+    def distinct_terms(cls,values):
+        result=[]
+        for value in values:
+            value=value.strip()
+            if not value:raise ValueError('关注或静默关键词不能为空')
+            if value.casefold() not in {v.casefold() for v in result}:result.append(value)
+        return result
+
+    @model_validator(mode='after')
+    def valid_quiet_window(self):
+        if bool(self.quiet_start)!=bool(self.quiet_end):raise ValueError('免打扰开始和结束时间须一起填写')
+        for value in (self.quiet_start,self.quiet_end):
+            if value and (len(value)!=5 or time.fromisoformat(value).strftime('%H:%M')!=value):raise ValueError('免打扰时间须为 HH:MM')
+        if self.quiet_start and self.quiet_start==self.quiet_end:raise ValueError('免打扰开始和结束时间不能相同')
+        return self
 
 
 class Profile(Strict):
@@ -53,6 +82,7 @@ class Profile(Strict):
     semester: str = Field(default='', max_length=40)
     semester_start: str = Field(default='', max_length=10)
     week_starts_on: Literal[0,1] = 1
+    notification_preferences: NotificationPreferences = Field(default_factory=NotificationPreferences)
 
     @field_validator('semester_start')
     @classmethod
@@ -74,7 +104,8 @@ class ProfilePatch(Strict):
 
 
 class Recover(Login):
-    recovery_code: str = Field(min_length=20,max_length=100)
+    verification_token: str = Field(default='',max_length=100)
+    recovery_code: str = Field(default='',max_length=100)
 
     @field_validator('password')
     @classmethod
@@ -282,7 +313,7 @@ class Version(Strict):
 
 class Generate(Version):
     allow_external_processing: Literal[True]
-    processing_mode: Literal['configured','fast'] = 'configured'
+    processing_mode: Literal['configured','daily','fast'] = 'configured'
 
 
 class TaskUpdate(Version):
@@ -292,8 +323,9 @@ class TaskUpdate(Version):
 
 
 class PasswordChange(Strict):
-    old_password: str = Field(min_length=1, max_length=128)
-    new_password: str = Field(min_length=12, max_length=128)
+    verification_token: str = Field(default='',max_length=100)
+    old_password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=12, max_length=256)
 
 
 class CalendarRequest(Strict):

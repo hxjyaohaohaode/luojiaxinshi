@@ -86,8 +86,8 @@ def main():
         if not args.username:
             parser.error('请指定 --username')
         password=getpass.getpass('新密码（至少 12 字符）：')
-        if len(password)<12 or len(password)>128:
-            parser.error('密码长度须为 12—128 字符')
+        if len(password)<12 or len(password)>256:
+            parser.error('密码长度须为 12—256 字符')
         if password!=getpass.getpass('再输入一次：'):
             parser.error('两次密码不一致')
         with db.connect(write=True) as conn:

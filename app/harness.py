@@ -5,6 +5,7 @@ No prompt bodies, API keys, model reasoning or memory contents enter telemetry.
 from contextvars import ContextVar
 import hashlib
 import json
+import math
 import time
 
 VERSION='harness-v2'
@@ -12,6 +13,23 @@ GENERATION_LIMIT=5
 PROTOCOL_RETRIES=3
 SEMANTIC_RETRIES=1
 CURRENT=ContextVar('reply_harness',default=None)
+
+
+def transport_metrics(value):
+    """An allowlist of numeric timings; never retain provider text or reasoning."""
+    if not isinstance(value,dict):return {}
+    result={}
+    for key in ('first_event_seconds','first_reasoning_seconds','first_content_seconds','first_tool_seconds','stream_seconds'):
+        number=value.get(key)
+        if type(number) in (int,float) and math.isfinite(number) and 0 <= number <= 86400:
+            result[key]=round(number,4)
+    for key in ('chunks','events','bytes'):
+        number=value.get(key)
+        if type(number) is int and 0 <= number <= 100_000_000:result[key]=number
+    if type(value.get('terminal_received')) is bool:result['terminal_received']=value['terminal_received']
+    if isinstance(value.get('finish_reason'),str) and value['finish_reason'] in {'stop','tool_calls','length','repetition_truncation','content_filter','incomplete','provider_error'}:
+        result['finish_reason']=value['finish_reason']
+    return result
 
 
 class Trace:
@@ -64,3 +82,5 @@ def finish_call(entry,usage=None,error=None):
         reasoning_tokens=int((usage.get('completion_tokens_details') or {}).get('reasoning_tokens') or 0))
     if error:entry['error_type']=type(error).__name__
     if isinstance(usage.get('provider_model'), str):entry['provider_model']=usage['provider_model'][:128]
+    transport=transport_metrics(usage.get('transport'))
+    if transport:entry['transport']=transport

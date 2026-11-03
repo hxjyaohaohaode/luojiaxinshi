@@ -49,7 +49,10 @@ def extend_index(entries, sources):
     keys = {(e['source_id'], e['locator'], e['quote']) for e in entries}
     for entry in evidence_index(sources):
         key = entry['source_id'], entry['locator'], entry['quote']
-        if key not in keys and len(entries) < 120:
+        # This is the server's stable ledger, bounded by the run's source and
+        # tool budgets. The per-model window and final citation count are
+        # separate limits; neither may silently discard a later real receipt.
+        if key not in keys:
             entries.append({**entry, 'ref': 'E' + str(len(entries) + 1)})
             keys.add(key)
 

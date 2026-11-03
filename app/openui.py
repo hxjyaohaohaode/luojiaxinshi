@@ -35,6 +35,7 @@ class Document(HTMLParser):
         self.option = None
         self.labels = {}
         self.label = None
+        self.label_frames = []
 
     def handle_starttag(self, tag, attrs):
         p = dict(attrs)
@@ -45,13 +46,15 @@ class Document(HTMLParser):
             if p['id'] in self.ids:raise ValueError('openui_duplicate_id')
             self.ids.add(p['id'])
         if tag == 'a' and p.get('href'):self.links.append(p['href'])
-        if tag == 'label' and p.get('for'):self.label = p['for']
+        if tag == 'label':self.label_frames.append({'for':p.get('for'),'keys':[],'text':[]})
         if tag in ('input', 'select', 'textarea') and p.get('type','').lower() not in ('submit', 'button', 'reset'):
             key = p.get('id') or p.get('name')
             if not key or len(key)>100 or key in self.controls or key in ('__proto__','prototype','constructor'):raise ValueError('openui_control_id')
             kind = p.get('type', 'text').lower() if tag == 'input' else tag
             value = 'checked' in p if kind in ('checkbox', 'radio') else p.get('value', '')
-            self.controls[key] = {'type':kind, 'label':p.get('aria-label') or p.get('name') or key, 'value':value, 'options':[]}
+            self.controls[key] = {'type':kind, 'label':p.get('aria-label') or p.get('name') or key, 'value':value, 'options':[],
+                **{name:p[name] for name in ('min','max','step') if name in p},'required':'required' in p}
+            if self.label_frames and kind!='hidden':self.label_frames[-1]['keys'].append(key)
             if tag in ('select', 'textarea'):self.current = key
         if tag == 'option' and self.current:
             self.option = {'value':p.get('value'), 'text':'', 'selected':'selected' in p}
@@ -59,13 +62,19 @@ class Document(HTMLParser):
     def handle_data(self, value):
         if self.hidden:return
         if value.strip():self.text.append(value.strip())
-        if self.label:self.labels[self.label] = self.labels.get(self.label, '') + value
+        if not self.current and self.option is None:
+            for frame in self.label_frames:frame['text'].append(value)
         if self.current and self.controls[self.current]['type'] == 'textarea':self.controls[self.current]['value'] += value
         if self.option is not None:self.option['text'] += value
 
     def handle_endtag(self, tag):
         if tag in ('script', 'style'):self.hidden = max(0, self.hidden-1)
-        if tag == 'label':self.label = None
+        if tag == 'label' and self.label_frames:
+            frame=self.label_frames.pop()
+            label=' '.join(' '.join(frame['text']).split())
+            targets=[frame['for']] if frame['for'] else frame['keys'][:1]
+            if label:
+                for key in targets:self.labels[key]=label
         if tag == 'option' and self.current and self.option is not None:
             item = self.controls[self.current]
             value = self.option['value'] if self.option['value'] is not None else self.option['text']
@@ -137,6 +146,33 @@ def validate_controls(spec, state):
         elif control['type']=='select' and value not in control['options']:raise ValueError('openui_control_option')
     if len(json.dumps(state, ensure_ascii=False).encode())>16000:raise ValueError('openui_state_limit')
     return deepcopy(state)
+
+def control_validity(control,value):
+    """Keep invalid drafts editable, but never describe them as valid inputs.
+
+    This checks native numeric contracts only, and executes no authored code.
+    Business authorization remains with the actual backend tool.
+    """
+    import math
+    if control['type'] not in ('number','range'):return None
+    if not value.strip():return {'state':'unknown','message':'尚未填写，不能作为零参与计算'}
+    try:number=float(value)
+    except (ValueError,TypeError):return {'state':'invalid','message':'不是有效数值'}
+    if not math.isfinite(number):return {'state':'invalid','message':'不能使用非有限数值'}
+    def bound(key,default=None):
+        try:result=float(control.get(key,default))
+        except (ValueError,TypeError):return default
+        return result if math.isfinite(result) else default
+    low=bound('min',0 if control['type']=='range' else None)
+    high=bound('max',100 if control['type']=='range' else None)
+    if low is not None and number<low or high is not None and number>high:return {'state':'invalid','message':'超出原界面允许的范围'}
+    if control.get('step')!='any':
+        step=bound('step',1)
+        if step and step>0:
+            base=low if low is not None else 0 if control['type']=='range' else bound('value',0)
+            position=(number-base)/step
+            if abs(position-round(position))>1e-7:return {'state':'invalid','message':'不符合原界面的步长'}
+    return None
 
 
 class UIStreamDecoder:

@@ -28,21 +28,21 @@ export function createDialogNavigation({dialog,state,persist}){
   dialog.addEventListener('cancel',event=>{if(stack.length){event.preventDefault();cancel();}});
   dialog.addEventListener('close',()=>{if(!dialog.open)stack=[];});
   window.addEventListener('hashchange',()=>{stack=[];});
-  return {remember,back,hasParent:()=>stack.length>0};
+  return {remember,back,hasParent:()=>stack.length>0,clear:()=>{stack=[];}};
 }
 
 // Restore only unsaved form values. Files and credentials are not retained in
 // edit history, and no request is issued by undo/redo.
 export function installFormHistory(root){
   const histories=new WeakMap();
-  const fields=form=>[...form.querySelectorAll('input,textarea,select')].filter(el=>!['hidden','file','password','submit','button'].includes(el.type)&&!el.readOnly);
+  const fields=form=>[...form.querySelectorAll('input,textarea,select')].filter(el=>!['hidden','file','password','submit','button'].includes(el.type)&&!el.readOnly&&!el.closest('[data-verification]'));
   const capture=form=>fields(form).map(el=>({el,value:el.value,checked:el.checked,selected:el.multiple?[...el.options].map(o=>o.selected):null}));
   const equal=(a,b)=>a.length===b.length&&a.every((v,i)=>v.el===b[i].el&&v.value===b[i].value&&v.checked===b[i].checked&&String(v.selected)===String(b[i].selected));
   function controls(form){
     if(histories.has(form)||!form.querySelector('[type="submit"]'))return;
     const footer=form.querySelector('.form-footer')||form.appendChild(Object.assign(document.createElement('div'),{className:'form-footer'}));
     // 一次性确认类表单（如注销确认）只有确认词，撤销/重做没有意义。
-    if(form.hasAttribute('data-no-history')){histories.set(form,null);if(form.closest('dialog')&&!footer.querySelector('[data-dialog-cancel],[data-action="close-dialog"]')){const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.dialogCancel='';cancel.textContent='取消';footer.prepend(cancel);}return;}
+    if(form.hasAttribute('data-no-history')){histories.set(form,null);if(!form.hasAttribute('data-own-navigation')&&form.closest('dialog')&&!footer.querySelector('[data-dialog-cancel],[data-action="close-dialog"]')){const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.dialogCancel='';cancel.textContent='取消';footer.prepend(cancel);}return;}
     const actions=document.createElement('div');actions.className='form-edit-actions';
     // 窄屏只显示“撤销”，把一行留给主要按钮；读屏仍是完整名称。
     actions.innerHTML='<button type="button" class="button plain small" data-form-undo disabled aria-label="撤销编辑">撤销<span class="edit-word">编辑</span></button><button type="button" class="button plain small" data-form-redo disabled>重做</button>';

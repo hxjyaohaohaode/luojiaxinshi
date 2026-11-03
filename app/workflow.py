@@ -185,6 +185,8 @@ def enrich_tasks(conn, tasks):
             check and check['task_version'] == task['version'] and check['result'] in {'imported', 'reminder_verified', 'removed'})
         if check and check['task_version'] == task['version'] and check['result'] == 'removed' and task['status'] == 'cancelled':
             task['needs_calendar_sync'] = False
+        from .handling_state import current_step
+        task['handling_state'] = current_step(task)
     return tasks
 
 

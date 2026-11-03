@@ -187,9 +187,118 @@ def test_read_pagination_query_and_existing_ids(setup):
         second = w.read(conn, uid, cid, w.WorkspaceRead(limit=1, offset=1))
         assert first['total'] == 2 and first['has_more']
         assert second['records'][0]['id'] == task['target_id'] and not second['has_more']
+        assert first['query_task_status_counts'] == second['query_task_status_counts'] == {'pending':1,'done':0,'cancelled':0}
+        filtered=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',query='报告'))
+        assert filtered['query_task_status_counts']['pending']==1
+        assert filtered['query_scope']=={'kind':'tasks','target_id':'','query':'报告'}
+        empty=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',target_id='not-owned'))
+        assert not any(empty['query_task_status_counts'].values())
         assert w.read(conn, uid, cid, w.WorkspaceRead(query='报告'))['total'] == 1
         assert w.read(conn, uid, cid, w.WorkspaceRead(query='准备 报告'))['total'] == 1
         assert w.read(conn, uid, cid, w.WorkspaceRead(target_id='not-owned'))['total'] == 0
+        from app.agent_runtime.chat import ChatRun
+        from app.agent_runtime.context import size
+        from app.db import dumps
+        full=w.read(conn,uid,cid,w.WorkspaceRead())
+        compact=ChatRun.bound_tool_result(object.__new__(ChatRun),'workspace_read',full,size(dumps(full))-100)
+        assert len(compact['records'])==1 and compact['records'][0]['kind']=='calendar'
+        assert compact['has_more'] and compact['next_offset']==1
+        assert compact['query_task_status_counts']==full['query_task_status_counts']=={'pending':1,'done':0,'cancelled':0}
+        assert compact['query_scope']==full['query_scope']
+    saved=next(t for t in c.get('/api/tasks').json()if t['id']==task['target_id'])
+    done=c.put('/api/tasks/'+task['target_id'],json={'version':saved['version'],'data':saved['data'],'status':'done','reason':'虚构分页验收'})
+    assert done.status_code==200,done.text
+    with db.connect()as conn:
+        assert w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',query='报告'))['query_task_status_counts']=={'pending':0,'done':1,'cancelled':0}
+
+
+def test_task_reads_share_the_live_workflow_gates_and_change_evidence_with_the_browser(setup,env):
+    from datetime import timedelta,timezone
+    from test_workflow import manual,notice,confirm,task
+    c,db,uid,cid,mid=setup
+    first=manual(c,notice(c));pre=confirm(c,first,task(first,title='前置签字'))
+    second=manual(c,notice(c));tid=confirm(c,second,task(second,title='后续提交'))
+    t=c.get(f'/api/tasks/{tid}/workflow').json()['task']
+    data={**t['workflow']['data'],'stage':'blocked','outcome':'签字尚未完成','dependencies':[pre],
+          'next_step':'核对最新安排','followup_at':(datetime.now(timezone.utc)-timedelta(hours=1)).isoformat()}
+    saved=c.put(f'/api/tasks/{tid}/workflow',json={'version':t['workflow']['version'],'task_version':t['version'],'data':data})
+    assert saved.status_code==200,saved.text
+    n=c.get('/api/notices/'+second['id']).json()
+    change=c.post('/api/notices/'+n['id']+'/changes',json={'notice_version':n['version'],'kind':'unverified','text':'虚构转述，尚未核实','source_label':'虚构群','targets':[]})
+    assert change.status_code==200,change.text
+    with db.connect()as conn:
+        value=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',target_id=tid))
+    assert value['state_semantics']==w.TASK_STATE_POLICY
+    record=value['records'][0];browser=next(t for t in c.get('/api/tasks').json()if t['id']==tid)
+    for key in ('workflow','pending_changes','change_review','execution_issues','followup_due','handling_state'):
+        assert record[key]==browser[key]
+    assert record['handling_state']['kind']=='changes'
+    from app.grounding import retrieve
+    sources,_=retrieve(db,uid,cid,[],[{'role':'user','content':'只读取我的待办和办理状态，不修改'}],{},['后续提交'])
+    snapshot=next(s for s in sources if s['id']=='task-'+tid)
+    fact=json.loads(snapshot['sections'][0]['text'])
+    for key in ('workflow','pending_changes','change_review','execution_issues','followup_due','handling_state'):
+        assert fact[key]==browser[key]
+    assert record['workflow']['blocked'] and record['pending_changes'] and record['followup_due']
+    assert 'user_id' not in record
+    summary=next(s for s in w.evidence_sections(value)if s['locator'].endswith('状态与时间'))
+    evidence=json.loads(summary['text']);assert evidence['workflow']==record['workflow'] and evidence['pending_changes']==record['pending_changes']
+    from app.genui_ai import evidence_index
+    sections=w.evidence_sections(value)
+    spans=evidence_index([{'id':'workspace-state','label':'当前本人待办','sections':sections}])
+    scope=json.loads(next(s['quote']for s in spans if s['locator']=='查询范围'))
+    assert scope['query_task_status_counts']=={'pending':1,'done':0,'cancelled':0}
+    assert scope['query_scope']['target_id']==tid
+    anchor=next(s for s in spans if s['locator'].endswith('状态核对'))
+    fact=json.loads(anchor['quote'])
+    assert len(anchor['quote'])<=1400 and fact['id']==tid and fact['status']==record['status']
+    assert fact['workflow']['data']['followup_at']==record['workflow']['data']['followup_at']
+    assert fact['workflow']['blocked'] and fact['pending_changes_count']==len(record['pending_changes'])
+    from app.agent_runtime.chat import ChatRun
+    delivered=ChatRun.bound_tool_result(object.__new__(ChatRun),'workspace_read',{**value,'evidence_index':spans},64000)
+    visible=next(entry for entry in delivered['evidence_index']if entry['ref']==anchor['ref'])
+    assert visible['quote']==anchor['quote']
+    assert json.loads(next(entry['quote']for entry in delivered['evidence_index']if entry['locator']=='查询范围'))['query_task_status_counts']==scope['query_task_status_counts']
+    before=next(t for t in c.get('/api/tasks').json()if t['id']==pre)
+    completed=c.put('/api/tasks/'+pre,json={'version':before['version'],'data':before['data'],'status':'done','reason':'虚构验收完成前置'})
+    assert completed.status_code==200,completed.text
+    with db.connect()as conn:
+        current=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',target_id=tid))['records'][0]
+    assert not current['workflow']['blocked'] and current['pending_changes']
+    assert current['handling_state']['kind']=='changes'
+    assert current['change_review']==next(t for t in c.get('/api/tasks').json()if t['id']==tid)['change_review']
+    other=account(env,'workflow-reader-other').get('/api/session').json()['user']['id']
+    with db.connect()as conn:assert w.read(conn,other,cid,w.WorkspaceRead(kind='tasks',target_id=tid))['records']==[]
+
+
+def test_workspace_query_applies_every_keyword_to_details_and_counts(setup):
+    c,db,uid,cid,mid=setup
+    title='alpha beta gamma delta epsilon zeta eta theta target'
+    apply(setup,'task_write',w.TaskWrite(operation='create',fields=w.TaskFields(title=title)))
+    with db.connect()as conn:
+        match=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',query=title))
+        absent=w.read(conn,uid,cid,w.WorkspaceRead(kind='tasks',query=title.replace('target','absent')))
+    assert match['total']==1 and match['query_task_status_counts']['pending']==1
+    assert absent['records']==[] and absent['total']==0 and not any(absent['query_task_status_counts'].values())
+
+
+def test_long_task_workflow_keeps_a_complete_citable_status_and_time_span():
+    from app.genui_ai import evidence_index
+    task={'kind':'tasks','id':'owned-task','status':'done','version':3,
+          'data':{'title':'长标题'*50,'due_date':'2027-11-01','due_time':'17:00','deadline_confirmed':True},
+          'workflow':{'blocked':False,'data':{'stage':'preparing','outcome':'本人办理记录。'*500,
+                     'receipt':'本人留存材料。'*500,'followup_at':'2027-11-05T12:00:00+08:00'}},
+          'handling_state':{'kind':'done','label':'已完成'},'pending_changes':[]}
+    sections=w.evidence_sections({'records':[task],'total':1})
+    index=evidence_index([{'id':'workspace','label':'当前本人待办','sections':sections}])
+    anchors=[s for s in index if s['locator'].endswith('状态核对')]
+    assert len(anchors)==1 and len(anchors[0]['quote'])<=1400
+    anchor=json.loads(anchors[0]['quote'])
+    assert anchor['id']==task['id'] and anchor['status']=='done'
+    assert anchor['workflow']['data']=={'stage':'preparing','followup_at':'2027-11-05T12:00:00+08:00'}
+    assert anchor['data']['deadline_confirmed'] is True and anchor['data']['due_date']=='2027-11-01'
+    full=json.loads(next(s['text']for s in sections if s['locator'].endswith('状态与时间')))
+    assert full['workflow']==task['workflow'] and full['data']['title']==task['data']['title']
 
 
 @pytest.mark.parametrize('text,allowed', [('明天九点提醒我准备报告', True), ('把任务标记完成', True), ('添加到我的日历', True), ('只分析，不要保存', False), ('只读我的日历', False), ('这张图片里写了什么', False), ('不要删除这项待办',False), ('先不取消安排',False), ('别标记完成',False)])

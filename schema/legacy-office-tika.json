@@ -1,0 +1,8 @@
+{
+  "parsers": [
+    {"office-parser": {}},
+    {"old-excel-parser": {}},
+    {"rtf-parser": {}}
+  ],
+  "text-recognizers": []
+}

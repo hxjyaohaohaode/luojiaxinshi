@@ -34,6 +34,12 @@ export function citationPreview(entry,focusNumber=null){
   return (focused||substantial)?.quote||entry.source.preview||'';
 }
 
+export function citationPdfPage(entry,focusNumber=null){
+  const quote=entry.quotes.find(q=>q.number===focusNumber)||entry.quotes.find(q=>/^PDF 第 [1-9][0-9]* 页（图像观察，非 OCR）$/.test(q.locator||''));
+  const value=quote?.locator?.match(/^PDF 第 ([1-9][0-9]*) 页（图像观察，非 OCR）$/)?.[1],page=Number(value);
+  return Number.isInteger(page)&&page>=1&&page<=50?page:null;
+}
+
 export class CitationView{
   constructor(content,footer,options){
     this.content=content;this.footer=footer;this.options=options;this.entries=[];
@@ -75,7 +81,7 @@ export class CitationView{
       article.append(el('p','source-result-kind',kinds[source.evidence_kind]||'原材料'));
       if(quotes.length){const detail=el('details','source-quote-details');detail.open=quotes.some(q=>q.number===focusNumber);const snapshot=['task','arrangement','profile','memory','execution'].includes(source.evidence_kind);detail.append(el('summary','',`${source.evidence_kind==='image'?'看看从图片里读到了什么':snapshot?'查看当时记录':'查看引用原文'} · ${quotes.length} 处`));for(const quote of quotes){const block=el('blockquote','source-quote');block.dataset.citationNumber=String(quote.number);if(quote.number===focusNumber)block.classList.add('selected');block.append(el('span','source-quote-label',`[${quote.number}] ${snapshot?'保存时的记录':quote.locator}`),document.createTextNode(readableSnapshot(quote.quote,source.evidence_kind)));detail.append(block);}article.append(detail);}
       if(source.retrieved_at)article.append(el('p','source-result-kind','查阅于 '+new Date(source.retrieved_at).toLocaleString('zh-CN')));
-      if(this.options.sources?.some(s=>s.id===source.id))article.append(button('查看完整材料',()=>{this.close(false);this.options.preview(source.id);},'button small plain'));
+      if(this.options.sources?.some(s=>s.id===source.id))article.append(button('查看完整材料',()=>{this.close(false);this.options.preview(source.id,{page:citationPdfPage(entry,focusNumber)});},'button small plain'));
       else if(target&&!target.external){const link=el('a','button small plain','打开对应记录');link.href=target.href;link.addEventListener('click',()=>this.close(false));article.append(link);}
     }
     return article;

@@ -8,7 +8,7 @@ export function reminderGroups(items){
   return REMINDER_GROUPS.map(([id,label])=>({id,label,items:items.filter(item=>key(item)===id)})).filter(group=>group.items.length);
 }
 
-export function createReminders({state, api, esc, icon, toast, showDialog, push=null}) {
+export function createReminders({state, api, esc, icon, toast, showDialog, push=null,email=null}) {
   let data=null, owner=null, timers=[], poll=0, loading=null, generation=0;
   let filter='unread', managing=false, selected=new Set(), saving=false, lastError='';
   const $ = selector => document.querySelector(selector);
@@ -42,7 +42,8 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   }
   function schedule() {
     timers.forEach(clearTimeout);timers=[];
-    if(!data||push?.enabled()||!supported()||Notification.permission!=='granted'||!browserEnabled())return;
+    // Scheduling is opt-in on this device, independently of other devices.
+    if(!data||!browserEnabled()||push?.enabled()||!supported()||Notification.permission!=='granted')return;
     const seen=notified(),now=Date.now(),uid=owner;
     for(const entry of data.upcoming||[]){
       const at=Date.parse(entry.at),key=`${uid}:${entry.kind||'reminder'}:${entry.task_id||entry.arrangement_id}:${entry.at}`;
@@ -100,7 +101,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   async function open() {
     const view=captureUiContext(state);await refresh();if(!view.sameDialog())return;
     filter='unread';managing=false;selected.clear();
-    showDialog('提醒',`<div class="reminder-center"><div data-reminder-content>${centerMarkup()}</div><details class="reminder-rules"><summary>提醒规则</summary><ul class="small muted"><li>截止事项查看未来 7 天；24 小时内优先，3 天内列为留意。未确认的期限另行标注。</li><li>日程显示今天、明天和仍在进行的跨日安排；已知结束时间后移出列表，未写结束时间的保留至开始后 1 小时。</li><li>已读和归档只管理提醒。新的发生日、期限或通知变化会产生新提醒，不会完成或删除待办。</li><li>页面内通知迟到超过 90 秒不补发；关闭页面后的通知由本机提醒设置决定。</li></ul></details>${push?`<div data-push-settings>${push.markup()}</div><details class="details"><summary>页面内提醒</summary>${browserControl()}</details>`:browserControl()}</div>`);push?.refresh();
+    showDialog('提醒',`<div class="reminder-center"><div data-reminder-content>${centerMarkup()}</div><details class="reminder-rules"><summary>提醒规则</summary><ul class="small muted"><li>截止事项查看未来 7 天；24 小时内优先，3 天内列为留意。未确认的期限另行标注。</li><li>日程显示今天、明天和仍在进行的跨日安排；已知结束时间后移出列表，未写结束时间的保留至开始后 1 小时。</li><li>已读和归档只管理提醒。新的发生日、期限或通知变化会产生新提醒，不会完成或删除待办。</li><li>页面内通知迟到超过 90 秒不补发；关闭页面后的通知由本机提醒设置决定。</li></ul></details>${push?`<div data-push-settings>${push.markup()}</div><details class="details"><summary>页面内提醒</summary>${browserControl()}</details>`:browserControl()}${email?`<div data-mail-settings>${email.markup()}</div>`:''}<button type="button" class="button small" data-action="settings-notification">智能通知偏好</button><button type="button" class="button small" data-pwa-open>添加到桌面与设备提醒说明</button></div>`);push?.refresh();email?.refresh();
   }
   async function update(ids,status) {
     if(saving||!ids.length||owner!==state.session?.user.id)return false;

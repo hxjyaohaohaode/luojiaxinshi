@@ -4,6 +4,22 @@ const pending=new WeakMap();
 const automatic=new WeakMap();
 export const chatViewportHeld=reader=>!!reader&&pending.has(reader);
 export function scrollChatToEnd(reader){if(!reader)return;pending.get(reader)?.stop();reader.scrollTop=reader.scrollHeight;automatic.set(reader,{top:reader.scrollTop,at:performance.now()});}
+// A completed tool has its result above its feedback controls. Revealing the
+// footer alone can place that result behind the floating heading on a phone.
+export function revealLatestChatReply(reader,{once=false}={}){
+ if(!reader)return;
+ const last=[...reader.querySelectorAll('.message')].at(-1);
+ const frame=last?.dataset.role==='assistant'&&last.dataset.status==='complete'?last.querySelector('iframe.openui-frame'):null;
+ if(frame&&once&&last.dataset.primaryRevealed)return;
+ scrollChatToEnd(reader);if(!frame)return;last.dataset.primaryRevealed='true';
+ const box=reader.getBoundingClientRect(),heading=reader.closest('.chat-main')?.querySelector('.chat-heading'),head=heading?.getBoundingClientRect();
+ const overlay=head&&['absolute','fixed'].includes(getComputedStyle(heading).position)&&head.right>box.left&&head.left<box.right;
+ const top=(overlay?Math.max(box.top,head.bottom):box.top)+8;
+ if(frame.getBoundingClientRect().top>=top)return;
+ reader.scrollTop+=frame.getBoundingClientRect().top-top;
+ automatic.set(reader,{top:reader.scrollTop,at:performance.now()});
+ preserveChatViewport(reader,()=>{},{anchor:frame,pinBottom:false});
+}
 export function automaticChatScroll(reader){const mark=automatic.get(reader);return chatViewportHeld(reader)||!!mark&&performance.now()-mark.at<120&&Math.abs(reader.scrollTop-mark.top)<1;}
 export function preserveChatViewport(reader,change,{anchor=null,pinBottom=true}={}){
  if(!reader){change();return;}
