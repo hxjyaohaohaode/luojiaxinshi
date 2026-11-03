@@ -57,8 +57,8 @@ def main():
     data = Path(fixture_data.name).resolve()
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
-    env = dict(os.environ, MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
-    for key in ('MIMO_API_KEY', 'AI_API_KEY', 'OPENAI_API_KEY'):
+    env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
+    for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD'):
         env.pop(key, None)
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
     with (OUT / 'fixture.log').open('w', encoding='utf-8') as log:

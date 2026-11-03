@@ -1,6 +1,6 @@
 """Run every backend test file exactly once, in isolated bounded processes.
 
-The old complete JUnit report only balances work; it never supplies results.
+Grouping is deterministic and independent of previous reports.
 Per-shard logs, current collected counts, JUnit and exit codes are retained.
 No provider credentials or application data are read by this coordinator.
 """
@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import time
@@ -44,43 +45,52 @@ def combine_junit(reports,destination):
     ET.ElementTree(root).write(destination,encoding='utf-8',xml_declaration=True)
 
 
+def run_shard(index,group,out,timeout):
+    xml=out/f'shard-{index+1}.xml';log=out/f'shard-{index+1}.log'
+    xml.unlink(missing_ok=True)
+    command=[sys.executable,'-m','pytest',*group,'-vv','--junitxml='+str(xml),
+        '-o','cache_dir='+str(out/f'cache-{index+1}'),'-o','faulthandler_timeout=90','--durations=8']
+    env=dict(os.environ,CAMPUS_AUTO_LOAD_ENV='0',PYTHONUNBUFFERED='1',PYTHONFAULTHANDLER='1')
+    for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID',
+                'ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD',
+                'DATA_DIR','APP_ENV','APP_ORIGIN','APP_HOST','APP_PORT'):
+        env.pop(key,None)
+    timed_out=False
+    with log.open('w',encoding='utf-8') as stream:
+        options={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {'start_new_session':True}
+        process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=stream,stderr=subprocess.STDOUT,**options)
+        try:code=process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            timed_out=True;code=124
+            stream.write('\nOwned test shard exceeded its deadline; its process tree is being stopped.\n');stream.flush()
+            if process.poll()is None:
+                if os.name=='nt':subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True,timeout=15)
+                else:os.killpg(process.pid,signal.SIGKILL)
+            process.wait(timeout=15)
+    result={'shard':index+1,'exit_code':code,'files':len(group),'timed_out':timed_out}
+    if xml.exists():
+        suites=list(ET.parse(xml).getroot().iter('testsuite'))
+        result.update({key:sum(int(s.get(key,0)) for s in suites) for key in ('tests','failures','errors','skipped')})
+    return result
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workers',type=int,default=4,choices=range(1,5))
     parser.add_argument('--output',default='artifacts/full-audit-suite')
     parser.add_argument('--junitxml',type=Path,help='Optional combined JUnit report for the exact same shard results')
+    parser.add_argument('--shard-timeout',type=int,default=2400,help='Maximum seconds per owned shard; timeout is a failure')
     args=parser.parse_args();out=(ROOT/args.output).resolve();out.mkdir(parents=True,exist_ok=True)
+    if args.shard_timeout<1:parser.error('Shard timeout must be positive')
     files=sorted(p.relative_to(ROOT).as_posix() for p in (ROOT/'tests').rglob('test_*.py'))
     if not files:parser.error('No backend test files found; an empty run cannot pass')
-    weights={name:1. for name in files}
-    previous=list((ROOT/'artifacts/full-audit-suite').glob('shard-*.xml')) or [ROOT/'artifacts/proactive-full-tests.xml']
-    for report in previous:
-        if not report.exists():continue
-        for case in ET.parse(report).getroot().iter('testcase'):
-            name=case.get('classname','').replace('.','/')+'.py'
-            if not name.startswith('tests/'):name='tests/'+name
-            if name in weights:weights[name]+=float(case.get('time',0))
-    groups=[[] for _ in range(args.workers)];cost=[0.]*args.workers
-    for name in sorted(files,key=lambda p:(-weights[p],p)):
-        index=min(range(args.workers),key=lambda i:cost[i]);groups[index].append(name);cost[index]+=weights[name]
+    groups=[files[index::args.workers]for index in range(args.workers)]
     (out/'manifest.json').write_text(json.dumps({'files':files,'count':len(files),'shards':groups},indent=2),encoding='utf-8')
     started=time.monotonic()
     before=fingerprint()
-    def run(index,group):
-        xml=out/f'shard-{index+1}.xml';log=out/f'shard-{index+1}.log'
-        command=[sys.executable,'-m','pytest',*group,'-q','--junitxml='+str(xml),
-            '-o','cache_dir='+str(out/f'cache-{index+1}'),'--durations=8']
-        with log.open('w',encoding='utf-8') as stream:
-            process=subprocess.run(command,cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
-        result={'shard':index+1,'exit_code':process.returncode,'files':len(group)}
-        if xml.exists():
-            suites=list(ET.parse(xml).getroot().iter('testsuite'))
-            result.update({key:sum(int(s.get(key,0)) for s in suites) for key in ('tests','failures','errors','skipped')})
-        return result
     results=[]
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        for future in as_completed([pool.submit(run,i,g) for i,g in enumerate(groups) if g]):
+        for future in as_completed([pool.submit(run_shard,i,g,out,args.shard_timeout) for i,g in enumerate(groups) if g]):
             result=future.result();results.append(result);print(json.dumps(result),flush=True)
     after=fingerprint()
     summary={'elapsed_seconds':round(time.monotonic()-started,2),'file_count':len(files),'shards':sorted(results,key=lambda x:x['shard']),

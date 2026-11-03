@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  CAMPUS_AUTO_LOAD_ENV: '0'
+  PYTHONUNBUFFERED: '1'
 jobs:
   tests:
     strategy:

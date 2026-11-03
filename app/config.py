@@ -21,7 +21,10 @@ def load_environment(path):
         os.environ['MIMO_API_KEY']=values['MIMO_API_KEY'] or ''
 
 
-load_environment(ROOT / ".env")
+# Isolated checks must not inherit a developer's keys or local feature defaults.
+# Explicit operator calls to load_environment() still load the requested file.
+if os.getenv('CAMPUS_AUTO_LOAD_ENV','1') != '0':
+    load_environment(ROOT / '.env')
 
 
 @dataclass

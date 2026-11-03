@@ -30,8 +30,8 @@ def main():
             raise SystemExit('Port 8793 is occupied; no existing process was reused or stopped.') from None
     OUT.mkdir(parents=True, exist_ok=True)
     subprocess.run([sys.executable,'tests/media_fixtures.py'],cwd=ROOT,check=True)
-    env = dict(os.environ, PYTHONUNBUFFERED='1', AGENT_LIVE_UI='0')
-    for key in ('MIMO_API_KEY', 'AI_API_KEY', 'OPENAI_API_KEY', 'AGENT_BROWSER_OUTPUT', 'AGENT_UI_REPLAY_DIR'):
+    env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', PYTHONUNBUFFERED='1', AGENT_LIVE_UI='0')
+    for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD','AGENT_BROWSER_OUTPUT','AGENT_UI_REPLAY_DIR'):
         env.pop(key, None)
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
     with tempfile.TemporaryDirectory(prefix='fixture-', dir=OUT) as data:

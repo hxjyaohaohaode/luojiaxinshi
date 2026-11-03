@@ -65,4 +65,5 @@ def test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker():
     try:legacy_office.tools()
     except ValueError:pytest.skip('Optional pinned Tika/JRE not installed in this environment')
     result=file_source('application.doc',b'{\\rtf1\\ansi Synthetic application. \\par Deadline: 2027-11-06 17:00.}')
-    assert result['status']=='ok' and [s['text']for s in result['sections']]==['Synthetic application.','Deadline: 2027-11-06 17:00.']
+    assert result['status']=='ok',result['warning']
+    assert [s['text']for s in result['sections']]==['Synthetic application.','Deadline: 2027-11-06 17:00.']

@@ -29,9 +29,17 @@ def events(response):
     packets=[]
     for frame in response.text.split('\n\n'):
         if not frame.strip():continue
-        fields=dict(line.split(': ',1) for line in frame.split('\n') if ': ' in line)
+        lines=[line for line in frame.split('\n')if line and not line.startswith(':')]
+        if not lines:continue
+        fields=dict(line.split(': ',1) for line in lines if ': ' in line)
         packets.append({'type':fields['event'],'seq':int(fields['id']),'data':json.loads(fields['data'])})
     return packets
+
+
+def test_comment_heartbeats_do_not_become_model_or_business_events():
+    response=httpx.Response(200,text=': keep-alive\n\nid: 1\nevent: start\ndata: {"ready": true}\n\n: keep-alive\n\nid: 2\nevent: done\ndata: {}\n\n: keep-alive\n\n')
+    assert events(response)==[{'type':'start','seq':1,'data':{'ready':True}},
+                              {'type':'done','seq':2,'data':{}}]
 
 
 async def recorded(*args):

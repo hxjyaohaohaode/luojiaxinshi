@@ -150,3 +150,7 @@ npm ci --ignore-scripts
 后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、十二组通用浏览器、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
 
 本地完整一轮通过后再正常推送，检查新 main 提交实际触发的 Actions 全部 jobs，再确认功能分支已合入并清理。旧提交、局部补跑、离线模型夹具及桌面模拟视口不替代当前 main CI、真实渠道或真实试点验收。
+
+隔离运行设置 `CAMPUS_AUTO_LOAD_ENV=0`，使配置模块在导入时不读取项目 `.env`。本机正常启动仍按原规则读取配置，操作员显式的 `--local-env` 入口继续生效。后端协调器、浏览器夹具和 CI 均设置隔离标记；测试分组仅由当前文件清单决定，不读取旧报告作为分组输入。
+
+后端每个分片默认最多 2400 秒，超时返回失败并只终止该分片创建的进程树。该边界为 Windows 全量运行实测约 37 分钟保留收尾空间，CI 总限时仍为 45 分钟。执行前移除同名旧 JUnit；缺失报告不能通过。分片保留逐用例日志和超过 90 秒时的线程栈，便于区分慢用例、等待和退出阻塞。

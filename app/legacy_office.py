@@ -83,7 +83,7 @@ def extract(data,kind,max_chars=10000):
     with tempfile.TemporaryFile()as output,tempfile.TemporaryFile()as errors:
         try:
             result=subprocess.run(command,input=data,stdout=output,stderr=errors,env=environment,
-                                  cwd=jar.parent,timeout=15,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                                  cwd=jar.parent,timeout=30,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         except subprocess.TimeoutExpired:
             raise ValueError('旧格式解析超时，原件已保留；请拆分文档或提供新版格式')from None
         if result.returncode:raise ValueError('旧格式正文无法可靠提取，可能已加密或损坏；请提供可读取版本')

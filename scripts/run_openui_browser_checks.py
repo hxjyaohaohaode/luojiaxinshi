@@ -28,8 +28,8 @@ def ensure_fixture_port_free(port=8794):
 def main():
     ensure_fixture_port_free()
     OUT.mkdir(parents=True,exist_ok=True)
-    env=dict(os.environ,PYTHONUNBUFFERED='1')
-    for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY'):env.pop(key,None)
+    env=dict(os.environ,CAMPUS_AUTO_LOAD_ENV='0',PYTHONUNBUFFERED='1')
+    for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD'):env.pop(key,None)
     flags={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
     results=[]
     verify_script=os.getenv('OPENUI_VERIFY_SCRIPT','scripts/verify_openui.mjs')
