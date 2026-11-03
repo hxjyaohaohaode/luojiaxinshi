@@ -22,8 +22,7 @@ if ($configuration.production) { throw 'Use OPERATIONS.md for production HTTPS d
 if ($Restart) { Stop-OwnedTask $configuration }
 $existing = Get-OwnedTaskProcess $configuration -AllowStalePid
 if (-not $existing) {
-    $listener = Get-NetTCPConnection -State Listen -LocalPort $configuration.port -ErrorAction SilentlyContinue
-    if ($listener) { throw ('Port ' + $configuration.port + ' is occupied. Change APP_PORT and APP_ORIGIN together.') }
+    Assert-TaskPortAvailable $configuration
     & $taskPython $taskManage init --local-env
     if ($LASTEXITCODE -ne 0) { throw 'Initialization failed.' }
     $logDirectory = Join-Path $configuration.data_dir 'logs'
@@ -40,7 +39,8 @@ $ready = $false
 for ($attempt=0; $attempt -lt 40; $attempt++) {
     try {
         $health = Invoke-RestMethod -Uri ($configuration.origin + '/api/health') -TimeoutSec 2
-        if ($health.status -eq 'ok' -and $health.version -eq $expectedVersion) { $ready=$true; break }
+        $ownedRuntime = Get-OwnedTaskProcess $configuration
+        if ($health.status -eq 'ok' -and $health.version -eq $expectedVersion -and $ownedRuntime) { $ready=$true; break }
     } catch { }
     Start-Sleep -Milliseconds 250
 }

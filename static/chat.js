@@ -113,7 +113,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if(renderId!==state.renderId)return;
     historyItems=results[0];current=results[1];chatFeedback.reset(current);hostArrangements=results[3];hostTasks=results[4];drafts.activate(key());
     $('#content').innerHTML=`<div id="chat-workspace" class="chat-workspace ${current?'has-conversation':''}">
-      <div class="chat-main"><header class="chat-heading"><div><h1 id="conversation-title">${esc(current?.title||'和小信使聊聊')}</h1></div><div class="row compact-row">${call(icon('history')+'<span>历史对话</span>','history','','small')}${call(icon('plus')+'<span>新对话</span>','new','','small')}${call(icon('doc')+'<span>材料</span>','toggle-materials','aria-expanded="false" aria-controls="chat-materials"','small materials-toggle')}</div></header>
+      <div class="chat-main"><header class="chat-heading"><div class="chat-heading-title"><h1 id="conversation-title">${esc(current?.title||'和小信使聊聊')}</h1></div><div class="row compact-row">${call(icon('history')+'<span>历史对话</span>','history','','small')}${call(icon('plus')+'<span>新对话</span>','new','','small')}${call(icon('doc')+'<span>材料</span>','toggle-materials','aria-expanded="false" aria-controls="chat-materials"','small materials-toggle')}</div></header>
       <div class="chat-reading-area"><section class="chat-thread" id="chat-thread" aria-label="和小信使的对话" tabindex="0">${thread()}</section><nav id="chat-turn-rail" class="chat-turn-rail" aria-label="按轮次跳转对话" hidden></nav></div>
       <div class="chat-jump-row"><button type="button" id="chat-jump-latest" class="button small" hidden>回到最新 ↓</button></div>
       <form class="chat-composer" id="chat-composer" data-workspace-form="chat" data-cache-key="${key()}">

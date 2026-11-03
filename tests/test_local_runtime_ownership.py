@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import socket
 import subprocess
 import sys
 
@@ -40,3 +41,33 @@ if (-not $workspaceDenied) { throw 'Startup must reject another workspace metada
                             env=environment,capture_output=True,text=True,timeout=30)
     assert result.returncode==0,result.stderr
     assert json.loads(result.stdout)=={'strict_stop':True,'foreign_workspace':True,'fixture_exists':True}
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='Windows socket and launcher guard')
+def test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port():
+    shell=shutil.which('pwsh')or shutil.which('powershell')
+    if not shell:pytest.skip('PowerShell is unavailable')
+    root=Path(__file__).resolve().parent.parent
+    script=r'''
+. $env:RUNTIME_TEST_HELPER
+$configuration=[pscustomobject]@{host='127.0.0.1';port=[int]$env:RUNTIME_TEST_PORT}
+$blocked=$false
+try { Assert-TaskPortAvailable $configuration } catch {
+    if ($_.Exception.Message -notlike '*occupied or unavailable*') { throw }
+    $blocked=$true
+}
+@{blocked=$blocked} | ConvertTo-Json -Compress
+'''
+    with socket.socket()as listener:
+        listener.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
+        listener.bind(('127.0.0.1',0));listener.listen()
+        environment={**os.environ,'RUNTIME_TEST_HELPER':str(root/'scripts/local-runtime.ps1'),
+                     'RUNTIME_TEST_PORT':str(listener.getsockname()[1])}
+        occupied=subprocess.run([shell,'-NoProfile','-NonInteractive','-Command',script],env=environment,
+                                capture_output=True,text=True,timeout=30)
+        assert occupied.returncode==0,occupied.stderr
+        assert json.loads(occupied.stdout)=={'blocked':True}
+    released=subprocess.run([shell,'-NoProfile','-NonInteractive','-Command',script],env=environment,
+                            capture_output=True,text=True,timeout=30)
+    assert released.returncode==0,released.stderr
+    assert json.loads(released.stdout)=={'blocked':False}

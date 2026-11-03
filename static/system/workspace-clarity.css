@@ -151,7 +151,8 @@ html[data-input-mode=keyboard] :is(a,button,summary,[role=tab]):focus-visible { 
   .mobile-task-status select { min-height:36px; height:36px; padding-block:4px; padding-inline:8px 24px; font-size:12px; max-width:116px; width:auto; }
   .content[data-page=tasks] .toolbar { display:none; }
   .content[data-page=tasks] .task-filter-row { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
-  .task-filter-row .view-toggle button { min-height:32px; height:32px; font-size:12px; padding:4px 8px; }
+  .task-filter-row .view-toggle { gap:2px; padding:2px; }
+  .task-filter-row .view-toggle button { min-width:32px; min-height:32px; height:32px; font-size:12px; padding:4px 8px; }
   .task-filter-row .view-toggle button > span { display:none; }
   .task-filter-row .task-date-filter > summary { min-height:32px; padding:5px 8px; font-size:12px; }
   .task-filter-row #task-count { margin-left:auto; font-size:11px; }

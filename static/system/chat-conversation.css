@@ -40,4 +40,6 @@
 
 .chat-welcome.chat-welcome-compact{padding:18px 0;gap:14px;min-height:0}.chat-welcome-compact h2{font-size:clamp(19px,3vw,24px);line-height:1.35;margin:0}.chat-welcome-compact .scene-choices{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}.chat-welcome-compact .scene-choice{display:inline-flex;align-items:center;gap:6px;width:auto;min-height:36px;padding:7px 11px;border:0;border-radius:8px;background:var(--green-wash,#edf5ee)}.chat-welcome-compact .scene-choice strong{font-size:13px;font-weight:500}.chat-welcome-compact .scene-choice .icon{width:16px;height:16px}.chat-welcome-compact .recent-chats{margin-top:8px;padding:0;width:100%;max-width:420px}.chat-welcome-compact .recent-chats>summary{font-size:12px;min-height:32px;cursor:pointer;color:var(--muted,#65716b)}
 .message-wait-hint{margin:6px 0 0;color:var(--muted,#65716b);font-size:12px;font-weight:400;line-height:1.5;overflow-wrap:anywhere}
+.chat-heading>.chat-heading-title{display:flex;align-items:center;flex:1 1 0%;min-width:0}
+.chat-heading-title>h1{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:850px){.message-wait-hint{font-size:11px;margin-top:5px}}

@@ -96,7 +96,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   });
   await resize(390,844);await nav('sources');
   await check('source editor opens from its entry and Escape returns to its trigger',async()=>{
-   const preset=page.locator('[data-source-action=preset][data-id=website]'),trigger=await preset.count()?preset:page.locator('.source-toolbar>[data-source-action=add]');
+   const trigger=page.locator('.source-toolbar [data-source-action=add]');
    await trigger.click();await page.locator('[data-workspace-form=source-catalog]').waitFor();assert.equal(await page.locator('[data-workspace-form=source-catalog] [name=platform]').inputValue(),'website');await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});await settle();assert.equal(await trigger.evaluate(n=>n===document.activeElement),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await capture('sources-390');
   });
@@ -110,7 +110,19 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
    await resize(width,844);await nav(route);
    await check('mobile '+route+' keeps content and primary controls inside '+width,async()=>{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    if(route==='chat'){
+     const geometry=await page.locator('.chat-heading').evaluate(h=>{const clip=h.getBoundingClientRect(),title=h.querySelector('h1').getBoundingClientRect();return {clip:clip.toJSON(),title:title.toJSON(),buttons:[...h.querySelectorAll('[data-chat-action]')].map(b=>{const r=b.getBoundingClientRect(),i=b.querySelector('svg').getBoundingClientRect();return {action:b.dataset.chatAction,rect:r.toJSON(),rightEdgeReceivesPointer:b.contains(document.elementFromPoint(r.right-2,r.top+r.height/2)),iconRight:i.right};})};});
+     assert.equal(geometry.buttons.length,3);
+     for(const b of geometry.buttons){assert.ok(b.rect.left>=geometry.clip.left-.5&&b.rect.right<=geometry.clip.right+.5&&b.rect.width>=32,JSON.stringify({width,...geometry}));assert.equal(b.rightEdgeReceivesPointer,true,JSON.stringify(b));}
+     assert.ok(geometry.title.right<=geometry.buttons[0].rect.left+.5,JSON.stringify(geometry));
+     const materials=page.locator('.chat-heading [data-chat-action=toggle-materials]'),box=await materials.boundingBox();
+     await materials.click({position:{x:box.width-2,y:box.height/2}});assert.equal(await materials.getAttribute('aria-expanded'),'true');
+     await page.keyboard.press('Escape');assert.equal(await materials.getAttribute('aria-expanded'),'false');await settle();
+    }
     if(route==='tasks'){
+     const views=await page.locator('.view-toggle>button').evaluateAll(nodes=>nodes.map(b=>{const r=b.getBoundingClientRect(),i=b.querySelector('svg').getBoundingClientRect();return {action:b.dataset.taskView,button:r.toJSON(),icon:i.toJSON(),hit:b.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))};}));
+     assert.equal(views.length,2);for(const view of views){assert.ok(view.icon.width>=14&&view.icon.height>=14&&view.button.width>=32&&view.button.height>=32,JSON.stringify(view));assert.ok(view.button.x>=0&&view.button.right<=width+.5,JSON.stringify(view));assert.equal(view.hit,true,JSON.stringify(view));}
+     await page.locator('[data-task-view=list]').click();await settle();assert.equal(await page.locator('.task-board').count(),0);
      await page.locator('[data-task-view=board]').click();await settle();
      const lanes=await page.locator('.task-board-column').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().toJSON()));
      assert.ok(lanes.length>=3);for(let i=0;i<lanes.length;i++){assert.ok(lanes[i].x>=0&&lanes[i].right<=width+1,JSON.stringify(lanes[i]));if(i)assert.ok(lanes[i].top>=lanes[i-1].bottom-1,'Mobile lanes must stack without overlap');}

@@ -34,6 +34,19 @@ function Get-OwnedTaskProcess($configuration, [switch]$AllowStalePid) {
     return $process
 }
 
+function Assert-TaskPortAvailable($configuration) {
+    $bindAddress = if ($configuration.host -eq 'localhost') { [System.Net.IPAddress]::Loopback } else { [System.Net.IPAddress]::Parse([string]$configuration.host) }
+    $probe = [System.Net.Sockets.TcpListener]::new($bindAddress, [int]$configuration.port)
+    try {
+        $probe.Server.ExclusiveAddressUse = $true
+        $probe.Start()
+    } catch {
+        throw ('Port ' + $configuration.port + ' is occupied or unavailable. No existing service was reused or stopped.')
+    } finally {
+        $probe.Stop()
+    }
+}
+
 function Stop-OwnedTask($configuration) {
     $process = Get-OwnedTaskProcess $configuration
     if ($process) {

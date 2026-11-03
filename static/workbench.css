@@ -879,7 +879,6 @@ html[data-ui-motion=off] .material-checklist .check { transition: none; }
   .action-metric { padding: 14px 12px; gap: 5px; }
   .action-metric > .metric-symbol { width: 25px; height: 27px; }
   .action-metric > .metric-label { font-size: 12px; }
-  .task-filter-row .view-toggle .icon { display: none; }
   .task-filter-row > #task-count { width: auto; margin-left: auto; }
 }
 html[data-ui-motion=off] .is-ready .readiness-mark { animation: none; }
