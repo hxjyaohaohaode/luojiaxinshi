@@ -15,6 +15,9 @@ from .config import ROOT
 
 TIKA_VERSION='4.2.0'
 OUTPUT_BYTES=4*1024*1024
+PARSE_TIMEOUT_SECONDS=45
+WORKER_TIMEOUT_SECONDS=PARSE_TIMEOUT_SECONDS+10
+QUEUE_TIMEOUT_SECONDS=WORKER_TIMEOUT_SECONDS+5
 
 
 def tools():
@@ -72,7 +75,10 @@ def extract(data,kind,max_chars=10000):
     rtf=kind=='doc' and data.lstrip().startswith(b'{\\rtf')
     if not (ole or rtf):raise ValueError('旧文档类型与内容不符，请核对原件格式；未按扩展名猜测正文')
     java,jar=tools()
-    command=[java,'-Xmx192m','-XX:MaxMetaspaceSize=96m','-XX:MaxDirectMemorySize=16m',
+    # A new JVM handles one bounded document, so favor C1 startup over C2 warmup.
+    # Keep GC/compiler threads small when two parsers share a low-core host.
+    command=[java,'-XX:TieredStopAtLevel=1','-XX:+UseSerialGC','-XX:ActiveProcessorCount=2',
+             '-Xmx192m','-XX:MaxMetaspaceSize=96m','-XX:MaxDirectMemorySize=16m',
              '-XX:ReservedCodeCacheSize=32m','-Xss512k','-Djava.awt.headless=true','-Dfile.encoding=UTF-8',
              '-jar',str(jar),'--config='+str(ROOT/'schema/legacy-office-tika.json'),
              '--xml','--encoding=UTF-8','--maxEmbeddedDepth=0','--maxEmbeddedCount=0','-']
@@ -83,7 +89,7 @@ def extract(data,kind,max_chars=10000):
     with tempfile.TemporaryFile()as output,tempfile.TemporaryFile()as errors:
         try:
             result=subprocess.run(command,input=data,stdout=output,stderr=errors,env=environment,
-                                  cwd=jar.parent,timeout=30,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                                  cwd=jar.parent,timeout=PARSE_TIMEOUT_SECONDS,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         except subprocess.TimeoutExpired:
             raise ValueError('旧格式解析超时，原件已保留；请拆分文档或提供新版格式')from None
         if result.returncode:raise ValueError('旧格式正文无法可靠提取，可能已加密或损坏；请提供可读取版本')

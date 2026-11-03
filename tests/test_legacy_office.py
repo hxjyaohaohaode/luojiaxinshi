@@ -38,6 +38,8 @@ def test_parser_receives_bytes_not_urls_or_application_secrets(monkeypatch,tmp_p
         assert kwargs['input']==bytes.fromhex('D0CF11E0A1B11AE1')
         assert 'AI_API_KEY' not in kwargs['env'] and 'JAVA_TOOL_OPTIONS' not in kwargs['env']
         assert command[-1]=='-' and '--maxEmbeddedCount=0' in command
+        assert '-XX:ActiveProcessorCount=2' in command and '-Xmx192m' in command
+        assert kwargs['timeout']<legacy_office.WORKER_TIMEOUT_SECONDS<legacy_office.QUEUE_TIMEOUT_SECONDS
         kwargs['stdout'].write(XHTML)
         return subprocess.CompletedProcess(command,0)
     monkeypatch.setattr(legacy_office.subprocess,'run',run)

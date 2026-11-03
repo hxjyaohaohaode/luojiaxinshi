@@ -14,7 +14,31 @@ assert.equal((await send({content:'合成验收：生成可交互的准备计划
 chat=await(await api.get(url)).json();const old=chat.messages.at(-1).id;
 const browser=await engine.launch({headless:true,...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})}),context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871}}),page=await context.newPage();
 page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(String(e)));
-let pending;
+let pending,phase='setup';
+const selections=[];
+page.on('response',response=>{if(new URL(response.url()).pathname.endsWith('/select'))selections.push({path:new URL(response.url()).pathname,status:response.status()});});
+async function readyReply(id){
+  phase='restore interactive reply '+id;
+  await page.waitForFunction(expected=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===expected,id);
+  const reply=page.locator('.message-assistant').last(),frame=page.frameLocator('iframe.openui-frame');
+  await frame.locator('input').first().waitFor();
+  await reply.locator('.openui-status').waitFor({state:'hidden'});
+  const height=await frame.locator('#openui-root').evaluate(root=>Math.ceil(Math.max(root.getBoundingClientRect().height,root.scrollHeight)));
+  await page.waitForFunction(expected=>Number(document.querySelector('iframe.openui-frame')?.height)>=expected,height);
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+}
+async function selectAndReload(label,id){
+  phase='select '+label;
+  const [response]=await Promise.all([
+    page.waitForResponse(response=>new URL(response.url()).pathname===url+'/messages/'+id+'/select'&&response.request().method()==='POST'),
+    page.locator('.message-assistant').last().getByRole('button',{name:label,exact:true}).click()
+  ]);
+  assert.equal(response.status(),200,await response.text());
+  assert.equal((await response.json()).messages.at(-1).id,id);
+  await page.waitForFunction(expected=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===expected,id);
+  await page.reload({waitUntil:'domcontentloaded'});
+  await readyReply(id);
+}
 try{
   await page.goto(origin+'/#chat/'+chat.id,{waitUntil:'domcontentloaded'});await page.locator('iframe.openui-frame').waitFor();
   assert.equal((await api.post('/api/fixture/review-gate',{headers,data:{hold:true}})).status(),200);
@@ -33,10 +57,10 @@ try{
   assert.equal((await pending).status(),200);pending=null;
   await page.waitForFunction(()=>!document.querySelector('.message-assistant:last-child')?.classList.contains('is-streaming'));
   live=await(await api.get(url)).json();const final=live.messages.at(-1);assert.equal(final.id,current.id);assert.equal(final.status,'complete');assert.ok(final.genui.validated);assert.equal(final.preview,undefined);
-  await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.frameLocator('iframe.openui-frame').locator('input').first().waitFor();
+  await page.reload({waitUntil:'domcontentloaded'});await readyReply(current.id);
   assert.equal((await(await api.get(url)).json()).messages.at(-1).genui.raw,final.genui.raw);checks.push('完成后刷新，最终正文与界面原文完全一致，预览检查点清除');
-  await page.locator('.message-assistant').last().getByRole('button',{name:'上一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,old);
-  await page.locator('.message-assistant').last().getByRole('button',{name:'下一版回复',exact:true}).click();await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>document.querySelector('.message-assistant:last-child')?.dataset.messageId===id,current.id);checks.push('主动切换旧版和最新版都持久化，刷新后保持所选版本');
+  await selectAndReload('上一版回复',old);
+  await selectAndReload('下一版回复',current.id);checks.push('主动切换旧版和最新版都持久化，刷新后保持所选版本');
   await page.screenshot({path:out+'/latest-restored.png'});assert.deepEqual(errors,[]);await writeFile(out+'/report.json',JSON.stringify({passed:true,browser:name,checks,errors},null,2));console.log(JSON.stringify({passed:true,browser:name,checks},null,2));
-}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors},null,2));throw error;}
+}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});const diagnostics=await page.evaluate(()=>({message:document.querySelector('.message-assistant:last-child')?.dataset.messageId,frameHeight:document.querySelector('iframe.openui-frame')?.height,versions:[...document.querySelectorAll('.reply-versions button')].map(button=>({label:button.getAttribute('aria-label'),disabled:button.disabled,index:button.dataset.index,rect:button.getBoundingClientRect().toJSON()}))})).catch(()=>null);await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),phase,selections,diagnostics,checks,errors},null,2));throw error;}
 finally{await api.post('/api/fixture/review-gate',{headers,data:{hold:false}}).catch(()=>{});if(pending)await pending.catch(()=>{});await context.close();await browser.close();await api.dispose();}

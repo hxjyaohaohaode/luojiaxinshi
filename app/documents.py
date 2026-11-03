@@ -8,6 +8,7 @@ import threading
 
 from .config import ROOT
 from .db import ident
+from .legacy_office import WORKER_TIMEOUT_SECONDS
 
 MAX_FILE = 5*1024*1024
 MAX_CHARS = 10000
@@ -36,7 +37,7 @@ def file_source(filename, data):
     try:
         worker='app.legacy_office_worker' if suffix in {'doc','xls'} else 'app.parser_worker'
         proc = subprocess.run([sys.executable,'-m',worker,suffix], input=data, capture_output=True,
-                              timeout=40 if suffix in {'doc','xls'} else 20,
+                              timeout=WORKER_TIMEOUT_SECONDS if suffix in {'doc','xls'} else 20,
                               cwd=ROOT, creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if proc.returncode or len(proc.stdout)>300000:
             raise ValueError('解析程序未正常返回')

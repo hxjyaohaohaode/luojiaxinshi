@@ -13,6 +13,7 @@ from defusedxml import ElementTree as ET
 from .config import ROOT
 from .db import ident
 from .documents import PARSER_SLOTS
+from .legacy_office import QUEUE_TIMEOUT_SECONDS, WORKER_TIMEOUT_SECONDS
 
 MAX_UPLOAD=20*1024*1024
 MAX_PREVIEW=1000000
@@ -107,11 +108,11 @@ def library_file(filename,data,path=None):
     if kind not in FORMATS:raise ValueError(f'{name}：暂不支持这个格式，请转换为 PDF、文字或新版 Office')
     if not data or len(data)>MAX_UPLOAD:raise ValueError(f'{name}：每份文件应为 1 字节至 20 MB')
     # The composer sends three files concurrently, while only two isolated
-    # parsers may run. Allow one bounded legacy turn (40s) plus startup margin
+    # parsers may run. Allow one bounded legacy turn plus startup margin
     # instead of rejecting the third upload during ordinary contention.
-    if not PARSER_SLOTS.acquire(timeout=45):raise ValueError('正在读取其他材料，请稍后重新上传')
+    if not PARSER_SLOTS.acquire(timeout=QUEUE_TIMEOUT_SECONDS):raise ValueError('正在读取其他材料，请稍后重新上传')
     try:
-        proc=subprocess.run([sys.executable,'-m','app.material_files',kind],input=data,capture_output=True,timeout=40 if kind in {'doc','xls'} else 25,cwd=ROOT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+        proc=subprocess.run([sys.executable,'-m','app.material_files',kind],input=data,capture_output=True,timeout=WORKER_TIMEOUT_SECONDS if kind in {'doc','xls'} else 25,cwd=ROOT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         if proc.returncode or len(proc.stdout)>8*1024*1024:raise ValueError('解析未正常返回')
         result=json.loads(proc.stdout)
     except (subprocess.TimeoutExpired,ValueError,OSError):
