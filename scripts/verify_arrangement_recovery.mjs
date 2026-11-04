@@ -3,16 +3,18 @@ import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 const require=createRequire(import.meta.url),engines=require(process.env.PLAYWRIGHT_PATH||'playwright');
-const origin='http://127.0.0.1:8780',report={scenarios:[],errors:[]};
+const port=Number(process.env.MVP_PORT||8780);
+if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid synthetic fixture port');
+const origin='http://127.0.0.1:'+port,report={scenarios:[],errors:[]};
 const sizes=JSON.parse(process.env.MVP_VIEWPORTS||'[[320,740],[390,844],[768,1024],[844,390],[1440,900],[1920,1080]]');
 const fixture=title=>({title,category:'personal',start_date:'2026-10-19',end_date:'2026-10-19',start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:null,location:'虚构验收地点',notes:'工程测试，不代表真实安排。'});
 try{
 for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',')){
   const browser=await engines[engine].launch({headless:true,executablePath:engines[engine].executablePath()});
   try{
-    const context=await browser.newContext({reducedMotion:'reduce'}),headers={Origin:origin,'X-Requested-With':'campus-notice'};
-    const registration=await context.request.post(origin+'/api/auth/register',{headers,data:{username:'recovery.'+engine+'.'+Date.now(),password:'Recovery-Verification-Only-2026',display_name:'虚构保存恢复验收',accepted_terms:true}});
-    if(!registration.ok())throw new Error('Fixture registration: '+registration.status());
+    const context=await browser.newContext({reducedMotion:'reduce',serviceWorkers:'block'}),headers={Origin:origin,'X-Requested-With':'campus-notice'};
+    const registration=await context.request.post(origin+'/api/auth/login',{headers,data:{username:'workflow.demo',password:'Mvp-Verification-Only-2026'}});
+    if(!registration.ok())throw new Error('Owned synthetic account login: '+registration.status());
     headers['X-CSRF-Token']=(await(await context.request.get(origin+'/api/session')).json()).csrf;
     const request=async(method,path,data)=>{const r=await context.request.fetch(origin+'/api'+path,{method,headers,...(data?{data}:{})});if(!r.ok())throw new Error(method+' '+path+': '+r.status());return r.json();};
     const read=path=>request('GET',path);
@@ -24,23 +26,24 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
     const recovered=()=>page.waitForSelector('#arrangement-recovery');
     const choice=name=>page.locator(`[data-arrangement-recovery=${name}]`).click();
     const geometry=async check=>{
-      const g=await page.evaluate(()=>{const d=document.querySelector('dialog'),b=d.querySelector('.dialog-body'),r=d.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:innerWidth,height:innerHeight,scroll:b.scrollWidth,client:b.clientWidth,targets:[...d.querySelectorAll('[data-arrangement-recovery]')].map(e=>{const r=e.getBoundingClientRect();return [r.width,r.height];})};});
+      const g=await page.evaluate(()=>{const d=document.querySelector('dialog'),b=d.querySelector('.dialog-body'),r=d.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:innerWidth,height:innerHeight,scroll:b.scrollWidth,client:b.clientWidth,targets:[...d.querySelectorAll('.recovery-actions .button')].map(e=>{const r=e.getBoundingClientRect(),style=getComputedStyle(e),text=document.createRange();text.selectNodeContents(e);return {width:r.width,height:r.height,label:e.textContent.trim(),textHeight:text.getBoundingClientRect().height,lineHeight:parseFloat(style.lineHeight)||parseFloat(style.fontSize)*1.5,fontSize:parseFloat(style.fontSize),overflows:e.scrollWidth>e.clientWidth+1};})};});
       check(g.left>=0&&g.right<=g.width+1&&g.top>=0&&g.bottom<=g.height+1&&g.scroll<=g.client+1,'Recovery panel stays inside the viewport');
-      check(g.targets.every(([w,h])=>w>=39&&h>=39),'Recovery choices keep usable target sizes');
+      check(g.targets.every(t=>t.width>=39&&t.height>=39),'All recovery actions keep usable target sizes '+JSON.stringify(g.targets));
+      check(g.targets.every(t=>t.fontSize>=12&&t.textHeight<=t.lineHeight+1&&!t.overflows),'Recovery labels remain readable on one line '+JSON.stringify(g.targets));
     };
     for(const [width,height] of sizes){
       await page.setViewportSize({width,height});
-      const run=async(label,work)=>{const result={engine,width,height,label,checks:[]},check=(passed,detail)=>result.checks.push({passed:!!passed,detail});try{await work(check);result.passed=result.checks.every(x=>x.passed);}catch(error){result.passed=false;result.error=error.stack;}report.scenarios.push(result);console.log(engine,width,height,label,result.passed?'pass':'FAIL');};
+      const run=async(label,work)=>{const result={engine,width,height,label,checks:[]},check=(passed,detail)=>result.checks.push({passed:!!passed,detail});try{await work(check);result.passed=result.checks.every(x=>x.passed);}catch(error){result.passed=false;result.error=error.stack;}report.scenarios.push(result);console.log(engine,width,height,label,result.passed?'pass':'FAIL');if(!result.passed)console.log(JSON.stringify(result));};
       await run('Cleanup fails, then reload and explicitly start another arrangement',async check=>{
         await cache(null);await open();await newArrangement();
         const title='虚构清理恢复 '+Date.now();await page.locator('#arrangement-form [name=title]').fill(title);
         const oldRequest=await page.locator('#arrangement-form').getAttribute('data-request-id');
         const cleanup=async route=>{if(route.request().method()==='PUT'&&route.request().postDataJSON().payload===null)await route.fulfill({status:503,json:{detail:'虚构清理失败'}});else await route.continue();};
         await page.route(origin+'/api/edit-cache/arrangement-new',cleanup);
-        try{await page.locator('#arrangement-form [type=submit]').click();await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('旧草稿清理未完成'));}finally{await page.unroute(origin+'/api/edit-cache/arrangement-new',cleanup);}
+        try{await page.locator('#arrangement-form [type=submit]').click();await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('旧草稿没清理掉'));}finally{await page.unroute(origin+'/api/edit-cache/arrangement-new',cleanup);}
         check((await read('/arrangements')).filter(x=>x.data.title===title).length===1,'The formal save happened once');
         await open();await newArrangement();await recovered();await geometry(check);
-        check((await page.locator('#arrangement-recovery').textContent()).includes('已经保存'),'Reload identifies the completed submission');
+        check((await page.locator('#arrangement-recovery').textContent()).includes('已经存好了'),'Reload identifies the completed submission');
         check((await read('/edit-cache/arrangement-new')).payload.request_id===oldRequest,'Recovery preserves the original draft until a choice');
         if(engine==='chromium'&&[320,390,1440].includes(width))await page.screenshot({path:artifactPath(`recovery-${width}.png`),animations:'disabled'});
         await choice('blank');await page.waitForSelector('#arrangement-form');
@@ -55,7 +58,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
         await choice('view');await page.waitForSelector('.event-detail');
         check((await page.locator('.dialog-head').textContent()).includes(newer.data.title),'View opens the saved record, not the stale draft');
         check((await read('/edit-cache/arrangement-new')).payload.data.title===old.data.title,'Viewing does not discard draft edits');
-        await page.keyboard.press('Escape');await newArrangement();await recovered();await choice('copy');await page.waitForSelector('#arrangement-form');
+        await page.locator('#dialog .dialog-head [data-action=close-dialog]').click();await page.locator('#dialog[open]').waitFor({state:'hidden'});await newArrangement();await recovered();await choice('copy');await page.waitForSelector('#arrangement-form');
         check(await page.locator('#arrangement-form [name=title]').inputValue()===old.data.title,'Explicit copy preserves the draft fields');
         check(await page.locator('#arrangement-form').getAttribute('data-request-id')!==old.request_id,'Explicit copy cannot reuse the completed request');
         await page.locator('#arrangement-form [type=submit]').click();await page.locator('#arrangement-form').waitFor({state:'detached'});
@@ -64,7 +67,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
       await run('Deleted result remains deleted until explicit recreation',async check=>{
         const old=await create(fixture('虚构已删除安排 '+Date.now()));await cache({request_id:old.request_id,data:old.data});
         await request('DELETE','/arrangements/'+old.saved.id,{version:1});await open();await newArrangement();await recovered();
-        check((await page.locator('#arrangement-recovery').textContent()).includes('随后已删除'),'Recovery distinguishes deletion from a missing submission');
+        check((await page.locator('#arrangement-recovery').textContent()).includes('后来被删掉了'),'Recovery distinguishes deletion from a missing submission');
         check(!(await read('/arrangements')).some(x=>x.id===old.saved.id),'Opening recovery does not recreate a deleted item');
         await choice('copy');await page.waitForSelector('#arrangement-form');await page.locator('#arrangement-form [type=submit]').click();await page.locator('#arrangement-form').waitFor({state:'detached'});
         const rows=(await read('/arrangements')).filter(x=>x.data.title===old.data.title);check(rows.length===1&&rows[0].id!==old.saved.id,'Explicit recreation uses a different record');
@@ -74,14 +77,14 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
         const lost=async route=>{if(route.request().method()==='POST'){const r=await route.fetch();if(!r.ok())throw new Error('Expected committed write');await route.abort('failed');}else await route.continue();};
         await page.route(origin+'/api/arrangements',lost);
         try{await page.locator('#arrangement-form [type=submit]').click();await recovered();}finally{await page.unroute(origin+'/api/arrangements',lost);}
-        check((await page.locator('#arrangement-recovery').textContent()).includes('已经保存'),'A failed transport does not masquerade as a failed write');
+        check((await page.locator('#arrangement-recovery').textContent()).includes('已经存好了'),'A failed transport does not masquerade as a failed write');
         check((await read('/arrangements')).filter(x=>x.data.title===title).length===1,'There is exactly one committed result');
       });
       await run('Unavailable status preserves the draft and retry restores editing',async check=>{
         const draft={request_id:randomUUID(),data:fixture('虚构尚未保存 '+Date.now())};await cache(draft);await open();
         const unavailable=route=>route.fulfill({status:503,json:{detail:'虚构状态服务不可用'}});
         await page.route(origin+'/api/arrangements/requests/*',unavailable);
-        try{await newArrangement();await recovered();await geometry(check);check((await page.locator('#arrangement-recovery').textContent()).includes('暂时无法连接'),'Unavailable status is not treated as unsaved');}finally{await page.unroute(origin+'/api/arrangements/requests/*',unavailable);}
+        try{await newArrangement();await recovered();await geometry(check);check((await page.locator('#arrangement-recovery').textContent()).includes('暂时连不上'),'Unavailable status is not treated as unsaved');}finally{await page.unroute(origin+'/api/arrangements/requests/*',unavailable);}
         await choice('retry');await page.waitForSelector('#arrangement-form');
         check(await page.locator('#arrangement-form [name=title]').inputValue()===draft.data.title,'Retry restores the untouched unsaved draft');
         check(await page.locator('#arrangement-form').getAttribute('data-request-id')===draft.request_id,'Unsaved intent keeps its idempotency key');
@@ -97,7 +100,7 @@ for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(
         const draft={request_id:randomUUID(),data:fixture('虚构当前服务异常 '+Date.now())};await cache(draft);await open();
         const missing=route=>route.fulfill({status:404,json:{detail:'Not Found'}}),current=route=>route.fulfill({json:{status:'ok',version:'1.14.1'}});
         await page.route(origin+'/api/arrangements/requests/*',missing);await page.route(origin+'/api/health',current);
-        try{await newArrangement();await recovered();check((await page.locator('#arrangement-recovery').textContent()).includes('暂时无法连接'),'A current server failure cannot use legacy fallback');check((await read('/edit-cache/arrangement-new')).payload.request_id===draft.request_id,'Unknown state preserves the original draft');}
+        try{await newArrangement();await recovered();check((await page.locator('#arrangement-recovery').textContent()).includes('暂时连不上'),'A current server failure cannot use legacy fallback');check((await read('/edit-cache/arrangement-new')).payload.request_id===draft.request_id,'Unknown state preserves the original draft');}
         finally{await page.unroute(origin+'/api/arrangements/requests/*',missing);await page.unroute(origin+'/api/health',current);}
       });
       await run('A delayed status read cannot replace a later dialog',async check=>{

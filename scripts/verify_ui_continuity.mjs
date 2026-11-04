@@ -24,7 +24,7 @@ for(const name of names){
   const browser=await engines[name].launch({headless:true,executablePath:engines[name].executablePath()});
   try{
     for(const viewport of sizes){
-      const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState});
+      const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState,serviceWorkers:'block'});
       try{
         const session=await (await context.request.get(origin+'/api/session')).json();
         const headers={Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf};
@@ -151,7 +151,7 @@ for(const name of names){
           await page.locator('[data-action=supplement]').click();await page.locator('#supplement-form [name=body]').fill('虚构补充材料 '+Date.now());
           await delay('/notices/'+task.notice_id+'/supplement','POST',()=>page.locator('#supplement-form [type=submit]').click(),async()=>{
             await page.keyboard.press('Escape');await page.locator('.task-title[data-workflow-task="'+task.id+'"]').click();await page.locator('.workflow-followup > summary').click();await page.locator('#workflow-form [name=next_step]').fill('新的办理草稿尚未提交');beforeResponse=await page.locator('#workflow-form [name=next_step]').inputValue();
-          },async()=>{await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('补充材料已保存'));check(await page.locator('#dialog').evaluate(d=>d.open),'新的办理弹窗仍打开');const afterResponse=await page.locator('#workflow-form [name=next_step]').inputValue();check(afterResponse==='新的办理草稿尚未提交','补件结果不覆盖办理草稿',{beforeResponse,afterResponse});});
+          },async()=>{await page.waitForFunction(()=>document.querySelector('#toast').textContent.includes('补充通知原件已保存'));check(await page.locator('#dialog').evaluate(d=>d.open),'新的办理弹窗仍打开');const afterResponse=await page.locator('#workflow-form [name=next_step]').inputValue();check(afterResponse==='新的办理草稿尚未提交','补件结果不覆盖办理草稿',{beforeResponse,afterResponse});});
         });
         await scenario('关闭模型设置后迟到记录不重新弹出',async check=>{
           await open('settings','[data-action=settings-model]');await setting('settings-model');

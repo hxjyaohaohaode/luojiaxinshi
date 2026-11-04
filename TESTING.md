@@ -48,12 +48,14 @@ npm ci --ignore-scripts
 | 后端 | `python -m pytest -q` | `tests/test_*.py`，`pytest.ini` 固定 `testpaths = tests`。每项测试使用临时数据库和模拟模型，不读取正式 `data/`，不发起付费请求 |
 | 前端单元 | `node --test tests/*.test.mjs` | 与 `npm test` 相同，使用 Node.js 22 内置测试运行器；应用本身没有 npm 运行依赖 |
 | 浏览器回归 | `python scripts/run_browser_checks.py` | 在 `127.0.0.1:8786` 启动 `scripts/push_preview_server.py` 合成夹具，覆盖 Chromium、Firefox、WebKit 的既有界面回归，以及自然导入、个人材料、来源收件和持久推送。夹具沿用原有演示数据，来源读取与推送投递全部在本机模拟。可用 `--suite 脚本名` 只重跑一组。报告写入 `artifacts/<套件目录>/report.json`，日志在 `artifacts/ci-browser/` |
+| 异步保存与恢复 | `python scripts/run_continuity_browser_checks.py` | 三组保留的检查全部执行；每组使用系统分配的独立临时端口、全新合成数据库及经过验证码流程创建的夹具账号，手机／桌面与日历横屏等既有尺寸均保留。规范报告和原始场景记录位于 `artifacts/continuity-browser/`，不会复用真实服务 |
 | Agent 浏览器 | `python scripts/run_agent_browser_checks.py` | 在 `127.0.0.1:8793` 启动 `scripts/agent_preview_server.py` 离线夹具，运行 `tests/agent-browser.mjs`、`agent-adaptive-browser.mjs`、`agent-fusion-browser.mjs`、`agent-quality-browser.mjs`、`composer-browser.mjs`。汇总在 `artifacts/ci-agent-browser/results.json` |
 | 真实进程 | `python scripts/verify_local_runtime.py` | 随机本机端口启动真实服务进程，5 个合成账号并发提交、确认、修改通知与待办，再验证账号隔离、幂等、日历导出、停止重启和备份恢复。结果写入 `artifacts/runtime-acceptance.json`。不调用 AI，也不代表生产容量 |
 | 协议与依赖 | `python scripts/genui_catalog.py --check`、`python scripts/evaluate_genui.py`、`npm audit --omit=dev`、`python -m pip_audit -r requirements.lock --strict` | 组件目录一致性、离线 GenUI 样例、npm 生产依赖与 Python 锁定依赖的已知漏洞审计 |
+| 离线检索与容量 | `python scripts/verify_retrieval_quality.py`、`python scripts/verify_campus_capacity.py` | 合成全文尾部证据与截取偏移一致性、10,000 则通知的收件／全文检索／归组候选／容量拒绝和重复重放。测量结果属于本机单进程检查，不代表校园生产吞吐或真实模型准确率 |
 | 发布包 | `python scripts/build_release.py` | 按白名单打包源码到 `releases/`，并检查包内没有 `data/`、`artifacts/` 和 `.env` |
 
-两个浏览器入口需要 Playwright 浏览器（版本锁定在 `package-lock.json`）。本机首次运行先执行 `npx playwright install chromium firefox webkit`，或用 `PLAYWRIGHT_PATH` 指向已有安装。端口 8786 / 8793 被占用时脚本直接退出，不会复用或结束其他进程，也不会碰 8765 上的正式服务。浏览器夹具清除了模型密钥环境变量，回复均为明确标注的合成数据。
+浏览器入口需要 Playwright 浏览器（版本锁定在 `package-lock.json`）。本机首次运行先执行 `npx playwright install chromium firefox webkit`，或用 `PLAYWRIGHT_PATH` 指向已有安装。通用／Agent 套件使用 8786 / 8793，异步恢复协调器逐组分配空闲临时端口；已占用端口不复用，其他进程不结束，也不会碰 8765 上的正式服务。浏览器夹具清除了模型密钥环境变量，回复均为明确标注的合成数据。
 
 下面的脚本会调用真实的小米 MiMo 接口并可能计费，只在需要验证凭证或模型行为时手动运行，没有放进 CI：`scripts/verify_notice_model.py`、`scripts/verify_business_notice.py --live`、`scripts/verify_speech_models.py --live`、`scripts/verify_personalization.py --live`、`scripts/verify_agent_adaptive_live.py --allow-paid-synthetic-test`、`scripts/verify_media_review_live.py --allow-paid-synthetic-test`。它们使用临时数据库和合成或项目自带材料，不读取正式账号。单次结果不代表固定耗时、准确率或费用。
 
@@ -61,8 +63,11 @@ npm ci --ignore-scripts
 
 `.github/workflows/checks.yml` 在推送到 `main`、Pull Request 和手动触发时运行：
 
-- `tests`：Ubuntu 与 Windows 各一组，Python 3.12、Node.js 22。依次运行 pytest、Node 单元测试、GenUI 目录检查与离线样例、两项依赖审计、`verify_local_runtime.py` 和 `build_release.py`。
+- `tests`：Ubuntu 全量后端，Python 3.12、Node.js 22；继续执行 Node 单元测试、GenUI 目录检查与离线样例、两项依赖审计、`verify_local_runtime.py` 和 `build_release.py`。
+- `windows-backend`：同一完整文件清单确定四个不重叠分片，分别在隔离 Windows 作业执行。每片报告只声明 `selected_complete`，不能声明整个项目 `complete`。
+- `windows-results`：只下载本次 workflow attempt 的四份报告，验证源码摘要、完整文件清单、分片归属及真实 JUnit 一致后合并；缺片、重复、陈旧报告或伪造计数均失败。随后完整执行 Windows Node、GenUI、依赖审计、HTTP 并发恢复及打包，即使分片失败也继续保留其余检查结果。
 - `browser`：使用固定摘要的 Playwright 容器镜像，先确认三种浏览器都能启动，再运行 `run_browser_checks.py`；即使前者失败，也继续运行 `run_agent_browser_checks.py`，避免一组失败遮住另一组结果。
+- `continuity`：在同一固定浏览器镜像中执行全部异步保存与恢复检查，保留每个场景的实际断言、三浏览器／尺寸清单及独立夹具日志。它与其他作业共同组成同一次提交的完整验收。
 - `container`：构建镜像后以只读根文件系统、去除全部权限、非 root 用户和 production 配置启动，检查健康接口、运行用户、`manage.py check`、提示资源和首页。不包含公网域名、HTTPS 证书或真实服务器部署。
 
 每次运行的 Summary 由 `scripts/write_ci_summary.py` 写入实际数量，JUnit、浏览器 JSON 和合成截图作为 Artifacts 保留 14 天。
@@ -96,7 +101,7 @@ npm ci --ignore-scripts
 
 `scripts/verify_ui_continuity.mjs`、`verify_draft_continuity.mjs` 和 `verify_arrangement_recovery.mjs` 覆盖延迟保存后切页、并发草稿编辑、已保存但响应丢失、清理草稿失败及重新加载恢复。这些不是一次性截图脚本，保留在仓库中。
 
-单独启动 `python scripts/mvp_preview_server.py` 后运行上述脚本（例如 `node scripts/verify_ui_continuity.mjs`）。默认仅连接 `127.0.0.1:8780` 合成环境；首次运行或政策版本更新后，用 `MVP_DATA_DIR=artifacts/continuity-新的运行编号/data` 指向新的夹具目录，避免复用旧账号和旧同意记录。`MVP_BROWSERS` 可选浏览器，`MVP_ARTIFACT_DIR` 可指定 `artifacts/` 内的独立输出目录。它们未合并进默认五组浏览器套件；保留源码不代表本轮已重跑通过。
+统一运行 `python scripts/run_continuity_browser_checks.py`，它为每组检查创建并清理自己拥有的全新夹具，执行所有默认浏览器和尺寸；原脚本仍可单独诊断。协调器清除场景／视口过滤环境变量，并核对全部声明浏览器及尺寸，不允许局部选择冒充全套。报告保留场景原文并汇总真实检查，空场景、失败、缺失报告及超时均失败。它已加入 CI 的 `continuity` 作业；只有本次提交的实际结果才能证明通过。
 
 新增的提醒回归位于 `tests/test_account_and_insights.py` 和 `tests/reminders.test.mjs`，检查已读与归档持久化、账号隔离、全部已读只操作点击时的提醒、改期重新提醒、超过 60 条提醒、旧请求回流、切换账号及网络失败重试。`tests/test_motion_assets.py` 在临时目录重建动效并对比当前生成资源。
 
@@ -153,4 +158,6 @@ npm ci --ignore-scripts
 
 隔离运行设置 `CAMPUS_AUTO_LOAD_ENV=0`，使配置模块在导入时不读取项目 `.env`。本机正常启动仍按原规则读取配置，操作员显式的 `--local-env` 入口继续生效。后端协调器、浏览器夹具和 CI 均设置隔离标记；测试分组仅由当前文件清单决定，不读取旧报告作为分组输入。
 
-后端每个分片默认最多 2400 秒，超时返回失败并只终止该分片创建的进程树。该边界为 Windows 全量运行实测约 37 分钟保留收尾空间，CI 总限时仍为 45 分钟。执行前移除同名旧 JUnit；缺失报告不能通过。分片保留逐用例日志和超过 90 秒时的线程栈，便于区分慢用例、等待和退出阻塞。
+后端每个分片默认最多 2400 秒，超时返回失败并只终止该分片创建的进程树。Windows 单机四片曾实测用时 2396.67 秒，因此 CI 将同一分组分配到四个独立作业，各作业限时仍为 45 分钟，未提高分片期限或删除用例。执行前移除同名旧 JUnit；缺失报告不能通过。分片保留逐用例日志和超过 90 秒时的线程栈，便于区分慢用例、等待和退出阻塞。
+
+`--only-shard 1` 仅供上述 CI 调度，不替代本地全量命令。`--merge-partitions artifacts/windows-partitions` 要求同一源码的所有声明分片，并核对每个 JUnit 用例所属文件及计数。需要重跑时应重跑完整 workflow；不同 attempt 的部分成功不能拼成当前整轮验收。

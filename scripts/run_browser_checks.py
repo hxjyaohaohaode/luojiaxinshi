@@ -4,7 +4,6 @@ from contextlib import closing
 import json
 import os
 from pathlib import Path
-import socket
 import sqlite3
 import subprocess
 import sys
@@ -13,6 +12,8 @@ import time
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0,str(ROOT))
+from scripts.run_openui_browser_checks import ensure_fixture_port_free
 OUT = ROOT / 'artifacts' / 'ci-browser'
 SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_frontend_review.mjs', 'frontend-v8-browser'),
@@ -25,7 +26,8 @@ SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_task_materials.mjs', 'task-materials-browser'),
           ('verify_source_inbox.mjs', 'source-inbox-browser'),
           ('verify_push_browser.mjs', 'push-browser'),
-          ('verify_notice_matters.mjs', 'notice-matters-browser')]
+          ('verify_notice_matters.mjs', 'notice-matters-browser'),
+          ('verify_source_presets_ui.mjs', 'source-presets-browser')]
 
 
 def reset_fixture_limits(data):
@@ -47,11 +49,7 @@ def main():
                         help='Run only these suites; the default runs all suites.')
     selected = parser.parse_args().suite
     # Never reuse or terminate another service. In particular, leave 8765 alone.
-    with socket.socket() as probe:
-        try:
-            probe.bind(('127.0.0.1', 8786))
-        except OSError:
-            raise SystemExit('Port 8786 is occupied; the browser checks were not started.') from None
+    ensure_fixture_port_free(8786)
     OUT.mkdir(parents=True, exist_ok=True)
     fixture_data = tempfile.TemporaryDirectory(prefix='fixture-', dir=OUT)
     data = Path(fixture_data.name).resolve()

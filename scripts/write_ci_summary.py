@@ -17,7 +17,7 @@ def junit(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--kind', choices=['unit', 'browser', 'all'], default='all')
+    parser.add_argument('--kind', choices=['unit', 'browser', 'continuity', 'all'], default='all')
     kind = parser.parse_args().kind
     rows = []
     units = [('Python', 'artifacts/ci/python-tests.xml'), ('Node', 'artifacts/ci/node-tests.xml')]
@@ -39,6 +39,7 @@ def main():
                 ('Source subscriptions and personal inbox', 'artifacts/source-inbox-browser/report.json'),
                 ('Persistent push and device ownership', 'artifacts/push-browser/report.json'),
                 ('Notice matter grouping and campus capacities', 'artifacts/notice-matters-browser/report.json'),
+                ('School source chooser and pending saves', 'artifacts/source-presets-browser/report.json'),
                 ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),
@@ -56,7 +57,11 @@ def main():
                 ('Chat recovery Chromium', 'artifacts/chat-recovery/chromium/report.json'),
                 ('Chat recovery Firefox', 'artifacts/chat-recovery/firefox/report.json'),
                 ('Chat recovery WebKit', 'artifacts/chat-recovery/webkit/report.json')]
-    for label, path in browsers if kind in {'browser', 'all'} else []:
+    continuity = [('Async page and dialog continuity', 'artifacts/continuity-browser/ui-continuity/report.json'),
+                  ('Concurrent draft edits and duplicate saves', 'artifacts/continuity-browser/draft-continuity/report.json'),
+                  ('Arrangement save and reload recovery', 'artifacts/continuity-browser/arrangement-recovery/report.json')]
+    selected = (browsers if kind in {'browser', 'all'} else []) + (continuity if kind in {'continuity', 'all'} else [])
+    for label, path in selected:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))
             rows.append([label, len(data['checks']), sum(not c.get('ok', c.get('passed', False)) for c in data['checks'] if isinstance(c, dict)), len(data['errors']), 0])

@@ -2,7 +2,9 @@ import {artifactPath} from './mvp_check_runtime.mjs';
 import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
 const require=createRequire(import.meta.url),engines=require(process.env.PLAYWRIGHT_PATH||'playwright');
-const origin='http://127.0.0.1:8780',report={scenarios:[],errors:[]};
+const port=Number(process.env.MVP_PORT||8780);
+if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid synthetic fixture port');
+const origin='http://127.0.0.1:'+port,report={scenarios:[],errors:[]};
 const sizes=JSON.parse(process.env.MVP_VIEWPORTS||'[{"width":390,"height":844},{"width":1440,"height":900}]');
 
 try{
@@ -10,14 +12,14 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
   const auth=await engines.request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin,'X-Requested-With':'campus-notice'}});
   let storageState,headers;
   try{
-    const registered=await auth.post('/api/auth/register',{data:{username:'draft.'+name+'.'+Date.now(),password:'Draft-Verification-Only-2026',display_name:'虚构草稿验收',accepted_terms:true}});
-    if(!registered.ok())throw new Error('Isolated test account creation failed: '+registered.status());
+    const registered=await auth.post('/api/auth/login',{data:{username:'workflow.demo',password:'Mvp-Verification-Only-2026'}});
+    if(!registered.ok())throw new Error('Owned synthetic account login failed: '+registered.status());
     const session=await (await auth.get('/api/session')).json();headers={Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf};storageState=await auth.storageState();
   }finally{await auth.dispose();}
   const browser=await engines[name].launch({headless:true,executablePath:engines[name].executablePath()});
   try{
   for(const viewport of sizes){
-    const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState});
+    const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState,serviceWorkers:'block'});
     try{
       const page=await context.newPage();page.on('pageerror',e=>report.errors.push({engine:name,width:viewport.width,error:e.message}));
       const read=async path=>{const r=await context.request.get(origin+'/api'+path);if(!r.ok())throw new Error('Fixture read failed: '+r.status());return r.json();};

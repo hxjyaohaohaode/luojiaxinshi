@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 const require=createRequire(import.meta.url),{chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
-const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'artifacts/public-sources-2026-10-29/frontend');
+const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'artifacts/source-presets-browser');
 await mkdir(out,{recursive:true});
 const html=`<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/static/styles.css"><body><main class="content" id="content"></main><dialog id="dialog"></dialog><div id="toast" role="status"></div><script type="module">
 import {createSourcesUI} from '/static/sources.js';

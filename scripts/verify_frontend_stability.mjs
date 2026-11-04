@@ -8,6 +8,31 @@ const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_P
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/frontend-v9-browser');await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic UI and speech responses; no external provider calls',checks:[],errors:[]};
 const wave=Buffer.alloc(44+16000*2*5);wave.write('RIFF');wave.writeUInt32LE(wave.length-8,4);wave.write('WAVEfmt ',8);wave.writeUInt32LE(16,16);wave.writeUInt16LE(1,20);wave.writeUInt16LE(1,22);wave.writeUInt32LE(16000,24);wave.writeUInt32LE(32000,28);wave.writeUInt16LE(2,32);wave.writeUInt16LE(16,34);wave.write('data',36);wave.writeUInt32LE(wave.length-44,40);
+async function delayedReadingAnchor(browser){
+ const probe=await browser.newPage({serviceWorkers:'block',viewport:{width:1100,height:800}});
+ const errors=[];probe.on('pageerror',error=>errors.push(error.message));
+ const paragraphs=Array.from({length:42},(_,i)=>'<p>第 '+i+' 段：'+'阅读位置需要在延迟的侧栏重排前后保持一致。这里使用足够长的合成文字，验证相同内容在不同宽度下换行后仍然保留正在阅读的段落。'.repeat(3)+'</p>').join('');
+ const html='<!doctype html><meta charset=utf-8><style>*{box-sizing:border-box}body{margin:0}#workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,0fr);width:1000px;height:600px;transition:grid-template-columns 180ms linear 900ms}#workspace.open{grid-template-columns:minmax(0,1fr) minmax(0,.55fr)}.chat-main{min-width:0;min-height:0;display:grid}#reader{height:600px;overflow:auto;overflow-anchor:none;font:16px/26px sans-serif;padding:12px}p{margin:0 0 18px}.side{min-width:0;overflow:hidden}</style><div id=workspace><main class=chat-main><section id=reader><article class=message data-message-id=one data-role=assistant><div class=message-content>'+paragraphs+'</div></article></section></main><aside class=side>侧栏</aside></div>';
+ try{
+  await probe.route(origin+'/__viewport-probe__',route=>route.fulfill({contentType:'text/html; charset=utf-8',body:html}));
+  await probe.goto(origin+'/__viewport-probe__');
+  // Place a known first word at the reading edge. Comparing the next whole
+  // paragraph while the previous paragraph is still visible measures a
+  // different anchor after wrapping, rather than the word being preserved.
+  const before=await probe.evaluate(async()=>{window.anchorModule=await import('/static/chat-viewport.js');const reader=document.querySelector('#reader');reader.scrollTop=950;const top=reader.getBoundingClientRect().top;window.readingPoint=[...reader.querySelectorAll('p')].find(p=>p.getBoundingClientRect().top>=top+10);reader.scrollTop+=readingPoint.getBoundingClientRect().top-top-12;window.readingWord=document.createRange();readingWord.setStart(readingPoint.firstChild,0);readingWord.setEnd(readingPoint.firstChild,1);return {scroll:reader.scrollTop,top:readingWord.getBoundingClientRect().top,text:readingPoint.textContent,width:reader.clientWidth,height:reader.scrollHeight};});
+  for(const open of [true,false]){
+   await probe.evaluate(open=>anchorModule.preserveChatViewport(document.querySelector('#reader'),()=>document.querySelector('#workspace').classList.toggle('open',open),{pinBottom:false}),open);
+   await probe.locator('#workspace').evaluate(node=>{node.getBoundingClientRect();return Promise.all(node.getAnimations().map(animation=>animation.finished));});
+   await probe.waitForFunction(()=>!anchorModule.chatViewportHeld(document.querySelector('#reader')));
+   const after=await probe.evaluate(()=>{const reader=document.querySelector('#reader');return {scroll:reader.scrollTop,top:readingWord.getBoundingClientRect().top,text:readingPoint.textContent,width:reader.clientWidth,height:reader.scrollHeight};});
+   assert.equal(after.text,before.text);assert.ok(Math.abs(after.top-before.top)<2,JSON.stringify({open,before,after}));
+   if(open){assert.ok(after.width<before.width-300,'The sidebar must actually narrow the reading column');assert.ok(after.height>before.height+250,'The text must actually wrap onto additional lines');}
+   if(!open)assert.ok(Math.abs(after.scroll-before.scroll)<2,JSON.stringify({before,after}));
+  }
+  assert.equal(await probe.evaluate(()=>{const reader=document.querySelector('#reader');anchorModule.preserveChatViewport(reader,()=>{});reader.dispatchEvent(new CustomEvent('campus:reading',{bubbles:true,detail:{delta:80}}));return !anchorModule.chatViewportHeld(reader);}),true,'A reading gesture from the embedded UI must immediately release the anchor');
+  assert.deepEqual(errors,[]);
+ }finally{await probe.close();}
+}
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
  const settleReader=async()=>{await page.evaluate(async()=>{window.__chatViewportHeld=(await import('/static/chat-viewport.js')).chatViewportHeld;});await page.waitForFunction(()=>!window.__chatViewportHeld(document.querySelector('#chat-thread')));};
@@ -16,6 +41,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  const nav=async route=>{await page.goto(origin+'/#'+route);await page.locator('#content:not([inert])').waitFor();};
  const api=(url,method='GET',json)=>page.evaluate(async({url,method,json})=>{const s=await(await fetch('/api/session')).json(),r=await fetch('/api'+url,{method,headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':s.csrf,...(json?{'Content-Type':'application/json'}:{})},...(json?{body:JSON.stringify(json)}:{})});if(!r.ok)throw Error(await r.text());return r.json();},{url,method,json});
  try{
+  await check('delayed sidebar layout preserves the same reading word through open and close',()=>delayedReadingAnchor(browser));
   await page.goto(origin+'/#login');await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
   await nav('memory');await page.locator('#memory-shell').waitFor();await page.waitForFunction(()=>!document.querySelector('.memory-tree-main')?.matches('[aria-busy=true]'));
   for(const [width,height] of [[1413,871],[1651,871],[1920,1080],[1280,720],[1024,768],[850,700],[768,1024],[390,844],[320,640]]){
