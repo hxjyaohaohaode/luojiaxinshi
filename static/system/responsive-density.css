@@ -177,3 +177,6 @@ body { font-size:14px; line-height:1.55; }
     .week-agenda > p,.week-agenda > button { flex:1; }
   }
 }
+.collaboration-note{white-space:pre-wrap;overflow-wrap:anywhere}
+.collaboration-empty{padding:1rem}
+.collaboration-page .change-list-item{min-width:0;overflow-wrap:anywhere}

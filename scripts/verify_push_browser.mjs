@@ -33,7 +33,12 @@ try{
    const deadline=Date.now()+25000;let accepted=false;
    while(Date.now()<deadline){accepted=await page.evaluate(async deviceId=>{const data=await fetch('/api/fixture/push-deliveries',{cache:'no-store'}).then(r=>r.json()),status=await fetch('/api/push/status',{cache:'no-store'}).then(r=>r.json());return data.synthetic&&data.deliveries.some(item=>item.device_id===deviceId)&&status.devices.some(item=>item.id===deviceId&&item.last_success);},deviceId);if(accepted)break;await new Promise(resolve=>setTimeout(resolve,300));}
    assert.equal(accepted,true,'the background worker must actually record the simulated provider response');
-   await page.locator('[data-push-action=refresh]').click();await page.getByText(/本机最近一次已交给推送服务/).waitFor();
+   const disable=page.locator('[data-push-action=disable]');
+   await disable.evaluate(button=>{window.originalPushControl=button;});
+   await Promise.all([page.waitForResponse(response=>response.url().endsWith('/api/push/status')),
+     page.locator('[data-push-action=refresh]').click()]);
+   await page.getByText(/本机最近一次已交给推送服务/).waitFor();
+   assert.equal(await disable.evaluate(button=>button===window.originalPushControl),true);
  });
  await check('narrow reminder settings remain reachable without horizontal overflow',async()=>{for(const [width,height] of [[390,700],[390,350]]){await page.setViewportSize({width,height});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);await page.locator('[data-push-action=disable]').scrollIntoViewIfNeeded();assert.equal(await page.locator('[data-push-action=disable]').isVisible(),true);}await page.setViewportSize({width:1440,height:900});});
  await check('logout revokes the local subscription and worker binding before ending the session',async()=>{await page.keyboard.press('Escape');await page.locator('[data-action=logout]').click();await page.locator('#auth-form').waitFor();assert.equal((await binding()).enabled,false);assert.equal(await page.evaluate(()=>localStorage.getItem('synthetic.push.subscription')),null);});

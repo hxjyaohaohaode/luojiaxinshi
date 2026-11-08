@@ -309,6 +309,7 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
     @app.get('/api/tasks/{tid}/workflow')
     def read_workflow(tid: str, current=Depends(user)):
         with db.connect() as conn:
+            conn.execute('BEGIN')
             task = get_task(conn, tid, current['id'])
             candidates = [{'id': r['id'], 'title': json.loads(r['data'])['title'], 'status': r['status'],
                            'notice_id': r['notice_id'],'review_required':r['review_state']=='pending',

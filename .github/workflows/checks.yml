@@ -245,6 +245,7 @@ jobs:
             artifacts/source-inbox-browser/*
             artifacts/notice-matters-browser/*
             artifacts/source-presets-browser/*
+            artifacts/pilot-workspace-browser/*
             artifacts/push-browser/*
             artifacts/ci-browser/verify_natural_intake.mjs.log
             artifacts/ci-browser/verify_task_materials.mjs.log

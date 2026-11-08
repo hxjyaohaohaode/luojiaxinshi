@@ -259,5 +259,17 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
   });
   document.addEventListener('invalid',event=>{if(event.target.closest('[data-intake-entry]')){const details=event.target.closest('details');if(details)details.open=true;}},true);
   document.addEventListener('submit',event=>{if(event.target.matches('[data-intake-entry]')){event.preventDefault();saveBatch();}});
-  return {attachSingle,restoreSingle,decorateNotice,render};
+  function refreshTargets(){
+    for(const select of document.querySelectorAll('[data-intake-entry] select[name=target]')){
+      const selected=select.value;
+      const options=[new Option('按这一则收件','')];
+      if(selected&&!state.notices.some(notice=>notice.id===selected)){
+        options.push(new Option('原通知暂不可用，请重新选择',selected));
+      }
+      for(const notice of state.notices)options.push(new Option(notice.title,notice.id));
+      select.replaceChildren(...options);
+      select.value=selected;
+    }
+  }
+  return {attachSingle,restoreSingle,decorateNotice,render,refreshTargets};
 }

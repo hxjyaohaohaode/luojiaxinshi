@@ -10,8 +10,15 @@ export function createMailNotifications({state,api,esc,toast}){
     ${status.recent.length?`<p class="small muted">最近投递：${esc(labels[status.recent[0].state]||status.recent[0].state)}${status.recent[0].error?' · '+esc(status.recent[0].error):''}</p>`:''}`:'<p class="small muted">正在读取邮件设置…</p>'}
     <button class="button small plain" type="button" data-mail-action="refresh" ${busy?'disabled':''}>刷新邮件状态</button></section>`;
   }
-  function render(){if(host())host().innerHTML=markup();}
-  async function refresh(){const uid=state.session?.user.id;if(!uid)return;if(owner!==uid){owner=uid;epoch++;status=null;}const turn=epoch;try{const next=await api('/notifications/email');if(state.session?.user.id===uid&&turn===epoch){status=next;render();}}catch(error){if(state.session?.user.id===uid)toast(error.message,true);}}
+  function render(previous=status){
+    const root=host();if(!root)return;
+    const template=document.createElement('template');template.innerHTML=markup();
+    if(root.firstElementChild?.isEqualNode(template.content.firstElementChild))return;
+    const prior=root.querySelector('[data-mail-consent]'),next=template.content.querySelector('[data-mail-consent]');
+    if(prior&&!prior.disabled&&next&&!next.disabled&&previous?.email===status?.email)next.checked=prior.checked;
+    root.replaceChildren(template.content);
+  }
+  async function refresh(){const uid=state.session?.user.id;if(!uid)return;if(owner!==uid){owner=uid;epoch++;status=null;}const turn=epoch;try{const next=await api('/notifications/email');if(state.session?.user.id===uid&&turn===epoch){const previous=status;status=next;render(previous);}}catch(error){if(state.session?.user.id===uid)toast(error.message,true);}}
   document.addEventListener('click',async event=>{
     const button=event.target.closest('[data-mail-action]');if(!button||busy)return;const action=button.dataset.mailAction;
     if(action==='refresh'){refresh();return;}

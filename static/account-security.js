@@ -12,6 +12,7 @@ export function createAccountSecurity({state,esc,field,api,verification,showDial
     ${verification.markup('new-contact','contact_bind',{title:'验证新手机号或邮箱'})}<p class="small muted">绑定后可用该联系方式登录；同类联系方式将被替换，其他设备需要重新登录。</p><div class="form-footer"><button type="submit" class="button primary">确认绑定</button></div></form>`);}
   async function submit(form,fd){
     const uid=state.session?.user.id,payload=Object.fromEntries(fd);
+    let result;
     if(form.id==='contact-form'){
       const old=form.querySelector('[data-verification="old-contact"]');if(old)payload.authorization_token=await verification.prove(old);
       payload.verification_token=await verification.prove(form.querySelector('[data-verification="new-contact"]'));
@@ -20,9 +21,9 @@ export function createAccountSecurity({state,esc,field,api,verification,showDial
     }else{
       payload.verification_token=await verification.prove(form.querySelector('[data-verification]'));
       if(state.session?.user.id!==uid)return;
-      await api('/auth/password',{method:'POST',json:payload});
+      result=await api('/auth/password',{method:'POST',json:payload});
     }
-    const session=await api('/session');if(state.session?.user.id!==uid)return;state.session=session;open();toast('账号安全信息已更新，其他设备需要重新登录');
+    const session=result?.session||await api('/session');if(state.session?.user.id!==uid)return;state.session=session;open();toast('账号安全信息已更新，其他设备需要重新登录');
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-contact-bind]'))bindDialog();});
   return {open,submit};

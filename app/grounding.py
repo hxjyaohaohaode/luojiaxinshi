@@ -47,7 +47,7 @@ claims 列出回答中各关键事实、推断、建议和未知：kind 为 fact
 response_contract 是服务器从实际用户要求保留的本轮输出约束；改稿也须遵守。以 latest_user_request 的问题范围为主，前文只补足必要背景。已经完成的旧任务不重新扩写；要求两句话就用两句话表达结论、必要条件和引用，不另加标题、重复结论或冗长说明。no_ui 为 true 时只写正文，保留旧工作区。
 逐字保留的引句可嵌入主句；引句内含句号时，用闭引号后的逗号或分号接续本句，避免在闭引号后直接另起陈述而超过句数。不能为了凑句数删改用户要求逐字保留的内容，不能把多句整篇包进引号规避约束。
 interface 专用于描述当前界面的实际功能（如“调整滑块会更新合计”“只保存本回答进度，不修改日程”），依据是实际组件、绑定、动作和服务器 ui_contract；不需要外部文献引用。计算结果用 inference，用户提供的初值用 fact 并引用 user_input；不要把 UI 功能说明误填为无引文的 fact，也不能用 interface 掩盖学校规定等外部事实。
-本轮提问/用户已提供的条件是 user_input 证据，只能表述为“你提供/你记录”，不是外部核实。profile 是用户自填信息，本身不能证明实名认证或资格认可；没有验证记录时，认证状态保持未知，也不能断言“未经学校核验”。日程库代表用户记录，不能把计划时间当作正式截止时间，不能将空白时间直接认定为有空。
+user_input 须明确归因于本人。个人条件为自填，站内角色和权限以学院授权快照为准；冲突时分别注明。学校资格须有校方证据，缺失则核验状态未知，不能断言已核验或“未经学校核验”。日程属本人记录，计划不作正式期限，空白不代表有空。
 通知原文、用户记录、网页有冲突或过期可能时，并列引用差异与日期，不默默择一。优先原发布机构，重大资格/时限等只有摘要或过时转载时须说明不能确认；不要擅自补年份、时刻、手续、资格或默认为 23:59。
 时间与计算检查：使用服务器给出的当前日期和 Asia/Shanghai 时区；相对日期先找明确基准；期限、个人准备计划、提醒分别标示。复算数字、总和、百分比、单位换算，说明假设和舍入；缺失值不得填 0。
 联网页面日期是检索元数据，不自动等于文件生效日期。相同内容的转载不算独立交叉验证。来源覆盖有上限时据实说明，不能宣称“全部”“唯一”“保证”“已审核通过”。高影响结论证据不足就保留未知并指出可查的原发布机构。
@@ -242,11 +242,16 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
         selected,coverage=select_sections(register_images(records),queries,46000);counts['sections']=coverage['scanned_sections']
         return register_images(selected),{'scanned':counts,**coverage,'local_scope':'message','scope':'仅使用本条用户消息及后续补充；明确指定附件时包含本会话附件，不检索资料库、日程或个人档案。'}
     with db.connect() as conn:
-        task_states={}
+        conn.execute('BEGIN')
+        owned_tasks=[]
+        affiliation=None
+        if access['profile']:
+            from .campus import affiliation_evidence
+            affiliation=affiliation_evidence(conn,uid)
         if access['schedule']:
             from .workflow import enrich_tasks
-            owned_tasks=[{**dict(row),'data':json.loads(row['data'])} for row in conn.execute('SELECT * FROM tasks WHERE user_id=?',(uid,))]
-            task_states={task['id']:task for task in enrich_tasks(conn,owned_tasks)}
+            owned_tasks=[{**dict(row),'data':json.loads(row['data'])} for row in conn.execute('SELECT * FROM tasks WHERE user_id=? ORDER BY updated_at DESC',(uid,))]
+            enrich_tasks(conn,owned_tasks)
         for row in (conn.execute('SELECT s.id,s.name,s.kind,s.status,s.sections,s.warning,s.conversation_id,l.path,l.full_sections FROM conversation_sources s JOIN conversations c ON c.id=s.conversation_id LEFT JOIN material_library l ON l.source_id=s.id WHERE c.user_id=? ORDER BY c.updated_at DESC,s.rowid', (uid,)) if access['library'] else ()):
             r = dict(row)
             counts['materials'] += 1
@@ -259,16 +264,18 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
             records.append(source(r['id'], r['title'] + ' · ' + r['name'], json.loads(r['sections']), 'notice', warning=r['warning'], status=r['status'],
                                   published_at=r['published_at'], href='#notice/' + r['notice_id']))
         for table, kind in (('tasks', 'task'), ('arrangements', 'arrangement')):
-            for row in (conn.execute('SELECT * FROM ' + table + ' WHERE user_id=? ORDER BY updated_at DESC', (uid,)) if access['schedule'] else ()):
+            rows=owned_tasks if kind=='task' else (
+                conn.execute('SELECT * FROM arrangements WHERE user_id=? ORDER BY updated_at DESC',(uid,)) if access['schedule'] else ())
+            for row in rows:
                 r = dict(row)
-                data = json.loads(r['data'])
+                data = r['data'] if kind=='task' else json.loads(r['data'])
                 counts[table] += 1
                 value = {'record_type': '用户确认的待办记录，期限是否已核实以 deadline_confirmed 为准' if kind == 'task' else '用户安排，属于计划而非正式期限',
                          'values': data, 'version': r['version'], 'updated_at': datetime.fromtimestamp(r['updated_at'], CST).isoformat()}
                 if 'status' in r:
                     value['status'] = r['status']
                 if kind=='task':
-                    current_task=task_states[r['id']]
+                    current_task=r
                     for key in ('workflow','handling_state','execution_issues','pending_changes','change_review','followup_due','action_excluded'):
                         value[key]=current_task[key]
                     value['workflow_authority']='本人记录的办理进度与回执，未经学校系统自动核验；与个人完成标记独立。'
@@ -287,6 +294,9 @@ def retrieve(db, uid, cid, original, messages, profile, queries):
     personal = {k: v for k, v in profile.items() if k in PERSONAL_KEYS and v not in ('', None, [])}
     if personal and access['profile']:
         records.append(source('personal-profile', '你填写的个人条件', [{'locator': '个人条件快照', 'text': dumps(personal)}], 'profile'))
+    if affiliation:
+        records.append(source('campus-affiliation','本站授权范围',
+                              [{'locator':'学院授权快照','text':dumps(affiliation)}],'profile'))
     for item in profile.get('_memory_entries',[]):
         label='本人保存' if item.get('origin','manual')=='manual' or item.get('locked') else '按授权整理'
         records.append(source('memory-'+item['id'],label+'的'+{'global':'通用','project':'项目','topic':'专题'}[item['scope']]+'记忆',

@@ -44,14 +44,18 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   const materialTreeState=new MaterialTreeState();
   let materialInert=[],materialReturn=null,materialQuery="";
   let readingTransition=0;
-  let endGesture=null,newChatPending=false;
+  let endGesture=null;
   let traceView=null,traceMessageId=null;
   function openTrace(message){
     showDialog('执行轨迹','<div class="trace-workspace"></div>');
     traceView=new ExecutionTraceView();traceMessageId=message.id;
     $('.trace-workspace').append(traceView.root);traceView.update(message);
   }
-  async function openNewChat(){if(newChatPending)return;newChatPending=true;const renderId=state.renderId;try{persist();await drafts.flushAll();if(renderId!==state.renderId)return;remember('new');if(location.hash==='#chat/new')$('#chat-input')?.focus();else location.hash='chat/new';}finally{newChatPending=false;}}
+  function openNewChat(){
+    persist();remember('new');
+    if(location.hash==='#chat/new')$('#chat-input')?.focus();
+    else location.hash='chat/new';
+  }
   function reflowReading(){const reader=$('#chat-thread');if(!reader)return;reader.classList.remove('reading-reflow');requestAnimationFrame(()=>reader.isConnected&&reader.classList.add('reading-reflow'));clearTimeout(readingTransition);readingTransition=setTimeout(()=>reader.classList.remove('reading-reflow'),380);}
   function setMaterials(open,restore=true){
     const workspace=$('#chat-workspace'),panel=$('#chat-materials'),wasOpen=workspace?.classList.contains('show-materials');
@@ -558,5 +562,41 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   });
   document.addEventListener('keydown',e=>{if(e.target.id==='chat-input'&&!e.shiftKey&&e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();$('#chat-composer').requestSubmit();}});
   window.addEventListener('hashchange',()=>{composerResize?.disconnect();if(branchDraft&&location.hash!==`#chat/${branchDraft.originId}/branch/${branchDraft.messageId}`)branchDraft=null;submission++;accepting=false;clearTimeout(pollTimer);streaming?.controller.abort();cancelAnimationFrame(paintFrame);paintFrame=0;presenter?.dispose();presenter=null;});
-  return {render,persist,preview};
+  async function refreshWorkspace({tasks,arrangements,reload,canApply}){
+    if(!$('#chat-workspace')||branchDraft)return true;
+    if(sending||streaming||accepting)return false;
+    const cid=current?.id,version=current?.version;
+    let latest=null;
+    if(cid&&reload){
+      latest=await api('/conversations/'+encodeURIComponent(cid)).catch(error=>{
+        if(error.status===404)return false;
+        throw error;
+      });
+    }
+    if(!canApply()||sending||streaming||accepting||current?.id!==cid||current?.version!==version)return false;
+    if(tasks)hostTasks=tasks;
+    if(arrangements)hostArrangements=arrangements;
+    if(latest===false){
+      persist();remember('new');location.hash='#chat/new';
+      toast('这段对话已在其他页面删除。');
+      return true;
+    }
+    if(latest&&latest.version>=version)receiveConversation(latest);
+    if(latest||tasks||arrangements)update();
+    if(current?.processing)schedulePoll(cid,state.renderId);
+    return true;
+  }
+  function clearSession(){
+    submission++;accepting=false;sending=false;
+    clearTimeout(pollTimer);clearTimeout(feedbackTimer);clearTimeout(feedbackPoll);
+    streaming?.controller.abort();streaming=null;
+    cancelAnimationFrame(paintFrame);paintFrame=0;
+    presenter?.dispose();presenter=null;
+    outbox?.dispose();outbox=null;attachments?.dispose();attachments=null;
+    materialSearch?.dispose();historySearch?.dispose();
+    for(const waiter of receiptWaiters.values())waiter.reject(Error('当前账号已退出'));
+    receiptWaiters.clear();current=null;branchDraft=null;historyItems=[];files=[];
+    hostArrangements=[];hostTasks=[];replyTarget=null;
+  }
+  return {render,persist,preview,refreshWorkspace,clearSession};
 }

@@ -83,6 +83,16 @@ class Profile(Strict):
     semester_start: str = Field(default='', max_length=10)
     week_starts_on: Literal[0,1] = 1
     notification_preferences: NotificationPreferences = Field(default_factory=NotificationPreferences)
+    task_view: Literal['list','board'] | None = None
+    calendar_view: Literal['day','week','month','list'] | None = None
+    calendar_kinds: list[Literal['notice_event','notice_window','deadline','plan','course','activity','personal']] | None = Field(default=None,max_length=7)
+    calendar_show_done: bool | None = None
+    motion_enabled: bool | None = None
+    companion_enabled: bool | None = None
+    dismissed_hints: list[Annotated[str,Field(max_length=80)]] | None = Field(default=None,max_length=60)
+    workspace_home: Literal['personal','college','system'] | None = None
+    sidebar_width: int | None = Field(default=None,ge=180,le=460)
+    sidebar_collapsed: bool | None = None
 
     @field_validator('semester_start')
     @classmethod
@@ -90,6 +100,11 @@ class Profile(Strict):
         if value and (len(value) != 10 or date.fromisoformat(value).isoformat() != value or not 2000 <= date.fromisoformat(value).year <= 2100):
             raise ValueError('学期第一周日期须为 2000 至 2100 年之间的有效日期')
         return value
+
+
+DISPLAY_PREFERENCES=('task_view','calendar_view','calendar_kinds','calendar_show_done',
+                     'motion_enabled','companion_enabled','dismissed_hints','workspace_home',
+                     'sidebar_width','sidebar_collapsed')
 
 
 class ProfilePatch(Strict):

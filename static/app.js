@@ -1,4 +1,5 @@
 import {installDataSync} from './data-sync.js';
+import {createCollaborationUI} from './collaboration.js';
 import {bindProfileForm,saveProfileForm,applyProfileForm,patchProfile,profileUndoValues} from './profile-editor.js';
 import {createDialogNavigation,installFormHistory} from './dialog-navigation.js';
 import {syncPageNavigation,installPageNavigation} from './page-navigation.js';
@@ -89,22 +90,96 @@ let dialogReturnTarget,lastDialogTrigger;
 const dialogNavigation=createDialogNavigation({dialog:$('#dialog'),state,persist:persistCurrentForms});
 document.addEventListener('click',event=>{if(!$('#dialog')?.open)lastDialogTrigger=event.target.closest('button,a,input,summary');},true);
 const toast=createToastPresenter({esc,icon,owner:()=>state.session?.user?.id});
+let dataSync,workspaceMutation=0;
+const projections=new Map();
+let displayWrites=Promise.resolve(),pendingDisplayWrites=0;
+function applyDisplayPreferences(){
+  const profile=state.session?.user?.profile||null;
+  if(profile?.task_view)state.taskView=profile.task_view;
+  document.dispatchEvent(new CustomEvent('campus:display-preferences',{detail:profile}));
+}
+function saveDisplayPreferences(values){
+  const session=state.session;
+  if(!session)return false;
+  pendingDisplayWrites++;
+  displayWrites=displayWrites.then(async()=>{
+    if(state.session!==session)return;
+    const base=Object.fromEntries(Object.keys(values).map(key=>[key,session.user.profile[key]??null]));
+    try{
+      const profile=await patchProfile(api,base,values);
+      if(state.session!==session)return;
+      for(const key of Object.keys(values))session.user.profile[key]=profile[key];
+    }catch(error){
+      if(state.session!==session)return;
+      for(const key of Object.keys(values))session.user.profile[key]=error.detail?.profile?.[key]??base[key];
+      applyDisplayPreferences();
+      if(location.hash==='#tasks')taskList();
+      if(location.hash==='#calendar')calendarUI.applyRecords();
+      toast(error.message,true);
+    }
+  }).finally(()=>{pendingDisplayWrites--;dataSync?.wake();});
+  return true;
+}
+function clearSession({returnTo=false,keepInvite=false}={}){
+  const uid=state.session?.user?.id;
+  if(returnTo&&uid)state.loginReturn={owner:uid,hash:location.hash};
+  else state.loginReturn=null;
+  state.renderId++;
+  projections.clear();
+  push.stop();reminders.stop();drafts.clear();dialogNavigation.clear();
+  chatUI.clearSession();memoryUI.clearPrivate();
+  Object.assign(state,{session:null,notices:[],tasks:[],arrangements:[],notice:null,workContext:null});
+  state.taskView='list';state.workOwner=null;applyDisplayPreferences();
+  const dialog=$('#dialog');
+  if(dialog?.open)dialog.close();
+  if(dialog)dialog.replaceChildren();
+  if(!keepInvite){
+    state.invite='';
+    try{sessionStorage.removeItem('campus.registration.invite');}catch{}
+  }
+}
 async function api(path, options={}) {
   const {json,blob,...opts}=options;
+  const method=(opts.method||'GET').toUpperCase(),get=method==='GET';
   const requestedSession=state.session;
+  const cacheable=requestedSession&&!blob&&get&&['/notices','/tasks','/arrangements'].includes(path);
+  const saved=cacheable?projections.get(path):null;
   const headers = {'X-Requested-With':'campus-notice',...(opts.headers||{})};
-  if(state.session)headers['X-CSRF-Token']=state.session.csrf;
+  if(requestedSession){
+    headers['X-CSRF-Token']=requestedSession.csrf;
+    headers['X-Workspace-Owner']=requestedSession.user.id;
+  }
+  if(saved?.session===requestedSession)headers['If-None-Match']=saved.tag;
   if(json!==undefined){headers['Content-Type']='application/json';opts.body=JSON.stringify(json);}
   let response;
-  const readController=(opts.method||'GET')==='GET'&&!opts.signal?new AbortController():null;
+  const readController=get&&!opts.signal?new AbortController():null;
   const readTimer=readController?setTimeout(()=>readController.abort(),25000):null;
-  try{response=await fetch('/api'+path,{...opts,...(readController?{signal:readController.signal}:{}),headers,credentials:'same-origin'});}
+  // WebKit may start replacing a document before pagehide, while a background read is starting.
+  try{response=await fetch('/api'+path,{keepalive:get&&!blob,...opts,...(readController?{signal:readController.signal}:{}),headers,credentials:'same-origin'});}
   catch(error){clearTimeout(readTimer);const e=new Error(error.name==='AbortError'?'网络有点慢，已保存的内容都还在，稍后刷新一下就好。':'连接断开了，检查一下网络后再试。已保存的内容不会丢。');e.status=0;throw e;}
-  try{if(!response.ok){let body;try{body=await response.json();}catch{body={detail:'服务暂时开小差了，请稍后再试'};}
-    const d=body.detail;const message=typeof d==='string'?d:Array.isArray(d)?d.map(item=>String(item.msg||'请检查填写内容').replace(/^Value error, /,'')).join('；'):d?.message;const e=new Error(message||'没有成功，检查一下填写的内容再试试');e.status=response.status;e.detail=d;
-    if(response.status===401&&requestedSession?.user?.id&&state.session===requestedSession){push.stop();state.session=null;drafts.clear();state.tasks=[];state.notices=[];state.notice=null;authPage();location.hash='#login';}
+  try{
+  if(response.status===304&&saved?.session===requestedSession&&state.session===requestedSession)return structuredClone(saved.value);
+  if(!response.ok){let body;try{body=await response.json();}catch{body={detail:'服务暂时开小差了，请稍后再试'};}
+    const d=body.detail;const message=typeof d==='string'?d:Array.isArray(d)?d.map(item=>String(item.msg||'请检查填写内容').replace(/^Value error, /,'')).join('；'):d?.message;const e=new Error(message||'没有成功，检查一下填写的内容再试试');e.status=response.status;e.detail=d;e.retryAfter=Number(response.headers.get('Retry-After'))||0;
+    if(response.status===401&&requestedSession?.user?.id&&state.session===requestedSession){
+      clearSession({returnTo:true});
+      history.replaceState(null,'','#login');
+      authPage();toast(e.message,true);
+    }
     throw e;}
-  return await (blob?response.blob():response.json());
+  const value=await (blob?response.blob():response.json());
+  if(requestedSession&&state.session!==requestedSession){
+    const error=new Error('当前登录状态已变化，请重新打开这项操作。');
+    error.status=409;
+    throw error;
+  }
+  if(requestedSession&&!['GET','HEAD'].includes(method)&&!path.startsWith('/edit-cache/')){
+    workspaceMutation++;
+    dataSync?.notify();
+  }
+  const tag=response.headers.get('ETag');
+  if(cacheable&&tag)projections.set(path,{session:requestedSession,tag,value:structuredClone(value)});
+  return value;
   }catch(error){if(readController?.signal.aborted){const e=new Error('网络有点慢，已保存的内容都还在，稍后刷新一下就好。');e.status=0;throw e;}throw error;}
   finally{clearTimeout(readTimer);}
 }
@@ -151,7 +226,11 @@ function authPage(){noticeFiles=[];memoryUI.clearPrivate();authUI.render();}
 const navs=[...workspaceNav('personal'),['campus','shield','学院事务']];
 function currentWorkContext(){
   const user=state.session.user;
-  if(state.workOwner!==user.id){state.workOwner=user.id;try{state.workContext=localStorage.getItem('campus.workspace.'+user.id);}catch{state.workContext=null;}}
+  if(state.workOwner!==user.id){
+    state.workOwner=user.id;state.workContext=user.profile?.workspace_home||null;
+    if(!state.workContext)try{state.workContext=localStorage.getItem('campus.workspace.'+user.id);}catch{}
+    applyDisplayPreferences();
+  }
   state.workContext=resolveWorkContext(user,state.workContext);return state.workContext;
 }
 function contextPicker(){const choices=workContexts(state.session.user),current=currentWorkContext();return choices.length>1?`<label class="workspace-context"><span class="sr-only">当前身份</span><select id="workspace-context" aria-label="当前身份">${choices.map(c=>`<option value="${c.id}" ${c.id===current?'selected':''}>${esc(c.label)}</option>`).join('')}</select></label>`:`<span class="workspace-context-label">${esc(choices[0].label)}</span>`;}
@@ -170,7 +249,12 @@ function updateWorkNavigation(){
   const create=$('.sidebar-create');create.hidden=context==='system';create.href=context==='college'?'#campus/publish':'#new';create.innerHTML=icon('plus')+(context==='college'?' 发布通知':' 收通知');
   $('.topbar-context').innerHTML=contextPicker();
 }
-document.addEventListener('change',event=>{if(event.target.id!=='workspace-context')return;state.workContext=resolveWorkContext(state.session.user,event.target.value);try{localStorage.setItem('campus.workspace.'+state.session.user.id,state.workContext);}catch{}if(location.hash==='#dashboard')route();else location.hash='#dashboard';});
+document.addEventListener('change',event=>{
+  if(event.target.id!=='workspace-context'||!state.session)return;
+  state.workContext=resolveWorkContext(state.session.user,event.target.value);
+  saveDisplayPreferences({workspace_home:state.workContext});
+  if(location.hash==='#dashboard')route();else location.hash='#dashboard';
+});
 function shell(page){
   if($('.shell')){updateShell(page);return;}
   const u=state.session.user;
@@ -195,11 +279,18 @@ function taskRow(t,board=false){
   </div>`;
 }
 
-async function dashboard(canRender=()=>true){const id=state.renderId,context=currentWorkContext();if(context==='system')return systemHome.render(id);if(context==='college')return campusUI.render(id,'home');const arrangements=await api('/arrangements');if(id!==state.renderId||!canRender())return false;state.arrangements=arrangements;overviewUI.render();return true;}
+async function dashboard(canRender=()=>true,records){
+  const id=state.renderId,context=currentWorkContext();
+  if(context==='system')return systemHome.render(id);
+  if(context==='college')return campusUI.render(id,'home');
+  const arrangements=records??await api('/arrangements');
+  if(id!==state.renderId||!canRender())return false;
+  state.arrangements=arrangements;overviewUI.render();return true;
+}
 function newNotice(){noticeUI.render();}
 
 function noticeList(){libraryUI.render();}
-async function calendarPage(){await calendarUI.render(state.renderId);}
+async function calendarPage(records){await calendarUI.render(state.renderId,records);}
 
 const factNames={theme:'主题',audience:'适用对象',dates:'关键时间',actions:'办理事项',materials:'材料清单',submission:'提交方式',location:'办理地点',contact:'联系方式'};
 const blankTask=()=>({title:'',details:'',scope:'personal',due_date:null,due_time:null,deadline_text:'',planned_at:null,reminder_at:null,deadline_confirmed:false,materials:[],submission:'',location:'',contact:'',evidence:[],deadline_evidence:[],uncertainties:[],resolution_note:'',notes:'',origin:'manual'});
@@ -214,10 +305,11 @@ function intakePanel(n){
   const textFor=ids=>ids.map(id=>{const source=n.sources.find(s=>s.id===id);return source?source.sections.map(p=>p.text).join('\n'):'';}).join('\n');
   return `${automation.needs_profile_review?'<div class="alert">个人适用条件已变化，请重新整理或手工核对后再确认。</div>':''}${automation.job?.state==='queued'?'<p class="small">已排队自动整理</p>':''}${automation.job?.state==='failed'?`<p class="alert">自动整理未完成：${esc(automation.job.error)} <a href="#sources">查看并重试</a></p>`:''}${updates.length?`<details class="notice-source-updates"><summary>来源有 ${updates.length} 次修订 · 查看新旧原文</summary>${updates.map(update=>`<section class="panel intake-update"><strong>来源内容有变化</strong><p class="small">原有办理进度已保留，请核对变化及相关待办。</p><details><summary>查看新旧原文</summary><h4>此前原文</h4><p class="intake-update-text">${esc(textFor(update.previous_source_ids))}</p><h4>新收到的原文</h4><p class="intake-update-text">${esc(textFor(update.new_source_ids))}</p></details>${button('已核对原文及相关待办','intake-update-review','small',`data-id="${esc(update.id)}"`)}</section>`).join('')}</details>`:''}${receipts.length>1?`<details class="intake-provenance"><summary>已归并 ${receipts.length} 次收件</summary>${receipts.map(r=>`<p class="small">${esc(r.source_label||'本人转入')} · ${dateText(r.created_at)} ${r.source_url?`<a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer">原文链接</a>`:''}</p>`).join('')}</details>`:''}`;
 }
-function noticeDetail(n,keepDraft=false){const preparationPending=noticePreparation.isPending(n.id);if(preparationPending&&!n.draft)n={...n,status:'processing'};state.notice=n;if(!keepDraft){const saved=drafts.peek('notice:'+n.id+':'+n.version).payload||{};state.qualityDecisions=saved.issue_resolutions||{};state.manualQualityReviewed=!!saved.manual_quality_reviewed;}if(!keepDraft)state.qualityResolution=drafts.peek('notice:'+n.id+':'+n.version).payload?.quality_resolution||'';if(!keepDraft)state.drafts=drafts.peek('notice:'+n.id+':'+n.version).payload?.tasks||n.draft?.tasks?.map(t=>({...t,include:t.scope!=='other',replacement:''}))||[];state.drafts=initializeDraftPlans(state.drafts,n.draft?.plans||{});const [status,color]=noticeStatus(n);$('#content').innerHTML=`<div class="notice-detail-workspace"><div class="notice-primary"><h1>${esc(n.title)}</h1><details class="notice-actions"><summary aria-label="通知操作" title="通知操作"><span aria-hidden="true">···</span></summary><div class="notice-actions-menu"><a class="button small plain" href="#notices">${icon('back')} 返回通知列表</a>${button(icon('spark')+' 带着材料继续问 AI','notice-chat','small plain')}${button(icon('bell')+' 追踪与证据链','notice-notification-decision','small plain')}${n.draft&&n.status!=='processing'?button(icon('spark')+' 重新整理','regenerate','small plain'):''}${button(icon('history')+' 修改记录','history','small plain')}${button(icon('trash')+' 删除通知','delete-notice','small plain danger')}</div></details></div>${noticeFocus(n,{esc})}<div class="review-grid"><section id="draft-pane">${draftPane(n)}</section><section class="panel source-pane"><details class="notice-originals"><summary class="between"><strong>原文与附件</strong><span class="small muted">${n.sources.filter(s=>s.active).length} 份 · ${n.character_count.toLocaleString()} 字</span></summary><div class="small muted">${esc(n.source_label||'本人提交')}${n.published_at?' · 发布于 '+esc(timeInput(n.published_at).replace('T',' ')):' · 未提供原发布时间'}</div>${n.source_url?`<a class="small" href="${esc(n.source_url)}" target="_blank" rel="noopener noreferrer">查看原文链接 ↗</a>`:''}${n.blockers.length?`<div class="alert"><strong>材料核对</strong><ul>${n.blockers.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`:'<div class="status-line muted">'+icon('shield')+' 材料已齐，可以开始整理。</div>'}${n.sources.map(sourceCard).join('')}<div class="form-footer">${button(icon('plus')+' 补充材料','supplement','small')}${button(n.materials_complete?'改为材料未齐':'确认材料齐全','materials','small')}</div></details></section></div><details class="notice-context"><summary>来源、变更与处理记录</summary><div class="notice-context-body"><ol class="notice-steps" aria-label="办理进度">${[['收下原件','received'],['确认办理路径','draft'],['办理与跟进','confirmed']].map(([label,key],i)=>`<li ${key===(n.status==='confirmed'?'confirmed':n.draft?'draft':'received')?'aria-current="step"':''}><b>${i+1}</b>${label}</li>`).join('')}</ol>${intakePanel(n)}${workflowUI.noticePanel(n)}</div></details></div>`;intakeUI.decorateNotice(n);matterUI.decorate(n);attachDraftForm();if(n.draft&&n.status!=='confirmed')syncIssueControls($('#draft-form'),n.draft.quality||{},state.drafts,state.qualityDecisions,esc);noticeProgress.watch(n,{pending:preparationPending});}
+function noticeDetail(n,keepDraft=false,{matterOpen}={}){const preparationPending=noticePreparation.isPending(n.id);if(preparationPending&&!n.draft)n={...n,status:'processing'};state.notice=n;if(!keepDraft){const saved=drafts.peek('notice:'+n.id+':'+n.version).payload||{};state.qualityDecisions=saved.issue_resolutions||{};state.manualQualityReviewed=!!saved.manual_quality_reviewed;}if(!keepDraft)state.qualityResolution=drafts.peek('notice:'+n.id+':'+n.version).payload?.quality_resolution||'';if(!keepDraft)state.drafts=drafts.peek('notice:'+n.id+':'+n.version).payload?.tasks||n.draft?.tasks?.map(t=>({...t,include:t.scope!=='other',replacement:''}))||[];state.drafts=initializeDraftPlans(state.drafts,n.draft?.plans||{});const [status,color]=noticeStatus(n);$('#content').innerHTML=`<div class="notice-detail-workspace"><div class="notice-primary"><h1>${esc(n.title)}</h1><details class="notice-actions"><summary aria-label="通知操作" title="通知操作"><span aria-hidden="true">···</span></summary><div class="notice-actions-menu"><a class="button small plain" href="#notices">${icon('back')} 返回通知列表</a>${button(icon('spark')+' 带着材料继续问 AI','notice-chat','small plain')}${button(icon('bell')+' 追踪与证据链','notice-notification-decision','small plain')}${n.draft&&n.status!=='processing'?button(icon('spark')+' 重新整理','regenerate','small plain'):''}${button(icon('history')+' 修改记录','history','small plain')}${button(icon('trash')+' 删除通知','delete-notice','small plain danger')}</div></details></div>${noticeFocus(n,{esc})}<div class="review-grid"><section id="draft-pane">${draftPane(n)}</section><section class="panel source-pane"><details class="notice-originals"><summary class="between"><strong>原文与附件</strong><span class="small muted">${n.sources.filter(s=>s.active).length} 份 · ${n.character_count.toLocaleString()} 字</span></summary><div class="small muted">${esc(n.source_label||'本人提交')}${n.published_at?' · 发布于 '+esc(timeInput(n.published_at).replace('T',' ')):' · 未提供原发布时间'}</div>${n.source_url?`<a class="small" href="${esc(n.source_url)}" target="_blank" rel="noopener noreferrer">查看原文链接 ↗</a>`:''}${n.blockers.length?`<div class="alert"><strong>材料核对</strong><ul>${n.blockers.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`:'<div class="status-line muted">'+icon('shield')+' 材料已齐，可以开始整理。</div>'}${n.sources.map(sourceCard).join('')}<div class="form-footer">${button(icon('plus')+' 补充材料','supplement','small')}${button(n.materials_complete?'改为材料未齐':'确认材料齐全','materials','small')}</div></details></section></div><details class="notice-context"><summary>来源、变更与处理记录</summary><div class="notice-context-body"><ol class="notice-steps" aria-label="办理进度">${[['收下原件','received'],['确认办理路径','draft'],['办理与跟进','confirmed']].map(([label,key],i)=>`<li ${key===(n.status==='confirmed'?'confirmed':n.draft?'draft':'received')?'aria-current="step"':''}><b>${i+1}</b>${label}</li>`).join('')}</ol>${intakePanel(n)}${workflowUI.noticePanel(n)}</div></details></div>`;intakeUI.decorateNotice(n);matterUI.decorate(n,matterOpen);attachDraftForm();if(n.draft&&n.status!=='confirmed')syncIssueControls($('#draft-form'),n.draft.quality||{},state.drafts,state.qualityDecisions,esc);noticeProgress.watch(n,{pending:preparationPending});}
 function draftPane(n){if(shouldOfferHistoricalSummary(n)&&n.draft?.origin!=='manual')return `<section class="panel stack"><h2>${esc(n.tracking.label)}</h2><details class="details"><summary>查看通知摘要</summary><p>${esc(n.draft?.summary||n.title)}</p></details><p class="small muted">系统仍会检查已启用来源的后续修订，无须逐条选择跟踪。原文和历史保留，可在“全部记录”查找；个人办理记录继续保留在待办页。</p><details class="details"><summary>查看原来的行动与期限</summary><ul>${(n.tracking.expired_actions||[]).map(t=>`<li>${esc(t.title)} · ${historicalBoundaryLabel(t)}</li>`).join('')}</ul></details><div class="row wrap">${button('追踪与证据链 / 纠正判断','notice-notification-decision','small')}${button('补充个人办理步骤','manual','small plain')}</div></section>`;if(n.status==='processing')return noticeProgressPanel(n,{esc,brandMotion,button});if(n.status==='confirmed')return `<div class="panel"><div class="saved-notice-header">${companion('complete','saved-companion')}<div><div class="row">${brandMotion('seal','',{once:true})}<h2>办理路径已保存</h2></div><p>从下一步开始准备，提交后在对应步骤记录凭证与后续反馈。</p></div></div><div class="divider"></div>${qualityReceipt(n.quality_receipt,esc)}${n.tasks.map(taskRow).join('')}<div class="form-footer">${button('重新整理','regenerate','small')}<a class="button primary small" href="#tasks">管理我的待办</a></div></div>`;if(n.automation_state==='queued'&&!n.draft)return `<section class="panel stack"><h2>等待系统自动整理</h2><p class="small">这则信息已在自动整理队列中，无须逐条开启追踪。系统会按来源授权和每日额度处理，完成后再由你决定是否加入个人待办。</p><div class="row wrap">${button('追踪与证据链','notice-notification-decision','small')}<a class="button small plain" href="#sources">查看队列与额度</a>${button('先补充个人办理步骤','manual','small plain')}</div></section>`;if(!n.draft)return `<div class="panel stack"><div><h2>把这则通知变成下一步</h2></div>${n.error?`<div class="alert error">${esc(n.error)}</div>`:''}<p class="muted small">小信使会找出和你有关的时间、材料和步骤，你看过没问题就能存成待办。</p><div class="alert ${state.session.ai.configured?'info':''}">${state.session.ai.configured?'小信使只读这则通知和整理需要的个人条件，结果由你确认后才会保存。':'AI 还没有接通，可以先手动整理。接通后，小信使就能帮你一键提取要点。'}</div>${noticeModePicker(state.session.ai,esc)}<label class="check"><input id="ai-consent" type="checkbox"><span>同意把这则通知和必要的个人条件发送给 AI 服务（小米 MiMo）整理</span></label>${state.session.ai.notice_review_enabled?'<p class="footnote">'+(state.session.ai.notice_auto_repair?'通常整理和复核各一次，发现问题时最多再补正、复核各一次':'整理和复核各一次')+'；失败不会自动重发。</p>':''}<div class="row wrap">${button(icon('spark')+' AI 整理下一步','generate','primary',state.session.ai.configured?'':'disabled')}${button(icon('edit')+' 手工整理','manual')}</div><p class="footnote">整理结果只是草稿，你确认之后才会变成待办。</p></div>`;if(!n.draft.tasks.length&&n.draft.origin!=='manual'&&!state.drafts.length)return `<section class="panel stack"><h2>${n.draft.applicability==='not_matching'?'这则通知可能与你无关':'这则通知以知悉为主'}</h2><p>${esc(n.draft.summary)}</p><p class="small muted">${esc(n.draft.applicability_reason)}</p>${qualityPanel(n.draft.quality,[],state.qualityResolution,esc,{structured:false})}<div class="row wrap"><button type="button" class="button primary" data-notice-disposition="${n.draft.applicability==='not_matching'?'not_applicable':'reference'}">${n.draft.applicability==='not_matching'?'归为与我无关':'保存为知悉资料'}</button>${button('我需要补充个人步骤','manual','small')}</div></section>`;return `<form id="draft-form" class="panel"><div class="section-head"><h2>你的办理路径</h2>${pill('等你确认','orange')}</div><div id="draft-editors">${state.drafts.map((t,i)=>taskEditor(t,i)).join('')}</div><div class="draft-support"><details class="details draft-quality-details"><summary>核对结果、通知概况与原文依据</summary>${n.review_observation_contract===1?observationPanel():''}<div class="draft-review-intro"><p class="small muted">按原文整理了下面的步骤。可以先保存能做的准备，未明确的信息只影响相关步骤。</p><p class="small"><strong>${{matches_known:'看起来和你有关',not_matching:'可能不适用于你',needs_review:'需要你确认是否适用'}[n.draft.applicability]}</strong></p><details class="details draft-overview"><summary>通知概况，以及为什么这样判断</summary><p class="small muted">${esc(n.draft.summary)}</p><div class="alert info">${esc(n.draft.applicability_reason)}</div></details></div>${n.draft.warnings?.length?`<details class="alert draft-warnings" ${n.draft.warnings.length<=3?'open':''}><summary>${n.draft.warnings.length} 处值得留意<span class="small">展开查看</span></summary><ul>${n.draft.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>`:''}${Object.keys(n.draft.facts).length?`<details class="details"><summary>通知要点与原文出处</summary><div class="facts">${Object.entries(n.draft.facts).map(([key,f])=>`<div class="fact"><b>${esc(factNames[key]||key)}</b>${esc(f.value||'原文未明确')}${f.evidence.map(e=>`<div class="evidence"><button type="button" data-action="evidence" data-source="${e.source_id}" data-locator="${esc(e.locator)}">${esc(e.locator)} ↗</button><p>${esc(e.quote)}</p></div>`).join('')}</div>`).join('')}</div></details>`:''}${qualityPanel(n.draft.quality,state.drafts,state.qualityResolution,esc,{structured:n.quality_resolution_contract===1,decisions:state.qualityDecisions,manualReviewed:state.manualQualityReviewed})}</details></div><div class="form-footer">${button(icon('plus')+' 增加本人步骤','add-task','small')}</div><div class="divider"></div><label class="check"><input name="reviewed" required type="checkbox"><span>我已对照原文看过这些步骤，确认保存。</span></label><p class="footnote">日期不确定可以先空着，之后再补。注意别把学院审核的时间当成自己的截止时间。</p><div class="form-footer"><button class="button primary" type="submit">${icon('check')} 确认并保存待办</button></div></form>`;}
 function settingsPage({preserveScroll=false}={}){
   const content=$('#content'),scroll=content.scrollTop,p=state.session.user.profile,u=state.session.user;
+  const usageOpen=preserveScroll&&content.querySelector('.settings-usage')?.open;
   const selected=preserveScroll?content.querySelector('.settings-home')?.dataset.category||'personal':'personal';
   const groups=[['personal','个人资料'],['account','账号服务'],['display','显示与声音']];
   const item=(title,text,action,i='settings')=>`<button type="button" class="settings-item" data-action="${action}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${esc(text)}</small></span>${icon('arrow')}</button>`;
@@ -232,7 +324,10 @@ function settingsPage({preserveScroll=false}={}){
   const choose=(key,focus=false)=>{content.querySelector('.settings-home').dataset.category=key;for(const tab of nav.children){const active=tab.dataset.settingsCategory===key;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus();}for(const panel of content.querySelectorAll('[data-settings-panel]'))panel.hidden=panel.dataset.settingsPanel!==key;};
   nav.addEventListener('click',event=>{const tab=event.target.closest('[data-settings-category]');if(tab)choose(tab.dataset.settingsCategory);});
   nav.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;event.preventDefault();const index=groups.findIndex(([key])=>key===content.querySelector('.settings-home').dataset.category),next=event.key==='Home'?0:event.key==='End'?groups.length-1:(index+(['ArrowLeft','ArrowUp'].includes(event.key)?groups.length-1:1))%groups.length;choose(groups[next][0],true);});
-  const usage=content.querySelector('.settings-usage');usage.querySelector('#companion-enabled+span').textContent='显示小信使问候';const notes=usage.querySelectorAll('p');if(notes[0])notes[0].textContent='仅保存在当前浏览器。';if(notes[1])notes[1].textContent='跟随系统的减少动态效果设置。';if(preserveScroll)content.scrollTop=scroll;
+  const usage=content.querySelector('.settings-usage');
+  usage.open=!!usageOpen;
+  usage.querySelector('#companion-enabled+span').textContent='显示小信使问候';
+  if(preserveScroll)content.scrollTop=scroll;
 }
 function preferencesDialog(){const p=state.session.user.profile;const select=(name,label,items,value)=>`<label class="field">${label}<select name="${name}">${Object.entries(items).map(([k,v])=>`<option value="${k}" ${k===value?'selected':''}>${v}</option>`).join('')}</select></label>`;showDialog('按你的习惯回答',`<form id="preferences-form" class="stack">${field('希望小信使怎么称呼你','preferred_name',p.preferred_name||'','text','maxlength="30" placeholder="留空使用账号昵称"')}<div class="form-grid">${select('response_detail','回答详细程度',{concise:'简洁 · 重点和下一步',balanced:'适中 · 解释关键原因',detailed:'详细 · 依据与完整步骤'},p.response_detail||'balanced')}${select('response_style','回答风格',{warm:'温和自然',direct:'直接清楚',academic:'严谨规范'},p.response_style||'warm')}${select('avatar_tone','头像颜色',{forest:'珞珈绿',blue:'湖水蓝',plum:'淡紫',amber:'暖杏'},p.avatar_tone||'forest')}</div>${area('还有哪些表达习惯','response_preferences',p.response_preferences||'',3,'maxlength="600" placeholder="例如：先给结论；解释缩写；计划分为今天和本周。"')}<p class="small muted">之后的回答会按这个习惯来，内容依据不受影响。</p><div class="form-footer"><button class="button primary" type="submit">保存偏好</button></div></form>`);bindProfileForm($('#preferences-form'),p);}
 function dataDialog(){showDialog('导入与导出',`<div class="stack"><a class="button" href="/api/export">${icon('down')} 导出个人数据 JSON</a><p class="small muted">包括个人条件、通知、对话、待办和日程。附件原件请另行下载保留。</p><form id="data-import-form" data-workspace-form="data-transfer" class="stack"><label class="upload"><strong>选择此前导出的 JSON</strong><span class="small muted">先查看导入范围，再确认保存；不覆盖现有记录。</span><input id="data-import-file" name="backup" type="file" accept=".json,application/json" required></label><div id="data-import-preview" role="status"></div><button class="button" type="submit">查看导入内容</button></form></div>`);}
@@ -246,7 +341,13 @@ function modelDialog(){const service=state.session.ai;showDialog('模型服务',
 
 function genuiDialog(){const g=state.session.genui;showDialog('互动回答',`<form id="genui-settings-form" class="stack"><label class="check"><input type="checkbox" name="enabled" ${g.enabled?'checked':''} ${g.available?'':'disabled'}><span>需要时，用图表、清单和可调参数帮助我理解</span></label><p class="small muted">简单问题仍用文字回答。调参数、排序和勾选在本地完成；需要保留时再点击“保存互动进度”。</p>${g.available?'':'<p class="alert">当前部署已关闭互动回答，仍可正常使用文字对话。</p>'}<div class="form-footer"><button type="submit" class="button primary">保存设置</button></div></form>`);}
 
-async function refreshData(){const id=state.renderId;const [notices,tasks]=await Promise.all([api('/notices'),api('/tasks')]);if(id===state.renderId){state.notices=notices;state.tasks=tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));}reminders.refresh();}
+async function refreshData(kinds=['notices','tasks']){
+  const session=state.session,id=state.renderId;
+  const values=await Promise.all(kinds.map(kind=>api('/'+kind)));
+  if(session!==state.session||id!==state.renderId)return;
+  kinds.forEach((kind,index)=>{state[kind]=values[index];});
+  document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
+}
 async function route(){
   const id=++state.renderId;
   const previousContent=$('#content');if(previousContent){previousContent.inert=true;previousContent.setAttribute('aria-busy','true');previousContent.classList.add('route-pending');}
@@ -254,19 +355,48 @@ async function route(){
   clearTimeout(searchTimer);state.dialogRequest=(state.dialogRequest||0)+1;
   persistCurrentForms();
   if($('#dialog')?.open)$('#dialog').close();
-  await drafts.flushAll().catch(error=>toast(error.message,true));
-  if(id!==state.renderId)return;
+  const editingOwner=state.session?.user?.id;
+  drafts.flushAll().catch(error=>{if(editingOwner===state.session?.user?.id)toast(error.message,true);});
   let page=location.hash.slice(1)||'dashboard';
   const recordTarget=/^(tasks|calendar|memory)\/([A-Za-z0-9_-]{1,100})$/.exec(page);
   const materialTarget=/^chat\/([A-Za-z0-9_-]{1,100})\/source\/([A-Za-z0-9_-]{1,100})$/.exec(page);
   const branchTarget=/^chat\/([a-f0-9]{32})\/branch\/([a-f0-9]{32})$/.exec(page);
   if(recordTarget)page=recordTarget[1];
   if(state.insightSelection&&(state.insightSelection.kind!==page||state.insightSelection.owner!==state.session?.user.id))state.insightSelection=null;
-  if(page.startsWith('invite=')){state.invite=decodeURIComponent(page.slice(7));try{sessionStorage.setItem('campus.registration.invite',JSON.stringify({token:state.invite,expires:Date.now()+3600000}));}catch{}history.replaceState(null,'','#register');page='register';}
+  if(page.startsWith('invite=')){
+    const token=page.slice(7);
+    if(/^[A-Za-z0-9_-]{20,100}$/.test(token)){
+      state.invite=token;
+      try{sessionStorage.setItem('campus.registration.invite',JSON.stringify({token,expires:Date.now()+3600000}));}catch{}
+      history.replaceState(null,'','#register');page='register';
+    }else{
+      toast('邀请链接格式不正确，请向邀请人索取完整链接。',true);
+      page=state.session?'dashboard':'login';history.replaceState(null,'','#'+page);
+    }
+  }
   if(page==='login'){state.invite='';try{sessionStorage.removeItem('campus.registration.invite');}catch{}}
   if(!state.session&&(page==='privacy'||page==='terms')){await standaloneLegal(page);return;}
   if(!state.session){authPage();return;}
-  if(state.invite){await push.detachForLogout();await api('/auth/logout',{method:'POST'});push.stop();state.session=null;drafts.clear();authPage();return;}
+  if(state.invite){
+    const leave=await ask('使用邀请注册新账号？','你正在使用已有账号。只有选择继续注册时，才会退出当前账号。','退出并继续注册');
+    if(id!==state.renderId)return;
+    if(leave){
+      try{
+        await drafts.flushAll();
+        await push.detachForLogout();
+        await api('/auth/logout',{method:'POST'});
+        clearSession({keepInvite:true});
+        authPage();
+        return;
+      }catch(error){
+        if(id!==state.renderId)return;
+        toast(error.message,true);
+      }
+    }
+    state.invite='';
+    try{sessionStorage.removeItem('campus.registration.invite');}catch{}
+    page='dashboard';history.replaceState(null,'','#dashboard');
+  }
   state.workContext=contextForRoute(state.session.user,currentWorkContext(),page);
   shell(page.split('/')[0]);updateShell(page.split('/')[0]);reminders.start();
   const content=$('#content'),finishRouteFeedback=beginRouteFeedback(content);content.setAttribute('aria-busy','true');content.inert=true;content.classList.add('route-pending');
@@ -276,6 +406,8 @@ async function route(){
     if(page==='chat'||page.startsWith('chat/')){
       await chatUI.render(page.split('/')[1],id,branchTarget?.[2]);
       page=location.hash.slice(1)||'chat';
+    }else if(page==='collaboration'||page.startsWith('collaboration/')){
+      await collaborationUI.render(id,page.split('/')[1]);
     }else if(page==='sources'){
       await sourcesUI.render(id);
     }else if(page==='campus'||page.startsWith('campus/')){
@@ -291,10 +423,16 @@ async function route(){
       if(n.draft&&n.status!=='confirmed')await drafts.load('notice:'+n.id+':'+n.version);
       if(id!==state.renderId)return;noticeDetail(n);attachDraftForm();
     }else{
-      if(page!=='dashboard'||currentWorkContext()==='personal')await refreshData();
-      if(page==='new')await drafts.load('new-notice');
+      let records;
+      if(page==='dashboard'&&currentWorkContext()==='personal'){
+        [records]=await Promise.all([api('/arrangements'),refreshData()]);
+      }else if(page==='calendar'){
+        [records]=await Promise.all([api('/arrangements'),refreshData(['tasks'])]);
+      }else if(page==='notices'||page==='intake')await refreshData(['notices']);
+      else if(page==='tasks')await refreshData(['tasks']);
+      else if(page==='new')await drafts.load('new-notice');
       if(id!==state.renderId)return;
-      await ({dashboard,tasks:taskList,notices:noticeList,new:newNotice,intake:()=>intakeUI.render(),calendar:calendarPage,settings:settingsPage}[page]||dashboard)();
+      await ({dashboard:()=>dashboard(undefined,records),tasks:taskList,notices:noticeList,new:newNotice,intake:()=>intakeUI.render(),calendar:()=>calendarPage(records),settings:settingsPage}[page]||dashboard)();
       if(page==='new'){restoreNoticeForm();if(state.sourcePreset){const f=$('#notice-form');if(!f.elements.source_label.value)f.elements.source_label.value=state.sourcePreset.name;if(!f.elements.source_url.value)f.elements.source_url.value=state.sourcePreset.url;state.sourcePreset=null;persistCurrentForms();}}
     }
     if(id!==state.renderId)return;
@@ -413,7 +551,11 @@ async function handleClick(e){const target=e.target.closest('[data-action]');if(
 
   else if(action==='settings-genui')genuiDialog();
   else if(action==='profile-section'){$$('[data-profile-group]').forEach(node=>node.hidden=node.dataset.profileGroup!==target.dataset.section);$$('[data-action=profile-section]').forEach(node=>{const active=node===target;node.classList.toggle('active',active);node.setAttribute('aria-selected',String(active));node.tabIndex=active?0:-1;});moveSelection($('.profile-tabs'));}
-  else if(action==='logout'){persistCurrentForms();await drafts.flushAll();await push.detachForLogout();await api('/auth/logout',{method:'POST'});push.stop();state.session=null;state.invite='';drafts.clear();reminders.stop();state.tasks=[];state.notices=[];state.notice=null;location.hash='login';authPage();}
+  else if(action==='logout'){
+    persistCurrentForms();await drafts.flushAll();await push.detachForLogout();
+    await api('/auth/logout',{method:'POST'});
+    clearSession();history.replaceState(null,'','#login');authPage();
+  }
   else if(action==='open-notice')location.hash='notice/'+id;
   else if(action==='refresh')await route();
   else if(action==='refresh-notice')await refreshNotice();
@@ -470,7 +612,7 @@ const drafts=createDraftStore(api,(key,message,error)=>{
 installFormHistory(document.body);
 function updateShell(page){
   updateWorkNavigation();syncChrome(page);syncPageNavigation(state.session?.user?.id);updateAccount();
-  const fullPage=location.hash.slice(1),name=({memory:'我的记忆',privacy:'隐私政策',terms:'用户协议'})[page]||workspaceNav(currentWorkContext()).find(n=>n[0]===fullPage)?.[2]||({'campus/publish':'发布通知','campus/records':'发布记录','campus/members':'学院成员','campus/audit':'权限记录'})[fullPage]||navs.find(n=>n[0]===page)?.[2]||'收通知';
+  const fullPage=location.hash.slice(1),name=({memory:'我的记忆',privacy:'隐私政策',terms:'用户协议',collaboration:'协作办理'})[page]||workspaceNav(currentWorkContext(),state.session.user).find(n=>n[0]===fullPage)?.[2]||({'campus/publish':'发布通知','campus/records':'发布记录','campus/members':'学院成员','campus/audit':'权限记录'})[fullPage]||navs.find(n=>n[0]===page)?.[2]||'收通知';
   $$('.nav-item').forEach(a=>{const active=a.hash==='#'+(['new','notice'].includes(page)?'notices':page==='campus'?fullPage:page);a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
   const label=$('.topbar-left b');if(label)label.textContent=name;
   setMenu(false,false);
@@ -545,7 +687,10 @@ function taskList(){
   $('#task-pages').innerHTML=pages>1?`${button('上一页','task-page','small',`data-page="${state.taskPage-1}" ${state.taskPage===1?'disabled':''}`)}<span>第 ${state.taskPage} / ${pages} 页 · 每页 20 项</span>${button('下一页','task-page','small',`data-page="${state.taskPage+1}" ${state.taskPage===pages?'disabled':''}`)}`:'';
   taskBoardDrag.afterRender();
 }
-document.addEventListener('click',e=>{const view=e.target.closest('[data-task-view]');if(view){state.taskView=view.dataset.taskView;taskList();}});
+document.addEventListener('click',e=>{
+  const view=e.target.closest('[data-task-view]');
+  if(view){state.taskView=view.dataset.taskView;saveDisplayPreferences({task_view:state.taskView});taskList();}
+});
 document.addEventListener('input',e=>{if(e.target.closest('form[data-cache-key]'))persistCurrentForms();});
 document.addEventListener('change',e=>{if(e.target.closest('form[data-cache-key]'))persistCurrentForms();});
 $('#dialog').addEventListener('close',()=>{if($('#dialog').open)return;state.dialogRequest=(state.dialogRequest||0)+1;const closing=state.dialogRequest;persistCurrentForms();drafts.flushAll().catch(error=>toast(error.message,true));
@@ -566,6 +711,7 @@ const pwa=createPWA({showDialog});
 const accountSecurity=createAccountSecurity({state,esc,field,api,verification,showDialog,toast});
 const authUI=createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,download,route,moveSelection,verification});
 const memoryUI=createMemoryUI({state,api,esc,icon,showDialog,toast,ask});
+const collaborationUI=createCollaborationUI({state,api,esc,showDialog,toast});
 const chatUI=createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI});
 const sourcesUI=createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route});
 const campusImports=createCampusImports({state,api,esc,showDialog,toast,route});
@@ -643,7 +789,7 @@ const noticePreparation=createNoticePreparation({api,getOwner:()=>state.session?
   onError:async(error,n)=>{toast('原件已保存；'+error.message,true);if(location.hash==='#notice/'+n.id)await refreshNotice();}
 });
 const noticeUI=createNoticeComposer({esc,field,area,icon,toast,showDialog,api,ask,getAI:()=>state.session?.ai||{},persist:persistCurrentForms,onRender:form=>intakeUI.attachSingle(form)});
-const calendarUI=createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts});
+const calendarUI=createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts,saveDisplayPreferences});
 let menuFocusFrame=0,menuFocusTimer=0,menuRequest=0,menuReturnTarget=null;
 function setMenu(open,focus=true,opener=null){
   const request=++menuRequest;cancelAnimationFrame(menuFocusFrame);clearTimeout(menuFocusTimer);
@@ -680,8 +826,8 @@ window.addEventListener('resize',()=>{if(!matchMedia('(max-width:850px)').matche
 function quickSearch(){commandSearch.open();}
 
 document.addEventListener('click',e=>{const a=e.target.closest('[data-overview-filter]');if(a?.dataset.overviewFilter){state.insightSelection=null;state.filter=a.dataset.overviewFilter;state.query='';state.dateFilter='';state.taskPage=1;}});
-initializeCompanion();
-initializeMotion();
+initializeCompanion(saveDisplayPreferences);
+initializeMotion(saveDisplayPreferences);
 initializeExperience();
 initializeChoreography();
 const boot=$('#app .boot');if(boot)boot.innerHTML=brandMotion('stroke','',{once:true,priority:3})+'<p>正在打开个人工作台…</p>';
@@ -691,7 +837,8 @@ state.registrationMode=policyResult.status==='fulfilled'?policyResult.value.regi
 state.authPolicy=policyResult.status==='fulfilled'?policyResult.value:null;
 await route();
 
-installChrome({setMenu});
+installChrome({setMenu,saveDisplayPreferences});
+applyDisplayPreferences();
 installPageNavigation();
 
 installAttachmentPreviews({api,toast});
@@ -700,34 +847,139 @@ function accountCaption(u){const context=currentWorkContext();return workContext
 function updateAccount(){const p=state.session.user.profile,u=state.session.user,name=p.preferred_name||u.display_name,avatar=$('.account .avatar'),account=$('.account-name');if(avatar){avatar.textContent=name.slice(0,1);avatar.className='avatar avatar-'+(p.avatar_tone||'forest');}if(account){account.replaceChildren(document.createTextNode(name));const small=document.createElement('small');small.textContent=accountCaption(u);account.append(small);}}
 
 window.addEventListener('resize',()=>{if(state.session?.user)updateWorkNavigation();});
-function backgroundSyncAllowed(){
+function backgroundSyncAllowed(allowChatInput=false){
   // Replacing a row during a menu click detaches its target and discards the
   // user's open interaction. Keep the revision pending until it can be applied.
-  return !pendingTaskUpdates.size&&!document.documentElement.classList.contains('task-dragging')&&
+  return !pendingDisplayWrites&&!pendingTaskUpdates.size&&!document.documentElement.classList.contains('task-dragging')&&
     !$('#content')?.inert&&!$('#dialog')?.open&&
-    !document.querySelector('.task-more[open],.notice-actions[open],.task-date-filter[open],.library-date[open]')&&
-    !document.activeElement?.matches('input,textarea,select,[contenteditable=true]');
+    !document.querySelector('.task-more[open],.notice-actions[open],.task-date-filter[open],.library-date[open],#content form[inert],#content .request-pending')&&
+    (!document.activeElement?.matches('input,textarea,select,[contenteditable=true]')||
+      allowChatInput&&document.activeElement?.id==='chat-input');
 }
-installDataSync({state,api,onChange:async()=>{
-  if(!backgroundSyncAllowed())return false;
-  const session=state.session,render=state.renderId;
-  const [fresh,notices,tasks]=await Promise.all([api('/session'),api('/notices'),api('/tasks')]);
-  if(state.session!==session||state.renderId!==render)return true;
-  if(!backgroundSyncAllowed())return false;
-  Object.assign(state.session,fresh);state.notices=notices;state.tasks=tasks;updateAccount();updateWorkNavigation();document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
-  const page=location.hash.slice(1);
-  if(page==='notices')libraryUI.render();else if(page==='dashboard'){if(await dashboard(backgroundSyncAllowed)===false)return false;}else if(page==='tasks')taskList();else if(page==='calendar')calendarUI.refresh();
-  else if(page.startsWith('notice/')&&state.notice){
-    const latest=await api('/notices/'+encodeURIComponent(state.notice.id));
-    if(state.session!==session||state.renderId!==render)return true;
-    if(!backgroundSyncAllowed())return false;
-    if(latest.version!==state.notice.version){
-      if(!document.querySelector('[data-source-update-banner]'))$('.notice-primary')?.insertAdjacentHTML('beforebegin','<div class="alert info" data-source-update-banner role="status">原通知已有新版本，当前编辑已保留。 <button type="button" class="link-button" data-action="proactive-refresh-notice">读取最新内容</button></div>');
-    }else if(!$('#draft-form')&&shouldOfferHistoricalSummary(state.notice)!==shouldOfferHistoricalSummary(latest))noticeDetail(latest);
-    else for(const key of ['assessment','feedback','tracking','recommended','intent'])state.notice[key]=latest[key];
+function updateNoticeFocus(notice){
+  const previous=$('#content .notice-focus');
+  const template=document.createElement('template');
+  template.innerHTML=noticeFocus(notice,{esc});
+  const next=template.content.firstElementChild;
+  if(!next)previous?.remove();
+  else if(!previous)$('#content .notice-primary')?.after(next);
+  else if(!previous.isEqualNode(next))previous.replaceWith(next);
+}
+function redrawNoticeDetail(notice){
+  const content=$('#content'),scroll=content.scrollTop,focused=document.activeElement;
+  const selectors=['.notice-originals','.notice-context',...Array.from(content.querySelectorAll('[data-source-card]'),
+    node=>`[data-source-card="${CSS.escape(node.dataset.sourceCard)}"]`)];
+  const reading=selectors.map(selector=>{
+    const node=content.querySelector(selector);
+    return {selector,open:node?.open,focused:node?.querySelector(':scope>summary')===focused};
+  });
+  noticeDetail(notice,false,{matterOpen:content.querySelector('#notice-matters>details')?.open});
+  for(const entry of reading){
+    const node=content.querySelector(entry.selector);
+    if(!node||entry.open===undefined)continue;
+    node.open=entry.open;
+    if(entry.focused)node.querySelector(':scope>summary')?.focus({preventScroll:true});
   }
-  return true;
-}});
+  content.scrollTop=scroll;
+}
+async function refreshWorkspace(domains,revision){
+  const changed=(...keys)=>!domains||keys.some(key=>domains.has(key));
+  const session=state.session,render=state.renderId,mutation=workspaceMutation;
+  const page=location.hash.slice(1).split('/')[0]||'dashboard';
+  const current=()=>state.session===session&&state.renderId===render&&workspaceMutation===mutation;
+  const canApply=()=>current()&&backgroundSyncAllowed(page==='chat');
+  const context=currentWorkContext();
+  if(changed('account')){
+    if(pendingDisplayWrites)return false;
+    const fresh=await api('/session');
+    if(!current())return false;
+    Object.assign(session,fresh);
+    applyDisplayPreferences();
+    updateAccount();updateWorkNavigation();
+    if(!workContexts(fresh.user).some(choice=>choice.id===context)){
+      persistCurrentForms();
+      state.workContext='personal';
+      if(location.hash==='#dashboard')await route();else location.hash='#dashboard';
+      toast('学院或管理权限已更新，已回到个人工作台。');
+      return false;
+    }
+  }
+  if(changed('collaboration','account')&&page==='collaboration'){
+    if(collaborationUI.saving()||await collaborationUI.render(render,location.hash.split('/')[1],current)===false)return false;
+  }
+  if(changed('collaboration','reminders')&&$('#dialog [data-reminder-content]'))reminders.refresh();
+  if(changed('delivery')&&$('#dialog [data-reminder-content]')){
+    push.refresh();emailReminders.refresh();
+  }
+  if(changed('tasks','notices')&&$('#workflow-form'))await workflowUI.refreshOpen(revision);
+  if(!canApply())return false;
+  const home=page==='dashboard'&&context==='personal';
+  const needsNotices=(home||page==='notices')&&changed('notices','account','clock');
+  const needsTasks=(home||['tasks','calendar','chat'].includes(page))&&changed('tasks','notices');
+  const needsCalendar=(home||['calendar','chat'].includes(page))&&changed('calendar');
+  const detail=page==='notice'&&state.notice&&changed('notices','tasks','account','clock')?state.notice.id:null;
+  const [notices,tasks,arrangements,latest]=await Promise.all([
+    needsNotices?api('/notices'):null,
+    needsTasks?api('/tasks'):null,
+    needsCalendar?api('/arrangements'):null,
+    detail?api('/notices/'+encodeURIComponent(detail)).catch(error=>{if(error.status===404)return false;throw error;}):null,
+  ]);
+  if(!canApply())return false;
+  if(notices)state.notices=notices;
+  if(tasks)state.tasks=tasks;
+  if(arrangements)state.arrangements=arrangements;
+  if(notices||tasks||arrangements||changed('notices','tasks','calendar')){
+    document.dispatchEvent(new CustomEvent('campus:data-updated'));
+  }
+  if(changed('notices','tasks','calendar','reminders','collaboration','account','clock'))reminders.refresh();
+  if(page==='notices'&&notices)libraryUI.render();
+  else if(home&&(notices||tasks||arrangements||changed('account','clock')))overviewUI.render();
+  else if(page==='tasks'&&(tasks||changed('account')))taskList();
+  else if(page==='calendar'&&(tasks||arrangements||changed('account')))calendarUI.applyRecords(arrangements);
+  else if(page==='chat'&&(tasks||arrangements||changed('chat','account'))){
+    if(await chatUI.refreshWorkspace({tasks,arrangements,reload:changed('chat'),canApply})===false)return false;
+  }else if(page==='sources'&&changed('sources')){
+    if(await sourcesUI.refresh(render,canApply)===false)return false;
+  }
+  else if(page==='memory'&&changed('memory')){
+    if(await memoryUI.refresh()===false)return false;
+  }
+  else if(page==='intake'&&changed('notices')){
+    const records=await api('/notices');if(!canApply())return false;state.notices=records;
+    intakeUI.refreshTargets();
+  }
+  else if((page==='campus'||page==='dashboard'&&context!=='personal')&&changed('campus','account')){
+    if(page==='dashboard')await dashboard(canApply);else await campusUI.render(render);
+  }else if(page==='settings'&&changed('account'))settingsPage({preserveScroll:true});
+  else if(detail&&state.notice?.id===detail){
+    if(latest===false){
+      $('#content').innerHTML=empty('这则通知已移除','该记录已在其他页面删除。','<a class="button" href="#notices">返回通知</a>',false,'static');
+      state.notice=null;
+    }else if(latest&&latest.version!==state.notice.version&&$('#draft-form')){
+      if(!$('[data-source-update-banner]'))$('.notice-primary')?.insertAdjacentHTML('beforebegin','<div class="alert info" data-source-update-banner role="status">原通知已有新版本，当前编辑已保留。 <button type="button" class="link-button" data-action="proactive-refresh-notice">读取最新内容</button></div>');
+    }else if(latest&&!$('#draft-form')&&(
+      latest.version!==state.notice.version||latest.status!==state.notice.status||
+      latest.handling?.disposition!==state.notice.handling?.disposition||latest.automation_state!==state.notice.automation_state||
+      latest.pending_intake_updates!==state.notice.pending_intake_updates||
+      shouldOfferHistoricalSummary(latest)!==shouldOfferHistoricalSummary(state.notice)||
+      JSON.stringify(latest.tasks)!==JSON.stringify(state.notice.tasks)||
+      JSON.stringify(latest.changes)!==JSON.stringify(state.notice.changes)
+    )){
+      if(latest.draft&&latest.status!=='confirmed')await drafts.load('notice:'+latest.id+':'+latest.version);
+      if(!canApply())return false;
+      redrawNoticeDetail(latest);
+    }else if(latest){
+      for(const key of ['assessment','feedback','tracking','recommended','intent','intake_updates','pending_intake_updates'])state.notice[key]=latest[key];
+      updateNoticeFocus(latest);
+      if(changed('notices','tasks'))await matterUI.refresh();
+    }
+  }
+  return current();
+}
+dataSync=installDataSync({state,api,onChange:refreshWorkspace});
+document.addEventListener('focusout',()=>dataSync.wake());
+$('#dialog').addEventListener('close',()=>dataSync.wake());
+dataSync.wake();
 installDataTransfer({api,toast,onImported:async()=>{state.session=await api('/session');updateAccount();await refreshData();}});
 
 let layoutFrame=0;window.addEventListener('campus:layout',()=>{cancelAnimationFrame(layoutFrame);layoutFrame=requestAnimationFrame(()=>{moveSelection($('.sidebar nav'),'.nav-item.active');$$('.tabs').forEach(group=>moveSelection(group));});});

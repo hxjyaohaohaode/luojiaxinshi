@@ -101,5 +101,5 @@ export function createMemoryUI({state,api,esc,icon,showDialog,toast,ask}){
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });
-  return {render,context,openRecord:id=>editor({id}),clearPrivate:()=>{data={projects:[],memories:[]};workbench.clearPrivate();},remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
+  return {render,refresh:workbench.poll,context,openRecord:id=>editor({id}),clearPrivate:()=>{data={projects:[],memories:[]};workbench.clearPrivate();},remember:conversation=>editor({content:conversation.messages.findLast(m=>m.role==='user')?.content.slice(0,2000)||''},conversation)};
 }

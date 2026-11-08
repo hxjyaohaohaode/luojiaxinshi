@@ -19,10 +19,11 @@ export function contextForRoute(user,current,page) {
   return selected;
 }
 export function workspaceNav(context,user) {
-  if(context==='college')return [['dashboard','grid','首页'],['campus/publish','plus','发布通知'],['campus/records','doc','发布记录'],['campus/members','tasks','学院成员'],['settings','settings','我的']];
+  if(context==='college')return [['dashboard','grid','首页'],['campus/publish','plus','发布通知'],['campus/records','doc','发布记录'],['collaboration','check','协作办理'],['campus/members','tasks','学院成员'],['settings','settings','我的']];
   if(context==='system')return [['dashboard','grid','首页'],['campus/members','shield','学院与权限'],['campus/audit','history','权限记录'],['settings','settings','我的']];
   const planning=user?.profile?.campus_role==='teacher'?[['calendar','calendar','日程'],['tasks','tasks','待办']]:[['tasks','tasks','待办'],['calendar','calendar','日程']];
-  return [['dashboard','grid','首页'],['notices','doc','通知'],['chat','spark','小信使'],...planning,['sources','history','订阅与来源'],['insights','chart','办理统计'],['settings','settings','我的']];
+  const cooperation=user?.campus_membership?.role==='student'?[['collaboration','check','协作办理']]:[];
+  return [['dashboard','grid','首页'],['notices','doc','通知'],['chat','spark','小信使'],...planning,...cooperation,['sources','history','订阅与来源'],['insights','chart','办理统计'],['settings','settings','我的']];
 }
 export function primaryWorkspaceNav(context,user) {
   const chat=['chat','spark','小信使'];

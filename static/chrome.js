@@ -3,17 +3,49 @@ import {preserveChatViewport,automaticChatScroll} from './chat-viewport.js';
 const $=selector=>document.querySelector(selector);
 const mobile=()=>matchMedia('(max-width:850px)').matches;
 let installed=false,drag=null,idleTimer,lastGesture=-Infinity,chromeResizeUntil=0;
+let savedWidth=null,savedCollapse=null,savePreferences=null;
 const positions=new WeakMap();
 const storage={get(key,fallback){try{return localStorage.getItem(key)??fallback;}catch{return fallback;}},set(key,value){try{localStorage.setItem(key,String(value));}catch{}}};
 function widthLimit(){return Math.max(180,Math.min(460,innerWidth*.48));}
-function setWidth(value,save=false){const width=Math.round(Math.max(180,Math.min(widthLimit(),Number(value)||234)));$('.shell')?.style.setProperty('--sidebar-width',width+'px');const grip=$('.sidebar-resize');if(grip){grip.setAttribute('aria-valuenow',String(width));grip.setAttribute('aria-valuemax',String(Math.floor(widthLimit())));}window.dispatchEvent(new Event('campus:layout'));if(save)storage.set('campus.sidebar.width',width);}
+const preferredWidth=()=>savedWidth??storage.get('campus.sidebar.width',234);
+const preferredCollapse=()=>savedCollapse??(storage.get('campus.sidebar.collapsed','false')==='true');
+function setWidth(value,save=false){
+  const width=Math.round(Math.max(180,Math.min(widthLimit(),Number(value)||234)));
+  $('.shell')?.style.setProperty('--sidebar-width',width+'px');
+  const grip=$('.sidebar-resize');
+  if(grip){grip.setAttribute('aria-valuenow',String(width));grip.setAttribute('aria-valuemax',String(Math.floor(widthLimit())));}
+  window.dispatchEvent(new Event('campus:layout'));
+  if(save){
+    if(savePreferences?.({sidebar_width:width}))savedWidth=width;
+    else storage.set('campus.sidebar.width',width);
+  }
+}
 function setReading(value){if(mobile())value=false;if(document.documentElement.classList.contains('reading-content')===value)return;chromeResizeUntil=performance.now()+100;document.documentElement.classList.toggle('reading-content',value);}
 export function revealChrome(){clearTimeout(idleTimer);lastGesture=-Infinity;setReading(false);}
-export function syncChrome(page){document.documentElement.dataset.route=page;revealChrome();const shell=$('.shell');if(!shell)return;shell.classList.toggle('sidebar-collapsed',storage.get('campus.sidebar.collapsed','false')==='true');const toggle=$('.workspace-chrome-toggle'),host=['chat','calendar'].includes(page)?$('.workspace'):$('.topbar-left');if(toggle&&host&&toggle.parentElement!==host)host.prepend(toggle);setWidth(storage.get('campus.sidebar.width',234));updateToggle();}
+export function syncChrome(page){document.documentElement.dataset.route=page;revealChrome();const shell=$('.shell');if(!shell)return;shell.classList.toggle('sidebar-collapsed',preferredCollapse());const toggle=$('.workspace-chrome-toggle'),host=['chat','calendar'].includes(page)?$('.workspace'):$('.topbar-left');if(toggle&&host&&toggle.parentElement!==host)host.prepend(toggle);setWidth(preferredWidth());updateToggle();}
 function updateToggle(){const shell=$('.shell'),collapsed=shell?.classList.contains('sidebar-collapsed');document.querySelectorAll('[data-shell-toggle]').forEach(b=>{b.setAttribute('aria-label',mobile()?'打开导航菜单':collapsed?'展开侧栏':'收起侧栏');b.setAttribute('aria-expanded',String(mobile()?!!shell?.classList.contains('menu-open'):!collapsed));});}
-export function installChrome({setMenu}){
+export function installChrome({setMenu,saveDisplayPreferences}){
  if(installed)return;installed=true;
- function toggle(opener=null){if(mobile()){setMenu(true,true,opener);return;}const shell=$('.shell');if(!shell)return;preserveChatViewport($('#chat-thread'),()=>shell.classList.toggle('sidebar-collapsed'));storage.set('campus.sidebar.collapsed',shell.classList.contains('sidebar-collapsed'));updateToggle();}
+ savePreferences=saveDisplayPreferences;
+ document.addEventListener('campus:display-preferences',event=>{
+   const oldWidth=preferredWidth(),oldCollapse=preferredCollapse();
+   savedWidth=event.detail?.sidebar_width??null;savedCollapse=event.detail?.sidebar_collapsed??null;
+   if(!drag&&(oldWidth!==preferredWidth()||oldCollapse!==preferredCollapse())){
+     preserveChatViewport($('#chat-thread'),()=>{
+       $('.shell')?.classList.toggle('sidebar-collapsed',preferredCollapse());
+       setWidth(preferredWidth());updateToggle();
+     });
+   }
+ });
+ function toggle(opener=null){
+   if(mobile()){setMenu(true,true,opener);return;}
+   const shell=$('.shell');if(!shell)return;
+   preserveChatViewport($('#chat-thread'),()=>shell.classList.toggle('sidebar-collapsed'));
+   const collapsed=shell.classList.contains('sidebar-collapsed');
+   if(savePreferences?.({sidebar_collapsed:collapsed}))savedCollapse=collapsed;
+   else storage.set('campus.sidebar.collapsed',collapsed);
+   updateToggle();
+ }
  document.addEventListener('click',e=>{const opener=e.target.closest('[data-shell-toggle]');if(opener)toggle(opener);});
  document.addEventListener('pointerdown',e=>{const grip=e.target.closest('.sidebar-resize');if(!grip||mobile()||e.button!==0)return;e.preventDefault();drag={grip,start:e.clientX,width:$('.sidebar').getBoundingClientRect().width};grip.setPointerCapture(e.pointerId);document.documentElement.classList.add('resizing-sidebar');});
  document.addEventListener('pointermove',e=>{if(drag)preserveChatViewport($('#chat-thread'),()=>setWidth(drag.width+e.clientX-drag.start));});
@@ -43,5 +75,5 @@ export function installChrome({setMenu}){
  for(const name of ['pointerdown','input','keydown'])document.addEventListener(name,e=>{if(e.target.closest?.('.chat-composer'))revealChrome();});
  document.addEventListener('pointermove',e=>{if(e.clientY<20&&!document.documentElement.classList.contains('task-dragging'))revealChrome();},{passive:true});
  function viewport(){const v=window.visualViewport;document.documentElement.style.setProperty('--visual-height',(v?.height||innerHeight)+'px');document.documentElement.classList.toggle('keyboard-open',!!v&&innerHeight-v.height>140&&!!document.activeElement?.closest('input,textarea'));}
- window.visualViewport?.addEventListener('resize',viewport);window.addEventListener('resize',()=>{setWidth(storage.get('campus.sidebar.width',234));updateToggle();viewport();});viewport();
+ window.visualViewport?.addEventListener('resize',viewport);window.addEventListener('resize',()=>{setWidth(preferredWidth());updateToggle();viewport();});viewport();
 }

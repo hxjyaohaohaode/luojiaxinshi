@@ -213,6 +213,9 @@ def create_app(settings=None):
                              (token_hash(raw),int(time.time()))).fetchone()
         if row is None:
             raise HTTPException(401,'请先登录，或登录已过期')
+        expected_owner=request.headers.get('x-workspace-owner')
+        if expected_owner is not None and expected_owner!=row['id']:
+            raise HTTPException(401,{'code':'account_changed','message':'此浏览器的登录账号已切换，请重新打开工作台。'})
         if request.method not in {'GET','HEAD'} and not secrets.compare_digest(request.headers.get('x-csrf-token',''),row['csrf']):
             raise HTTPException(403,'页面令牌已过期，请刷新后重试')
         return dict(row)
@@ -325,14 +328,29 @@ def create_app(settings=None):
         annotate(conn,uid,[record])
         return record
 
-    def session_response(uid, extra=None):
+    def session_payload(conn, current, csrf):
+        from .model_catalog import public_configuration
+        from .campus import membership as campus_membership
+        from .workspace_sync import snapshot as workspace_snapshot
+        uid=current['id']
+        affiliation=campus_membership(conn,uid)
+        return {'user':{'id':uid,'username':current['username'],'display_name':current['display_name'],
+                        'role':current['role'],'profile':json.loads(current['profile']),
+                        'verified_contacts':verification.contacts(conn,uid),
+                        'campus_membership':{key:affiliation[key] for key in
+                            ('role','college_name','grade','class_name','version')} if affiliation else None},
+                'csrf':csrf,'ai':public_configuration(settings),'genui':feature_settings(conn,uid,settings),
+                'consent':consent_state(conn,uid),'environment':'production' if settings.production else 'local',
+                'task_board_contract':1,'sync':workspace_snapshot(conn,current)}
+
+    def session_response(conn, uid):
         token=secrets.token_urlsafe(32)
         csrf=secrets.token_urlsafe(32)
         now=int(time.time())
-        with db.connect(write=True) as conn:
-            conn.execute('DELETE FROM sessions WHERE expires_at<?',(now,))
-            conn.execute('INSERT INTO sessions VALUES(?,?,?,?)',(token_hash(token),uid,csrf,now+7*86400))
-        response=JSONResponse({'ok':True,**(extra or {})})
+        conn.execute('DELETE FROM sessions WHERE expires_at<?',(now,))
+        conn.execute('INSERT INTO sessions VALUES(?,?,?,?)',(token_hash(token),uid,csrf,now+7*86400))
+        current=conn.execute('SELECT * FROM users WHERE id=?',(uid,)).fetchone()
+        response=JSONResponse({'ok':True,'session':session_payload(conn,current,csrf)})
         response.set_cookie('campus_session',token,max_age=7*86400,httponly=True,secure=settings.production,samesite='strict',path='/')
         return response
 
@@ -349,30 +367,29 @@ def create_app(settings=None):
 
     @app.get('/api/session')
     def session(current=Depends(user)):
-        from .model_catalog import public_configuration
-        from .campus import membership as campus_membership
         with db.connect() as conn:
-            genui=feature_settings(conn,current['id'],settings)
-            consent=consent_state(conn,current['id'])
-            affiliation=campus_membership(conn,current['id'])
-            verified_contacts=verification.contacts(conn,current['id'])
-        return {'user':{'id':current['id'],'username':current['username'],'display_name':current['display_name'],
-                        'role':current['role'],'profile':json.loads(current['profile']),'verified_contacts':verified_contacts,
-                        'campus_membership':{'role':affiliation['role'],'college_name':affiliation['college_name']} if affiliation else None},'csrf':current['csrf'],
-                'ai':public_configuration(settings),'genui':genui,'consent':consent,
-                'environment':'production' if settings.production else 'local','task_board_contract':1}
+            conn.execute('BEGIN')
+            latest=conn.execute('SELECT * FROM users WHERE id=?',(current['id'],)).fetchone()
+            if latest is None:raise HTTPException(401,'请重新登录')
+            return session_payload(conn,latest,current['csrf'])
 
     @app.post('/api/auth/login')
     def login(payload: Login, request: Request):
         ip=request.client.host if request.client else 'unknown'
         rate_limit(db,'login-ip:'+ip,30,900)
-        rate_limit(db,'login-user:'+payload.username.lower(),10,900)
         with db.connect() as conn:
             record=verification.find_account(conn,payload.username)
+        # Username, email and phone all share the same limit for an account.
+        account_key=record['id'] if record else token_hash(payload.username.casefold())
+        rate_limit(db,'login-user:'+account_key,10,900)
         valid=verify_password(payload.password,record['password'] if record else DUMMY_PASSWORD)
         if not valid or record is None:
-            raise HTTPException(401,'用户名或密码错误')
-        return session_response(record['id'])
+            raise HTTPException(401,'账号或密码错误')
+        with db.connect(write=True) as conn:
+            latest=verification.find_account(conn,payload.username)
+            if not latest or latest['id']!=record['id'] or latest['password']!=record['password']:
+                raise HTTPException(401,'账号安全信息已变化，请重新登录')
+            return session_response(conn,record['id'])
 
     @app.get('/api/auth/policy')
     def registration_policy():
@@ -384,13 +401,13 @@ def create_app(settings=None):
         if settings.registration_mode == 'invite' and not payload.invite:
             raise HTTPException(403,'当前仅开放受邀试点，请使用维护者提供的一次性邀请链接')
         rate_limit(db,'register:'+(request.client.host if request.client else 'unknown'),15,900)
-        password=hash_password(payload.password)
         uid=ident()
         now=int(time.time())
         if not payload.accepted_terms:
             raise HTTPException(422,'请先阅读并同意《隐私政策》和《用户协议》')
         if payload.account_kind=='phone' and not re.fullmatch(r'\+?[0-9]{7,15}',payload.username):
             raise HTTPException(422,'手机号账号应为 7—15 位数字，可带国际区号 +')
+        password=hash_password(payload.password)
         with db.connect(write=True) as conn:
             invite=conn.execute('SELECT * FROM invites WHERE token_hash=? AND used_at IS NULL AND expires_at>?',(token_hash(payload.invite),now)).fetchone() if payload.invite else None
             if payload.invite and invite is None:
@@ -402,6 +419,7 @@ def create_app(settings=None):
             proof=verification.consume(conn,payload.verification_token,'register')
             verification.available_contact(conn,proof['channel'],proof['destination'])
             verification.available_alias(conn,payload.username.lower())
+            verification.require_verified_alias(payload.username,proof)
             if payload.account_kind=='phone' and (proof['channel']!='sms' or verification.normalize('sms',payload.username)!=proof['destination']):
                 raise HTTPException(422,'手机号账号必须验证同一个手机号')
             profile=Profile(campus_role=payload.campus_role).model_dump()
@@ -415,22 +433,23 @@ def create_app(settings=None):
             record_consent(conn,uid,now)
             if invite:
                 conn.execute('UPDATE invites SET used_at=? WHERE token_hash=?',(now,token_hash(payload.invite)))
-        return session_response(uid)
+            return session_response(conn,uid)
 
     @app.post('/api/auth/recover')
     def recover(payload:Recover,request:Request):
         rate_limit(db,'recover:'+(request.client.host if request.client else 'unknown'),5,900)
         rate_limit(db,'recover-user:'+payload.username.lower(),5,900)
+        password=hash_password(payload.password)
         with db.connect(write=True) as conn:
             record=verification.find_account(conn,payload.username)
             proof=verification.consume(conn,payload.verification_token,'recover')
             if not record or proof['user_id']!=record['id']:
                 raise HTTPException(400,'账号与验证信息不匹配，密码未修改')
-            conn.execute('UPDATE users SET password=? WHERE id=?',(hash_password(payload.password),record['id']))
+            conn.execute('UPDATE users SET password=? WHERE id=?',(password,record['id']))
             conn.execute('DELETE FROM account_recovery WHERE user_id=?',(record['id'],))
             conn.execute('DELETE FROM auth_challenges WHERE user_id=?',(record['id'],))
             conn.execute('DELETE FROM sessions WHERE user_id=?',(record['id'],))
-        return session_response(record['id'])
+            return session_response(conn,record['id'])
 
     @app.post('/api/auth/logout')
     def logout(current=Depends(user)):
@@ -445,20 +464,27 @@ def create_app(settings=None):
         rate_limit(db,'password:'+current['id'],5,900)
         if not verify_password(payload.old_password,current['password']):
             raise HTTPException(400,'原密码不正确')
+        password=hash_password(payload.new_password)
         with db.connect(write=True) as conn:
             verification.consume(conn,payload.verification_token,'password',current['id'])
-            conn.execute('UPDATE users SET password=? WHERE id=?',(hash_password(payload.new_password),current['id']))
+            changed=conn.execute('UPDATE users SET password=? WHERE id=? AND password=?',(password,current['id'],current['password']))
+            if changed.rowcount!=1:
+                raise HTTPException(409,'账号安全信息已变化，请重新验证')
             conn.execute('DELETE FROM auth_challenges WHERE user_id=?',(current['id'],))
             conn.execute('DELETE FROM account_recovery WHERE user_id=?',(current['id'],))
             conn.execute('DELETE FROM sessions WHERE user_id=?',(current['id'],))
-        return session_response(current['id'])
+            return session_response(conn,current['id'])
 
     @app.put('/api/profile')
     def profile(payload:Profile,current=Depends(user)):
+        from .models import DISPLAY_PREFERENCES
         with db.connect(write=True) as conn:
             saved=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
             if payload.phone!=saved.get('phone',''):raise HTTPException(422,'请在账号安全中验证后修改手机号')
-            conn.execute('UPDATE users SET profile=? WHERE id=?',(payload.model_dump_json(),current['id']))
+            value=payload.model_dump()
+            for key in DISPLAY_PREFERENCES:
+                if key not in payload.model_fields_set and key in saved:value[key]=saved[key]
+            conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(value),current['id']))
         return {'ok':True}
 
     @app.patch('/api/profile')
@@ -476,7 +502,8 @@ def create_app(settings=None):
                 raise HTTPException(409,{'code':'profile_conflict','message':'这些资料已在另一处修改。本次填写已保留，请先核对最新值。',
                                          'fields':conflicts,'profile':saved})
             updated=Profile.model_validate({**saved,**changes})
-            conn.execute('UPDATE users SET profile=? WHERE id=?',(updated.model_dump_json(),current['id']))
+            if updated.model_dump()!=saved:
+                conn.execute('UPDATE users SET profile=? WHERE id=?',(updated.model_dump_json(),current['id']))
         return {'profile':updated.model_dump()}
 
     @app.post('/api/admin/invites')
@@ -542,9 +569,11 @@ def create_app(settings=None):
         return {'revision':revision+1,'payload':payload.payload}
 
     @app.get('/api/notices')
-    def notices(current=Depends(user)):
+    def notices(request:Request,current=Depends(user)):
+        from .workspace_sync import projection
         with db.connect() as conn:
-            return search_notices(conn,current['id'])
+            return projection(conn,request,current,'notices',('notices','tasks','account','clock'),
+                              lambda:search_notices(conn,current['id']))
 
     @app.get('/api/notices/search')
     def find_notices(q:str='',current=Depends(user)):
@@ -625,6 +654,7 @@ def create_app(settings=None):
     @app.get('/api/notices/{nid}')
     def notice(nid:str,current=Depends(user)):
         with db.connect() as conn:
+            conn.execute('BEGIN')
             return detailed_notice(conn,nid,current['id'])
 
     @app.post('/api/notices/{nid}/intake-updates/{update_id}/review')
@@ -960,9 +990,11 @@ def create_app(settings=None):
         return enrich_tasks(conn, items)
 
     @app.get('/api/tasks')
-    def tasks(current=Depends(user)):
+    def tasks(request:Request,current=Depends(user)):
+        from .workspace_sync import projection
         with db.connect() as conn:
-            return list_tasks(conn,current['id'])
+            return projection(conn,request,current,'tasks',('tasks','notices','account','clock'),
+                              lambda:list_tasks(conn,current['id']))
 
     from .insights import install as install_insights
     install_insights(app,db,user,admin,list_tasks)
@@ -1091,6 +1123,8 @@ def create_app(settings=None):
     install_memory(app,db,user)
     install_integrations(app,db,settings,user,admin)
     source_sync.install(app,db,user)
+    from .collaboration import install as install_collaboration
+    install_collaboration(app,db,user)
     from .usage_limits import install as install_usage
     install_usage(app,db,settings,user)
     from .notice_matters import install as install_matters

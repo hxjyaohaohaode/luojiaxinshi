@@ -6,6 +6,7 @@ import time
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import Field
 from typing import Literal
 
@@ -182,10 +183,11 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                     if active.get(cid) is not interrupted:break
                     await asyncio.sleep(.01)
                 else:raise HTTPException(409,'上一轮正在停止，请再次发送补充；草稿已保留')
-        prepared,existing=prepare_send(cid,payload,current)
+        prepared,existing=await run_in_threadpool(prepare_send,cid,payload,current)
         def packet(kind,value,seq):return 'id: '+str(seq)+'\nevent: '+kind+'\ndata: '+dumps(value)+'\n\n'
         if existing is not None:
-            async def replay():yield packet('done',{'conversation':existing,'replayed':True},1)
+            async def replay():
+                yield packet('done',{'conversation':existing,'replayed':not bool(prepared)},1)
             return StreamingResponse(replay(),media_type='text/event-stream')
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
         released=False
@@ -214,6 +216,21 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
             from .reply_preview import PreviewCheckpoint
             preview=PreviewCheckpoint(feature['limits']['messageBytes'])
             task=asyncio.current_task();active[cid]=(asyncio.get_running_loop(),task)
+            def persist_progress(kind,value):
+                # These writes can wait on another SQLite writer. Keep that wait
+                # off the loop that is serving other accounts and live streams.
+                with db.connect(write=True) as conn:
+                    live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
+                    if not live or live['processing_token']!=token:raise asyncio.CancelledError()
+                    if kind=='preview':
+                        preview.save(conn,mid)
+                    elif kind=='phase':
+                        from .execution import stage
+                        stage(conn,mid,value['phase'])
+                        if value.get('data'):
+                            conn.execute('UPDATE genui_messages SET trusted_data=? WHERE message_id=?',(dumps(trusted),mid))
+                    else:
+                        conn.execute('UPDATE genui_messages SET raw=?,updated_at=? WHERE message_id=?',(value,int(time.time()),mid))
             try:
                 seq+=1;yield packet('start',{'message_id':mid,'conversation':initial,'tier':tier,'data':trusted,'limits':feature['limits']},seq)
                 from .grounding import events as grounded_events
@@ -231,11 +248,9 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             seq+=1;yield packet('agent',{'message_id':mid,'kind':event['kind'],'data':event['data'],'state':event['state']},seq)
                             continue
                         if event['type']=='phase':
-                            from .execution import stage
-                            with db.connect(write=True) as conn:stage(conn,mid,event['phase'])
                             if event.get('data'):
                                 trusted.update(event['data'])
-                                with db.connect(write=True) as conn:conn.execute('UPDATE genui_messages SET trusted_data=? WHERE message_id=?',(dumps(trusted),mid))
+                            await run_in_threadpool(persist_progress,'phase',event)
                             seq+=1;yield packet('phase',{'message_id':mid,'phase':event['phase'],'label':event['label'],'data':event.get('data'),'steps':event.get('steps',[])},seq)
                             continue
                         if event['type']=='work':
@@ -243,30 +258,21 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                             continue
                         if event['type']=='ui_preview':
                             preview.apply('ui_preview',event)
-                            with db.connect(write=True) as conn:
-                                live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
-                                if not live or live['processing_token']!=token:raise asyncio.CancelledError()
-                                preview.save(conn,mid)
+                            await run_in_threadpool(persist_progress,'preview',None)
                             seq+=1;yield packet('ui_preview',{'message_id':mid,'content':event['content']},seq)
                             continue
                         if event['type']=='preview':
                             # Persist separately before delivery. Reload restores the
                             # unfinished revision without making it verified evidence.
                             preview.apply('preview',event)
-                            with db.connect(write=True) as conn:
-                                live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
-                                if not live or live['processing_token']!=token:raise asyncio.CancelledError()
-                                preview.save(conn,mid)
+                            await run_in_threadpool(persist_progress,'preview',None)
                             seq+=1;yield packet('preview',{'message_id':mid,'text':event['text'],'reset':bool(event.get('reset')),'clear_ui':bool(event.get('clear_ui'))},seq)
                             continue
                         if event['type']=='delta':
                             if len((raw+event['text']).encode())>feature['limits']['messageBytes']:raise AIError('回复已达大小上限，已保留收到的部分。')
                             raw+=event['text']
                             # Persist before delivery, so cancellation cannot lose a chunk the user has seen.
-                            with db.connect(write=True) as conn:
-                                live=conn.execute('SELECT processing_token FROM conversations WHERE id=?',(cid,)).fetchone()
-                                if not live or live['processing_token']!=token:raise asyncio.CancelledError()
-                                conn.execute('UPDATE genui_messages SET raw=?,updated_at=? WHERE message_id=?',(raw,int(time.time()),mid))
+                            await run_in_threadpool(persist_progress,'delta',raw)
                             seq+=1;yield packet('delta',{'message_id':mid,'text':event['text'],'expanded_template':event.get('expanded_template',False)},seq)
                         elif event['type']=='complete':
                             result=event['result'];usage=event.get('usage',{})

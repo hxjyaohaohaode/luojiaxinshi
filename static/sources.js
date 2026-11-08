@@ -8,6 +8,20 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
   const expanded=new Map();let expansionOwner=null;
   const pendingPresets=new Set();
   const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${id}">${text}</button>`;
+  async function refresh(renderId,canApply=()=>true){
+    const view=captureUiContext(state);
+    const [result,channels,sync,auto]=await Promise.all([
+      api('/source-catalog'),api('/integrations'),api('/source-subscriptions'),api('/notice-automation'),
+    ]);
+    if(renderId!==state.renderId||!view.sameRoute()||!canApply())return false;
+    entries=result;integrations=channels;subscriptions=sync;automation=auto;
+    const button=$('[data-source-action="automation"]');
+    if(button)button.textContent='自动整理'+(auto.enabled?' · 已开启':' · 未开启');
+    const failed=$('[data-source-failures]');
+    if(failed){failed.hidden=!auto.counts?.failed;failed.textContent=auto.counts?.failed?auto.counts.failed+' 条整理失败':'';}
+    list();
+    return true;
+  }
   async function render(renderId){
     const view=captureUiContext(state);
     if(expansionOwner!==state.session?.user?.id){expanded.clear();expansionOwner=state.session?.user?.id;}
@@ -15,7 +29,7 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     $('#content').innerHTML=`<div class="page-title between"><div><h1>我的通知来源</h1></div></div>
       <div class="source-access row wrap">${action('选择学校官网','school-presets','','primary')}<button type="button" class="button" data-campus-import="accounts">导入公众号清单</button><span class="small muted">选好栏目后，持续接收学校发布的新通知。</span></div>
       <div class="toolbar source-toolbar"><h2>我常看的来源 <span class="muted small" id="catalog-total"></span></h2>${searchControls({id:"source",esc,icon,scope:"sources",kinds:Object.entries(platforms)})}${action(icon('plus')+' 添加来源','add','','primary')}</div><div id="source-catalog-list" class="source-catalog-list"></div><nav id="source-pages" class="calendar-pagination" aria-label="来源分页" hidden></nav>
-      <div class="source-access row wrap">${action('能接入哪些平台 '+icon('arrow'),'platforms','','small plain')}${action('自动整理'+(automation.enabled?' · 已开启':' · 未开启'),'automation','','small')}${automation.counts?.failed?`<span class="small">${automation.counts.failed} 条整理失败</span>`:''}</div>`;
+      <div class="source-access row wrap">${action('能接入哪些平台 '+icon('arrow'),'platforms','','small plain')}${action('自动整理'+(automation.enabled?' · 已开启':' · 未开启'),'automation','','small')}<span class="small" data-source-failures ${automation.counts?.failed?'':'hidden'}>${automation.counts?.failed?automation.counts.failed+' 条整理失败':''}</span></div>`;
     searchController=new WorkspaceSearch(document.querySelector('[data-search-host="source"]'),{api,scope:'sources',onResult:result=>{matchedIds=new Set(result.items.map(s=>s.id));query=result.query;page=1;list();},onError:message=>toast(message,true)});list();
   }
   async function schoolPresetsDialog(){
@@ -186,5 +200,5 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     try{const fd=new FormData(form),payload=Object.fromEntries(fd);payload.followed=payload.platform==='wechat_public'&&fd.get('followed')==='on';if(selected)payload.version=selected.version;await api('/source-catalog'+(selected?'/'+selected.id:''),{method:selected?'PUT':'POST',json:payload});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await render(routeId);toast('来源存好了，下次提交可以直接选。');}
     catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;finishFeedback();}
   });
-  return {render};
+  return {render,refresh};
 }

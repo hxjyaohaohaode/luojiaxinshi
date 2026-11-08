@@ -274,16 +274,19 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     if(context.sameRoute()){checked.clear();clearDetail();navDirty=true;await render();}toast(`已${{archive:'归档',activate:'启用',forget:'遗忘'}[action]} ${items.length} 条记忆。`);
   }
   async function poll(){
-    const user=current();if(!user||location.hash.split('/')[0]!=='#memory'||document.visibilityState==='hidden'||polling||controller||pendingWrites)return;
+    const user=current();
+    if(!user||location.hash.split('/')[0]!=='#memory'||document.visibilityState==='hidden'||polling||controller||pendingWrites||loading.size)return false;
     polling=true;lastPollAt=Date.now();const context=captureUiContext(state);
     try{
-      const data=await api('/memory/tree/status');if(user!==current()||!context.sameRoute())return;
+      const data=await api('/memory/tree/status');
+      if(user!==current()||!context.sameRoute()||controller||pendingWrites||loading.size)return false;
       indexing=!!(data.jobs.queued||data.jobs.running);
       if(lastToken&&lastToken!==data.token){
         const interacting=selected||$('#memory-inline-editor')||$('dialog[open]')||checked.size||$('.memory-tools[open]')||document.activeElement?.closest('#memory-tree-nav,.memory-manage-button')||document.activeElement?.matches('#memory-search,[data-tree-check]');
         navDirty=true;if(interacting){pendingUpdate=true;updateNotice('记忆有新变化。你正在改的和选中的都会保留，忙完再刷新列表就好。',true);}else await render({navigation:true,quiet:true});
       }else if(!lastToken)lastToken=data.token;
-    }catch{}finally{polling=false;}
+      return true;
+    }catch{return false;}finally{polling=false;}
   }
   document.addEventListener('input',e=>{if(e.target.id!=='memory-search'||!$('.memory-tree-page')||e.isComposing)return;query[mode]=e.target.value;page=0;checked.clear();clearTimeout(timer);timer=setTimeout(render,250);});
   document.addEventListener('compositionend',e=>{if(e.target.id==='memory-search')e.target.dispatchEvent(new Event('input',{bubbles:true}));});
@@ -356,6 +359,6 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
   window.addEventListener('online',poll);document.addEventListener('visibilitychange',poll);window.addEventListener('focus',poll);
   window.addEventListener('hashchange',()=>{current();if(location.hash.split('/')[0]!=='#memory'){controller?.abort();revision++;overlay(false);}});
   matchMedia('(max-width:1200px)').addEventListener('change',()=>overlay(!!selected));
-  return {render,write,clearPrivate(){drafts.clear();owner=null;selected='';overlay(false);},
+  return {render,poll,write,clearPrivate(){drafts.clear();owner=null;selected='';overlay(false);},
     projectDeleted(){node='';page=0;selected='';tree.clear();expanded.clear();checked.clear();navDirty=true;}};
 }

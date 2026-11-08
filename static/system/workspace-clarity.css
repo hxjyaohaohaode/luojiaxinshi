@@ -55,6 +55,9 @@
 .task-more > summary { display:grid; place-items:center; width:36px; height:36px; list-style:none; cursor:pointer; font-size:20px; color:var(--muted); }
 .task-more > summary::-webkit-details-marker { display:none; }
 .task-more-menu { position:absolute; z-index:40; top:35px; right:0; display:grid; gap:2px; min-width:142px; padding:5px; border:1px solid #e1e7e3; border-radius:8px; background:var(--surface,#fff); box-shadow:0 5px 20px #18302412; }
+.task-board .task-more-menu { left:0; right:auto; }
+[data-collaboration-files] { border:0; margin:0; min-width:0; padding:0; }
+[data-collaboration-files] > legend { font-weight:600; margin-bottom:6px; padding:0; }
 .task-more-menu .button { justify-content:start; white-space:nowrap; }
 .task-more-menu > a { display:flex; align-items:center; gap:6px; padding:8px; font-size:13px; }
 .task-row .task-actions { align-self:start; padding:0; margin:0; }

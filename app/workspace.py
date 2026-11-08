@@ -292,20 +292,22 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 raise HTTPException(413,'本会话内容已较长，请新建对话继续；原回复未中断，你的补充草稿仍保留。')
 
     def prepare_send(cid,payload,current):
+        from .agent_runtime.briefing import exact_task_count
+        local_count=exact_task_count(payload)
         with db.connect() as conn:
             own(conn,cid,current['id'])
             if conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND request_id=?',(cid,payload.request_id)).fetchone():
                 check_replay(conn,cid,payload)
                 return None,conversation_detail(conn,cid,current['id'],settings)
             validate_inputs(conn,cid,payload)
-        if settings.ai_api_key and not payload.allow_external_processing:
+        if settings.ai_api_key and not payload.allow_external_processing and not local_count:
             raise HTTPException(422,'请确认本会话材料可发送到所配置的模型服务')
-        if not heavy_lock.acquire(blocking=False):
+        if not local_count and not heavy_lock.acquire(blocking=False):
             raise HTTPException(429,'助手正在处理其他请求，请稍后重试')
         token=secrets.token_urlsafe(24);mid=ident();now=int(time.time())
         try:
             rate_limit(db,'chat-submit:'+current['id'],40,3600)
-            if settings.ai_api_key:
+            if settings.ai_api_key and not local_count:
                 day=datetime.now(timezone(timedelta(hours=8))).date().isoformat()
                 rate_limit(db,'ai:'+current['id']+':'+day,settings.ai_daily_limit,86400)
             with db.connect(write=True) as conn:
@@ -343,6 +345,30 @@ def install_workspace(app,db,settings,user,heavy_lock):
                             conn.execute('INSERT INTO genui_interactions VALUES(?,?,?)',(parent,incoming.ui_context.message_id,dumps(interaction)))
                     if conversation['title']=='新的校园对话':
                         conn.execute('UPDATE conversations SET title=? WHERE id=?',(inputs[0].content[:40],cid))
+                if local_count:
+                    from .agent_runtime.briefing import count_snapshot
+                    from .conversation_tools import select_reply
+                    from .genui_api import message_parts
+                    answer,counts=count_snapshot(conn,current['id'])
+                    receipt={'status':'checked','planning_mode':'host_workspace_count','attempts':0,
+                             'checked_at':now,'count_snapshot':counts,'usage':{'input_tokens':0,'output_tokens':0}}
+                    evidence={'id':'workspace-task-count','name':'我的待办 · 保存记录','evidence_kind':'task',
+                              'href':'#tasks','sections':[{'locator':'本次查询统计','text':answer}]}
+                    citation={'source_id':evidence['id'],'locator':'本次查询统计','quote':answer,
+                              'href':'#tasks','name':evidence['name']}
+                    conn.execute("""INSERT INTO conversation_messages
+                        (id,conversation_id,role,content,status,request_id,parent_id,citations,created_at)
+                        VALUES(?,?,'assistant',?,'complete',?,?,?,?)""",
+                        (mid,cid,answer,payload.request_id,parent,dumps([citation]),now))
+                    parts=message_parts(answer,3,True,settings.genui_limits,{})
+                    conn.execute("""INSERT INTO genui_messages
+                        (message_id,raw,parts,tier,validated,ai_label,updated_at) VALUES(?,?,?,3,1,'系统汇总',?)""",
+                        (mid,answer,dumps(parts),now))
+                    conn.execute('INSERT INTO reply_grounding(message_id,sources,report) VALUES(?,?,?)',
+                                 (mid,dumps([evidence]),dumps(receipt)))
+                    select_reply(conn,mid)
+                    changed(conn,cid)
+                    return {'local':True},conversation_detail(conn,cid,current['id'],settings)
                 messages=[]
                 interactions=interaction_index(conn,cid)
                 for m in logical_messages(conn,cid):
@@ -404,12 +430,12 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 app.state.execution.start(conn,mid,current['id'],'conversation',cid,token)
             return {'token':token,'mid':mid,'sources':sources,'messages':messages},None
         except BaseException:
-            heavy_lock.release()
+            if not local_count:heavy_lock.release()
             raise
 
     @app.post('/api/conversations/{cid}/messages')
     async def send(cid:str,payload:SendMessage,current=Depends(user)):
-        prepared,existing=prepare_send(cid,payload,current)
+        prepared,existing=await run_in_threadpool(prepare_send,cid,payload,current)
         if existing is not None:
             return existing
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))

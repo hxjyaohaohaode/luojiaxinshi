@@ -8,6 +8,7 @@ from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import socket
@@ -74,6 +75,7 @@ def main():
                 'password':password,'accepted_terms':True})
     clients=[]
     metrics=[]
+    operation_metrics={}
     mutex=threading.Lock()
     worker=None
     log=None
@@ -85,6 +87,8 @@ def main():
         elapsed=(time.perf_counter()-before)*1000
         with mutex:
             metrics.append((elapsed,response.status_code))
+            route=re.sub(r'(?<=/)[a-f0-9]{32}(?=/|$)','{id}',path)
+            operation_metrics.setdefault((method,route,response.status_code),[]).append(elapsed)
         if response.status_code!=expected:
             raise AssertionError(f'{method} {path}: expected {expected}, got {response.status_code}: {response.text[:500]}')
         return response
@@ -226,10 +230,18 @@ def main():
             assert request(client,'GET','/api/edit-cache/new-notice').json()['revision']==NOTICES_PER_USER
         timings=sorted(elapsed for elapsed,_ in metrics)
         status_counts={str(code):sum(status==code for _,status in metrics) for code in sorted({code for _,code in metrics})}
+        operations=[]
+        for (method,route,status),samples in sorted(operation_metrics.items()):
+            values=sorted(samples)
+            operations.append({'method':method,'route':route,'status':status,'samples':len(values),
+                               'p50_ms':round(values[len(values)//2],1),
+                               'p95_ms':round(values[min(len(values)-1,int(.95*len(values)))],1),
+                               'max_ms':round(values[-1],1)})
         report={'verified_at':datetime.now(timezone.utc).isoformat(),'result':'passed',
                 'synthetic_test':True,'live_model_calls':0,'concurrent_users':USERS,
                 'notices_saved':USERS*NOTICES_PER_USER,'tasks_saved':USERS*NOTICES_PER_USER*2,
                 'http_requests':len(metrics),'response_status_counts':status_counts,
+                'operations':operations,
                 'workload_seconds':round(workload_seconds,2),
                 'request_latency_ms':{'median':round(timings[len(timings)//2],1),
                                       'p95':round(timings[int((len(timings)-1)*.95)],1),

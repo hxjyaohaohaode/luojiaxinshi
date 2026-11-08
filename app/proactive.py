@@ -93,22 +93,8 @@ def install(app,db,settings,user):
                 'obsolete_queued':stale,'poll_seconds':analysis_poll},'sources':sources,'delivery':channels,
             'external_delivery_verified':False,'note':'任务存活和配置存在不代表外部通道已送达；缺失与读取失败需分别核对。'}
 
-    @app.get('/api/proactive/revision')
-    def revision(current=Depends(user)):
-        uid=current['id'];now=int(time.time())
-        with db.connect() as conn:
-            values=[uid,now//60]
-            for sql in [
-                'SELECT count(*),coalesce(sum(version),0),max(updated_at) FROM notices WHERE user_id=?',
-                'SELECT count(*),coalesce(sum(version),0),max(updated_at) FROM tasks WHERE user_id=?',
-                'SELECT count(*),coalesce(sum(version),0),max(updated_at) FROM arrangements WHERE user_id=?',
-                'SELECT max(id) FROM audit WHERE user_id=?',
-                'SELECT count(*),coalesce(sum(version),0),max(updated_at) FROM notice_recommendation_feedback WHERE user_id=?',
-                'SELECT count(*),max(checked_at),max(error) FROM source_subscriptions WHERE user_id=?',
-                'SELECT profile,role FROM users WHERE id=?',
-                'SELECT role,version FROM campus_members WHERE user_id=?',
-            ]:values.append([list(r) for r in conn.execute(sql,(uid,))])
-        return {'revision':hashlib.sha256(dumps(values).encode()).hexdigest(),'poll_after_seconds':15,'temporal_precision_seconds':60}
+    from .workspace_sync import install as install_workspace_sync
+    install_workspace_sync(app,db,user)
 
     @app.put('/api/proactive/notices/{nid}/feedback')
     def feedback(nid:str,payload:Feedback,current=Depends(user)):

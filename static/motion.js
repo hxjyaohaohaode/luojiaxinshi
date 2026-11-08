@@ -60,7 +60,7 @@ export function beginRouteFeedback(content,title='正在打开你的空间'){
   activeRouteFeedback=finish;return finish;
 }
 
-export function initializeMotion(){
+export function initializeMotion(savePreferences){
   if(installed)return;installed=true;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)'),visible=new Set(),observed=new Set();
   function synchronize(){
@@ -93,16 +93,44 @@ export function initializeMotion(){
   foregroundChanges.observe(document.body,{attributes:true,attributeFilter:['class']});
   const dialog=document.querySelector('#dialog');if(dialog)foregroundChanges.observe(dialog,{attributes:true,attributeFilter:['open']});
   document.addEventListener('visibilitychange',choose);reduced.addEventListener('change',synchronize);
+  let accountScoped=false;
+  function applyHints(){
+    document.querySelectorAll('[data-context-hint]').forEach(hint=>{
+      if(dismissed.has(hint.dataset.contextHint))hint.remove();
+    });
+  }
+  document.addEventListener('campus:display-preferences',event=>{
+    const profile=event.detail;
+    accountScoped=!!profile;
+    if(typeof profile?.motion_enabled==='boolean')enabled=profile.motion_enabled;
+    else try{enabled=localStorage.getItem(storageKey)!=='false';}catch{enabled=true;}
+    if(Array.isArray(profile?.dismissed_hints))dismissed=new Set(profile.dismissed_hints);
+    else try{dismissed=new Set(JSON.parse(localStorage.getItem(hintKey)||'[]'));}catch{dismissed=new Set();}
+    synchronize();applyHints();
+  });
   window.addEventListener('storage',event=>{
+    if(accountScoped)return;
     if(event.key===storageKey||event.key===null){enabled=event.key===null?true:event.newValue!=='false';synchronize();}
     if(event.key===hintKey){try{dismissed=new Set(JSON.parse(event.newValue||'[]'));}catch{return;}document.querySelectorAll('[data-context-hint]').forEach(hint=>{if(dismissed.has(hint.dataset.contextHint))hint.remove();});}
   });
   document.addEventListener('change',event=>{if(event.target.id==='interface-motion-enabled')setEnabled(event.target.checked);});
-  function setEnabled(value){enabled=value;try{localStorage.setItem(storageKey,String(enabled));}catch{}synchronize();}
+  function setEnabled(value){
+    enabled=value;
+    if(!savePreferences?.({motion_enabled:value}))try{localStorage.setItem(storageKey,String(enabled));}catch{}
+    synchronize();
+  }
   document.addEventListener('click',event=>{
     if(event.target.closest('[data-motion-toggle]'))setEnabled(!enabled);
     const dismiss=event.target.closest('[data-dismiss-hint]');
-    if(dismiss){dismissed.add(dismiss.dataset.dismissHint);try{localStorage.setItem(hintKey,JSON.stringify([...dismissed]));}catch{}const hint=dismiss.closest('[data-context-hint]'),next=hint?.nextElementSibling?.querySelector('input,button,a')||document.querySelector('#content');hint?.remove();next?.focus({preventScroll:true});}
-    if(event.target.closest('[data-restore-hints]')){dismissed.clear();try{localStorage.removeItem(hintKey);}catch{}event.target.closest('button').textContent='小提示已恢复，下次打开相关页面时显示';}
+    if(dismiss){
+      dismissed.add(dismiss.dataset.dismissHint);
+      if(!savePreferences?.({dismissed_hints:[...dismissed]}))try{localStorage.setItem(hintKey,JSON.stringify([...dismissed]));}catch{}
+      const hint=dismiss.closest('[data-context-hint]'),next=hint?.nextElementSibling?.querySelector('input,button,a')||document.querySelector('#content');hint?.remove();next?.focus({preventScroll:true});
+    }
+    if(event.target.closest('[data-restore-hints]')){
+      dismissed.clear();
+      if(!savePreferences?.({dismissed_hints:[]}))try{localStorage.removeItem(hintKey);}catch{}
+      event.target.closest('button').textContent='小提示已恢复，下次打开相关页面时显示';
+    }
   });
 }

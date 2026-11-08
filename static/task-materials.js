@@ -2,7 +2,7 @@
 export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onSubmission,savedDraft=null,onChange=()=>{}}){
   const owner=state.session?.user?.id,dialog=state.dialogRequest;
   let bundle=null,replacing=null,busy=false,requestId=crypto.randomUUID();
-  let submissionDraft=savedDraft||{};
+  let submissionDraft=savedDraft||{},pendingEditors=false;
   const draftFields=['channel','time','receipt','url','note'];
   function snapshot(){
     if(!host.querySelector('[data-submission-channel]'))return submissionDraft;
@@ -10,10 +10,10 @@ export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onS
       files:Object.fromEntries([...host.querySelectorAll('[data-submission-file]')].map(node=>[node.dataset.submissionFile,{checked:node.checked,version:host.querySelector(`[data-submission-version="${node.dataset.submissionFile}"]`).value}])),
       external:[...host.querySelectorAll('[data-submission-external]:checked')].map(node=>node.value),open:host.querySelector('.personal-submission-editor').open};
   }
-  function restoreDraft(value){
+  function restoreDraft(value,{skipNew=false}={}){
     for(const key of draftFields)if(value.values?.[key]!==undefined)host.querySelector('[data-submission-'+key+']').value=value.values[key];
     host.querySelector('[data-submission-confirm]').checked=!!value.confirmed;
-    for(const node of host.querySelectorAll('[data-submission-file]')){const selected=value.files?.[node.dataset.submissionFile];if(selected){node.checked=selected.checked;host.querySelector(`[data-submission-version="${node.dataset.submissionFile}"]`).value=selected.version;}}
+    for(const node of host.querySelectorAll('[data-submission-file]')){const selected=value.files?.[node.dataset.submissionFile];if(selected){node.checked=selected.checked;host.querySelector(`[data-submission-version="${node.dataset.submissionFile}"]`).value=selected.version;}else if(skipNew)node.checked=false;}
     for(const node of host.querySelectorAll('[data-submission-external]'))node.checked=!!value.external?.includes(node.value);
     host.querySelector('.personal-submission-editor').open=!!value.open;
     if(value.request_id)requestId=value.request_id;
@@ -28,19 +28,61 @@ export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onS
   const formatDate=value=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short',hour12:false}).format(new Date(typeof value==='number'?value*1000:value));
   const url=version=>esc(version.download_url);
   const versionMarkup=version=>`<div class="personal-file-version"><div class="between"><span>版本 ${version.version} · ${esc(version.name)} · ${Math.ceil(version.size/1024)} KB</span><a class="button small plain" href="${url(version)}">下载</a></div>${version.image_preview?`<img class="personal-file-preview" loading="lazy" src="${url(version)}?preview=true" alt="${esc(version.name)}">`:version.preview?`<pre class="personal-file-text">${esc(version.preview)}</pre>`:''}${version.warning?`<p class="small muted">${esc(version.warning)}</p>`:''}</div>`;
-  function render(){
+  function render(previous=null){
     if(!current())return;
     submissionDraft=snapshot();
     const requirements=bundle.requirements,submissions=bundle.submissions;
-    host.innerHTML=`<div class="between"><h3>本人办理材料</h3><div class="row wrap"><span class="small muted">${bundle.materials.length} 份</span>${bundle.materials.length?`<a class="button small" href="/api/tasks/${task.id}/materials/package">下载材料包</a>`:''}</div></div><div class="personal-file-list">${bundle.materials.map(material=>{
+    const markup=`<div class="between personal-material-heading"><h3>本人办理材料</h3><div class="row wrap"><span class="small muted">${bundle.materials.length} 份</span>${bundle.materials.length?`<a class="button small" href="/api/tasks/${task.id}/materials/package">下载材料包</a>`:''}</div></div><div class="personal-file-list">${bundle.materials.map(material=>{
       const latest=material.versions[0];return `<article class="personal-file"><div class="between"><div><strong>${esc(latest.name)}</strong><p class="small muted">${esc(material.requirement||'其他补充材料')}${material.requirement&&!material.matches_requirement?' · 原要求已变化，请核对归属':''}</p></div><button type="button" class="button small plain" data-replace-material="${material.id}">上传新版本</button></div><div class="row wrap small"><span>版本 ${latest.version} · ${Math.ceil(latest.size/1024)} KB</span><a href="${url(latest)}">下载当前文件</a><span>${formatDate(latest.created_at)}</span></div>${latest.image_preview?`<img class="personal-file-preview" loading="lazy" src="${url(latest)}?preview=true" alt="${esc(latest.name)}">`:''}${latest.preview||latest.warning?`<details><summary>查看文件内容</summary>${latest.preview?`<pre class="personal-file-text">${esc(latest.preview)}</pre>`:''}${latest.warning?`<p class="small muted">${esc(latest.warning)}</p>`:''}</details>`:''}${material.versions.length>1?`<details><summary>历史版本 · ${material.versions.length-1}</summary>${material.versions.slice(1).map(versionMarkup).join('')}</details>`:''}</article>`;
     }).join('')}</div><div class="personal-material-upload"><label class="field">对应材料要求<select data-material-requirement><option value="">其他补充材料</option>${requirements.map(value=>`<option value="${esc(value)}">${esc(value)}</option>`).join('')}</select></label><label class="field">本人准备的文件<input type="file" data-material-file accept=".pdf,.docx,.xlsx,.csv,.txt,.md,.png,.jpg,.jpeg,.webp,.mp4,.webm"></label><div class="row wrap"><button type="button" class="button" data-upload-material>保存本人材料</button><button type="button" class="button plain" data-cancel-replacement hidden>取消新版本</button><span class="small muted">每份最多 5 MB</span></div></div><p class="small" data-material-status role="status"></p><details class="personal-submission-editor"><summary>记录本次提交</summary><div class="stack"><div class="form-grid"><label class="field">实际提交渠道<input data-submission-channel maxlength="200" value="${esc(task.data.submission||'')}" placeholder="学院系统、邮件或线下办公室"></label><label class="field">实际提交时间（北京时间）<input type="datetime-local" data-submission-time value="${esc(timeInput(new Date().toISOString()))}"></label></div><label class="field">提交情况或凭证编号<textarea data-submission-receipt rows="2" maxlength="2000" placeholder="记录已发生的提交和凭证"></textarea></label><label class="field">凭证链接（选填）<input type="url" data-submission-url maxlength="2000"></label><div class="personal-submitted-files"><strong class="small">这次提交的文件版本</strong>${bundle.materials.map(material=>`<label class="personal-submitted-file"><input type="checkbox" data-submission-file="${material.id}" ${material.matches_requirement?'checked':''}><span>${esc(material.requirement||'其他补充材料')}</span><select data-submission-version="${material.id}" aria-label="${esc(material.requirement||'补充材料')}提交版本">${material.versions.map(version=>`<option value="${version.version}">版本 ${version.version} · ${esc(version.name)}</option>`).join('')}</select></label>`).join('')||'<p class="small muted">尚未上传本次文件；在外部提交的材料可在下方记录。</p>'}</div>${requirements.length?`<details><summary>已在外部提交、未附文件的材料</summary>${requirements.map(value=>`<label class="check"><input type="checkbox" data-submission-external value="${esc(value)}"><span>${esc(value)}</span></label>`).join('')}</details>`:''}<label class="field">本次备注（选填）<textarea data-submission-note rows="2" maxlength="2000"></textarea></label><label class="check"><input type="checkbox" data-submission-confirm><span>以上是本人实际提交记录，尚不代表学校受理。</span></label><button type="button" class="button primary" data-record-submission>记录本次提交</button></div></details><details class="personal-submission-history" ${submissions.length?'open':''}><summary>本人提交记录 · ${submissions.length}</summary>${submissions.map(record=>`<article class="personal-submission"><div class="between"><strong>${esc(record.data.channel)}</strong><a class="button small plain" href="/api/tasks/${task.id}/materials/package?submission_id=${encodeURIComponent(record.id)}">下载此次提交包</a></div><p class="small">${formatDate(record.data.submitted_at)} · 本人记录</p><p>${esc(record.data.receipt)}</p>${record.data.receipt_url?`<a href="${esc(record.data.receipt_url)}" target="_blank" rel="noopener noreferrer">查看凭证</a>`:''}${record.data.files.map(file=>`<p class="small"><a href="${url(file)}">${esc(file.name)} · 版本 ${file.version}</a>${file.requirement?' · '+esc(file.requirement):''}</p>`).join('')}${record.data.external_requirements.length?`<p class="small">外部提交：${esc(record.data.external_requirements.join('、'))}</p>`:''}${record.data.note?`<p class="small">${esc(record.data.note)}</p>`:''}</article>`).join('')}</details>`;
+    if(!previous){
+      host.innerHTML=markup;
+      pendingEditors=false;
+      return;
+    }
+    const template=document.createElement('template');
+    template.innerHTML=markup;
+    const selectors=[];
+    if(JSON.stringify(previous.materials)!==JSON.stringify(bundle.materials))selectors.push('.personal-material-heading','.personal-file-list');
+    if(JSON.stringify(previous.submissions)!==JSON.stringify(bundle.submissions))selectors.push('.personal-submission-history');
+    for(const selector of selectors)host.querySelector(selector).replaceWith(template.content.querySelector(selector));
+    pendingEditors=true;
   }
+  function editorsInUse(){
+    return replacing||host.querySelector('[data-material-file]')?.files.length||
+      document.activeElement?.closest('.personal-material-upload,.personal-submission-editor')?.parentElement===host;
+  }
+  function refreshEditors(){
+    if(!current()||busy||!pendingEditors||editorsInUse())return;
+    const requirement=host.querySelector('[data-material-requirement]')?.value||'';
+    render();
+    restoreDraft(submissionDraft,{skipNew:true});
+    const select=host.querySelector('[data-material-requirement]');
+    if([...select.options].some(option=>option.value===requirement))select.value=requirement;
+    syncMode();
+  }
+  async function refresh(){
+    if(!current()||busy)return false;
+    const previous=bundle;
+    const result=await api(`/tasks/${task.id}/materials`);
+    if(!current()||busy||bundle!==previous)return false;
+    if(JSON.stringify(result)===JSON.stringify(previous))return true;
+    bundle=result;
+    if(previous&&editorsInUse())render(previous);
+    else {
+      pendingEditors=true;
+      refreshEditors();
+    }
+    syncMode();
+    return true;
+  }
+  host.addEventListener('focusout',()=>setTimeout(refreshEditors,0));
   host.closest('form').addEventListener('change',event=>{if(event.target.name==='execution_mode')syncMode();});
   async function load(){
+    const previous=bundle;
     host.innerHTML='<p class="small" role="status">正在读取本人材料…</p>';
-    try{const result=await api(`/tasks/${task.id}/materials`);if(!current())return;bundle=result;render();restoreDraft(submissionDraft);syncMode();}
-    catch(error){if(current())host.innerHTML=`<p class="alert error" role="alert">${esc(error.message)}</p><button type="button" class="button small" data-reload-materials>重新读取材料</button>`;}
+    try{const result=await api(`/tasks/${task.id}/materials`);if(!current()||busy||bundle!==previous)return;bundle=result;render();restoreDraft(submissionDraft);syncMode();}
+    catch(error){if(current()&&bundle===previous)host.innerHTML=`<p class="alert error" role="alert">${esc(error.message)}</p><button type="button" class="button small" data-reload-materials>重新读取材料</button>`;}
   }
   async function upload(){
     if(busy||!bundle)return;
@@ -90,5 +132,5 @@ export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onS
     try{const result=await api(`/tasks/${task.id}/materials`,{method:'POST',body:data});if(!current())return;bundle=result;render();restoreDraft(submissionDraft);syncMode();onChange();}
     finally{busy=false;}
   }
-  return {collect,snapshot,addDraft};
+  return {collect,snapshot,addDraft,refresh};
 }

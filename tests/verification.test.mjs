@@ -4,12 +4,12 @@ import {setImmediate as tick} from 'node:timers/promises';
 import {createVerificationUI} from '../static/verification.js';
 
 function fixture(t,challengeWait=null){
-  const saved=globalThis.document,interval=globalThis.setInterval;const doc=new EventTarget();globalThis.document=doc;globalThis.setInterval=()=>0;
-  t.after(()=>{globalThis.document=saved;globalThis.setInterval=interval;});
+  const saved=globalThis.document,timeout=globalThis.setTimeout;const doc=new EventTarget();globalThis.document=doc;globalThis.setTimeout=()=>0;
+  t.after(()=>{globalThis.document=saved;globalThis.setTimeout=timeout;});
   const user={value:'initial.account'},agreed={checked:true},dest={value:'13800000000',reportValidity:()=>true},code={value:'123456'},status={},button={disabled:false,isConnected:true,textContent:'',closest:()=>group};
   const form={querySelector:selector=>selector==='[name=username]'?user:agreed};
-  const group={isConnected:true,dataset:{purpose:'register'},closest:()=>form,querySelector:selector=>({'[data-otp-contact]':null,'[data-otp-destination]':dest,'[data-otp-code]':code,'[data-otp-status]':status}[selector])};
-  const calls=[];const api=async(path,options)=>{calls.push({path,...options});if(path==='/auth/challenges'&&challengeWait)await challengeWait;return path==='/auth/challenges'?{challenge_id:'synthetic-challenge',retry_after:60,message:'sent'}:{verification_token:'synthetic-proof',expires_in:300};};
+  const group={isConnected:true,dataset:{purpose:'register'},closest:()=>form,querySelector:selector=>({'[data-otp-contact]':null,'[data-otp-destination]':dest,'[data-otp-code]':code,'[data-otp-status]':status,'[data-otp-send]':button}[selector])};
+  const calls=[];const api=async(path,options)=>{calls.push({path,...options});if(path==='/auth/challenges'&&challengeWait)await challengeWait;return path==='/auth/challenges'?{challenge_id:'synthetic-challenge',retry_after:60,expires_in:300,message:'sent'}:{verification_token:'synthetic-proof',expires_in:300};};
   const state={session:null};const ui=createVerificationUI({state,api,esc:String,toast:()=>{}});
   const send=async()=>{const e=new Event('click');Object.defineProperty(e,'target',{value:{closest:()=>button}});doc.dispatchEvent(e);await tick();};
   return {ui,send,calls,user,dest,code,group,button,status,state};

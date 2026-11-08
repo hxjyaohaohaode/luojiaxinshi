@@ -5,7 +5,7 @@ import json
 import time as clock
 from typing import Literal
 
-from fastapi import Depends, HTTPException, Response, Path as ApiPath
+from fastapi import Depends, HTTPException, Request, Response, Path as ApiPath
 from icalendar import Calendar, Event
 from pydantic import Field, field_validator, model_validator
 
@@ -156,9 +156,11 @@ def delete_arrangement(conn,uid,eid,payload):
 
 def install_schedule(app, db, user):
     @app.get('/api/arrangements')
-    def listing(current=Depends(user)):
+    def listing(request:Request,current=Depends(user)):
+        from .workspace_sync import projection
         with db.connect() as conn:
-            return [serialize(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=? ORDER BY created_at,id', (current['id'],))]
+            return projection(conn,request,current,'arrangements',('calendar',),lambda:[
+                serialize(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=? ORDER BY created_at,id',(current['id'],))])
 
     @app.get('/api/arrangements/requests/{request_id}')
     def request_status(request_id: str = ApiPath(min_length=16, max_length=80, pattern=r'^[a-zA-Z0-9_-]+$'), current=Depends(user)):

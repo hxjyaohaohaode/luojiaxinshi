@@ -13,7 +13,7 @@ export async function successTransition(form){
   button.setAttribute('aria-label','登录成功');button.removeAttribute('aria-busy');
   button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>';
   // This feedback follows a successful session response, never a submitted form.
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await new Promise(resolve=>setTimeout(resolve,420));
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches)await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 }
 export function passwordEditor(field,{creating=false,confirm=false}={}){
   return `<div class="auth-password-control">${field(creating?'设置密码':'密码','password','','password',`required ${creating?'minlength="12"':''} maxlength="256" autocomplete="${creating?'new-password':'current-password'}"`)}<button type="button" class="auth-eye" data-auth-show aria-label="显示密码" aria-pressed="false">${eye}</button></div>${confirm?field('确认密码','confirm_password','','password','required minlength="12" maxlength="256" autocomplete="new-password"'):''}${creating?`<div class="password-strength" data-password-strength><div class="password-strength-bars" aria-hidden="true">${'<i></i>'.repeat(4)}</div><span data-password-strength-label>强度：未输入</span></div><ul class="password-rules">${[['min','至少 12 个字符'],['max','不超过 256 个字符'],['match','两次输入一致']].map(([key,label])=>`<li data-password-rule="${key}">${circle}<span>${label}</span></li>`).join('')}</ul>`:''}`;

@@ -27,7 +27,8 @@ SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_source_inbox.mjs', 'source-inbox-browser'),
           ('verify_push_browser.mjs', 'push-browser'),
           ('verify_notice_matters.mjs', 'notice-matters-browser'),
-          ('verify_source_presets_ui.mjs', 'source-presets-browser')]
+          ('verify_source_presets_ui.mjs', 'source-presets-browser'),
+          ('verify_pilot_workspace.mjs', 'pilot-workspace-browser')]
 
 
 def reset_fixture_limits(data):
@@ -56,6 +57,7 @@ def main():
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
     env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
+    env['PILOT_BROWSER_FIXTURE']='1' if not selected or 'verify_pilot_workspace.mjs' in selected else '0'
     for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD'):
         env.pop(key, None)
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}

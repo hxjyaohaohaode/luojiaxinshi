@@ -8,6 +8,26 @@ import re
 CST=timezone(timedelta(hours=8))
 
 
+def exact_task_count(payload):
+    """Only a standalone count of saved records is computable without a model."""
+    if any((payload.retry_message_id,payload.regenerate_message_id,payload.steer_message_id,
+            payload.reply_to,payload.additional_messages,payload.ui_context,payload.source_ids)):
+        return False
+    text=re.sub(r'[\s？?。！!]+','',payload.content)
+    return bool(re.fullmatch(
+        r'(?:请(?:告诉我|查询)?|帮我查)?(?:我(?:的|现在|目前)?|当前(?:账号)?)'
+        r'(?:现在|目前)?(?:保存了|共有|一共有|有)?(?:多少|几)(?:条|项|件)(?:已保存的)?待办(?:记录)?'
+        r'|(?:请(?:告诉我|查询)?|帮我查)?我的待办(?:记录)?(?:一共|总共)?有(?:多少|几)(?:条|项|件)',
+        text))
+
+
+def count_snapshot(conn,uid):
+    counts={'pending':0,'done':0,'cancelled':0}
+    counts.update(dict(conn.execute('SELECT status,count(*) FROM tasks WHERE user_id=? GROUP BY status',(uid,))))
+    text=f"你当前保存了 {sum(counts.values())} 条待办记录。待完成 {counts['pending']} 条，已标记完成 {counts['done']} 条，已取消 {counts['cancelled']} 条。"
+    return text,counts
+
+
 def requested_attention_count(text):
     """Bind an unambiguous requested shortlist size, never infer task intent.
 

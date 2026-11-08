@@ -66,6 +66,11 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     assert.ok(taskId,'Task confirmation is a prerequisite for the remaining flow');
     await check('task body opens handling while source and edit controls retain separate actions',async()=>{
       await nav('tasks');
+      const grip=page.locator('.sidebar-resize');
+      if(!await grip.isVisible())await page.locator('.workspace-chrome-toggle').click();
+      await grip.press('End');
+      await page.locator('[data-task-view=board]').click();
+      await page.locator('.task-board').waitFor();
       const primary=page.locator(`.task-primary[data-workflow-task="${taskId}"]`),row=primary.locator('xpath=ancestor::div[contains(@class,"task-row")][1]');
       const box=await primary.boundingBox();assert.ok(box.width>100&&box.height>=32);
       await primary.click({position:{x:box.width-8,y:box.height-6}});await page.locator('#workflow-form').waitFor();await close();

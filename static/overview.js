@@ -45,7 +45,10 @@ export function createOverview({state,esc,icon,taskRow,noticeRow}) {
   }
   function render(){
     const data=overviewData(state.tasks,state.notices);
-    if(owner!==state.session.user.id){owner=state.session.user.id;section=data.pending.length?'tasks':data.notices.length?'notices':'tasks';}
+    if(owner!==state.session.user.id){
+      owner=state.session.user.id;
+      section=role()==='staff'&&data.followup.length?'followup':data.pending.length?'tasks':data.notices.length?'notices':'tasks';
+    }
     const title=role()==='student'?'我的事务':role()==='teacher'?'教学与个人事务':role()==='staff'?'工作与个人事务':'我的事务';
     $('#content').innerHTML=`<section class="personal-home" data-home-context="personal"><header class="home-heading"><div><h1>${title}</h1><p>${new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'long'}).format(new Date())}</p></div><a class="button primary small" href="#new">${icon('plus')} 收通知</a></header>
       <div class="home-counts" aria-label="个人事务概览"><a href="#tasks" data-overview-filter="pending">待办 <b>${data.pending.length}</b></a><a href="#notices">通知 <b>${data.notices.length}</b></a><a href="#tasks" data-overview-filter="followup">待跟进 <b>${data.followup.length}</b></a></div>

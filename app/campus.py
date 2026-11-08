@@ -171,6 +171,15 @@ def membership(conn, uid):
     return result
 
 
+def affiliation_evidence(conn,uid):
+    member=membership(conn,uid)
+    if not member:return None
+    return {'authority':'本站经管理员授权的学院身份，用于站内范围核对',
+            'role':member['role'],'college':member['college_name'],
+            'grade':member['grade'],'class_name':member['class_name'],
+            'scopes':member['scopes']}
+
+
 def manager(conn, current, college_id):
     college(conn, college_id)
     if current['role'] == 'admin':

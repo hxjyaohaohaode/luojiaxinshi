@@ -99,6 +99,8 @@ npm ci --ignore-scripts
 
 ## 保留的异步交互回归
 
+试点联动使用 `python scripts/run_browser_checks.py --suite verify_pilot_workspace.mjs` 在 Chromium、Firefox、WebKit 各开独立电脑、手机尺寸和接收人会话。覆盖真实注册提交、独立会话、设置更新、通知转待办、日程、正在编辑的办理详情、站内协作及断线恢复。记录每步 HTTP 状态、请求耗时和另一端可见耗时，前台本机的更新目标是五秒内。验证码由隔离服务捕获，浏览器和数据写入是真实执行。完整回归默认包含本套件；详细口径见 [试点链路](docs/proactive/PILOT_RUNTIME.md)。
+
 `scripts/verify_ui_continuity.mjs`、`verify_draft_continuity.mjs` 和 `verify_arrangement_recovery.mjs` 覆盖延迟保存后切页、并发草稿编辑、已保存但响应丢失、清理草稿失败及重新加载恢复。这些不是一次性截图脚本，保留在仓库中。
 
 统一运行 `python scripts/run_continuity_browser_checks.py`，它为每组检查创建并清理自己拥有的全新夹具，执行所有默认浏览器和尺寸；原脚本仍可单独诊断。协调器清除场景／视口过滤环境变量，并核对全部声明浏览器及尺寸，不允许局部选择冒充全套。报告保留场景原文并汇总真实检查，空场景、失败、缺失报告及超时均失败。它已加入 CI 的 `continuity` 作业；只有本次提交的实际结果才能证明通过。
@@ -152,7 +154,7 @@ npm ci --ignore-scripts
 
 最后一次代码修改后重新执行全部检查，以同一份源码为基础。整轮之间修改代码，原批次只保留为诊断记录，不计为冻结版本通过。完整入口和范围见 [main 整轮验收](docs/proactive/MAIN_SYNC.md)，CI 的全部任务见 `.github/workflows/checks.yml`。
 
-后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、十二组通用浏览器、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
+后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、十四组通用浏览器、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
 
 本地完整一轮通过后再正常推送，检查新 main 提交实际触发的 Actions 全部 jobs，再确认功能分支已合入并清理。旧提交、局部补跑、离线模型夹具及桌面模拟视口不替代当前 main CI、真实渠道或真实试点验收。
 

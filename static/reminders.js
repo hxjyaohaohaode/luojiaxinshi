@@ -1,8 +1,8 @@
 // Read/archive state belongs to the account; task completion stays independent.
 import {captureUiContext} from './ui-request.js';
-const KIND_ICON = {overdue:'clock', due:'calendar', reminder:'bell', followup:'history', change:'shield', arrangement:'calendar',notice_event:'calendar', notice:'doc'};
+const KIND_ICON = {overdue:'clock', due:'calendar', reminder:'bell', followup:'history', change:'shield', arrangement:'calendar',notice_event:'calendar', notice:'doc',collaboration:'check'};
 const NOTIFIED_KEY = 'campus.reminders.notified', ENABLED_KEY = 'campus.reminders.browser';
-const REMINDER_GROUPS=[['overdue','已过期限'],['due','即将截止'],['change','通知变更'],['followup','等待跟进'],['reminder','个人提醒'],['calendar','日程安排'],['notice','待整理通知'],['other','其他提醒']];
+const REMINDER_GROUPS=[['overdue','已过期限'],['due','即将截止'],['change','通知变更'],['collaboration','协作办理'],['followup','等待跟进'],['reminder','个人提醒'],['calendar','日程安排'],['notice','待整理通知'],['other','其他提醒']];
 export function reminderGroups(items){
   const key=item=>['arrangement','notice_event'].includes(item.kind)?'calendar':REMINDER_GROUPS.some(([kind])=>kind===item.kind)?item.kind:'other';
   return REMINDER_GROUPS.map(([id,label])=>({id,label,items:items.filter(item=>key(item)===id)})).filter(group=>group.items.length);
@@ -21,6 +21,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   function notified() { try { return new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY)||'[]')); } catch { return new Set(); } }
   function remember(key) { const seen=notified();seen.add(key);try { localStorage.setItem(NOTIFIED_KEY,JSON.stringify([...seen].slice(-200))); } catch {} }
   function target(item) {
+    if(item.case_id)return '#collaboration/'+encodeURIComponent(item.case_id);
     if(item.task_id)return '#tasks/'+encodeURIComponent(item.task_id);
     if(item.arrangement_id)return '#calendar/'+encodeURIComponent(item.arrangement_id);
     if(item.notice_id)return '#notice/'+encodeURIComponent(item.notice_id);
@@ -112,7 +113,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   }
   function summary(limit=4) {
     if(!data)return '';const seen=new Set(),unread=unreadItems();
-    const items=unread.filter(item=>{if(item.level==='info'&&item.kind!=='arrangement')return false;const key=item.task_id||item.arrangement_id||item.kind;if(seen.has(key))return false;seen.add(key);return true;}).slice(0,limit);
+    const items=unread.filter(item=>{if(item.level==='info'&&item.kind!=='arrangement')return false;const key=item.task_id||item.arrangement_id||item.case_id||item.kind;if(seen.has(key))return false;seen.add(key);return true;}).slice(0,limit);
     return `${items.length?`<div class="reminder-list compact">${items.map(item=>itemLink(item,true)).join('')}</div>`:'<p class="small muted">暂无紧急未读提醒</p>'}<button type="button" class="link-button small" data-action="reminders">${unread.length?`查看全部 ${unread.length} 条未读提醒`:'查看提醒'}</button>`;
   }
   document.addEventListener('change',async event=>{

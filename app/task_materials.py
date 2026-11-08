@@ -107,7 +107,9 @@ def material_bundle(conn,task,uid):
     materials=[]
     for row in conn.execute('SELECT * FROM task_materials WHERE task_id=? AND user_id=? ORDER BY created_at,id',(task['id'],uid)):
         item=dict(row);item['matches_requirement']=bool(item['requirement'] and item['requirement'] in requirements)
-        item['versions']=[version_info(v,task['id']) for v in conn.execute('SELECT *,length(content) AS size FROM task_material_versions WHERE material_id=? ORDER BY version DESC',(row['id'],))]
+        item['versions']=[version_info(v,task['id']) for v in conn.execute('''SELECT material_id,version,name,kind,
+            sha256,parse_status,warning,sections,created_at,length(content) AS size FROM task_material_versions
+            WHERE material_id=? ORDER BY version DESC''',(row['id'],))]
         materials.append(item)
     submissions=[]
     for row in conn.execute('SELECT * FROM task_submission_records WHERE task_id=? AND user_id=? ORDER BY created_at DESC,rowid DESC',(task['id'],uid)):
@@ -177,7 +179,9 @@ def store_submission(conn,task,uid,payload,snapshot,workflow_version):
 def install_task_materials(app,db,settings,user,own_task,expect_version):
     @app.get('/api/tasks/{tid}/materials')
     def read_materials(tid:str,current=Depends(user)):
-        with db.connect() as conn:return material_bundle(conn,own_task(conn,tid,current['id']),current['id'])
+        with db.connect() as conn:
+            conn.execute('BEGIN')
+            return material_bundle(conn,own_task(conn,tid,current['id']),current['id'])
 
     @app.get('/api/tasks/{tid}/materials/package')
     def download_package(tid:str,submission_id:str='',current=Depends(user)):

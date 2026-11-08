@@ -10,7 +10,7 @@ const pretty=day=>new Intl.DateTimeFormat('zh-CN',{timeZone:'UTC',month:'long',d
 const tone=e=>e.kind==='course'?'tone-'+([...e.title].reduce((sum,ch)=>sum+ch.codePointAt(0),0)%4):'';
 const monthLabel=day=>`${Number(day.slice(0,4))} 年 ${Number(day.slice(5,7))} 月`;
 
-export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts}){
+export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts,saveDisplayPreferences}){
   let selected=dayKey(),view='month',owner=null,records=[],query='',showDone=false,visible=new Set(Object.keys(kinds)),entries=[],editRecord=null;
   const pendingCreates=new Set();
   let monthElement=null;
@@ -27,14 +27,23 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   const range=()=>view==='day'||(view==='list'&&listDay)?[selected,selected]:view==='week'?[startWeek(selected),addDays(startWeek(selected),6)]:[selected.slice(0,7)+'-01',addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1)];
   function filter(list){return list.filter(e=>visible.has(e.kind)&&(!query||(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));}
   const preferenceKey=()=>`luojia:calendar:${owner}`;
-  function saveDisplay(){try{localStorage.setItem(preferenceKey(),JSON.stringify({view,visible:[...visible],showDone}));}catch{}}
+  function readDisplay(){
+    const profile=state.session.user.profile;
+    if(profile.calendar_view&&profile.calendar_view!==view){view=profile.calendar_view;listDay=false;listPage=1;}
+    if(Array.isArray(profile.calendar_kinds))visible=new Set(profile.calendar_kinds);
+    if(typeof profile.calendar_show_done==='boolean')showDone=profile.calendar_show_done;
+    weekStartsOn=profile.week_starts_on??1;
+    for(const input of document.querySelectorAll('[data-calendar-kind]'))input.checked=visible.has(input.dataset.calendarKind);
+    for(const input of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))input.checked=showDone;
+  }
   function reset(){
     owner=state.session.user.id;selected=dayKey();listDay=false;listPage=1;view=phone.matches?'list':'month';query='';showDone=false;visible=new Set(Object.keys(kinds));records=[];weekStartsOn=state.session.user.profile.week_starts_on??1;
     try{const saved=JSON.parse(localStorage.getItem(preferenceKey())||'null');if(saved){if(['day','week','month','list'].includes(saved.view))view=saved.view;if(Array.isArray(saved.visible))visible=new Set(saved.visible.filter(k=>k in kinds));showDone=saved.showDone===true;}}catch{}
+    readDisplay();
   }
-  async function render(renderId=state.renderId){
+  async function render(renderId=state.renderId,projection){
     if(owner!==state.session.user.id)reset();
-    const items=await api('/arrangements');if(renderId!==state.renderId)return;records=items;
+    const items=projection??await api('/arrangements');if(renderId!==state.renderId)return;records=items;
     $('#content').innerHTML=`<section class="calendar-workspace"><h1 class="sr-only">我的日历</h1><div class="calendar-layout"><aside class="calendar-sidebar"><div id="calendar-mini"></div><details class="calendar-filters" open><summary>显示内容</summary><div class="calendar-filter-fields">${Object.entries(kinds).map(([k,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${k}" checked><i class="calendar-dot ${k}" aria-hidden="true"></i>${label}</label>`).join('')}<label class="check calendar-done"><input type="checkbox" id="calendar-show-done">包含已完成待办</label><label class="calendar-search"><span class="sr-only">搜索日历安排</span>${icon('search')}<input type="search" id="calendar-query" placeholder="查找安排" value="${esc(query)}"></label><div class="calendar-filter-actions"><button type="button" class="link-button small" data-calendar-action="reset-filters" hidden>重置筛选</button><button type="button" class="link-button small" data-calendar-action="undated" id="calendar-undated" hidden></button></div></div></details><div class="calendar-side-note">${companion('planning','calendar-companion')}<p>把时间理顺，<br>也留一点空白。</p></div></aside><div class="calendar-main"><header class="calendar-toolbar"><div class="calendar-navigation">${control(icon('back'),'previous','aria-label="上一个日期范围"','icon-button')}${control(icon('arrow'),'next','aria-label="下一个日期范围"','icon-button')}<h2><button type="button" id="calendar-title" class="calendar-date-trigger" data-calendar-action="date-picker" aria-label="点选日期、周或月份"></button></h2>${control('今','today','aria-label="回到今天"','small calendar-today')}</div><div class="calendar-tools"><button type="button" class="icon-button calendar-import" data-campus-import="courses" aria-label="导入课表" title="导入课表">${icon('down')}</button>${control(icon('settings'),'options','aria-label="显示与导出"','icon-button')}${control(icon('plus'),'new','aria-label="新建安排"','icon-button calendar-add')}</div><div class="tabs calendar-view-tabs" role="tablist" aria-label="日历视图">${[['day','日'],['week','周'],['month','月'],['list','列表']].map(([v,label])=>`<button type="button" role="tab" class="tab" data-calendar-view="${v}">${label}</button>`).join('')}</div></header><span id="calendar-count" class="sr-only" role="status"></span><div id="calendar-body" role="tabpanel" aria-label="日历安排"></div><section id="calendar-selection" class="calendar-selection"></section></div></div></section>`;
     for(const input of document.querySelectorAll('[data-calendar-kind]'))input.checked=visible.has(input.dataset.calendarKind);
     $('#calendar-show-done').checked=showDone;
@@ -43,7 +52,6 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   }
   function refresh(){
     if(!belongs())return;
-    saveDisplay();
     for(const input of document.querySelectorAll('#calendar-query,#calendar-option-query'))if(input.value!==query)input.value=query;
     monthResize.disconnect();monthElement=null;
     const positionKey=view+':'+selected,previousScroll=$('.time-calendar-scroll');
@@ -241,8 +249,8 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
         .catch(error=>{if(!view.sameUser())return;if(error.detail?.profile)state.session.user.profile=error.detail.profile;weekStartsOn=state.session.user.profile.week_starts_on;el.value=weekStartsOn;refresh();toast(error.message,true);}).finally(()=>{el.disabled=false;});
     }
     if(el.id==='picker-year'||el.id==='picker-month'){pickerMonth=$('#picker-year').value+'-'+$('#picker-month').value+'-01';datePicker();$('#'+el.id)?.focus({preventScroll:true});}
-    if(el.dataset.calendarKind){el.checked?visible.add(el.dataset.calendarKind):visible.delete(el.dataset.calendarKind);for(const input of document.querySelectorAll('[data-calendar-kind]'))input.checked=visible.has(input.dataset.calendarKind);refresh();}
-    if(el.id==='calendar-show-done'||el.id==='calendar-option-done'){showDone=el.checked;for(const input of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))input.checked=showDone;refresh();}
+    if(el.dataset.calendarKind){el.checked?visible.add(el.dataset.calendarKind):visible.delete(el.dataset.calendarKind);for(const input of document.querySelectorAll('[data-calendar-kind]'))input.checked=visible.has(input.dataset.calendarKind);saveDisplayPreferences?.({calendar_kinds:[...visible]});refresh();}
+    if(el.id==='calendar-show-done'||el.id==='calendar-option-done'){showDone=el.checked;for(const input of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))input.checked=showDone;saveDisplayPreferences?.({calendar_show_done:showDone});refresh();}
     if((el.id==='calendar-jump'||el.id==='calendar-option-date')&&el.value&&el.validity.valid){selected=el.value;view='day';listPage=1;refresh();}
     if(el.closest('#arrangement-form')){if(el.name==='start_date'&&el.value&&el.form.elements.end_date.value<el.value)el.form.elements.end_date.value=el.value;syncForm();stash();}
   });
@@ -265,7 +273,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   });
   document.addEventListener('click',async e=>{
     const tab=e.target.closest('[data-calendar-view]'),date=e.target.closest('[data-calendar-day]'),item=e.target.closest('[data-calendar-event]'),button=e.target.closest('[data-calendar-action]');
-    if(tab){view=tab.dataset.calendarView;listDay=false;listPage=1;refresh();}
+    if(tab){view=tab.dataset.calendarView;listDay=false;listPage=1;saveDisplayPreferences?.({calendar_view:view});refresh();}
     const cell=e.target.closest('[data-calendar-cell]');if(cell&&!item&&!button){selected=cell.dataset.calendarCell;view='week';refresh();return;}
     if(date){selected=date.dataset.calendarDay;listPage=1;if(date.closest('#calendar-mini')){if(view==='list')listDay=true;else view='day';}else if(date.classList.contains('month-date'))view='week';const focusMonth=date.classList.contains('month-date');refresh();if(focusMonth)$(`.time-grid-header [data-calendar-day="${selected}"]`)?.focus({preventScroll:true});else document.querySelector(`.period-week-header [data-calendar-day="${selected}"],.time-grid-header [data-calendar-day="${selected}"],#calendar-mini [data-calendar-day="${selected}"]`)?.focus({preventScroll:true});}
     if(item)detail(item.dataset.calendarEvent);
@@ -307,5 +315,11 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     const event=entries.find(e=>e.id===id);
     if(event)detail(event.key);else editor(record);
   }
-  return {render,refresh,persist:stash,openRecord};
+  function applyRecords(items){
+    if(!belongs()||owner!==state.session?.user?.id)return;
+    if(items)records=items;
+    readDisplay();
+    refresh();
+  }
+  return {render,refresh,applyRecords,persist:stash,openRecord};
 }

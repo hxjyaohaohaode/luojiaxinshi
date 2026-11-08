@@ -169,14 +169,21 @@ def minimal_run():
 
 
 def test_concurrent_same_scope_retrieval_is_coalesced_and_event_loop_remains_responsive(monkeypatch):
-    calls=[];finished=threading.Event()
+    calls=[];finished=threading.Event();entered=threading.Event();release=threading.Event()
     def slow(db,uid,*args):
-        calls.append(uid);time.sleep(.08);finished.set();return [],{'scanned':{'sections':1}}
+        calls.append(uid);entered.set()
+        assert release.wait(2),'Retrieval blocked the event loop'
+        finished.set()
+        return [],{'scanned':{'sections':1}}
     monkeypatch.setattr(grounding,'retrieve',slow)
     async def scenario():
         run=minimal_run();ticks=[]
         async def heartbeat():
-            for _ in range(4):await asyncio.sleep(.008);ticks.append(finished.is_set())
+            assert await asyncio.to_thread(entered.wait,2)
+            for _ in range(4):
+                await asyncio.sleep(0)
+                ticks.append(finished.is_set())
+            release.set()
         result=await asyncio.gather(run.local('申请',['library']),run.local('申请',['library']),heartbeat())
         assert result[0]==result[1] and len(ticks)==4 and not any(ticks) and calls==['owner']
         assert sum(item['cached'] for item in run.retrieval_metrics)==1

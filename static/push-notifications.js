@@ -68,19 +68,37 @@ export function createPushNotifications({state,api,esc,toast}){
   function start(){const uid=state.session?.user.id;if(!uid)return;if(owner===uid){return;}if(owner)stop();owner=uid;epoch++;config=null;status=null;subscription=null;binding=null;localEnabled=false;lastError='';feedback='';refresh();}
   function markup(){
     const unavailable=pushUnavailable(),device=(status?.devices||[]).find(item=>item.endpoint===subscription?.endpoint),disabled=busy?'disabled':'';
-    const headline=busy?'正在更新…':loading?'正在读取本机状态…':localEnabled?'本机已开启':lastError&&subscription?'本机状态待确认':'本机未开启';
+    const headline=busy?'正在更新…':loading&&!status?'正在读取本机状态…':localEnabled?'本机已开启':lastError&&subscription?'本机状态待确认':'本机未开启';
     const canEnable=!unavailable&&config?.supported&&config?.public_key&&typeof Notification!=='undefined'&&Notification.permission!=='denied';
     const other=Math.max(0,(status?.devices||[]).filter(item=>item.enabled!==false&&item.enabled!==0).length-(localPushDevice(status,subscription)?1:0));
-    return `<section class="push-settings stack" aria-labelledby="push-settings-title"><h3 id="push-settings-title">关闭页面提醒</h3><p class="small" role="status">${headline}${other?` · 其他 ${other} 台设备已开启`:''}</p>
+    return `<section class="push-settings stack" aria-labelledby="push-settings-title"><h3 id="push-settings-title">关闭页面提醒</h3><div class="stack" data-push-status><p class="small" role="status">${headline}${other?` · 其他 ${other} 台设备已开启`:''}</p>
       ${unavailable?`<p class="small muted">${esc(unavailable)}</p>`:typeof Notification!=='undefined'&&Notification.permission==='denied'?'<p class="small muted">通知权限已被拒绝，请在浏览器的网站设置中允许通知，再刷新状态。</p>':config&&!config.supported?'<p class="small muted">当前服务暂不支持推送。</p>':''}
       ${localEnabled?'<p class="small muted">可在关闭本页面后接收。浏览器、系统通知和网络仍会影响送达；退出账号会解除本机订阅。</p>':''}
       ${device?.error?`<p class="alert error">本机最近发送失败：${esc(device.error)}</p>`:''}
       ${device?.last_success?'<p class="small muted">本机最近一次已交给推送服务，尚不能确认设备展示。</p>':''}
       ${status?.last_delivery&&deliveryText(status.last_delivery)?`<p class="small muted">账号最近投递：${esc(deliveryText(status.last_delivery))}</p>`:''}
-      ${lastError?`<p class="alert error" role="alert">${esc(lastError)}</p>`:''}${feedback?`<p class="small" role="status">${esc(feedback)}</p>`:''}
-      <div class="row wrap">${subscription?`<button type="button" class="button small" data-push-action="disable" ${disabled}>关闭本机提醒</button>`:''}${localEnabled?`<button type="button" class="button small" data-push-action="test" ${disabled}>发送测试提醒</button>`:`<button type="button" class="button small" data-push-action="enable" ${disabled||(!canEnable?'disabled':'')}>开启本机提醒</button>`}<button type="button" class="button small plain" data-push-action="refresh" ${disabled}>刷新状态</button></div></section>`;
+      ${lastError?`<p class="alert error" role="alert">${esc(lastError)}</p>`:''}${feedback?`<p class="small" role="status">${esc(feedback)}</p>`:''}</div>
+      <div class="row wrap" data-push-controls>${subscription?`<button type="button" class="button small" data-push-action="disable" ${disabled}>关闭本机提醒</button>`:''}${localEnabled?`<button type="button" class="button small" data-push-action="test" ${disabled}>发送测试提醒</button>`:`<button type="button" class="button small" data-push-action="enable" ${disabled||(!canEnable?'disabled':'')}>开启本机提醒</button>`}<button type="button" class="button small plain" data-push-action="refresh" ${disabled}>刷新状态</button></div></section>`;
   }
-  function render(){const host=document.querySelector('[data-push-settings]');if(!host||!host.closest('dialog')?.open)return;const active=document.activeElement?.dataset?.pushAction;host.innerHTML=markup();if(active&&!busy)host.querySelector(`[data-push-action="${active}"]`)?.focus({preventScroll:true});}
+  function render(){
+    const host=document.querySelector('[data-push-settings]');
+    if(!host||!host.closest('dialog')?.open)return;
+    const template=document.createElement('template');template.innerHTML=markup();
+    const status=host.querySelector('[data-push-status]'),controls=host.querySelector('[data-push-controls]');
+    if(!status||!controls){host.replaceChildren(template.content);return;}
+    const nextStatus=template.content.querySelector('[data-push-status]');
+    if(!status.isEqualNode(nextStatus))status.replaceWith(nextStatus);
+    // A status refresh must not detach the action the user is about to click.
+    const previous=new Map(Array.from(controls.children,button=>[button.dataset.pushAction,button]));
+    const desired=template.content.querySelector('[data-push-controls]');
+    for(const [index,next] of Array.from(desired.children).entries()){
+      const key=next.dataset.pushAction,button=previous.get(key)||next;
+      button.disabled=next.disabled;
+      if(controls.children[index]!==button)controls.insertBefore(button,controls.children[index]||null);
+      previous.delete(key);
+    }
+    for(const button of previous.values())button.remove();
+  }
   async function enable(){
     if(busy||!owner||!config?.public_key||!supported())return;
     const session=state.session,version=epoch;

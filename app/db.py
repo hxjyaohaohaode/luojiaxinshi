@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS tasks(
  version INTEGER NOT NULL DEFAULT 1, exported_version INTEGER,
  created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS tasks_owner ON tasks(user_id,updated_at);
+CREATE INDEX IF NOT EXISTS tasks_notice ON tasks(notice_id);
+CREATE INDEX IF NOT EXISTS tasks_owner_status ON tasks(user_id,status);
 CREATE TABLE IF NOT EXISTS audit(
  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL,
  notice_id TEXT NOT NULL REFERENCES notices(id) ON DELETE CASCADE,
@@ -336,6 +338,12 @@ class Database:
             init_mail(conn)
             from .delivery_policy import initialize as init_delivery_policy
             init_delivery_policy(conn)
+            from .account import SCHEMA as CONSENT_SCHEMA
+            conn.executescript(CONSENT_SCHEMA)
+            from .collaboration import SCHEMA as COLLABORATION_SCHEMA
+            conn.executescript(COLLABORATION_SCHEMA)
+            from .workspace_sync import initialize as init_workspace_sync
+            init_workspace_sync(conn)
 
     @contextmanager
     def connect(self, write=False):

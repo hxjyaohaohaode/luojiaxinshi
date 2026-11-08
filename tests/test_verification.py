@@ -115,11 +115,38 @@ def test_contact_aliases_cannot_shadow_another_verified_phone(env):
 
 def test_email_hyphens_remain_meaningful_when_checking_account_aliases(env):
     app,_=env;c=anonymous(app)
-    token=proof(c,channel='sms',destination='13800000000')
+    token=proof(c,destination='student-name@example.invalid')
     assert c.post('/api/auth/register',json={'username':'student-name@example.invalid','password':PASSWORD,'display_name':'A','accepted_terms':True,'verification_token':token}).status_code==200
     other=anonymous(app)
     proof(other,destination='studentname@example.invalid')
     assert other.post('/api/auth/challenges',json={'purpose':'register','channel':'email','destination':'student-name@example.invalid'}).status_code==409
+
+
+def test_contact_shaped_account_alias_requires_proof_of_same_contact(env):
+    app,_=env;c=anonymous(app)
+    token=proof(c,channel='sms',destination='13800000000')
+    body={'username':'someone-else@example.invalid','password':PASSWORD,
+          'display_name':'合成账户','accepted_terms':True,'verification_token':token}
+    assert c.post('/api/auth/register',json=body).status_code==422
+    # The alias error rolls the proof consumption back, so a corrected form works.
+    response=c.post('/api/auth/register',json={**body,'username':'local-handle'})
+    assert response.status_code==200,response.text
+    assert response.json()['session']['user']['username']=='local-handle'
+
+
+def test_unmatched_request_and_different_purpose_do_not_invalidate_login_code(env):
+    c=account(env);app,_=env;advance_cooldown(app)
+    other=anonymous(app);provider=install_capture(app)
+    request={'purpose':'login','channel':'email','destination':'alice@example.invalid'}
+    original=other.post('/api/auth/challenges',json=request)
+    assert original.status_code==200,original.text
+    cid=original.json()['challenge_id']
+    decoy=other.post('/api/auth/challenges',json={**request,'username':'unrelated'})
+    assert decoy.status_code==200 and decoy.json()['challenge_id'] not in provider.codes
+    advance_cooldown(app)
+    assert c.post('/api/auth/challenges',json={**request,'purpose':'contact_authorize'}).status_code==200
+    checked=other.post('/api/auth/verify',json={'challenge_id':cid,'code':provider.codes[cid]})
+    assert checked.status_code==200,checked.text
 
 
 def test_future_verification_schema_is_rejected_before_any_migration(env):

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS auth_challenges(
  proof_hash TEXT UNIQUE, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,
  provider_id TEXT NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS auth_challenges_expiry ON auth_challenges(expires_at);
+CREATE INDEX IF NOT EXISTS auth_challenges_recipient ON auth_challenges(channel,destination,purpose,user_id,state);
 INSERT OR IGNORE INTO meta VALUES('verification_schema_version','1');
 """
 
@@ -88,6 +89,16 @@ def available_alias(conn, name):
     except HTTPException:return
     if conn.execute('SELECT 1 FROM verified_contacts WHERE channel=? AND value=?',(channel,value)).fetchone():
         raise HTTPException(409,'该账号名已经与其他账号的联系方式关联')
+
+
+def require_verified_alias(name, proof):
+    channel='email' if '@' in name else 'sms'
+    try:
+        value=normalize(channel,name)
+    except HTTPException:
+        return
+    if channel!=proof['channel'] or value!=proof['destination']:
+        raise HTTPException(422,{'code':'alias_proof_required','message':'使用手机号或邮箱作为账号名时，请先验证同一个联系方式'})
 
 
 def consume(conn, proof, purpose, uid=None):
@@ -166,27 +177,42 @@ class VerificationService:
                 if record and conn.execute('SELECT 1 FROM verified_contacts WHERE user_id=? AND channel=? AND value=?',(record['id'],channel,value)).fetchone():
                     uid=record['id'];stamp=token_hash(record['password'])
                 else:deliver=False  # Same-shaped response, no disclosure or SMS to unrelated contacts.
-        key=token_hash(channel+':'+value)
         rate_limit(self.db,'otp-ip:'+token_hash(ip),20,3600)
+        now=int(time.time());cid=secrets.token_urlsafe(32)
+        response={'challenge_id':cid,'expires_in':300,'retry_after':60,'destination':masked(channel,value),
+                  'message':'若填写的信息与账号匹配，验证码将发送；请检查短信或邮箱。'}
+        if not deliver:
+            # An unmatched request must not consume the recipient's delivery
+            # allowance or invalidate a legitimate login/recovery in progress.
+            rate_limit(self.db,'otp-unmatched:'+token_hash(channel+':'+value+':'+payload.username.casefold()),1,60)
+            return response
+        key=token_hash(channel+':'+value)
         rate_limit(self.db,'otp-cooldown:'+key,1,60)
         rate_limit(self.db,'otp-destination:'+key,10,86400)
-        now=int(time.time());cid=secrets.token_urlsafe(32);code=f'{secrets.randbelow(1000000):06d}'
+        rate_limit(self.db,'otp-budget:'+channel,getattr(self.settings,'otp_'+('sms' if channel=='sms' else 'mail')+'_daily_limit'),86400)
+        code=f'{secrets.randbelow(1000000):06d}'
         with self.db.connect(write=True) as conn:
             conn.execute('DELETE FROM auth_challenges WHERE expires_at<?',(now-86400,))
-            conn.execute("UPDATE auth_challenges SET state='superseded',digest='' WHERE channel=? AND destination=? AND state IN ('pending','sent','verified')",(channel,value))
             conn.execute('INSERT INTO auth_challenges(id,user_id,purpose,channel,destination,password_stamp,digest,state,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
-                         (cid,uid,purpose,channel,value,stamp,self.digest(cid,code),'pending' if deliver else 'unavailable',now,now+300))
-        if deliver:
-            try:
-                rate_limit(self.db,'otp-budget:'+channel,getattr(self.settings,'otp_'+('sms' if channel=='sms' else 'mail')+'_daily_limit'),86400)
-                receipt=self.provider.send_code(channel,value,code,purpose,cid)
-            except Exception:
-                with self.db.connect(write=True) as conn:conn.execute("UPDATE auth_challenges SET state='failed',digest='' WHERE id=?",(cid,))
-                raise
+                         (cid,uid,purpose,channel,value,stamp,self.digest(cid,code),'pending',now,now+300))
+        try:
+            receipt=self.provider.send_code(channel,value,code,purpose,cid)
+        except Exception:
             with self.db.connect(write=True) as conn:
-                conn.execute("UPDATE auth_challenges SET state='sent',provider_id=? WHERE id=? AND state='pending'",(str(receipt)[:100],cid))
-        return {'challenge_id':cid,'expires_in':300,'retry_after':60,'destination':masked(channel,value),
-                'message':'若填写的信息与账号匹配，验证码将发送；请检查短信或邮箱。'}
+                conn.execute("UPDATE auth_challenges SET state='failed',digest='' WHERE id=? AND state='pending'",(cid,))
+            raise
+        with self.db.connect(write=True) as conn:
+            updated=conn.execute("UPDATE auth_challenges SET state='sent',provider_id=? WHERE id=? AND state='pending'",(str(receipt)[:100],cid))
+            if updated.rowcount:
+                conn.execute("""UPDATE auth_challenges SET state='superseded',digest=''
+                    WHERE channel=? AND destination=? AND purpose=? AND user_id IS ?
+                    AND state IN ('pending','sent','verified')
+                    AND rowid<(SELECT rowid FROM auth_challenges WHERE id=?)""",(channel,value,purpose,uid,cid))
+        if not updated.rowcount:
+            raise HTTPException(409,'已发起更新的验证，请使用最近一次发送的验证码')
+        elapsed=max(0,int(time.time())-now)
+        response.update(expires_in=max(0,300-elapsed),retry_after=max(1,60-elapsed))
+        return response
 
     def verify(self, payload, ip, current=None):
         rate_limit(self.db,'otp-check:'+token_hash(ip),60,900)
@@ -226,7 +252,7 @@ def install(app, db, settings, user, session_response):
         with db.connect(write=True) as conn:
             record=consume(conn,payload.verification_token,'login')
             if not record['user_id']:raise HTTPException(400,'身份验证无效')
-        return session_response(record['user_id'])
+            return session_response(conn,record['user_id'])
 
     @app.get('/api/account/contacts')
     def list_contacts(current=Depends(user)):
@@ -235,10 +261,12 @@ def install(app, db, settings, user, session_response):
     @app.post('/api/account/contacts')
     def bind(payload:BindContact,current=Depends(user)):
         rate_limit(db,'bind-contact:'+current['id'],10,3600)
+        password_matches=bool(payload.old_password) and verify_password(payload.old_password,current['password'])
         with db.connect(write=True) as conn:
             existing=contacts(conn,current['id'])
             if existing:consume(conn,payload.authorization_token,'contact_authorize',current['id'])
-            elif not verify_password(payload.old_password,current['password']):
+            elif not password_matches or not conn.execute('SELECT 1 FROM users WHERE id=? AND password=?',
+                    (current['id'],current['password'])).fetchone():
                 raise HTTPException(400,'首次绑定请确认当前密码，并验证新联系方式')
             proof=consume(conn,payload.verification_token,'contact_bind',current['id'])
             available_contact(conn,proof['channel'],proof['destination'],current['id'])

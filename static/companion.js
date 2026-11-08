@@ -16,7 +16,7 @@ export function companion(pose='welcome',className=''){
 }
 
 export function companionSetting(){
-  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">想安静专注时随时关掉。这个设置只存在当前浏览器里，保存和出错的提示还是会照常显示。</p>${motionSetting()}</section>`;
+  return `<section class="panel stack"><h2>使用偏好</h2><label class="check"><input type="checkbox" id="companion-enabled" ${enabled?'checked':''}><span>保留小信使的轻声问候与小动作</span></label><p class="small muted">这项偏好随账号同步。保存和出错的提示会照常显示。</p>${motionSetting()}</section>`;
 }
 
 function closeTip(){
@@ -87,7 +87,18 @@ function contextualTip(){
   const options=tips[page]||tips.dashboard;return options[tipIndex++%options.length];
 }
 
-export function initializeCompanion(){
+export function initializeCompanion(savePreferences){
+  function applyEnabled(){
+    const input=document.querySelector('#companion-enabled');
+    if(input)input.checked=enabled;
+    document.querySelectorAll('[data-companion]').forEach(button=>button.disabled=!enabled);
+    if(!enabled){closeTip();document.querySelectorAll('.companion-petal').forEach(node=>node.remove());}
+  }
+  document.addEventListener('campus:display-preferences',event=>{
+    if(typeof event.detail?.companion_enabled==='boolean')enabled=event.detail.companion_enabled;
+    else try{enabled=localStorage.getItem(preferenceKey)!=='false';}catch{enabled=true;}
+    applyEnabled();
+  });
   let milestoneCount=0;
   document.addEventListener('campus:milestone',event=>{
     if(!enabled||document.querySelector('#dialog')?.open)return;
@@ -110,9 +121,8 @@ export function initializeCompanion(){
   document.addEventListener('change',event=>{
     if(event.target.id!=='companion-enabled')return;
     enabled=event.target.checked;
-    try{localStorage.setItem(preferenceKey,String(enabled));}catch{/* Keep this page's preference. */}
-    document.querySelectorAll('[data-companion]').forEach(button=>button.disabled=!enabled);
-    if(!enabled){closeTip();document.querySelectorAll('.companion-petal').forEach(node=>node.remove());}
+    if(!savePreferences?.({companion_enabled:enabled}))try{localStorage.setItem(preferenceKey,String(enabled));}catch{}
+    applyEnabled();
   });
   document.addEventListener('keydown',event=>{if(event.key==='Escape')closeTip();});
   window.addEventListener('hashchange',closeTip);

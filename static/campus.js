@@ -35,7 +35,9 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const current=()=>sequence===renderSequence&&stillCurrent(id,uid);
     if(owner!==uid){drafts.clear();owner=uid;collegeId='';editing=null;pubPage=1;pubQuery='';}
     const next=await api('/campus/context');if(!current())return;context=next;
-    state.session.user.campus_membership=context.membership?{role:context.membership.role,college_name:context.membership.college_name}:null;
+    state.session.user.campus_membership=context.membership?Object.fromEntries(
+      ['role','college_name','grade','class_name','version'].map(key=>[key,context.membership[key]])
+    ):null;
     updateAccount();
     if(!siteMode())collegeId=context.membership?.college_id||'';
     else if(!collegeId || !context.colleges.some(c=>c.id===collegeId))collegeId=context.membership?.college_id||context.colleges[0]?.id||'';

@@ -40,6 +40,8 @@ def reminder_id(item):
         'kind', 'level', 'task_id', 'arrangement_id', 'notice_id', 'at',
         'title', 'confirmed', 'revision',
     )}
+    if item.get('case_id'):
+        identity['case_id']=item['case_id']
     return hashlib.sha256(json.dumps(identity, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -364,7 +366,20 @@ def install(app, db, user, admin, list_tasks):
         tasks = list_tasks(conn, uid)
         notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.version,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
         arrangements = [serialize_arrangement(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=?', (uid,))]
-        return build_reminders(tasks, notices, arrangements)
+        result=build_reminders(tasks, notices, arrangements)
+        from .collaboration import reminders as collaboration_reminders
+        labels={'sent':'有新的站内协作需要接收','resubmitted':'已收到补交内容',
+                'supplement':'对方请求补件，请查看说明','resolved':'协作已办结，请查看回执'}
+        for case in collaboration_reminders(conn,uid,int(time.time())):
+            level='info' if case['state']=='resolved' else 'attention'
+            item={'kind':'collaboration','level':level,'title':case['title'],'case_id':case['id'],
+                  'text':labels[case['state']],'at':datetime.fromtimestamp(case['updated_at'],CST).isoformat()}
+            item['id']=reminder_id({**item,'revision':case['version']})
+            result['items'].append(item)
+            result['counts'][level]+=1
+            result['counts']['total']+=1
+        result['items'].sort(key=lambda item:(LEVELS[item['level']],item.get('at') or '9999'))
+        return result
 
     @app.get('/api/reminders')
     def reminders(current=Depends(user)):
