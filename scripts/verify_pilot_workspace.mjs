@@ -115,8 +115,16 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
         await page.locator('[data-settings-category=display]').click();
         await page.locator('.settings-usage>summary').click();
       }
-      await mobile.bringToFront();
       const input=desktop.locator('#companion-enabled');
+      await desktop.bringToFront();
+      await input.evaluate(node=>{window.pilotDisplayToggle=node;});
+      const previous=(await api(b,'/session')).user.profile.preferred_name;
+      const preferredName='跨端更新 '+engine;
+      await visibleAfter('settings: profile summary visible',()=>api(b,'/profile','PATCH',{
+        changes:{preferred_name:preferredName},expected:{preferred_name:previous}
+      },200,'settings: save profile name'),()=>desktop.locator('.settings-person h2').filter({hasText:preferredName}).waitFor());
+      assert.equal(await input.evaluate(node=>node===window.pilotDisplayToggle),true);
+      await mobile.bringToFront();
       assert.equal(await mobile.locator('#companion-enabled').isChecked(),true);
       const start=performance.now();
       const [response]=await Promise.all([
@@ -214,6 +222,14 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
       await nav(counselor,'collaboration');
       await mobile.bringToFront();
       await mobile.locator('.task-primary[data-workflow-task="'+tid+'"]').click();
+      const currentForm=mobile.locator('#workflow-form');
+      await currentForm.evaluate(node=>{window.pilotOpenWorkflow=node;});
+      const previous=(await api(a,'/tasks/'+tid+'/workflow')).task;
+      const firstNext='保持表单时更新进度 '+engine;
+      await visibleAfter('workflow: open form stays in place',()=>api(a,'/tasks/'+tid+'/workflow','PUT',{
+        version:previous.workflow.version,task_version:previous.version,data:{...previous.workflow.data,next_step:firstNext}
+      },200,'workflow: save while form is open'),()=>mobile.locator('[data-workflow-newer]').getByText('下一步 '+firstNext,{exact:true}).waitFor());
+      assert.equal(await currentForm.evaluate(node=>node===window.pilotOpenWorkflow),true);
       const optionsPath='/api/collaboration/tasks/'+tid+'/options';
       // Hold only this page's options read. The revision poll and the eventual
       // options response still use the real server without route interception.

@@ -51,24 +51,20 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
   const materialReceipt=result=>JSON.stringify([result.task.version,(result.history||[]).find(item=>
     item.action==='personal_material_uploaded'||item.action==='personal_submission_recorded')?.id]);
 
-  async function openTask(tid,{latest=null,replace=null}={}){
-    if(!latest)persist();
-    const request=replace?state.dialogRequest:++state.dialogRequest,owner=state.session.user.id;
-    const result=latest||await api(`/tasks/${tid}/workflow`);
+  async function openTask(tid){
+    persist();
+    const request=++state.dialogRequest,owner=state.session.user.id;
+    const result=await api(`/tasks/${tid}/workflow`);
     if(request!==state.dialogRequest||owner!==state.session?.user.id)return;
     const t=result.task,w=t.workflow,key=`workflow:${tid}:${t.version}:${w.version}`;
     const cached=await drafts.load(key);
     if(request!==state.dialogRequest||owner!==state.session?.user?.id)return;
-    if(replace){
-      if(!replace.canReplace())return false;
-      replace.form.remove();
-    }
     const d=cached.payload?.data||w.data;
     drafts.activate(key);
     showDialog('办理这件事',`<form id="workflow-form" data-workspace-form="workflow" data-cache-key="${key}" class="workflow-form stack"><div class="workflow-task-head"><span class="workflow-eyebrow">我的事项 · ${esc(statusNames[t.status])}</span><h3>${esc(t.data.title)}</h3><p>${esc(taskTimeLabel(t.data))}${t.data.submission?' · '+esc(t.data.submission):''}</p><a class="small" href="#notice/${t.notice_id}">回看原通知 ↗</a></div>${t.pending_changes.length?'<div class="alert">原通知有待核实的变动，请先核对相关要求，再继续办理。</div>':''}${t.status==='cancelled'?'<div class="alert">这件事已经取消了，之前的记录都还在；如果恢复办理，再来更新就好。</div>':''}<div class="form-grid">${select('办理进度','stage',stageOptions(d.execution_mode,d.stage),d.stage)}${select('事项类型','action_kind',{unclassified:'还没分类',required:'必须办',optional:'可自选',verification:'核对信息'},d.action_kind)}</div><div data-optional-choice ${d.action_kind==='optional'?'':'hidden'}>${select('你想参加吗','participation',{undecided:'还没想好',joined:'要参加',declined:'不参加'},d.participation)}</div><fieldset class="workflow-section" data-prepared-materials><legend>准备材料</legend>${t.data.materials.length?`<div class="material-checklist">${t.data.materials.map((m,i)=>`<label class="check"><input type="checkbox" name="material" value="${i}" ${d.prepared_materials.includes(m)?'checked':''}><span>${esc(m)}</span></label>`).join('')}</div>`:'<p class="small muted">通知里没提到要准备什么材料，之后有要求再补上就行。</p>'}</fieldset><details class="workflow-section" ${w.blocked?'open':''}><summary>前置步骤 <span class="small muted">${d.dependencies.length} 项</span></summary><p class="small muted">按选定的前置规则核对。取消、删除或待复核的步骤不算完成。</p><label class="field">找找前置步骤<input type="search" data-dependency-search placeholder="输入事项标题"></label><div class="dependency-list">${result.candidates.map(c=>`<label class="check" data-dependency-label="${esc(c.title.toLowerCase())}"><input type="checkbox" name="dependency" value="${c.id}" ${d.dependencies.includes(c.id)?'checked':''}><span>${esc(c.title)}<small>${esc(statusNames[c.status])}${c.notice_id===t.notice_id?' · 同一条通知':''}</small></span></label>`).join('')||'<p class="small muted">还没有别的事项。</p>'}</div>${w.dependencies.filter(x=>x.status==='missing').map(x=>`<label class="check"><input type="checkbox" name="dependency" value="${x.id}" checked><span>这个前置步骤找不到了，可能还没导入；可以先留着等它补上，或取消勾选再重新选</span></label>`).join('')}</details><fieldset class="workflow-section"><legend>提交与结果</legend>${area('提交情况 / 凭证编号','receipt',d.receipt,2,'maxlength="2000" placeholder="例如：已在学院系统提交，凭证编号……"')}${field('凭证链接（可选）','receipt_url',d.receipt_url,'url','maxlength="2000" placeholder="https://…"')}${area('结果、补件要求或卡住的原因','outcome',d.outcome,2,'maxlength="2000" placeholder="照学校的实际反馈写就好；这里标完成，只是你自己的记录"')}</fieldset><fieldset class="workflow-section"><legend>下一次跟进</legend>${field('下一步做什么','next_step',d.next_step,'text','maxlength="1000" placeholder="例如：查询受理结果 / 补交签字页"')}${field('跟进时间（北京时间）','followup_at',timeInput(d.followup_at),'datetime-local')}<p class="small muted">到时间会在提醒中心显示；可另行开启本机的关闭页面提醒，或使用已导入的日历。</p></fieldset><details class="workflow-section"><summary>办理时间线 · ${result.history.length}</summary>${historyHTML(result.history)}</details><div class="workflow-tools">${btn('修改要求和计划',`data-action="edit-task" data-id="${tid}"`)}${btn('检查日历提醒',`data-calendar-check="${tid}"`)}</div><div class="form-footer workflow-save"><span class="small muted">记下你的实际进展就好</span><button type="submit" class="button primary">保存进度</button></div></form>`);
     editing={task:t,key};
     if(state.session.user.campus_membership?.role==='student'){
-      $('#workflow-form .workflow-tools').insertAdjacentHTML('beforeend',btn('发起协作','data-collaboration-start="'+esc(tid)+'"'));
+      $('#workflow-form .workflow-task-head').insertAdjacentHTML('beforeend',` <button type="button" class="button small" data-collaboration-start="${esc(tid)}">发起协作</button>`);
     }
     $('#workflow-form .workflow-task-head').insertAdjacentHTML('afterend',conditionsEditor(d.conditions||[],esc));
     const reviewBanner=reviewUI.banner(t);
@@ -90,18 +86,11 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     const assistanceSection=document.createElement('section');assistanceSection.className='handling-assistance-host';
     materialSection.before(assistanceSection);
     if(state.session.ai.configured)editing.assistance=mountHandlingAssistant(assistanceSection,{task:t,state,api,esc,onSave:editing.materials.addDraft,onChange:persist,savedDraft:cached.payload?.assistanceDraft});
-    editing.initial=JSON.stringify(readWorkflow(form));
-    editing.restored=!!cached.payload;
-    const opened=editing;
-    form.addEventListener('click',()=>{opened.touched=true;},true);
-    form.addEventListener('input',()=>{opened.touched=true;});
-    form.addEventListener('change',()=>{opened.touched=true;});
-    return true;
   }
 
-  async function refreshOpen(sync){
+  async function refreshOpen(sync,canUpdate){
     const form=$('#workflow-form'),editor=editing;
-    if(!form||!editor||form.inert)return;
+    if(!form||!editor||form.inert||!canUpdate())return;
     const stamp=JSON.stringify([sync?.tasks,sync?.notices]);
     if(editor.remoteStamp===stamp)return;
     const context=state.session,dialog=state.dialogRequest;
@@ -109,7 +98,7 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
       if(error.status===404)return null;
       throw error;
     });
-    const present=()=>state.session===context&&state.dialogRequest===dialog&&$('#workflow-form')===form;
+    const present=()=>canUpdate()&&state.session===context&&state.dialogRequest===dialog&&$('#workflow-form')===form;
     if(!present()||form.inert)return;
     const latest=result?.task;
     const receipt=latest?materialReceipt(result):null;
@@ -120,13 +109,6 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     editor.remoteStamp=stamp;
     if(latest&&latest.version===editor.task.version&&latest.workflow.version===editor.task.workflow.version&&
         JSON.stringify(latest.pending_changes)===JSON.stringify(editor.task.pending_changes))return;
-    const canReplace=()=>form.isConnected&&editing===editor&&!form.inert&&!form.contains(document.activeElement)&&
-      !editor.restored&&!editor.touched&&JSON.stringify(readWorkflow(form))===editor.initial;
-    if(latest&&canReplace()){
-      if(await openTask(editor.task.id,{latest:result,replace:{form,canReplace}}))return;
-      if($('#workflow-form')!==form)return;
-    }
-    form.querySelector('[data-workflow-newer]')?.remove();
     const snapshot=latest?.workflow.data;
     const detail=latest?`<p><strong>${esc(workflowStage(snapshot))}</strong> · ${esc(statusNames[latest.status])}</p>
       ${snapshot.next_step?`<p>下一步 ${esc(snapshot.next_step)}</p>`:''}
@@ -134,8 +116,17 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
       ${snapshot.outcome?`<p>${esc(snapshot.outcome)}</p>`:''}
       <details><summary>查看已保存的办理时间线</summary>${historyHTML(result.history)}</details>`:
       '<p>原事项已在另一端移除。</p>';
-    form.querySelector('.workflow-task-head').insertAdjacentHTML('afterend',
-      `<section class="alert info" data-workflow-newer role="status"><strong>另一端更新了办理进度</strong>${detail}<p>当前填写仍保留。提交时会核对版本。</p></section>`);
+    let banner=form.querySelector('[data-workflow-newer]');
+    if(!banner){
+      form.querySelector('.workflow-task-head').insertAdjacentHTML('afterend',`<section class="alert info" data-workflow-newer>
+        <strong>另一端更新了办理进度</strong><div data-workflow-live-receipt role="status"></div>
+        <p>当前填写仍保留。提交时会核对版本。</p>
+        <button type="button" class="button small" data-workflow-task="${esc(editor.task.id)}">打开最新办理记录</button>
+      </section>`);
+      banner=form.querySelector('[data-workflow-newer]');
+    }
+    if(editor.liveDetails!==detail){banner.querySelector('[data-workflow-live-receipt]').innerHTML=detail;editor.liveDetails=detail;}
+    banner.querySelector('button[data-workflow-task]').hidden=!latest;
   }
 
   function arrangeWorkflow(task,data,candidates=[]){

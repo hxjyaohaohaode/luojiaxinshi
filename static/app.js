@@ -91,6 +91,7 @@ const dialogNavigation=createDialogNavigation({dialog:$('#dialog'),state,persist
 document.addEventListener('click',event=>{if(!$('#dialog')?.open)lastDialogTrigger=event.target.closest('button,a,input,summary');},true);
 const toast=createToastPresenter({esc,icon,owner:()=>state.session?.user?.id});
 let dataSync,workspaceMutation=0;
+let workspacePointer=null,workspacePointerTimer;
 const projections=new Map();
 let displayWrites=Promise.resolve(),pendingDisplayWrites=0;
 function applyDisplayPreferences(){
@@ -307,27 +308,46 @@ function intakePanel(n){
 }
 function noticeDetail(n,keepDraft=false,{matterOpen}={}){const preparationPending=noticePreparation.isPending(n.id);if(preparationPending&&!n.draft)n={...n,status:'processing'};state.notice=n;if(!keepDraft){const saved=drafts.peek('notice:'+n.id+':'+n.version).payload||{};state.qualityDecisions=saved.issue_resolutions||{};state.manualQualityReviewed=!!saved.manual_quality_reviewed;}if(!keepDraft)state.qualityResolution=drafts.peek('notice:'+n.id+':'+n.version).payload?.quality_resolution||'';if(!keepDraft)state.drafts=drafts.peek('notice:'+n.id+':'+n.version).payload?.tasks||n.draft?.tasks?.map(t=>({...t,include:t.scope!=='other',replacement:''}))||[];state.drafts=initializeDraftPlans(state.drafts,n.draft?.plans||{});const [status,color]=noticeStatus(n);$('#content').innerHTML=`<div class="notice-detail-workspace"><div class="notice-primary"><h1>${esc(n.title)}</h1><details class="notice-actions"><summary aria-label="通知操作" title="通知操作"><span aria-hidden="true">···</span></summary><div class="notice-actions-menu"><a class="button small plain" href="#notices">${icon('back')} 返回通知列表</a>${button(icon('spark')+' 带着材料继续问 AI','notice-chat','small plain')}${button(icon('bell')+' 追踪与证据链','notice-notification-decision','small plain')}${n.draft&&n.status!=='processing'?button(icon('spark')+' 重新整理','regenerate','small plain'):''}${button(icon('history')+' 修改记录','history','small plain')}${button(icon('trash')+' 删除通知','delete-notice','small plain danger')}</div></details></div>${noticeFocus(n,{esc})}<div class="review-grid"><section id="draft-pane">${draftPane(n)}</section><section class="panel source-pane"><details class="notice-originals"><summary class="between"><strong>原文与附件</strong><span class="small muted">${n.sources.filter(s=>s.active).length} 份 · ${n.character_count.toLocaleString()} 字</span></summary><div class="small muted">${esc(n.source_label||'本人提交')}${n.published_at?' · 发布于 '+esc(timeInput(n.published_at).replace('T',' ')):' · 未提供原发布时间'}</div>${n.source_url?`<a class="small" href="${esc(n.source_url)}" target="_blank" rel="noopener noreferrer">查看原文链接 ↗</a>`:''}${n.blockers.length?`<div class="alert"><strong>材料核对</strong><ul>${n.blockers.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>`:'<div class="status-line muted">'+icon('shield')+' 材料已齐，可以开始整理。</div>'}${n.sources.map(sourceCard).join('')}<div class="form-footer">${button(icon('plus')+' 补充材料','supplement','small')}${button(n.materials_complete?'改为材料未齐':'确认材料齐全','materials','small')}</div></details></section></div><details class="notice-context"><summary>来源、变更与处理记录</summary><div class="notice-context-body"><ol class="notice-steps" aria-label="办理进度">${[['收下原件','received'],['确认办理路径','draft'],['办理与跟进','confirmed']].map(([label,key],i)=>`<li ${key===(n.status==='confirmed'?'confirmed':n.draft?'draft':'received')?'aria-current="step"':''}><b>${i+1}</b>${label}</li>`).join('')}</ol>${intakePanel(n)}${workflowUI.noticePanel(n)}</div></details></div>`;intakeUI.decorateNotice(n);matterUI.decorate(n,matterOpen);attachDraftForm();if(n.draft&&n.status!=='confirmed')syncIssueControls($('#draft-form'),n.draft.quality||{},state.drafts,state.qualityDecisions,esc);noticeProgress.watch(n,{pending:preparationPending});}
 function draftPane(n){if(shouldOfferHistoricalSummary(n)&&n.draft?.origin!=='manual')return `<section class="panel stack"><h2>${esc(n.tracking.label)}</h2><details class="details"><summary>查看通知摘要</summary><p>${esc(n.draft?.summary||n.title)}</p></details><p class="small muted">系统仍会检查已启用来源的后续修订，无须逐条选择跟踪。原文和历史保留，可在“全部记录”查找；个人办理记录继续保留在待办页。</p><details class="details"><summary>查看原来的行动与期限</summary><ul>${(n.tracking.expired_actions||[]).map(t=>`<li>${esc(t.title)} · ${historicalBoundaryLabel(t)}</li>`).join('')}</ul></details><div class="row wrap">${button('追踪与证据链 / 纠正判断','notice-notification-decision','small')}${button('补充个人办理步骤','manual','small plain')}</div></section>`;if(n.status==='processing')return noticeProgressPanel(n,{esc,brandMotion,button});if(n.status==='confirmed')return `<div class="panel"><div class="saved-notice-header">${companion('complete','saved-companion')}<div><div class="row">${brandMotion('seal','',{once:true})}<h2>办理路径已保存</h2></div><p>从下一步开始准备，提交后在对应步骤记录凭证与后续反馈。</p></div></div><div class="divider"></div>${qualityReceipt(n.quality_receipt,esc)}${n.tasks.map(taskRow).join('')}<div class="form-footer">${button('重新整理','regenerate','small')}<a class="button primary small" href="#tasks">管理我的待办</a></div></div>`;if(n.automation_state==='queued'&&!n.draft)return `<section class="panel stack"><h2>等待系统自动整理</h2><p class="small">这则信息已在自动整理队列中，无须逐条开启追踪。系统会按来源授权和每日额度处理，完成后再由你决定是否加入个人待办。</p><div class="row wrap">${button('追踪与证据链','notice-notification-decision','small')}<a class="button small plain" href="#sources">查看队列与额度</a>${button('先补充个人办理步骤','manual','small plain')}</div></section>`;if(!n.draft)return `<div class="panel stack"><div><h2>把这则通知变成下一步</h2></div>${n.error?`<div class="alert error">${esc(n.error)}</div>`:''}<p class="muted small">小信使会找出和你有关的时间、材料和步骤，你看过没问题就能存成待办。</p><div class="alert ${state.session.ai.configured?'info':''}">${state.session.ai.configured?'小信使只读这则通知和整理需要的个人条件，结果由你确认后才会保存。':'AI 还没有接通，可以先手动整理。接通后，小信使就能帮你一键提取要点。'}</div>${noticeModePicker(state.session.ai,esc)}<label class="check"><input id="ai-consent" type="checkbox"><span>同意把这则通知和必要的个人条件发送给 AI 服务（小米 MiMo）整理</span></label>${state.session.ai.notice_review_enabled?'<p class="footnote">'+(state.session.ai.notice_auto_repair?'通常整理和复核各一次，发现问题时最多再补正、复核各一次':'整理和复核各一次')+'；失败不会自动重发。</p>':''}<div class="row wrap">${button(icon('spark')+' AI 整理下一步','generate','primary',state.session.ai.configured?'':'disabled')}${button(icon('edit')+' 手工整理','manual')}</div><p class="footnote">整理结果只是草稿，你确认之后才会变成待办。</p></div>`;if(!n.draft.tasks.length&&n.draft.origin!=='manual'&&!state.drafts.length)return `<section class="panel stack"><h2>${n.draft.applicability==='not_matching'?'这则通知可能与你无关':'这则通知以知悉为主'}</h2><p>${esc(n.draft.summary)}</p><p class="small muted">${esc(n.draft.applicability_reason)}</p>${qualityPanel(n.draft.quality,[],state.qualityResolution,esc,{structured:false})}<div class="row wrap"><button type="button" class="button primary" data-notice-disposition="${n.draft.applicability==='not_matching'?'not_applicable':'reference'}">${n.draft.applicability==='not_matching'?'归为与我无关':'保存为知悉资料'}</button>${button('我需要补充个人步骤','manual','small')}</div></section>`;return `<form id="draft-form" class="panel"><div class="section-head"><h2>你的办理路径</h2>${pill('等你确认','orange')}</div><div id="draft-editors">${state.drafts.map((t,i)=>taskEditor(t,i)).join('')}</div><div class="draft-support"><details class="details draft-quality-details"><summary>核对结果、通知概况与原文依据</summary>${n.review_observation_contract===1?observationPanel():''}<div class="draft-review-intro"><p class="small muted">按原文整理了下面的步骤。可以先保存能做的准备，未明确的信息只影响相关步骤。</p><p class="small"><strong>${{matches_known:'看起来和你有关',not_matching:'可能不适用于你',needs_review:'需要你确认是否适用'}[n.draft.applicability]}</strong></p><details class="details draft-overview"><summary>通知概况，以及为什么这样判断</summary><p class="small muted">${esc(n.draft.summary)}</p><div class="alert info">${esc(n.draft.applicability_reason)}</div></details></div>${n.draft.warnings?.length?`<details class="alert draft-warnings" ${n.draft.warnings.length<=3?'open':''}><summary>${n.draft.warnings.length} 处值得留意<span class="small">展开查看</span></summary><ul>${n.draft.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>`:''}${Object.keys(n.draft.facts).length?`<details class="details"><summary>通知要点与原文出处</summary><div class="facts">${Object.entries(n.draft.facts).map(([key,f])=>`<div class="fact"><b>${esc(factNames[key]||key)}</b>${esc(f.value||'原文未明确')}${f.evidence.map(e=>`<div class="evidence"><button type="button" data-action="evidence" data-source="${e.source_id}" data-locator="${esc(e.locator)}">${esc(e.locator)} ↗</button><p>${esc(e.quote)}</p></div>`).join('')}</div>`).join('')}</div></details>`:''}${qualityPanel(n.draft.quality,state.drafts,state.qualityResolution,esc,{structured:n.quality_resolution_contract===1,decisions:state.qualityDecisions,manualReviewed:state.manualQualityReviewed})}</details></div><div class="form-footer">${button(icon('plus')+' 增加本人步骤','add-task','small')}</div><div class="divider"></div><label class="check"><input name="reviewed" required type="checkbox"><span>我已对照原文看过这些步骤，确认保存。</span></label><p class="footnote">日期不确定可以先空着，之后再补。注意别把学院审核的时间当成自己的截止时间。</p><div class="form-footer"><button class="button primary" type="submit">${icon('check')} 确认并保存待办</button></div></form>`;}
+function settingsSummary(){
+  const {user,ai,genui}=state.session,p=user.profile;
+  return {name:p.preferred_name||user.display_name,tone:p.avatar_tone||'forest',
+    school:[p.school||'武汉大学',p.college,p.campus_area].filter(Boolean).join(' · '),labels:{
+      'settings-profile':[p.college,p.major,p.grade].filter(Boolean).join(' · ')||'身份、学期与联系方式',
+      'settings-preferences':({concise:'简洁',balanced:'适中',detailed:'详细'}[p.response_detail]||'适中')+' · '+({warm:'温和自然',direct:'直接清楚',academic:'严谨规范'}[p.response_style]||'温和自然'),
+      'settings-security':user.username,'settings-model':ai.billing_label||'模型配置与处理状态',
+      'settings-genui':genui?.enabled?'图表与互动内容':'使用文字回答'
+    }};
+}
+function updateSettingsSummary(root,summary){
+  const avatar=root.querySelector('.settings-person .avatar');
+  const avatarClass='avatar avatar-'+summary.tone;
+  if(avatar.className!==avatarClass)avatar.className=avatarClass;
+  const labels={'.settings-person .avatar':summary.name.slice(0,1),'.settings-person h2':summary.name,'.settings-person p':summary.school};
+  for(const [action,label] of Object.entries(summary.labels))labels[`[data-action="${action}"] small`]=label;
+  for(const [selector,label] of Object.entries(labels)){
+    const node=root.querySelector(selector);
+    if(node&&node.textContent!==label)node.textContent=label;
+  }
+}
 function settingsPage({preserveScroll=false}={}){
-  const content=$('#content'),scroll=content.scrollTop,p=state.session.user.profile,u=state.session.user;
-  const usageOpen=preserveScroll&&content.querySelector('.settings-usage')?.open;
-  const selected=preserveScroll?content.querySelector('.settings-home')?.dataset.category||'personal':'personal';
+  const content=$('#content'),summary=settingsSummary(),root=content.querySelector('.settings-home');
+  if(preserveScroll&&root){updateSettingsSummary(root,summary);return;}
+  const selected='personal',labels=summary.labels;
   const groups=[['personal','个人资料'],['account','账号服务'],['display','显示与声音']];
   const item=(title,text,action,i='settings')=>`<button type="button" class="settings-item" data-action="${action}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${esc(text)}</small></span>${icon('arrow')}</button>`;
   const link=(title,text,href,i)=>`<a class="settings-item" href="${href}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${text}</small></span>${icon('arrow')}</a>`;
   const menus={
-    personal:item('个人条件',[p.college,p.major,p.grade].filter(Boolean).join(' · ')||'身份、学期与联系方式','settings-profile','doc')+item('回答偏好',({concise:'简洁',balanced:'适中',detailed:'详细'}[p.response_detail]||'适中')+' · '+({warm:'温和自然',direct:'直接清楚',academic:'严谨规范'}[p.response_style]||'温和自然'),'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
-    account:item('账号安全',u.username,'settings-security','shield')+item('智能通知偏好','关注内容、分级汇总与免打扰','settings-notification','bell')+item('账号容量','通知、会话与文件使用情况','account-usage','doc')+item('模型与处理记录',state.session.ai.billing_label||'模型配置与处理状态','settings-model','spark')+link('通知来源','常用网站、公众号与群','#sources','history')+item('导入与导出','备份与迁移资料','settings-data','down')+link('隐私政策与用户协议','数据与服务条款','#privacy','shield'),
-    display:item('添加到桌面','手机与电脑安装入口','settings-install','down')+item('语音播报','朗读回复与播放控制','settings-speech','mic')+(state.session.genui?item('互动回答',state.session.genui.enabled?'图表与互动内容':'使用文字回答','settings-genui','grid'):'')
+    personal:item('个人条件',labels['settings-profile'],'settings-profile','doc')+item('回答偏好',labels['settings-preferences'],'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
+    account:item('账号安全',labels['settings-security'],'settings-security','shield')+item('智能通知偏好','关注内容、分级汇总与免打扰','settings-notification','bell')+item('账号容量','通知、会话与文件使用情况','account-usage','doc')+item('模型与处理记录',labels['settings-model'],'settings-model','spark')+link('通知来源','常用网站、公众号与群','#sources','history')+item('导入与导出','备份与迁移资料','settings-data','down')+link('隐私政策与用户协议','数据与服务条款','#privacy','shield'),
+    display:item('添加到桌面','手机与电脑安装入口','settings-install','down')+item('语音播报','朗读回复与播放控制','settings-speech','mic')+(state.session.genui?item('互动回答',labels['settings-genui'],'settings-genui','grid'):'')
   };
-  content.innerHTML=`<h1 class="sr-only">个人与账号</h1><div class="settings-home" data-category="${selected}"><header class="settings-person"><span class="avatar avatar-${esc(p.avatar_tone||'forest')}">${esc((p.preferred_name||u.display_name).slice(0,1))}</span><div><h2>${esc(p.preferred_name||u.display_name)}</h2><p>${esc([p.school||'武汉大学',p.college,p.campus_area].filter(Boolean).join(' · '))}</p></div></header><div class="settings-layout"><nav class="settings-categories" role="tablist" aria-label="设置分类">${groups.map(([key,label])=>`<button type="button" role="tab" id="settings-category-${key}" data-settings-category="${key}" aria-controls="settings-panel-${key}" aria-selected="${key===selected}" tabindex="${key===selected?0:-1}">${label}</button>`).join('')}</nav><div class="settings-groups">${groups.map(([key,label])=>`<section class="settings-group" role="tabpanel" id="settings-panel-${key}" data-settings-panel="${key}" aria-labelledby="settings-category-${key}" ${key===selected?'':'hidden'}><h3>${label}</h3><div class="settings-menu">${menus[key]}</div>${key==='display'?`<details class="settings-usage"><summary>使用偏好</summary>${companionSetting()}</details>`:''}</section>`).join('')}</div></div></div>`;
+  content.innerHTML=`<h1 class="sr-only">个人与账号</h1><div class="settings-home" data-category="${selected}"><header class="settings-person"><span class="avatar avatar-${esc(summary.tone)}">${esc(summary.name.slice(0,1))}</span><div><h2>${esc(summary.name)}</h2><p>${esc(summary.school)}</p></div></header><div class="settings-layout"><nav class="settings-categories" role="tablist" aria-label="设置分类">${groups.map(([key,label])=>`<button type="button" role="tab" id="settings-category-${key}" data-settings-category="${key}" aria-controls="settings-panel-${key}" aria-selected="${key===selected}" tabindex="${key===selected?0:-1}">${label}</button>`).join('')}</nav><div class="settings-groups">${groups.map(([key,label])=>`<section class="settings-group" role="tabpanel" id="settings-panel-${key}" data-settings-panel="${key}" aria-labelledby="settings-category-${key}" ${key===selected?'':'hidden'}><h3>${label}</h3><div class="settings-menu">${menus[key]}</div>${key==='display'?`<details class="settings-usage"><summary>使用偏好</summary>${companionSetting()}</details>`:''}</section>`).join('')}</div></div></div>`;
   const nav=content.querySelector('.settings-categories');
   const choose=(key,focus=false)=>{content.querySelector('.settings-home').dataset.category=key;for(const tab of nav.children){const active=tab.dataset.settingsCategory===key;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus();}for(const panel of content.querySelectorAll('[data-settings-panel]'))panel.hidden=panel.dataset.settingsPanel!==key;};
   nav.addEventListener('click',event=>{const tab=event.target.closest('[data-settings-category]');if(tab)choose(tab.dataset.settingsCategory);});
   nav.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(event.key))return;event.preventDefault();const index=groups.findIndex(([key])=>key===content.querySelector('.settings-home').dataset.category),next=event.key==='Home'?0:event.key==='End'?groups.length-1:(index+(['ArrowLeft','ArrowUp'].includes(event.key)?groups.length-1:1))%groups.length;choose(groups[next][0],true);});
   const usage=content.querySelector('.settings-usage');
-  usage.open=!!usageOpen;
   usage.querySelector('#companion-enabled+span').textContent='显示小信使问候';
-  if(preserveScroll)content.scrollTop=scroll;
 }
 function preferencesDialog(){const p=state.session.user.profile;const select=(name,label,items,value)=>`<label class="field">${label}<select name="${name}">${Object.entries(items).map(([k,v])=>`<option value="${k}" ${k===value?'selected':''}>${v}</option>`).join('')}</select></label>`;showDialog('按你的习惯回答',`<form id="preferences-form" class="stack">${field('希望小信使怎么称呼你','preferred_name',p.preferred_name||'','text','maxlength="30" placeholder="留空使用账号昵称"')}<div class="form-grid">${select('response_detail','回答详细程度',{concise:'简洁 · 重点和下一步',balanced:'适中 · 解释关键原因',detailed:'详细 · 依据与完整步骤'},p.response_detail||'balanced')}${select('response_style','回答风格',{warm:'温和自然',direct:'直接清楚',academic:'严谨规范'},p.response_style||'warm')}${select('avatar_tone','头像颜色',{forest:'珞珈绿',blue:'湖水蓝',plum:'淡紫',amber:'暖杏'},p.avatar_tone||'forest')}</div>${area('还有哪些表达习惯','response_preferences',p.response_preferences||'',3,'maxlength="600" placeholder="例如：先给结论；解释缩写；计划分为今天和本周。"')}<p class="small muted">之后的回答会按这个习惯来，内容依据不受影响。</p><div class="form-footer"><button class="button primary" type="submit">保存偏好</button></div></form>`);bindProfileForm($('#preferences-form'),p);}
 function dataDialog(){showDialog('导入与导出',`<div class="stack"><a class="button" href="/api/export">${icon('down')} 导出个人数据 JSON</a><p class="small muted">包括个人条件、通知、对话、待办和日程。附件原件请另行下载保留。</p><form id="data-import-form" data-workspace-form="data-transfer" class="stack"><label class="upload"><strong>选择此前导出的 JSON</strong><span class="small muted">先查看导入范围，再确认保存；不覆盖现有记录。</span><input id="data-import-file" name="backup" type="file" accept=".json,application/json" required></label><div id="data-import-preview" role="status"></div><button class="button" type="submit">查看导入内容</button></form></div>`);}
@@ -850,7 +870,7 @@ window.addEventListener('resize',()=>{if(state.session?.user)updateWorkNavigatio
 function backgroundSyncAllowed(allowChatInput=false){
   // Replacing a row during a menu click detaches its target and discards the
   // user's open interaction. Keep the revision pending until it can be applied.
-  return !pendingDisplayWrites&&!pendingTaskUpdates.size&&!document.documentElement.classList.contains('task-dragging')&&
+  return workspacePointer===null&&!pendingDisplayWrites&&!pendingTaskUpdates.size&&!document.documentElement.classList.contains('task-dragging')&&
     !$('#content')?.inert&&!$('#dialog')?.open&&
     !document.querySelector('.task-more[open],.notice-actions[open],.task-date-filter[open],.library-date[open],#content form[inert],#content .request-pending')&&
     (!document.activeElement?.matches('input,textarea,select,[contenteditable=true]')||
@@ -887,14 +907,16 @@ async function refreshWorkspace(domains,revision){
   const session=state.session,render=state.renderId,mutation=workspaceMutation;
   const page=location.hash.slice(1).split('/')[0]||'dashboard';
   const current=()=>state.session===session&&state.renderId===render&&workspaceMutation===mutation;
+  const canUpdate=()=>current()&&workspacePointer===null;
   const canApply=()=>current()&&backgroundSyncAllowed(page==='chat');
   const context=currentWorkContext();
   if(changed('account')){
-    if(pendingDisplayWrites)return false;
+    if(!canUpdate()||pendingDisplayWrites)return false;
     const fresh=await api('/session');
-    if(!current())return false;
+    if(!canUpdate()||pendingDisplayWrites)return false;
+    const profileChanged=JSON.stringify(session.user.profile)!==JSON.stringify(fresh.user.profile);
     Object.assign(session,fresh);
-    applyDisplayPreferences();
+    if(profileChanged)applyDisplayPreferences();
     updateAccount();updateWorkNavigation();
     if(!workContexts(fresh.user).some(choice=>choice.id===context)){
       persistCurrentForms();
@@ -905,13 +927,13 @@ async function refreshWorkspace(domains,revision){
     }
   }
   if(changed('collaboration','account')&&page==='collaboration'){
-    if(collaborationUI.saving()||await collaborationUI.render(render,location.hash.split('/')[1],current)===false)return false;
+    if(collaborationUI.saving()||await collaborationUI.render(render,location.hash.split('/')[1],canUpdate)===false)return false;
   }
   if(changed('collaboration','reminders')&&$('#dialog [data-reminder-content]'))reminders.refresh();
   if(changed('delivery')&&$('#dialog [data-reminder-content]')){
     push.refresh();emailReminders.refresh();
   }
-  if(changed('tasks','notices')&&$('#workflow-form'))await workflowUI.refreshOpen(revision);
+  if(changed('tasks','notices')&&$('#workflow-form'))await workflowUI.refreshOpen(revision,canUpdate);
   if(!canApply())return false;
   const home=page==='dashboard'&&context==='personal';
   const needsNotices=(home||page==='notices')&&changed('notices','account','clock');
@@ -971,12 +993,25 @@ async function refreshWorkspace(domains,revision){
     }else if(latest){
       for(const key of ['assessment','feedback','tracking','recommended','intent','intake_updates','pending_intake_updates'])state.notice[key]=latest[key];
       updateNoticeFocus(latest);
-      if(changed('notices','tasks'))await matterUI.refresh();
+      if(changed('notices','tasks')&&await matterUI.refresh(canApply)===false)return false;
     }
   }
   return current();
 }
 dataSync=installDataSync({state,api,onChange:refreshWorkspace});
+// Pointer release and its click are separate browser events. Keep the target
+// mounted until the gesture has been dispatched before applying background data.
+document.addEventListener('pointerdown',event=>{
+  if(!event.target.closest?.('#content,#dialog'))return;
+  clearTimeout(workspacePointerTimer);
+  workspacePointer=event.pointerId;
+},true);
+function releaseWorkspacePointer(event){
+  if(workspacePointer===null||event.pointerId!==undefined&&event.pointerId!==workspacePointer)return;
+  clearTimeout(workspacePointerTimer);
+  workspacePointerTimer=setTimeout(()=>{workspacePointer=null;dataSync.wake();},50);
+}
+for(const name of ['pointerup','pointercancel','blur','pagehide'])window.addEventListener(name,releaseWorkspacePointer,true);
 document.addEventListener('focusout',()=>dataSync.wake());
 $('#dialog').addEventListener('close',()=>dataSync.wake());
 dataSync.wake();

@@ -14,11 +14,12 @@ export function createNoticeMatters({state,api,esc,showDialog,toast,refreshData}
     const current=()=>ticket===sequence&&session===state.session&&route===state.renderId&&host.isConnected;
     host.innerHTML='<p class="small" role="status">正在查找同一事项…</p>';
     let request=0,projection;
-    const load=async(background=false)=>{
+    const load=async(background=false,canApply=()=>true)=>{
       const read=++request;
       try{
         const data=await api(`/notices/${encodeURIComponent(notice.id)}/matter`);
         if(!current()||read!==request)return;
+        if(!canApply())return false;
         const next=JSON.stringify(data);
         if(next===projection)return;
         const open=host.querySelector('details')?.open??previousOpen??!!data.group;
@@ -79,8 +80,8 @@ export function createNoticeMatters({state,api,esc,showDialog,toast,refreshData}
       };
       search.addEventListener('input',render);render();
     }
-    refreshCurrent=()=>current()?load(true):undefined;
+    refreshCurrent=canApply=>current()?load(true,canApply):undefined;
     load();
   }
-  return {decorate,refresh:()=>refreshCurrent?.()};
+  return {decorate,refresh:canApply=>refreshCurrent?.(canApply)};
 }

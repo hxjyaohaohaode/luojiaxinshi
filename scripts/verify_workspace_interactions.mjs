@@ -105,7 +105,17 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('search expands matching material folders and restores the user folder choices',async()=>{
    await page.locator('.chat-heading [data-chat-action=toggle-materials]').click();await searched();const root=page.locator('[data-folder-path="课程"]'),child=page.locator('[data-folder-path="课程/附件"]');assert.equal(await child.evaluate(n=>n.open),false);await page.locator('#material-search').fill('子资料');await page.locator('#material-search').press('Enter');await searched();assert.equal(await child.evaluate(n=>n.open),true);await page.locator('#chat-materials [data-search-clear]').click();await searched();assert.equal(await child.evaluate(n=>n.open),false);assert.equal(await root.evaluate(n=>n.open),true);await root.locator(':scope > summary').click();await settle();await page.locator('#material-search').fill('说明');await page.locator('#material-search').press('Enter');await searched();assert.equal(await root.evaluate(n=>n.open),true);await page.locator('#chat-materials [data-search-clear]').click();await searched();assert.equal(await root.evaluate(n=>n.open),false);await page.locator('.materials-close').click();
   });
-  await page.locator('#chat-input').fill('【合成验收】长篇阅读');await page.locator('#chat-composer [type=submit]').click();await page.waitForFunction(()=>document.querySelector('#chat-thread')?.textContent.includes('第 60 段')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
+   await settleReader();
+   await page.locator('#chat-input').fill('【合成验收】长篇阅读');
+   const submitted=page.waitForResponse(response=>response.url().endsWith('/messages/stream')&&response.request().method()==='POST');
+   await page.locator('#chat-composer [type=submit]').click();
+   const reply=await submitted;
+   assert.equal(reply.status(),200);
+   assert.equal(reply.request().postDataJSON().content,'【合成验收】长篇阅读');
+   await page.waitForFunction(()=>document.querySelector('#chat-thread')?.textContent.includes('第 60 段')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
+   const savedReply=(await api('/conversations/'+chat.id)).messages.findLast(message=>message.role==='assistant');
+   assert.equal(savedReply?.status,'complete');
+   assert.ok(savedReply.content.includes('第 60 段'));
   const anchor=async()=>{await settleReader();return page.evaluate(()=>{const reader=document.querySelector('#chat-thread'),p=reader.querySelectorAll('.message-assistant .message-content p')[25];if(!p)throw Error('Missing long synthetic reading content');const top=reader.getBoundingClientRect().top,heading=document.querySelector('.chat-heading'),head=heading.getBoundingClientRect(),style=getComputedStyle(heading),inset=style.visibility!=='hidden'&&Number(style.opacity)>.5?Math.max(12,head.bottom-top+12):12;reader.scrollTop+=p.getBoundingClientRect().top-top-inset;const text=document.createTreeWalker(p,NodeFilter.SHOW_TEXT).nextNode(),range=document.createRange();range.setStart(text,0);range.setEnd(text,1);window.__readingAnchor={range,p};return{top:range.getBoundingClientRect().top,font:getComputedStyle(p).fontSize,width:reader.clientWidth};});};
   const position=async()=>page.evaluate(()=>({top:window.__readingAnchor.range.getBoundingClientRect().top,font:getComputedStyle(window.__readingAnchor.p).fontSize,connected:window.__readingAnchor.p.isConnected,width:document.querySelector('#chat-thread').clientWidth}));
   await check('sidebar collapse and expansion preserve the text anchor through the full transition',async()=>{

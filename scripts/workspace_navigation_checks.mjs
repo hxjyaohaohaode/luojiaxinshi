@@ -99,7 +99,15 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
     assert.equal(await page.locator('#calendar-body').getAttribute('data-view'),'list');assert.equal(await page.locator('.calendar-agenda .agenda-row').count(),1);assert.ok((await page.locator('.calendar-agenda .agenda-title').textContent()).includes(calendarDates[0]));
     await page.locator('#calendar-mini [data-calendar-day="2026-11-02"]').click();assert.equal(await page.locator('#calendar-body').getAttribute('data-view'),'list');assert.equal(await page.locator('.calendar-agenda .agenda-row').count(),0);assert.equal(await page.locator('.calendar-empty').isVisible(),true);
     await page.locator('[data-calendar-action="list-month"]').click();assert.equal(await page.locator('.calendar-agenda .agenda-row').count(),2);
-    await page.locator('[data-calendar-view="week"]').click();await page.locator('#calendar-mini [data-calendar-day="'+calendarDates[1]+'"]').click();assert.equal(await page.locator('#calendar-body').getAttribute('data-view'),'day');assert.equal(await page.locator('.time-day').getAttribute('data-day'),calendarDates[1]);
+    const savedView=page.waitForResponse(response=>response.url().endsWith('/api/profile')&&
+      response.request().method()==='PATCH'&&response.request().postDataJSON()?.changes?.calendar_view==='week');
+    await page.locator('[data-calendar-view="week"]').click();assert.equal((await savedView).status(),200);
+    await page.locator('#calendar-mini [data-calendar-day="'+calendarDates[1]+'"]').click();
+    const title=tag+' 同步进来的当天日程';
+    calendarRecords.push(await api('/arrangements','POST',{request_id:crypto.randomUUID(),data:{title,category:'personal',start_date:calendarDates[1],end_date:calendarDates[1],start_time:'13:00',end_time:'14:00'}}));
+    await page.locator('#calendar-body').getByText(title,{exact:true}).waitFor();
+    assert.equal(await page.locator('#calendar-body').getAttribute('data-view'),'day');
+    assert.equal(await page.locator('.time-day').getAttribute('data-day'),calendarDates[1]);
   });
   await check('calendar removes redundant rows, keeps compact controls and a neutral search focus',async()=>{
     assert.equal(await page.locator('.calendar-context,#calendar-active-filters').count(),0);

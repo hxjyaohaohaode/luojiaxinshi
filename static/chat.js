@@ -581,8 +581,9 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       toast('这段对话已在其他页面删除。');
       return true;
     }
-    if(latest&&latest.version>=version)receiveConversation(latest);
-    if(latest||tasks||arrangements)update();
+    const changed=latest&&latest.version>=version&&JSON.stringify(latest)!==JSON.stringify(current);
+    if(changed)receiveConversation(latest);
+    if(changed||tasks||arrangements)update();
     if(current?.processing)schedulePoll(cid,state.renderId);
     return true;
   }
