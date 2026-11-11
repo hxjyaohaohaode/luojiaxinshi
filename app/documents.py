@@ -15,6 +15,11 @@ MAX_CHARS = 10000
 PARSER_SLOTS=threading.BoundedSemaphore(2)
 
 
+def source_storage_key(source):
+    """The same bytes can appear as inline text and as a downloadable file."""
+    return (source['kind']=='text', source['sha256'])
+
+
 def text_source(text, name='通知正文'):
     sections = [{'locator':f'第 {i} 段','text':line.strip()} for i,line in enumerate(text.splitlines(),1) if line.strip()]
     return {'id':ident(),'name':name,'kind':'text','content':None,'sha256':hashlib.sha256(text.encode()).hexdigest(),

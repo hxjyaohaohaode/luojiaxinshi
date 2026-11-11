@@ -5,11 +5,13 @@ from .notice_automation import profile_hash
 from .proactive_policy import assess,preferences
 from .proactive_feedback import apply as apply_feedback
 from .notice_lifecycle import RETIRED_STATES
+from .qq_group_intake import quiet_assessment, quiet_notices
 
 
 def annotate(conn, uid, records):
     saved_profile=conn.execute('SELECT profile FROM users WHERE id=?', (uid,)).fetchone()[0]
     profile = profile_hash(saved_profile);pref=preferences(saved_profile)
+    quiet = quiet_notices(conn,uid)
     notices = {r['id']: r for r in conn.execute('SELECT id,title,published_at,version,draft_version,status,draft FROM notices WHERE user_id=?', (uid,))}
     checks = {r['notice_id']: r for r in conn.execute('SELECT p.* FROM notice_profile_checks p JOIN notices n ON n.id=p.notice_id WHERE n.user_id=?', (uid,))}
     feedbacks={r['notice_id']:dict(r) for r in conn.execute('SELECT f.* FROM notice_recommendation_feedback f JOIN notices n ON n.id=f.notice_id AND n.user_id=f.user_id WHERE f.user_id=?',(uid,))}
@@ -60,6 +62,11 @@ def annotate(conn, uid, records):
         else:
             draft=json.loads(notice['draft'] or '{}')
             intent='decide' if any(t.get('scope','personal')=='personal' for t in draft.get('tasks',[])) else 'read'
+        if nid in quiet:
+            decision=quiet_assessment(decision)
+            record['assessment']=decision
+            record['recommended']=False
+            if disposition=='inbox':intent='discussion'
         record['intent']=intent
         if intent in {'closed','irrelevant'}:record['recommended']=False
         # Revisions to already chosen tasks need attention even if the old

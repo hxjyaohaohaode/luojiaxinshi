@@ -41,6 +41,7 @@ def main():
                 ('Notice matter grouping and campus capacities', 'artifacts/notice-matters-browser/report.json'),
                 ('School source chooser and pending saves', 'artifacts/source-presets-browser/report.json'),
                 ('Independent devices and campus collaboration', 'artifacts/pilot-workspace-browser/report.json'),
+                ('QQ group intake, rules and attachments', 'artifacts/qq-group-intake-browser/report.json'),
                 ('Agent approvals and cancellation', 'artifacts/agent-chat-browser/results.json'),
                 ('Agent authored UI and persistence', 'artifacts/agent-adaptive-browser/results.json'),
                 ('Agent private media and resize', 'artifacts/reference-fusion/browser/results.json'),

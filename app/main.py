@@ -25,7 +25,7 @@ from .backups import daily_backup
 from .calendar_export import build_calendar, eligible
 from .config import ROOT, Settings
 from .db import Database, audit, dumps, ident
-from .documents import MAX_CHARS, MAX_FILE, blockers, file_source, text_source, total_chars
+from .documents import MAX_CHARS, MAX_FILE, blockers, file_source, source_storage_key, text_source, total_chars
 from .models import (CalendarRequest, Confirm, EditCache, Generate, Login, PasswordChange, Profile, ProfilePatch, Register, Recover,
                      TaskData, TaskUpdate, Version, safe_url)
 from .security import DUMMY_PASSWORD, hash_password, new_invite, rate_limit, token_hash, verify_password
@@ -162,9 +162,11 @@ def create_app(settings=None):
         automation_worker=asyncio.create_task(run_notice_automation(application,db,settings))
         from .group_delivery import run_worker as run_group_delivery
         group_worker=asyncio.create_task(run_group_delivery(db,settings))
+        from .qq_group_media import run_worker as run_group_media
+        group_media_worker=asyncio.create_task(run_group_media(db,settings))
         application.state.worker_tasks={'backups':worker,'execution':lease_worker,'knowledge':memory_worker,
             'sources':source_worker,'web_push':push_worker,'email':mail_worker,
-            'notice_analysis':automation_worker,'groups':group_worker}
+            'notice_analysis':automation_worker,'groups':group_worker,'group_attachments':group_media_worker}
         try:
             yield
         finally:
@@ -183,8 +185,10 @@ def create_app(settings=None):
             push_worker.cancel()
             automation_worker.cancel()
             group_worker.cancel()
+            group_media_worker.cancel()
             mail_worker.cancel()
-            await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,group_worker,mail_worker,return_exceptions=True)
+            await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,
+                                 group_worker,group_media_worker,mail_worker,return_exceptions=True)
             await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
@@ -694,7 +698,8 @@ def create_app(settings=None):
                 raise HTTPException(422,'有效附件合计最多 5 份，请先将旧附件移出当前材料')
             if total_chars(existing+sources)>MAX_CHARS:
                 raise HTTPException(422,'合计超过 10000 字，请先整理当前材料')
-            if any(s['sha256'] in {x['sha256'] for x in existing} for s in sources):
+            existing_keys={source_storage_key(s) for s in existing}
+            if any(source_storage_key(s) in existing_keys for s in sources):
                 raise HTTPException(409,'当前通知已经包含相同材料，请直接复用')
             for source in sources:
                 store_source(conn,nid,source)

@@ -15,9 +15,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import Depends,HTTPException,Query,Request
 import httpx
 from pydantic import Field
+from starlette.concurrency import run_in_threadpool
 
 from .db import dumps,ident
-from .documents import text_source
+from .documents import MAX_CHARS,text_source
 from .models import Strict
 from .security import rate_limit,token_hash
 
@@ -59,36 +60,64 @@ def initialize(conn):
     initialize_publisher(conn)
 
 
-def message_source(data, name):
+def message_source(data, name, *, attachments=None):
     """Preserve bounded nested text and mark unavailable media explicitly."""
     parts = []
     incomplete = False
-    budget = [0]
+    bounded = False
+    visited = 0
     def visit(node, depth=0):
-        nonlocal incomplete
-        budget[0] += 1
-        if depth > 5 or budget[0] > 80:
+        nonlocal incomplete,bounded,visited
+        if depth > 5 or visited >= 80:
+            if attachments is not None:
+                bounded = True
+                return
             raise HTTPException(413, '消息嵌套过多，请转入原始通知')
+        visited += 1
         content = node.get('content', '')
-        if isinstance(content, str) and content.strip():
+        has_text = isinstance(content, str) and bool(content.strip())
+        if has_text:
             parts.append(content.strip())
-        if node.get('attachments') or node.get('ark_data'):
+        media = node.get('attachments')
+        if media:
+            if attachments is not None and isinstance(media,list):
+                attachments.extend(media)
+            else:
+                incomplete = True
+        if node.get('ark_data'):
             incomplete = True
         elements = node.get('msg_elements') or []
         if not isinstance(elements, list):
             incomplete = True
             return
+        if attachments is not None and depth and not (has_text or media or elements):
+            incomplete = True
         for child in elements:
+            if attachments is not None and visited>=80:
+                bounded = True
+                break
             if isinstance(child, dict):
                 visit(child, depth + 1)
+            elif attachments is not None:
+                incomplete = True
     visit(data)
     text = '\n\n'.join(parts)
-    if len(text) > 10000:
+    clipped = len(text)>MAX_CHARS
+    if clipped and attachments is None:
         raise HTTPException(413, '消息正文超过 10000 字，未截断保存')
-    source = text_source(text, name)
+    source = text_source(text[:MAX_CHARS] if clipped else text, name)
+    warnings = []
+    if clipped:
+        source['sha256'] = hashlib.sha256(text.encode()).hexdigest()
+        warnings.append('群消息超过 10000 字，已保留前 10000 字，完整内容请核对 QQ 原文。')
+    if bounded:
+        warnings.append('群消息嵌套过多，已保留可读取部分，其余内容请核对 QQ 原文。')
     if incomplete:
-        source.update(status='review', warning='已保存消息文字；图片、文件或卡片原件未取得，请补充关键附件。')
-    if not source['sections']:
+        warnings.append('存在未能读取的卡片或消息材料，请补充关键原件。' if attachments is not None
+                        else '已保存消息文字；图片、文件或卡片原件未取得，请补充关键附件。')
+    if warnings:
+        source.update(status='review', warning=' '.join(warnings))
+    if not source['sections'] and attachments is None:
         source.update(status='failed', warning='此消息没有可读正文，附件尚未取得，请主动上传原文件。')
     return source
 
@@ -221,6 +250,7 @@ class PublisherClient:
 
 def install_integrations(app,db,settings,user,admin):
     from .notice_ingest import ingest_notice
+    from . import qq_group_intake, qq_group_media
     publisher=PublisherClient(settings)
     app.state.publisher_client=publisher
     from .publisher_sync import install as install_publisher_sync
@@ -246,11 +276,13 @@ def install_integrations(app,db,settings,user,admin):
     def event_time(data):
         value=data.get('timestamp')
         try:
-            if isinstance(value,(float,int)) and not isinstance(value,bool):return float(value)
+            if isinstance(value,(float,int)) and not isinstance(value,bool) and 1<value<100_000_000_000:
+                return float(value)
             if isinstance(value,str):
                 parsed=datetime.fromisoformat(value.replace('Z','+00:00'))
-                if parsed.tzinfo:return parsed.timestamp()
-        except (ValueError,OverflowError):pass
+                stamp=parsed.timestamp() if parsed.tzinfo else 0
+                if 1<stamp<100_000_000_000:return stamp
+        except (ValueError,OverflowError,OSError):pass
         # Missing provider timestamps must stay idempotent by event identity.
         return 1.0
 
@@ -258,7 +290,11 @@ def install_integrations(app,db,settings,user,admin):
     def status(current=Depends(user)):
         with db.connect() as conn:
             binding=conn.execute('SELECT created_at,last_received_at FROM external_bindings WHERE user_id=? AND app_id=?',(current['id'],settings.qq_bot_app_id)).fetchone()
-            groups=[dict(r) for r in conn.execute('SELECT s.group_id,s.created_at,s.last_received_at,g.authorized_by=? AS can_disable FROM qq_group_subscriptions s JOIN qq_authorized_groups g USING(app_id,group_id) WHERE s.user_id=? AND s.app_id=?',(current['id'],current['id'],settings.qq_bot_app_id))]
+            groups=[dict(r) for r in conn.execute('''SELECT s.group_id,s.created_at,s.last_received_at,
+                g.authorized_by=? AS can_disable,COALESCE(p.name,'') AS name,COALESCE(p.mode,'notices') AS mode
+                FROM qq_group_subscriptions s JOIN qq_authorized_groups g USING(app_id,group_id)
+                LEFT JOIN qq_group_intake_settings p USING(user_id,app_id,group_id)
+                WHERE s.user_id=? AND s.app_id=?''',(current['id'],current['id'],settings.qq_bot_app_id))]
             from .group_delivery import status as delivery_status
             pending_delivery=delivery_status(conn,current['id'],settings.qq_bot_app_id)
             from .publisher_sync import status as publisher_status
@@ -300,16 +336,35 @@ def install_integrations(app,db,settings,user,admin):
     def unsubscribe_group(group_id:str,current=Depends(user)):
         with db.connect(write=True) as conn:
             conn.execute('DELETE FROM qq_group_subscriptions WHERE user_id=? AND app_id=? AND group_id=?',(current['id'],settings.qq_bot_app_id,group_id))
+            qq_group_media.prune(conn,int(time.time()))
         return {'ok':True}
+
+    @app.get('/api/integrations/qq/groups/{group_id}/intake')
+    def group_intake(group_id: str, before: int | None = Query(None,ge=1),
+                     category: qq_group_intake.Filter = 'all', current=Depends(user)):
+        with db.connect() as conn:
+            conn.execute('BEGIN')
+            return qq_group_intake.history(conn,current['id'],settings.qq_bot_app_id,group_id,
+                                           before=before,category=category)
+
+    @app.put('/api/integrations/qq/groups/{group_id}/intake')
+    def update_group_intake(group_id: str, payload: qq_group_intake.GroupIntakeSettings, current=Depends(user)):
+        with db.connect(write=True) as conn:
+            return qq_group_intake.save_settings(conn,current['id'],settings.qq_bot_app_id,group_id,payload)
 
     @app.post('/api/integrations/qq/deliveries/{delivery_id}/retry')
     def retry_group_delivery(delivery_id:str,current=Depends(user)):
         rate_limit(db,'qq-delivery-retry:'+current['id'],20,3600)
         from .group_delivery import deliver_one
         with db.connect(write=True) as conn:
-            row=conn.execute("SELECT * FROM qq_group_deliveries WHERE id=? AND user_id=? AND app_id=?",(delivery_id,current['id'],settings.qq_bot_app_id)).fetchone()
+            row=conn.execute('''SELECT d.*, b.state AS media_batch_state FROM qq_group_deliveries d
+                LEFT JOIN qq_group_delivery_info i ON i.delivery_id=d.id
+                LEFT JOIN qq_group_attachment_batches b ON b.id=i.media_id
+                WHERE d.id=? AND d.user_id=? AND d.app_id=?''',(delivery_id,current['id'],settings.qq_bot_app_id)).fetchone()
             if not row:raise HTTPException(404,'群收件记录不存在或接收授权已撤回')
             if row['state'] not in {'pending','failed'}:return {'ok':True,'state':row['state']}
+            if row['media_batch_state'] in {'queued','running'}:
+                return {'ok':False,'state':'pending','waiting_attachments':True}
             conn.execute("UPDATE qq_group_deliveries SET state='pending',attempts=0 WHERE id=?",(delivery_id,))
             row=conn.execute('SELECT * FROM qq_group_deliveries WHERE id=?',(delivery_id,)).fetchone()
             success=deliver_one(conn,row,int(time.time()))
@@ -322,7 +377,7 @@ def install_integrations(app,db,settings,user,admin):
                 raise HTTPException(404,'群授权不存在或无权停用')
         return {'ok':True}
 
-    def receive_group(conn,data,event_type):
+    def receive_group(conn,data):
         group_id=data.get('group_openid');author=data.get('author') or {}
         member_id=author.get('member_openid') if isinstance(author,dict) else None
         message_id=data.get('id');content=data.get('content','')
@@ -337,29 +392,69 @@ def install_integrations(app,db,settings,user,admin):
             binding=conn.execute('SELECT * FROM qq_group_codes WHERE code_hash=? AND app_id=? AND expires_at>?',(token_hash(code),settings.qq_bot_app_id,now)).fetchone()
             if not binding:return
             group=conn.execute('SELECT * FROM qq_authorized_groups WHERE app_id=? AND group_id=?',(settings.qq_bot_app_id,group_id)).fetchone()
-            if command.startswith('启用群通知 '):
-                if author.get('member_role') not in {'owner','admin'}:return
+            enable=command.startswith('启用群通知 ')
+            if enable:
+                if author.get('member_role') not in ('owner','admin'):return
                 if group and group['authorized_by']!=binding['user_id']:return
-                conn.execute('INSERT OR IGNORE INTO qq_authorized_groups VALUES(?,?,?,?,?)',(settings.qq_bot_app_id,group_id,binding['user_id'],member_id,now))
             elif not group:return
             conflict=conn.execute('SELECT user_id FROM qq_group_subscriptions WHERE app_id=? AND group_id=? AND member_id=?',(settings.qq_bot_app_id,group_id,member_id)).fetchone()
             if conflict and conflict['user_id']!=binding['user_id']:return
-            conn.execute('INSERT INTO qq_group_subscriptions(user_id,app_id,group_id,member_id,created_at) VALUES(?,?,?,?,?) ON CONFLICT(user_id,app_id,group_id) DO UPDATE SET member_id=excluded.member_id',
+            if enable:
+                conn.execute('''INSERT INTO qq_authorized_groups VALUES(?,?,?,?,?)
+                    ON CONFLICT(app_id,group_id) DO UPDATE SET authorized_member=excluded.authorized_member,
+                    created_at=excluded.created_at''',(settings.qq_bot_app_id,group_id,binding['user_id'],member_id,now))
+            conn.execute('''INSERT INTO qq_group_subscriptions(user_id,app_id,group_id,member_id,created_at) VALUES(?,?,?,?,?)
+                ON CONFLICT(user_id,app_id,group_id) DO UPDATE SET member_id=excluded.member_id,created_at=excluded.created_at''',
                          (binding['user_id'],settings.qq_bot_app_id,group_id,member_id,now))
             conn.execute('DELETE FROM qq_group_codes WHERE code_hash=?',(binding['code_hash'],))
             return
         group=conn.execute('SELECT 1 FROM qq_authorized_groups WHERE app_id=? AND group_id=?',(settings.qq_bot_app_id,group_id)).fetchone()
         if not group or author.get('bot'):return
-        subscribers=conn.execute('SELECT user_id FROM qq_group_subscriptions WHERE app_id=? AND group_id=?',(settings.qq_bot_app_id,group_id)).fetchall()
+        app_id=settings.qq_bot_app_id
+        event_key='qq-group:'+app_id+':'+group_id+':'+message_id
+        observed_at=event_time(data)
+        cutoff=observed_at
+        if observed_at==1.0:
+            cutoff=conn.execute('''SELECT min(created_at) FROM qq_group_deliveries
+                WHERE app_id=? AND group_id=? AND event_key=?''',(app_id,group_id,event_key)).fetchone()[0] or now
+        subscribers=conn.execute('''SELECT s.user_id,p.name,p.mode,p.keywords FROM qq_group_subscriptions s
+            LEFT JOIN qq_group_intake_settings p USING(user_id,app_id,group_id)
+            WHERE s.app_id=? AND s.group_id=? AND s.created_at<=?''',(app_id,group_id,cutoff)).fetchall()
         if not subscribers:return
-        source=message_source(data,'QQ 群消息原文')
-        title='群通知 · '+((' '.join(s['text'] for s in source['sections']))[:60] or '待补充材料')
-        for subscriber in subscribers:
-            # A group payload is distributed only to separately proven members
-            # who opted in, never to every account or every member by default.
-            from .group_delivery import enqueue
-            enqueue(conn,subscriber['user_id'],settings.qq_bot_app_id,group_id,
-                    'qq-group:'+settings.qq_bot_app_id+':'+group_id+':'+message_id,title,source,event_time(data))
+        attachments=[]
+        source=message_source(data,'QQ 群消息原文',attachments=attachments)
+        plan=qq_group_media.inspect(attachments)
+        title='群通知 · '+((' '.join(s['text'] for s in source['sections']))[:60]
+                         or (plan.files[0]['name'][:60] if plan.files else '待补充材料'))
+        from .group_delivery import enqueue
+        enqueue(conn,subscribers,app_id,group_id,event_key,title,source,observed_at,plan)
+
+    def revoke_group(conn,data,event_type):
+        group_id=data.get('group_openid')
+        if not isinstance(group_id,str) or not 1<=len(group_id)<=512:
+            return
+        now=int(time.time())
+        observed_at=event_time(data)
+        cutoff=now if observed_at==1.0 else observed_at
+        scope=(settings.qq_bot_app_id,group_id,cutoff)
+        if event_type=='GROUP_DEL_ROBOT':
+            conn.execute('DELETE FROM qq_authorized_groups WHERE app_id=? AND group_id=? AND created_at<=?',scope)
+        else:
+            member_id=data.get('member_openid')
+            if not isinstance(member_id,str) or not 1<=len(member_id)<=512:
+                return
+            conn.execute('''DELETE FROM qq_group_subscriptions WHERE app_id=? AND group_id=?
+                AND created_at<=? AND member_id=?''',(*scope,member_id))
+            conn.execute('''DELETE FROM qq_authorized_groups WHERE app_id=? AND group_id=?
+                AND created_at<=? AND authorized_member=?''',(*scope,member_id))
+        qq_group_media.prune(conn,now)
+
+    def handle_group(data,event_type):
+        with db.connect(write=True) as conn:
+            if event_type in {'GROUP_MESSAGE_CREATE','GROUP_AT_MESSAGE_CREATE'}:
+                receive_group(conn,data)
+            else:
+                revoke_group(conn,data,event_type)
 
     @app.post('/api/integrations/qq/webhook')
     async def webhook(request:Request):
@@ -374,7 +469,7 @@ def install_integrations(app,db,settings,user,admin):
             payload=json.loads(raw);data=payload['d']
             if not isinstance(data,dict):
                 raise ValueError('invalid')
-        except (ValueError,TypeError,KeyError):
+        except (ValueError,TypeError,KeyError,RecursionError):
             raise HTTPException(400,'事件格式不合法') from None
         if payload.get('op')==13:
             rate_limit(db,'qq-challenge:'+(request.client.host if request.client else ''),30,60)
@@ -386,21 +481,10 @@ def install_integrations(app,db,settings,user,admin):
         if not verify_qq(settings.qq_bot_secret,request.headers.get('x-signature-timestamp',''),request.headers.get('x-signature-ed25519',''),raw):
             raise HTTPException(403,'事件签名无效或已过期')
         event_type=payload.get('t');ack={'op':12}
-        if payload.get('op')!=0:
+        if payload.get('op')!=0 or not isinstance(event_type,str):
             return ack
-        if event_type in {'GROUP_MESSAGE_CREATE','GROUP_AT_MESSAGE_CREATE'}:
-            with db.connect(write=True) as conn:receive_group(conn,data,event_type)
-            return ack
-        if event_type in {'GROUP_DEL_ROBOT','GROUP_MEMBER_REMOVE'}:
-            group_id=data.get('group_openid')
-            with db.connect(write=True) as conn:
-                if event_type=='GROUP_DEL_ROBOT':
-                    conn.execute('DELETE FROM qq_authorized_groups WHERE app_id=? AND group_id=?',(settings.qq_bot_app_id,group_id))
-                else:
-                    member_id=data.get('member_openid')
-                    if member_id:
-                        conn.execute('DELETE FROM qq_group_subscriptions WHERE app_id=? AND group_id=? AND member_id=?',(settings.qq_bot_app_id,group_id,member_id))
-                        conn.execute('DELETE FROM qq_authorized_groups WHERE app_id=? AND group_id=? AND authorized_member=?',(settings.qq_bot_app_id,group_id,member_id))
+        if event_type in {'GROUP_MESSAGE_CREATE','GROUP_AT_MESSAGE_CREATE','GROUP_DEL_ROBOT','GROUP_MEMBER_REMOVE'}:
+            await run_in_threadpool(handle_group,data,event_type)
             return ack
         if event_type!='C2C_MESSAGE_CREATE':return ack
         author=data.get('author',{})

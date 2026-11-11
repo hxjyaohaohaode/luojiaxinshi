@@ -96,8 +96,12 @@ def authorized_source(conn,uid,nid,settings):
     return False
 
 
-def eligible(conn,notice,settings):
+def eligible(conn,notice,settings,*,quiet_ids=None):
+    from .qq_group_intake import quiet_notices
     if notice['status'] in {'confirmed','processing'}:return False
+    if quiet_ids is None:
+        quiet_ids=quiet_notices(conn,notice['user_id'],notice['id'])
+    if notice['id'] in quiet_ids:return False
     disposition=conn.execute('SELECT disposition FROM notice_dispositions WHERE notice_id=?',(notice['id'],)).fetchone()
     if disposition and disposition[0]!='inbox':return False
     has_tasks=conn.execute('SELECT 1 FROM tasks WHERE notice_id=?',(notice['id'],)).fetchone()
@@ -131,11 +135,13 @@ def retire_obsolete(conn,settings,only_uid=None):
 
 def queue_ready(conn,settings,only_uid=None):
     from .ai import EXTRACTION_VERSION
+    from .qq_group_intake import quiet_notices
     retire_obsolete(conn,settings,only_uid)
     params=(only_uid,) if only_uid else ()
     users=conn.execute('SELECT u.* FROM users u JOIN notice_automation_settings a ON a.user_id=u.id WHERE a.enabled=1 AND a.consented_at IS NOT NULL'+(' AND u.id=?' if only_uid else ''),params).fetchall()
     for user in users:
         digest=profile_hash(user['profile'])
+        quiet_ids=quiet_notices(conn,user['id'])
         # Initial website snapshots stay silent for delivery, but still need
         # automatic age/relevance analysis after global AI consent. Otherwise
         # every historical opportunity remains an unclassified user chore.
@@ -149,7 +155,7 @@ def queue_ready(conn,settings,only_uid=None):
                 generated=isinstance(prior.get('quality'),dict)
                 upgrade=generated and prior['quality'].get('status')=='needs_review' and prior.get('extraction_version')!=EXTRACTION_VERSION
                 if not profile and not generated or profile and profile['profile_hash']==digest and not upgrade:continue
-            if not eligible(conn,notice,settings):continue
+            if not eligible(conn,notice,settings,quiet_ids=quiet_ids):continue
             now=int(time.time())
             conn.execute("INSERT OR IGNORE INTO notice_automation_jobs(id,user_id,notice_id,input_version,profile_hash,state,created_at) VALUES(?,?,?,?,?,'queued',?)",
                          (ident(),user['id'],notice['id'],notice['version'],digest,now))

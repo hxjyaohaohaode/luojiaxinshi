@@ -128,7 +128,9 @@ def restore_database(source:Path,destination:Path):
                     target.execute('DELETE FROM external_bindings')
                 for table in ('reply_shares','conversation_ai_consents','notice_link_previews'):
                     if table in tables:target.execute('DELETE FROM '+table)
-                for table in ('qq_group_subscriptions','qq_authorized_groups','qq_group_codes','push_outbox','push_devices'):
+                for table in ('qq_group_delivery_info','qq_group_attachment_files','qq_group_attachment_batches',
+                              'qq_group_deliveries','qq_group_intake_settings','qq_group_subscriptions',
+                              'qq_authorized_groups','qq_group_codes','push_outbox','push_devices'):
                     if table in tables:target.execute('DELETE FROM '+table)
                 # Old snapshots must not silently revive revoked college privileges.
                 for table in ('campus_counselor_scopes','campus_members'):

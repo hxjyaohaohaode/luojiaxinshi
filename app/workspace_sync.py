@@ -34,6 +34,8 @@ OWNED = {
     'source_catalog': ('sources', 'user_id'),
     'publisher_subscriptions': ('sources','user_id'),
     'qq_group_subscriptions': ('sources','user_id'),
+    'qq_group_intake_settings': ('sources','user_id'),
+    'qq_group_deliveries': ('sources','user_id'),
     'notice_automation_settings': ('sources', 'user_id'),
     'notice_automation_jobs': ('sources', 'user_id'),
     'external_bindings': ('sources', 'user_id'),

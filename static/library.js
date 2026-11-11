@@ -3,7 +3,7 @@ import {noticeState,isNoticeOpen} from './notice-intake.js';
 import {noticeSearchText,noticeSearchExcerpt} from './notice-search.js';
 import {highlightMatch} from './command-search.js';
 export const RELEVANCE={matches_known:['和你有关','green'],needs_review:['需确认是否适用','orange'],not_matching:['可能不适用','']};
-export const INBOX_INTENTS={current:'与你相关',all:'全部记录',tracking:'系统跟踪中',act:'要做',decide:'可加入待办',verify:'要核实',followup:'待跟进',read:'知悉 / 阅读',irrelevant:'不适用',closed:'历史 / 已结束'};
+export const INBOX_INTENTS={current:'与你相关',all:'全部记录',tracking:'系统跟踪中',act:'要做',decide:'可加入待办',verify:'要核实',followup:'待跟进',read:'知悉 / 阅读',discussion:'普通群聊',irrelevant:'不适用',closed:'历史 / 已结束'};
 export function noticeOrigins(notice){
   const labels=Array.isArray(notice.origin_labels)?notice.origin_labels.map(v=>String(v||'').trim()).filter(Boolean):[];
   return [...new Set(labels.length?labels:[String(notice.source_label||'').trim()||'个人提交'])];
@@ -203,7 +203,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     }
     const counts=Object.fromEntries(Object.keys(INBOX_INTENTS).map(key=>[key,key==='all'?state.notices.length:filterNotices(state.notices,{intent:key}).length]));
     $('#library-summary').innerHTML=['current','all'].map(key=>`<button type="button" class="collection-stat" data-library-intent="${key}" aria-pressed="${key===intent}"><span>${INBOX_INTENTS[key]}</span><strong>${counts[key]}</strong></button>`).join('')+`<label class="library-intent-picker"><span class="sr-only">按办理状态查看</span><select id="library-intent-filter" aria-label="按办理状态查看"><option value="">更多状态</option>${Object.entries(INBOX_INTENTS).filter(([key])=>!['current','all'].includes(key)).map(([key,label])=>`<option value="${key}" ${intent===key?'selected':''}>${label} · ${counts[key]}</option>`).join('')}</select></label>`;
-    const unreviewed=state.notices.filter(n=>n.status==='received'&&isNoticeOpen(n)&&!n.applicability).length;
+    const unreviewed=state.notices.filter(n=>n.status==='received'&&n.intent!=='discussion'&&isNoticeOpen(n)&&!n.applicability).length;
     $('#library-unreviewed-note').textContent=unreviewed?`${unreviewed} 则通知尚未判断是否适合你；“要核实”不等于都需要办理。`:'';
     update();if(query.trim())queueSearch(true);if(mounted)loadSourceHealth();
   }

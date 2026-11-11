@@ -1,13 +1,16 @@
 import {captureUiContext,beginFormFeedback} from './ui-request.js';
 import {searchControls,WorkspaceSearch} from './workspace-search.js';
 import {detailsExpanded} from './reference-interactions.js';
+import {createQQGroupIntake} from './qq-group-intake.js';
 const $=(s)=>document.querySelector(s);
 const platforms={website:'学校 / 学院官网',wechat_public:'微信公众号',qq_group:'QQ 群',wechat_group:'微信群',campus:'校内平台',other:'其他来源'};
 export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route}){
   let entries=[],query='',editing=null,integrations=null,publisherItems=[],publisherNext=null,page=1,searchController=null,matchedIds=null,subscriptions=[],automation=null;
   const expanded=new Map();let expansionOwner=null;
   const pendingPresets=new Set();
-  const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${id}">${text}</button>`;
+  const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${esc(id)}">${text}</button>`;
+  const groupIntake=createQQGroupIntake({state,api,esc,showDialog,toast});
+  const groupName=(id,name)=>name||('群 '+id.slice(0,10));
   async function refresh(renderId,canApply=()=>true){
     const view=captureUiContext(state);
     const [result,channels,sync,auto]=await Promise.all([
@@ -70,13 +73,13 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
       q.configured?`<div class="row wrap">${action(q.bound?'刷新状态':'绑定我的 QQ','qq-bind','','small primary')}${q.bound?action('解除绑定','qq-unlink','','small plain danger'):''}</div>${q.binding?.last_received_at?`<p class="small">最近收到：${esc(new Date(q.binding.last_received_at*1000).toLocaleString('zh-CN'))}</p>`:''}`:'<span>需要管理员开通</span>还没开通也没关系，你可以直接上传文字、截图和附件。',q.bound)+
       card('QQ 群通知',q.groups?.length?`${q.groups.length} 个群已接收`:q.configured?'待群内授权':'还没开通',
         '群主或管理员在群内启用后，每位成员自行选择接收。全量消息还需 QQ 侧开启接收所有消息。',
-        q.configured?`${action('接入群通知','qq-group','','small primary')}${(q.groups||[]).map(g=>`<div class="row wrap"><span>群 ${esc(g.group_id.slice(0,10))}${g.last_received_at?' · 最近收到 '+esc(new Date(g.last_received_at*1000).toLocaleString('zh-CN')):' · 等待新消息'}</span>${action('停止本人接收','qq-group-unsubscribe',g.group_id,'small plain')}${g.can_disable?action('停用此群','qq-group-disable',g.group_id,'small plain danger'):''}</div>`).join('')}`:'需要管理员配置机器人',!!q.groups?.length)+
+        q.configured?`${action('接入群通知','qq-group','','small primary')}${(q.groups||[]).map(g=>`<div class="row wrap"><span><span data-qq-group-name>${esc(groupName(g.group_id,g.name))}</span>${g.last_received_at?' · 最近收到 '+esc(new Date(g.last_received_at*1000).toLocaleString('zh-CN')):' · 等待新消息'}</span>${action('收件与规则','qq-group-intake',g.group_id,'small')}${action('停止本人接收','qq-group-unsubscribe',g.group_id,'small plain')}${g.can_disable?action('停用此群','qq-group-disable',g.group_id,'small plain danger'):''}</div>`).join('')}`:'需要管理员配置机器人',!!q.groups?.length)+
       card('已授权的公众号文章',w.subscription?.enabled?w.subscription.error?'检查未完成':'自动接收':w.configured?'可接入':'还没开通',
         '获授权发布账号的新文章和更正进入本人收件箱；图片和关键附件需核对。',
         w.configured&&w.can_import?`<div class="row wrap">${action('自动同步设置','publisher-sync','','small primary')}${w.subscription?.enabled?action('立即同步','publisher-refresh','','small'):''}${action('选择文章','publisher','','small')}</div>${w.subscription?.checked_at?`<p class="small muted">最近检查 ${esc(new Date(w.subscription.checked_at*1000).toLocaleString('zh-CN'))} · 新收 ${w.subscription.received_count||0} · 更新 ${w.subscription.updated_count||0}</p>`:''}${w.subscription?.error?`<p class="alert error">${esc(w.subscription.error)}</p>`:''}`:w.configured?'需要发布账号的管理员授权':'需要管理员配置发布账号凭证',!!w.subscription?.enabled)+
       card('智慧珞珈课表','本人导出后上传','在学校教务页面自行登录、导出课表，再上传核对课程和周次，确认后加入个人日历。统一身份认证仍需学校开放。','<button type="button" class="button small primary" data-campus-import="courses">导出并导入课表</button>',true)+
       card('个人日历','可以导出','确认过的待办可以导出成日历文件（.ics），要自己导入手机日历才会提醒。之后有改动或取消，记得在手机日历里也改一下。','<span class="integration-link-label">看看怎么设置日历提醒 →</span>',true,'#calendar');
-    if(q.pending_deliveries?.length)$('#integration-cards').insertAdjacentHTML('beforeend',`<section class="stack"><h3>群通知待收件 · ${q.pending_deliveries.length}</h3>${q.pending_deliveries.map(d=>`<article class="panel"><strong>${esc(d.title)}</strong><p class="small">${esc(d.error||'等待收件')}${d.state==='failed'?' · 自动重试已停止':''}</p>${action('重试收件','qq-delivery-retry',d.id,'small')}</article>`).join('')}</section>`);
+    if(q.pending_deliveries?.length)$('#integration-cards').insertAdjacentHTML('beforeend',`<section class="stack"><h3>群通知待收件 · ${q.pending_deliveries.length}</h3>${q.pending_deliveries.map(d=>`<article class="panel"><strong>${esc(d.title)}</strong><p class="small">${esc(d.waiting_attachments?'等待原件':d.error||'等待收件')}${d.state==='failed'?' · 自动重试已停止':''}</p>${d.waiting_attachments?'':action('重试收件','qq-delivery-retry',d.id,'small')}</article>`).join('')}</section>`);
   }
   async function refreshIntegrations(){integrations=await api('/integrations');integrationCards();return integrations;}
   async function bindingDialog(){
@@ -85,7 +88,7 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     showDialog('绑定 QQ 机器人',`<div class="stack"><p>只有你主动私聊发给机器人的内容，才会收进你的账号。它读不到群聊记录，绑定也不算学校认证。</p><label class="check"><input id="qq-binding-consent" type="checkbox"><span>我同意把自己私聊发给机器人的内容保存到珞珈信使。</span></label><div id="qq-binding-code" aria-live="polite"></div><div class="row wrap">${action('生成绑定指令','qq-code','','primary')}${action('发好了，检查一下','qq-check','','small')}</div></div>`);
   }
   async function groupDialog(){
-    showDialog('接入 QQ 群通知',`<div class="stack"><p>先由群主或管理员启用该群，再由成员分别接收；只会保存授权之后的新消息。</p><label class="check"><input id="qq-group-consent" type="checkbox"><span>我同意接收所在群的新通知到本人账号。</span></label><div id="qq-group-code" aria-live="polite"></div><div class="row wrap">${action('生成群内指令','qq-group-code','','primary')}${action('检查接入状态','qq-group-check','','small')}</div></div>`);
+    showDialog('接入 QQ 群通知',`<div class="stack"><p>群主或管理员启用后，成员可保存授权之后的新消息及支持的附件。</p><label class="check"><input id="qq-group-consent" type="checkbox"><span>我同意接收所在群的新消息及支持的附件到本人账号。</span></label><div id="qq-group-code" aria-live="polite"></div><div class="row wrap">${action('生成群内指令','qq-group-code','','primary')}${action('检查接入状态','qq-group-check','','small')}</div></div>`);
   }
   async function publisherSyncDialog(){
     const view=captureUiContext(state),s=await api('/integrations/wechat/subscription');if(!view.sameDialog())return;
@@ -149,7 +152,15 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
       else if(action==='delete'&&item&&await ask('移除这个来源','只是把这个来源从列表里拿掉，已经保存的通知、对话和待办都还在。','移除')){await api('/source-catalog/'+item.id,{method:'DELETE',json:{version:item.version}});entries=entries.filter(s=>s.id!==item.id);list();toast('来源已移除。');}
       else if(action==='qq-bind')await bindingDialog();
       else if(action==='qq-group')await groupDialog();
-      else if(action==='qq-delivery-retry'){const result=await api('/integrations/qq/deliveries/'+encodeURIComponent(b.dataset.id)+'/retry',{method:'POST'});await refreshIntegrations();toast(result.ok?'已收件':'尚未收件，请查看失败原因',!result.ok);}
+      else if(action==='qq-group-intake'){
+        const groupId=b.dataset.id,name=b.parentElement.querySelector('[data-qq-group-name]');
+        await groupIntake.open(groupId,saved=>{
+          const group=integrations?.qq.groups?.find(g=>g.group_id===groupId);
+          if(group)group.name=saved.name;
+          name.textContent=groupName(groupId,saved.name);
+        });
+      }
+      else if(action==='qq-delivery-retry'){const result=await api('/integrations/qq/deliveries/'+encodeURIComponent(b.dataset.id)+'/retry',{method:'POST'});await refreshIntegrations();toast(result.ok?'已收件':result.waiting_attachments?'原件仍在读取':'尚未收件，请查看失败原因',!result.ok);}
       else if(action==='qq-group-code'){
         if(!$('#qq-group-consent')?.checked){toast('请先选择同意接收',true);return;}
         const view=captureUiContext(state,b),result=await api('/integrations/qq/group-code',{method:'POST',json:{receive_group_notices:true}});

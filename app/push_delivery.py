@@ -179,6 +179,8 @@ def candidates(conn, uid, now):
             if at and at > now:
                 add(f'event:{tid}:{at}', at - 900, title, f"活动开始：{slot['start_date']} {slot['start_time']}，请查看地点和准备事项", url, 'task:' + tid)
     from .notice_automation import profile_hash
+    from .qq_group_intake import quiet_notices
+    quiet = quiet_notices(conn,uid)
     saved_profile=conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0]
     user_profile=profile_hash(saved_profile);notification_pref=preferences(saved_profile)
     chosen={t['notice_id'] for t in tasks if t['data'].get('scope')=='personal' and t['status']!='cancelled' and not t.get('action_excluded')}
@@ -186,6 +188,7 @@ def candidates(conn, uid, now):
         if update['notice_id'] in chosen:
             add('intake-change:' + update['id'], update['created_at'], update['title'], '来源内容已更新，已有办理进度已保留，请核对变化', '/#notice/' + update['notice_id'], 'notice:' + update['notice_id'])
             continue
+        if update['notice_id'] in quiet:continue
         # Unchosen information must not bypass the personalized receipt policy
         # merely because a source fetched a new attachment/related candidate.
         notice=conn.execute('SELECT * FROM notices WHERE id=? AND user_id=?',(update['notice_id'],uid)).fetchone()
@@ -209,6 +212,7 @@ def candidates(conn, uid, now):
         AND NOT EXISTS(SELECT 1 FROM notice_delivery_suppressions s WHERE s.notice_id=n.id)
         AND r.external_key NOT LIKE 'manual:%' AND r.external_key NOT LIKE 'conversation:%'""", (uid, now - 3*86400))
     for row in rows:
+        if row['id'] in quiet:continue
         check = conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?', (row['id'],)).fetchone()
         current_draft = (row['status'] == 'draft' and row['draft_version'] == row['version'] and check
                          and check['notice_version'] == row['version'] and check['profile_hash'] == user_profile)

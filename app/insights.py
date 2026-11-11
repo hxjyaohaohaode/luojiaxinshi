@@ -242,8 +242,10 @@ def completion_times(conn, uid):
 
 
 def personal_insights(conn, uid, now=None, current_tasks=None):
+    from .qq_group_intake import quiet_notices
     now = (now or datetime.now(CST)).astimezone(CST)
     notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.source_label,n.draft,n.created_at,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
+    quiet = quiet_notices(conn,uid)
     tasks = []
     for row in conn.execute('SELECT id,status,data,created_at,updated_at FROM tasks WHERE user_id=?', (uid,)):
         item = dict(row)
@@ -311,7 +313,10 @@ def personal_insights(conn, uid, now=None, current_tasks=None):
         return {'key':key,'label':label,'kind':kind,'count':len(records),'ids':[r['id'] for r in records]}
     notice_rows=[group('all','全部通知','notices',notices)]
     for key,label in [('received','待整理'),('draft','待确认'),('processing','整理中'),('failed','整理失败'),('confirmed','已转为行动')]:
-        notice_rows.append(group(key,label,'notices',[n for n in notices if n['status']==key and n['disposition']=='inbox']))
+        notice_rows.append(group(key,label,'notices',[n for n in notices
+            if n['status']==key and n['disposition']=='inbox' and n['id'] not in quiet]))
+    if quiet:
+        notice_rows.append(group('discussion','普通群聊','notices',[n for n in notices if n['id'] in quiet]))
     for key,label in [('reference','仅存资料'),('not_applicable','与我无关'),('closed','已结束')]:
         notice_rows.append(group(key,label,'notices',[n for n in notices if n['disposition']==key]))
     active_sources=list(conn.execute('SELECT s.notice_id,s.kind,o.data AS origin FROM sources s JOIN notices n ON n.id=s.notice_id LEFT JOIN notice_source_origins o ON o.source_id=s.id WHERE n.user_id=? AND s.active=1',(uid,)))
@@ -329,7 +334,8 @@ def personal_insights(conn, uid, now=None, current_tasks=None):
         'dimensions':{'notices':notice_rows,'intake':intake,'tasks':task_rows,'timing':timing,'progress':progress},
         'generated_at': now.isoformat(),
         'notices': {'total': len(notices), 'confirmed': sum(n['status'] == 'confirmed' for n in notices),
-                    'waiting': sum(n['status'] in {'received', 'draft', 'failed'} and n['disposition']=='inbox' for n in notices)},
+                    'waiting': sum(n['status'] in {'received','draft','failed'} and n['disposition']=='inbox'
+                                   and n['id'] not in quiet for n in notices)},
         'tasks': {'total': len(personal), 'done': status['done'], 'pending': status['pending'], 'cancelled': status['cancelled'],
                   'overdue': overdue, 'on_time': on_time, 'late': late, 'from_ai': origins['ai'], 'manual': origins['manual']},
         'trend': trend, 'horizon': horizon,
@@ -363,8 +369,10 @@ def install(app, db, user, admin, list_tasks):
     from .schedule import serialize as serialize_arrangement
 
     def current_reminders(conn, uid):
+        from .qq_group_intake import quiet_notices
         tasks = list_tasks(conn, uid)
-        notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.version,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,))]
+        quiet = quiet_notices(conn,uid)
+        notices = [dict(r) for r in conn.execute("SELECT n.id,n.status,n.version,COALESCE(d.disposition,'inbox') AS disposition FROM notices n LEFT JOIN notice_dispositions d ON d.notice_id=n.id WHERE n.user_id=?", (uid,)) if r['id'] not in quiet]
         arrangements = [serialize_arrangement(r) for r in conn.execute('SELECT * FROM arrangements WHERE user_id=?', (uid,))]
         result=build_reminders(tasks, notices, arrangements)
         from .collaboration import reminders as collaboration_reminders

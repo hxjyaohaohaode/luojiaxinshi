@@ -18,6 +18,7 @@ export function historicalBoundaryLabel(item){
 export function noticeState(n){
   const disposition=n.disposition||n.handling?.disposition||'inbox';
   if(disposition!=='inbox')return [dispositionNames[disposition]||'已收好',''];
+  if(n.intent==='discussion')return ['普通群聊',''];
   if(n.tracking?.state==='elapsed'&&n.status!=='confirmed')return ['已过原文期限',''];
   if(n.tracking?.state==='event_date_passed'&&n.status!=='confirmed')return ['已过原文活动日期',''];
   if(n.tracking?.state==='entry_closed'&&n.status!=='confirmed')return ['报名或申报期限已过',''];

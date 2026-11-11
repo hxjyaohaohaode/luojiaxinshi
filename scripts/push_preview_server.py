@@ -36,6 +36,25 @@ def change_fixture_source():
     source_revision+=1
     return {'synthetic':True,'revision':source_revision}
 
+
+@app.post('/api/fixture/qq-enable')
+def enable_synthetic_qq():
+    if os.getenv('QQ_GROUP_BROWSER_FIXTURE')!='1':
+        raise HTTPException(404,'No synthetic QQ fixture')
+    from mvp_preview_server import config
+    from app import qq_group_media
+
+    async def download(url):
+        if url!='https://multimedia.nt.qq.com.cn/download?fileid=browser-synthetic':
+            raise qq_group_media.AttachmentError('合成验收只提供指定原件')
+        return '合成群通知原件，请核对课程资料。'.encode()
+
+    qq_group_media.fetch_file=download
+    config.qq_bot_app_id='qq-browser-synthetic'
+    config.qq_bot_secret='qq-browser-signing-fixture'
+    return {'synthetic':True}
+
+
 def simulated_delivery(device, payload, config):
     sent.append({'device_id': device['id'], 'user_id': device['user_id'], 'payload': payload})
     return SimpleNamespace(status_code=201)

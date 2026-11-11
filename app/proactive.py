@@ -34,13 +34,16 @@ def evidence_chain(conn,uid,nid):
         'policy':'直接附件链接证明引用关系；候选关联不证明适用、替代或取消效力。原文修订保留历史版本。'}
 
 def assessment(conn,notice,profile):
+    from .qq_group_intake import quiet_assessment, quiet_notices
     check=conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?',(notice['id'],)).fetchone()
     digest=profile_hash(profile)
     current=notice['status'] in {'draft','confirmed'} and notice['draft_version']==notice['version'] and check and check['notice_version']==notice['version'] and check['profile_hash']==digest
     pref=preferences(profile)
     result=apply_feedback(assess(dict(notice),current_draft=bool(current),pref=pref),saved(conn,notice['user_id'],notice['id']))
+    quiet=bool(quiet_notices(conn,notice['user_id'],notice['id']))
+    if quiet:result=quiet_assessment(result)
     result['current_draft']=bool(current)
-    result['decision_key']=hashlib.sha256(dumps([VERSION,notice['id'],notice['version'],digest,pref.model_dump(),result['tracking']['state'],result['feedback']['version']]).encode()).hexdigest()[:24]
+    result['decision_key']=hashlib.sha256(dumps([VERSION,notice['id'],notice['version'],digest,pref.model_dump(),result['tracking']['state'],result['feedback']['version'],quiet]).encode()).hexdigest()[:24]
     return result
 
 def source_capabilities(conn,uid,now):

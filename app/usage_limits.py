@@ -59,13 +59,17 @@ def check_count(conn, uid, table, field, label, extra=1):
         raise HTTPException(413, f'{label}将超过当前账号容量（{limit:,}），可导出并清理旧内容，或由管理员调整容量')
 
 
+class StorageCapacityError(HTTPException):
+    """Original file storage reached the account's configured capacity."""
+
+
 def check_storage(conn, uid, extra=0):
     from .notice_ingest import personal_storage_bytes
     if type(extra) is not int or extra < 0:raise ValueError('Storage increment must be nonnegative')
     if not extra:return
     limit = limits_for(conn).storage_bytes
     if personal_storage_bytes(conn, uid) + extra > limit:
-        raise HTTPException(413, f'账号原件与本人材料将超过 {limit / 1024**3:g} GB 容量，可清理旧文件或由管理员调整容量')
+        raise StorageCapacityError(413, f'账号原件与本人材料将超过 {limit / 1024**3:g} GB 容量，可清理旧文件或由管理员调整容量')
 
 
 def install(app, db, settings, user):

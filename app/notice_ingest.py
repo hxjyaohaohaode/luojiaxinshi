@@ -13,7 +13,7 @@ from .usage_limits import check_count, check_storage, limits_for
 from fastapi import HTTPException
 
 from .db import audit, dumps, ident
-from .documents import MAX_CHARS, total_chars
+from .documents import MAX_CHARS, source_storage_key, total_chars
 from .models import safe_url
 
 TABLES = {'notice_ingest_receipts', 'notice_ingest_updates'}
@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS notice_ingest_updates(
  receipt_id TEXT NOT NULL REFERENCES notice_ingest_receipts(id) ON DELETE CASCADE,
  previous_source_ids TEXT NOT NULL, new_source_ids TEXT NOT NULL,
  state TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL, reviewed_at INTEGER);
+CREATE INDEX IF NOT EXISTS notice_ingest_updates_pending ON notice_ingest_updates(notice_id) WHERE state='pending';
 INSERT OR IGNORE INTO meta VALUES('notice_ingest_schema_version','1');
 """
 
@@ -200,9 +201,9 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
     else:
         check_count(conn,uid,'notices','notices','通知')
         nid = ident()
-    existing = {s['sha256']: s['id'] for s in conn.execute('SELECT id,sha256 FROM sources WHERE notice_id=?', (nid,))}
-    new_sources = [s for s in sources if s['sha256'] not in existing]
-    check_storage(conn,uid,sum(len(s.get('content') or b'') for s in new_sources))
+    existing = {source_storage_key(s):s['id'] for s in conn.execute('SELECT id,kind,sha256 FROM sources WHERE notice_id=?', (nid,))}
+    new_sources = {source_storage_key(s):s for s in sources if source_storage_key(s) not in existing}
+    check_storage(conn,uid,sum(len(s.get('content') or b'') for s in new_sources.values()))
     created = not changed and duplicate is None
     if created:
         conn.execute('INSERT INTO notices(id,user_id,title,source_label,source_url,published_at,materials_complete,fingerprint,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
@@ -212,14 +213,15 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
         _refresh_origins(conn, uid, nid, sources)
     source_ids = []
     for source in sources:
-        sid = existing.get(source['sha256'])
+        key_for_storage = source_storage_key(source)
+        sid = existing.get(key_for_storage)
         if not sid:
             sid = ident()
             conn.execute('INSERT INTO sources(id,notice_id,name,kind,content,sha256,status,sections,warning,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
                          (sid, nid, source['name'], source['kind'], source.get('content'), source['sha256'], source['status'], dumps(sections(source)), source.get('warning', ''), now))
             from .notice_intake import save_origin
             save_origin(conn, sid, source)
-            existing[source['sha256']] = sid
+            existing[key_for_storage] = sid
         source_ids.append(sid)
     rid = ident()
     conn.execute('INSERT INTO notice_ingest_receipts VALUES(?,?,?,?,?,?,?,?,?,?)',
@@ -246,7 +248,8 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
     audit(conn, uid, nid, 'source_update' if changed else 'create_notice' if created else 'notice_source_received',
           before=dict(prior_record) if prior_record else None,
           after={'title': title,'published_at':published_at,'source_label': source_label, 'receipt_id': rid,'metadata_changed':metadata_changed})
-    return {'notice_id': nid, 'created': created, 'updated': changed, 'duplicate': bool(duplicate),'metadata_changed':metadata_changed}
+    return {'notice_id': nid, 'receipt_id': rid, 'created': created, 'updated': changed,
+            'duplicate': bool(duplicate),'metadata_changed':metadata_changed}
 
 
 def intake_state(conn, nid):

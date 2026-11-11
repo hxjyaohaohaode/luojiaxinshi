@@ -246,11 +246,13 @@ jobs:
             artifacts/notice-matters-browser/*
             artifacts/source-presets-browser/*
             artifacts/pilot-workspace-browser/*
+            artifacts/qq-group-intake-browser/*
             artifacts/push-browser/*
             artifacts/ci-browser/verify_natural_intake.mjs.log
             artifacts/ci-browser/verify_task_materials.mjs.log
             artifacts/ci-browser/verify_source_inbox.mjs.log
             artifacts/ci-browser/verify_notice_matters.mjs.log
+            artifacts/ci-browser/verify_qq_group_intake_ui.mjs.log
             artifacts/ci-browser/verify_push_browser.mjs.log
             artifacts/ci-browser/verify_task_board.mjs.log
             artifacts/ci-browser/verify_frontend_stability.mjs.log

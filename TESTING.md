@@ -46,6 +46,8 @@ npm ci --ignore-scripts
 | 层级 | 命令 | 范围与边界 |
 |---|---|---|
 | 后端 | `python -m pytest -q` | `tests/test_*.py`，`pytest.ini` 固定 `testpaths = tests`。每项测试使用临时数据库和模拟模型，不读取正式 `data/`，不发起付费请求 |
+| QQ 群回放 | `python -m pytest tests/test_qq_group_intake.py tests/test_group_delivery.py -ra` | 将 `fixtures/qq-group/replay.json` 的标注消息通过签名回调重放，核对分流、原文保存、自动整理资格和提醒候选。另验证迟到退群、过长材料、附件失败补传、独立重试、撤权和下载。附件网络使用合成响应，送达和已读需要真实通道验收 |
+| QQ 群浏览器 | `python scripts/run_browser_checks.py --suite verify_qq_group_intake_ui.mjs` | Chromium、Firefox 和 WebKit 上经真实来源页保存规则、筛选和分页、查看原文并下载附件。签名回调、账号和文件响应均为隔离合成夹具 |
 | 前端单元 | `node --test tests/*.test.mjs` | 与 `npm test` 相同，使用 Node.js 22 内置测试运行器；应用本身没有 npm 运行依赖 |
 | 浏览器回归 | `python scripts/run_browser_checks.py` | 在 `127.0.0.1:8786` 启动 `scripts/push_preview_server.py` 合成夹具，覆盖 Chromium、Firefox、WebKit 的既有界面回归，以及自然导入、个人材料、来源收件和持久推送。夹具沿用原有演示数据，来源读取与推送投递全部在本机模拟。可用 `--suite 脚本名` 只重跑一组。报告写入 `artifacts/<套件目录>/report.json`，日志在 `artifacts/ci-browser/` |
 | 异步保存与恢复 | `python scripts/run_continuity_browser_checks.py` | 三组保留的检查全部执行；每组使用系统分配的独立临时端口、全新合成数据库及经过验证码流程创建的夹具账号，手机／桌面与日历横屏等既有尺寸均保留。规范报告和原始场景记录位于 `artifacts/continuity-browser/`，不会复用真实服务 |
