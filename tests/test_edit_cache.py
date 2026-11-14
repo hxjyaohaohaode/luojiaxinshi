@@ -55,3 +55,23 @@ def test_cache_keys_are_bounded_and_validated(env,key):
 def test_cache_payload_limit(env):
     c=account(env)
     assert c.put('/api/edit-cache/new-notice',json={'revision':0,'payload':{'body':'a'*180001}}).status_code==413
+
+
+def test_pending_campus_publication_cache_is_private_versioned_and_not_authorization(env):
+    alice=account(env);bob=account(env,'bob')
+    route='/api/edit-cache/campus-publication'
+    payload={'request_id':'publication_retry_2026','draft_id':'draft_retry_2026','draft_version':2,
+             'title':'本人待核对的发布','body':'尚未确认是否发布成功的原始内容','audience':'college',
+             'grade':'','class_name':'','audience_review':'a'*64}
+    assert alice.get(route).json()=={'revision':0,'payload':None}
+    saved=alice.put(route,json={'revision':0,'payload':payload})
+    assert saved.status_code==200
+    assert saved.json()=={'revision':1,'payload':payload}
+    assert alice.get(route).json()==saved.json()
+    assert bob.get(route).json()=={'revision':0,'payload':None}
+    assert alice.put(route,json={'revision':0,'payload':{'request_id':'stale-replacement'}}).status_code==409
+    # Saving an owner's recovery payload does not grant a campus publisher role.
+    assert alice.post('/api/campus/publications',json=payload).status_code==403
+    assert alice.put(route,json={'revision':1,'payload':None}).status_code==200
+    assert alice.put(route,json={'revision':1,'payload':payload}).status_code==409
+    assert alice.get(route).json()=={'revision':2,'payload':None}

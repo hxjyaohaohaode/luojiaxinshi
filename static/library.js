@@ -1,4 +1,6 @@
 import {createPagedList} from './paged-list.js';
+import {preserveListViewport} from './list-viewport.js';
+import {createListClock} from './list-clock.js';
 import {numberMarkup,animateSurface} from './experience-system.js';
 import {noticeState,isNoticeOpen} from './notice-intake.js';
 import {noticeSearchText,noticeSearchExcerpt} from './notice-search.js';
@@ -84,11 +86,13 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
   let grouped=true;
   let searchSequence=0,searchTimer=null,searchResult=null,searchQuery='',searchError='',searching=false,sourceSequence=0;
   let websiteSources=[],sourceBusy=false,refreshSequence=0;
+  const listClock=createListClock('notices');
   const $=s=>document.querySelector(s);
   const button=(label,value,disabled=false)=>`<button type="button" class="button small" data-library-page="${value}" ${disabled?'disabled':''}>${label}</button>`;
-  const collection=createPagedList({api,path:'/notices/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:value=>{
+  const collection=createPagedList({api,path:'/notices/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:(value,options)=>{
     if(owner!==state.session?.user?.id||!$('#library-results'))return;
-    state.notices=value.items;searching=value.loading;searchError=value.error;update();
+    state.notices=value.items;searching=value.loading;searchError=value.error;
+    if(options.preserveViewport)preserveListViewport(update);else update();
   }});
   function currentFilters(){
     const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;
@@ -267,5 +271,6 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     if(pagination&&!pagination.disabled){page=Number(pagination.dataset.libraryPage);update();$('#library-results').scrollIntoView({block:'nearest'});}
     if(e.target.closest('[data-library-reset]')){state.insightSelection=null;clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';queueSearch(true);$('#library-search').focus({preventScroll:true});}
   });
-  return {render,reload:()=>loadFilters(true),clear:()=>collection.clear(),snapshot:()=>collection.snapshot(),resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
+  const reload=options=>options?.preserveRange?collection.load(currentFilters(),{...options,force:true}):loadFilters(true);
+  return {render,reload,refreshClock:(projection,canApply)=>listClock.refresh(collection,projection,{owner:state.session?.user?.id,canApply,reload}),clear:()=>collection.clear(),snapshot:()=>collection.snapshot(),resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
 }

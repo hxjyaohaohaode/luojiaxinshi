@@ -76,19 +76,35 @@ def reconcile(conn, uid, now):
 def tick(db, settings, provider=None, now=None):
     sender=provider or CloudMessages(settings)
     if not sender.available('email'):return
-    moment=int(time.time()) if now is None else now
+    def clock():
+        return int(time.time() if now is None else now)
     with db.connect(write=True) as conn:
+        moment=clock()
         # Provider timeouts and process crashes have ambiguous delivery status.
         # Never blindly replay an already submitted notification on restart.
         conn.execute("UPDATE mail_outbox SET state='uncertain',finished_at=?,error='发送中断，送达状态待核对' WHERE state='sending' AND lease_until<?",(moment,moment))
         conn.execute("DELETE FROM mail_outbox WHERE state NOT IN ('pending','sending') AND finished_at<?",(moment-30*86400,))
         users=[row['user_id'] for row in conn.execute('SELECT user_id FROM mail_preferences WHERE enabled=1')]
     from .notification_coordination import coordinate
-    for uid in users:coordinate(db,uid,'email',moment,reconcile)
+    for uid in users:coordinate(db,uid,'email',clock(),reconcile)
     for _ in range(12):
-        with db.connect(write=True) as conn:
-            row=conn.execute("SELECT * FROM mail_outbox WHERE state='pending' AND due_at<=? ORDER BY due_at,rowid LIMIT 1",(moment,)).fetchone()
+        # Locate a possible job without claiming submission. Budget accounting
+        # can wait on the database; current truth must be checked after it.
+        with db.connect() as conn:
+            row=conn.execute("SELECT id FROM mail_outbox WHERE state='pending' AND due_at<=? ORDER BY due_at,rowid LIMIT 1",(clock(),)).fetchone()
             if not row:return
+            jid=row['id']
+        try:rate_limit(db,'mail-reminder-budget',settings.notification_mail_daily_limit,86400)
+        except HTTPException:
+            with db.connect(write=True) as conn:
+                conn.execute("UPDATE mail_outbox SET error='今日邮件额度已用完，等待额度恢复' WHERE id=? AND state='pending'",(jid,))
+            return
+        with db.connect(write=True) as conn:
+            # Read the live clock only after FIFO/SQLite admission. Explicit
+            # now remains fixed for deterministic simulations and tests.
+            moment=clock()
+            row=conn.execute("SELECT * FROM mail_outbox WHERE id=? AND state='pending' AND due_at<=?",(jid,moment)).fetchone()
+            if not row:continue
             job=dict(row);reconcile(conn,job['user_id'],moment)
             if conn.execute('SELECT state FROM mail_outbox WHERE id=?',(job['id'],)).fetchone()[0]!='pending':continue
             pref=preference(conn,job['user_id'])
@@ -96,11 +112,6 @@ def tick(db, settings, provider=None, now=None):
             job=dict(conn.execute('SELECT * FROM mail_outbox WHERE id=?',(job['id'],)).fetchone())
             if job['due_at']>moment:continue
             conn.execute("UPDATE mail_outbox SET state='sending',lease_until=? WHERE id=?",(moment+60,job['id']))
-        try:rate_limit(db,'mail-reminder-budget',settings.notification_mail_daily_limit,86400)
-        except HTTPException:
-            with db.connect(write=True) as conn:
-                conn.execute("UPDATE mail_outbox SET state='pending',error='今日邮件额度已用完，等待额度恢复' WHERE id=?",(job['id'],))
-            return
         try:
             payload=json.loads(job['payload'])
             if payload.get('user_id')!=job['user_id']:raise ValueError('invalid_owner')
@@ -112,6 +123,7 @@ def tick(db, settings, provider=None, now=None):
         except Exception:
             receipt='';state,error='uncertain','邮件提交未确认，请检查收件箱和垃圾邮件；系统不会重复提交这条邮件'
         with db.connect(write=True) as conn:
+            moment=clock()
             conn.execute('UPDATE mail_outbox SET state=?,finished_at=?,error=?,provider_id=? WHERE id=? AND state=?',
                          (state,moment,error,str(receipt)[:100],job['id'],'sending'))
 

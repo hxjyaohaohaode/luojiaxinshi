@@ -79,13 +79,15 @@ def restore_database(source:Path,destination:Path):
             from .listing import TABLES as LISTING_TABLES
             from .observability import TABLES as OBSERVABILITY_TABLES
             from .notification_coordination import TABLES as COORDINATION_TABLES
+            from .campus_submissions import TABLES as SUBMISSION_TABLES
             for key, required in (('campus_sprint_schema_version',SPRINT_TABLES),
                                   ('source_fetch_schema_version',FETCH_TABLES),
                                   ('source_observation_schema_version',OBSERVATION_TABLES),
                                   ('notice_tracking_schema_version',TRACKING_TABLES),
                                   ('bounded_lists_version',LISTING_TABLES),
                                   ('observability_schema_version',OBSERVABILITY_TABLES),
-                                  ('notification_coordination_schema_version',COORDINATION_TABLES)):
+                                  ('notification_coordination_schema_version',COORDINATION_TABLES),
+                                  ('campus_submission_schema_version',SUBMISSION_TABLES)):
                 marker=original.execute('SELECT value FROM meta WHERE key=?',(key,)).fetchone()
                 if marker and (marker[0]!='1' or not required.issubset(tables)):
                     raise ValueError('备份扩展版本不兼容或必要记录缺失：'+key)
@@ -156,6 +158,8 @@ def restore_database(source:Path,destination:Path):
                     if table in tables:target.execute('DELETE FROM '+table)
                 for table in ('campus_audience_reviews','campus_roster_previews','campus_dispatch_authority'):
                     if table in tables:target.execute('DELETE FROM '+table)
+                # Keep campus_submission_cancellations present in this snapshot.
+                # An earlier backup cannot recover cancellations made afterward.
                 if 'campus_deliveries' in tables:
                     target.execute("UPDATE campus_deliveries SET state='failed',error='恢复后请重新授权并核对受众' WHERE state IN ('pending','failed')")
                 for table in ('source_subscriptions','publisher_subscriptions'):

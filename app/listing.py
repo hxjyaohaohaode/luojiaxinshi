@@ -168,7 +168,11 @@ def notice_page(conn, uid, *, limit=50, cursor='', q='', status='', disposition=
                'intent':intent,'relevance':relevance,'from':from_day,'to':to_day,'sort':sort,'ids':ids}
     revision = _revision(conn, uid)
     advanced = intent not in {'','all'} or relevance not in {'','all'} or sort not in {'collected','newest'}
-    if advanced: revision['clock'] = int(time.time()) // 60
+    # A clock lease is needed only when time can change membership or order.
+    # Stable applicability and publication/collection sorting must not eject
+    # an already loaded reader from later pages at every minute boundary.
+    if intent not in {'','all'} or sort in {'priority','deadline'}:
+        revision['clock'] = int(time.time()) // 60
     previous = _decode(conn, cursor, uid, 'notices', filters, revision) if cursor else None
     clauses, args = ['n.user_id=?'], [uid]
     if status:
@@ -252,7 +256,7 @@ def _response(conn, items, more, total, limit, uid, kind, filters, revision):
             'order': 'created_at_desc_id_desc'}
 
 
-def task_page(conn, uid, serialize_task, *, limit=50, cursor='', q='', status='', notice_id='', lane='', scope='',day='',ids=''):
+def task_page(conn, uid, serialize_task, *, limit=50, cursor='', q='', status='', notice_id='', lane='', scope='',day='',ids='',sort=''):
     from .list_filters import selected_ids, valid_day, cached_order, ordered_page, task_matches
     if not conn.in_transaction:
         conn.execute('BEGIN')
@@ -264,11 +268,19 @@ def task_page(conn, uid, serialize_task, *, limit=50, cursor='', q='', status=''
         raise HTTPException(422, '待办范围无效')
     if lane and lane not in {'action', 'followup'}:
         raise HTTPException(422, '看板分组无效')
+    if sort not in {'', 'created', 'board'}:
+        raise HTTPException(422, '待办排序无效')
+    # Keep the original list and its signed filters unchanged. Only the board
+    # opts into personal priority; switching views cannot reuse its cursor.
+    board = sort == 'board'
     valid_day(day); selected = selected_ids(ids)
     filters = {'q': q, 'status': status, 'notice_id': notice_id, 'lane': lane, 'scope': scope,'day':day,'ids':ids}
+    if board: filters['sort'] = 'board'
     revision = _revision(conn, uid)
     advanced = status not in {'','done','cancelled'}
-    if advanced: revision['clock'] = int(time.time()) // 60
+    ranked = advanced or board
+    if status in {'followup','soon'}:
+        revision['clock'] = int(time.time()) // 60
     previous = _decode(conn, cursor, uid, 'tasks', filters, revision) if cursor else None
     clauses, args = ['t.user_id=?'], [uid]
     for field, value in [('status', status if status in {'done','cancelled'} else ''), ('notice_id', notice_id)]:
@@ -290,20 +302,32 @@ def task_page(conn, uid, serialize_task, *, limit=50, cursor='', q='', status=''
     base = ' FROM tasks t JOIN notices n ON n.id=t.notice_id LEFT JOIN task_workflows w ON w.task_id=t.id WHERE ' + ' AND '.join(clauses)
     total = conn.execute('SELECT COUNT(*)' + base, args).fetchone()[0]
     from .workflow import enrich_tasks
-    if advanced:
+    if ranked:
         def compute():
-            records=[serialize_task(row) for row in conn.execute('SELECT t.*,n.title AS notice_title'+base+' ORDER BY t.created_at DESC,t.id DESC',args)]
-            enrich_tasks(conn,records)
-            return [row['id'] for row in records if task_matches(row,status)]
+            if advanced:
+                records=[serialize_task(row) for row in conn.execute('SELECT t.*,n.title AS notice_title'+base+' ORDER BY t.created_at DESC,t.id DESC',args)]
+                enrich_tasks(conn,records)
+                records=[row for row in records if task_matches(row,status)]
+            else:
+                # The complete board order must be known before choosing its
+                # first 50 cards. Read only ordering metadata here, not every
+                # task's original requirements, workflow or attachments.
+                records=[{'id':row['id'],'created_at':row['created_at'],
+                          'workflow':{'data':{'board_order':row['board_order']}}}
+                         for row in conn.execute("SELECT t.id,t.created_at,json_extract(w.data,'$.board_order') AS board_order"+base,args)]
+            if board:
+                from .task_board import ordered
+                records=ordered(records)
+            return [row['id'] for row in records]
         order=cached_order(conn,uid,'tasks',revision,filters,compute)
         chosen,more=ordered_page(order,previous,limit)
         rows=[serialize_task(row) for row in conn.execute('SELECT t.*,n.title AS notice_title'+base+' AND t.id IN (SELECT value FROM json_each(?))', [*args,dumps(chosen)])]
         positions={value:index for index,value in enumerate(chosen)}
         rows.sort(key=lambda row:positions[row['id']]); total=len(order)
-    if previous and not advanced:
+    if previous and not ranked:
         base += ' AND (t.created_at<? OR (t.created_at=? AND t.id<?))'
         args.extend([previous['at'], previous['at'], previous['id']])
-    if not advanced:
+    if not ranked:
         rows = [serialize_task(row) for row in conn.execute('SELECT t.*,n.title AS notice_title' + base + ' ORDER BY t.created_at DESC,t.id DESC LIMIT ?', [*args, limit + 1])]
         more, rows = len(rows) > limit, rows[:limit]
     enrich_tasks(conn, rows)
@@ -319,4 +343,6 @@ def task_page(conn, uid, serialize_task, *, limit=50, cursor='', q='', status=''
         attachments.setdefault(row['notice_id'],[]).append(dict(row))
     for row in rows:
         row['attachments']=attachments.get(row['notice_id'],[])
-    return _response(conn, rows, more, total, limit, uid, 'tasks', filters, revision)
+    result = _response(conn, rows, more, total, limit, uid, 'tasks', filters, revision)
+    if board: result['order'] = 'board_order_asc_created_at_desc_id_desc'
+    return result

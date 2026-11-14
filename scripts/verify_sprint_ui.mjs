@@ -6,9 +6,10 @@ import {createRequire} from 'node:module';
 import {browserExecutable} from './browser-runtime.mjs';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-browser');
-const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=20;
+const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=25;
 const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',network_fixture:{service_workers:'block',reason:'Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs.'},status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],mobile_controls:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
+report.review_regressions={clock_ranges:[],board_ranges:[],publication_retries:[],publication_cancellations:[]};
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
 await saveReport();
@@ -35,6 +36,18 @@ for(const engine of engines){
   const taskResponse=(query,response)=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===query&&response.request().method()==='GET';};
   const searchTasks=async query=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
   const settledTaskSearch=async(query,total)=>{await page.waitForFunction(({query,total})=>document.querySelector('#task-search')?.value===query&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 '+Math.min(total,50)+' / '+total+' 项',{query,total});};
+  const publicationPayload=request=>{
+    const data=request.postData()?.match(/name="data"\r?\n\r?\n([\s\S]*?)\r?\n--/);assert.ok(data,'The actual multipart publication request carries its data part');return JSON.parse(data[1]);
+  };
+  const readyPublication=()=>page.waitForFunction(()=>{const form=document.querySelector('[data-workspace-form="campus-publish"]');return form&&!form.inert&&form.getAttribute('aria-busy')!=='true';});
+  const fillPublication=async(title,{attachment=false}={})=>{
+    const form=page.locator('[data-workspace-form=campus-publish]');await form.waitFor();
+    await form.locator('[name=audience]').selectOption('class');await form.locator('[name=grade]').fill('2026级');await form.locator('[name=class_name]').fill('试点一班');
+    await form.locator('[name=title]').fill(title);await form.locator('[name=body]').fill('合成发布恢复验收；只有隔离夹具内的已核实范围，无外部接收者。');
+    if(attachment)await form.locator('[name=files]').setInputFiles({name:'恢复原件.txt',mimeType:'text/plain',buffer:Buffer.from('用于验证发布后未决结果及新草稿缺件提示的合成原件。')});
+    return form;
+  };
+  const confirmPublication=async form=>{await form.locator('[type=submit]').click();await page.locator('#dialog [data-action=accept-dialog]').click();};
   const measureLoad=async(label,operation,selector)=>{
     await operation();const input=page.locator(selector);await input.waitFor({state:'visible'});await page.waitForFunction(selector=>{const node=document.querySelector(selector);return node&&!node.disabled&&!node.readOnly&&!node.closest('[inert]');},selector);await input.focus();assert.equal(await input.isEditable(),true);
     const metrics=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0],resources=performance.getEntriesByType('resource'),files=resources.filter(item=>/\/static\//.test(item.name));return {can_input_at_ms:performance.now(),dom_content_loaded_ms:nav?.domContentLoadedEventEnd||null,load_event_ms:nav?.loadEventEnd||null,request_count:resources.length,static_request_count:files.length,css_request_count:files.filter(item=>/\.css(?:$|\?)/.test(item.name)).length,transfer_size:resources.reduce((sum,item)=>sum+item.transferSize,0),encoded_body_size:resources.reduce((sum,item)=>sum+item.encodedBodySize,0),longtask_supported:window.__sprintLongTaskSupported,longtasks:window.__sprintLongTaskSupported?window.__sprintLongTasks:null,parse_duration_ms:null,parse_duration_note:'No portable browser API separates JavaScript parsing from execution; unmeasured.',cache_note:'Zero transferSize is allowed on warm loads and is not treated as a network failure.',resources:files.map(item=>({url:item.name.replace(location.origin,''),initiator:item.initiatorType,duration:item.duration,transferSize:item.transferSize,encodedBodySize:item.encodedBodySize}))};});
@@ -92,6 +105,54 @@ for(const engine of engines){
     });
     await nav('tasks');
     if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-action=filter][data-filter=all]').click();
+    await check('a clock-only signal preserves all 54 loaded tasks, focused node and scroll without reloading unchanged full records',async()=>{
+      await searchTasks(prefix);await settledTaskSearch(prefix,54);
+      const baseline=await api('/proactive/revision');let tick=0;const paths=[];
+      const handler=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...baseline,revision:baseline.revision+':clock-fixture:'+tick,domains:{...baseline.domains,clock:tick?String(baseline.domains.clock)+':fixture:'+tick:baseline.domains.clock}})});
+      const observer=request=>{const url=new URL(request.url());if(url.origin===origin&&request.method()==='GET')paths.push(url.pathname+url.search);};
+      const probe=()=>Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);
+      await page.route('**/api/proactive/revision',handler);
+      let node;
+      try{
+        // A revision response precedes its awaited UI refresh. The sync
+        // controller serializes probes, so the second real response proves
+        // that the initial stable refresh finished before measurement begins.
+        await probe();await probe();
+        if(await page.locator('[data-action=task-more]').count())await page.locator('[data-action=task-more]').click();
+        await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项'&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false');
+        const ids=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId)),target=ids.at(-1),button=page.locator('[data-task-id="'+target+'"] .task-primary');
+        await button.scrollIntoViewIfNeeded();await button.focus();node=await button.elementHandle();
+        const before=await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY}));
+        await page.evaluate(()=>{window.__clockListMutations=0;window.__clockListObserver=new MutationObserver(()=>window.__clockListMutations++);window.__clockListObserver.observe(document.querySelector('#task-results'),{childList:true,subtree:true,attributes:true});});
+        page.on('request',observer);tick++;
+        const projection=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/workspace/projection');await probe();assert.equal((await projection).status(),200);
+        // The next serialized probe also waits out the tick's final DOM work;
+        // checking immediately at response time could miss a late redraw.
+        await probe();
+        assert.deepEqual(await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId)),ids);
+        assert.equal(await node.evaluate(element=>element.isConnected&&document.activeElement===element),true);
+        assert.equal(await page.evaluate(()=>window.__clockListMutations),0,'Unchanged lightweight flags must not redraw list rows');
+        const after=await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY}));assert.ok(Math.abs(after.content-before.content)<2&&Math.abs(after.window-before.window)<2,JSON.stringify({before,after}));
+        assert.equal(paths.some(url=>url.startsWith('/api/tasks/page')),false,'A stable all filter must not reread its full loaded task records');
+        const readCount=paths.filter(url=>url.startsWith('/api/workspace/projection')).length;await probe();await page.waitForTimeout(250);assert.equal(paths.filter(url=>url.startsWith('/api/workspace/projection')).length,readCount,'An unchanged clock revision is not another refresh');
+        report.review_regressions.clock_ranges.push({engine,loaded:ids.length,controlled_clock_signal:true,real_entity_endpoint:'/api/workspace/projection',full_page_reads:paths.filter(url=>url.startsWith('/api/tasks/page')).length,dom_mutations:await page.evaluate(()=>window.__clockListMutations),focused_node_preserved:true,before,after});
+      }finally{page.off('request',observer);await page.unroute('**/api/proactive/revision',handler);await page.evaluate(()=>window.__clockListObserver?.disconnect());await node?.dispose();}
+    });
+    await check('a card loaded from the second board page remains on page one after an actual upward move',async()=>{
+      const boardResponse=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');});
+      await page.locator('[data-task-view=board]').click();const initial=await(await boardResponse).json();assert.equal(initial.items.length,50);await page.locator('[data-action=task-more]').click();
+      await page.waitForFunction(()=>document.querySelectorAll('#task-results [data-task-id]').length===54);
+      const ordered=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.equal(ordered.length,54);const moved=ordered[50];assert.equal(initial.items.some(item=>item.id===moved),false);
+      await page.locator('[data-task-id="'+moved+'"] [data-task-drag-handle]').click();
+      const moveResponse=page.waitForResponse(response=>response.url()===origin+'/api/tasks/'+moved+'/move'&&response.request().method()==='POST');
+      const refreshed=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');});
+      await page.locator('.task-move-menu').getByRole('button',{name:'上移一位',exact:true}).click();assert.equal((await moveResponse).status(),200);const result=await(await refreshed).json();assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
+      await page.waitForFunction(id=>document.querySelectorAll('#task-results [data-task-id]').length===50&&!!document.querySelector('[data-task-id="'+id+'"]'),moved);
+      const ids=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.deepEqual(ids,[...ordered.slice(0,49),moved]);
+      report.review_regressions.board_ranges.push({engine,initial_page:50,loaded:54,moved_id:moved,from_index:50,to_index:49,after_first_page:ids});
+      await page.screenshot({path:path.join(out,engine+'-desktop-board-page-move.png')});
+      const listResponse=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort');});await page.locator('[data-task-view=list]').click();assert.equal((await listResponse).status(),200);
+    });
     await page.locator('#task-search').fill(prefix);
     await check('task list reports a bounded first page and loads the remaining real records',async()=>{
       await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
@@ -201,6 +262,61 @@ for(const engine of engines){
       assert.ok(control.height>=43.9&&control.y>=0&&control.y+control.height<=navigation.y-1,JSON.stringify({control,navigation}));
     });
     await page.screenshot({path:path.join(out,engine+'-mobile-draft.png')});
+    await check('a committed publication with a lost response retries the identical confirmed payload without saving its deleted draft',async()=>{
+      const title='丢响应直接恢复 '+engine,form=await fillPublication(title),attempts=[],writes=[];let committed=null;
+      const observe=request=>{if(request.method()==='PUT'&&new URL(request.url()).pathname.startsWith('/api/campus/drafts/'))writes.push(new URL(request.url()).pathname);};
+      const handler=async route=>{const payload=publicationPayload(route.request());attempts.push(payload);const response=await route.fetch();assert.equal(response.status(),200,await response.text());if(!committed){committed=await response.json();await route.abort('failed');}else await route.fulfill({response});};
+      page.on('request',observe);await page.route(origin+'/api/campus/publications',handler);
+      try{
+        await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();assert.ok(committed?.id);
+        const original=(await api('/edit-cache/campus-publication')).payload.payload;assert.deepEqual(original,attempts[0]);assert.equal((await context.request.get(origin+'/api/campus/drafts/'+original.draft_id)).status(),404);
+        const saved=writes.length;
+        const replayResponse=page.waitForResponse(response=>response.url()===origin+'/api/campus/publications'&&response.request().method()==='POST');
+        await form.locator('[type=submit]').click();const replayed=await replayResponse;
+        assert.equal(replayed.status(),200,await replayed.text());assert.equal((await replayed.json()).id,committed.id);
+        // Successful recovery performs this navigation itself. Changing the
+        // hash here would cancel a not-yet-sent retry through its route guard.
+        await page.waitForFunction(()=>location.hash==='#campus/records'&&document.querySelector('#content')?.dataset.page==='campus/records'&&!document.querySelector('#content')?.inert);
+        assert.equal(attempts.length,2);assert.deepEqual(attempts[1],original);assert.equal(writes.length,saved);
+        const records=await api('/campus/publications?page_size=100&q='+encodeURIComponent(title));assert.equal(records.items.length,1);assert.equal(records.items[0].id,committed.id);assert.equal((await api('/edit-cache/campus-publication')).payload,null);
+        report.review_regressions.publication_retries.push({engine,scenario:'same form retry',publication_id:committed.id,request_id:original.request_id,attempts:2,additional_draft_writes:0,stored_publications:records.items.length});
+      }finally{await page.unroute(origin+'/api/campus/publications',handler);page.off('request',observe);}
+    });
+    await check('an uncertain publication survives reload and its recovery preserves new draft input and unresolved attachment names',async()=>{
+      await nav('campus/publish');const title='刷新恢复原发布 '+engine,form=await fillPublication(title,{attachment:true}),attempts=[],writes=[];let committed=null;
+      const observe=request=>{if(request.method()==='PUT'&&new URL(request.url()).pathname.startsWith('/api/campus/drafts/'))writes.push(new URL(request.url()).pathname);};
+      const handler=async route=>{attempts.push(publicationPayload(route.request()));const response=await route.fetch();assert.equal(response.status(),200,await response.text());if(!committed){committed=await response.json();await route.abort('failed');}else await route.fulfill({response});};
+      page.on('request',observe);await page.route(origin+'/api/campus/publications',handler);
+      try{
+        await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();const original=(await api('/edit-cache/campus-publication')).payload.payload;
+        await page.reload();await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();assert.equal(await form.locator('[name=title]').inputValue(),title);
+        const newTitle='后来编辑暂不发布 '+engine,newBody='保留这份新输入；恢复上次确认的发布不得把它一起发送。';await form.locator('[name=title]').fill(newTitle);await form.locator('[name=body]').fill(newBody);
+        const newDraft=await form.getAttribute('data-draft-id');assert.notEqual(newDraft,original.draft_id);await form.locator('[data-campus-action=save-draft]').click();
+        // A preceding autosave can show this status too. Wait for the actual
+        // manual save handler to finish its serialized write before reading.
+        await form.locator('[data-campus-action=save-draft]:enabled').waitFor();await page.waitForFunction(()=>document.querySelector('[data-campus-draft-status]')?.textContent.startsWith('正文已保存'));
+        const saved=await api('/campus/drafts/'+newDraft);assert.equal(saved.body,newBody);assert.deepEqual(saved.pending_attachment_names,['恢复原件.txt']);
+        await page.reload();await page.locator('.campus-drafts>summary').click();await page.locator('[data-campus-action=open-draft][data-id="'+newDraft+'"]').click();await page.waitForFunction(title=>document.querySelector('[data-workspace-form=campus-publish] [name=title]')?.value===title,newTitle);
+        assert.equal(await form.getAttribute('data-missing-files'),'1');assert.match(await page.locator('#campus-missing-files').innerText(),/恢复原件/);
+        await page.screenshot({path:path.join(out,engine+'-mobile-publication-recovery.png')});
+        const oldWrites=writes.filter(path=>path.endsWith('/'+original.draft_id)).length;
+        await page.locator('[data-campus-action=recover-publication]').click();await page.locator('[data-campus-publication-recovery]').waitFor({state:'detached'});await readyPublication();assert.equal(attempts.length,2);assert.deepEqual(attempts[1],original);
+        assert.equal(await form.locator('[name=title]').inputValue(),newTitle);assert.equal(await form.locator('[name=body]').inputValue(),newBody);assert.equal(writes.filter(path=>path.endsWith('/'+original.draft_id)).length,oldWrites);
+        await form.locator('[type=submit]').click();await page.locator('#toast').filter({hasText:'请重新选择附件'}).waitFor();assert.equal(attempts.length,2,'A new draft with unresolved attachments must not publish');
+        await form.locator('[data-campus-action=clear-files]').click();await form.locator('[data-campus-action=save-draft]').click();await form.locator('[data-campus-action=save-draft]:enabled').waitFor();await page.waitForFunction(()=>document.querySelector('[data-campus-draft-status]')?.textContent.startsWith('已保存第'));assert.deepEqual((await api('/campus/drafts/'+newDraft)).pending_attachment_names,[]);
+        const records=await api('/campus/publications?page_size=100&q='+encodeURIComponent(title));assert.equal(records.items.length,1);assert.equal(records.items[0].id,committed.id);assert.equal((await api('/campus/publications?q='+encodeURIComponent(newTitle))).items.length,0);
+        report.review_regressions.publication_retries.push({engine,scenario:'reload with new draft',publication_id:committed.id,request_id:original.request_id,new_draft_id:newDraft,new_input_preserved:true,missing_attachments_persisted:true,attempts:2,stored_publications:records.items.length});
+      }finally{await page.unroute(origin+'/api/campus/publications',handler);page.off('request',observe);}
+    });
+    await check('stopping an uncommitted publication preserves its draft and rejects a later replay of the stopped request',async()=>{
+      const title='停止尚未发布 '+engine,form=await fillPublication(title);let original;
+      const handler=async route=>{original=publicationPayload(route.request());await route.abort('failed');};await page.route(origin+'/api/campus/publications',handler);
+      try{await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();}finally{await page.unroute(origin+'/api/campus/publications',handler);}
+      assert.ok(original?.request_id);await page.locator('[data-campus-action=cancel-publication]').click();await page.locator('#dialog [data-action=accept-dialog]').click();await page.locator('[data-campus-publication-recovery]').waitFor({state:'detached'});
+      const newDraft=await form.getAttribute('data-draft-id');assert.notEqual(newDraft,original.draft_id);assert.equal(await form.locator('[name=title]').inputValue(),title);assert.equal((await api('/edit-cache/campus-publication')).payload,null);
+      const session=await api('/session'),late=await context.request.post(origin+'/api/campus/publications',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{data:JSON.stringify(original)}});assert.equal(late.status(),409);assert.equal((await late.json()).detail.code,'publication_cancelled');assert.equal((await api('/campus/publications?q='+encodeURIComponent(title))).items.length,0);
+      report.review_regressions.publication_cancellations.push({engine,request_id:original.request_id,replacement_draft_id:newDraft,late_status:409,late_code:'publication_cancelled',published_count:0});
+    });
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
   }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await saveReport();await browser.close();}
 }

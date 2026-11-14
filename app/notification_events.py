@@ -37,12 +37,16 @@ def extra_candidates(conn, uid, now):
             at = datetime.combine(day, time.fromisoformat(data['start_time']) if data.get('start_time') else time(9), CST)
             start = int(at.timestamp())
             due = start - minutes * 60
-            if start < now or due < now - 86400:
+            expires = start + 60
+            # Workers poll and recheck before sending. A start-time reminder
+            # remains valid throughout its declared grace window, not just
+            # the exact start second; the expiry boundary stays exclusive.
+            if now >= expires or due < now - 86400:
                 continue
             # Identity depends on the actual reminder time and occurrence, not
             # an unrelated note edit; changing time revokes the previous plan.
             key = f'arrangement:{row["id"]}:{day.isoformat()}:{due}'
-            result[key] = {'due_at': due, 'expires_at': start + 60, 'prospective': True,
+            result[key] = {'due_at': due, 'expires_at': expires, 'prospective': True,
                 'category': 'arrangement', 'created_at': 0,
                 'payload': {'user_id': uid, 'title': data['title'][:90],
                     'body': '你设置的安排即将开始，请查看时间和地点' if data.get('start_time') else '今天有你设置的全天安排；09:00 是提醒时刻',
@@ -126,13 +130,25 @@ def apply_policy(items, pref, now, *, include_suppressed=False):
         due = original
         if mode in {'in_app', 'off'}:
             reason = '本人选择仅站内提醒' if mode == 'in_app' else '本人关闭了此类提醒'
-        elif group != 'receipt':
-            if mode == 'digest':
+        else:
+            # Receipt candidates already carry a slot resolved from current
+            # relevance, owner routes and quiet hours. Scheduling them again
+            # would move a digest to the following day and past its expiry.
+            if group != 'receipt' and mode == 'digest':
                 due = next_digest(original, pref.digest_hour)
-            urgent = key.startswith(('change:', 'review:', 'intake-change:'))
+            urgent = group != 'receipt' and key.startswith(('change:', 'review:', 'intake-change:'))
             if not (urgent and pref.allow_urgent_during_quiet):
                 due = outside_quiet_hours(due, pref)
-            if event.get('expires_at') is not None and due >= event['expires_at']:
+                # A delayed worker cannot use an old, pre-quiet due time as
+                # permission to send during the current quiet window. Keep
+                # the stable original slot unless a real quiet delay applies.
+                if due <= now:
+                    current_end = outside_quiet_hours(now, pref)
+                    if current_end > now:
+                        due = max(due, current_end)
+            if event.get('expires_at') is not None and now >= event['expires_at']:
+                reason = '本次提醒已超过有效窗口；保留站内记录，请核对当前事项'
+            elif event.get('expires_at') is not None and due >= event['expires_at']:
                 reason = '免打扰或摘要时刻已晚于本次有效窗口；保留站内记录，请核对偏好'
         event['due_at'] = due
         event['policy'] = {'mode': mode, 'original_due_at': original, 'due_at': due,
@@ -164,8 +180,8 @@ def channel_events(events, seen, baseline):
             result[key]=value
             continue
         buckets.setdefault((event['category'],event['due_at']),[]).append((key,value))
-    labels={'task':'待办','arrangement':'个人安排','collaboration':'站内协作','source_health':'来源状态'}
-    routes={'task':'tasks','arrangement':'calendar','collaboration':'collaboration','source_health':'sources'}
+    labels={'receipt':'收件与关注内容','task':'待办','arrangement':'个人安排','collaboration':'站内协作','source_health':'来源状态'}
+    routes={'receipt':'notices','task':'tasks','arrangement':'calendar','collaboration':'collaboration','source_health':'sources'}
     for (group,due),members in buckets.items():
         refs=sorted(key for key,_ in members)
         signature=hashlib.sha256(json.dumps(refs,separators=(',',':')).encode()).hexdigest()[:24]
