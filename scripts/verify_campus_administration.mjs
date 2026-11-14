@@ -97,7 +97,7 @@ for(const [engineIndex,engine] of engines.entries()){
     while(await control.locator('xpath=ancestor::details[not(@open)]').count())await control.locator('xpath=ancestor::details[not(@open)]').first().locator(':scope > summary').click();
     await control.waitFor();return control;
   }
-  async function closeDialog(who){await who.page.locator('#dialog').getByRole('button',{name:'关闭',exact:true}).click();await who.page.locator('#dialog').waitFor({state:'hidden'});}
+  async function closeDialog(who){const close=who.page.locator('#dialog .dialog-head > [data-action="close-dialog"]');assert.equal(await close.count(),1);await close.click();await who.page.locator('#dialog').waitFor({state:'hidden'});}
   async function memberUi(who,target,role,{grade='',class_name=''}={}){
     await nav(who,'campus/members');const form=who.page.locator('[data-workspace-form=campus-member]');
     await who.page.locator('.campus-member-editor>summary').click();await form.locator('[name=username]').fill(target.username);await form.locator('[name=role]').selectOption(role);

@@ -387,6 +387,17 @@ jobs:
           path: artifacts/shared-host-config.json
           retention-days: 14
           if-no-files-found: error
+      - name: Verify container proxy network isolation without starting services
+        if: ${{ !cancelled() }}
+        run: python scripts/verify_shared_host_config.py --mode proxy-network --output artifacts/proxy-network-config.json
+      - name: Preserve the container proxy network configuration evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: proxy-network-compose-config
+          path: artifacts/proxy-network-config.json
+          retention-days: 14
+          if-no-files-found: error
       - run: docker build -t campus-notice:ci .
       - name: Start the isolated container without credentials or host data
         run: >-

@@ -8,7 +8,7 @@
 
 验证入口：[GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) · [测试体系与尚未完成的外部验收](TESTING.md)。同学第一次拉取请先看 [协作开发指南](CONTRIBUTING.md)。
 
-本次冲刺的[128 项逐项总账](docs/audits/SPRINT_AUDIT_2026-11-13.md)、[25 项前端审计](docs/sprint-2026-11-14/FRONTEND_AUDIT.md)、[209 项参考采用记录](docs/sprint-2026-11-14/components-209.json)及[补修与最新验证记录](docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md)分别保留原始要求、实现证据和未满足条件。工程测试通过不代替真实校园验收；[试点性能与外部准入门槛](docs/PILOT_RELEASE_GATES.md)继续单独判定。
+本次冲刺的[128 项逐项总账](docs/audits/SPRINT_AUDIT_2026-11-13.md)、[25 项前端审计](docs/sprint-2026-11-14/FRONTEND_AUDIT.md)和[209 项参考采用记录](docs/sprint-2026-11-14/components-209.json)保留原始要求。当前前端接续、未提交工作恢复及实际验证状态见[前端接续记录](docs/audits/FRONTEND_RECOVERY_2026-11-14.md)，此前的[补修记录](docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md)继续作为历史证据。工程测试通过不代替真实校园验收；[试点性能与外部准入门槛](docs/PILOT_RELEASE_GATES.md)继续单独判定。已有反向代理的服务器请使用[共享宿主部署说明](docs/SHARED_HOST_DEPLOYMENT.md)，按反代所在位置选择独立模板。
 
 **校园容量与事项归组**：每账号默认 10,000 则通知、2,000 个会话、1,000 个来源、10 GB 文件空间；AI 每日默认 1,000 次，均可按部署调整。通知详情支持核对候选、把不同原文归入同一事项、查看各自办理记录及拆组；列表默认收拢已确认的事项。参见 [容量配置与归组契约](docs/CAMPUS_CAPACITY_AND_MATTERS.md)。
 

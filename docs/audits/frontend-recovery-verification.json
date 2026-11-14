@@ -1,0 +1,1491 @@
+{
+  "schema_version": 1,
+  "record_type": "frontend_recovery_integrated_local_verification",
+  "recorded_at": "2026-11-14T16:22:13.409369+00:00",
+  "status": "local_integrated_checks_passed_remote_candidate_and_main_runs_required",
+  "base_candidate_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+  "base_candidate_tree": "3aec820100eeda1c7cf9f4b84b3de8363380e572",
+  "base_main_sha": "37150dc650f7c40783a84e718a102b9413b815fe",
+  "local_node_and_build": {
+    "verified_at": "2026-11-14T16:20:55.619533+00:00",
+    "node": {
+      "tests": 461,
+      "passed": 461,
+      "failures": 0,
+      "skips": 0,
+      "baseline_tests": 411,
+      "all_baseline_ids_retained": true,
+      "baseline_junit_sha256": "0ad0d51b9e8e0c0aa6aca3402effc87d373636479060ab536bbd57f35dad6399",
+      "junit_sha256": "b7eab1b080b9f14f1cff7c9efead7efb83130d02a6f127053aa262953744ddfa",
+      "added_unique_cases": 50,
+      "added_case_ids": [
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "a failed original request unlocks the replacement form without discarding its entered values"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "a late anonymous authentication response cannot overwrite a newly adopted session"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "a session change during the successful animation also prevents late session adoption"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "an authentication form retained after an accepted session cannot start another account login"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "clicking a login method while authentication is pending preserves the submitted form and shows a status"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "failed proof and failed fallback session reads release the lock for a later login"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "pending password login rejects a second login form before another session-changing request"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "pending password login rejects a second recover form before another session-changing request"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "pending password login rejects a second register form before another session-changing request"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "pending recover holds the shared lock through its contact proof and forbids a replacement login"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "pending register holds the shared lock through its contact proof and forbids a replacement login"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "successful authentication preserves the privacy page opened while it was pending"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "successful authentication preserves the terms page opened while it was pending"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "the success transition remains serialized until the session is adopted"
+        ],
+        [
+          "auth-concurrency.test.mjs",
+          "test",
+          "verified-contact login shares the same pending lock as password login"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a failed response keeps the latest attachment choice and selected files available for retry"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a file with the same name but different bytes does not conceal a removed original that was rechecked"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a later checkbox choice is included when the same local draft is rendered again"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a later removal stays visible before its next save and cannot be described as already saved"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a response for the previous draft cannot rewrite current fields or attachment selections"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "a response for the previous owner cannot rewrite current fields or attachment selections"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "an earlier save response preserves a later unchecked attachment choice and the queued save removes it"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "an exact uploaded replacement already retained by the server needs no invented missing-file obligation"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "an original reselected before the removal response is confirmed by server SHA and clears the persisted missing obligation"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "explicit missing-file removal while a save is pending is preserved and correctly marked as newer input"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "failed recovery metadata reconciliation keeps later inputs and permits a retry without uploading the original twice"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "new file selection survives an earlier response, stays unsaved, and is uploaded exactly once"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "publishing rechecks missing originals created by an earlier pending save before requesting an audience review"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "rechecking attachments during their accepted removal creates a persistent missing-file obligation"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "reselecting a missing file while a save is pending keeps the new upload and clears only the submitted missing state"
+        ],
+        [
+          "campus-draft-save-race.test.mjs",
+          "test",
+          "same-name replacement bytes never satisfy a missing original, including a later file reselection"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a changed hash blocks the old legal result before the hashchange route callback runs"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a current privacy failure offers a working route retry and never fabricates policy content"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a current terms failure offers a working route retry and never fabricates policy content"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a delayed anonymous legal response cannot replace a later login route"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a newer render at the same anonymous hash also blocks the old legal result"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a stale legal failure cannot affect a newly adopted session at the same hash"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "a stale legal failure settles without replacing or reporting an error on the later login route"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "an adopted session blocks the anonymous legal result even before the next route starts"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "cached legal information still supports switching between both anonymous documents"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "reverse completion of privacy then terms keeps the newer terms page"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "the current anonymous privacy route renders the real document and a login link"
+        ],
+        [
+          "legal-route-race.test.mjs",
+          "test",
+          "the current anonymous terms route renders the real document and a login link"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "a corrected signup OTP clears its own persistent failure only after real verification accepts it"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "a first successful verification does not clear an unrelated pre-existing message"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "a newer unrelated message is not dismissed when the prior signup error is corrected"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "an unrelated message arriving during corrective verification survives its successful completion"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "the original verification error remains visible throughout a corrective request still awaiting acceptance"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "toast tickets clear only their current message while the existing no-argument clear remains compatible"
+        ],
+        [
+          "signup-verification-toast.test.mjs",
+          "test",
+          "uncorrected or repeatedly rejected verification remains persistent and cannot advance signup"
+        ]
+      ]
+    },
+    "commands": [
+      {
+        "label": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-reporter=junit",
+          "tests/account-lifecycle-ui.test.mjs",
+          "tests/account-profile-dialog.test.mjs",
+          "tests/action-plans.test.mjs",
+          "tests/agent-work.test.mjs",
+          "tests/audio-wav.test.mjs",
+          "tests/auth-concurrency.test.mjs",
+          "tests/auth-error-descriptions.test.mjs",
+          "tests/auth-feedback.test.mjs",
+          "tests/auth-toast-lifecycle.test.mjs",
+          "tests/branch-preview.test.mjs",
+          "tests/calendar.test.mjs",
+          "tests/campus-draft-conflict.test.mjs",
+          "tests/campus-draft-save-race.test.mjs",
+          "tests/campus-imports.test.mjs",
+          "tests/campus-publication-retry.test.mjs",
+          "tests/campus-publication-submission.test.mjs",
+          "tests/campus-roster.test.mjs",
+          "tests/chat-feedback.test.mjs",
+          "tests/chat-outbox.test.mjs",
+          "tests/chat-policy.test.mjs",
+          "tests/chat-wait.test.mjs",
+          "tests/citations.test.mjs",
+          "tests/collaboration-followup.test.mjs",
+          "tests/command-search.test.mjs",
+          "tests/compliance-ui.test.mjs",
+          "tests/continuity.test.mjs",
+          "tests/data-sync.test.mjs",
+          "tests/dictation-segments.test.mjs",
+          "tests/execution-trace.test.mjs",
+          "tests/feedback.test.mjs",
+          "tests/genui-charts.test.mjs",
+          "tests/genui-composition.test.mjs",
+          "tests/genui-core.test.mjs",
+          "tests/genui-editorial.test.mjs",
+          "tests/genui-form-reliability.test.mjs",
+          "tests/genui-interaction.test.mjs",
+          "tests/genui-math.test.mjs",
+          "tests/genui-openui.test.mjs",
+          "tests/genui-plot.test.mjs",
+          "tests/genui-transport.test.mjs",
+          "tests/getting-started.test.mjs",
+          "tests/handling-route.test.mjs",
+          "tests/legal-route-race.test.mjs",
+          "tests/library-controls.test.mjs",
+          "tests/list-cache-revision.test.mjs",
+          "tests/list-clock.test.mjs",
+          "tests/memory-assist.test.mjs",
+          "tests/memory-drafts.test.mjs",
+          "tests/memory-intents.test.mjs",
+          "tests/memory-list-text.test.mjs",
+          "tests/memory-notice.test.mjs",
+          "tests/motion.test.mjs",
+          "tests/natural-intake.test.mjs",
+          "tests/notice-files.test.mjs",
+          "tests/notice-focus.test.mjs",
+          "tests/notice-intake.test.mjs",
+          "tests/notice-matters.test.mjs",
+          "tests/notice-modes.test.mjs",
+          "tests/notice-preparation.test.mjs",
+          "tests/notice-progress.test.mjs",
+          "tests/notice-quality.test.mjs",
+          "tests/notice-resolution.test.mjs",
+          "tests/notice-timing.test.mjs",
+          "tests/operations-monitor.test.mjs",
+          "tests/overview.test.mjs",
+          "tests/paged-list-mutation.test.mjs",
+          "tests/paged-list.test.mjs",
+          "tests/presentation.test.mjs",
+          "tests/proactive-notifications.test.mjs",
+          "tests/push-notifications.test.mjs",
+          "tests/record-preview.test.mjs",
+          "tests/reference-interactions.test.mjs",
+          "tests/reminders.test.mjs",
+          "tests/review-observation.test.mjs",
+          "tests/signup-verification-toast.test.mjs",
+          "tests/speech-text.test.mjs",
+          "tests/student-inbox.test.mjs",
+          "tests/task-summary.test.mjs",
+          "tests/task-views.test.mjs",
+          "tests/verification-slots.test.mjs",
+          "tests/verification.test.mjs",
+          "tests/work-context.test.mjs",
+          "tests/workspace-projection.test.mjs"
+        ],
+        "started_at": "2026-11-14T16:20:45.177189+00:00",
+        "finished_at": "2026-11-14T16:20:47.808167+00:00",
+        "elapsed_seconds": 2.631,
+        "exit_code": 0,
+        "stdout_file": "node-tests.xml",
+        "stdout_sha256": "b7eab1b080b9f14f1cff7c9efead7efb83130d02a6f127053aa262953744ddfa",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "label": "build",
+        "command": [
+          "npm",
+          "run",
+          "build"
+        ],
+        "started_at": "2026-11-14T16:20:47.817036+00:00",
+        "finished_at": "2026-11-14T16:20:51.872616+00:00",
+        "elapsed_seconds": 4.056,
+        "exit_code": 0,
+        "stdout_file": "build.log",
+        "stdout_sha256": "ca6cf04e9f84ce9ae23ad0186f808a6dbdaf5cad5cc7d694283ab016ba2ed224",
+        "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+      },
+      {
+        "label": "build-check",
+        "command": [
+          "npm",
+          "run",
+          "build:check"
+        ],
+        "started_at": "2026-11-14T16:20:51.873525+00:00",
+        "finished_at": "2026-11-14T16:20:55.609791+00:00",
+        "elapsed_seconds": 3.736,
+        "exit_code": 0,
+        "stdout_file": "build-check.log",
+        "stdout_sha256": "a27b9d314cedc8d233256cdf0ee4a2d4a86aad09f02b8dd07f206267a2a45584",
+        "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+      }
+    ],
+    "manifest_sha256": "d9c0bfc4abe45a60795a4270a5d84e3205a955e2972c871b9dcc52d736bd7bde",
+    "manifest_entries": {
+      "js": "/static/dist/app-ATRVQEYB.js",
+      "css": "/static/dist/styles-IB2C4A4G.css"
+    },
+    "hashes_recomputed": {
+      "sources": 194,
+      "build_sources": 3,
+      "outputs": 24
+    },
+    "new_test_files": {
+      "tests/auth-concurrency.test.mjs": "99dc3e2aba63ec6d5f417e880fff6018b19ef9e44ae057ea62c23ba82463479f",
+      "tests/campus-draft-save-race.test.mjs": "844d0790c7045065f3575b996e08ac4cf08752c72d02ddec1cd161d24e55e374",
+      "tests/legal-route-race.test.mjs": "6cbe2d84b8dfd9a1dddf3ef6257c13e5e1f6407254a2d0536cb787bb1e894e7a",
+      "tests/signup-verification-toast.test.mjs": "82e31f7e861974a55ac8b23c8f95e075c2dc1a648e2469bc6da66d01db83c740"
+    }
+  },
+  "shared_host_verifier_unit": {
+    "started_at": "2026-11-14T16:14:51.401110+00:00",
+    "finished_at": "2026-11-14T16:14:52.118503+00:00",
+    "elapsed_seconds": 0.717,
+    "command": "python -m pytest -q tests/test_shared_host_config.py --junitxml=shared-host-tests.xml",
+    "exit_code": 0,
+    "cases": [
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_canonical_memory_budget_passes_every_configuration_case[official-string]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_changed_cpu_is_rejected_with_original_config_preserved",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_renderer_failure_keeps_version_exit_code_and_exact_stderr",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_silently_accepted_missing_variable_is_not_marked_passed",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_unavailable_docker_remains_a_nonzero_failure",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_validates_two_projects_and_all_required_variables",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[published-port]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[host-network]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[alias-collision]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[data-volume-collision]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[nonexternal-network]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_exposure_or_shared_identity[different-network]",
+        "failure": false,
+        "error": false,
+        "skip": false
+      },
+      {
+        "class": "tests.test_shared_host_config",
+        "name": "test_proxy_network_mode_rejects_a_silently_defaulted_external_network",
+        "failure": false,
+        "error": false,
+        "skip": false
+      }
+    ],
+    "files": {
+      "scripts/verify_shared_host_config.py": "2374489634f88dfad097d5a311569238e4c22a66a580f1e91c5ae3bac4427e78",
+      "tests/test_shared_host_config.py": "889195e210009d28a3b270db81d0fd1e890c3daef320695e232cf8ed0a4ebe14",
+      "compose.shared-host.yaml": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+      "compose.proxy-network.yaml": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443"
+    },
+    "logs": {
+      "shared-host-tests.log": "341d5dca33250b815baddbafb6001e174c20bf1716bb74f3d612e77777db8938",
+      "shared-host-tests.xml": "bc9cab554e76e08d1421a089eaf12ec2d0dea6d2f340c757890ce0a89cfddbca"
+    }
+  },
+  "integrity_and_syntax": {
+    "requirement_catalogs": [
+      {
+        "path": "docs/audits/sprint-requirements-128.json",
+        "unchanged_from_main": true,
+        "sha256": "a632e55f73e404080769e2a5d2fb7b3dd005a0a659f8a92970e081bfdaed74ff"
+      },
+      {
+        "path": "docs/sprint-2026-11-14/frontend-25.json",
+        "unchanged_from_main": true,
+        "sha256": "fa86949689d77b76445f0f31bd7bf0c0ff95177472d6930734756995b6c06693"
+      },
+      {
+        "path": "docs/sprint-2026-11-14/components-209.json",
+        "unchanged_from_main": true,
+        "sha256": "02b9287f58f78073af58eb2bccd617f950338fe085aad5f351cc0703a81c0889"
+      },
+      {
+        "path": "docs/sprint-2026-11-14/requirements-extracted.json",
+        "unchanged_from_main": true,
+        "sha256": "b73327d1ba466d04ca0e0346774149212832c783caf41608c23cf63e3788a74e"
+      }
+    ],
+    "browser_scripts_syntax": [
+      {
+        "path": "scripts/verify_account_lifecycle.mjs",
+        "syntax_exit_code": 0,
+        "sha256": "0d85832166b8b81f180e89ce84df5d160b272256c6c8e24f475bfed086b03640"
+      },
+      {
+        "path": "scripts/verify_frontend_finish.mjs",
+        "syntax_exit_code": 0,
+        "sha256": "868378cc59989794c9a9ad597a0f7db7fa743b14b16002023dff4e7e00e33289"
+      },
+      {
+        "path": "scripts/verify_campus_administration.mjs",
+        "syntax_exit_code": 0,
+        "sha256": "a2993033b79aa3356df761caaf24c2669ee6156f5abad5c92c5b32e1be4345f7"
+      },
+      {
+        "path": "scripts/verify_sprint_ui.mjs",
+        "syntax_exit_code": 0,
+        "sha256": "a7a2c6cb9e36e62cd97708a727a878cdcf92721b4ee069756a662e9b372a8739"
+      }
+    ],
+    "browser_execution": "not_executed_locally"
+  },
+  "targeted_evidence": [
+    {
+      "record": "auth-concurrency-proof.json",
+      "sha256": "52ba85d8bef682e9b7f166cc8c7d2227afcdfbda5c0cf3d1565f67251cfdd9f2",
+      "evidence": {
+        "recorded_at": "2026-11-14T16:06:40.709771+00:00",
+        "baseline": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+        "finding": "Two anonymous authentication requests from replaced forms could resolve in reverse order and overwrite the newer accepted account.",
+        "production_files": {
+          "source": {
+            "path": "static/auth.js",
+            "sha256": "6f12140f037d5efdb75eae93f44edaa8f4178619f1f1a13d7247a15702deffa5",
+            "bytes": 11896
+          },
+          "tests": {
+            "path": "tests/auth-concurrency.test.mjs",
+            "sha256": "99dc3e2aba63ec6d5f417e880fff6018b19ef9e44ae057ea62c23ba82463479f",
+            "bytes": 18817
+          }
+        },
+        "logs": {
+          "red": {
+            "path": "local-evidence/auth-concurrency-red-v3.log",
+            "sha256": "55ab9d2759f1114d67e9c03c2fbe7751382d8890e8aaa5dcd47a891f67333de9"
+          },
+          "green": {
+            "path": "local-evidence/auth-concurrency-green.log",
+            "sha256": "fb3f62b7f82d12ac5e632f2aec2bfb1af84697cf39fd4bb34edd4e5c9d413954"
+          },
+          "regression": {
+            "path": "local-evidence/auth-regression-green.log",
+            "sha256": "8225fd9cb975ffb17d056bba741a90998820e0c364928e75174466ba123909f2"
+          }
+        },
+        "red": {
+          "tests": 15,
+          "passed": 2,
+          "failed_assertions": 13,
+          "runtime_errors": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "green": {
+          "tests": 15,
+          "passed": 15,
+          "failed": 0
+        },
+        "targeted_regression": {
+          "files": 5,
+          "tests": 48,
+          "passed": 48,
+          "failed": 0
+        },
+        "scope": [
+          "real production authentication factory",
+          "real delegated form submit handler",
+          "real API wrapper",
+          "controlled DOM and HTTP response boundaries"
+        ],
+        "not_proven": [
+          "browser cookie ordering",
+          "native pointer and keyboard interactions",
+          "real verification provider delivery",
+          "cross-tab authentication coordination"
+        ],
+        "fixture_preparation": "Two initial harness attempts were corrected before the retained red run: one null mount after markup replacement and one unresolved second proof. They are not counted as product failures.",
+        "patch_sha256": "ba58622b428112f0715ec54c8b99e8b6e4f1869c4bf4414c52cf467e8269133c"
+      }
+    },
+    {
+      "record": "campus-draft-save-race-proof.json",
+      "sha256": "1c1d2e5433d26d2bfef43e21df3639252a8ca852217aeb9649e2ba5d8bc87169",
+      "evidence": {
+        "recorded_at": "2026-11-14T16:12:22.486457+00:00",
+        "baseline": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+        "finding": "An older draft save response rebuilt keep_attachments as checked and discarded later user removal. Late file/pending-name edits were also incorrectly shown as saved.",
+        "production_files": {
+          "source": {
+            "path": "static/campus.js",
+            "sha256": "5e336ceb6518db73c5c3feddf9d42116329248a0957ab331031ff76b5a09a238",
+            "bytes": 61970
+          },
+          "tests": {
+            "path": "tests/campus-draft-save-race.test.mjs",
+            "sha256": "023163826b0148ca6f702cd1cca6ec44bb4a2ddc4fc2e11ec7e91d69f10c7bb9",
+            "bytes": 15854
+          }
+        },
+        "logs": {
+          "initial_red": {
+            "path": "local-evidence/campus-draft-save-race-red-v2.log",
+            "sha256": "c4abef0da0f0f53a8cc640e445484d47d15f4ece5f41e60e34e30db381a08692"
+          },
+          "initial_green": {
+            "path": "local-evidence/campus-draft-save-race-green.log",
+            "sha256": "eb653ac2052d7fbed48a3234648afc295b675ed94f4a26410c97e4238e0cff75"
+          },
+          "publication_gate_red": {
+            "path": "local-evidence/campus-draft-publish-gate-red.log",
+            "sha256": "7d43935b84748c7acc7ae1a2c02730e3d83953529ec1b5eaf937767c275488b1"
+          },
+          "final_regression_green": {
+            "path": "local-evidence/campus-draft-regression-green.log",
+            "sha256": "7c8fabc2b5a6a38bcb51b28699affaf2b6c0a9979edb3f9beb26f0e600532e0b"
+          }
+        },
+        "initial_red": {
+          "tests": 12,
+          "passed": 4,
+          "failed_assertions": 8,
+          "runtime_errors": 0,
+          "skipped": 0
+        },
+        "initial_green": {
+          "tests": 12,
+          "passed": 12,
+          "failed": 0
+        },
+        "additional_publication_gate": {
+          "tests": 1,
+          "failed_assertions_before_gate": 1,
+          "reason": "Missing originals can be introduced by the preceding asynchronous save after publication has passed its first guard."
+        },
+        "final_regression": {
+          "files": 4,
+          "tests": 31,
+          "passed": 31,
+          "failed": 0,
+          "new_unique_tests": 13
+        },
+        "prior_conflict_tests_unchanged_sha256": "cf40827a05da9b93a9371e5fcfd09aff6f6fc73153118216dda9e4dcdd000db0",
+        "scope": [
+          "real createCampusUI",
+          "real delegated draft input/save/publish handlers",
+          "rendered HTML attachment control attributes",
+          "controlled deferred CAS and material transport boundary"
+        ],
+        "behavior": [
+          "preserve later checkbox choice and expanded attachment details",
+          "do not clear a newer FileList",
+          "saved status includes attachment and pending-name changes",
+          "removed originals rechecked in flight become missing-file obligations; same filename alone is insufficient, matching SHA256 avoids unnecessary obligation",
+          "recheck missing files after waiting for queued saves and before audience review",
+          "owner and draft guards retained"
+        ],
+        "not_proven": [
+          "native browser checkbox interaction",
+          "real server byte storage or delivery in these unit tests",
+          "physical device interactions"
+        ],
+        "fixture_preparation": "One initial rendering fixture lacked the audience label DOM. It was corrected before the retained red run and is not counted as a product failure.",
+        "patch_sha256": "f53a9c4f0cd1889f668341d4e361d36101d686302a74210c8d92b6c171565d7e"
+      }
+    },
+    {
+      "record": "campus-original-recovery-proof.json",
+      "sha256": "59f2df2c7537999e23c841462eaa628fbf7829c65152416f730489e229c4177c",
+      "evidence": {
+        "recorded_at": "2026-11-14T16:21:28.964855+00:00",
+        "finding": "Reselecting the exact original FileList before an earlier accepted removal response returned left a permanent missing-file obligation even after a later upload saved the original bytes.",
+        "fix": "Local draft missingOriginals retains original name/server-SHA identities. A successful response resolves a name only after all original identities under it are present. The same serial run then saves current inputs with the accepted version to clear persisted pending names; it may also save newer selected files or text. It never awaits its own draftWrites queue.",
+        "scope": "Only static/campus.js existing draft-save/clear-files flow and the new campus-draft-save-race.test.mjs were edited; no backend, build, commit or remote action by this agent.",
+        "prior_proof_preserved": {
+          "path": "local-evidence/campus-draft-save-race-proof.json",
+          "bytes": 3328,
+          "sha256": "1c1d2e5433d26d2bfef43e21df3639252a8ca852217aeb9649e2ba5d8bc87169"
+        },
+        "prior_source_and_test_snapshots_match_proof": true,
+        "prior_log_hashes_match_proof": true,
+        "before_sources": [
+          {
+            "path": "local-evidence/campus-before-original-recovery.js",
+            "bytes": 61970,
+            "sha256": "5e336ceb6518db73c5c3feddf9d42116329248a0957ab331031ff76b5a09a238"
+          },
+          {
+            "path": "local-evidence/campus-tests-before-original-recovery.mjs",
+            "bytes": 15854,
+            "sha256": "023163826b0148ca6f702cd1cca6ec44bb4a2ddc4fc2e11ec7e91d69f10c7bb9"
+          }
+        ],
+        "sources": [
+          {
+            "path": "static/campus.js",
+            "bytes": 63180,
+            "sha256": "8c0ce576f23c3991ba71351f8fbc771d64b40753fa72e7681229890e49ab3d90"
+          },
+          {
+            "path": "tests/campus-draft-save-race.test.mjs",
+            "bytes": 21038,
+            "sha256": "844d0790c7045065f3575b996e08ac4cf08752c72d02ddec1cd161d24e55e374"
+          }
+        ],
+        "patch": {
+          "path": "local-evidence/campus-original-recovery.patch",
+          "bytes": 6984,
+          "sha256": "adc3e9b6dc2cd35f70cbcd2fdfea0b2828de646b80916e826baba74b218e3dad"
+        },
+        "original_13_test_bodies_and_identities_unchanged": true,
+        "case_identities_equal_red_green": true,
+        "additional_unique_cases": 3,
+        "red": {
+          "path": "local-evidence/campus-original-recovery-red.log",
+          "bytes": 6811,
+          "sha256": "5fa1fa9c5a95d4a32f6d5284fefc24afedeb5d0be29e9a74089926e97fabecbe",
+          "counts": {
+            "tests": 16,
+            "pass": 13,
+            "fail": 3,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 3,
+          "cases": [
+            {
+              "name": "an earlier save response preserves a later unchecked attachment choice and the queued save removes it",
+              "number": 1,
+              "passed": true
+            },
+            {
+              "name": "a later removal stays visible before its next save and cannot be described as already saved",
+              "number": 2,
+              "passed": true
+            },
+            {
+              "name": "rechecking attachments during their accepted removal creates a persistent missing-file obligation",
+              "number": 3,
+              "passed": true
+            },
+            {
+              "name": "a file with the same name but different bytes does not conceal a removed original that was rechecked",
+              "number": 4,
+              "passed": true
+            },
+            {
+              "name": "an exact uploaded replacement already retained by the server needs no invented missing-file obligation",
+              "number": 5,
+              "passed": true
+            },
+            {
+              "name": "new file selection survives an earlier response, stays unsaved, and is uploaded exactly once",
+              "number": 6,
+              "passed": true
+            },
+            {
+              "name": "explicit missing-file removal while a save is pending is preserved and correctly marked as newer input",
+              "number": 7,
+              "passed": true
+            },
+            {
+              "name": "reselecting a missing file while a save is pending keeps the new upload and clears only the submitted missing state",
+              "number": 8,
+              "passed": true
+            },
+            {
+              "name": "a later checkbox choice is included when the same local draft is rendered again",
+              "number": 9,
+              "passed": true
+            },
+            {
+              "name": "a response for the previous owner cannot rewrite current fields or attachment selections",
+              "number": 10,
+              "passed": true
+            },
+            {
+              "name": "a response for the previous draft cannot rewrite current fields or attachment selections",
+              "number": 11,
+              "passed": true
+            },
+            {
+              "name": "a failed response keeps the latest attachment choice and selected files available for retry",
+              "number": 12,
+              "passed": true
+            },
+            {
+              "name": "publishing rechecks missing originals created by an earlier pending save before requesting an audience review",
+              "number": 13,
+              "passed": true
+            },
+            {
+              "name": "an original reselected before the removal response is confirmed by server SHA and clears the persisted missing obligation",
+              "number": 14,
+              "passed": false
+            },
+            {
+              "name": "same-name replacement bytes never satisfy a missing original, including a later file reselection",
+              "number": 15,
+              "passed": false
+            },
+            {
+              "name": "failed recovery metadata reconciliation keeps later inputs and permits a retry without uploading the original twice",
+              "number": 16,
+              "passed": false
+            }
+          ]
+        },
+        "green": {
+          "path": "local-evidence/campus-original-recovery-green.log",
+          "bytes": 4441,
+          "sha256": "b347877be6a23016084875bbb3b8c72d481e296318a02ae9bd256a2ea93cc2be",
+          "counts": {
+            "tests": 16,
+            "pass": 16,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 0,
+          "cases": [
+            {
+              "name": "an earlier save response preserves a later unchecked attachment choice and the queued save removes it",
+              "number": 1,
+              "passed": true
+            },
+            {
+              "name": "a later removal stays visible before its next save and cannot be described as already saved",
+              "number": 2,
+              "passed": true
+            },
+            {
+              "name": "rechecking attachments during their accepted removal creates a persistent missing-file obligation",
+              "number": 3,
+              "passed": true
+            },
+            {
+              "name": "a file with the same name but different bytes does not conceal a removed original that was rechecked",
+              "number": 4,
+              "passed": true
+            },
+            {
+              "name": "an exact uploaded replacement already retained by the server needs no invented missing-file obligation",
+              "number": 5,
+              "passed": true
+            },
+            {
+              "name": "new file selection survives an earlier response, stays unsaved, and is uploaded exactly once",
+              "number": 6,
+              "passed": true
+            },
+            {
+              "name": "explicit missing-file removal while a save is pending is preserved and correctly marked as newer input",
+              "number": 7,
+              "passed": true
+            },
+            {
+              "name": "reselecting a missing file while a save is pending keeps the new upload and clears only the submitted missing state",
+              "number": 8,
+              "passed": true
+            },
+            {
+              "name": "a later checkbox choice is included when the same local draft is rendered again",
+              "number": 9,
+              "passed": true
+            },
+            {
+              "name": "a response for the previous owner cannot rewrite current fields or attachment selections",
+              "number": 10,
+              "passed": true
+            },
+            {
+              "name": "a response for the previous draft cannot rewrite current fields or attachment selections",
+              "number": 11,
+              "passed": true
+            },
+            {
+              "name": "a failed response keeps the latest attachment choice and selected files available for retry",
+              "number": 12,
+              "passed": true
+            },
+            {
+              "name": "publishing rechecks missing originals created by an earlier pending save before requesting an audience review",
+              "number": 13,
+              "passed": true
+            },
+            {
+              "name": "an original reselected before the removal response is confirmed by server SHA and clears the persisted missing obligation",
+              "number": 14,
+              "passed": true
+            },
+            {
+              "name": "same-name replacement bytes never satisfy a missing original, including a later file reselection",
+              "number": 15,
+              "passed": true
+            },
+            {
+              "name": "failed recovery metadata reconciliation keeps later inputs and permits a retry without uploading the original twice",
+              "number": 16,
+              "passed": true
+            }
+          ]
+        },
+        "existing_regression": {
+          "path": "local-evidence/campus-original-recovery-regression-green.log",
+          "bytes": 4810,
+          "sha256": "ecc3bdae04e4f8ee7b083a04a05bfbd6ccfdbf9948ac0334d0b5cb47c97705f8",
+          "counts": {
+            "tests": 18,
+            "pass": 18,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 0,
+          "cases": [
+            {
+              "name": "conflicting draft copied without original files persists missing names, blocks publishing and survives reopening",
+              "number": 1,
+              "passed": true
+            },
+            {
+              "name": "conflict copy keeps an existing new upload separate from unresolved original attachment names",
+              "number": 2,
+              "passed": true
+            },
+            {
+              "name": "an explicit choice not to retain original attachments does not create a missing-files obligation",
+              "number": 3,
+              "passed": true
+            },
+            {
+              "name": "explicit reselection or removal resolves only the copied draft missing-files record",
+              "number": 4,
+              "passed": true
+            },
+            {
+              "name": "a repeated conflict copy keeps its current identity and input until attachment names fit the actual limit",
+              "number": 5,
+              "passed": true
+            },
+            {
+              "name": "lost publication response replays the confirmed payload before touching its deleted draft",
+              "number": 6,
+              "passed": true
+            },
+            {
+              "name": "input after an uncertain publication becomes a separate draft and cannot replace the replay payload",
+              "number": 7,
+              "passed": true
+            },
+            {
+              "name": "saving a separated draft preserves unresolved attachment names until an explicit removal",
+              "number": 8,
+              "passed": true
+            },
+            {
+              "name": "a durable confirmed publication can be recovered after closing and reopening the editor",
+              "number": 9,
+              "passed": true
+            },
+            {
+              "name": "unresolved publication refuses a new request ID instead of hiding the uncertain original",
+              "number": 10,
+              "passed": true
+            },
+            {
+              "name": "preparing the same request ID cannot replace its confirmed content or draft snapshot",
+              "number": 11,
+              "passed": true
+            },
+            {
+              "name": "expired audience review can renew only its token while retaining the original request and attachment draft version",
+              "number": 12,
+              "passed": true
+            },
+            {
+              "name": "account switches and late publication responses never load or retire another account intent",
+              "number": 13,
+              "passed": true
+            },
+            {
+              "name": "another tab cannot replace or clear a different confirmed submission by stale cache revision",
+              "number": 14,
+              "passed": true
+            },
+            {
+              "name": "leaving the original route during a renewed review cache write does not start a late publication",
+              "number": 15,
+              "passed": true
+            },
+            {
+              "name": "concurrent recovery controls share one publication request",
+              "number": 16,
+              "passed": true
+            },
+            {
+              "name": "a lost cancellation response remains retryable and never permits the stopped request to publish later",
+              "number": 17,
+              "passed": true
+            },
+            {
+              "name": "an authoritative already-published cancellation receipt retires the old intent even when its details are no longer authorized",
+              "number": 18,
+              "passed": true
+            }
+          ]
+        },
+        "syntax_check_exit_code": 0,
+        "diff_check_exit_code": 0,
+        "commands": [
+          "node --test --test-reporter=tap tests/campus-draft-save-race.test.mjs",
+          "node --test --test-reporter=tap tests/campus-draft-conflict.test.mjs tests/campus-publication-submission.test.mjs tests/campus-publication-retry.test.mjs",
+          "node --check static/campus.js",
+          "git diff --check -- static/campus.js tests/campus-draft-save-race.test.mjs static/app.js tests/legal-route-race.test.mjs"
+        ],
+        "independent_read_only_review": "product_review confirmed exact SHA identities, same-name grouping, explicit discard, serial recursion without queue self-wait, preserved live inputs, and retry after reconciliation failure; no further edits requested.",
+        "limits": "Actual createCampusUI/delegated handlers; controlled DOM and transport. New fixtures use native File bytes and independently computed SHA256 for the server projection. This does not certify native browser or live backend storage. Hash identities are local draft state; no backend contract was expanded."
+      }
+    },
+    {
+      "record": "legal-route-race-proof.json",
+      "sha256": "7899f36388e4e36ad31abb66122522449b3e376621bd88d2c482a6f10ff9d8fb",
+      "evidence": {
+        "recorded_at": "2026-11-14T16:14:28.688376+00:00",
+        "contract": "Anonymous legal success/failure may render only while its original renderId, hash and anonymous session remain current; current failure offers a real route retry and return to login.",
+        "scope": "Only static/app.js standaloneLegal and new tests/legal-route-race.test.mjs were changed by this review. No build, commit, auth.js or campus.js change.",
+        "before": {
+          "path": "local-evidence/app-before-legal-route-race.js",
+          "bytes": 148833,
+          "sha256": "b9c0425ff377d9cbbbf4683657dae9122d6574e85943d676d075dc16e19dea96"
+        },
+        "sources": [
+          {
+            "path": "static/app.js",
+            "bytes": 149301,
+            "sha256": "df0e8497fdf3bc2f8eee0b7a5e80fa0814dcab8948d84d190d51f5f0309110f5"
+          },
+          {
+            "path": "static/legal.js",
+            "bytes": 10997,
+            "sha256": "62d7e3b6d5e2a8d233f14f476a9e200b3e58043bf2af02239931c6bffaf05c13"
+          },
+          {
+            "path": "static/ui-request.js",
+            "bytes": 2180,
+            "sha256": "af3273b8651e3f0b27e75106c9b55c99b6a113094b7d6431ade475fb63c81e86"
+          },
+          {
+            "path": "tests/legal-route-race.test.mjs",
+            "bytes": 7754,
+            "sha256": "6cbe2d84b8dfd9a1dddf3ef6257c13e5e1f6407254a2d0536cb787bb1e894e7a"
+          }
+        ],
+        "patch": {
+          "path": "local-evidence/legal-route-race.patch",
+          "bytes": 5978,
+          "sha256": "50e4f7a22fb56c0d73f661321d18ac3e99208afdbb425bd0b6879ddf8c2ad7bc"
+        },
+        "outside_standalone_function_byte_equivalent": true,
+        "commands": [
+          "node --test --test-reporter=tap tests/legal-route-race.test.mjs",
+          "node --test --test-reporter=tap tests/compliance-ui.test.mjs",
+          "node --check static/app.js",
+          "git diff --check -- static/app.js tests/legal-route-race.test.mjs"
+        ],
+        "red": {
+          "path": "local-evidence/legal-route-race-red.log",
+          "bytes": 100809,
+          "sha256": "01280551a030f7c7aa97028b828b05fc2f697e2db782518fcdc1efeab1865759",
+          "counts": {
+            "tests": 12,
+            "pass": 3,
+            "fail": 9,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 9,
+          "cases": [
+            {
+              "number": 1,
+              "name": "the current anonymous privacy route renders the real document and a login link",
+              "passed": true
+            },
+            {
+              "number": 2,
+              "name": "the current anonymous terms route renders the real document and a login link",
+              "passed": true
+            },
+            {
+              "number": 3,
+              "name": "cached legal information still supports switching between both anonymous documents",
+              "passed": true
+            },
+            {
+              "number": 4,
+              "name": "a delayed anonymous legal response cannot replace a later login route",
+              "passed": false
+            },
+            {
+              "number": 5,
+              "name": "an adopted session blocks the anonymous legal result even before the next route starts",
+              "passed": false
+            },
+            {
+              "number": 6,
+              "name": "a changed hash blocks the old legal result before the hashchange route callback runs",
+              "passed": false
+            },
+            {
+              "number": 7,
+              "name": "a newer render at the same anonymous hash also blocks the old legal result",
+              "passed": false
+            },
+            {
+              "number": 8,
+              "name": "reverse completion of privacy then terms keeps the newer terms page",
+              "passed": false
+            },
+            {
+              "number": 9,
+              "name": "a stale legal failure settles without replacing or reporting an error on the later login route",
+              "passed": false
+            },
+            {
+              "number": 10,
+              "name": "a stale legal failure cannot affect a newly adopted session at the same hash",
+              "passed": false
+            },
+            {
+              "number": 11,
+              "name": "a current privacy failure offers a working route retry and never fabricates policy content",
+              "passed": false
+            },
+            {
+              "number": 12,
+              "name": "a current terms failure offers a working route retry and never fabricates policy content",
+              "passed": false
+            }
+          ]
+        },
+        "green": {
+          "path": "local-evidence/legal-route-race-green.log",
+          "bytes": 2903,
+          "sha256": "3c3656dac290795cf16f5e11bddde7ffa9b2277cbdb6a2ba9771d9d52f5f2abc",
+          "counts": {
+            "tests": 12,
+            "pass": 12,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 0,
+          "cases": [
+            {
+              "number": 1,
+              "name": "the current anonymous privacy route renders the real document and a login link",
+              "passed": true
+            },
+            {
+              "number": 2,
+              "name": "the current anonymous terms route renders the real document and a login link",
+              "passed": true
+            },
+            {
+              "number": 3,
+              "name": "cached legal information still supports switching between both anonymous documents",
+              "passed": true
+            },
+            {
+              "number": 4,
+              "name": "a delayed anonymous legal response cannot replace a later login route",
+              "passed": true
+            },
+            {
+              "number": 5,
+              "name": "an adopted session blocks the anonymous legal result even before the next route starts",
+              "passed": true
+            },
+            {
+              "number": 6,
+              "name": "a changed hash blocks the old legal result before the hashchange route callback runs",
+              "passed": true
+            },
+            {
+              "number": 7,
+              "name": "a newer render at the same anonymous hash also blocks the old legal result",
+              "passed": true
+            },
+            {
+              "number": 8,
+              "name": "reverse completion of privacy then terms keeps the newer terms page",
+              "passed": true
+            },
+            {
+              "number": 9,
+              "name": "a stale legal failure settles without replacing or reporting an error on the later login route",
+              "passed": true
+            },
+            {
+              "number": 10,
+              "name": "a stale legal failure cannot affect a newly adopted session at the same hash",
+              "passed": true
+            },
+            {
+              "number": 11,
+              "name": "a current privacy failure offers a working route retry and never fabricates policy content",
+              "passed": true
+            },
+            {
+              "number": 12,
+              "name": "a current terms failure offers a working route retry and never fabricates policy content",
+              "passed": true
+            }
+          ]
+        },
+        "regression": {
+          "path": "local-evidence/legal-compliance-green.log",
+          "bytes": 750,
+          "sha256": "d5cefc9934d94d77cd2bc9a5dcbe55c94abe45183e57e125c8b3c575c573bbc3",
+          "counts": {
+            "tests": 3,
+            "pass": 3,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0,
+            "todo": 0
+          },
+          "assertion_failures": 0,
+          "cases": [
+            {
+              "number": 1,
+              "name": "privacy policy names the AI provider, excluded fields, retention and deletion path",
+              "passed": true
+            },
+            {
+              "number": 2,
+              "name": "terms say AI output is for reference and the official notice prevails",
+              "passed": true
+            },
+            {
+              "number": 3,
+              "name": "notice library can be filtered by relevance to the student",
+              "passed": true
+            }
+          ]
+        },
+        "case_identities_equal": true,
+        "syntax_check_exit_code": 0,
+        "diff_check_exit_code": 0,
+        "limits": "Node VM executes actual anonymous route, renderer, legalMarkup and refresh click handler with controlled root/API. Native browser behavior is delegated to the independent browser check."
+      }
+    },
+    {
+      "record": "signup-verification-toast-proof.json",
+      "sha256": "4dbe15ac8967bd758f9833c7ce4df3af420c8a856ad80ef8c659acf0b90f2409",
+      "evidence": {
+        "recorded_at": "2026-11-14T16:15:22.806431+00:00",
+        "finding": "CI70 screenshot shows a persistent rejected-OTP error while the same signup has advanced to the password step after successful correction.",
+        "observed_screenshot": {
+          "path": "local-evidence/chromium-signup-password.png",
+          "sha256": "a0d37ac2836edd445faf997c82eec25e5598d392528918269df0e605cb7e4957",
+          "viewed": true
+        },
+        "files": {
+          "static/auth.js": {
+            "sha256": "d9cb2a89c04eb3260a23448b87df421c92d58ac849914a59cafac581e0fd9b44",
+            "bytes": 12219
+          },
+          "static/experience-system.js": {
+            "sha256": "9d4f2e83b2e8b05b7e039c922b4887324f28398415cc5d18d05b4ab3eb1bd4c5",
+            "bytes": 17797
+          },
+          "tests/signup-verification-toast.test.mjs": {
+            "sha256": "82e31f7e861974a55ac8b23c8f95e075c2dc1a648e2469bc6da66d01db83c740",
+            "bytes": 9948
+          }
+        },
+        "logs": {
+          "red": {
+            "path": "local-evidence/signup-verification-toast-red.log",
+            "sha256": "9aea8f0472793a2ff974f8f1bb54a502c621bbe8ef46a149d85d57d23eda4675"
+          },
+          "green": {
+            "path": "local-evidence/signup-verification-toast-green.log",
+            "sha256": "1b7d2d2ec86014fff8e8a08d6ac17bf380aa5c475011d75e0f5a62887d111d69"
+          }
+        },
+        "red": {
+          "tests": 7,
+          "passed": 4,
+          "failed_assertions": 3,
+          "runtime_errors": 0,
+          "skipped": 0
+        },
+        "final_targeted_regression": {
+          "files": 5,
+          "tests": 56,
+          "passed": 56,
+          "failed": 0,
+          "new_unique_tests": 7
+        },
+        "behavior": "Toast returns its existing revision ticket; clear(ticket) affects only that current ticket, while no-argument clear remains unconditional. Signup remembers its own step-one error ticket in a per-form WeakMap and clears it only after accepted OTP verification.",
+        "scope": [
+          "real createAuthUI signup click handler",
+          "real createVerificationUI challenge/proof and error state",
+          "real createToastPresenter",
+          "controlled DOM, clock scheduling and HTTP boundary"
+        ],
+        "not_proven": [
+          "the updated native browser screenshot until subsequent CI",
+          "real verification supplier delivery"
+        ],
+        "source_freeze": true
+      }
+    }
+  ],
+  "targeted_count_semantics": "Stage proofs retain the source bytes actually tested at that time. Later changes do not rewrite earlier red/green evidence. The final 461-case suite and recomputed manifest bind the integrated sources; overlapping targeted regression counts are not added.",
+  "current_product_sources": {
+    "static/auth.js": "d9cb2a89c04eb3260a23448b87df421c92d58ac849914a59cafac581e0fd9b44",
+    "static/app.js": "df0e8497fdf3bc2f8eee0b7a5e80fa0814dcab8948d84d190d51f5f0309110f5",
+    "static/campus.js": "8c0ce576f23c3991ba71351f8fbc771d64b40753fa72e7681229890e49ab3d90",
+    "static/experience-system.js": "9d4f2e83b2e8b05b7e039c922b4887324f28398415cc5d18d05b4ab3eb1bd4c5"
+  },
+  "browser_contract": {
+    "execution": "not_executed_locally",
+    "expected_complete_reports": 36,
+    "expected_complete_formal_checks": 1146,
+    "original_ci69_formal_checks": 1056,
+    "original_ci70_new_suite_defined": 84,
+    "original_ci70_new_suite_actually_recorded": 38,
+    "new_formal_checks_added_after_ci70": 6,
+    "expected_current_suites": {
+      "account": 36,
+      "frontend_finish": 21,
+      "campus_administration": 33
+    },
+    "expected_observation_counts": {
+      "authentication_concurrency": 6,
+      "late_legal": 3,
+      "draft_attachment_races": 3,
+      "corrected_error_toast": 3
+    },
+    "source_contract_record_sha256": "60a6ffe27308a579b81c5f04ad4dbe596b3469b0f87b280801b5297961deb01e",
+    "root_followup": "Added one corrected_error_toast observation and assertion to the existing registration identity after the browser peer-reviewed patch; current script SHA is in integrity_and_syntax.",
+    "unchanged_default_timeout_ms": 12000,
+    "real_response_policy": "Delayed real server responses are delivered with exact original bytes. No fake success body or direct correction of product state.",
+    "cookie_boundary": "route.fetch may update context cookies before delivery. Actual authentication POST count and final server owner after delivered response are checked independently."
+  },
+  "ci70_complete_result": {
+    "run_id": 43608838369,
+    "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+    "checkout_sha": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+    "jobs": 9,
+    "successful_jobs": 7,
+    "failed_jobs": [
+      "browser",
+      "container"
+    ],
+    "browser_recorded": 1094,
+    "browser_passed": 1087,
+    "browser_failed": 7,
+    "browser_unrecorded": 46,
+    "continuity_passed": 990,
+    "container_build_and_smoke": "skipped_after_configuration_failure"
+  },
+  "remote_gate_policy": [
+    "Verify the new candidate exact head and checkout; inspect full CI and original artifacts.",
+    "Merge with an expected-head lease only after required checks pass.",
+    "Verify the resulting main push workflow and its original artifacts independently.",
+    "Delete only incorporated remote work branches and re-enumerate main as the sole remote branch."
+  ],
+  "remaining_boundaries": {
+    "external_conditions": 51,
+    "conditional_p2": 8,
+    "reference_catalog": 209,
+    "reference_source_and_demo_deep_review": 5,
+    "reference_not_deep_reviewed": 204,
+    "physical_ime_keyboard_screen_reader_native_zoom": "not_accepted_by_synthetic_tests",
+    "real_provider_delivery": "user_configuration_and_real_delivery_receipts_required",
+    "shared_host_deployment": "not_performed_user_handles_deployment",
+    "historical_10_user_write_wait_p95": "failure_preserved_not_superseded_by_functional_ci",
+    "campus_pilot_minimum_days": 5,
+    "repository_root_open_source_license": "owner_choice_required"
+  }
+}

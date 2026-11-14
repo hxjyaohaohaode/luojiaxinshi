@@ -312,7 +312,7 @@ function draftPane(n){if(shouldOfferHistoricalSummary(n)&&n.draft?.origin!=='man
 function settingsSummary(){
   const {user,ai,genui}=state.session,p=user.profile;
   return {name:p.preferred_name||user.display_name,tone:p.avatar_tone||'forest',
-    school:[p.school||'武汉大学',p.college,p.campus_area].filter(Boolean).join(' · '),labels:{
+    school:[p.school??'武汉大学',p.college,p.campus_area].filter(Boolean).join(' · '),labels:{
       'settings-profile':[p.college,p.major,p.grade].filter(Boolean).join(' · ')||'身份、学期与联系方式',
       'settings-preferences':({concise:'简洁',balanced:'适中',detailed:'详细'}[p.response_detail]||'适中')+' · '+({warm:'温和自然',direct:'直接清楚',academic:'严谨规范'}[p.response_style]||'温和自然'),
       'settings-security':user.username,'settings-model':ai.billing_label||'模型配置与处理状态',
@@ -357,7 +357,22 @@ function profileDialog(){const p=state.session.user.profile;showDialog('个人�
 async function legalInfo(){if(!state.legal)state.legal=await api('/legal');return state.legal;}
 async function deleteAccountDialog(){const view=captureUiContext(state);const [info,impact]=await Promise.all([legalInfo(),api('/account/deletion-impact')]);if(!view.sameDialog())return;showDialog('注销账号',`<form id="delete-account-form" class="stack" data-no-history><div class="alert error"><strong>注销后无法恢复</strong><p>你的账号，以及全部通知、附件、对话、待办、日程和记忆会立即删除。已有备份不会立即改写。服务运行时会清理超过 ${Number(info.backup_retention_days)||7} 天的自动备份；停机期间暂停清理，手动备份请联系部署管理员处理。</p></div><section class="stack"><h3>本次注销范围</h3><p class="small">通知 ${impact.deleted.notices} 条 · 待办 ${impact.deleted.tasks} 条 · 对话 ${impact.deleted.conversations} 个 · 日程 ${impact.deleted.arrangements} 条 · 发布草稿 ${impact.deleted.publication_drafts} 份。</p><p class="small">对方将保留 ${impact.retained_counterparty_receipts} 份最小化脱敏协作回执，分享文件的访问授权立即撤销。</p><p class="small muted">${esc(impact.retention_note)}</p><p class="small muted">${esc(impact.publication_note)}</p></section><p class="small muted">想留着这些资料的话，先导出一份。</p><a class="button small" href="/api/export">${icon('down')} 导出我的数据</a>${field('当前密码','password','','password','required autocomplete="current-password"')}${field('输入“注销账号”四个字确认','confirm','','text','required autocomplete="off" maxlength="20"')}<div class="form-footer"><button type="button" class="button" data-action="close-dialog">再想想</button><button class="button primary danger-fill" type="submit">永久注销</button></div></form>`);}
 async function legalPage(kind,renderId){const info=await legalInfo();if(renderId!==state.renderId)return;$('#content').innerHTML=legalMarkup(kind,info,esc);}
-async function standaloneLegal(kind){const info=await legalInfo();$('#app').innerHTML=`<main class="legal-standalone"><a class="legal-brand" href="#login"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="40" height="40"><strong>珞珈信使</strong></a>${legalMarkup(kind,info,esc)}<p class="legal-back"><a class="button" href="#login">${icon('back')} 返回登录</a></p></main>`;choreograph($('#app'));}
+async function standaloneLegal(kind){
+  const renderId=state.renderId,hash=location.hash,session=state.session;
+  const current=()=>renderId===state.renderId&&hash===location.hash&&session===state.session&&!state.session;
+  let body;
+  try{
+    const info=await legalInfo();
+    if(!current())return;
+    body=legalMarkup(kind,info,esc);
+  }catch{
+    if(!current())return;
+    body=empty('暂时未能打开协议','协议内容暂时未能加载，请重新加载或返回登录。',button('重新加载','refresh'),false,'static');
+  }
+  const app=$('#app');
+  app.innerHTML=`<main class="legal-standalone"><a class="legal-brand" href="#login"><img class="brand-mark" src="/static/assets/campus-notice-mark-v4.png" alt="" width="40" height="40"><strong>珞珈信使</strong></a>${body}<p class="legal-back"><a class="button" href="#login">${icon('back')} 返回登录</a></p></main>`;
+  choreograph(app);
+}
 function modelDialog(){const service=state.session.ai;showDialog('模型服务',`<div class="stack"><div class="status-line">${pill(service.configured?'已填写配置':'等待配置',service.configured?'green':'orange')}<span class="mono small">${esc(service.model)}</span></div><p><strong>${esc(service.billing_label||'Xiaomi MiMo')}</strong></p><p class="small muted">${service.billing_channel==='token_plan'?'使用 Token Plan 专属通道，额度由小米套餐决定。当前适配器的语音功能需要普通 API 通道。':'当前调用走普通 API 按量通道，不代表扣除 Token Plan 或 Desktop 订阅额度。'}</p><p>通知提取：${esc(service.model)}<br>独立动作复核：${service.notice_review_enabled?esc(service.notice_review_model):'未启用'}<br>互动回答组织：${esc(service.composition_model||service.model)}</p><p>${state.session.user.role==='admin'?'模型和凭证在服务端 .env 中配置，修改后重启生效。可选 V2.6 Pro、Flash；普通 API 还适配 Pro UltraSpeed，其权限和费用由小米决定。':'模型服务由当前部署的管理员配置。你可以先保存材料，配置完成后继续对话。'}</p><p class="small muted">适配清单核对日期：${esc(service.catalog_verified_at||'未提供')}。配置状态不代表实时连通或账户模型权限，以实际调用结果为准。</p><button type="button" class="button" id="open-speech">语音播报</button><button type="button" class="button" id="open-executions">最近处理记录</button></div>`);$('#open-speech').addEventListener('click',()=>speechDialog({state,api,esc,toast,showDialog}).catch(e=>toast(e.message,true)));$('#open-executions').addEventListener('click',()=>executionDialog({state,api,esc,showDialog,toast}).catch(e=>toast(e.message,true)));}
 
 function genuiDialog(){const g=state.session.genui;showDialog('互动回答',`<form id="genui-settings-form" class="stack"><label class="check"><input type="checkbox" name="enabled" ${g.enabled?'checked':''} ${g.available?'':'disabled'}><span>需要时，用图表、清单和可调参数帮助我理解</span></label><p class="small muted">简单问题仍用文字回答。调参数、排序和勾选在本地完成；需要保留时再点击“保存互动进度”。</p>${g.available?'':'<p class="alert">当前部署已关闭互动回答，仍可正常使用文字对话。</p>'}<div class="form-footer"><button type="submit" class="button primary">保存设置</button></div></form>`);}

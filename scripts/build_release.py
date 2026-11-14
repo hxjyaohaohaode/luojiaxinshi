@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from app.version import VERSION
 FILES=['README.md','CONTRIBUTING.md','OPERATIONS.md','TESTING.md','ASSETS.md','REDESIGN.md','INTEGRATIONS.md','MIMO_INTEGRATION.md','requirements.lock','requirements-dev.txt',
-       '.env.example','.dockerignore','.gitignore','.gitattributes','Dockerfile','compose.yaml','compose.shared-host.yaml','Caddyfile',
+       '.env.example','.dockerignore','.gitignore','.gitattributes','Dockerfile','compose.yaml','compose.shared-host.yaml','compose.proxy-network.yaml','Caddyfile',
        'manage.py','start.ps1','stop.ps1','启动工作台.cmd','停止工作台.cmd','重启工作台.cmd','pytest.ini',
        'package.json','package-lock.json','THIRD_PARTY_NOTICES.md','deploy/aliyun-message-policy.json',
        'deploy/modelscope/Dockerfile','deploy/modelscope/studio_entrypoint.py','deploy/modelscope/.dockerignore']
@@ -30,7 +30,7 @@ with zipfile.ZipFile(destination) as archive:
     assert all('campus-notice/static/'+name in archive.namelist() for name in
                ('manifest.webmanifest','notification-worker.js','pwa.js','offline.html','assets/app-icon.svg'))
     assert all('campus-notice/'+name in archive.namelist() for name in
-               ('compose.shared-host.yaml','docs/SHARED_HOST_DEPLOYMENT.md','scripts/verify_shared_host_config.py'))
+               ('compose.shared-host.yaml','compose.proxy-network.yaml','docs/SHARED_HOST_DEPLOYMENT.md','scripts/verify_shared_host_config.py'))
 checksum=hashlib.sha256(destination.read_bytes()).hexdigest()
 destination.with_suffix('.zip.sha256').write_text(checksum+'  '+destination.name+'\n',encoding='ascii')
 print(f'{destination.name}: {len(FILES)} files, {destination.stat().st_size} bytes, SHA256 {checksum}')

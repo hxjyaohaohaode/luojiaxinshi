@@ -4,7 +4,7 @@
 
 ## 第一次启动
 
-安装 Python 3.12 和 Git。Node.js 22 仅用于前端单元测试，应用本身没有 npm 运行依赖，也不需要前端打包。
+安装 Python 3.12 和 Git。应用本身没有 npm 运行依赖，仓库携带已构建的前端产物；修改前端源码时，需要 Node.js 22 运行单元测试和可复现构建，并将新的 `static/dist/` 一并提交。
 
 ```powershell
 git clone https://github.com/hxjyaohaohaode/luojiaxinshi.git
@@ -32,39 +32,44 @@ cp .env.example .env
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+npm ci --ignore-scripts
 .\.venv\Scripts\python.exe -m pytest -q
 node --test tests/*.test.mjs
+npm run build
+npm run build:check
 .\.venv\Scripts\python.exe scripts/genui_catalog.py --check
 .\.venv\Scripts\python.exe scripts/evaluate_genui.py
-npm audit --omit=dev
+npm audit
 .\.venv\Scripts\python.exe -m pip_audit -r requirements.lock
 # 改动界面时再运行浏览器回归（需要 Playwright 浏览器，见 TESTING.md）
 .\.venv\Scripts\python.exe scripts/run_browser_checks.py
 .\.venv\Scripts\python.exe scripts/run_agent_browser_checks.py
 ```
 
-前端没有新增 npm 包；`package-lock.json` 仍然保留，用于固定和审计空的依赖树。
+`package-lock.json` 固定 esbuild 和 Playwright 等开发依赖；构建工具链也纳入 `npm audit`。前端源码修改后必须更新产物，`build:check` 只验证一致性，不代替生成构建。完整后端可按 [TESTING.md](TESTING.md) 使用隔离分片审计脚本执行。
 
 互动组件画廊地址为 `/static/genui/gallery.html`，可检查所有组件、亮暗主题和窄屏。需要真实 HTTP 流程但没有模型密钥时，运行 `python scripts/genui_test_server.py`，打开 `http://127.0.0.1:8767`。该服务只用 `artifacts/genui-browser-data` 下的合成测试数据，回复明确标记为工程示例，不代表真实模型输出。测试账号及测试入口见该脚本；完整的测试体系、浏览器回归入口和 CI 说明见 [TESTING.md](TESTING.md)。
 
 ## 分支与协作
 
-当前仓库统一保留 `main` 分支，维护者按项目要求直接更新 `main`。开始修改前先同步远端，提交前完成相关检查，并在提交说明中记录实际问题、修改后的行为、验证结果与未验证项。不要直接把其他人的本机数据库同步进仓库。
+当前仓库在交付后只保留远端 `main`。进行中的修改可使用一个临时任务分支与 PR：先验证候选提交，再正常合并，并核对合并后 `main` 自身触发的完整检查，确认通过后删除已合入的临时分支。候选通过不替代 `main` 的实际执行结果。开始修改前先同步远端，提交说明记录实际问题、修改后的行为、验证结果与未验证项。不要把其他人的本机数据库同步进仓库。
 
 ```sh
 git switch main
 git pull --ff-only origin main
+git switch -c my-change
 # 完成修改与检查后
 git add 具体修改的文件
 git commit -m "描述问题和修改"
-git push origin main
+git push -u origin my-change
+# 在 GitHub 建立 PR；检查候选、合并后的 main 和分支清理结果
 ```
 
 如果远端在本地修改期间新增提交，先获取并审阅差异，再合并和验证；不要通过强制推送覆盖他人的修改。清理其他分支前，必须确认其中的独有提交已保留在 `main` 中。
 
 不要使用 force push、破坏性数据库迁移或提交真实用户导出文件。`data/`、`.env*`、备份、日志、验收数据、数据库文件和私钥都已排除；`.env.example` 是可以提交的空配置示例。上传测试附件时使用合成内容。历史资料与代码不一致时，以当前代码、README 和明确标注的验收记录为准。
 
-`schema/genui/catalog.json` 是组件目录唯一事实源。改动后运行 `python scripts/genui_catalog.py` 生成派生文件，再运行 `--check` 与相关测试。不要直接改生成文件；模型内容不得成为可执行 HTML、JS 或 CSS。
+`schema/genui/catalog.json` 是受控组件目录的唯一事实源。改动后运行 `python scripts/genui_catalog.py` 生成派生文件，再运行 `--check` 与相关测试，不要直接改生成文件。流式生成 UI 使用另外的验证器和隔离运行时；模型生成的 HTML、CSS 与脚本只能通过现有校验、沙箱和宿主操作协议运行，不得直接注入宿主页面或绕过独立复核与操作权限。两条路径的边界见 [OpenIntelligentUI 适配](docs/genui/OPEN_INTELLIGENT_UI.md)。
 
 ## 附件与资料
 

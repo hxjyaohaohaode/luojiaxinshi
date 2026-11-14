@@ -139,7 +139,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         ${policyFields(draft)}
         <label class="field">附件（选填，最多 3 份）<input type="file" name="files" multiple accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.png,.jpg,.jpeg,.webp"></label>
         ${missing}
-        <div data-campus-saved-files>${savedAttachmentFields(draft.attachments||[])}</div>
+        <div data-campus-saved-files>${savedAttachmentFields(draft.attachments||[],draft.keep_attachments!==false)}</div>
         <div class="row wrap"><button class="button small" type="button" data-campus-action="save-draft">保存草稿</button><span class="small muted" data-campus-draft-status role="status">${draft.version?'已保存第 '+draft.version+' 版':'尚未保存'}</span></div>
         <p class="small muted">单份不超过 5 MB，合计不超过 8 MB。发布后进入对方的通知资料，仍由本人核对；后来加入的成员可在发布记录中补发，补发时也会重试当前范围内未送达的记录。</p>
         <div><button class="button primary" type="submit">${submission.pending()?'重试上次确认的发布':'核对并发布'}</button></div>
@@ -188,8 +188,8 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const label=result.state==='withdrawn'?'上次发布已有结果，当前已撤回；此操作没有恢复发布。':recovered.state==='published'?'该通知已经发布，本次停止操作没有撤回；':'已确认发布：';
     toast(`${label}站内收件 ${result.delivery.delivered}/${result.delivery.total}${result.delivery.pending?'，待投递 '+result.delivery.pending:''}${sameDraft?'':'；当前新输入仍是草稿，尚未发布。'}${cleanupError?' 发布已保存，核对记录清理暂未完成；再次重试仍会返回同一发布。':''}`,!!cleanupError||!!result.delivery.failed);
   }
-  function savedAttachmentFields(files){
-    return files.length?`<details class="details"><summary>已保存的附件 · ${files.length} 份</summary><ul>${files.map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('')}</ul><label class="check"><input type="checkbox" name="keep_attachments" checked><span>保留这些附件；取消并保存后移除</span></label></details>`:'<input type="hidden" name="keep_attachments" value="true">';
+  function savedAttachmentFields(files,keep=true){
+    return files.length?`<details class="details"><summary>已保存的附件 · ${files.length} 份</summary><ul>${files.map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('')}</ul><label class="check"><input type="checkbox" name="keep_attachments" ${keep?'checked':''}><span>保留这些附件；取消并保存后移除</span></label></details>`:'<input type="hidden" name="keep_attachments" value="true">';
   }
   function publicationList(){
     const rows=publications.map(p=>`<article class="campus-row" data-campus-publication="${esc(p.id)}"><div><strong>${esc(p.title)}</strong>
@@ -237,7 +237,8 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const fileNames=form.dataset.missingFiles==='1'?prior.fileNames||[]:files.map(f=>f.name);
     drafts.set(owner,{...prior,id:form.dataset.draftId,version:prior.id===form.dataset.draftId?(prior.version||0):(Number(form.dataset.draftVersion)||0),
       audience:form.elements.audience.value,grade:form.elements.grade.value,class_name:form.elements.class_name.value,
-      title:form.elements.title.value,body:form.elements.body.value,...readPolicy(form),requestId:form.dataset.requestId||'',fileNames});
+      title:form.elements.title.value,body:form.elements.body.value,...readPolicy(form),requestId:form.dataset.requestId||'',fileNames,
+      keep_attachments:form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked});
     if(changed){
       const status=form.querySelector('[data-campus-draft-status]');if(status)status.textContent='修改尚未保存';
       clearTimeout(draftTimer);
@@ -263,10 +264,11 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         return null;
       }
       if(form.dataset.draftConflict)throw Error('服务器草稿已有新版本，请核对后继续，或将当前输入另存为草稿。');
+      const previousAttachments=drafts.get(uid)?.attachments||[];
       const files=[...form.elements.files.files],snapshot={version:drafts.get(uid)?.version??(Number(form.dataset.draftVersion)||0),
         title:form.elements.title.value,body:form.elements.body.value,audience:form.elements.audience.value,
         grade:form.elements.grade.value,class_name:form.elements.class_name.value,...readPolicy(form),
-        pending_attachment_names:form.dataset.missingFiles==='1'?(drafts.get(uid)?.fileNames||[]):[],
+        pending_attachment_names:[...new Set([...(form.dataset.missingFiles==='1'?(drafts.get(uid)?.fileNames||[]):[]),...(drafts.get(uid)?.missingOriginals||[]).map(file=>file.name)])],
         keep_attachments:form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked};
       if(!snapshot.title&&!snapshot.body&&!files.length&&!snapshot.version)return null;
       const body=new FormData();body.append('data',JSON.stringify(snapshot));for(const file of files)body.append('files',file);
@@ -275,13 +277,32 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       if(uid!==state.session?.user?.id||drafts.get(uid)?.id!==id)return saved;
       form.dataset.draftVersion=String(saved.version);
       const sameFiles=[...form.elements.files.files].every((file,i)=>file===files[i])&&form.elements.files.files.length===files.length;
+      const liveKeep=form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked,keepChanged=liveKeep!==snapshot.keep_attachments;
+      // A response retires the submitted attachment choice, never a newer
+      // checkbox edit. If removal already committed before the user rechecked
+      // it, preserve the missing originals explicitly; their bytes are gone.
+      const restoredOriginals=keepChanged&&liveKeep?previousAttachments.filter(file=>!saved.attachments.some(next=>file.sha256&&file.sha256===next.sha256&&file.name===next.name)):[];
+      const originals=[...new Map([...(drafts.get(uid).missingOriginals||[]),...restoredOriginals].map(file=>[JSON.stringify([file.name,file.sha256]),{name:file.name,sha256:file.sha256}])).values()];
+      const missingOriginals=originals.filter(file=>!saved.attachments.some(next=>file.sha256&&file.sha256===next.sha256&&file.name===next.name));
+      const resolvedNames=originals.filter(file=>!missingOriginals.some(next=>next.name===file.name)).map(file=>file.name);
+      const hadMissing=form.dataset.missingFiles==='1',liveNames=hadMissing?drafts.get(uid).fileNames||[]:[];
+      const pendingNames=[...new Set([...liveNames.filter(name=>!resolvedNames.includes(name)),...missingOriginals.map(file=>file.name)])];
+      form.dataset.missingFiles=pendingNames.length?'1':'';
       const missingFiles=form.dataset.missingFiles==='1';
       if(sameFiles){form.elements.files.value='';if(!missingFiles)form.dataset.missingFiles='';}
-      drafts.set(uid,{...drafts.get(uid),version:saved.version,attachments:saved.attachments,pending_attachment_names:saved.pending_attachment_names||[],fileNames:sameFiles&&!missingFiles?[]:drafts.get(uid).fileNames});
-      form.querySelector('[data-campus-saved-files]').innerHTML=savedAttachmentFields(saved.attachments);
+      const keep=keepChanged?liveKeep:true;
+      drafts.set(uid,{...drafts.get(uid),version:saved.version,attachments:saved.attachments,keep_attachments:keep,missingOriginals,pending_attachment_names:pendingNames,fileNames:missingFiles?pendingNames:sameFiles?[]:drafts.get(uid).fileNames});
+      const savedHost=form.querySelector('[data-campus-saved-files]'),expanded=savedHost.querySelector('details')?.open;
+      savedHost.innerHTML=savedAttachmentFields(saved.attachments,keep);
+      if(expanded&&savedHost.querySelector('details'))savedHost.querySelector('details').open=true;
+      if(missingFiles&&(restoredOriginals.length||resolvedNames.length||!hadMissing)){$('#campus-missing-files')?.remove();savedHost.insertAdjacentHTML('beforebegin',`<p class="small" id="campus-missing-files">上一次保存已移除你重新选择保留的附件，请重新选择要保留的附件：${pendingNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`);}else if(!missingFiles)$('#campus-missing-files')?.remove();
       serverDrafts=[saved,...serverDrafts.filter(item=>item.id!==id)];
-      const stillSame=['title','body','audience','grade','class_name'].every(key=>form.elements[key].value===snapshot[key])&&JSON.stringify(readPolicy(form))===JSON.stringify({valid_until:snapshot.valid_until,reference_only:snapshot.reference_only});
+      const stillSame=sameFiles&&!keepChanged&&JSON.stringify(pendingNames)===JSON.stringify(snapshot.pending_attachment_names)&&['title','body','audience','grade','class_name'].every(key=>form.elements[key].value===snapshot[key])&&JSON.stringify(readPolicy(form))===JSON.stringify({valid_until:snapshot.valid_until,reference_only:snapshot.reference_only});
       if(status){status.textContent=missingFiles?'正文已保存第 '+saved.version+' 版；待重新选择的附件尚未保存，请选择附件或明确不再附加。':stillSame?'已保存第 '+saved.version+' 版 · '+saved.attachments.length+' 份附件':'较早修改已保存，正在保存新输入…';status.setAttribute('role','status');}
+      // Only the server's exact name/SHA confirms a recovered original. Clear
+      // its persisted obligation in this same serial run, using the saved
+      // version and current inputs; never wait on our own draftWrites queue.
+      if(resolvedNames.length&&JSON.stringify(pendingNames)!==JSON.stringify(saved.pending_attachment_names||[]))return run();
       return saved;
     };
     const result=draftWrites.catch(()=>{}).then(run);draftWrites=result.catch(()=>{});return result;
@@ -411,7 +432,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       }
       else if(action==='edit-member'&&member){editing=member;await render();if(view.sameRoute())$('[data-workspace-form="campus-member"]')?.scrollIntoView({block:'start'});}
       else if(action==='cancel-member'){editing=null;await render();}
-      else if(action==='clear-files'){const form=button.closest('form');form.dataset.missingFiles='';form.elements.files.value='';$('#campus-missing-files')?.remove();saveDraft(form);}
+      else if(action==='clear-files'){const form=button.closest('form');form.dataset.missingFiles='';form.elements.files.value='';drafts.set(owner,{...drafts.get(owner),missingOriginals:[]});$('#campus-missing-files')?.remove();saveDraft(form);}
       else if(action==='remove-member'&&member&&await ask('移除学院身份',`移除 ${member.display_name} 的学院权限；已有个人通知和资料保留。`,'移除')){
         await api('/campus/members/'+encodeURIComponent(member.username),{method:'DELETE',json:{version:member.version}});if(view.sameRoute()){editing=null;await render();}if(view.sameUser())toast('学院身份已移除');
       }else if(action==='preview'){
@@ -448,6 +469,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         if(form.dataset.missingFiles==='1')throw Error('请重新选择附件，或点击“不再附加”');
         await persistDraft(form);
         if(!view.sameRoute()||!form.isConnected)return;
+        if(form.dataset.missingFiles==='1')throw Error('请重新选择附件，或点击“不再附加”');
         const selected=audience(form),review=await api('/campus/audience-review',{method:'POST',json:selected});
         if(!view.sameRoute()||!form.isConnected)return;
         const summary=`《${String(values.get('title')).trim()}》将发送至${targetText(selected)}：学生 ${review.students} 人，学院工作人员 ${review.staff} 人。${review.students?'请确认接收范围。':'当前没有学生符合条件，请确认是否仍要发布。'}`;

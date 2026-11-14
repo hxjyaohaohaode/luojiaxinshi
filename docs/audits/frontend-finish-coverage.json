@@ -1,13 +1,46 @@
 {
+  "recovery_record": {
+    "record_scope": "Historical frontend-finish evidence and preparation. The original status and per-stage records below are frozen; they are not the current candidate result.",
+    "current_report": "docs/audits/FRONTEND_RECOVERY_2026-11-14.md",
+    "current_local_verification": "docs/audits/frontend-recovery-verification.json",
+    "ci70_final_observation": {
+      "run_id": 43608838369,
+      "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+      "checkout_sha": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+      "completed_jobs": 9,
+      "successful_jobs": 7,
+      "failed_jobs": [
+        "browser",
+        "container"
+      ],
+      "browser_reports": 36,
+      "browser_recorded": 1094,
+      "browser_passed": 1087,
+      "browser_failed": 7,
+      "browser_unrecorded": 46,
+      "continuity_checks": 990,
+      "continuity_passed": 990,
+      "container_build_and_smoke_after_config": "skipped"
+    },
+    "publication_rule": "Check the candidate CI, then the merged main push CI, then enumerate remote branches. No future result is asserted here."
+  },
   "schema_version": 1,
   "record_type": "frontend_finish_overlay_before_new_candidate_ci",
-  "recorded_at": "2026-11-14T15:09:39.135709+00:00",
-  "status": "local_integrated_node_and_build_passed_new_full_ci_and_main_delivery_pending",
+  "recorded_at": "2026-11-14T15:30:13.600172+00:00",
+  "status": "ci70_configuration_gate_failed_two_mode_config_preparation_and_18_local_regressions_passed_real_compose_and_new_ci_pending",
   "working_base_main": "37150dc650f7c40783a84e718a102b9413b815fe",
   "working_base_tree": "8310dc5346228394e36c102883571ac726066411",
-  "new_candidate_sha": null,
-  "new_candidate_run_id": null,
-  "new_candidate_ci_result": null,
+  "new_candidate_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+  "new_candidate_run_id": 43608838369,
+  "new_candidate_ci_result": {
+    "status_at_original_snapshot": "in_progress",
+    "run_attempt": 1,
+    "known_completed_failed_job": "container",
+    "job_id": 132489170290,
+    "whole_workflow_success": false,
+    "other_job_results": "awaiting their original reports; no completed counts inferred here",
+    "patch_in_this_overlay_executed_in_ci70": false
+  },
   "source_integrity": {
     "attachment_name": "珞珈信使_冲刺前全量审查与优化清单.md",
     "attachment_sha256": "01f8056c1e854265370341e06429e378d9ec335237a8dec15e4449a7e2fa9bd1",
@@ -194,7 +227,7 @@
           "account_lifecycle",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69证明既有分层构建与相关布局用例；本轮仍在既有system层改控件，不凭静态删去未确认冗余规则。",
       "original_record_limitations_retained_as_history": [],
@@ -267,7 +300,7 @@
           "frontend_finish",
           "account_lifecycle"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "保留现有绿白品牌、导航和密度令牌；本轮没有整体缩放页面或更换框架。",
       "original_record_limitations_retained_as_history": [],
@@ -339,7 +372,7 @@
           "account_lifecycle",
           "frontend_finish"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69已有任务/聊天目标和移动看板回归。本轮44px认证触区需新CI实际rect/命中验证；44px是本项目目标，不能把旧30px直接宣称为WCAG 2.5.8不合格。",
       "original_record_limitations_retained_as_history": [],
@@ -418,7 +451,7 @@
         "new_browser_suite_ids": [
           "frontend_finish"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69基线保留资料库分页/筛选/稳定归组；本轮只进一步压缩标题入口，首屏与200%文本几何尚待新CI。",
       "original_record_limitations_retained_as_history": [],
@@ -481,7 +514,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "本轮没有重写task-summary。69相关任务/首页操作用例及既有Node语义作为基线，不把suite总数等同每种业务组合。",
       "original_record_limitations_retained_as_history": [],
@@ -544,7 +577,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "保留原手机分组、长标题、菜单/键盘替代拖动；69看板28与动画18观测为旧树真实证据，新树完整回归仍须执行。",
       "original_record_limitations_retained_as_history": [],
@@ -607,7 +640,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "保留服务端done成功后才庆祝的原策略；69成功/失败/撤销覆盖不代替下一候选重验。",
       "original_record_limitations_retained_as_history": [],
@@ -688,7 +721,7 @@
         "new_browser_suite_ids": [
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "保留详情层级和证据定位；新增校园版本链是另一个真实API检查范围，尚不能作为已执行详情全验收。",
       "original_record_limitations_retained_as_history": [],
@@ -751,7 +784,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "原办理面板/恢复在69的相关suite及连续性检查内；本轮没有修改workflow模块。实体软键盘与系统安全区仍单列。",
       "original_record_limitations_retained_as_history": [
@@ -828,7 +861,7 @@
           "frontend_finish",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69个人收件/材料回执已按原suite执行；新校园草稿复制缺件修复是相邻材料合同，不能替代个人收件每种错误/取消组合。",
       "original_record_limitations_retained_as_history": [],
@@ -923,7 +956,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69 Composer仅Chromium合成麦克风，13阶段/41事件/3录音clip/0及4截图已核；不替代真实麦克风、输入法或系统权限UI。",
       "original_record_limitations_retained_as_history": [
@@ -1046,7 +1079,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69回复菜单与chat9/8/8已有真实自动回归，次要动作键盘退出/焦点保持范围沿原报告；本轮未改工具栏。",
       "original_record_limitations_retained_as_history": [],
@@ -1237,7 +1270,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69真实受控流/三引擎chat与恢复报告保留；不推断未采样断网、后台系统或实体设备行为。",
       "original_record_limitations_retained_as_history": [],
@@ -1312,7 +1345,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69记忆首次懒加载入口及迟到owner/dialog隔离按Agent13 Chromium范围，记忆筛选/连续性按其三引擎报告。",
       "original_record_limitations_retained_as_history": [],
@@ -1366,7 +1399,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "来源主要UI仅Chromium、迟到保存连续性三引擎；真实外部网页/来源可靠性需要其自身读取回执，不由本轮未改源码推断。",
       "original_record_limitations_retained_as_history": [
@@ -1448,7 +1481,7 @@
         "targeted_evidence_ids": [],
         "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
         "new_browser_suite_ids": [],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69相关日历/工作区真实用例沿用基线；实体长按/系统通知/锁屏呈现不由模拟视口证明。",
       "original_record_limitations_retained_as_history": [
@@ -1526,7 +1559,7 @@
           "frontend_finish",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "新缺件/容量Node已通过；新增发布版本链、晚加入补发、成员预检选行、审计分页脚本定义待CI，不用桌面整体缩放替代窄屏布局。",
       "original_record_limitations_retained_as_history": [],
@@ -1624,7 +1657,7 @@
           "account_lifecycle",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "新控制流修复分别覆盖401、409、迟到、失败与owner切换；未逐一穷举所有页面×权限×离线×已删除的组合。",
       "original_record_limitations_retained_as_history": [
@@ -1721,7 +1754,7 @@
           "account_lifecycle",
           "frontend_finish"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "坏密码和验证码错误常驻原表单并保留帮助/发送状态，字段修正只清本字段错误；实体软键盘安全区仍需实机。",
       "original_record_limitations_retained_as_history": [
@@ -1810,7 +1843,7 @@
           "frontend_finish",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "69所有归组/分页/旧响应/返回范围按原报告通过；标题布局改动没有改变筛选语义，但新候选仍需完整回归。",
       "original_record_limitations_retained_as_history": [],
@@ -1918,7 +1951,7 @@
           "frontend_finish",
           "account_lifecycle"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "原长文本布局回归保留；本轮加强占位及认证提示对比。新200%检查仅把选定通知文字的实际CSS字号乘2，未执行原生浏览器缩放。",
       "original_record_limitations_retained_as_history": [
@@ -2014,7 +2047,7 @@
           "frontend_finish",
           "account_lifecycle"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "键盘/ARIA/颜色/字号需分别核证。Node受控DOM不证明实际读屏播报；CSS字号翻倍不等于原生200%zoom；中文实体IME/系统软键盘/读屏全链路仍未执行。",
       "original_record_limitations_retained_as_history": [
@@ -2088,7 +2121,7 @@
         "new_browser_suite_ids": [
           "account_lifecycle"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "原减少动画/生命周期基线保留。验证码仅状态切换并显式reduced-motion；RubberSegment拖动登录切换没有采用，未新增持续装饰动效。",
       "original_record_limitations_retained_as_history": [],
@@ -2182,7 +2215,7 @@
           "account_lifecycle",
           "campus_administration"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "本轮加强真实成功之后才清理、owner/route/dialog迟到隔离和草稿材料一致性；新浏览器跨账号与管理链仍未执行。",
       "original_record_limitations_retained_as_history": [],
@@ -2333,7 +2366,7 @@
         "new_browser_suite_ids": [
           "account_lifecycle"
         ],
-        "new_browser_execution": "not_executed"
+        "new_browser_execution": "ci70_result_pending_original_report_verification"
       },
       "interpretation": "原209条与35/79/95分类字节不动；额外2项源码/演示深核后累计5项，204项仍未逐一demo+source深核。未安装209项依赖。",
       "original_record_limitations_retained_as_history": [
@@ -2496,28 +2529,42 @@
     "deployment": {
       "files": [
         "compose.shared-host.yaml",
+        "compose.proxy-network.yaml",
         "scripts/verify_shared_host_config.py",
+        "tests/test_shared_host_config.py",
         "docs/SHARED_HOST_DEPLOYMENT.md"
       ],
       "evidence": [
         "operations"
       ],
-      "scope": "独立同宿主反代模板只发布127.0.0.1，项目/卷/网络隔离及资源/日志限额显式配置；不替换现主compose、不启动服务。实际Compose config门禁待CI。",
+      "scope": "原回环模板字节不变；CI70真实失败保留。配置验证器接受同预算的规范十进制表示并保存失败诊断；新增独立proxy-network模板无宿主端口、项目唯一别名/私有卷和显式external代理网络。两个模式各2+12=14，真实Compose待新CI；受控CLI一次18/18不是Docker或云主机验收。",
       "file_snapshots": [
         {
           "path": "compose.shared-host.yaml",
           "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae"
         },
         {
+          "path": "compose.proxy-network.yaml",
+          "sha256": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443"
+        },
+        {
           "path": "scripts/verify_shared_host_config.py",
-          "sha256": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc"
+          "sha256": "2374489634f88dfad097d5a311569238e4c22a66a580f1e91c5ae3bac4427e78"
+        },
+        {
+          "path": "tests/test_shared_host_config.py",
+          "sha256": "889195e210009d28a3b270db81d0fd1e890c3daef320695e232cf8ed0a4ebe14"
         },
         {
           "path": "docs/SHARED_HOST_DEPLOYMENT.md",
-          "sha256": "47da92c845a7dfd5d3fd721278d6c8472a8db7c6df398af8e8d7bcbc1cdfb0cf"
+          "sha256": "c6ff94324f4d4905e13ee08e0a9c76c4ba015d8e8eb61655ab8db4e3ea98a562"
         }
       ],
-      "application_browser_status": "not_executed_on_this_working_tree"
+      "application_browser_status": "Configuration preparation has no application browser assertion; the three new frontend suite reports remain independently pending verification.",
+      "historical_verifier_hashes": {
+        "ci70_actual": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc",
+        "first_local_10_case_fix": "adef53325987cf9991896c6067d6becbad1c8d132847ecadfa4bd2878cee9711"
+      }
     }
   },
   "targeted_evidence": {
@@ -3160,12 +3207,12 @@
       "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
     }
   },
-  "count_semantics": "Targeted red/green rounds overlap and are not added. The separately recorded integrated Node run contains exactly 411 unique cases, all 363 baseline identities retained plus 48 new identities; full backend/native browser/shared-host Compose execution for the new candidate remains pending.",
+  "count_semantics": "Targeted red/green rounds overlap and are not added. The historical integrated Node run is 411 unique cases, retaining all 363 baseline identities plus 48. The later config verifier file has 18 actual local cases (first 10 plus 8 proxy cases); expected next backend inventory is 140 files/1893 cases, pending actual full CI. Two real Compose modes of 14 each are not inferred from these controlled CLI tests.",
   "new_browser_suites": {
     "frontend_finish": {
       "path": "scripts/verify_frontend_finish.mjs",
       "sha256": "34eaf467f4a2433aab5ac58617a9d7dd90c88be10460ce21ff1f506d8b4c4021",
-      "status": "defined_not_executed",
+      "status": "defined_no_completed_ci70_result_observed_here",
       "engines": [
         "chromium",
         "firefox",
@@ -3189,7 +3236,7 @@
     "account_lifecycle": {
       "path": "scripts/verify_account_lifecycle.mjs",
       "sha256": "02f699b4cfc62d79eb31188c57d7c8bf6468313a9940375eb49cf0fe0085c01d",
-      "status": "defined_not_executed",
+      "status": "defined_no_completed_ci70_result_observed_here",
       "engines": [
         "chromium",
         "firefox",
@@ -3298,7 +3345,7 @@
     },
     "campus_administration": {
       "path": "scripts/verify_campus_administration.mjs",
-      "status": "defined_not_executed",
+      "status": "defined_no_completed_ci70_result_observed_here",
       "engines": [
         "chromium",
         "firefox",
@@ -3357,11 +3404,13 @@
     }
   },
   "new_full_ci": {
-    "status": "not_started_or_not_observed_here",
-    "actual_run_id": null,
-    "actual_head_sha": null,
+    "status": "ci70_known_failed_container_other_results_pending",
+    "actual_run_id": 43608838369,
+    "actual_head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
     "actual_counts": null,
-    "merge_gate": "Require actual new candidate results and exact unchanged baseline case identities, then actual main push CI. Definitions and Node passes are not browser execution."
+    "merge_gate": "Require actual new candidate results and exact unchanged baseline case identities, then actual main push CI. Definitions and Node passes are not browser execution.",
+    "next_repaired_candidate_full_ci": "pending actual execution; no rerun of CI70 is used to erase its failure",
+    "known_ci70_skipped_scope": "Image build/start and the original container smoke steps were skipped after the configuration assertion failed."
   },
   "reference_followup": {
     "path": "docs/audits/frontend-reference-followup.json",
@@ -3401,13 +3450,13 @@
     "config_verifier": "scripts/verify_shared_host_config.py",
     "local_config_result": "Docker CLI unavailable; verifier returned nonzero, not skipped/pass. New CI must run actual Compose config.",
     "server_actions_executed": false,
-    "tencent_state": "No authenticated instance inventory or actual CPU/memory/ports/proxy configuration is established by this record.",
+    "tencent_state": "Public repository records contain no actual instance identifiers, addresses or private host inventory. A deployment owner must actually prepare and verify the dedicated proxy network, existing proxy membership, egress and trusted peer addresses; rendered config does not establish those facts.",
     "user_owned_followup": "Real registration/OTP provider configuration and deployment are assigned to the user; no provider receipt or school authorization is invented.",
     "remaining_original_external_requirements": 51,
     "remaining_original_conditional_p2": 8,
     "cumulative_five_day_campus_acceptance": "not_completed_by_synthetic_ci",
     "new_ci_config_contract": {
-      "status": "pending_actual_ci_execution",
+      "status": "pending_actual_repaired_candidate_ci_execution",
       "command": "python scripts/verify_shared_host_config.py --output artifacts/shared-host-config.json",
       "expected_synthetic_projects": 2,
       "expected_missing_required_variable_cases": 12,
@@ -3415,7 +3464,20 @@
       "services_started_by_config_verifier": false,
       "expected_artifact_name": "shared-host-compose-config",
       "scope": "Require actual official archive SHA/size, actual job checkout, unique source-bound JSON and all 14 original configuration outcomes; no actual-server validation is implied."
-    }
+    },
+    "ci70_actual_config_result": "Failed at the old compound memory/CPU assertion. The original failure record did not retain rendered values or Compose version; the historical type is unknown. Later local controlled tests do not change this actual failure.",
+    "container_proxy_template": "compose.proxy-network.yaml",
+    "new_ci_proxy_config_contract": {
+      "status": "pending_actual_new_candidate_ci_execution",
+      "command": "python scripts/verify_shared_host_config.py --mode proxy-network --output artifacts/proxy-network-config.json",
+      "expected_synthetic_projects": 2,
+      "expected_missing_required_variable_cases": 12,
+      "expected_configuration_cases": 14,
+      "services_started_by_config_verifier": false,
+      "expected_artifact_name": "proxy-network-compose-config",
+      "scope": "Dedicated external proxy network, project aliases and private data volumes; no host ports. Actual network existence, membership, connectivity and deployment remain unverified by this config-only gate."
+    },
+    "two_mode_expected_configuration_cases": 28
   },
   "performance_boundary": {
     "original_goal": "Total writer wait includes admission queue, connection preparation and SQLite BEGIN; P95<100ms unchanged.",
@@ -3453,7 +3515,8 @@
     "review_threads_resolved_with_actual_evidence": "pending_new_candidate_review",
     "remote_branches_exactly_main": "pending_final_api_inventory_after_authorized_cleanup",
     "layout_and_style": "Retain existing green/light brand, navigation and task/notice flow. Changes target proven state loss and concrete narrow-screen controls.",
-    "old_proofs_frozen": true
+    "old_proofs_frozen": true,
+    "two_configuration_modes_14_each": "pending_next_candidate_real_compose_results"
   },
   "new_browser_suite_definition_counts": {
     "frontend_finish": 18,
@@ -3461,7 +3524,9 @@
     "campus_administration": 33,
     "total_defined_checks": 84,
     "actual_executed_checks_on_new_tree": 0,
-    "interpretation": "Definitions are expected counts only. None is added to the executed CI69 totals."
+    "interpretation": "Definitions are expected counts only. None is added to the executed CI69 totals.",
+    "scope": "Historical pre-CI70 definition snapshot; the zero refers to that snapshot. CI70 is now in progress and completed original suite results have not been observed in this document.",
+    "ci70_completed_result_count_observed": null
   },
   "local_integrated_validation": {
     "path": "docs/audits/frontend-finish-local-verification.json",
@@ -3705,5 +3770,1424 @@
     "native_browser_executed_for_new_tree": false,
     "shared_host_compose_executed_successfully_locally": false,
     "later_script_only_change": "After the recorded Node/build run, account-lifecycle browser reporting gained safe owner/status/identity projections only. Its 11 names, 87 assertions, interactions and timeouts remain unchanged; no product/bundle input or Node case changed. The updated script is defined, not executed."
+  },
+  "overlay_history": [
+    {
+      "recorded_at": "2026-11-14T15:09:39.135709+00:00",
+      "json_sha256": "f2e2e95bad9058e9ff780387aad2350a08187fcbea9aef4a1bd382e72dcd2ab1",
+      "markdown_sha256": "4229d800cbbe4b2b135a1e5c4acdf74274db11b6f02016f6623f7ef111da0167",
+      "scope": "Frozen before CI70; 411 Node/build passed and browser definitions pending."
+    },
+    {
+      "recorded_at": "2026-11-14T15:19:42.691640+00:00",
+      "json_sha256": "4d8e989d6cd57d18eb763ded18773f167695b9bd1cf1a8a1f8738fe7a996c24f",
+      "markdown_sha256": "ea718bb55a0e85caaea5c3ab42defb7a8064c1458a1da93d7f4f9f6bc6cd0b07",
+      "scope": "CI70 old config failure plus the first 10-case local fix; before adding the independent container-proxy mode."
+    }
+  ],
+  "current_worktree_changes_not_tested_by_ci70": [
+    "scripts/verify_shared_host_config.py",
+    "tests/test_shared_host_config.py",
+    "compose.proxy-network.yaml",
+    ".github/workflows/checks.yml",
+    "scripts/build_release.py",
+    "docs/SHARED_HOST_DEPLOYMENT.md"
+  ],
+  "shared_host_ci70_followup": {
+    "local_path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/verification.json",
+    "bytes": 18226,
+    "sha256": "1a244dda41ea603fafeaa2ab96c882fa91d67e0e0d1da2f848fff58982db34ae",
+    "record": {
+      "verified_at": "2026-11-14T15:18:26.364714+00:00",
+      "source_execution_base": {
+        "actual_ci70_head": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+        "actual_ci70_checkout": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+        "local_head": "d17ed2eb9c85ae1b03d02b17d57dfa2fd2d55c8f",
+        "new_patch_not_executed_by_ci70": true
+      },
+      "historical_ci70_failure": {
+        "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host-failure-verification.json",
+        "sha256": "5a38a353e522be0b90209bb9bed0f048e4a40782623977273fdd49bd773163a4",
+        "record": {
+          "schema_version": 1,
+          "verified_at": "2026-11-14T15:18:26.351126+00:00",
+          "run_id": 43608838369,
+          "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+          "tree_sha": "3aec820100eeda1c7cf9f4b84b3de8363380e572",
+          "checkout_sha": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+          "event": "pull_request",
+          "branch": "codex/frontend-finish-2026-11-14",
+          "job": {
+            "id": 132489170290,
+            "name": "container",
+            "status": "completed",
+            "conclusion": "failure",
+            "run_id": 43608838369,
+            "logs_url": null,
+            "steps": [
+              {
+                "name": "Set up job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 1
+              },
+              {
+                "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 2
+              },
+              {
+                "name": "Verify shared-host Compose isolation without starting services",
+                "status": "completed",
+                "conclusion": "failure",
+                "number": 3
+              },
+              {
+                "name": "Preserve the shared-host configuration evidence",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 4
+              },
+              {
+                "name": "Run docker build -t campus-notice:ci .",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 5
+              },
+              {
+                "name": "Start the isolated container without credentials or host data",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 6
+              },
+              {
+                "name": "Verify health, non-root runtime, database and UI prompt resources",
+                "status": "completed",
+                "conclusion": "skipped",
+                "number": 7
+              },
+              {
+                "name": "Diagnose an isolated container failure",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 8
+              },
+              {
+                "name": "Remove the isolated container",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 9
+              },
+              {
+                "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 18
+              },
+              {
+                "name": "Complete job",
+                "status": "completed",
+                "conclusion": "success",
+                "number": 19
+              }
+            ]
+          },
+          "status": "failed",
+          "whole_workflow_status_at_snapshot": "in_progress",
+          "artifact": {
+            "id": 14118784355,
+            "name": "shared-host-compose-config",
+            "size_in_bytes": 499,
+            "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14118784355",
+            "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14118784355/zip",
+            "expired": false,
+            "created_at": "2026-11-14T15:11:44Z",
+            "expires_at": "2026-11-28T15:11:43Z",
+            "updated_at": "2026-11-14T15:11:44Z",
+            "digest": "sha256:003b3acae120f788be1d7da7ca6040c95cbcd2153cd919802f1d9241db768b9c",
+            "workflow_run": {
+              "id": 43608838369,
+              "repository_id": 1417322145,
+              "head_repository_id": 1417322145,
+              "head_branch": "codex/frontend-finish-2026-11-14",
+              "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa"
+            }
+          },
+          "archive_path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host.zip",
+          "artifact_sha256": "003b3acae120f788be1d7da7ca6040c95cbcd2153cd919802f1d9241db768b9c",
+          "original_json": {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host/shared-host-config.json",
+            "bytes": 673,
+            "sha256": "adb0e1962bc53573a04631f5c6a6a4bbacd4eb35e7ee968d32d2c64a96553832",
+            "record": {
+              "result": "failed",
+              "synthetic_config_only": true,
+              "services_started": false,
+              "error": "AssertionError: ",
+              "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/luojiaxinshi/luojiaxinshi/scripts/verify_shared_host_config.py\", line 131, in main\n    record = verify(args.root.resolve())\n  File \"/home/runner/work/luojiaxinshi/luojiaxinshi/scripts/verify_shared_host_config.py\", line 92, in verify\n    assert app[\"mem_limit\"] == 768 * 1024 * 1024 and float(app[\"cpus\"]) == 0.5\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+              "verified_at": "2026-11-14T15:11:43.356159+00:00"
+            }
+          },
+          "job_log": {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-container.log",
+            "bytes": 16239,
+            "sha256": "e238524a7f736a5ef4a3415a1dcaed4eb9d0eea3e0daaf446eecd1c3ca7101e9"
+          },
+          "original_stdout_json_equals_zip_record": true,
+          "smoke_commands_executed": false,
+          "skipped_steps": [
+            {
+              "name": "Run docker build -t campus-notice:ci .",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 5
+            },
+            {
+              "name": "Start the isolated container without credentials or host data",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 6
+            },
+            {
+              "name": "Verify health, non-root runtime, database and UI prompt resources",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 7
+            }
+          ],
+          "unknown_original_values": [
+            "docker_compose_version",
+            "mem_limit value and JSON type",
+            "cpus value and JSON type"
+          ],
+          "finding": "The compound memory/CPU assertion failed. The old failure handler discarded rendered configurations and version, so neither exact historical value nor unique type cause is reconstructed. Official compose-go serialization independently demonstrates that the verifier incorrectly rejects its legitimate decimal-string byte representation.",
+          "no_retry_or_service_execution_by_this_audit": true
+        }
+      },
+      "official_contract_sources": [
+        {
+          "url": "https://github.com/compose-spec/compose-go/blob/main/types/bytes.go",
+          "observation": "UnitBytes.MarshalJSON emits the byte count as a decimal JSON string."
+        },
+        {
+          "url": "https://github.com/compose-spec/compose-go/blob/main/types/types.go",
+          "observation": "ServiceConfig.MemLimit uses UnitBytes."
+        },
+        {
+          "url": "https://github.com/docker/compose/blob/main/docs/reference/compose_config.md",
+          "observation": "Compose config renders the resolved canonical model; JSON is an output option."
+        }
+      ],
+      "before": {
+        "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before.xml",
+        "sha256": "507e5f10e9d21ce8ea1d20c204a96ee25eb6b365fa6151ae5c8ff4a75df0e372",
+        "bytes": 12173,
+        "tests": 10,
+        "passed": 2,
+        "failed": 8,
+        "errors": 0,
+        "skipped": 0,
+        "case_ids": [
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_changed_cpu_is_rejected_with_original_config_preserved"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_silently_accepted_missing_variable_is_not_marked_passed"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_unavailable_docker_remains_a_nonzero_failure"
+          ]
+        ],
+        "failure_messages": [
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+            ],
+            "message": "assert (1 == 0)"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+            ],
+            "message": "assert (0 == 1)"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+            ],
+            "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+            ],
+            "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+            ],
+            "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_changed_cpu_is_rejected_with_original_config_preserved"
+            ],
+            "message": "AssertionError: CPU failures must preserve actual rendered configuration.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+            ],
+            "message": "AssertionError: A failed renderer call must remain available for diagnosis.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: project-a rejected the synthetic configuration: controlled renderer syntax failure', ...}"
+          },
+          {
+            "id": [
+              "tests.test_shared_host_config",
+              "test_silently_accepted_missing_variable_is_not_marked_passed"
+            ],
+            "message": "AssertionError: The unexpected successful command must be retained.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: missing-CAMPUS_CPU_LIMIT unexpectedly accepted a missing required variable', ...}"
+          }
+        ]
+      },
+      "after": {
+        "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/after.xml",
+        "sha256": "a6eda9db6979ddad76d2ae3f7deffd2ca8182838bab95f958c9812ba3d6342c7",
+        "bytes": 1693,
+        "tests": 10,
+        "passed": 10,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "case_ids": [
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_changed_cpu_is_rejected_with_original_config_preserved"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_silently_accepted_missing_variable_is_not_marked_passed"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_unavailable_docker_remains_a_nonzero_failure"
+          ]
+        ],
+        "failure_messages": []
+      },
+      "backend": {
+        "added_files": [
+          "tests/test_shared_host_config.py"
+        ],
+        "added_case_ids": [
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_changed_cpu_is_rejected_with_original_config_preserved"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_silently_accepted_missing_variable_is_not_marked_passed"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_unavailable_docker_remains_a_nonzero_failure"
+          ]
+        ],
+        "added_unique_cases": 10,
+        "expected_next_total_files": 140,
+        "expected_next_total_cases": 1885,
+        "next_full_ci_actual_execution": "pending"
+      },
+      "source_files": {
+        "before_verifier": {
+          "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before-verifier.py",
+          "sha256": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc"
+        },
+        "after_verifier": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py",
+          "sha256": "adef53325987cf9991896c6067d6becbad1c8d132847ecadfa4bd2878cee9711"
+        },
+        "test": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/test_shared_host_config.py",
+          "sha256": "6fbbd0e66afea899bd342128d5a6320b99ccd1feab936e1b1bec6d6243f9492e",
+          "unchanged_between_before_and_after_runs": true,
+          "scope": "The same newly created test file was used unchanged for both recorded invocations."
+        },
+        "template": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.shared-host.yaml",
+          "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+          "unchanged": true
+        }
+      },
+      "logs": [
+        {
+          "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before.log",
+          "bytes": 25408,
+          "sha256": "bfcffe9935e9a57fb13013539539a7b0b40fe7c9855f39c6a8af83ea7e238473"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/after.log",
+          "bytes": 80,
+          "sha256": "7040371af15613c02e821ec0eecc1d1330f691ace4cef93a41bfa358822c4103"
+        }
+      ],
+      "diff": {
+        "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/changes.patch",
+        "bytes": 13193,
+        "sha256": "66fa0ef6e678a6d3976c4cefe2c202e75b96cd057c796e48acc531e2524531c3"
+      },
+      "preserved_contract": {
+        "memory_bytes": 805306368,
+        "cpu_limit": 0.5,
+        "synthetic_projects": 2,
+        "required_variable_rejections": 12,
+        "actual_compose_config_cases": 14,
+        "original_container_smoke_commands_changed": false,
+        "services_started_by_local_tests": false
+      },
+      "test_scope": "The real verifier/main runs with a controlled subprocess boundary and synthetic canonical configuration. This is deterministic red/green proof of representation handling and diagnostic retention, not actual Docker/Compose or target-host execution. CI70 did not record original rendered types, and no original type is invented. New genuine Compose gate remains pending.",
+      "independent_review": "context_audit read the actual two-file diff and control boundary without rerunning; no concrete blocker reported."
+    },
+    "new_genuine_compose_gate": "pending_next_candidate"
+  },
+  "proxy_network_config_followup": {
+    "local_path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/verification-reviewed.json",
+    "bytes": 43131,
+    "sha256": "22bc69af1dfbbca5fcbc417f13f3c61ab9232bf54642978e7012abb6d4046e50",
+    "record": {
+      "verified_at": "2026-11-14T15:29:15.716516+00:00",
+      "scope": "Final read-only source/evidence binding after the one existing 18-case run; no tests or Docker/browser/server actions rerun.",
+      "prior_execution_proof": {
+        "path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/verification.json",
+        "bytes": 33957,
+        "sha256": "3aaa21d7c8fb3fe731a35512fef29d53ace324e5c8795aedda5b9578ef664ac5",
+        "record": {
+          "verified_at": "2026-11-14T15:28:05.968189+00:00",
+          "worktree": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final",
+          "base_identity": {
+            "local_head": "d17ed2eb9c85ae1b03d02b17d57dfa2fd2d55c8f",
+            "scope": "Before adding the independently selected proxy-network mode; preserves the prior 10-case fix and the existing loopback 14-case contract.",
+            "files": [
+              {
+                "path": "scripts/verify_shared_host_config.py",
+                "bytes": 9447,
+                "sha256": "adef53325987cf9991896c6067d6becbad1c8d132847ecadfa4bd2878cee9711",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-scripts__verify_shared_host_config.py"
+              },
+              {
+                "path": "tests/test_shared_host_config.py",
+                "bytes": 8544,
+                "sha256": "6fbbd0e66afea899bd342128d5a6320b99ccd1feab936e1b1bec6d6243f9492e",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-tests__test_shared_host_config.py"
+              },
+              {
+                "path": "compose.shared-host.yaml",
+                "bytes": 2133,
+                "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-compose.shared-host.yaml"
+              },
+              {
+                "path": ".github/workflows/checks.yml",
+                "bytes": 20175,
+                "sha256": "36772351d7eead6618c9b63101961e1c952860a012c24d173bf6280085d3d476",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-.github__workflows__checks.yml"
+              },
+              {
+                "path": "scripts/build_release.py",
+                "bytes": 2803,
+                "sha256": "5b5519bd6e405dfff74ff454e78317ec00816b5ab6766142ddae3aaff6d6455d",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-scripts__build_release.py"
+              },
+              {
+                "path": "docs/SHARED_HOST_DEPLOYMENT.md",
+                "bytes": 6177,
+                "sha256": "47da92c845a7dfd5d3fd721278d6c8472a8db7c6df398af8e8d7bcbc1cdfb0cf",
+                "snapshot": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/before-docs__SHARED_HOST_DEPLOYMENT.md"
+              }
+            ]
+          },
+          "scope": "Repository preparation for an independently selected container-proxy topology. No cloud mutation, Docker network creation, actual Compose execution, service startup, local browser, or performance load was performed.",
+          "implementation": {
+            "default_mode": "loopback",
+            "default_template_unchanged": true,
+            "new_mode": "proxy-network",
+            "new_template": "compose.proxy-network.yaml",
+            "per_mode_configurations": {
+              "synthetic_projects": 2,
+              "required_variable_rejections": 12,
+              "total": 14
+            },
+            "network_boundary": "Explicit dedicated external network; no host ports. Existing proxy joining, network existence/member trust/connectivity/egress are target-host prerequisites, not config-rendering evidence.",
+            "alias": "${CAMPUS_PROJECT_NAME}-app",
+            "private_volume": "Compose project-scoped campus-data",
+            "budget_bytes": 805306368,
+            "cpu_budget": 0.5,
+            "services_started_by_verifier": false
+          },
+          "tests": {
+            "command": "CAMPUS_AUTO_LOAD_ENV=0 /workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/bin/python -m pytest tests/test_shared_host_config.py -q --junitxml=/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/after.xml",
+            "executions": 1,
+            "tests": 18,
+            "passed": 18,
+            "failed": 0,
+            "errors": 0,
+            "skipped": 0,
+            "elapsed_seconds_from_junit": 0.261,
+            "actual_case_ids": [
+              [
+                "tests.test_shared_host_config",
+                "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_changed_cpu_is_rejected_with_original_config_preserved"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_silently_accepted_missing_variable_is_not_marked_passed"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_unavailable_docker_remains_a_nonzero_failure"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_validates_two_projects_and_all_required_variables"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[published-port]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[host-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[alias-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[data-volume-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[nonexternal-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[different-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_a_silently_defaulted_external_network"
+              ]
+            ],
+            "previous_10_ids_retained_in_order": true,
+            "previous_test_file_prefix_byte_identical": true,
+            "new_mode_added_case_ids": [
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_validates_two_projects_and_all_required_variables"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[published-port]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[host-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[alias-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[data-volume-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[nonexternal-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[different-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_a_silently_defaulted_external_network"
+              ]
+            ],
+            "scope": "Real verifier/main with controlled Compose CLI return values. These are not real Docker/config acceptance results. No missing-CLI-argument error is presented as a historical business regression."
+          },
+          "backend": {
+            "added_files": [
+              "tests/test_shared_host_config.py"
+            ],
+            "added_case_ids": [
+              [
+                "tests.test_shared_host_config",
+                "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_changed_cpu_is_rejected_with_original_config_preserved"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_silently_accepted_missing_variable_is_not_marked_passed"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_unavailable_docker_remains_a_nonzero_failure"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_validates_two_projects_and_all_required_variables"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[published-port]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[host-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[alias-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[data-volume-collision]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[nonexternal-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_exposure_or_shared_identity[different-network]"
+              ],
+              [
+                "tests.test_shared_host_config",
+                "test_proxy_network_mode_rejects_a_silently_defaulted_external_network"
+              ]
+            ],
+            "added_unique_cases_total": 18,
+            "additional_proxy_cases": 8,
+            "expected_next_total_files": 140,
+            "expected_next_total_cases": 1893,
+            "next_full_ci_actual_execution": "pending"
+          },
+          "existing_ci70_fix_proof": {
+            "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/verification.json",
+            "bytes": 18226,
+            "sha256": "1a244dda41ea603fafeaa2ab96c882fa91d67e0e0d1da2f848fff58982db34ae",
+            "record": {
+              "verified_at": "2026-11-14T15:18:26.364714+00:00",
+              "source_execution_base": {
+                "actual_ci70_head": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+                "actual_ci70_checkout": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+                "local_head": "d17ed2eb9c85ae1b03d02b17d57dfa2fd2d55c8f",
+                "new_patch_not_executed_by_ci70": true
+              },
+              "historical_ci70_failure": {
+                "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host-failure-verification.json",
+                "sha256": "5a38a353e522be0b90209bb9bed0f048e4a40782623977273fdd49bd773163a4",
+                "record": {
+                  "schema_version": 1,
+                  "verified_at": "2026-11-14T15:18:26.351126+00:00",
+                  "run_id": 43608838369,
+                  "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
+                  "tree_sha": "3aec820100eeda1c7cf9f4b84b3de8363380e572",
+                  "checkout_sha": "5b26331ba9d262e99a5d5747a886726ccfc71f59",
+                  "event": "pull_request",
+                  "branch": "codex/frontend-finish-2026-11-14",
+                  "job": {
+                    "id": 132489170290,
+                    "name": "container",
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "run_id": 43608838369,
+                    "logs_url": null,
+                    "steps": [
+                      {
+                        "name": "Set up job",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 1
+                      },
+                      {
+                        "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 2
+                      },
+                      {
+                        "name": "Verify shared-host Compose isolation without starting services",
+                        "status": "completed",
+                        "conclusion": "failure",
+                        "number": 3
+                      },
+                      {
+                        "name": "Preserve the shared-host configuration evidence",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 4
+                      },
+                      {
+                        "name": "Run docker build -t campus-notice:ci .",
+                        "status": "completed",
+                        "conclusion": "skipped",
+                        "number": 5
+                      },
+                      {
+                        "name": "Start the isolated container without credentials or host data",
+                        "status": "completed",
+                        "conclusion": "skipped",
+                        "number": 6
+                      },
+                      {
+                        "name": "Verify health, non-root runtime, database and UI prompt resources",
+                        "status": "completed",
+                        "conclusion": "skipped",
+                        "number": 7
+                      },
+                      {
+                        "name": "Diagnose an isolated container failure",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 8
+                      },
+                      {
+                        "name": "Remove the isolated container",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 9
+                      },
+                      {
+                        "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 18
+                      },
+                      {
+                        "name": "Complete job",
+                        "status": "completed",
+                        "conclusion": "success",
+                        "number": 19
+                      }
+                    ]
+                  },
+                  "status": "failed",
+                  "whole_workflow_status_at_snapshot": "in_progress",
+                  "artifact": {
+                    "id": 14118784355,
+                    "name": "shared-host-compose-config",
+                    "size_in_bytes": 499,
+                    "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14118784355",
+                    "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14118784355/zip",
+                    "expired": false,
+                    "created_at": "2026-11-14T15:11:44Z",
+                    "expires_at": "2026-11-28T15:11:43Z",
+                    "updated_at": "2026-11-14T15:11:44Z",
+                    "digest": "sha256:003b3acae120f788be1d7da7ca6040c95cbcd2153cd919802f1d9241db768b9c",
+                    "workflow_run": {
+                      "id": 43608838369,
+                      "repository_id": 1417322145,
+                      "head_repository_id": 1417322145,
+                      "head_branch": "codex/frontend-finish-2026-11-14",
+                      "head_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa"
+                    }
+                  },
+                  "archive_path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host.zip",
+                  "artifact_sha256": "003b3acae120f788be1d7da7ca6040c95cbcd2153cd919802f1d9241db768b9c",
+                  "original_json": {
+                    "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-shared-host/shared-host-config.json",
+                    "bytes": 673,
+                    "sha256": "adb0e1962bc53573a04631f5c6a6a4bbacd4eb35e7ee968d32d2c64a96553832",
+                    "record": {
+                      "result": "failed",
+                      "synthetic_config_only": true,
+                      "services_started": false,
+                      "error": "AssertionError: ",
+                      "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/luojiaxinshi/luojiaxinshi/scripts/verify_shared_host_config.py\", line 131, in main\n    record = verify(args.root.resolve())\n  File \"/home/runner/work/luojiaxinshi/luojiaxinshi/scripts/verify_shared_host_config.py\", line 92, in verify\n    assert app[\"mem_limit\"] == 768 * 1024 * 1024 and float(app[\"cpus\"]) == 0.5\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+                      "verified_at": "2026-11-14T15:11:43.356159+00:00"
+                    }
+                  },
+                  "job_log": {
+                    "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43608838369-container.log",
+                    "bytes": 16239,
+                    "sha256": "e238524a7f736a5ef4a3415a1dcaed4eb9d0eea3e0daaf446eecd1c3ca7101e9"
+                  },
+                  "original_stdout_json_equals_zip_record": true,
+                  "smoke_commands_executed": false,
+                  "skipped_steps": [
+                    {
+                      "name": "Run docker build -t campus-notice:ci .",
+                      "status": "completed",
+                      "conclusion": "skipped",
+                      "number": 5
+                    },
+                    {
+                      "name": "Start the isolated container without credentials or host data",
+                      "status": "completed",
+                      "conclusion": "skipped",
+                      "number": 6
+                    },
+                    {
+                      "name": "Verify health, non-root runtime, database and UI prompt resources",
+                      "status": "completed",
+                      "conclusion": "skipped",
+                      "number": 7
+                    }
+                  ],
+                  "unknown_original_values": [
+                    "docker_compose_version",
+                    "mem_limit value and JSON type",
+                    "cpus value and JSON type"
+                  ],
+                  "finding": "The compound memory/CPU assertion failed. The old failure handler discarded rendered configurations and version, so neither exact historical value nor unique type cause is reconstructed. Official compose-go serialization independently demonstrates that the verifier incorrectly rejects its legitimate decimal-string byte representation.",
+                  "no_retry_or_service_execution_by_this_audit": true
+                }
+              },
+              "official_contract_sources": [
+                {
+                  "url": "https://github.com/compose-spec/compose-go/blob/main/types/bytes.go",
+                  "observation": "UnitBytes.MarshalJSON emits the byte count as a decimal JSON string."
+                },
+                {
+                  "url": "https://github.com/compose-spec/compose-go/blob/main/types/types.go",
+                  "observation": "ServiceConfig.MemLimit uses UnitBytes."
+                },
+                {
+                  "url": "https://github.com/docker/compose/blob/main/docs/reference/compose_config.md",
+                  "observation": "Compose config renders the resolved canonical model; JSON is an output option."
+                }
+              ],
+              "before": {
+                "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before.xml",
+                "sha256": "507e5f10e9d21ce8ea1d20c204a96ee25eb6b365fa6151ae5c8ff4a75df0e372",
+                "bytes": 12173,
+                "tests": 10,
+                "passed": 2,
+                "failed": 8,
+                "errors": 0,
+                "skipped": 0,
+                "case_ids": [
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_changed_cpu_is_rejected_with_original_config_preserved"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_silently_accepted_missing_variable_is_not_marked_passed"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_unavailable_docker_remains_a_nonzero_failure"
+                  ]
+                ],
+                "failure_messages": [
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+                    ],
+                    "message": "assert (1 == 0)"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+                    ],
+                    "message": "assert (0 == 1)"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+                    ],
+                    "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+                    ],
+                    "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+                    ],
+                    "message": "AssertionError: A failed config must retain completed renderer observations.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_changed_cpu_is_rejected_with_original_config_preserved"
+                    ],
+                    "message": "AssertionError: CPU failures must preserve actual rendered configuration.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: ', ...}"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+                    ],
+                    "message": "AssertionError: A failed renderer call must remain available for diagnosis.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: project-a rejected the synthetic configuration: controlled renderer syntax failure', ...}"
+                  },
+                  {
+                    "id": [
+                      "tests.test_shared_host_config",
+                      "test_silently_accepted_missing_variable_is_not_marked_passed"
+                    ],
+                    "message": "AssertionError: The unexpected successful command must be retained.\nassert 'checks' in {'result': 'failed', 'synthetic_config_only': True, 'services_started': False, 'error': 'AssertionError: missing-CAMPUS_CPU_LIMIT unexpectedly accepted a missing required variable', ...}"
+                  }
+                ]
+              },
+              "after": {
+                "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/after.xml",
+                "sha256": "a6eda9db6979ddad76d2ae3f7deffd2ca8182838bab95f958c9812ba3d6342c7",
+                "bytes": 1693,
+                "tests": 10,
+                "passed": 10,
+                "failed": 0,
+                "errors": 0,
+                "skipped": 0,
+                "case_ids": [
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_changed_cpu_is_rejected_with_original_config_preserved"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_silently_accepted_missing_variable_is_not_marked_passed"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_unavailable_docker_remains_a_nonzero_failure"
+                  ]
+                ],
+                "failure_messages": []
+              },
+              "backend": {
+                "added_files": [
+                  "tests/test_shared_host_config.py"
+                ],
+                "added_case_ids": [
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_changed_cpu_is_rejected_with_original_config_preserved"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_silently_accepted_missing_variable_is_not_marked_passed"
+                  ],
+                  [
+                    "tests.test_shared_host_config",
+                    "test_unavailable_docker_remains_a_nonzero_failure"
+                  ]
+                ],
+                "added_unique_cases": 10,
+                "expected_next_total_files": 140,
+                "expected_next_total_cases": 1885,
+                "next_full_ci_actual_execution": "pending"
+              },
+              "source_files": {
+                "before_verifier": {
+                  "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before-verifier.py",
+                  "sha256": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc"
+                },
+                "after_verifier": {
+                  "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py",
+                  "sha256": "adef53325987cf9991896c6067d6becbad1c8d132847ecadfa4bd2878cee9711"
+                },
+                "test": {
+                  "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/test_shared_host_config.py",
+                  "sha256": "6fbbd0e66afea899bd342128d5a6320b99ccd1feab936e1b1bec6d6243f9492e",
+                  "unchanged_between_before_and_after_runs": true,
+                  "scope": "The same newly created test file was used unchanged for both recorded invocations."
+                },
+                "template": {
+                  "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.shared-host.yaml",
+                  "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+                  "unchanged": true
+                }
+              },
+              "logs": [
+                {
+                  "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/before.log",
+                  "bytes": 25408,
+                  "sha256": "bfcffe9935e9a57fb13013539539a7b0b40fe7c9855f39c6a8af83ea7e238473"
+                },
+                {
+                  "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/after.log",
+                  "bytes": 80,
+                  "sha256": "7040371af15613c02e821ec0eecc1d1330f691ace4cef93a41bfa358822c4103"
+                }
+              ],
+              "diff": {
+                "path": "/workspace/scratch/0a6433f08acc/shared-host-fix-evidence/changes.patch",
+                "bytes": 13193,
+                "sha256": "66fa0ef6e678a6d3976c4cefe2c202e75b96cd057c796e48acc531e2524531c3"
+              },
+              "preserved_contract": {
+                "memory_bytes": 805306368,
+                "cpu_limit": 0.5,
+                "synthetic_projects": 2,
+                "required_variable_rejections": 12,
+                "actual_compose_config_cases": 14,
+                "original_container_smoke_commands_changed": false,
+                "services_started_by_local_tests": false
+              },
+              "test_scope": "The real verifier/main runs with a controlled subprocess boundary and synthetic canonical configuration. This is deterministic red/green proof of representation handling and diagnostic retention, not actual Docker/Compose or target-host execution. CI70 did not record original rendered types, and no original type is invented. New genuine Compose gate remains pending.",
+              "independent_review": "context_audit read the actual two-file diff and control boundary without rerunning; no concrete blocker reported."
+            }
+          },
+          "ci_contract": {
+            "loopback_command": "python scripts/verify_shared_host_config.py --output artifacts/shared-host-config.json",
+            "loopback_artifact": "shared-host-compose-config",
+            "proxy_command": "python scripts/verify_shared_host_config.py --mode proxy-network --output artifacts/proxy-network-config.json",
+            "proxy_artifact": "proxy-network-compose-config",
+            "existing_build_and_smoke_suffix_byte_identical": true,
+            "real_config_runs": "pending a new candidate CI; CI70 used the old verifier and remains a real failure"
+          },
+          "files": [
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py",
+              "bytes": 11180,
+              "sha256": "2374489634f88dfad097d5a311569238e4c22a66a580f1e91c5ae3bac4427e78"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/test_shared_host_config.py",
+              "bytes": 14788,
+              "sha256": "889195e210009d28a3b270db81d0fd1e890c3daef320695e232cf8ed0a4ebe14"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.proxy-network.yaml",
+              "bytes": 2050,
+              "sha256": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/.github/workflows/checks.yml",
+              "bytes": 20769,
+              "sha256": "51d74e7f6d1c763f5b14ed2549b72ea7ac85e7f8fe14176e2d1c7806d2519fd8"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/build_release.py",
+              "bytes": 2861,
+              "sha256": "3e650a3edd5332712d5fa995caa4028aadad779217eafe091e69e4821808ab46"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/docs/SHARED_HOST_DEPLOYMENT.md",
+              "bytes": 9853,
+              "sha256": "3d966be9f32e2736c2afedf964b3814897c41f7bdcc3c9ff8dd48d842a62d765"
+            }
+          ],
+          "preserved_loopback_template": {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.shared-host.yaml",
+            "bytes": 2133,
+            "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae"
+          },
+          "junit": {
+            "path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/after.xml",
+            "bytes": 2899,
+            "sha256": "1dcac107e3f4475f88c9ae89b9ab65b9ad6c72e512124c255bbab0aa0ee5a586"
+          },
+          "log": {
+            "path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/after.log",
+            "bytes": 80,
+            "sha256": "341d5dca33250b815baddbafb6001e174c20bf1716bb74f3d612e77777db8938"
+          },
+          "diff": {
+            "path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/changes.patch",
+            "bytes": 29176,
+            "sha256": "c20224afebb0e57fcd829bb7c59d819349dc92c2aea41b03bf5d633f6f8e9c3e"
+          },
+          "syntax": "ast.parse of both Python entrypoints and tests passed",
+          "diff_check": {
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          "official_contract_sources": [
+            "https://docs.docker.com/compose/how-tos/networking/",
+            "https://docs.docker.com/reference/compose-file/networks/#external",
+            "https://docs.docker.com/reference/compose-file/services/#aliases"
+          ],
+          "independent_review": "Requested from context_audit; not prefilled as passed."
+        }
+      },
+      "files": [
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py",
+          "bytes": 11180,
+          "sha256": "2374489634f88dfad097d5a311569238e4c22a66a580f1e91c5ae3bac4427e78"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/test_shared_host_config.py",
+          "bytes": 14788,
+          "sha256": "889195e210009d28a3b270db81d0fd1e890c3daef320695e232cf8ed0a4ebe14"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.proxy-network.yaml",
+          "bytes": 2050,
+          "sha256": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/.github/workflows/checks.yml",
+          "bytes": 20769,
+          "sha256": "51d74e7f6d1c763f5b14ed2549b72ea7ac85e7f8fe14176e2d1c7806d2519fd8"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/build_release.py",
+          "bytes": 2861,
+          "sha256": "3e650a3edd5332712d5fa995caa4028aadad779217eafe091e69e4821808ab46"
+        },
+        {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/docs/SHARED_HOST_DEPLOYMENT.md",
+          "bytes": 10017,
+          "sha256": "c6ff94324f4d4905e13ee08e0a9c76c4ba015d8e8eb61655ab8db4e3ea98a562"
+        }
+      ],
+      "diff": {
+        "path": "/workspace/scratch/0a6433f08acc/proxy-network-config-evidence/changes-reviewed.patch",
+        "bytes": 29340,
+        "sha256": "eadecadad3e6cbe0837205b667dbf7d0db889fec7e6cd4fffc1ba4a4dd6806a0"
+      },
+      "backend": {
+        "added_files": [
+          "tests/test_shared_host_config.py"
+        ],
+        "added_case_ids": [
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[official-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_canonical_memory_budget_passes_every_configuration_case[compatible-integer]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[float-not-canonical]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[boolean]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[different-budget]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_invalid_memory_fails_and_keeps_original_rendered_values[noninteger-string]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_changed_cpu_is_rejected_with_original_config_preserved"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_renderer_failure_keeps_version_exit_code_and_exact_stderr"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_silently_accepted_missing_variable_is_not_marked_passed"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_unavailable_docker_remains_a_nonzero_failure"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_validates_two_projects_and_all_required_variables"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[published-port]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[host-network]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[alias-collision]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[data-volume-collision]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[nonexternal-network]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_exposure_or_shared_identity[different-network]"
+          ],
+          [
+            "tests.test_shared_host_config",
+            "test_proxy_network_mode_rejects_a_silently_defaulted_external_network"
+          ]
+        ],
+        "added_unique_cases_total": 18,
+        "additional_proxy_cases": 8,
+        "expected_next_total_files": 140,
+        "expected_next_total_cases": 1893,
+        "next_full_ci_actual_execution": "pending"
+      },
+      "independent_review": {
+        "reviewer": "context_audit",
+        "result": "No concrete blocker found in actual proxy template/verifier/tests and deployment guide.",
+        "verified_contracts": [
+          "Default loopback retains all original 14 configuration cases.",
+          "Proxy mode has no ports or host network, uses one explicit external network and project-specific aliases/private data volumes.",
+          "Common permissions, resources and logs are unchanged.",
+          "Six invalid exposure/identity cases plus missing external variable rejection retain original stdout.",
+          "Guide distinguishes target network membership, egress and trusted peers from config-only validation."
+        ],
+        "execution_boundary": "Review only; reviewer did not run tests or modify files."
+      },
+      "after_execution_change": "Only a deployment-guide sentence explicitly states the deployment owner must create/connect the dedicated network if absent; no executed test/source input changed.",
+      "actual_compose_28_configuration_results": "pending_new_ci",
+      "historical_ci70_status": "failed; original missing value/type observations remain unknown"
+    },
+    "actual_compose_execution": "pending_new_candidate",
+    "network_created_or_connected": false,
+    "cloud_mutations": false
   }
 }
