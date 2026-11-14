@@ -283,8 +283,8 @@ function taskRow(t,board=false){
 
 async function dashboard(canRender=()=>true,records){
   const id=state.renderId,context=currentWorkContext();
-  if(context==='system')return systemHome.render(id);
-  if(context==='college')return campusUI.render(id,'home');
+  if(context==='system')return systemHome.render(id,canRender);
+  if(context==='college')return campusUI.render(id,'home',canRender);
   const arrangements=records??await api('/arrangements');
   if(id!==state.renderId||!canRender())return false;
   state.arrangements=arrangements;overviewUI.render();gettingStarted.mount();return true;
@@ -1108,7 +1108,8 @@ async function refreshWorkspace(domains,revision){
     intakeUI.refreshTargets();
   }
   else if((page==='campus'||page==='dashboard'&&context!=='personal')&&changed('campus','account')){
-    if(page==='dashboard')await dashboard(canApply);else await campusUI.render(render);
+    const applied=page==='dashboard'?await dashboard(canApply):await campusUI.render(render,undefined,canApply);
+    if(applied===false)return false;
   }else if(page==='settings'&&changed('account'))settingsPage({preserveScroll:true});
   else if(detail&&state.notice?.id===detail){
     if(latest===false){

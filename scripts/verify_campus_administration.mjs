@@ -54,6 +54,54 @@ for(const [engineIndex,engine] of engines.entries()){
   const responseFor=(who,pathname,method='POST',query=null)=>who.page.waitForResponse(response=>{
     const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api'+pathname&&response.request().method()===method&&(!query||query(url.searchParams));
   });
+  async function auditPagination(who,direction,query,entry){
+    const id=engine+'-'+direction,detail={engine,action:direction,timeout_ms:timeout,started_at:Date.now(),status:'running',native_events:[],network:[],response_wait:{status:'not_started'},click:{status:'not_started'},cleanup:null};
+    (entry.pagination_actions||=[]).push(detail);
+    const requests=new Map();let sequence=0,failed=false,response;
+    const requestInfo=request=>{
+      const url=new URL(request.url());if(url.origin!==origin||request.method()!=='GET'||!(url.pathname.startsWith('/api/campus/')||url.pathname==='/api/proactive/revision'))return null;
+      if(!requests.has(request))requests.set(request,requests.size+1);
+      return {request_id:requests.get(request),method:request.method(),path:url.pathname+url.search,matches_waiter:url.pathname==='/api/campus/audit'&&query(url.searchParams)};
+    };
+    const record=(kind,request,extra={})=>{const info=requestInfo(request);if(info)detail.network.push({sequence:++sequence,kind,at:Date.now(),...info,...extra});};
+    const onRequest=request=>record('request',request),onResponse=value=>record('response',value.request(),{status:value.status(),from_service_worker:value.fromServiceWorker()}),onFailure=request=>record('requestfailed',request,{error:request.failure()?.errorText||'unknown'});
+    const observe=(name,work)=>{
+      const value=detail[name];value.status='pending';value.started_at=Date.now();
+      let promise;try{promise=work();}catch(error){promise=Promise.reject(error);}
+      return Promise.resolve(promise).then(result=>{value.status='fulfilled';value.finished_at=Date.now();if(name==='response_wait')value.response={...requestInfo(result.request()),status:result.status()};return result;},error=>{value.status='rejected';value.finished_at=Date.now();value.error=error.stack||String(error);throw error;});
+    };
+    who.page.on('request',onRequest);who.page.on('response',onResponse);who.page.on('requestfailed',onFailure);
+    try{
+      await who.page.evaluate(id=>{
+        if(window.__campusAuditPagination)throw Error('Another pagination diagnostic is still active');
+        const types=['pointerdown','mousedown','pointerup','mouseup','click','pointercancel'],events=[],ids=new WeakMap();let next=0,down=null;
+        const key=node=>{if(!node)return null;if(!ids.has(node))ids.set(node,++next);return ids.get(node);};
+        const describe=node=>node instanceof Element?{node_id:key(node),tag:node.tagName,id:node.id||null,action:node.getAttribute('data-campus-action')}:null;
+        const listener=event=>{
+          const target=event.target instanceof Element?event.target:null,control=target?.closest('[data-campus-action]')||null;
+          if(event.type==='pointerdown'||event.type==='mousedown'&&!down)down=control;
+          events.push({sequence:events.length+1,type:event.type,at:Date.now(),performance_ms:performance.now(),trusted:event.isTrusted,button:event.button??null,pointer_type:event.pointerType||null,x:event.clientX??null,y:event.clientY??null,target:describe(target),control:describe(control),down_target:describe(down),down_connected:down?down.isConnected:null,same_down_target:down?control===down:null,route:location.hash});
+        };
+        window.__campusAuditPagination={id,types,events,listener};
+        for(const type of types)document.addEventListener(type,listener,{capture:true,passive:true});
+      },id);
+      const outcomes=await Promise.allSettled([observe('response_wait',()=>responseFor(who,'/campus/audit','GET',query)),observe('click',()=>who.page.locator('[data-campus-action=audit-'+direction+']').click())]);
+      const failures=outcomes.map((value,index)=>value.status==='rejected'?{operation:index===0?'response_wait':'click',error:value.reason}:null).filter(Boolean);
+      if(failures.length)throw new AggregateError(failures.map(value=>value.error),'Audit '+direction+' failed: '+failures.map(value=>value.operation+': '+(value.error?.message||String(value.error))).join('; '));
+      response=outcomes[0].value;detail.status='observed';
+    }catch(error){failed=true;detail.status='failed';detail.error=error.stack||String(error);throw error;}
+    finally{
+      who.page.off('request',onRequest);who.page.off('response',onResponse);who.page.off('requestfailed',onFailure);
+      try{
+        const captured=await who.page.evaluate(id=>{const value=window.__campusAuditPagination;if(!value||value.id!==id)return {removed:false,events:[]};try{return {removed:true,events:value.events};}finally{for(const type of value.types)document.removeEventListener(type,value.listener,true);delete window.__campusAuditPagination;}},id);
+        detail.native_events=captured.events;detail.cleanup={network_listeners_removed:true,native_listeners_removed:captured.removed};
+        if(!captured.removed)throw Error('Native pagination diagnostic was not available for collection');
+      }catch(error){detail.cleanup={network_listeners_removed:true,native_listeners_removed:false,error:error.stack||String(error)};if(!failed)detail.status='diagnostic-failed';}
+      detail.finished_at=Date.now();await save();
+      if(!failed&&detail.status==='diagnostic-failed')throw Error('Pagination diagnostic cleanup failed: '+detail.cleanup.error);
+    }
+    return response;
+  }
   async function action(who,pathname,method,run,expected=200){
     const [response]=await Promise.all([responseFor(who,pathname,method),run()]),text=await response.text();
     report.receipts.push({engine,actor:who.label,path:pathname,method,status:response.status(),body_sha256:sha(text),at:Date.now()});await save();
@@ -273,12 +321,12 @@ for(const [engineIndex,engine] of engines.entries()){
       }
       const [firstResponse]=await Promise.all([responseFor(manager,'/campus/audit','GET',query=>query.get('action')==='assign_member'&&!query.has('before_id')),manager.page.locator('#campus-audit-action').selectOption('assign_member')]);assert.equal(firstResponse.status(),200);const first=await firstResponse.json();entry.first_page=first;assert.equal(first.items.length,100);assert.equal(first.has_more,true);assert.ok(first.next_cursor);
       await manager.page.waitForFunction(count=>document.querySelectorAll('.campus-audit li').length===count&&!document.querySelector('[data-campus-action="audit-next"]')?.disabled,first.items.length);
-      const [secondResponse]=await Promise.all([responseFor(manager,'/campus/audit','GET',query=>query.get('action')==='assign_member'&&query.get('before_id')===String(first.next_cursor)),manager.page.locator('[data-campus-action=audit-next]').click()]);assert.equal(secondResponse.status(),200);const second=await secondResponse.json();entry.second_page=second;
+      const secondResponse=await auditPagination(manager,'next',query=>query.get('action')==='assign_member'&&query.get('before_id')===String(first.next_cursor),entry);assert.equal(secondResponse.status(),200);const second=await secondResponse.json();entry.second_page=second;
       await manager.page.waitForFunction(count=>document.querySelectorAll('.campus-audit li').length===count&&!document.querySelector('[data-campus-action="audit-prev"]')?.disabled,second.items.length);
       const ids=[...first.items,...second.items].map(item=>item.id);assert.equal(new Set(ids).size,ids.length);assert.ok(first.items.every(item=>item.action==='assign_member'));assert.ok(second.items.every(item=>item.action==='assign_member'&&item.id<first.next_cursor));
       const actual=first.items.concat(second.items).filter(item=>item.id>beforeId&&item.actor_name==='学院验收 '+engine+' manager'&&item.target_name==='学院验收 '+engine+' spare');assert.equal(actual.length,101);assert.deepEqual(actual.map(item=>item.details.class_name).reverse(),changes.map(item=>item.class_name));
       await manager.page.screenshot({path:path.join(out,engine+'-audit-second-page.png')});
-      const [backResponse]=await Promise.all([responseFor(manager,'/campus/audit','GET',query=>query.get('action')==='assign_member'&&!query.has('before_id')),manager.page.locator('[data-campus-action=audit-prev]').click()]);assert.equal(backResponse.status(),200);const back=await backResponse.json();assert.deepEqual(back.items.map(item=>item.id),first.items.map(item=>item.id));await manager.page.waitForFunction(()=>document.querySelectorAll('.campus-audit li').length===100&&document.querySelector('[data-campus-action="audit-prev"]')?.disabled);
+      const backResponse=await auditPagination(manager,'prev',query=>query.get('action')==='assign_member'&&!query.has('before_id'),entry);assert.equal(backResponse.status(),200);const back=await backResponse.json();assert.deepEqual(back.items.map(item=>item.id),first.items.map(item=>item.id));await manager.page.waitForFunction(()=>document.querySelectorAll('.campus-audit li').length===100&&document.querySelector('[data-campus-action="audit-prev"]')?.disabled);
       entry.previous_page_ids=back.items.map(item=>item.id);entry.own_real_mutations=actual.length;entry.status='passed';
     });
     await check(10,async()=>{assert.deepEqual(pageErrors,[]);assert.equal(new Set([manager,student,late,spare].map(who=>who.owner)).size,4);assert.equal(report.checks.filter(item=>item.engine===engine&&item.ok).length,names.length-1);});

@@ -37,12 +37,14 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
   const canManage=()=>siteMode()||ownRole()==='college_admin';
   const canPublish=()=>state.workContext==='college'&&['college_admin','counselor'].includes(ownRole());
 
-  async function render(id=state.renderId,section=location.hash.startsWith('#campus/')?location.hash.split('/')[1]:'home'){
+  async function render(id=state.renderId,section=location.hash.startsWith('#campus/')?location.hash.split('/')[1]:'home',canApply=()=>true){
+    // A deferred background refresh must keep the active gesture's controls mounted.
+    if(!canApply())return false;
     if(section==='home'){pubPage=1;pubQuery='';}
     const uid=state.session?.user?.id,sequence=++renderSequence;
-    const current=()=>sequence===renderSequence&&stillCurrent(id,uid);
+    const current=()=>sequence===renderSequence&&stillCurrent(id,uid)&&canApply();
     if(owner!==uid){clearTimeout(draftTimer);clearTimeout(deliveryTimer);serverDrafts=[];drafts.clear();owner=uid;collegeId='';editing=null;pubPage=1;pubQuery='';auditAction='';auditCursor='';auditPrevious=[];auditNext='';auditHasMore=false;}
-    const next=await api('/campus/context');if(!current())return;context=next;
+    const next=await api('/campus/context');if(!current())return false;context=next;
     state.session.user.campus_membership=context.membership?Object.fromEntries(
       ['role','college_name','grade','class_name','version'].map(key=>[key,context.membership[key]])
     ):null;
@@ -57,7 +59,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       canPublish()&&section==='publish'?api('/campus/drafts'):Promise.resolve({items:[]}),
       canPublish()&&section==='publish'?submission.load():Promise.resolve(null)
     ]);
-    if(!current())return;
+    if(!current())return false;
     if(pendingPublication&&!drafts.has(uid))drafts.set(uid,structuredClone(pendingPublication.draft));
     members=memberResult.members;publications=pubResult.items;serverDrafts=draftResult.items;if(section==='audit'){auditNext=auditResult.next_cursor||'';auditHasMore=!!auditResult.has_more;}
     if(ownRole()==='counselor'&&!siteMode())members=members.filter(m=>m.role==='student'&&context.membership.scopes.some(s=>s.all_college||s.grade===m.grade&&(!s.class_name||s.class_name===m.class_name)));
@@ -79,6 +81,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       ${section==='members'&&canRead?memberList(memberResult.can_manage):''}
       ${section==='audit'&&canManage()?auditList(auditResult.items):''}</div>`;
     syncMemberFields();syncAudienceFields();scheduleDeliveryRefresh(id,uid);
+    return true;
   }
 
   function memberForm(){

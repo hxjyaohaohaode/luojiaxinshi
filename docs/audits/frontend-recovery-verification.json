@@ -2,7 +2,7 @@
   "schema_version": 1,
   "record_type": "frontend_recovery_integrated_local_verification",
   "recorded_at": "2026-11-14T16:22:13.409369+00:00",
-  "status": "ci72_failed_reviewed_followup_requires_new_candidate_and_merged_main_verification",
+  "status": "ci73_failed_pagination_followup_requires_new_candidate_and_merged_main_verification",
   "base_candidate_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
   "base_candidate_tree": "3aec820100eeda1c7cf9f4b84b3de8363380e572",
   "base_main_sha": "37150dc650f7c40783a84e718a102b9413b815fe",
@@ -5455,5 +5455,1641 @@
         }
       }
     }
+  },
+  "ci73_complete_result": {
+    "run": {
+      "id": 43621255205,
+      "name": "项目检查",
+      "head_branch": "codex/frontend-finish-2026-11-14",
+      "head_sha": "0511124e58fe13146983d018460391dbb96d7552",
+      "run_number": 73,
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "failure",
+      "workflow_id": 383489645,
+      "run_attempt": 1,
+      "created_at": "2026-11-14T17:28:04Z",
+      "updated_at": "2026-11-14T17:55:27Z",
+      "run_started_at": "2026-11-14T17:28:04Z",
+      "html_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43621255205"
+    },
+    "actual_checkout": "95c22f05a799d1350cff2267bd32f0c2c942ba36",
+    "tree": "ba65cd033e5d8fc4562594b64677507d6ae8d9e2",
+    "jobs": [
+      {
+        "id": 132527236521,
+        "name": "Async save and recovery",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236755,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 132527236756,
+        "name": "tests (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236761,
+        "name": "Windows backend (4/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236773,
+        "name": "Windows backend (1/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236777,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236862,
+        "name": "Windows backend (3/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132527236902,
+        "name": "Windows backend (2/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132532658170,
+        "name": "tests (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "unit": {
+      "systems": {
+        "linux": {
+          "python": {
+            "tests": 1906,
+            "passed": 1904,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 2,
+            "unique_identities": 1906,
+            "baseline_count": 1875,
+            "baseline_missing": []
+          },
+          "node": {
+            "tests": 461,
+            "passed": 461,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "unique_identities": 461,
+            "baseline_count": 411,
+            "baseline_missing": []
+          }
+        },
+        "windows": {
+          "python": {
+            "tests": 1906,
+            "passed": 1905,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 1,
+            "unique_identities": 1906,
+            "baseline_count": 1875,
+            "baseline_missing": []
+          },
+          "node": {
+            "tests": 461,
+            "passed": 461,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "unique_identities": 461,
+            "baseline_count": 411,
+            "baseline_missing": []
+          }
+        }
+      },
+      "same_identities_across_os": {
+        "python": true,
+        "node": true
+      },
+      "backend_files": 140,
+      "implementation_fingerprints": {
+        "linux": "53393b0273a9dd595830013ba239436849a091ac265d21e47a50ec2642a77ad8",
+        "windows": "d7b9bdf9eddc312069a87250b4d018ad347c8247b1169ef3ac39b6427e2b8873"
+      },
+      "windows_crlf_converted_files": [
+        "scripts/local-runtime.ps1",
+        "deploy/modelscope/.dockerignore",
+        "deploy/modelscope/Dockerfile",
+        "start.ps1",
+        "stop.ps1",
+        "requirements.lock",
+        "requirements-dev.txt",
+        ".env.example",
+        "Dockerfile",
+        ".dockerignore",
+        "Caddyfile",
+        "pytest.ini",
+        ".gitattributes"
+      ],
+      "fingerprint_boundary": "Linux fingerprint uses exact candidate Git blobs. Windows fingerprint is independently reproduced from those same blobs with CRLF checkout conversion only on text paths that the candidate .gitattributes does not pin to LF. This reproduces the actual advertised Windows fingerprint; runner global Git configuration itself is not inferred as an observation.",
+      "archives": {
+        "unit-reports-ubuntu-latest": {
+          "artifact_id": 14123209968,
+          "bytes": 173443,
+          "sha256": "cf4d828e970ef45cad6ad48e2a54b89ca12605298b58246316e605017e5670e0"
+        },
+        "unit-reports-windows-latest": {
+          "artifact_id": 14125081401,
+          "bytes": 72591,
+          "sha256": "9399cd4e2fce286e6675442d6b049dfe00ab7bc0e57a3e14e4188de1c76f4c7c"
+        },
+        "windows-backend-1-attempt-1": {
+          "artifact_id": 14124034800,
+          "bytes": 29615,
+          "sha256": "0a0be1bb56b203b9e69bc6f5eeb8ae7543049af535f1062172b580dfa65f3100"
+        },
+        "windows-backend-2-attempt-1": {
+          "artifact_id": 14124179530,
+          "bytes": 27018,
+          "sha256": "c6fafe4be1f7b4b81c652f1ecf40a212f1e8bc1d6d35ecb1e7856013d7fea6e9"
+        },
+        "windows-backend-3-attempt-1": {
+          "artifact_id": 14124901060,
+          "bytes": 25771,
+          "sha256": "95a865af78aa5cbcbcf255860b63501e90bc819bfdc619f59aa10ad910e6ebf2"
+        },
+        "windows-backend-4-attempt-1": {
+          "artifact_id": 14124462992,
+          "bytes": 29173,
+          "sha256": "0093e3de46b6e7f0176dba34c575612e31bf9b707f62d30680002f28e3e88c55"
+        }
+      },
+      "acceptance_met": true
+    },
+    "browser": {
+      "report_slots": 36,
+      "statuses": {
+        "passed": 35,
+        "incomplete": 1
+      },
+      "recorded_checks": 1145,
+      "passed_checks": 1144,
+      "failed_checks": 1,
+      "expected_checks": 1146,
+      "expected_checks_not_recorded": 1,
+      "complete_success": false,
+      "original_ci69_subset": {
+        "reports": 33,
+        "expected_checks": 1056,
+        "recorded_checks": 1056,
+        "passed_checks": 1056,
+        "ordered_identities_equal": true
+      },
+      "archive": {
+        "bytes": 29507110,
+        "sha256": "0a9a1225f3459adcd79002d07be81fb06a8d503e8fec0a7d2c66f4af1133ce0f"
+      },
+      "failures": [
+        {
+          "engine": "firefox",
+          "name": "member-import audit filtering and cursor pagination show real authorized changes without repeating rows",
+          "ok": false,
+          "error": "page.waitForResponse: Timeout 12000ms exceeded while waiting for event \"response\"\n    at responseFor (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:54:71)\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:281:47\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:265:5"
+        }
+      ],
+      "missing_checks_boundary": "Only the final Firefox campus owner/no-page-error check was not recorded after the audit pagination failure. It is not counted as executed or passed.",
+      "frontend_detail": {
+        "recorded_formal_checks": 21,
+        "passed_formal_checks": 21,
+        "failed_formal_checks": [],
+        "complete_success": true,
+        "validation_issues": []
+      },
+      "layout": {
+        "expected_layout_observations": 15,
+        "recorded_layout_observations": 15,
+        "not_recorded": [],
+        "validation_issues": [],
+        "complete_success": true
+      },
+      "layout_snapshot_count": 208,
+      "new_observations": {
+        "expected": {
+          "authentication_concurrency": 6,
+          "late_legal": 3,
+          "draft_attachment_races": 3,
+          "corrected_error_toast": 3
+        },
+        "recorded": {
+          "authentication_concurrency": 6,
+          "late_legal": 3,
+          "draft_attachment_races": 3,
+          "corrected_error_toast": 3
+        },
+        "semantic_issues": [],
+        "aggregate_complete_success": false,
+        "aggregate_boundary": "The standalone appended proof includes all three new formal reports, so its overall status remains failed because campus is incomplete. All four actual observation families are present and their semantic issues array is empty. No campus check is promoted to passed."
+      },
+      "strict_auditor": {
+        "v4_layout_auditor_sha256": "187b6b78ffb5f304e8835e1312da294bc1ec460038fdece3fcd20a3ee6e8b30d",
+        "v4_contract_sha256": "cd656745de20ac5cbbcb9303375d7fba6148c793c9c208b35c0466f3d306bbb2",
+        "preparation_frozen_sha256": "755e71bd953942db06e2f6bc5356b6773f5f2e676d256384d6597c63b522b909"
+      },
+      "cause_boundary": "The native pointer/click sequence was not captured and the global request ring no longer retains Firefox. The subsequent controlled background-render defect reproduction is separate evidence, not a proven reconstruction of this CI event."
+    },
+    "continuity": {
+      "checks": 990,
+      "passed": 990,
+      "failed": 0,
+      "expected_checks": 990,
+      "expected_checks_not_recorded": 0,
+      "complete_success": true,
+      "download_sha256": "bd75e0848546dbe2873848af2f371d65ed5f6ce5fb512866b491e860cf2383d4"
+    },
+    "container": {
+      "run": 43621255205,
+      "candidate": "0511124e58fe13146983d018460391dbb96d7552",
+      "actual_checkout": "95c22f05a799d1350cff2267bd32f0c2c942ba36",
+      "tree": "ba65cd033e5d8fc4562594b64677507d6ae8d9e2",
+      "archives": {
+        "shared-host-compose-config": {
+          "status": "verified",
+          "artifact_id": 14123703602,
+          "archive": "local-evidence/shared-host-compose-config.zip",
+          "metadata": "local-evidence/shared-host-compose-config.metadata.json",
+          "bytes": 2773,
+          "sha256": "68d2777038d11cf6f9dc6691fca35b2ac48a99280617cf20a03f3130b9cfe108",
+          "entries": [
+            {
+              "path": "local-evidence/shared-host-config.json",
+              "bytes": 15585,
+              "sha256": "246083c004b71aca5995b43c922472e32bf4717b368ae611e78a5e5668987c8c"
+            }
+          ]
+        },
+        "proxy-network-compose-config": {
+          "status": "verified",
+          "artifact_id": 14123219177,
+          "archive": "local-evidence/proxy-network-compose-config.zip",
+          "metadata": "local-evidence/proxy-network-compose-config.metadata.json",
+          "bytes": 2620,
+          "sha256": "4b66a4d7f942ab0993a0ca7cf2fae2e0812dbfc77161dbc5554627d7470c9538",
+          "entries": [
+            {
+              "path": "local-evidence/proxy-network-config.json",
+              "bytes": 14391,
+              "sha256": "4ad9829b7733afb4c046979756df6861ff710aed8b4e75be9532c6983670d5b5"
+            }
+          ]
+        }
+      },
+      "modes": {
+        "loopback": {
+          "original": "local-evidence/shared-host-config.json",
+          "original_sha256": "246083c004b71aca5995b43c922472e32bf4717b368ae611e78a5e5668987c8c",
+          "actual_result": "passed",
+          "docker_compose_version": "5.1.3",
+          "actual_case_count": 14,
+          "actual_missing_variable_rejections": 12,
+          "verifier_sha256": "24453a1c61d8a9b17cff47bd3e53b2b363430ae57c3d505daaaeca5104735105",
+          "template_sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+          "cases": [
+            {
+              "case": "project-a",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "project-b",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "missing-CAMPUS_PROJECT_NAME",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_IMAGE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_ENV_FILE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-APP_ORIGIN",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TRUSTED_PROXY_IPS",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOOPBACK_PORT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_MEMORY_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_CPU_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PIDS_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TMPFS_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_FILES",
+              "exit_code": 1,
+              "expected_success": false
+            }
+          ],
+          "networks": [
+            {
+              "campus-private": {
+                "name": "campus-config-a_campus-private",
+                "driver": "bridge",
+                "driver_opts": {
+                  "com.docker.network.bridge.gateway_mode_ipv4": "nat"
+                },
+                "ipam": {},
+                "enable_ipv6": false
+              }
+            },
+            {
+              "campus-private": {
+                "name": "campus-config-b_campus-private",
+                "driver": "bridge",
+                "driver_opts": {
+                  "com.docker.network.bridge.gateway_mode_ipv4": "nat"
+                },
+                "ipam": {},
+                "enable_ipv6": false
+              }
+            }
+          ],
+          "issues": [],
+          "acceptance_met": true
+        },
+        "proxy-network": {
+          "original": "local-evidence/proxy-network-config.json",
+          "original_sha256": "4ad9829b7733afb4c046979756df6861ff710aed8b4e75be9532c6983670d5b5",
+          "actual_result": "passed",
+          "docker_compose_version": "5.1.3",
+          "actual_case_count": 14,
+          "actual_missing_variable_rejections": 12,
+          "verifier_sha256": "24453a1c61d8a9b17cff47bd3e53b2b363430ae57c3d505daaaeca5104735105",
+          "template_sha256": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443",
+          "cases": [
+            {
+              "case": "project-a",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "project-b",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "missing-CAMPUS_PROJECT_NAME",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_IMAGE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_ENV_FILE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-APP_ORIGIN",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TRUSTED_PROXY_IPS",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_MEMORY_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_CPU_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PIDS_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TMPFS_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_FILES",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PROXY_NETWORK",
+              "exit_code": 1,
+              "expected_success": false
+            }
+          ],
+          "networks": [
+            {
+              "campus-proxy": {
+                "name": "campus-config-proxy",
+                "ipam": {},
+                "external": true
+              }
+            },
+            {
+              "campus-proxy": {
+                "name": "campus-config-proxy",
+                "ipam": {},
+                "external": true
+              }
+            }
+          ],
+          "issues": [],
+          "acceptance_met": true
+        }
+      },
+      "issues": [],
+      "boundary": "Compose evidence only renders isolated synthetic configuration. Actual image build/start/smoke are separate required job steps. Neither proves deployment, physical user devices, external providers, or an existing shared host network.",
+      "job": {
+        "status": "verified",
+        "job_id": 132527236777,
+        "metadata": "local-evidence/container-job-132527236777.json",
+        "log": "local-evidence/container-job-132527236777.log",
+        "log_sha256": "a1c7746333134907dadb2db0e07ed2834a4fb419433f48243896392338ae1ee3",
+        "actual_checkouts": [
+          "95c22f05a799d1350cff2267bd32f0c2c942ba36"
+        ],
+        "actual_status": "completed",
+        "actual_conclusion": "success",
+        "non_successful_steps": [
+          {
+            "name": "Diagnose an isolated container failure",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10
+          }
+        ]
+      },
+      "required_steps": [
+        {
+          "name": "Verify shared-host Compose isolation without starting services",
+          "actual_matches": [
+            {
+              "name": "Verify shared-host Compose isolation without starting services",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Verify container proxy network isolation without starting services",
+          "actual_matches": [
+            {
+              "name": "Verify container proxy network isolation without starting services",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Run docker build -t campus-notice:ci .",
+          "actual_matches": [
+            {
+              "name": "Run docker build -t campus-notice:ci .",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Start the isolated container without credentials or host data",
+          "actual_matches": [
+            {
+              "name": "Start the isolated container without credentials or host data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Verify health, non-root runtime, database and UI prompt resources",
+          "actual_matches": [
+            {
+              "name": "Verify health, non-root runtime, database and UI prompt resources",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ],
+          "actually_succeeded": true
+        }
+      ],
+      "acceptance_met": true
+    },
+    "container_runtime_observations": {
+      "run": 43621255205,
+      "head": "0511124e58fe13146983d018460391dbb96d7552",
+      "checkout": "95c22f05a799d1350cff2267bd32f0c2c942ba36",
+      "tree": "ba65cd033e5d8fc4562594b64677507d6ae8d9e2",
+      "source_log": "local-evidence/container-job-132527236777.log",
+      "source_log_sha256": "a1c7746333134907dadb2db0e07ed2834a4fb419433f48243896392338ae1ee3",
+      "job_metadata": "local-evidence/container-job-132527236777.json",
+      "all_required_steps_actually_succeeded": true,
+      "cleanup_actually_succeeded": true,
+      "failure_diagnostic_appropriately_skipped": true,
+      "observations": [
+        {
+          "line": 125,
+          "text": "2026-11-14T17:28:12.2636547Z 95c22f05a799d1350cff2267bd32f0c2c942ba36",
+          "context": "git log -1 --format=%H"
+        },
+        {
+          "line": 1352,
+          "text": "2026-11-14T17:29:10.5392025Z #18 exporting manifest sha256:360ed3103c66640275ca5ebb764c728a57ca76a5de55a1c38ac0ac02d94aed05 done"
+        },
+        {
+          "line": 1353,
+          "text": "2026-11-14T17:29:10.5392958Z #18 exporting config sha256:09b9c539e1753d348ad785bf8e85ba70f8f3b179527f95ecdf7c5cc9c8f20e2d done"
+        },
+        {
+          "line": 1355,
+          "text": "2026-11-14T17:29:10.5395503Z #18 exporting manifest list sha256:93039a24045cecdd669026a9a6f9545194270fa4ff1f03666e5217d81aa6d95b done"
+        },
+        {
+          "line": 1356,
+          "text": "2026-11-14T17:29:10.5396380Z #18 naming to docker.io/library/campus-notice:ci done"
+        },
+        {
+          "line": 1367,
+          "text": "2026-11-14T17:29:16.8839894Z cb1281939929d246069877dc0f42a8f7dc6fc4a7760e9d9a2f5f1ac777f53703",
+          "context": "stdout after docker run"
+        },
+        {
+          "line": 1387,
+          "text": "2026-11-14T17:29:20.5016406Z {\"database\": \"ok\", \"schema\": \"4\", \"users\": 0, \"ai_configured\": false, \"ai_model\": \"mimo-v2.6-pro\", \"origin\": \"https://campus-ci.invalid\"}"
+        }
+      ],
+      "runtime_assertions": [
+        "health JSON status ok",
+        "runtime UID equals 10001",
+        "manage.py check succeeded",
+        "UI capability prompt module length >1000",
+        "legacy RTF/DOC parser returned expected text",
+        "HTTP homepage contains app root"
+      ],
+      "assertion_boundary": "The original shell script ran with bash -e and its official step succeeded. Except the separately printed database check, successful assertion values were not individually printed as raw bodies. The saved job log is the decoded official connector response.",
+      "scope": "Only the isolated CI container. No deployment, existing user data or external provider was exercised."
+    },
+    "root_visual_inspection": {
+      "scope": "Root directly inspected these four original CI73 screenshots. Screenshots do not prove native event order or causal diagnosis.",
+      "images": [
+        {
+          "path": "browser-continuity/browser/frontend-finish-browser/firefox-notices-320.png",
+          "observation": "Narrow notice header, receive action, filter/search controls, cards and bottom navigation are visible.",
+          "sha256": "28ecab9397eff859a0edf7290ae35c08ae3385865d3531479df7c7ced148f446"
+        },
+        {
+          "path": "browser-continuity/browser/campus-administration-browser/firefox-lifecycle-conflict.png",
+          "observation": "The open lifecycle form retains the local note and shows the version-conflict guidance to reopen and review current records.",
+          "sha256": "3377a8e92ed5abec12fb6e6a5419b9d7b67742c05385db0f92d94fe5212c7975"
+        },
+        {
+          "path": "browser-continuity/browser/campus-administration-browser/firefox-audit-second-page.png",
+          "observation": "Audit footer shows batch 2 with 100 records and visible previous/continue buttons.",
+          "sha256": "37e1c71228699b8f00f78ab8adc20d7ff81267108df7abdc4b7733c9ae72941d"
+        },
+        {
+          "path": "browser-continuity/browser/campus-administration-browser/firefox-manager-failure.png",
+          "observation": "After the timeout the audit page still shows batch 2 with 100 records; no dialog obstruction or network error message is visible. This is compatible with an interrupted click but does not establish the cause.",
+          "sha256": "da0a028e357dd5133b2324ddbeea31f941adf94ffc22dec87781766c8dc24d42"
+        }
+      ]
+    },
+    "audit_file_sha256": {
+      "workflow-final.json": "ffe8a741b6f7bc03526b754b7409983c5c05599649cfac55771c7e2dc24c7f80",
+      "unit-container/unit-junit-audit.json": "8b12aed0aa22ec020d387c51145c74893a47817cafeb2d708b9e7a4587a4aaa0",
+      "unit-container/container-evidence-audit.json": "8d9fc6ffb931b342c475d9831b7f72681f2134cbbe2d4b668b7cb505e4b37bd7",
+      "unit-container/container-runtime-observations.json": "bfc35c3c567183b3f2723f827ea0efb464520b18ec301151fa59bfcb42c81375",
+      "browser-continuity/browser-report-audit.json": "356d31b7019434074be0ea0a11a9c477b37149d75536300acdafa7be6c52ce76",
+      "browser-continuity/continuity-report-audit.json": "b71f969c813371125c8407fa7f107c40b8aeebb1bfe0e200f95191345781f6ef",
+      "browser-continuity/notice-layout-semantic-verification.json": "20a8a4c2609c88265ad33cfb412f1a1724970c74e4a9c17e98080434e6736b05",
+      "browser-continuity/frontend-detail-semantic-verification.json": "d98c437f595f1c13c011e76e98ac5e6095700ec2047f734cd5d66528668aba6c",
+      "browser-continuity/appended-regressions-semantic-verification.json": "4e04865a67a40d73d9585c85dbf323d380b0b267d4b86b925df35416061590d4",
+      "browser-continuity/audit-provenance.json": "4853945643c33857bf2e02ab5d981663fa2c5d07a8ed402482dc63f3a5e02b34",
+      "root-visual-inspection.json": "f955c1f551248987332121e4023a2c10da7d6db9de4f80bb6f67f16b7ad9eabd"
+    },
+    "acceptance_met": false,
+    "next_candidate_and_merged_main": "Both require their own complete successful workflow and independently verified official raw artifacts. CI73 subsets do not replace either gate."
+  },
+  "ci73_followup": {
+    "recorded_at": "2026-11-14T18:13:13.307171+00:00",
+    "stage": "reviewed_local_followup_before_next_candidate_publication",
+    "base_candidate": "0511124e58fe13146983d018460391dbb96d7552",
+    "local_evidence": {
+      "product_red_green": {
+        "original_proof_sha256": "f74975aa398544add35e30a6c1a0ac5ef690939cf8280b8b5de97eccf437af34",
+        "record": {
+          "scope": "Bounded product fix for a controlled background-render/pointer race in the actual campus and system factories and app call chain; no browser execution, build, full suite, commit, push or deployment performed by this proof.",
+          "candidate_before": "0511124e58fe13146983d018460391dbb96d7552",
+          "source_paths": [
+            "static/app.js",
+            "static/campus.js",
+            "static/system-home.js"
+          ],
+          "test_path": "tests/workspace-background-sync-race.test.mjs",
+          "ci73_observation": {
+            "run": 43621255205,
+            "report": {
+              "path": "local-evidence/report.json",
+              "bytes": 532080,
+              "sha256": "bb7a27cfd73a95c5d5688bb942d254f798a48bed0975046a362adb29e7010693"
+            },
+            "failure": {
+              "engine": "firefox",
+              "name": "member-import audit filtering and cursor pagination show real authorized changes without repeating rows",
+              "ok": false,
+              "error": "page.waitForResponse: Timeout 12000ms exceeded while waiting for event \"response\"\n    at responseFor (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:54:71)\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:281:47\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:265:5"
+            },
+            "firefox_audit": {
+              "first_count": 100,
+              "second_count": 100,
+              "first_cursor": 136,
+              "second_cursor": 28,
+              "membership_changes": 101,
+              "previous_page_ids_recorded": false
+            },
+            "screenshots": [
+              {
+                "path": "local-evidence/firefox-audit-second-page.png",
+                "bytes": 286655,
+                "sha256": "37e1c71228699b8f00f78ab8adc20d7ff81267108df7abdc4b7733c9ae72941d"
+              },
+              {
+                "path": "local-evidence/firefox-manager-failure.png",
+                "bytes": 287358,
+                "sha256": "da0a028e357dd5133b2324ddbeea31f941adf94ffc22dec87781766c8dc24d42"
+              }
+            ],
+            "screenshot_observation": "Both official captures show batch 2 with 100 entries and a visible Previous button; no dialog/overlay or network toast is visible in these captures.",
+            "causal_limit": "The original Firefox request ring was overwritten by later WebKit work and neither screenshot captures pointer event order. The controlled race is a proven product defect, not proof that this exact event sequence caused the CI73 timeout. Original 12-second browser assertion and all business checks remain unchanged."
+          },
+          "red": {
+            "test_file": {
+              "path": "local-evidence/ci73-campus-background-sync-race.test.mjs",
+              "bytes": 11355,
+              "sha256": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924"
+            },
+            "log": {
+              "path": "local-evidence/ci73-campus-background-sync-red.log",
+              "bytes": 5176,
+              "sha256": "c0d97a7b85a3a2cdfff8d406b24eb95f758d702ed027ab49714451c0c95c0650"
+            },
+            "observations": {
+              "path": "local-evidence/ci73-campus-background-sync-red-observations.json",
+              "bytes": 1147,
+              "sha256": "94e299490f49fbb83a3f037c337d5a16f032adc8442b467e58ca824864c16565"
+            },
+            "independent_review": {
+              "path": "local-evidence/ci73-campus-background-sync-red-review.json",
+              "bytes": 871,
+              "sha256": "98b4eb20e61bcb6f32539f733deb90a56cfa80c499d3e55698607a37822fb9a3"
+            },
+            "source_bindings": {
+              "static/app.js": {
+                "sha256": "df0e8497fdf3bc2f8eee0b7a5e80fa0814dcab8948d84d190d51f5f0309110f5",
+                "matches_ci73_candidate_blob": true
+              },
+              "static/campus.js": {
+                "sha256": "8c0ce576f23c3991ba71351f8fbc771d64b40753fa72e7681229890e49ab3d90",
+                "matches_ci73_candidate_blob": true
+              },
+              "static/system-home.js": {
+                "sha256": "4e6d53a0c4cd4bb04d4f56c7390e4fbeafb0788ca56622a67fc81640ac4c5c27",
+                "matches_ci73_candidate_blob": true
+              }
+            },
+            "tests": 5,
+            "passed": 0,
+            "failed": 5,
+            "failure_kind": "Five real ERR_ASSERTION failures on existing source; no syntax/import/fixture errors.",
+            "observed": [
+              {
+                "case": "context",
+                "result": true,
+                "writes": 1,
+                "old_control_connected": false,
+                "account_updates": 1,
+                "audit_requests": 1
+              },
+              {
+                "case": "audit",
+                "result": true,
+                "writes": 1,
+                "old_control_connected": false
+              },
+              {
+                "case": "entry",
+                "extra_requests": 2,
+                "writes": 1
+              },
+              {
+                "case": "college-dashboard",
+                "result": true,
+                "writes": 1
+              },
+              {
+                "case": "system-dashboard",
+                "result": true,
+                "writes": 1
+              }
+            ]
+          },
+          "green": {
+            "test_file": {
+              "path": "tests/workspace-background-sync-race.test.mjs",
+              "bytes": 11355,
+              "sha256": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924"
+            },
+            "log": {
+              "path": "local-evidence/green.log",
+              "bytes": 1557,
+              "sha256": "f36f25b5bdb910e4b3e1f0f90215e54dcc45fa7d00f1f5f1b9525eaaabe59fe5"
+            },
+            "xml": {
+              "path": "local-evidence/green.xml",
+              "bytes": 1530,
+              "sha256": "a5680ae168303bd054a237ec2173e9d36ad9dba98a7cbc71c82a38ef07a3f098"
+            },
+            "observations": {
+              "path": "local-evidence/green-observations.json",
+              "bytes": 1172,
+              "sha256": "e15fd424bb1adfa846d86576e53aae402b866fac59c390906ac4ae378e2e76de"
+            },
+            "process": {
+              "path": "local-evidence/green-process.json",
+              "bytes": 711,
+              "sha256": "bd101cc09d778fbc4cdde40ce55be632777f7159d2a6d72b4e6adc3a37564314"
+            },
+            "tests": 5,
+            "passed": 5,
+            "failed": 0,
+            "errors": 0,
+            "skipped": 0,
+            "observed": [
+              {
+                "case": "context",
+                "result": false,
+                "writes": 0,
+                "old_control_connected": true,
+                "account_updates": 0,
+                "audit_requests": 0
+              },
+              {
+                "case": "audit",
+                "result": false,
+                "writes": 0,
+                "old_control_connected": true
+              },
+              {
+                "case": "entry",
+                "result": false,
+                "extra_requests": 0,
+                "writes": 1
+              },
+              {
+                "case": "college-dashboard",
+                "result": false,
+                "writes": 0
+              },
+              {
+                "case": "system-dashboard",
+                "result": false,
+                "writes": 0
+              }
+            ]
+          },
+          "test_identity": {
+            "same_red_green_bytes": true,
+            "sha256": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924",
+            "unique_names": [
+              "campus background refresh denied after context response preserves the active control and remains retryable",
+              "campus background refresh denied after audit response preserves the pressed previous control and retries without losing pagination",
+              "a denied campus render at entry does not invalidate a pending foreground pagination render",
+              "college dashboard propagates a denied background render and applies the same revision after interaction ends",
+              "system dashboard propagates a denied background render and applies the same revision after interaction ends"
+            ],
+            "new_identities": 5,
+            "existing_node_total_before": 461,
+            "expected_node_total_after": 466,
+            "full_node_run_not_claimed": true,
+            "python_total_unchanged": 1906
+          },
+          "existing_regression": {
+            "test_file": {
+              "path": "tests/data-sync.test.mjs",
+              "bytes": 1313,
+              "sha256": "3718a34ea12716b05f85964c79c9c89a646ef9f8f32a450d7a1f7aa77068f435"
+            },
+            "unchanged_from_candidate": true,
+            "log": {
+              "path": "local-evidence/existing-data-sync.log",
+              "bytes": 358,
+              "sha256": "6a1e4ed5ae7c003051a498a9d164cd2e46ced5e9ef52a85e75edff3a143ac0f2"
+            },
+            "process": {
+              "path": "local-evidence/existing-data-sync-process.json",
+              "bytes": 182,
+              "sha256": "271a1d986981a40eb82abf5faea206745a44fbfa16dd914a040e77cb921a3d0c"
+            },
+            "passed": 1,
+            "failed": 0,
+            "meaning": "Actual onChange=false retains the revision and retries instead of advancing it."
+          },
+          "source_after": {
+            "static/app.js": {
+              "path": "static/app.js",
+              "bytes": 149383,
+              "sha256": "a8746f4f71fcb02894d5bc62d8e1e80a3bfcc5d0d1f2c3769a1a8929ba428780"
+            },
+            "static/campus.js": {
+              "path": "static/campus.js",
+              "bytes": 63358,
+              "sha256": "6c71856a7162bea9f43606fbbb98b28d4e4cd55f4cb004e3f1e6c7d3320e9f16"
+            },
+            "static/system-home.js": {
+              "path": "static/system-home.js",
+              "bytes": 3751,
+              "sha256": "246cb3046b956df1aa513ec169f212eca5d89160b85f4d95c1a24c894597b1e1"
+            }
+          },
+          "unchanged_campus_browser_script": {
+            "path": "scripts/verify_campus_administration.mjs",
+            "bytes": 37453,
+            "sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d"
+          },
+          "behavior": "Optional guard rejects before renderSequence/owner-state changes and requests, is rechecked after each await boundary, returns false through dashboard/refreshWorkspace to dataSync, and returns true only after rendering. Explicit foreground calls retain default permission. Controlled retry preserves audit cursor and the actual delegated Previous handler behavior.",
+          "status": "directed_green_pending_independent_review_and_next_official_ci"
+        }
+      },
+      "product_review": {
+        "original_proof_sha256": "b3ada49f89b3d25e266f20a3726bb708d0d600251c26ac7cc431b9b56143470d",
+        "record": {
+          "status": "accepted_bounded_fix_no_blocking_issue",
+          "candidate_before": "0511124e58fe13146983d018460391dbb96d7552",
+          "recovery_proof": {
+            "path": "local-evidence/proof.json",
+            "sha256": "f74975aa398544add35e30a6c1a0ac5ef690939cf8280b8b5de97eccf437af34"
+          },
+          "artifact_checks": [
+            {
+              "path": "local-evidence/report.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/firefox-audit-second-page.png",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/firefox-manager-failure.png",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/ci73-campus-background-sync-race.test.mjs",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/ci73-campus-background-sync-red.log",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/ci73-campus-background-sync-red-observations.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/ci73-campus-background-sync-red-review.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "tests/workspace-background-sync-race.test.mjs",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/green.log",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/green.xml",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/green-observations.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/green-process.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "tests/data-sync.test.mjs",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/existing-data-sync.log",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "local-evidence/existing-data-sync-process.json",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "static/app.js",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "static/campus.js",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "static/system-home.js",
+              "size_matches": true,
+              "sha256_matches": true
+            },
+            {
+              "path": "scripts/verify_campus_administration.mjs",
+              "size_matches": true,
+              "sha256_matches": true
+            }
+          ],
+          "same_red_green_test_bytes": true,
+          "unique_new_test_names": [
+            "campus background refresh denied after context response preserves the active control and remains retryable",
+            "campus background refresh denied after audit response preserves the pressed previous control and retries without losing pagination",
+            "a denied campus render at entry does not invalidate a pending foreground pagination render",
+            "college dashboard propagates a denied background render and applies the same revision after interaction ends",
+            "system dashboard propagates a denied background render and applies the same revision after interaction ends"
+          ],
+          "red": {
+            "tests": 5,
+            "pass": 0,
+            "fail": 5
+          },
+          "green": {
+            "tests": 5,
+            "pass": 5,
+            "fail": 0,
+            "error": 0,
+            "skip": 0
+          },
+          "prior_data_sync_case_passed": true,
+          "unchanged_files": {
+            "scripts/verify_campus_administration.mjs": true,
+            "tests/data-sync.test.mjs": true
+          },
+          "review": [
+            "Campus entry guard is before renderSequence, owner reset and requests.",
+            "Both campus await boundaries re-evaluate current route/user/sequence and canApply before applying state or DOM.",
+            "System home checks its optional guard before requests and after its three awaited APIs.",
+            "Both dashboard branches forward the same canRender; refreshWorkspace forwards false to dataSync.",
+            "Foreground defaults still allow rendering; the real delegated previous-page handler and cursor retry are verified.",
+            "The old 12-second native browser assertion, selectors, business assertions and script bytes remain unchanged."
+          ],
+          "limits": [
+            "Controlled delayed transport, minimal DOM and synthetic pointer state; not a real browser execution.",
+            "Official CI73 screenshots and request ring do not establish the native pointer event sequence; the proven product defect is not claimed as a captured CI73 cause.",
+            "No full test run/build or new official CI result is claimed by this review."
+          ]
+        }
+      },
+      "whole_node_and_build": {
+        "original_proof_sha256": "b0810008db0bc12169a2c9308887b76922a4ce546277ee78ca6f21b02cb11dbe",
+        "record": {
+          "verified_at": "2026-11-14T18:06:45.360468+00:00",
+          "node": {
+            "tests": 466,
+            "passed": 466,
+            "failures": 0,
+            "skips": 0,
+            "baseline_tests": 461,
+            "all_baseline_ids_retained": true,
+            "baseline_junit_sha256": "b7eab1b080b9f14f1cff7c9efead7efb83130d02a6f127053aa262953744ddfa",
+            "junit_sha256": "7d1ad99f379506eae7109343eaeb0aea4a8c96638da6061753be172c6e0b84f6",
+            "added_unique_cases": 5,
+            "added_case_ids": [
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "a denied campus render at entry does not invalidate a pending foreground pagination render"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "campus background refresh denied after audit response preserves the pressed previous control and retries without losing pagination"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "campus background refresh denied after context response preserves the active control and remains retryable"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "college dashboard propagates a denied background render and applies the same revision after interaction ends"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "system dashboard propagates a denied background render and applies the same revision after interaction ends"
+              ]
+            ],
+            "official_ci73_common_schema": {
+              "baseline_tests": 461,
+              "original_junit_sha256": "18ac6bd33cdd816e9db65606795ff3cfeee0aa5fb26b31a12025433b60c5fa4d",
+              "identity_fields": [
+                "classname",
+                "name"
+              ],
+              "all_ids_retained": true,
+              "added_cases": 5
+            },
+            "original_411_retained": {
+              "tests": 411,
+              "junit_sha256": "0ad0d51b9e8e0c0aa6aca3402effc87d373636479060ab536bbd57f35dad6399",
+              "missing": [],
+              "added_since_original": 55
+            }
+          },
+          "commands": [
+            {
+              "label": "node",
+              "command": [
+                "node",
+                "--test",
+                "--test-reporter=junit",
+                "tests/account-lifecycle-ui.test.mjs",
+                "tests/account-profile-dialog.test.mjs",
+                "tests/action-plans.test.mjs",
+                "tests/agent-work.test.mjs",
+                "tests/audio-wav.test.mjs",
+                "tests/auth-concurrency.test.mjs",
+                "tests/auth-error-descriptions.test.mjs",
+                "tests/auth-feedback.test.mjs",
+                "tests/auth-toast-lifecycle.test.mjs",
+                "tests/branch-preview.test.mjs",
+                "tests/calendar.test.mjs",
+                "tests/campus-draft-conflict.test.mjs",
+                "tests/campus-draft-save-race.test.mjs",
+                "tests/campus-imports.test.mjs",
+                "tests/campus-publication-retry.test.mjs",
+                "tests/campus-publication-submission.test.mjs",
+                "tests/campus-roster.test.mjs",
+                "tests/chat-feedback.test.mjs",
+                "tests/chat-outbox.test.mjs",
+                "tests/chat-policy.test.mjs",
+                "tests/chat-wait.test.mjs",
+                "tests/citations.test.mjs",
+                "tests/collaboration-followup.test.mjs",
+                "tests/command-search.test.mjs",
+                "tests/compliance-ui.test.mjs",
+                "tests/continuity.test.mjs",
+                "tests/data-sync.test.mjs",
+                "tests/dictation-segments.test.mjs",
+                "tests/execution-trace.test.mjs",
+                "tests/feedback.test.mjs",
+                "tests/genui-charts.test.mjs",
+                "tests/genui-composition.test.mjs",
+                "tests/genui-core.test.mjs",
+                "tests/genui-editorial.test.mjs",
+                "tests/genui-form-reliability.test.mjs",
+                "tests/genui-interaction.test.mjs",
+                "tests/genui-math.test.mjs",
+                "tests/genui-openui.test.mjs",
+                "tests/genui-plot.test.mjs",
+                "tests/genui-transport.test.mjs",
+                "tests/getting-started.test.mjs",
+                "tests/handling-route.test.mjs",
+                "tests/legal-route-race.test.mjs",
+                "tests/library-controls.test.mjs",
+                "tests/list-cache-revision.test.mjs",
+                "tests/list-clock.test.mjs",
+                "tests/memory-assist.test.mjs",
+                "tests/memory-drafts.test.mjs",
+                "tests/memory-intents.test.mjs",
+                "tests/memory-list-text.test.mjs",
+                "tests/memory-notice.test.mjs",
+                "tests/motion.test.mjs",
+                "tests/natural-intake.test.mjs",
+                "tests/notice-files.test.mjs",
+                "tests/notice-focus.test.mjs",
+                "tests/notice-intake.test.mjs",
+                "tests/notice-matters.test.mjs",
+                "tests/notice-modes.test.mjs",
+                "tests/notice-preparation.test.mjs",
+                "tests/notice-progress.test.mjs",
+                "tests/notice-quality.test.mjs",
+                "tests/notice-resolution.test.mjs",
+                "tests/notice-timing.test.mjs",
+                "tests/operations-monitor.test.mjs",
+                "tests/overview.test.mjs",
+                "tests/paged-list-mutation.test.mjs",
+                "tests/paged-list.test.mjs",
+                "tests/presentation.test.mjs",
+                "tests/proactive-notifications.test.mjs",
+                "tests/push-notifications.test.mjs",
+                "tests/record-preview.test.mjs",
+                "tests/reference-interactions.test.mjs",
+                "tests/reminders.test.mjs",
+                "tests/review-observation.test.mjs",
+                "tests/signup-verification-toast.test.mjs",
+                "tests/speech-text.test.mjs",
+                "tests/student-inbox.test.mjs",
+                "tests/task-summary.test.mjs",
+                "tests/task-views.test.mjs",
+                "tests/verification-slots.test.mjs",
+                "tests/verification.test.mjs",
+                "tests/work-context.test.mjs",
+                "tests/workspace-background-sync-race.test.mjs",
+                "tests/workspace-projection.test.mjs"
+              ],
+              "started_at": "2026-11-14T18:05:09.824979+00:00",
+              "finished_at": "2026-11-14T18:05:12.471099+00:00",
+              "elapsed_seconds": 2.646,
+              "exit_code": 0,
+              "stdout_file": "node-tests.xml",
+              "stdout_sha256": "7d1ad99f379506eae7109343eaeb0aea4a8c96638da6061753be172c6e0b84f6",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "label": "build",
+              "command": [
+                "npm",
+                "run",
+                "build"
+              ],
+              "started_at": "2026-11-14T18:06:37.176877+00:00",
+              "finished_at": "2026-11-14T18:06:41.610188+00:00",
+              "elapsed_seconds": 4.433,
+              "exit_code": 0,
+              "stdout_file": "build.log",
+              "stdout_sha256": "d5e4266d213e92538886eea4c8bef763d90b1672296b73f0b6a01f442118ee66",
+              "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+            },
+            {
+              "label": "build-check",
+              "command": [
+                "npm",
+                "run",
+                "build:check"
+              ],
+              "started_at": "2026-11-14T18:06:41.611115+00:00",
+              "finished_at": "2026-11-14T18:06:45.338832+00:00",
+              "elapsed_seconds": 3.728,
+              "exit_code": 0,
+              "stdout_file": "build-check.log",
+              "stdout_sha256": "7bc6436353a9995566cda3c3c4df78e9b8e0699f3c5c7be4e69858ec11adffcf",
+              "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+            }
+          ],
+          "manifest_sha256": "610ca079f29d01e5da7f1c953e4a67bef394a5c25be773b23f4d0585de3398a1",
+          "manifest_entries": {
+            "js": "/static/dist/app-3JL4O4RI.js",
+            "css": "/static/dist/styles-IB2C4A4G.css"
+          },
+          "hashes_recomputed": {
+            "sources": 194,
+            "build_sources": 3,
+            "outputs": 24
+          },
+          "new_test_files": {
+            "tests/workspace-background-sync-race.test.mjs": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924"
+          },
+          "identity_preflight_boundary_sha256": "b112f32f7eb70128bd150e951c8651b9214a24435fb4077764e89563585bf249",
+          "product_sources": {
+            "static/app.js": "a8746f4f71fcb02894d5bc62d8e1e80a3bfcc5d0d1f2c3769a1a8929ba428780",
+            "static/campus.js": "6c71856a7162bea9f43606fbbb98b28d4e4cd55f4cb004e3f1e6c7d3320e9f16",
+            "static/system-home.js": "246cb3046b956df1aa513ec169f212eca5d89160b85f4d95c1a24c894597b1e1"
+          }
+        }
+      },
+      "whole_node_and_build_review": {
+        "original_proof_sha256": "38bef21e166a3b4affc1e13b4ba5999e52dea94a243a7ef1996d839f19301e3a",
+        "record": {
+          "status": "accepted_no_blocking_issue",
+          "scope": "Independent read-only audit of completed local Node run and build outputs; no tests or builds rerun. Not a new official CI pass.",
+          "node": {
+            "tests": 466,
+            "passed": 466,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "unique_rich_ids": 466,
+            "unique_common_ids": 466,
+            "prior_local_rich_ids_retained": 461,
+            "official_ci73_linux_and_windows_common_ids_retained": 461,
+            "exact_new_ids": [
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "a denied campus render at entry does not invalidate a pending foreground pagination render"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "campus background refresh denied after audit response preserves the pressed previous control and retries without losing pagination"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "campus background refresh denied after context response preserves the active control and remains retryable"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "college dashboard propagates a denied background render and applies the same revision after interaction ends"
+              ],
+              [
+                "workspace-background-sync-race.test.mjs",
+                "test",
+                "system dashboard propagates a denied background render and applies the same revision after interaction ends"
+              ]
+            ],
+            "existing_test_files_unchanged_from_ci73_candidate": true,
+            "junit_sha256": "7d1ad99f379506eae7109343eaeb0aea4a8c96638da6061753be172c6e0b84f6",
+            "official_ci70_original_common_ids_retained": 411,
+            "exact_additions_over_original_411": 55
+          },
+          "preflight": {
+            "retained_original_runner": "local-evidence/run-recovery-ci73-node-build.py",
+            "runner_sha256": "f1b3bf83776e454cf2ce7c05b6b152d752b5cf466dea147715b883e2a2cc118f",
+            "original_identity_fields": [
+              "file-basename",
+              "classname",
+              "name"
+            ],
+            "official_missing_file_attribute": true,
+            "original_cross_format_overlap": 0,
+            "original_cross_format_missing_ids": 461,
+            "original_cross_format_extra_ids": 466,
+            "actual_product_test_exit_code": 0,
+            "correction": "Exact identity comparison on both the prior local rich schema and separately unique official classname/name schema; precisely the same five additions, no omitted identity.",
+            "record_sha256": "b112f32f7eb70128bd150e951c8651b9214a24435fb4077764e89563585bf249"
+          },
+          "commands": [
+            {
+              "label": "node",
+              "exit_code": 0,
+              "stdout_sha256": "7d1ad99f379506eae7109343eaeb0aea4a8c96638da6061753be172c6e0b84f6",
+              "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "label": "build",
+              "exit_code": 0,
+              "stdout_sha256": "d5e4266d213e92538886eea4c8bef763d90b1672296b73f0b6a01f442118ee66",
+              "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+            },
+            {
+              "label": "build-check",
+              "exit_code": 0,
+              "stdout_sha256": "7bc6436353a9995566cda3c3c4df78e9b8e0699f3c5c7be4e69858ec11adffcf",
+              "stderr_sha256": "7125f194612fcff2f454c05d848e7cb71facc1967b4d5017e25b34fdee3ba74f"
+            }
+          ],
+          "manifest": {
+            "path": "static/dist/manifest.json",
+            "sha256": "610ca079f29d01e5da7f1c953e4a67bef394a5c25be773b23f4d0585de3398a1",
+            "entries": {
+              "js": "/static/dist/app-3JL4O4RI.js",
+              "css": "/static/dist/styles-IB2C4A4G.css"
+            },
+            "independent_hash_counts": {
+              "sources": 194,
+              "build_sources": 3,
+              "outputs": 24
+            },
+            "exact_output_file_set": true
+          },
+          "product_sources": {
+            "static/app.js": "a8746f4f71fcb02894d5bc62d8e1e80a3bfcc5d0d1f2c3769a1a8929ba428780",
+            "static/campus.js": "6c71856a7162bea9f43606fbbb98b28d4e4cd55f4cb004e3f1e6c7d3320e9f16",
+            "static/system-home.js": "246cb3046b956df1aa513ec169f212eca5d89160b85f4d95c1a24c894597b1e1"
+          },
+          "new_test_files": {
+            "tests/workspace-background-sync-race.test.mjs": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924"
+          },
+          "root_verification_sha256": "b0810008db0bc12169a2c9308887b76922a4ce546277ee78ca6f21b02cb11dbe",
+          "prior_local_junit": {
+            "path": "local-evidence/node-tests.xml",
+            "sha256": "b7eab1b080b9f14f1cff7c9efead7efb83130d02a6f127053aa262953744ddfa"
+          },
+          "ci73_junit": [
+            {
+              "path": "local-evidence/node-tests.xml",
+              "sha256": "18ac6bd33cdd816e9db65606795ff3cfeee0aa5fb26b31a12025433b60c5fa4d"
+            },
+            {
+              "path": "local-evidence/node-tests.xml",
+              "sha256": "2df3edabd3483f785bfcc33024fe82f07292ba77da3fef7118935c00d6393345"
+            }
+          ],
+          "issues": [],
+          "ci70_original_junit": {
+            "path": "local-evidence/node-tests.xml",
+            "sha256": "76a1106bbfcc1cd38fada7625005232bf7e803a400afa5e6a6cf321402a74781"
+          }
+        }
+      },
+      "identity_comparison_preflight": {
+        "original_proof_sha256": "b112f32f7eb70128bd150e951c8651b9214a24435fb4077764e89563585bf249",
+        "record": {
+          "stage": "post-test identity comparison, before build",
+          "recorded_at": "2026-11-14T18:06:36.574375+00:00",
+          "node_test_exit_code": 0,
+          "actual_cases": 466,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "reason": "Local Node JUnit includes a file attribute; the official CI73 Node JUnit omits it. The first comparison included that optional attribute and rejected all cross-format matches. No test body failed and no identity was waived. Resume compares rich identities against the prior local 461-case XML and common classname/name identities against official CI73, requiring exact five additions and no missing identities.",
+          "executed_runner_sha256": "f1b3bf83776e454cf2ce7c05b6b152d752b5cf466dea147715b883e2a2cc118f"
+        }
+      },
+      "pagination_diagnostic_probe": {
+        "original_proof_sha256": "d2216fabf0e5b3b496edac3dd29280d8f50cd7f947fd990cbefb96190f80c79a",
+        "record": {
+          "kind": "controlled diagnostic helper correctness; not a browser runtime or CI result",
+          "source_sha256": "9b3bb4c599e4bc5bd06e92b9fd2b266f639bf237eb010dc07a97fd02d875c022",
+          "original_sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d",
+          "helper_sha256": "32492d4cfea207a0b3997ee2c3cbe10ff1e38f8ec8e098f4e9b2b2e07cf5e844",
+          "probe_sha256": "97c682332a49b335b724bbcc58d61678418aa03ae93f1ad8555b5e1a79c1128d",
+          "formal_names_per_engine": 11,
+          "formal_definition_count": 33,
+          "diagnostic_actions_per_engine": 2,
+          "diagnostic_expected_total": 6,
+          "timeout_ms": 12000,
+          "source_outside_helper_and_two_call_expressions_byte_equal": true,
+          "cases": [
+            {
+              "name": "original 33 identities, request predicates and all surrounding business assertions remain byte-identical",
+              "passed": true
+            },
+            {
+              "name": "native observations and exact original response are retained; normal disconnection after click is accepted",
+              "passed": true
+            },
+            {
+              "name": "replacement between real down and click is recorded without inventing a click failure or a causal claim",
+              "passed": true
+            },
+            {
+              "name": "failed response wait does not erase pending click outcome and no missing native click is fabricated",
+              "passed": true
+            },
+            {
+              "name": "two rejected operations preserve both actual errors and fail outward",
+              "passed": true
+            },
+            {
+              "name": "failed native click with successful matching response still fails and preserves the original response record",
+              "passed": true
+            },
+            {
+              "name": "non-200 matching response remains the exact original object for unchanged caller HTTP assertions",
+              "passed": true
+            },
+            {
+              "name": "original waiter excludes wrong cursor, action, method and origin while scoped read-only transport records remain factual",
+              "passed": true
+            },
+            {
+              "name": "actual requestfailed event remains independent of response waiter failure",
+              "passed": true
+            },
+            {
+              "name": "inaccessible cleanup is explicit and never becomes successful or fabricates native events",
+              "passed": true
+            },
+            {
+              "name": "initial capture failure makes no click or waiter, removes network listeners, and remains failed",
+              "passed": true
+            },
+            {
+              "name": "all three engine pairs remain independent, ordered and durable beyond later engine observations",
+              "passed": true
+            }
+          ],
+          "complete_success": true,
+          "limitations": [
+            "Fake Playwright transport and DOM objects execute the actual extracted helper and evaluate callbacks; this does not prove native browser ordering.",
+            "The next official run must provide actual six diagnostics and unchanged business checks.",
+            "Node and browser observation clocks are separate; no causal claim is inferred from these controlled records."
+          ]
+        }
+      },
+      "pagination_diagnostic_metadata": {
+        "original_proof_sha256": "32a0de941a7fde6a4fca702963e5cb7d698e5f4a44744a34881219fc659669fb",
+        "record": {
+          "base_head": "0511124e58fe13146983d018460391dbb96d7552",
+          "base_actual_checkout": "95c22f05a799d1350cff2267bd32f0c2c942ba36",
+          "files": {
+            "original-verify_campus_administration.mjs": {
+              "bytes": 37453,
+              "sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d"
+            },
+            "verify_campus_administration.mjs": {
+              "bytes": 42562,
+              "sha256": "9b3bb4c599e4bc5bd06e92b9fd2b266f639bf237eb010dc07a97fd02d875c022"
+            },
+            "pagination-diagnostics.patch": {
+              "bytes": 9648,
+              "sha256": "6108266b811f6893e31a5ee2d8d9cc6f9e97fe64e0234128b8a2681261b2fb55"
+            },
+            "check-pagination-diagnostics.mjs": {
+              "bytes": 16800,
+              "sha256": "97c682332a49b335b724bbcc58d61678418aa03ae93f1ad8555b5e1a79c1128d"
+            },
+            "diagnostic-helper-proof.json": {
+              "bytes": 2886,
+              "sha256": "d2216fabf0e5b3b496edac3dd29280d8f50cd7f947fd990cbefb96190f80c79a"
+            }
+          },
+          "source_outside_helper_and_two_call_expressions_byte_equal": true,
+          "formal_definition_count": 33,
+          "expected_diagnostic_actions": 6,
+          "action_order": [
+            "next",
+            "prev"
+          ],
+          "timeout_ms": 12000,
+          "controlled_cases": 12,
+          "controlled_success": true,
+          "runtime_status": "not run; requires next official CI originals",
+          "review_notes": [
+            "Read-only native capture is passive and performs no layout or focus reads or DOM mutations.",
+            "AllSettled persists both original promises; no business wait, retry, force or synthetic response is added.",
+            "A normal node disconnection after successful click/render is not an asserted failure.",
+            "Only same-origin GET /api/campus/* and /api/proactive/revision are recorded; no headers or cookies.",
+            "The proof uses controlled objects executing the actual extracted helper; it does not demonstrate CI73 native ordering."
+          ]
+        }
+      },
+      "pagination_diagnostic_review": {
+        "original_proof_sha256": "9dcb5e4920c359baf6f70fda6d9ef3c50b77d6c1297eb5a9edd984c3d3ee805c",
+        "record": {
+          "status": "accepted_no_blocking_issue",
+          "scope": "Read-only source and controlled-proof review; no real browser executed or new runtime success inferred.",
+          "base_head": "0511124e58fe13146983d018460391dbb96d7552",
+          "metadata_sha256": "32a0de941a7fde6a4fca702963e5cb7d698e5f4a44744a34881219fc659669fb",
+          "candidate_sha256": "9b3bb4c599e4bc5bd06e92b9fd2b266f639bf237eb010dc07a97fd02d875c022",
+          "patch_sha256": "6108266b811f6893e31a5ee2d8d9cc6f9e97fe64e0234128b8a2681261b2fb55",
+          "original_sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d",
+          "controlled_proof_sha256": "d2216fabf0e5b3b496edac3dd29280d8f50cd7f947fd990cbefb96190f80c79a",
+          "controlled_cases": 12,
+          "controlled_passed": 12,
+          "preserved": {
+            "all_bytes_outside_helper_and_two_action_expressions": true,
+            "formal_check_indices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10
+            ],
+            "formal_engine_identities": 33,
+            "timeout_ms": 12000,
+            "ordinary_native_locator_click": true,
+            "existing_response_predicates": true,
+            "all_original_HTTP_JSON_cursor_ID_DOM_assertions": true
+          },
+          "diagnostics": {
+            "expected_real_records": 6,
+            "per_engine_action_order": [
+              "next",
+              "prev"
+            ],
+            "capture_passive": true,
+            "both_operation_outcomes_preserved_before_outward_failure": true,
+            "original_response_object_returned": true,
+            "normal_disconnection_after_success_not_a_failure_gate": true,
+            "native_events_missing_remain_missing": true,
+            "network_scope": "same-origin GET /api/campus/* and /api/proactive/revision",
+            "network_scope_verified_against_actual_data_sync_source": true,
+            "headers_cookies_bodies_not_captured": true,
+            "removed_network_listeners_and_native_cleanup_recorded": true
+          },
+          "patch_apply_check_exit_code": 0,
+          "issues": [],
+          "limits": [
+            "Controlled helper proof uses simulated Playwright/DOM objects; it is not one of the 33 formal browser identities.",
+            "Six native action records can only be accepted from the next actual official run; these are currently definitions, not six real observed actions.",
+            "Both operation errors and cleanup evidence are recorded; no missing response or failed native click is accepted.",
+            "Event observation clocks are separate; diagnostics do not automatically prove a cause for CI73."
+          ]
+        }
+      }
+    },
+    "current_sources": {
+      "static/app.js": "a8746f4f71fcb02894d5bc62d8e1e80a3bfcc5d0d1f2c3769a1a8929ba428780",
+      "static/campus.js": "6c71856a7162bea9f43606fbbb98b28d4e4cd55f4cb004e3f1e6c7d3320e9f16",
+      "static/system-home.js": "246cb3046b956df1aa513ec169f212eca5d89160b85f4d95c1a24c894597b1e1",
+      "tests/workspace-background-sync-race.test.mjs": "cac208ffb7fb2d0b021964262214d6f49879df460a801029af3149eaaaafe924",
+      "scripts/verify_campus_administration.mjs": "9b3bb4c599e4bc5bd06e92b9fd2b266f639bf237eb010dc07a97fd02d875c022",
+      "static/dist/manifest.json": "610ca079f29d01e5da7f1c953e4a67bef394a5c25be773b23f4d0585de3398a1"
+    },
+    "expected_next_counts": {
+      "python_per_os": 1906,
+      "node_per_os": 466,
+      "python_source_files": 140,
+      "browser": 1146,
+      "continuity": 990,
+      "pagination_diagnostic_actions": 6
+    },
+    "source_scope": "Three existing asynchronous rendering paths receive and recheck the existing application guard, preserve denied updates for retry, and leave foreground behavior and pagination logic intact. The browser script adds passive observations only around its two existing native pagination actions.",
+    "causation_boundary": "The actual production defect is demonstrated using controlled responses and pointer state. The original CI73 native event ordering was not captured, so this is not asserted to be its proven unique cause.",
+    "gate_boundary": "The new candidate and actual merged main each need their own complete successful CI and official raw-artifact audit, including six actual pagination action records. Controlled probes do not replace real browser observations."
   }
 }
