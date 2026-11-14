@@ -2,10 +2,11 @@
 from app import source_sync
 from app.documents import text_source
 from tests.test_workflow import account, env
+from tests.source_trial_fixture import successful_rule_trial
 
 
 def subscribe(client, preset='whu-notices'):
-    response = client.post('/api/source-presets/' + preset + '/subscribe', json={})
+    with successful_rule_trial():response = client.post('/api/source-presets/' + preset + '/subscribe', json={})
     assert response.status_code == 200, response.text
     return response.json()
 

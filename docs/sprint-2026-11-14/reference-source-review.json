@@ -1,0 +1,97 @@
+{
+  "reviewed_at": "2026-11-14",
+  "source_repository": "https://github.com/DavidHDev/react-bits",
+  "license": {
+    "url": "https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md",
+    "observed_title": "MIT + Commons Clause License Condition v1.0",
+    "copied_source": false,
+    "dependencies_added": []
+  },
+  "method": "Official interactive demos inspected through browser; source JSX/CSS read through official demo and verified via GitHub blob identities. Local application browser verification is a separate CI gate.",
+  "references": [
+    {
+      "number": 133,
+      "name": "Spring Check",
+      "files": [
+        "SpringCheck.jsx",
+        "SpringCheck.css"
+      ],
+      "adopted": "Only confirmed server completion may trigger a small check response; separate 44px button targets; cancel animations on owner/route/reduced-motion changes.",
+      "not_adopted": "No React controlled component, motion runtime, Hugeicons dependency, or decorative strike-through copied.",
+      "demo": [
+        "Desktop checkbox toggled by click; Space toggled it back.",
+        "375px preview inspected; disabled setting prevented toggling."
+      ],
+      "source_files": [
+        {
+          "path": "src/content/Micro/SpringCheck/SpringCheck.jsx",
+          "blob_sha": "438e365e6d2408fd6ff192df90f954ad2f02a314",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/SpringCheck/SpringCheck.jsx",
+          "line_count": 168
+        },
+        {
+          "path": "src/content/Micro/SpringCheck/SpringCheck.css",
+          "blob_sha": "6b443d8c49890963a3a0c6004f700e23b0a3b55e",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/SpringCheck/SpringCheck.css",
+          "line_count": 133
+        }
+      ]
+    },
+    {
+      "number": 115,
+      "name": "Swipe Toast",
+      "files": [
+        "SwipeToast.jsx",
+        "SwipeToast.css"
+      ],
+      "adopted": "Pause transient timers during focus/hover/hidden tab; persistent error; real async Undo; accessible close; actual mobile navigation and visual viewport clearance.",
+      "not_adopted": "Swipe gesture and upstream fixed 32px bottom placement were not adopted. Undo immediately entered exit state in the demo; disappearance was not independently observed.",
+      "demo": [
+        "Opened actual demo toast and activated Undo.",
+        "Read source JavaScript and CSS tabs; checked timer cleanup and aria-live."
+      ],
+      "source_files": [
+        {
+          "path": "src/content/Micro/SwipeToast/SwipeToast.jsx",
+          "blob_sha": "08c5e8aeb5e66104e6b629bcabe466c6593278e3",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/SwipeToast/SwipeToast.jsx",
+          "line_count": 319
+        },
+        {
+          "path": "src/content/Micro/SwipeToast/SwipeToast.css",
+          "blob_sha": "7c934298007e02e1cbeed0f2205fa0649731c4ba",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/SwipeToast/SwipeToast.css",
+          "line_count": 269
+        }
+      ]
+    },
+    {
+      "number": 114,
+      "name": "Prompt Bar",
+      "files": [
+        "PromptBar.jsx",
+        "PromptBar.css"
+      ],
+      "adopted": "Text and Send keep dedicated cells; attachments/emoji/voice in an explicit menu; keyboard Escape restores focus; retained IME/stop/draft recovery safeguards.",
+      "not_adopted": "No decorative canvas, 28px upstream targets, or replacement of existing stream/runtime logic. In the 375px demo, clicking Add unexpectedly showed the effort menu; no claim that upstream mobile hit behavior passed.",
+      "demo": [
+        "375px preview inspected and Chinese input entered.",
+        "Opened Code and inspected complete JavaScript/CSS variants."
+      ],
+      "source_files": [
+        {
+          "path": "src/content/Micro/PromptBar/PromptBar.jsx",
+          "blob_sha": "a09a7ae14bf6aa3f5f55fb5639daad87a89fc610",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/PromptBar/PromptBar.jsx",
+          "line_count": 726
+        },
+        {
+          "path": "src/content/Micro/PromptBar/PromptBar.css",
+          "blob_sha": "1a09e7d505481099e982642aacd88379e3a966a9",
+          "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/PromptBar/PromptBar.css",
+          "line_count": 517
+        }
+      ]
+    }
+  ]
+}

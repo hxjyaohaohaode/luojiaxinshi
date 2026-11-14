@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /** Interaction adaptations only; the fixture is isolated on port 8786. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -7,7 +8,7 @@ const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_P
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/reference-interactions-browser');await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic reference interactions, simulated provider, no real account data',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()}),page=await browser.newPage({viewport:{width:1413,height:871}});page.setDefaultTimeout(10000);
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])}),page=await browser.newPage({viewport:{width:1413,height:871}});page.setDefaultTimeout(10000);
  let activeChat=null,phase='login';const messageRequests=[];
  page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/messages/stream')){let body;try{body=request.postDataJSON();}catch{}messageRequests.push({event:'request',url:request.url(),request_id:body?.request_id,content:body?.content,version:body?.version});}});
  page.on('response',response=>{if(response.request().method()==='POST'&&response.url().includes('/messages/stream'))messageRequests.push({event:'response',url:response.url(),status:response.status()});});

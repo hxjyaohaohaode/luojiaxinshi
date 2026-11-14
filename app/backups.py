@@ -72,6 +72,23 @@ def restore_database(source:Path,destination:Path):
             from .campus_imports import TABLES as IMPORT_TABLES
             from .message_interactions import TABLES as MESSAGE_INTERACTION_TABLES
             from .proactive_feedback import TABLES as FEEDBACK_TABLES
+            from .campus import SPRINT_TABLES
+            from .source_fetch import TABLES as FETCH_TABLES
+            from .source_sync import OBSERVATION_TABLES
+            from .notice_tracking import TABLES as TRACKING_TABLES
+            from .listing import TABLES as LISTING_TABLES
+            from .observability import TABLES as OBSERVABILITY_TABLES
+            from .notification_coordination import TABLES as COORDINATION_TABLES
+            for key, required in (('campus_sprint_schema_version',SPRINT_TABLES),
+                                  ('source_fetch_schema_version',FETCH_TABLES),
+                                  ('source_observation_schema_version',OBSERVATION_TABLES),
+                                  ('notice_tracking_schema_version',TRACKING_TABLES),
+                                  ('bounded_lists_version',LISTING_TABLES),
+                                  ('observability_schema_version',OBSERVABILITY_TABLES),
+                                  ('notification_coordination_schema_version',COORDINATION_TABLES)):
+                marker=original.execute('SELECT value FROM meta WHERE key=?',(key,)).fetchone()
+                if marker and (marker[0]!='1' or not required.issubset(tables)):
+                    raise ValueError('备份扩展版本不兼容或必要记录缺失：'+key)
             import_version=original.execute("SELECT value FROM meta WHERE key='campus_import_schema_version'").fetchone()
             if import_version and (import_version[0]!='1' or not IMPORT_TABLES.issubset(tables)):
                 raise ValueError('备份缺少校园导入记录或版本不兼容')
@@ -118,6 +135,8 @@ def restore_database(source:Path,destination:Path):
                 target.execute('PRAGMA secure_delete=ON')
                 target.execute('DELETE FROM sessions')
                 target.execute('DELETE FROM invites')
+                target.execute("DELETE FROM meta WHERE key='deployment_instance_id'")
+                if 'notification_reconcile_state' in tables:target.execute('DELETE FROM notification_reconcile_state')
                 if 'auth_challenges' in tables:target.execute('DELETE FROM auth_challenges')
                 # Restore must not resurrect ownership of an old/reassigned contact.
                 if 'verified_contacts' in tables:target.execute('DELETE FROM verified_contacts')
@@ -135,6 +154,10 @@ def restore_database(source:Path,destination:Path):
                 # Old snapshots must not silently revive revoked college privileges.
                 for table in ('campus_counselor_scopes','campus_members'):
                     if table in tables:target.execute('DELETE FROM '+table)
+                for table in ('campus_audience_reviews','campus_roster_previews','campus_dispatch_authority'):
+                    if table in tables:target.execute('DELETE FROM '+table)
+                if 'campus_deliveries' in tables:
+                    target.execute("UPDATE campus_deliveries SET state='failed',error='恢复后请重新授权并核对受众' WHERE state IN ('pending','failed')")
                 for table in ('source_subscriptions','publisher_subscriptions'):
                     if table in tables:
                         target.execute("UPDATE "+table+" SET enabled=0,running_until=0,error='从备份恢复，请重新确认来源授权'")

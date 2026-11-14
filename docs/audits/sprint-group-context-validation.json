@@ -1,0 +1,18 @@
+{
+  "id": "qq-context-domain-41",
+  "kind": "synthetic_backend",
+  "result": "passed",
+  "passed": 41,
+  "warnings": 1,
+  "seconds": 35.28,
+  "scope_files": [
+    "tests/test_group_context_candidates.py",
+    "tests/test_notice_matters.py",
+    "tests/test_qq_group_intake.py",
+    "tests/test_group_delivery.py",
+    "tests/test_source_subscriptions.py",
+    "tests/test_intake_round_isolation.py"
+  ],
+  "document": "docs/audits/sprint-sources-evidence.md",
+  "limits": "LJ-019 新增 6 项＋相应旧群收件、事项、来源及年度合同，实际签名合成回调；不代表真实 QQ 平台验收。"
+}

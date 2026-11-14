@@ -130,8 +130,9 @@ class CalendarCheck(Strict):
 
 
 PATCH_FIELDS = {'title', 'details', 'due_date', 'due_time', 'deadline_text', 'materials',
-                'submission', 'location', 'contact'}
+                'submission', 'location', 'contact', 'scheduled'}
 DATE_FIELDS = {'due_date', 'due_time', 'deadline_text'}
+TIMING_FIELDS = DATE_FIELDS | {'scheduled'}
 
 
 def workflow_record(conn, task):
@@ -146,19 +147,27 @@ def enrich_tasks(conn, tasks):
     if not tasks:
         return tasks
     uid = tasks[0]['user_id']
-    owned = {r['id']: dict(r) for r in conn.execute('SELECT id,status,data FROM tasks WHERE user_id=?', (uid,))}
+    ids = dumps([t['id'] for t in tasks])
+    notice_ids = dumps(list({t['notice_id'] for t in tasks}))
     workflows = {r['task_id']: dict(r) for r in conn.execute(
-        'SELECT w.* FROM task_workflows w JOIN tasks t ON t.id=w.task_id WHERE t.user_id=?', (uid,))}
+        'SELECT w.* FROM task_workflows w JOIN tasks t ON t.id=w.task_id WHERE t.user_id=? AND t.id IN (SELECT value FROM json_each(?))', (uid,ids))}
+    dependency_ids = set()
+    for row in workflows.values():
+        dependency_ids.update(json.loads(row['data']).get('dependencies', []))
+    referenced_ids = dumps(list({t['id'] for t in tasks} | dependency_ids))
+    owned = {r['id']: dict(r) for r in conn.execute('SELECT id,status,json_object(\'title\',json_extract(data,\'$.title\')) AS data FROM tasks WHERE user_id=? AND id IN (SELECT value FROM json_each(?))', (uid,referenced_ids))}
+    for row in conn.execute('SELECT w.* FROM task_workflows w JOIN tasks t ON t.id=w.task_id WHERE t.user_id=? AND t.id IN (SELECT value FROM json_each(?))', (uid,dumps(list(dependency_ids)))):
+        workflows[row['task_id']] = dict(row)
     changes = {}
-    for row in conn.execute("SELECT * FROM notice_changes WHERE user_id=? AND state='pending'", (uid,)):
+    for row in conn.execute("SELECT * FROM notice_changes WHERE user_id=? AND state='pending' AND notice_id IN (SELECT value FROM json_each(?))", (uid,notice_ids)):
         data = json.loads(row['data'])
         target_ids = [t['task_id'] for t in data['targets']]
         for task in tasks:
             if task['notice_id'] == row['notice_id'] and (not target_ids or task['id'] in target_ids):
                 changes.setdefault(task['id'], []).append({'id': row['id'], 'kind': data['kind']})
     checks = {r['task_id']: dict(r) for r in conn.execute(
-        'SELECT c.* FROM calendar_checks c JOIN tasks t ON t.id=c.task_id WHERE t.user_id=?', (uid,))}
-    reviews={r['task_id']:public_review(r) for r in conn.execute('SELECT r.* FROM task_reviews r JOIN tasks t ON t.id=r.task_id WHERE t.user_id=?',(uid,))}
+        'SELECT c.* FROM calendar_checks c JOIN tasks t ON t.id=c.task_id WHERE t.user_id=? AND t.id IN (SELECT value FROM json_each(?))', (uid,ids))}
+    reviews={r['task_id']:public_review(r) for r in conn.execute('SELECT r.* FROM task_reviews r JOIN tasks t ON t.id=r.task_id WHERE t.user_id=? AND t.id IN (SELECT value FROM json_each(?))',(uid,referenced_ids))}
     for task in tasks:
         row = workflows.get(task['id'])
         value = WorkflowData.model_validate(json.loads(row['data']) if row else {}).model_dump()
@@ -176,8 +185,8 @@ def enrich_tasks(conn, tasks):
         if task['action_excluded']:task['overdue']=task['due_soon']=False
         task['change_review']=reviews.get(task['id'])
         task['schedule_issues']=schedule_issues(task['data'])
-        task['followup_due'] = bool(task['status'] == 'pending' and not task['action_excluded'] and value['followup_at'] and
-                                   datetime.fromisoformat(value['followup_at']) <= datetime.now(timezone.utc))
+        from .task_timing import followup_due
+        task['followup_due'] = followup_due(task)
         task['pending_changes'] = changes.get(task['id'], [])
         check = checks.get(task['id'])
         task['calendar_check'] = {**check, 'current': check['task_version'] == task['version']} if check else None
@@ -420,8 +429,10 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
             if not diffs:
                 raise HTTPException(422, '该事项没有实际变化，请取消选择或修改目标值')
             warnings = []
-            if DATE_FIELDS.intersection(patch):
+            if TIMING_FIELDS.intersection(patch):
                 warnings.append('个人计划与提醒时间保留原值，请核对是否需要重排。')
+            if 'scheduled' in patch:
+                warnings.append('正式活动或办理时段已变化；依赖步骤、日历副本与已准备内容将按新版本重新核对。')
             if old['exported_version'] is not None:
                 warnings.append('已导出过日历，确认后须更新或删除目标日历中的旧事件。')
             affected=descendants(conn,uid,tid) if FORMAL_FIELDS.intersection(diffs) or status!=old['status'] else []
@@ -503,6 +514,19 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
                     if DATE_FIELDS.intersection(target['patch']):
                         after['deadline_confirmed'] = bool(after['due_date'])
                         after['deadline_evidence'] = evidence
+                        after['resolution_note'] = payload.note
+                    if 'scheduled' in target['patch']:
+                        # The verified proposal is the evidence for the new interval.
+                        # Never retain stale quotes or accept client-supplied provenance.
+                        if after.get('scheduled') is not None:
+                            from .deadline_evidence import analyze
+                            support=analyze([data['text']],data.get('published_at') or record['published_at'])
+                            for day_key,time_key in [('start_date','start_time'),('end_date','end_time')]:
+                                day,clock=after['scheduled'].get(day_key),after['scheduled'].get(time_key)
+                                if day and (not support.supports_date(day,clock) or clock and not support.supports_time(day,clock)):
+                                    raise HTTPException(422,'更正后的活动日期或时刻与更正原文不对应，请核对完整日期、时刻及发布依据')
+                            after['scheduled']['confirmed'] = True
+                            after['scheduled']['evidence'] = evidence
                         after['resolution_note'] = payload.note
                     try:
                         # Official facts may invalidate a saved personal reminder.

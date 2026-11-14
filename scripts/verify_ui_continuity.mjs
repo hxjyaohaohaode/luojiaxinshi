@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 import {artifactPath} from './mvp_check_runtime.mjs';
 import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
@@ -21,7 +22,7 @@ try{
   storageState=await fixture.storageState();
 }finally{await fixture.dispose();}
 for(const name of names){
-  const browser=await engines[name].launch({headless:true,executablePath:engines[name].executablePath()});
+  const browser=await engines[name].launch({headless:true,executablePath:browserExecutable(engines[name])});
   try{
     for(const viewport of sizes){
       const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState,serviceWorkers:'block'});

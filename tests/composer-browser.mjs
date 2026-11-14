@@ -60,17 +60,30 @@ try{
     await page.screenshot({path:`${out}/${name}.png`,animations:'disabled'});checks.push(`${name}: 无横向溢出，输入区与对话区可用`);
   }
   await page.setViewportSize({width:1100,height:850});
-  await page.evaluate(async()=>{
-    const {dictate}=await import('/static/dictation.js');window.__speechCalls=[];window.__speechErrors=[];
-    await dictate(document.querySelector('#chat-input'),document.querySelector('.composer-voice'),{
-      ask:async()=>{throw Error('录音不应重复请求应用确认');},toast:x=>window.__speechErrors.push(x),api:async(path,options)=>{
-        if(path==='/speech/config')return {configured:true,max_recording_seconds:60};
-        const blob=options.body.get('audio'),header=new Uint8Array(await blob.arrayBuffer());
-        window.__speechCalls.push({size:blob.size,header:String.fromCharCode(...header.slice(0,4))});
-        await new Promise(r=>setTimeout(r,180));return {text:window.__speechCalls.length===1?'':'第 '+window.__speechCalls.length+' 段合成转写'};
-      }});
+  // Intercept the public speech endpoints while the real composer owns the
+  // recording session. Importing source dictate() here creates a second active
+  // session when the production UI is bundled, so it cannot test this button.
+  const speechCalls=[];
+  await page.route('**/api/speech/config',route=>route.fulfill({json:{configured:true,max_recording_seconds:60}}));
+  const transcribe=async route=>{
+    const request=route.request(),form=await new Response(request.postDataBuffer(),{headers:{'Content-Type':request.headers()['content-type']}}).formData();
+    const blob=form.get('audio');assert.ok(blob&&typeof blob.arrayBuffer==='function');
+    const header=new Uint8Array(await blob.arrayBuffer());
+    speechCalls.push({size:blob.size,header:String.fromCharCode(...header.slice(0,4))});
+    assert.equal(form.get('allow_external_processing'),'true');
+    await new Promise(r=>setTimeout(r,180));
+    await route.fulfill({json:{text:speechCalls.length===1?'':'第 '+speechCalls.length+' 段合成转写'}});
+  };
+  await page.route('**/api/speech/transcribe',transcribe);
+  await page.evaluate(()=>{
+    window.__speechErrors=[];
+    window.__speechToastObserver=new MutationObserver(()=>{const toast=document.querySelector('#toast');if(toast?.matches('.visible.error'))window.__speechErrors.push(toast.textContent);});
+    window.__speechToastObserver.observe(document.querySelector('#toast'),{subtree:true,childList:true,attributes:true});
   });
+  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
+  await page.locator('#composer-menu .composer-voice').click();
   await page.waitForFunction(()=>document.querySelector('#chat-input').value.includes('合成转写'),{},{timeout:18000});
+  assert.equal(await page.locator('#dialog').evaluate(node=>node.open),false,'Recording starts from its button without an extra application confirmation');
   assert.equal(await page.locator('.dictation-panel').count(),1);
   assert.equal(await page.locator('.dictation-panel button').count(),1);
   assert.equal(await page.locator('#chat-composer .composer-voice').count(),1);
@@ -81,20 +94,17 @@ try{
   await page.screenshot({path:out+'/recording.png',animations:'disabled'});
   await page.getByRole('button',{name:'结束录音',exact:true}).last().click();
   await page.locator('.dictation-panel').waitFor({state:'hidden',timeout:12000});
-  assert.equal(await page.locator('.composer-entry .composer-voice').count(),1);
-  const audio=await page.evaluate(()=>({calls:window.__speechCalls,errors:window.__speechErrors}));
-  assert.ok(audio.calls.length>=2&&audio.calls.every(x=>x.header==='RIFF'&&x.size>100));assert.deepEqual(audio.errors,[]);
+  assert.equal(await page.locator('#composer-menu .composer-voice').count(),1);
+  assert.equal(await page.locator('#chat-composer .composer-voice').count(),1);
+  const speechErrors=await page.evaluate(()=>{window.__speechToastObserver.disconnect();return window.__speechErrors;});
+  assert.ok(speechCalls.length>=2&&speechCalls.every(x=>x.header==='RIFF'&&x.size>100));assert.deepEqual(speechErrors,[]);
   checks.push('真实 AudioWorklet 采集模拟麦克风：录音未结束即出现多段转写，保留手工输入，结束后释放录音界面（转写服务为合成夹具）');
   await page.locator('#chat-input').fill('重试前已经写好的内容');
-  await page.evaluate(async()=>{
-    const {dictate}=await import('/static/dictation.js');let attempts=0;window.__retryNotices=[];
-    await dictate(document.querySelector('#chat-input'),document.querySelector('.composer-voice'),{
-      ask:async()=>{throw Error('录音重试不应重复请求应用确认');},toast:text=>window.__retryNotices.push(text),api:async path=>{
-        if(path==='/speech/config')return {configured:true,max_recording_seconds:60};
-        if(++attempts===1)throw Error('合成转写故障');
-        return {text:'重试后恢复的转写'};
-      }});
-  });
+  await page.unroute('**/api/speech/transcribe',transcribe);
+  let attempts=0;
+  await page.route('**/api/speech/transcribe',route=>++attempts===1?route.fulfill({status:503,json:{detail:'合成转写故障'}}):route.fulfill({json:{text:'重试后恢复的转写'}}));
+  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
+  await page.locator('#composer-menu .composer-voice').click();
   await page.getByRole('button',{name:'重试转写（Esc 取消剩余录音）',exact:true}).waitFor({timeout:18000});
   assert.equal(await page.locator('.dictation-panel button').count(),1);
   assert.equal(await page.locator('#chat-input').inputValue(),'重试前已经写好的内容');
@@ -102,6 +112,7 @@ try{
   await page.locator('.dictation-panel').waitFor({state:'hidden',timeout:12000});
   assert.match(await page.locator('#chat-input').inputValue(),/^重试前已经写好的内容[\s\S]*重试后恢复的转写/);
   assert.equal(await page.locator('#chat-composer .composer-voice').count(),1);
+  assert.ok(attempts>=2,'The public transcription endpoint receives a real retry');
   checks.push('空分段不报整段失败；故障后保留已写文字，原位唯一录音按钮完成重试');
   assert.deepEqual(errors,[]);await writeFile(out+'/results.json',JSON.stringify({synthetic:true,checks,errors,peak},null,2));console.log(JSON.stringify({checks,errors,peak},null,2));
 }catch(error){

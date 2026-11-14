@@ -11,6 +11,58 @@ const context=await browser.newContext({storageState:await login.storageState(),
 const page=await context.newPage(),errors=[],checks=[];page.on('pageerror',e=>errors.push(String(e)));
 await page.addInitScript(()=>{window.__agentToasts=[];new MutationObserver(()=>{const node=document.querySelector('#toast');if(node?.textContent.includes('回复事件暂不支持')||node?.textContent.includes('工作摘要无效'))window.__agentToasts.push(node.textContent);}).observe(document,{subtree:true,childList:true,characterData:true});});
 async function ask(text){await page.locator('#chat-input').fill(text);await page.locator('#chat-input').press('Enter');}
+async function coldMemoryTrace(mode,cid,aid,operations){
+  // Each document starts on the real chat without ever opening memory. Hold
+  // only its actual module download; the trace endpoint stays unmodified.
+  const isolated=await browser.newContext({serviceWorkers:'block',storageState:await login.storageState(),viewport:{width:1440,height:1000}});
+  const cold=await isolated.newPage();cold.setDefaultTimeout(15000);
+  cold.on('pageerror',error=>errors.push(String(error)));
+  const moduleUrl=/(?:^|\/)memory(?:-[A-Z0-9]{8})?\.js(?:\?.*)?$/;
+  const tracePath=`/api/conversations/${cid}/messages/${aid}/memory-trace`,modules=[],requests=[];
+  let release;const gate=new Promise(resolve=>{release=resolve;});
+  cold.on('request',request=>{if(moduleUrl.test(request.url()))modules.push(request.url());if(new URL(request.url()).pathname===tracePath)requests.push(request.url());});
+  await cold.route(moduleUrl,async route=>{await gate;await route.continue();});
+  try{
+    await cold.goto(origin+'/#chat/'+cid);
+    const button=cold.locator(`[data-memory-life="trace"][data-id="${aid}"]`);
+    await button.waitFor({state:'visible'});
+    assert.equal(modules.length,0,'Opening a chat must not prewarm the memory route');
+    await button.evaluate(node=>{window.coldMemoryTraceButton=node;});
+    const [moduleRequest]=await Promise.all([cold.waitForRequest(request=>moduleUrl.test(request.url())),button.click()]);
+    assert.equal(await button.isDisabled(),true);
+    assert.equal(requests.length,0,'Trace waits for its actual lazy module');
+    if(mode==='route'){
+      await cold.locator('.sidebar .nav-item[href="#dashboard"]').click();
+      await cold.waitForFunction(()=>location.hash==='#dashboard'&&document.querySelector('#content')?.dataset.page==='dashboard'&&!document.querySelector('#content').inert);
+    }else if(mode==='dialog'){
+      await cold.locator('.chat-heading [data-chat-action="history"]').click();
+      await cold.getByRole('heading',{name:'接着上次的对话',exact:true}).waitFor();
+    }
+    const loaded=cold.waitForResponse(response=>response.url()===moduleRequest.url());
+    const traced=mode==='open'?cold.waitForResponse(response=>new URL(response.url()).pathname===tracePath):null;
+    release();assert.equal((await loaded).status(),200);
+    if(mode==='open'){
+      const response=await traced;assert.equal(response.status(),200);
+      assert.deepEqual((await response.json()).operations,operations);
+      await cold.getByRole('heading',{name:'这次回答用了哪些记忆',exact:true}).waitFor();
+      assert.equal(requests.length,1,'One cold click has one trace request');
+      await cold.locator('#dialog [data-action="close-dialog"]').click();
+      const repeated=cold.waitForResponse(response=>new URL(response.url()).pathname===tracePath);
+      await button.click();assert.equal((await repeated).status(),200);
+      await cold.getByRole('heading',{name:'这次回答用了哪些记忆',exact:true}).waitFor();
+      assert.equal(requests.length,2,'A loaded lifecycle must not duplicate the delegated entry');
+    }else{
+      await cold.waitForFunction(()=>window.coldMemoryTraceButton&&!window.coldMemoryTraceButton.disabled);
+      assert.equal(requests.length,0,'An abandoned entry must not read memory evidence');
+      assert.equal(await cold.getByRole('heading',{name:'这次回答用了哪些记忆',exact:true}).count(),0);
+      if(mode==='route'){
+        assert.equal(await cold.evaluate(()=>location.hash),'#dashboard');
+        assert.equal(await cold.locator('#dialog').evaluate(node=>node.open),false);
+      }else await cold.getByRole('heading',{name:'接着上次的对话',exact:true}).waitFor();
+    }
+  }catch(error){await cold.screenshot({path:out+'/cold-memory-'+mode+'-failure.png'}).catch(()=>{});throw error;}
+  finally{release();await cold.unrouteAll({behavior:'wait'});await isolated.close();}
+}
 try{
   await page.goto(origin+'/#chat/new');await page.locator('#chat-input').waitFor();
   assert.equal(await page.locator('a[href="/agent"]').count(),0);checks.push('无独立智能任务页面或导航，沿用原聊天');
@@ -82,7 +134,20 @@ try{
   },chatId);
   assert.equal(fallback.receipts,2);assert.match(fallback.text,/操作结果见下方/);assert.match(fallback.text,/已撤销/);
   checks.push('重试失败保留旧回答时，后来已提交的操作及撤销结果仍可见');
-  checks.push('日历和待办直接写入原业务数据，真实回执可见，无重复审批，撤销与刷新结果一致');assert.deepEqual(errors,[]);
+  checks.push('日历和待办直接写入原业务数据，真实回执可见，无重复审批，撤销与刷新结果一致');
+  const memoryPrompt='记住，我一直喜欢先核对原文，再写简短结论。';
+  await ask(memoryPrompt);
+  await page.locator('.message-assistant:not(.is-streaming)').filter({hasText:memoryPrompt}).last().locator('[data-memory-life="trace"]').waitFor();
+  const remembered=await page.evaluate(async id=>(await fetch('/api/conversations/'+id)).json(),chatId);
+  const memoryReply=remembered.messages.findLast(message=>message.role==='assistant');
+  assert.equal(memoryReply.status,'complete');
+  assert.equal(remembered.messages.find(message=>message.id===memoryReply.parent_id)?.content,memoryPrompt);
+  assert.ok(memoryReply.grounding.memory_operations.some(operation=>operation.status==='accepted'),'The server persisted the actual memory receipt');
+  for(const mode of ['open','dialog','route']){
+    await coldMemoryTrace(mode,chatId,memoryReply.id,memoryReply.grounding.memory_operations);
+    checks.push(({open:'全新聊天文档首次查看真实记忆回执可用，加载前后每次点击都只发一次请求',dialog:'首次记忆模块迟到后保留新打开的对话框，不读取旧入口的记忆',route:'首次记忆模块迟到后保留新路由，不读取旧入口的记忆'})[mode]);
+  }
+  assert.deepEqual(errors,[]);
   assert.deepEqual(await page.evaluate(()=>window.__agentToasts),[]);
   await writeFile(out+'/results.json',JSON.stringify({synthetic:true,checks,errors},null,2));console.log(JSON.stringify({checks,errors},null,2));
 }finally{

@@ -377,15 +377,54 @@ def install(app, db, user, admin, list_tasks):
         result=build_reminders(tasks, notices, arrangements)
         from .collaboration import reminders as collaboration_reminders
         labels={'sent':'有新的站内协作需要接收','resubmitted':'已收到补交内容',
-                'supplement':'对方请求补件，请查看说明','resolved':'协作已办结，请查看回执'}
-        for case in collaboration_reminders(conn,uid,int(time.time())):
+                'supplement':'对方请求补件，请查看说明','resolved':'协作已办结，请查看回执',
+                'declined':'负责人拒收或不再负责，请重新确认接收人；这不是校方办理结论',
+                'followup':'到了你设置的协作跟进时间，请核对当前进展'}
+        collaboration_items=collaboration_reminders(conn,uid,int(time.time()))
+        own_case_notices={row['id']:row['notice_id'] for row in conn.execute('''
+            SELECT c.id,t.notice_id FROM collaboration_cases c
+            JOIN tasks t ON t.id=c.task_id AND t.user_id=c.sender_id
+            JOIN notices n ON n.id=t.notice_id AND n.user_id=c.sender_id
+            WHERE c.sender_id=? AND c.id IN (SELECT value FROM json_each(?))''',
+            (uid,json.dumps([case['id'] for case in collaboration_items])))}
+        for case in collaboration_items:
             level='info' if case['state']=='resolved' else 'attention'
             item={'kind':'collaboration','level':level,'title':case['title'],'case_id':case['id'],
                   'text':labels[case['state']],'at':datetime.fromtimestamp(case['updated_at'],CST).isoformat()}
             item['id']=reminder_id({**item,'revision':case['version']})
+            # Route only an owner's own source record. The recipient must not
+            # receive the sender's private notice ID or inherit their settings.
+            if case['id'] in own_case_notices:item['notice_id']=own_case_notices[case['id']]
             result['items'].append(item)
             result['counts'][level]+=1
             result['counts']['total']+=1
+        from .source_sync import recent_failures
+        from .notification_events import phase_updates
+        for failure in recent_failures(conn,uid):
+            item={'kind':'source_health','category':'source_health','level':'attention','title':failure['title'],
+                  'source_id':failure['source_id'],'text':'来源读取未完成，覆盖未知，请查看来源状态。',
+                  'at':datetime.fromtimestamp(failure['checked_at'],CST).isoformat()}
+            item['id']=reminder_id({**item,'at':None,'revision':failure['problem_version']})
+            result['items'].append(item)
+        for phase in phase_updates(conn,uid,int(time.time())):
+            item={'kind':'notice_phase','category':'task','level':'info','title':phase['title'],'notice_id':phase['notice_id'],
+                  'text':'已核对的'+phase['label']+'记录有更新，请查看原文与本人后续行动。',
+                  'at':datetime.fromtimestamp(phase['updated_at'],CST).isoformat()}
+            item['id']=reminder_id({**item,'revision':phase['version']})
+            result['items'].append(item)
+        from .proactive_policy import preferences
+        pref=preferences(conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0])
+        from .notification_routing import notice_modes
+        overrides=notice_modes(conn,uid,pref)
+        task_notices={task['id']:task['notice_id'] for task in tasks}
+        def visible(item):
+            group=item.get('category') if item.get('category') in {'source_health','task','receipt','collaboration','arrangement'} else ('collaboration' if item.get('case_id') else 'arrangement' if item.get('arrangement_id') else 'task' if item.get('task_id') else 'receipt')
+            nid=item.get('notice_id') or task_notices.get(item.get('task_id'))
+            return overrides.get(nid,getattr(pref,group+'_delivery','immediate'))!='off'
+        result['items']=[item for item in result['items'] if visible(item)]
+        result['upcoming']=[item for item in result['upcoming'] if visible(item)]
+        result['counts']={level:sum(item['level']==level for item in result['items']) for level in LEVELS}
+        result['counts']['total']=len(result['items'])
         result['items'].sort(key=lambda item:(LEVELS[item['level']],item.get('at') or '9999'))
         return result
 

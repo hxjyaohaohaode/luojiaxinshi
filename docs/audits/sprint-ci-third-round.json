@@ -1,0 +1,1627 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-14T06:44:04.725Z",
+  "record_type": "historical_ci_third_round",
+  "run_id": 43565458564,
+  "run_number": 51,
+  "attempt": 1,
+  "event": "pull_request",
+  "conclusion": "failure",
+  "status": "completed",
+  "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564",
+  "candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+  "tested_merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+  "base_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+  "official_run_metadata": {
+    "api_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564",
+    "created_at": "2026-11-14T06:15:39Z",
+    "updated_at": "2026-11-14T06:36:52Z",
+    "fetched_in_this_audit": true
+  },
+  "implementation_by_platform": {
+    "ubuntu": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "windows": "879a24ddf158cd45a30d57e87a1313cf313820c783c4ef03a3544d3b93208d55",
+    "each_platform_internally_unchanged": true,
+    "interpretation": "Both operating systems actually checked out the same merge commit. Each platform retained its own unchanged byte fingerprint; cross-platform byte equality and a unique cause for the difference are not claimed."
+  },
+  "official_jobs": {
+    "total": 9,
+    "success": 8,
+    "failure": 1,
+    "all_non_browser_jobs_success": true,
+    "browser_job_id": 132358199991,
+    "jobs": [
+      {
+        "id": 132358199815,
+        "name": "tests (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358199919,
+        "name": "Windows backend (4/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358199942,
+        "name": "Windows backend (2/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358199954,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358199972,
+        "name": "Windows backend (3/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358199991,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "failure",
+        "failed_steps": [
+          {
+            "number": 10,
+            "name": "Run the browser suites against synthetic data",
+            "status": "completed",
+            "conclusion": "failure"
+          }
+        ]
+      },
+      {
+        "id": 132358200091,
+        "name": "Async save and recovery",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132358200166,
+        "name": "Windows backend (1/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132362236442,
+        "name": "tests (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      }
+    ]
+  },
+  "backend_and_node": {
+    "linux": {
+      "verification_path": "artifacts/ci-readonly/run-43565458564-linux-verification.json",
+      "verification_sha256": "911ce9f80cadb95aaef6c5a6468d7657008bffbcb99b6a76c88ec03956bdab6f",
+      "artifact": {
+        "id": 14102084219,
+        "name": "unit-reports-ubuntu-latest",
+        "size_in_bytes": 160781,
+        "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102084219",
+        "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102084219/zip",
+        "expired": false,
+        "created_at": "2026-11-14T06:24:27Z",
+        "expires_at": "2026-11-28T06:24:27Z",
+        "updated_at": "2026-11-14T06:24:27Z",
+        "digest": "sha256:95ba489a70b4f10c253f32f824490130165834ec3c1f83d94b38b898fcb95c22",
+        "workflow_run": {
+          "id": 43565458564,
+          "repository_id": 1417322145,
+          "head_repository_id": 1417322145,
+          "head_branch": "codex/sprint-2026-11-14",
+          "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3"
+        }
+      },
+      "archive_path": "artifacts/ci-readonly/run-43565458564-linux.zip",
+      "archive_sha256": "95ba489a70b4f10c253f32f824490130165834ec3c1f83d94b38b898fcb95c22",
+      "backend": {
+        "scope": "full",
+        "file_count": 134,
+        "tests": 1792,
+        "passed": 1790,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2,
+        "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+        "implementation_unchanged": true,
+        "complete": true,
+        "shards": [
+          {
+            "shard": 1,
+            "exit_code": 0,
+            "files": 34,
+            "timed_out": false,
+            "tests": 447,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "shard": 2,
+            "exit_code": 0,
+            "files": 34,
+            "timed_out": false,
+            "tests": 480,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "shard": 3,
+            "exit_code": 0,
+            "files": 33,
+            "timed_out": false,
+            "tests": 389,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "shard": 4,
+            "exit_code": 0,
+            "files": 33,
+            "timed_out": false,
+            "tests": 476,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 2
+          }
+        ]
+      },
+      "python_junit": {
+        "path": "artifacts/ci-readonly/run-43565458564-linux/ci/python-tests.xml",
+        "sha256": "4b6ae3c793766a8a3c93bd029eb7e4b2143321af051493d8593554fd0062eb26",
+        "counts": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1790,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        },
+        "skip_details": [
+          {
+            "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+            "message": "Windows process ownership guard",
+            "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:13: Windows process ownership guard"
+          },
+          {
+            "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+            "message": "Windows socket and launcher guard",
+            "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:46: Windows socket and launcher guard"
+          }
+        ]
+      },
+      "node_junit": {
+        "path": "artifacts/ci-readonly/run-43565458564-linux/ci/node-tests.xml",
+        "sha256": "b634899901053cf0bcbc2c389ad5e4ef208f3a45e8de03319f011870fd10cc86",
+        "counts": {
+          "tests": 275,
+          "unique": 275,
+          "passed": 275,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "frontend_build": {
+        "command": "npm run build:check",
+        "passed": true,
+        "actual_checked_marker": true
+      },
+      "dependency_audits": {
+        "npm": {
+          "command": "npm audit",
+          "scope": "all installed dependencies, including development/build dependencies; no --omit flag",
+          "known_vulnerabilities": 0,
+          "passed": true
+        },
+        "python": {
+          "command": "python -m pip_audit -r requirements.lock --strict",
+          "known_vulnerabilities": 0,
+          "passed": true
+        }
+      }
+    },
+    "windows": {
+      "verification_path": "artifacts/ci-readonly/run-43565458564-windows-verification.json",
+      "verification_sha256": "685fdcfc279a8947e2782e0c83b6370cb2d8e2f41396092b0f3fae359f308a11",
+      "artifact": {
+        "id": 14103021458,
+        "name": "unit-reports-windows-latest",
+        "size_in_bytes": 63995,
+        "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103021458",
+        "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103021458/zip",
+        "expired": false,
+        "created_at": "2026-11-14T06:34:17Z",
+        "expires_at": "2026-11-28T06:34:17Z",
+        "updated_at": "2026-11-14T06:34:17Z",
+        "digest": "sha256:af7ea3ef0c4381df265bc448bb2084cc71d7c9c0ef048cb41b3a43da58a0ee0f",
+        "workflow_run": {
+          "id": 43565458564,
+          "repository_id": 1417322145,
+          "head_repository_id": 1417322145,
+          "head_branch": "codex/sprint-2026-11-14",
+          "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3"
+        }
+      },
+      "archive_path": "artifacts/ci-readonly/run-43565458564-windows.zip",
+      "archive_sha256": "af7ea3ef0c4381df265bc448bb2084cc71d7c9c0ef048cb41b3a43da58a0ee0f",
+      "backend": {
+        "scope": "full",
+        "file_count": 134,
+        "tests": 1792,
+        "passed": 1791,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1,
+        "implementation_sha256": "879a24ddf158cd45a30d57e87a1313cf313820c783c4ef03a3544d3b93208d55",
+        "implementation_unchanged": true,
+        "complete": true,
+        "shards": [
+          {
+            "shard": 1,
+            "exit_code": 0,
+            "files": 34,
+            "timed_out": false,
+            "tests": 447,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "shard": 2,
+            "exit_code": 0,
+            "files": 34,
+            "timed_out": false,
+            "tests": 480,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          {
+            "shard": 3,
+            "exit_code": 0,
+            "files": 33,
+            "timed_out": false,
+            "tests": 389,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 1
+          },
+          {
+            "shard": 4,
+            "exit_code": 0,
+            "files": 33,
+            "timed_out": false,
+            "tests": 476,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          }
+        ],
+        "aggregation_errors": []
+      },
+      "python_junit": {
+        "path": "artifacts/ci-readonly/run-43565458564-windows/ci/python-tests.xml",
+        "sha256": "2104a82ce46913c4ee0799aca0e33cf14f8588f5f22d764c127060fa2d4b01b1",
+        "counts": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1791,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "skip_details": [
+          {
+            "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+            "message": "POSIX TIME_WAIT bind semantics",
+            "text": "D:\\a\\luojiaxinshi\\luojiaxinshi\\tests\\test_browser_fixture_ports.py:30: POSIX TIME_WAIT bind semantics"
+          }
+        ]
+      },
+      "node_junit": {
+        "path": "artifacts/ci-readonly/run-43565458564-windows/ci/node-tests.xml",
+        "sha256": "947feec509c48730e366da802ac480dd6999db97ed67942e9d67cabd749ab474",
+        "counts": {
+          "tests": 275,
+          "unique": 275,
+          "passed": 275,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      },
+      "frontend_build": {
+        "command": "npm run build:check",
+        "passed": true,
+        "actual_checked_marker": true
+      },
+      "dependency_audits": {
+        "npm": {
+          "command": "npm audit",
+          "scope": "all installed dependencies, including development/build dependencies; no --omit flag",
+          "known_vulnerabilities": 0,
+          "passed": true
+        },
+        "python": {
+          "command": "python -m pip_audit -r requirements.lock --strict",
+          "known_vulnerabilities": 0,
+          "passed": true
+        }
+      }
+    }
+  },
+  "continuity": {
+    "run_id": 43565458564,
+    "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "checkout_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+    "artifact": {
+      "id": 14101379678,
+      "bytes": 705888,
+      "sha256": "18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a"
+    },
+    "reports": [
+      {
+        "report": "continuity-browser/arrangement-recovery/report.json",
+        "checks": 612,
+        "passed": 612,
+        "failed": 0,
+        "errors": [],
+        "engines": {
+          "chromium": 204,
+          "firefox": 204,
+          "webkit": 204
+        },
+        "report_sha256": "5e4d3518093cefed395edee3a327057d99b6e4206760bbc7db35bde811d47a13"
+      },
+      {
+        "report": "continuity-browser/draft-continuity/report.json",
+        "checks": 204,
+        "passed": 204,
+        "failed": 0,
+        "errors": [],
+        "engines": {
+          "chromium": 68,
+          "firefox": 68,
+          "webkit": 68
+        },
+        "report_sha256": "2eee81c1d0755c81a3c45a32aecad8a5bb2135b048fa6b589ca4d2a883ee06bc"
+      },
+      {
+        "report": "continuity-browser/ui-continuity/report.json",
+        "checks": 174,
+        "passed": 174,
+        "failed": 0,
+        "errors": [],
+        "engines": {
+          "chromium": 58,
+          "firefox": 58,
+          "webkit": 58
+        },
+        "report_sha256": "4dd920fbdae20b89239d8ac8070afa711c646fdb97e0488032b7131da5678f8f"
+      }
+    ],
+    "audit_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43565458564/continuity-report-audit.json",
+    "audit_sha256": "33663186f68f745347a673c40cbcbcc4862b2cb9d53a92efb35f39a0763824d0",
+    "archive_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43565458564/continuity.zip",
+    "archive_sha256": "18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a",
+    "total_recorded": 990,
+    "total_passed": 990,
+    "total_failed": 0,
+    "github_artifact": {
+      "id": 14101379678,
+      "name": "continuity-browser-reports",
+      "size_in_bytes": 705888,
+      "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14101379678",
+      "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14101379678/zip",
+      "expired": false,
+      "created_at": "2026-11-14T06:19:40Z",
+      "expires_at": "2026-11-28T06:19:39Z",
+      "updated_at": "2026-11-14T06:19:40Z",
+      "digest": "sha256:18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a",
+      "workflow_run": {
+        "id": 43565458564,
+        "repository_id": 1417322145,
+        "head_repository_id": 1417322145,
+        "head_branch": "codex/sprint-2026-11-14",
+        "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3"
+      }
+    },
+    "github_digest_matches_archive": true,
+    "job_id": 132358200091,
+    "job_conclusion": "success",
+    "scope": "990 actual checks in three separately recorded reports; 330 per engine. Not added to backend/Node counts or the 33 main-browser report slots."
+  },
+  "container": {
+    "job_id": 132358199954,
+    "conclusion": "success",
+    "log_path": "artifacts/ci-readonly/run-43565458564-container.log",
+    "log_sha256": "456bdedd3eb4012c1869970eecc939fc2b118d07b0eb9a902ff0496829e9e557",
+    "actual_checkout_merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+    "verified_checks": [
+      "docker build成功",
+      "只读根文件系统及tmpfs数据目录启动",
+      "UID=10001；cap-drop ALL；no-new-privileges",
+      "健康接口status=ok",
+      "manage.py check: database=ok、schema=4、users=0、AI未配置",
+      "GenUI capability prompt资源存在且长度断言通过",
+      "旧格式DOC解析烟测提取到指定文字",
+      "入口页面包含app节点",
+      "测试容器清理成功"
+    ],
+    "successful_jobs": 1,
+    "verified_smoke_groups": 9,
+    "junit_test_case_count": null,
+    "uploaded_artifact": null,
+    "artifact_note": "This job uploads no separate container artifact. Its original job log and SHA-256 are retained; the smoke groups are not a fabricated JUnit test count."
+  },
+  "browser": {
+    "run_id": 43565458564,
+    "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "artifact_sha256": "989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec",
+    "report_slots": 33,
+    "statuses": {
+      "failed": 2,
+      "passed": 31
+    },
+    "recorded_checks": 1005,
+    "passed_checks": 1000,
+    "failed_checks": 5,
+    "checkout_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+    "node_runtime": "v22.23.4",
+    "unexecuted_expected_checks": {
+      "sprint": 24,
+      "pilot": 9
+    },
+    "note": "Recorded passed checks are counted separately from incomplete suites. Repeated errors and missing/unexecuted cases are not counted as passes. Agent and Composer are Chromium-only.",
+    "audit_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43565458564/browser-report-audit.json",
+    "audit_sha256": "ba89896f07002544c6f99310f555b9e1d0352a92c0c958e80aa8333946416962",
+    "missing_report_paths": [],
+    "rows": [
+      {
+        "suite": "Sprint workflows and loading performance",
+        "path": "sprint-ui-browser/report.json",
+        "status": "failed",
+        "recorded": 36,
+        "passed_checks": 34,
+        "failed_checks": 2,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 8,
+          "firefox": 20,
+          "webkit": 8
+        },
+        "report_sha256": "e568bea3b8d5d33c17fbdf90ba4cd0a7b70747c34863e3a0a6c6ce25797b1eed",
+        "failures": [
+          {
+            "engine": "chromium",
+            "name": "an obsolete query response cannot overwrite the latest server filter",
+            "ok": false,
+            "error": "Error: The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.\n    at Timeout.<anonymous> (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:13:139)\n    at listOnTimeout (node:internal/timers:585:17)\n    at process.processTimers (node:internal/timers:521:7)"
+          },
+          {
+            "engine": "webkit",
+            "name": "an obsolete query response cannot overwrite the latest server filter",
+            "ok": false,
+            "error": "Error: The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.\n    at Timeout.<anonymous> (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:13:139)\n    at listOnTimeout (node:internal/timers:585:17)\n    at process.processTimers (node:internal/timers:521:7)"
+          }
+        ],
+        "top_status": "incomplete",
+        "top_complete": false,
+        "repeated_errors_not_double_counted": 0
+      },
+      {
+        "suite": "Browser stability",
+        "path": "frontend-v9-browser/report.json",
+        "status": "passed",
+        "recorded": 123,
+        "passed_checks": 123,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 41,
+          "firefox": 41,
+          "webkit": 41
+        },
+        "report_sha256": "8c95719700e04ed5ee8352e23874bba865f6d1d84940968cab84ee3049477497"
+      },
+      {
+        "suite": "Browser regression",
+        "path": "frontend-v8-browser/report.json",
+        "status": "passed",
+        "recorded": 201,
+        "passed_checks": 201,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 67,
+          "firefox": 67,
+          "webkit": 67
+        },
+        "report_sha256": "0b29034a1d122d156922562a10414a9e63264c58a3d42d1b902021a978feac14"
+      },
+      {
+        "suite": "Reference interactions",
+        "path": "reference-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 48,
+        "passed_checks": 48,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 16,
+          "firefox": 16,
+          "webkit": 16
+        },
+        "report_sha256": "5b5e27449732db81134511417d4ec9603ed3edaf4c8b19c55a1b11543ab67f8f"
+      },
+      {
+        "suite": "Workspace interactions",
+        "path": "workspace-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 120,
+        "passed_checks": 120,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 40,
+          "firefox": 40,
+          "webkit": 40
+        },
+        "report_sha256": "d97d3dec48a908e42685d92a7ed1a7eaf18d1ba4f02d1c29265e88009cb4014a"
+      },
+      {
+        "suite": "Visual layout bounds",
+        "path": "visual-review-browser/report.json",
+        "status": "passed",
+        "recorded": 168,
+        "passed_checks": 168,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 56,
+          "firefox": 56,
+          "webkit": 56
+        },
+        "report_sha256": "8dc573b60be9bb063201fd85541dd4d8dff076ebb75b0b5a63f664d1ba2ae3ec"
+      },
+      {
+        "suite": "Notice intake and flexible workflows",
+        "path": "notice-flow-browser/report.json",
+        "status": "passed",
+        "recorded": 45,
+        "passed_checks": 45,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 15,
+          "firefox": 15,
+          "webkit": 15
+        },
+        "report_sha256": "9b66c12f3236e3f8dd0039ec84e64026d4bbc9b39a1398208b0b9a6970d3c192"
+      },
+      {
+        "suite": "Task board drag and recovery",
+        "path": "task-board-browser/report.json",
+        "status": "passed",
+        "recorded": 28,
+        "passed_checks": 28,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 10,
+          "firefox": 9,
+          "webkit": 9
+        },
+        "report_sha256": "af6e953c77b7f840318b889265af18877969d0838a2f85eaacce374521af8b4b"
+      },
+      {
+        "suite": "Natural notice intake",
+        "path": "natural-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        },
+        "report_sha256": "267c86f4ddc39b391129c3a64b926c8932a77ad09083d1213e1aa8afbc352bd5"
+      },
+      {
+        "suite": "Personal materials and submissions",
+        "path": "task-materials-browser/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        },
+        "report_sha256": "96c4d5b0a6617b79a9167d796f9648f162a07832e6e8866cf92a6f61fbadfdf8"
+      },
+      {
+        "suite": "Source subscriptions and personal inbox",
+        "path": "source-inbox-browser/report.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        },
+        "report_sha256": "3560890af5e27c4624fa0e07f4fbe7b0520edd0fb0c00b90394fc651cd429efe"
+      },
+      {
+        "suite": "Persistent push and device ownership",
+        "path": "push-browser/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 8
+        },
+        "report_sha256": "0378bf9303872db827faef8712be55d136ecc6e9b0500ab75bdeccb62328ef00"
+      },
+      {
+        "suite": "Notice matter grouping and campus capacities",
+        "path": "notice-matters-browser/report.json",
+        "status": "passed",
+        "recorded": 21,
+        "passed_checks": 21,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 7,
+          "firefox": 7,
+          "webkit": 7
+        },
+        "report_sha256": "6efca39aedb5f0851573017624180aad133b011316a67f2bffb954e750d2183f"
+      },
+      {
+        "suite": "School source chooser and pending saves",
+        "path": "source-presets-browser/report.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        },
+        "report_sha256": "d6410957bd3383dea10efbf77dc217f55d043932ace1bdeb64bfa5e4fa419984"
+      },
+      {
+        "suite": "Independent devices and campus collaboration",
+        "path": "pilot-workspace-browser/report.json",
+        "status": "failed",
+        "recorded": 24,
+        "passed_checks": 21,
+        "failed_checks": 3,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 8,
+          "firefox": 8,
+          "webkit": 8
+        },
+        "report_sha256": "069dca595efd02604273c6f6f3ae1ac967bb71fcd47f46c40ee80d834d98d8c9",
+        "failures": [
+          {
+            "engine": "chromium",
+            "name": "a cold collaboration import respects closing the workflow",
+            "ok": false,
+            "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+          },
+          {
+            "engine": "firefox",
+            "name": "a cold collaboration import respects closing the workflow",
+            "ok": false,
+            "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+          },
+          {
+            "engine": "webkit",
+            "name": "a cold collaboration import respects closing the workflow",
+            "ok": false,
+            "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+          }
+        ],
+        "top_status": null,
+        "top_complete": null,
+        "repeated_errors_not_double_counted": 3
+      },
+      {
+        "suite": "QQ group intake, rules and attachments",
+        "path": "qq-group-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 12,
+        "passed_checks": 12,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 4,
+          "firefox": 4,
+          "webkit": 4
+        },
+        "report_sha256": "b9ec592b65003063bafa2b57bc505036eeb09a714c26a148d5c6c9ee51dea476"
+      },
+      {
+        "suite": "Agent approvals and cancellation",
+        "path": "agent-chat-browser/results.json",
+        "status": "passed",
+        "recorded": 13,
+        "passed_checks": 13,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 13
+        },
+        "report_sha256": "b5bd62f1ca869b3ea24548e2fadc7d1f09edf6cf59e40dd485a0db7f3a18c80a"
+      },
+      {
+        "suite": "Agent authored UI and persistence",
+        "path": "agent-adaptive-browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        },
+        "report_sha256": "8fe7f3ed4fff31bea6779b8f271c0c8fffd9b484b03632052e9a2e37f934e20e"
+      },
+      {
+        "suite": "Agent private media and resize",
+        "path": "reference-fusion/browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        },
+        "report_sha256": "2ded6a3f530095e1a0e847900a303cb404da091b75c935ed62546d8d5f51c0c2"
+      },
+      {
+        "suite": "Agent incremental rendering",
+        "path": "agent-quality-browser/performance.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        },
+        "report_sha256": "849a62c7d2da46e5a852dd584fd216d156e02359fd19b9d93129da3ad5e873cd"
+      },
+      {
+        "suite": "Composer attachments and dictation",
+        "path": "composer-browser/results.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        },
+        "report_sha256": "5ecad0661e2d51c2bd1df847fcc7aab08d0844ababfb0496dd19f5afcc6b7bb3"
+      },
+      {
+        "suite": "OpenUI streaming Chromium",
+        "path": "openui-browser/chromium/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 10
+        },
+        "report_sha256": "3d9d3170b0a052b6ad335b8dd7f472b3fce2688a25a2712732105154a8400b81"
+      },
+      {
+        "suite": "OpenUI streaming Firefox",
+        "path": "openui-browser/firefox/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 10
+        },
+        "report_sha256": "f812301884acbbdafa4c301044d9acbd27f45d28886e4aa8ec38fd39a9c0f824"
+      },
+      {
+        "suite": "OpenUI streaming WebKit",
+        "path": "openui-browser/webkit/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 10
+        },
+        "report_sha256": "488b5c72d2773bf6f77c088c09830405b80d63dc6983b356809e9ac2f453aff5"
+      },
+      {
+        "suite": "Compact chat Chromium",
+        "path": "chat-layout/chromium/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 4
+        },
+        "report_sha256": "2e9648a3ef450ea4c1b04b3427f455f49c02f033a71b60b96ec5c5a42a54f233"
+      },
+      {
+        "suite": "Compact chat Firefox",
+        "path": "chat-layout/firefox/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 4
+        },
+        "report_sha256": "e9bc508f0e3acc33b7c753f55bd7c2cee2174b3eda9439881559215bb3120aeb"
+      },
+      {
+        "suite": "Compact chat WebKit",
+        "path": "chat-layout/webkit/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 4
+        },
+        "report_sha256": "bae340e2cc426efa23715ed9312e455fbe0211239dc1f686446a39ae798526f5"
+      },
+      {
+        "suite": "Chat interactions Chromium",
+        "path": "chat-interactions/chromium/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        },
+        "report_sha256": "477c77e3b873ab2bf9c1ba26d895097fb1b5b9fcdc1281df77e129897ab2141a"
+      },
+      {
+        "suite": "Chat interactions Firefox",
+        "path": "chat-interactions/firefox/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 8
+        },
+        "report_sha256": "a5900974d3fb80b03b3f7372e46f0e3a2b3282a49c9f51744cc4e49767b69d00"
+      },
+      {
+        "suite": "Chat interactions WebKit",
+        "path": "chat-interactions/webkit/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 8
+        },
+        "report_sha256": "21f2ed124ea03efe9ec0ad30d691af08a26e8c7cfee639449537c9dda2d02fda"
+      },
+      {
+        "suite": "Chat recovery Chromium",
+        "path": "chat-recovery/chromium/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 3
+        },
+        "report_sha256": "1d709be20d46bb0b3b9fb00aa23d8e7996e259572a3eeb325fa6b1d4c1404615"
+      },
+      {
+        "suite": "Chat recovery Firefox",
+        "path": "chat-recovery/firefox/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 3
+        },
+        "report_sha256": "227804e40caf81b6453e073bee57242fdd4c10cccab3b557083a6fb0ca27d286"
+      },
+      {
+        "suite": "Chat recovery WebKit",
+        "path": "chat-recovery/webkit/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 3
+        },
+        "report_sha256": "8e63173dab097196b69cd79b6fd9f7d964c09277c8300d0f83158b2632852cec"
+      }
+    ],
+    "artifact": {
+      "id": 14103186594,
+      "name": "synthetic-browser-reports",
+      "size_in_bytes": 22206238,
+      "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103186594",
+      "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103186594/zip",
+      "expired": false,
+      "created_at": "2026-11-14T06:36:49Z",
+      "expires_at": "2026-11-28T06:36:48Z",
+      "updated_at": "2026-11-14T06:36:49Z",
+      "digest": "sha256:989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec",
+      "workflow_run": {
+        "id": 43565458564,
+        "repository_id": 1417322145,
+        "head_repository_id": 1417322145,
+        "head_branch": "codex/sprint-2026-11-14",
+        "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3"
+      }
+    },
+    "archive_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43565458564/browser.zip",
+    "archive_sha256": "989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec",
+    "job_id": 132358199991,
+    "job_conclusion": "failure",
+    "missing_slots": 0,
+    "expected_but_unexecuted_total": 33,
+    "expected_but_unexecuted": {
+      "sprint": 24,
+      "pilot": 9
+    },
+    "counting_rules": [
+      "33 report slots are all present: 31 passed and 2 failed; a present but incomplete report is not missing.",
+      "1005 recorded assertions consist of 1000 passed and 5 failed. These are recorded assertions, not proof that every planned assertion ran.",
+      "33 subsequent assertions were not executed after failures: sprint 24, pilot 9. They are neither passed assertions nor JUnit skips.",
+      "The pilot errors array repeats the three failed checks; these repetitions are not counted as three additional failures.",
+      "Agent and Composer reports cover Chromium only. Other rows retain their actual engine fields."
+    ]
+  },
+  "failure_analysis": {
+    "sprint": {
+      "suite_path": "sprint-ui-browser/report.json",
+      "expected_checks": 60,
+      "recorded_checks": 36,
+      "passed_checks": 34,
+      "failed_checks": 2,
+      "unexecuted_expected_checks": 24,
+      "by_engine": {
+        "chromium": {
+          "recorded": 8,
+          "passed": 7,
+          "failed": 1
+        },
+        "firefox": {
+          "recorded": 20,
+          "passed": 20,
+          "failed": 0
+        },
+        "webkit": {
+          "recorded": 8,
+          "passed": 7,
+          "failed": 1
+        }
+      },
+      "query_races": [
+        {
+          "engine": "chromium",
+          "old_query": "冲刺分页 chromium",
+          "new_query": "跨页独有 chromium",
+          "old_response_captured": false,
+          "old_browser_response_observed": false,
+          "old_request_failure": null,
+          "late_fulfill_attempted": false,
+          "late_fulfill_result": null
+        },
+        {
+          "engine": "firefox",
+          "old_query": "冲刺分页 firefox",
+          "new_query": "跨页独有 firefox",
+          "old_response_captured": true,
+          "old_browser_response_observed": true,
+          "old_request_failure": null,
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "outcome": "old_response_observed_after_new_query"
+        },
+        {
+          "engine": "webkit",
+          "old_query": "冲刺分页 webkit",
+          "new_query": "跨页独有 webkit",
+          "old_response_captured": false,
+          "old_browser_response_observed": true,
+          "old_request_failure": null,
+          "late_fulfill_attempted": false,
+          "late_fulfill_result": null
+        }
+      ],
+      "failed_assertion": "an obsolete query response cannot overwrite the latest server filter",
+      "error_verbatim": "Error: The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.",
+      "proven_observations": [
+        "Chromium and WebKit did not complete the old-response capture prerequisite within 10 seconds; the test stopped before the intended late-response assertion could be validated in those engines.",
+        "Firefox completed all 20 checks, including the old response arriving after the newer query.",
+        "The old_response_captured flag was set only after route.fetch returned HTTP 200. The old report has no old_handler_entered field, so false cannot establish that the handler was never entered.",
+        "WebKit observed the old browser response even though old_response_captured remained false; late_fulfill_attempted was false. These facts do not establish a unique Service Worker cause."
+      ],
+      "inference_boundary": {
+        "api_cached_by_service_worker_claimed": false,
+        "service_worker_unique_cause_established": false,
+        "handler_never_entered_established": false,
+        "application_query_race_fixed_claimed_from_this_run": false,
+        "explanation": "The source worker caches only the generic offline shell and CSS; it does not cache API responses. Blocking Service Workers for an interception-dependent fixture follows the official Playwright guidance, but remains a fixture correction to verify in the next run, not proof of the preceding failure's unique cause."
+      },
+      "planned_fixture_correction": {
+        "file": "scripts/verify_sprint_ui.mjs",
+        "changes": [
+          "Use serviceWorkers:'block' for interception-dependent contexts.",
+          "Record the original query/filter/DOM/network prerequisites and explicit route-handler/capture progress, keeping genuine old/new requests and late-response assertions."
+        ],
+        "status": "next_ci_pending",
+        "official_references": [
+          {
+            "url": "https://playwright.dev/docs/network#missing-network-events-and-service-workers",
+            "summary": "Playwright recommends blocking Service Workers when native route interception appears to miss network events."
+          },
+          {
+            "url": "https://playwright.dev/docs/api/class-page#page-route",
+            "summary": "page.route does not intercept requests intercepted by a Service Worker; the documentation recommends serviceWorkers:'block' for request interception."
+          }
+        ]
+      }
+    },
+    "pilot": {
+      "suite_path": "pilot-workspace-browser/report.json",
+      "expected_checks": 33,
+      "recorded_checks": 24,
+      "passed_checks": 21,
+      "failed_checks": 3,
+      "unexecuted_expected_checks": 9,
+      "by_engine": {
+        "chromium": {
+          "recorded": 8,
+          "passed": 7,
+          "failed": 1
+        },
+        "firefox": {
+          "recorded": 8,
+          "passed": 7,
+          "failed": 1
+        },
+        "webkit": {
+          "recorded": 8,
+          "passed": 7,
+          "failed": 1
+        }
+      },
+      "failed_assertion": "a cold collaboration import respects closing the workflow",
+      "failure_kind": "Playwright strict locator matched two genuine close actions",
+      "original_errors": [
+        {
+          "engine": "chromium",
+          "name": "a cold collaboration import respects closing the workflow",
+          "ok": false,
+          "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+        },
+        {
+          "engine": "firefox",
+          "name": "a cold collaboration import respects closing the workflow",
+          "ok": false,
+          "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+        },
+        {
+          "engine": "webkit",
+          "name": "a cold collaboration import respects closing the workflow",
+          "ok": false,
+          "error": "locator.click: Error: strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements:\n    1) <button aria-label=\"关闭\" class=\"icon-button\" data-action=\"close-dialog\">…</button> aka getByRole('button', { name: '关闭' })\n    2) <button type=\"button\" class=\"button\" data-action=\"close-dialog\">返回</button> aka getByRole('button', { name: '返回' })\n\nCall log:\n  - waiting for locator('#dialog [data-action=close-dialog]')\n"
+        }
+      ],
+      "proven_observations": [
+        "In Chromium, Firefox and WebKit, #dialog [data-action=close-dialog] matched both the top icon button labelled 关闭 and the form's 返回 button.",
+        "The strict locator error prevented the intended close action. Therefore this run did not validate the later close/route delayed-import and subsequent checks in those engines.",
+        "The failure does not prove that the application's delayed-result guard failed; the closing action itself did not run."
+      ],
+      "planned_fixture_correction": {
+        "file": "scripts/verify_pilot_workspace.mjs",
+        "changes": [
+          "Target the unique top close control by its exact accessible name and location.",
+          "Require an explicit handler-held signal before performing the close or route change so a merely observed request cannot substitute for an established interception."
+        ],
+        "status": "next_ci_pending"
+      }
+    }
+  },
+  "independently_retained_worker_evidence": {
+    "report_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43565458564/browser/push-browser/report.json",
+    "sha256": "0378bf9303872db827faef8712be55d136ecc6e9b0500ab75bdeccb62328ef00",
+    "recorded_checks": 8,
+    "passed_checks": 8,
+    "errors": [],
+    "checks": [
+      {
+        "title": "initial login keeps notification delivery unbound while the generic offline worker is installed",
+        "passed": true
+      },
+      {
+        "title": "explicit opt-in stores the real API device and the worker account binding",
+        "passed": true
+      },
+      {
+        "title": "only the test button requests a test and labels it queued",
+        "passed": true
+      },
+      {
+        "title": "account binding persists after closing and reopening the application page",
+        "passed": true
+      },
+      {
+        "title": "the real API worker records simulated provider acceptance without a device-received claim",
+        "passed": true
+      },
+      {
+        "title": "narrow reminder settings remain reachable without horizontal overflow",
+        "passed": true
+      },
+      {
+        "title": "logout revokes the local subscription and worker binding before ending the session",
+        "passed": true
+      },
+      {
+        "title": "logging back in keeps this device off until another explicit opt-in",
+        "passed": true
+      }
+    ],
+    "engines": [
+      "chromium"
+    ],
+    "source_review_sha256": {
+      "static/notification-worker.js": "8727e00fdd75678990e7d4a8997e96f90948f46f27ec562fd6e1f0d4ff08d18c",
+      "scripts/verify_push_browser.mjs": "d14693669594e994bcdd85fb31fd6ac333008dd1813f77bc8038deb8f468567d"
+    },
+    "scope": "Eight Chromium checks actually install/use the real worker, verify account binding, explicit enable/disable/reopen/logout behavior and simulated provider acceptance. Subscription/provider facilities are synthetic where the fixture states so.",
+    "offline_fallback_browser_test_claimed": false,
+    "api_response_cache_claimed": false,
+    "actual_device_display_or_read_receipt_claimed": false,
+    "distinction": "This worker-specific evidence remains separate from interception fixtures that block Service Workers. It does not claim an actual offline-fallback navigation test."
+  },
+  "agent_and_composer": {
+    "path": "artifacts/ci-readonly/run-43565458564-agent-composer-verification.json",
+    "sha256": "516813900c8e1e0f74de6d69bc9d819bf609ae1093243ab2b05892fdca94af44",
+    "agent_checks": 13,
+    "composer_checks": 9,
+    "engines": [
+      "chromium"
+    ],
+    "limits": [
+      "成功cold-entry用例没有单独截图；以上依据本轮成功脚本日志、results和对应真实模块/API断言，不把其他聊天截图当作cold-entry截图。",
+      "模拟麦克风源、合成转写响应和既有离线Agent夹具；不代表供应商联调、手机实体麦克风或真人试用。"
+    ]
+  },
+  "runtime_evidence": {
+    "path": "artifacts/ci-readonly/run-43565458564-runtime-verification.json",
+    "sha256": "da8641388328e167f74c92dddcd11e6fd8fc47105b17a00333f797baf0591100",
+    "platforms": {
+      "ubuntu": {
+        "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+        "implementation_unchanged": true,
+        "ordinary_crud_latency_ms": {
+          "samples": 625,
+          "p50": 92.4,
+          "p95": 160.5,
+          "max": 246.4
+        },
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 775,
+            "samples": 775,
+            "p50_ms": 23.71,
+            "p95_ms": 67.627,
+            "max_ms": 99.795
+          },
+          "hold": {
+            "total_observations": 775,
+            "samples": 775,
+            "p50_ms": 10.164,
+            "p95_ms": 40.612,
+            "max_ms": 63.153
+          }
+        },
+        "recovery_observations": {
+          "backup_seconds": 0.025,
+          "restart_verified_seconds": 1.522,
+          "restore_file_seconds": 0.04,
+          "restore_verified_seconds": 1.777,
+          "confirmed_tasks_lost_in_fixture": 0,
+          "task_identity_and_business_content_equal": true,
+          "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+          "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+        }
+      },
+      "windows": {
+        "implementation_sha256": "879a24ddf158cd45a30d57e87a1313cf313820c783c4ef03a3544d3b93208d55",
+        "implementation_unchanged": true,
+        "ordinary_crud_latency_ms": {
+          "samples": 625,
+          "p50": 101.9,
+          "p95": 194.3,
+          "max": 348.7
+        },
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 776,
+            "samples": 776,
+            "p50_ms": 28.338,
+            "p95_ms": 67.687,
+            "max_ms": 100.851
+          },
+          "hold": {
+            "total_observations": 776,
+            "samples": 776,
+            "p50_ms": 9.898,
+            "p95_ms": 44.934,
+            "max_ms": 108.362
+          }
+        },
+        "recovery_observations": {
+          "backup_seconds": 0.034,
+          "restart_verified_seconds": 2.008,
+          "restore_file_seconds": 0.064,
+          "restore_verified_seconds": 2.756,
+          "confirmed_tasks_lost_in_fixture": 0,
+          "task_identity_and_business_content_equal": true,
+          "process_stop_method": "owned process tree taskkill /T /F",
+          "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+        }
+      }
+    },
+    "local_boundary": {
+      "five_user_artifact": "artifacts/sprint-final/runtime-5-final-v3.json",
+      "five_user_write_total_wait_p95_ms": 114.149,
+      "five_user_gate_passed": false,
+      "ten_user_artifact": "artifacts/sprint-final/runtime-10-final-v3.json",
+      "ten_user_write_total_wait_p95_ms": 272.906,
+      "ten_user_gate_passed": false,
+      "scope": "最新本地独立结果由root维护；本记录只对照，不替代或重跑。"
+    },
+    "interpretation": "The two shared-runner five-user observations stay separate from the most recent independent local v3 observations. Local five-user 114.149ms and ten-user 272.906ms total wait remain above the unchanged 100ms target; no five-user stable-pass claim is made."
+  },
+  "local_rounds_already_executed": {
+    "rounds": [
+      {
+        "round": 4,
+        "summary_path": "artifacts/sprint-final/backend-round4/summary.json",
+        "summary_sha256": "81f2049ff1a765d66e49d325b55231accfd33ba60b4360b00c63c383736e79cc",
+        "summary": {
+          "scope": "full",
+          "selected_shards": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "elapsed_seconds": 391.47,
+          "file_count": 134,
+          "shards": [
+            {
+              "shard": 1,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 447,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 2,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 480,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 3,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 389,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 1
+            },
+            {
+              "shard": 4,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 476,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 2
+            }
+          ],
+          "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+          "implementation_unchanged": true,
+          "tests": 1792,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3,
+          "passed": 1789,
+          "selected_complete": true,
+          "complete": true
+        },
+        "junit_path": "artifacts/sprint-final/backend-round4.xml",
+        "junit_sha256": "c5798027049cd2ea26cab258bc6b17f8506052eb995cebf6e3ae94cd0854833c",
+        "junit_counts": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1789,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "manifest_path": "artifacts/sprint-final/backend-round4/manifest.json",
+        "manifest_sha256": "6c03fc9a0d6884615b80975990a050e7e27419cf1ea3c43349607aff45aa7aca"
+      },
+      {
+        "round": 5,
+        "summary_path": "artifacts/sprint-final/backend-round5/summary.json",
+        "summary_sha256": "657f5cc7502de2ab1e4df6a3f8b27630f1f70c1c6c152196f8457986b8893f93",
+        "summary": {
+          "scope": "full",
+          "selected_shards": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "elapsed_seconds": 404.83,
+          "file_count": 134,
+          "shards": [
+            {
+              "shard": 1,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 447,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 2,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 480,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 3,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 389,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 1
+            },
+            {
+              "shard": 4,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 476,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 2
+            }
+          ],
+          "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+          "implementation_unchanged": true,
+          "tests": 1792,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3,
+          "passed": 1789,
+          "selected_complete": true,
+          "complete": true
+        },
+        "junit_path": "artifacts/sprint-final/backend-round5.xml",
+        "junit_sha256": "be06b8527e53f647d3dbe0c808ae2ea97ffb6a4798f31856b2546ddc9885604d",
+        "junit_counts": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1789,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 3
+        },
+        "manifest_path": "artifacts/sprint-final/backend-round5/manifest.json",
+        "manifest_sha256": "6c03fc9a0d6884615b80975990a050e7e27419cf1ea3c43349607aff45aa7aca"
+      }
+    ],
+    "tested_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "interpretation": "Rounds 4 and 5 actually executed all 134 backend files before the two browser-fixture revisions; each reports 1792 unique tests, 1789 passed, 3 environment skips, no failures/errors and unchanged d55 fingerprint. They remain evidence of that exact tree and are not relabelled as executions of the next candidate.",
+    "rerun_for_this_history": false,
+    "unaffected_local_performance_rerun": false,
+    "reason": "The next candidate changes only the two browser fixture scripts, leaving product/runtime/backend source unchanged. Existing independent local results retain their original fingerprint; the next full CI validates the new candidate."
+  },
+  "next_round": {
+    "status": "pending",
+    "run_id": 43567666000,
+    "run_number": 52,
+    "attempt": 1,
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+    "official_status_at_observation": "in_progress",
+    "official_conclusion_at_observation": null,
+    "remote_candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "remote_candidate_tree": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+    "expected_linux_implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+    "repair_scope": [
+      "scripts/verify_sprint_ui.mjs",
+      "scripts/verify_pilot_workspace.mjs"
+    ],
+    "product_source_change": false,
+    "completion_claimed": false,
+    "interpretation": "The final remote candidate is 6b15c745; local intermediate ec200b8 is not used as its identity. Next-round actual checkout, artifacts, counts and outcomes require separate verification."
+  },
+  "audit_limits": {
+    "scope": "Historical evidence for run51 / attempt1 only. It preserves actual success, failure and unexecuted coverage without converting a failing workflow into a pass.",
+    "local_load_or_tests_started": false,
+    "product_or_test_files_edited_for_this_document": false,
+    "only_file_created": "docs/audits/sprint-ci-third-round.json",
+    "master_validation_owned_by_root": true,
+    "deployment_school_approval_or_real_user_acceptance_claimed": false
+  }
+}

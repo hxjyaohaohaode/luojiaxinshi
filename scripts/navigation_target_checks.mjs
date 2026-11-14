@@ -8,11 +8,17 @@ export async function verifyNavigationTargets(page,base='http://127.0.0.1:8765')
   await page.evaluate(async base=>{
     const {createLibraryUI}=await import(base+'/static/library.js');
     const {createOverview}=await import(base+'/static/overview.js');
-    const state={session:{user:{id:'navigation-test'}},notices:[{id:'notice-one',title:'可选择并复制的通知标题',status:'received',source_label:'合成来源',created_at:1800000000}],tasks:[]};
+    const notice={id:'notice-one',title:'可选择并复制的通知标题',status:'received',source_label:'合成来源',created_at:1800000000};
+    const state={renderId:1,session:{user:{id:'navigation-test'}},notices:[notice],tasks:[]};
     const esc=s=>String(s??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
-    const common={state,esc,icon:()=>'<svg class="icon" aria-hidden="true"></svg>',moveSelection:()=>{},noticeRow:()=>'',empty:()=>''};
+    const api=async route=>{
+      if(route.startsWith('/notices/page?'))return {items:[notice],total:1,limit:50,next_cursor:null,has_more:false,snapshot:'navigation-fixture',filters:{},facets:{sources:['合成来源']}};
+      if(route==='/source-catalog'||route==='/source-subscriptions')return [];
+      throw Error('Unexpected navigation fixture request: '+route);
+    };
+    const common={state,api,esc,icon:()=>'<svg class="icon" aria-hidden="true"></svg>',moveSelection:()=>{},noticeRow:()=>'',empty:()=>''};
     window.targetViews={library:createLibraryUI(common),overview:createOverview({...common,taskRow:()=>'',reminders:{summary:()=>''}})};
-    window.targetViews.library.render();
+    await window.targetViews.library.render();
   },base);
   const card=page.locator('a.notice-card');
   assert.equal(await card.count(),1);

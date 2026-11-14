@@ -81,8 +81,13 @@
   --motion-standard: var(--dur-3);
 
   /* 触控尺寸 */
-  --tap: 40px;
-  --tap-touch: 44px;
+  --control-target: 44px;
+  --tap: var(--control-target);
+  --tap-touch: var(--control-target);
+  --density-page-inline: 20px;
+  --density-page-block: 14px;
+  --density-row-block: 10px;
+  --density-row-gap: 8px;
 }
 
 @supports (transition-timing-function: linear(0, 1)) {
@@ -92,3 +97,5 @@
     --ease-soft-spring: linear(0, .012, .047 2.6%, .19 5.8%, .623 12.8%, .82 16.8%, .955 21.3%, 1.024 25.6%, 1.045 29.2%, 1.046 32.3%, 1.03 37.6%, 1.006 45.2%, .995 52.3%, 1);
   }
 }
+
+@media(max-width:850px){:root{--density-page-inline:14px;--density-row-block:8px;--density-row-gap:6px}}

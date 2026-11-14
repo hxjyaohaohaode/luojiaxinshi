@@ -1,7 +1,7 @@
 /* Four layout ranges share typography, not a scaled desktop canvas. */
 :root { --fs-base:14px; --fs-lg:16px; --fs-xl:18px; --lh-body:1.55; }
 body { font-size:14px; line-height:1.55; }
-.workspace > .content:not([data-page^=chat]):not([data-page=calendar]):not([data-page=memory]) { padding:14px 20px; }
+.workspace > .content:not([data-page^=chat]):not([data-page=calendar]):not([data-page=memory]) { padding:var(--density-page-block) var(--density-page-inline); }
 .workspace > .topbar { min-height:44px; padding-block:0; gap:12px; }
 .shell > .sidebar { padding-block:12px 10px; }
 .sidebar .brand { min-height:42px; gap:8px; }
@@ -45,7 +45,7 @@ body { font-size:14px; line-height:1.55; }
 .overview-board-heading h2 { margin:0; font-size:15px; }
 .overview-compact .overview-tabs { padding:0 6px 6px; gap:4px; }
 .overview-tabs .tab { min-height:34px; padding:6px 8px; }
-.overview-compact .task-row,.task-results:not(.board-view) .task-row { padding:10px; column-gap:8px; }
+.overview-compact .task-row,.task-results:not(.board-view) .task-row { padding:var(--density-row-block); column-gap:var(--density-row-gap); }
 .overview-compact .task-title,.task-results:not(.board-view) .task-title { font-size:14px; line-height:1.5; padding-block:1px; }
 .task-row .task-timing,.overview-compact .task-statuses,.overview-compact .task-source { margin-top:3px; }
 .task-row .task-statuses .workflow-stage,.task-row .pill { padding:1px 6px; line-height:1.5; }

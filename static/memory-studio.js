@@ -102,5 +102,5 @@ export function createMemoryStudio({state,api,esc,showDialog,toast,ask,refresh})
     const view=captureUiContext(state,event.target);
     try{if(file.size>20000000)throw new Error('记忆文件不能超过 20 MB。');const text=await file.text();if(!view.sameUser())return;const result=await api('/memory/import',{method:'POST',json:{text,format:file.name.toLowerCase().endsWith('.md')?'markdown':'json'}});if(view.sameUser()){if(view.sameRoute())await refresh();toast(`已处理 ${result.count} 条记忆。${result.note}`);}}catch(error){if(view.sameUser())toast(error.message,true);}finally{event.target.value='';}
   });
-  return {panel,configure,management,meta,controls,workingButton:cid=>button('查看与编辑工作记忆','working',cid)};
+  return {panel,configure,management,meta,controls,trace:lifecycle.trace,workingButton:cid=>button('查看与编辑工作记忆','working',cid)};
 }

@@ -1,3 +1,4 @@
+import {createPagedList} from './paged-list.js';
 import {numberMarkup,animateSurface} from './experience-system.js';
 import {noticeState,isNoticeOpen} from './notice-intake.js';
 import {noticeSearchText,noticeSearchExcerpt} from './notice-search.js';
@@ -85,24 +86,28 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
   let websiteSources=[],sourceBusy=false,refreshSequence=0;
   const $=s=>document.querySelector(s);
   const button=(label,value,disabled=false)=>`<button type="button" class="button small" data-library-page="${value}" ${disabled?'disabled':''}>${label}</button>`;
-  function clearSearch(){clearTimeout(searchTimer);searchSequence++;searchResult=null;searchQuery='';searchError='';searching=false;}
+  const collection=createPagedList({api,path:'/notices/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:value=>{
+    if(owner!==state.session?.user?.id||!$('#library-results'))return;
+    state.notices=value.items;searching=value.loading;searchError=value.error;update();
+  }});
+  function currentFilters(){
+    const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;
+    return {q:query.trim(),status,from,to,relevance,intent,source,sort,...(selected?{ids:selected.ids.join(',')||'no-matching-record'}: {})};
+  }
+  async function loadFilters(force=false){
+    const value=await collection.load(currentFilters(),{force});
+    if(value&&owner===state.session?.user?.id&&$('#library-results')){state.notices=value.items;searching=value.loading;searchError=value.error;update();}
+    return value;
+  }
+  function clearSearch(){clearTimeout(searchTimer);searchSequence++;searchError='';searching=false;}
   function queueSearch(immediate=false){
-    clearSearch();
-    const term=query.trim();if(!term||!api){update();return;}
-    searching=true;update();
-    const sequence=searchSequence,session=state.session,route=state.renderId;
-    const current=()=>sequence===searchSequence&&session===state.session&&route===state.renderId&&query.trim()===term&&!!$('#library-results');
-    searchTimer=setTimeout(async()=>{
-      try{
-        const results=await api('/notices/search?q='+encodeURIComponent(term));
-        if(!current())return;
-        searchResult=results;searchQuery=term;searching=false;update();
-      }catch(error){if(current()){searchError=error.message;searching=false;update();}}
-    },immediate?0:180);
+    clearSearch();searching=true;update();
+    const uid=owner,route=state.renderId;
+    searchTimer=setTimeout(()=>{if(uid===state.session?.user?.id&&route===state.renderId&&$('#library-results'))loadFilters().catch(()=>{});},immediate?0:180);
   }
   const snippet=notice=>{
     if(!query.trim())return '';
-    const text=noticeSearchExcerpt(notice,query);if(!text)return '';
+    const text=notice.search_snippet||noticeSearchExcerpt(notice,query);if(!text)return '';
     return `<p class="notice-search-excerpt">${notice.search_source?`<span class="notice-search-source">${esc(notice.search_source)} · </span>`:''}${highlightMatch(text,query,esc)}</p>`;
   };
   const collectedDay=notice=>{
@@ -121,7 +126,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     return `<a class="notice-card notice-row" href="#notice/${encodeURIComponent(notice.id)}" aria-label="${esc(accessible)}" data-state="${esc(notice.status)}" data-priority="${esc(notice.assessment?.priority||'R')}"><div class="notice-card-content"><span class="link-button">${esc(notice.title)}</span>${notice.assessment?.focus?.key_time?`<p class="notice-card-keytime"><span>${esc(notice.assessment.focus.key_time.label)}</span><strong>${esc(notice.assessment.focus.key_time.date)}${notice.assessment.focus.key_time.time?' '+esc(notice.assessment.focus.key_time.time):''}</strong></p>`:''}<p>${esc(origins)}</p>${query.trim()?snippet(notice):excerpt}</div><div class="notice-card-top"><span class="notice-folder" aria-hidden="true">${icon('doc')}</span><span class="notice-card-pills">${notice.applicability&&RELEVANCE[notice.applicability]?`<span class="pill ${RELEVANCE[notice.applicability][1]}">${RELEVANCE[notice.applicability][0]}</span>`:''}<span class="pill ${color}">${label}</span>${flags.map(flag=>`<span class="pill orange">${flag}</span>`).join('')}</span></div><div class="notice-card-footer"><span>${esc(meta)}</span><span>${notice.task_count||0} 项待办</span><span class="notice-card-arrow" aria-hidden="true">${icon('arrow')}</span></div></a>`;
   }
   function matterCard(unit){
-    return `<article class="notice-card matter-library-card"><span class="pill">同一事项 · ${unit.matter.member_count} 则通知</span><a class="link-button" href="#notice/${encodeURIComponent(unit.notices[0].id)}">${esc(unit.matter.title)}</a><p class="small muted">${unit.notices.length} 则符合当前筛选</p><details><summary>查看组内通知</summary><ul>${unit.notices.map(n=>`<li><a href="#notice/${encodeURIComponent(n.id)}">${esc(n.title)}</a><span class="small muted"> · ${INBOX_INTENTS[n.intent]||''}</span>${snippet(n)}</li>`).join('')}</ul></details></article>`;
+    return `<article class="notice-card matter-library-card"><span class="pill">同一事项 · ${unit.matter.member_count} 则通知</span><a class="link-button" href="#notice/${encodeURIComponent(unit.notices[0].id)}">${esc(unit.matter.title)}</a><p class="small muted">本次已加载 ${unit.notices.length} 则符合筛选的组内通知</p><details><summary>查看组内通知</summary><ul>${unit.notices.map(n=>`<li><a href="#notice/${encodeURIComponent(n.id)}">${esc(n.title)}</a><span class="small muted"> · ${INBOX_INTENTS[n.intent]||''}</span>${snippet(n)}</li>`).join('')}</ul></details></article>`;
   }
   function sourceHealthMarkup(rows){
     if(!rows.length)return '<p class="small muted">还没有添加网站来源。可以选择学校或学院官网，并按需开启自动接收。</p>';
@@ -170,7 +175,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
       if(!current())return;
       let listUpdated=false;
       if(refreshData&&$('#library-results')){
-        try{await refreshData();if(current()&&$('#library-results')){render();listUpdated=true;}}catch(error){/* Keep the existing list and report refresh failure below. */}
+        try{await loadFilters(true);if(current()&&$('#library-results'))listUpdated=!collection.snapshot().error;}catch(error){/* Keep the existing list and report refresh failure below. */}
       }
       if(!current())return;
       if($('#library-source-health'))await loadSourceHealth();
@@ -180,8 +185,8 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
       if(current()){sourceBusy=false;if($('#library-refresh-web'))$('#library-refresh-web').disabled=!websiteSources.some(item=>item.enabled);}
     }
   }
-  function render(){
-    if(owner!==state.session.user.id){owner=state.session.user.id;clearSearch();sourceSequence++;refreshSequence++;websiteSources=[];sourceBusy=false;query='';status='all';from='';to='';relevance='all';intent='current';source='';sort='priority';page=1;view='cards';grouped=true;}
+  async function render(){
+    if(owner!==state.session.user.id){owner=state.session.user.id;collection.clear();clearSearch();sourceSequence++;refreshSequence++;websiteSources=[];sourceBusy=false;query='';status='all';from='';to='';relevance='all';intent='current';source='';sort='priority';page=1;view='cards';grouped=true;}
     const mounted=!$('#library-results');
     if(mounted)$('#content').innerHTML=`<div class="page-title between"><div><h1>通知资料</h1></div><a href="#new" class="button primary">${icon('plus')} 收通知</a></div>
       <section class="student-source-panel" aria-label="网站来源状态"><div class="student-source-heading"><strong>网站来源状态</strong><div class="row wrap"><button class="button small" type="button" id="library-refresh-web" data-library-refresh-web disabled>检查新通知</button><a class="link-button" href="#sources">管理来源 →</a></div></div><details class="student-source-details"><summary id="library-source-summary">正在读取网站来源状态…</summary><div id="library-source-health" role="status"><p class="small muted">正在读取网站来源状态…</p></div></details><p class="small muted" id="library-refresh-result" role="status"></p></section>
@@ -201,18 +206,15 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
       refine.append($('.student-inbox-controls'),$('.library-date'),$('.library-view-toggle'),$('#library-unreviewed-note'),$('.student-source-panel'));
       refine.open=status!=='all'||relevance!=='all';
     }
-    const counts=Object.fromEntries(Object.keys(INBOX_INTENTS).map(key=>[key,key==='all'?state.notices.length:filterNotices(state.notices,{intent:key}).length]));
-    $('#library-summary').innerHTML=['current','all'].map(key=>`<button type="button" class="collection-stat" data-library-intent="${key}" aria-pressed="${key===intent}"><span>${INBOX_INTENTS[key]}</span><strong>${counts[key]}</strong></button>`).join('')+`<label class="library-intent-picker"><span class="sr-only">按办理状态查看</span><select id="library-intent-filter" aria-label="按办理状态查看"><option value="">更多状态</option>${Object.entries(INBOX_INTENTS).filter(([key])=>!['current','all'].includes(key)).map(([key,label])=>`<option value="${key}" ${intent===key?'selected':''}>${label} · ${counts[key]}</option>`).join('')}</select></label>`;
-    const unreviewed=state.notices.filter(n=>n.status==='received'&&n.intent!=='discussion'&&isNoticeOpen(n)&&!n.applicability).length;
-    $('#library-unreviewed-note').textContent=unreviewed?`${unreviewed} 则通知尚未判断是否适合你；“要核实”不等于都需要办理。`:'';
-    update();if(query.trim())queueSearch(true);if(mounted)loadSourceHealth();
+    $('#library-summary').innerHTML=['current','all'].map(key=>`<button type="button" class="collection-stat" data-library-intent="${key}" aria-pressed="${key===intent}"><span>${INBOX_INTENTS[key]}</span></button>`).join('')+`<label class="library-intent-picker"><span class="sr-only">按办理状态查看</span><select id="library-intent-filter" aria-label="按办理状态查看"><option value="">更多状态</option>${Object.entries(INBOX_INTENTS).filter(([key])=>!['current','all'].includes(key)).map(([key,label])=>`<option value="${key}" ${intent===key?'selected':''}>${label}</option>`).join('')}</select></label>`;
+    $('#library-unreviewed-note').textContent='“要核实”表示信息或适用性仍需核对，不等于都需要办理。';
+    update();if(mounted)loadSourceHealth();await loadFilters();
   }
   function update(){
     if(!$('#library-results'))return;
-    const sourceCounts=new Map();
-    for(const notice of state.notices)for(const label of noticeOrigins(notice))sourceCounts.set(label,(sourceCounts.get(label)||0)+1);
-    if(source&&!sourceCounts.has(source))source='';
-    const options='<option value="">全部来源</option>'+[...sourceCounts].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'zh-CN')).map(([label,count])=>`<option value="${esc(label)}">${esc(label)} · ${count} 则</option>`).join('');
+    const value=collection.snapshot();
+    const sourceLabels=[...new Set([...(value.facets?.sources||[]),...(source?[source]:[])])];
+    const options='<option value="">全部来源</option>'+sourceLabels.map(label=>`<option value="${esc(label)}">${esc(label)}</option>`).join('');
     if($('#library-source').innerHTML!==options)$('#library-source').innerHTML=options;
     $('#library-source').value=source;$('#library-sort').value=sort;
     $('#library-sort-note').textContent=sort==='priority'?'优先呈现已有事项的变更、有据期限和已核对的相关机会；其余内容仍可完整查找。':sort==='published'?'按原记录发布时间排序；未标注的排在后面，可切换按收录时间查看。':sort==='collected'?'按加入本账号的时间排序。':'按通知记录最近更新的时间排序，不等同于原文发布时间。';
@@ -221,48 +223,49 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     const groupButton=$('[data-library-group]');if(groupButton){groupButton.hidden=!hasGroups;groupButton.setAttribute('aria-pressed',String(grouped));}
 
     const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;
-    const remote=query.trim()&&api,base=remote?(searchQuery===query.trim()?searchResult||[]:[]):state.notices;
-    const items=sortNotices(filterNotices(base.filter(n=>!selected||selected.ids.includes(n.id)),{query:remote?'':query,status,from,to,relevance,intent,source}),sort),units=grouped?groupNotices(items):items.map(n=>({notices:[n]})),pages=Math.max(1,Math.ceil(units.length/15));page=Math.max(1,Math.min(page,pages));
+    const items=value.items,units=grouped?groupNotices(items):items.map(n=>({notices:[n]}));
     document.querySelectorAll('[data-library-intent]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.libraryIntent===intent)));
     if($('#library-intent-filter'))$('#library-intent-filter').value=['current','all'].includes(intent)?'':intent;
     document.querySelectorAll('[data-library-status]').forEach(b=>{const active=b.dataset.libraryStatus===status;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;});moveSelection($('.tabs'));
-    $('#library-count').textContent=searching?'正在查找…':searchError?'查找失败':`${items.length} / ${state.notices.length} 则`;
-    document.querySelectorAll('[data-library-relevance]').forEach(b=>{const value=b.dataset.libraryRelevance;b.setAttribute('aria-pressed',String(value===relevance));const count=value==='all'?state.notices.length:state.notices.filter(n=>n.applicability===value).length;b.querySelector('b').textContent=count;b.hidden=value!=='all'&&!count&&value!==relevance;});
-    $('#library-filter-note').innerHTML=selected||query||status!=='all'||relevance!=='all'||!['current','all'].includes(intent)||source||from||to?`<span>${selected?'数据看板 · '+esc(selected.label)+' · ':''}${source?'来源：'+esc(source)+' · ':''}${intent!=='all'?INBOX_INTENTS[intent]+' · ':''}${from&&to&&from>to?'开始日期晚于结束日期，请调整范围。':'已按当前条件筛选全部通知。'}</span><button class="link-button" type="button" data-library-reset>清空筛选</button>`:'';
-    if(searching||searchError){
+    $('#library-count').textContent=searching?'正在查找…':searchError?'查找失败':`已加载 ${items.length} / ${value.total} 则`;
+    document.querySelectorAll('[data-library-relevance]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.libraryRelevance===relevance));b.querySelector('b').textContent='';b.hidden=false;});
+    $('#library-filter-note').innerHTML=selected||query||status!=='all'||relevance!=='all'||!['current','all'].includes(intent)||source||from||to?`<span>${selected?'数据看板 · '+esc(selected.label)+' · ':''}${source?'来源：'+esc(source)+' · ':''}${intent!=='all'?INBOX_INTENTS[intent]+' · ':''}${from&&to&&from>to?'开始日期晚于结束日期，请调整范围。':'已在全部记录中筛选；下方显示已加载范围。'}</span><button class="link-button" type="button" data-library-reset>清空筛选</button>`:'';
+    if((searching||searchError)&&!items.length){
       const results=$('#library-results');results.classList.remove('card-view');results.dataset.emptyKey='';results.setAttribute('aria-busy',String(searching));
       results.innerHTML=searching?'<p class="notice-search-status" role="status">正在查找通知正文和附件…</p>':`<div class="notice-search-status" role="alert">${esc(searchError)} <button type="button" class="button small" data-library-search-retry>重试</button></div>`;$('#library-pages').innerHTML='';return;
     }
-    $('#library-results').removeAttribute('aria-busy');
+    $('#library-results').setAttribute('aria-busy',String(searching));
     const hasFilter=!!(selected||query.trim()||status!=='all'||relevance!=='all'||intent!=='all'||source||from||to),emptyKey=items.length?'':hasFilter||state.notices.length?'search':'listening',results=$('#library-results');
     results.classList.toggle('card-view',view==='cards'&&items.length>0);
     document.querySelectorAll('[data-library-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.libraryView===view)));
-    if(!emptyKey||results.dataset.emptyKey!==emptyKey)results.innerHTML=items.length?units.slice((page-1)*15,page*15).map(unit=>unit.matter?matterCard(unit):(view==='cards'?noticeCard:n=>`<div class="notice-search-list-row">${noticeRow(n)}<p class="student-list-meta">${esc(sourceMeta(n))}${n.pending_intake_updates?' · 来源有更新':''}${n.source_review_count?' · 材料需核对':''}</p>${query.trim()?`<a class="notice-search-detail" href="#notice/${encodeURIComponent(n.id)}">${snippet(n)}</a>`:''}</div>`)(unit.notices[0])).join(''):empty(hasFilter||state.notices.length?'暂时没有匹配的通知':'先收好第一则通知',hasFilter||state.notices.length?'换一个正文或附件中的词，或清空筛选。':'订阅学校或学院官网，也可以自行保存正文、附件和截图。',hasFilter||state.notices.length?'<button class="button small" type="button" data-library-reset>清空筛选</button>':'<a class="button" href="#sources">选择通知来源</a>',false,hasFilter||state.notices.length?'search':'listening');
+    if(!emptyKey||results.dataset.emptyKey!==emptyKey)results.innerHTML=items.length?units.map(unit=>unit.matter?matterCard(unit):(view==='cards'?noticeCard:n=>`<div class="notice-search-list-row">${noticeRow(n)}<p class="student-list-meta">${esc(sourceMeta(n))}${n.pending_intake_updates?' · 来源有更新':''}${n.source_review_count?' · 材料需核对':''}</p>${query.trim()?`<a class="notice-search-detail" href="#notice/${encodeURIComponent(n.id)}">${snippet(n)}</a>`:''}</div>`)(unit.notices[0])).join(''):empty(hasFilter||state.notices.length?'暂时没有匹配的通知':'先收好第一则通知',hasFilter||state.notices.length?'换一个正文或附件中的词，或清空筛选。':'订阅学校或学院官网，也可以自行保存正文、附件和截图。',hasFilter||state.notices.length?'<button class="button small" type="button" data-library-reset>清空筛选</button>':'<a class="button" href="#sources">选择通知来源</a>',false,hasFilter||state.notices.length?'search':'listening');
     results.dataset.emptyKey=emptyKey;
-    $('#library-pages').innerHTML=pages>1?`${button('上一页',page-1,page===1)}<span>第 ${page} / ${pages} 页 · 每页 15 项</span>${button('下一页',page+1,page===pages)}`:'';
+    $('#library-pages').innerHTML=`${value.notice?`<p class="small" role="status">${esc(value.notice)}</p>`:''}${searchError?`<p class="alert error" role="alert">${esc(searchError)} <button type="button" class="button small" data-library-search-retry>重试读取</button></p>`:''}<span class="small muted">${searching?'正在读取…':`已加载 ${items.length} / ${value.total} 则${grouped&&hasGroups?'；归组仅含已加载通知':''}`}</span>${value.has_more?`<button type="button" class="button small" data-library-more ${searching?'disabled':''}>再加载 ${value.limit} 则</button>`:''}`;
+
   }
   document.addEventListener('input',e=>{if(e.target.id==='library-search'){query=e.target.value;page=1;if(!e.isComposing)queueSearch();}});
   document.addEventListener('compositionend',e=>{if(e.target.id==='library-search'){query=e.target.value;page=1;queueSearch();}});
   document.addEventListener('change',e=>{
-    if(e.target.id==='library-intent-filter'){intent=e.target.value||'current';status='all';relevance='all';state.insightSelection=null;page=1;update();return;}
-    if(['library-from','library-to'].includes(e.target.id)){from=$('#library-from').value;to=$('#library-to').value;page=1;update();}
-    else if(e.target.id==='library-source'){source=e.target.value;page=1;update();}
-    else if(e.target.id==='library-sort'){sort=e.target.value;page=1;update();}
+    if(e.target.id==='library-intent-filter'){intent=e.target.value||'current';status='all';relevance='all';state.insightSelection=null;page=1;queueSearch(true);return;}
+    if(['library-from','library-to'].includes(e.target.id)){from=$('#library-from').value;to=$('#library-to').value;page=1;queueSearch(true);}
+    else if(e.target.id==='library-source'){source=e.target.value;page=1;queueSearch(true);}
+    else if(e.target.id==='library-sort'){sort=e.target.value;page=1;queueSearch(true);}
   });
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-library-refresh-web]')){refreshWebsites();return;}
     if(e.target.closest('[data-library-source-retry]')){loadSourceHealth();return;}
     if(e.target.closest('[data-library-group]')){grouped=!grouped;page=1;update();return;}
-    const intentButton=e.target.closest('[data-library-intent]');if(intentButton){intent=intentButton.dataset.libraryIntent;status='all';relevance='all';state.insightSelection=null;page=1;update();return;}
-    if(e.target.closest('[data-library-search-retry]')){queueSearch(true);return;}
+    const intentButton=e.target.closest('[data-library-intent]');if(intentButton){intent=intentButton.dataset.libraryIntent;status='all';relevance='all';state.insightSelection=null;page=1;queueSearch(true);return;}
+    if(e.target.closest('[data-library-search-retry]')){loadFilters(true);return;}
+    if(e.target.closest('[data-library-more]')){collection.more();return;}
     const display=e.target.closest('[data-library-view]');
     if(display){view=display.dataset.libraryView;update();animateSurface($('#library-results'),0);}
     const tab=e.target.closest('[data-library-status]'),pagination=e.target.closest('[data-library-page]');
-    if(tab){state.insightSelection=null;status=tab.dataset.libraryStatus;page=1;update();}
+    if(tab){state.insightSelection=null;status=tab.dataset.libraryStatus;page=1;queueSearch(true);}
     const chip=e.target.closest('[data-library-relevance]');
-    if(chip){relevance=chip.dataset.libraryRelevance;page=1;update();}
+    if(chip){relevance=chip.dataset.libraryRelevance;page=1;queueSearch(true);}
     if(pagination&&!pagination.disabled){page=Number(pagination.dataset.libraryPage);update();$('#library-results').scrollIntoView({block:'nearest'});}
-    if(e.target.closest('[data-library-reset]')){state.insightSelection=null;clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';update();$('#library-search').focus({preventScroll:true});}
+    if(e.target.closest('[data-library-reset]')){state.insightSelection=null;clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';queueSearch(true);$('#library-search').focus({preventScroll:true});}
   });
-  return {render,resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
+  return {render,reload:()=>loadFilters(true),clear:()=>collection.clear(),snapshot:()=>collection.snapshot(),resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
 }

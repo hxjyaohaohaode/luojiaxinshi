@@ -89,6 +89,9 @@ def personal_storage_bytes(conn, uid):
     if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='task_material_versions'").fetchone():
         from .task_materials import personal_material_bytes
         value += personal_material_bytes(conn, uid)
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='campus_material_refs'").fetchone():
+        from .campus_assets import shared_storage_bytes
+        value += shared_storage_bytes(conn, uid)
     return value
 
 
@@ -97,7 +100,33 @@ def _distinct_round(record, title, published_at):
         old, new = set(re.findall(pattern, record['title'])), set(re.findall(pattern, title))
         if old and new and old != new:
             return True
-    return bool(record['published_at'] and published_at and record['published_at'][:4] != published_at[:4])
+    # A named later round/supplementary intake is a new opportunity even if the
+    # first announcement did not explicitly say "first round". A supplementary
+    # document/correction (补充/更正) is deliberately not an intake round.
+    rounds = r'第[零〇一二两三四五六七八九十百千\d]+(?:批|轮)|补录|补招|追加招募'
+    old, new = set(re.findall(rounds, record['title'])), set(re.findall(rounds, title))
+    if old != new:
+        return True
+    # The named academic/business year takes precedence over the publication
+    # timestamp: a January correction can still concern last December's round.
+    old_years, new_years = set(re.findall(r'(?:19|20)\d{2}',record['title'])), set(re.findall(r'(?:19|20)\d{2}',title))
+    return bool(not (old_years and new_years) and record['published_at'] and published_at and record['published_at'][:4] != published_at[:4])
+
+
+def _previous_round(conn, uid, key, title, published_at, *, separate_rounds=True):
+    """Resolve a reusable URL to this business round, not whichever arrived last.
+
+    Receipt history remains unchanged. A late old-year delivery may update only
+    that old year's record; it cannot replace the latest year's active facts.
+    """
+    receipts = conn.execute('''SELECT r.*,n.title AS notice_title,n.published_at AS notice_published_at
+        FROM notice_ingest_receipts r JOIN notices n ON n.id=r.notice_id AND n.user_id=r.user_id
+        WHERE r.user_id=? AND r.external_key=? ORDER BY r.observed_at DESC,r.created_at DESC,r.rowid DESC''', (uid,key)).fetchall()
+    for receipt in receipts:
+        if not separate_rounds or not _distinct_round(
+                {'title':receipt['notice_title'],'published_at':receipt['notice_published_at']}, title, published_at):
+            return receipt, bool(receipts and receipt['notice_id'] != receipts[0]['notice_id'])
+    return None, bool(receipts)
 
 
 def _find_duplicate(conn, uid, sources, digest, title, published_at):
@@ -148,7 +177,8 @@ def _refresh_origins(conn, uid, nid, sources):
 
 
 def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='', external_key='',
-                  published_at=None, materials_complete=False, allow_duplicate=False, observed_at=None):
+                  published_at=None, materials_complete=False, allow_duplicate=False, observed_at=None,
+                  separate_rounds=True):
     """Call within a write transaction. No network, model, or outgoing message."""
     if not sources:
         raise HTTPException(422, '请提供通知正文、链接原文或附件')
@@ -166,7 +196,7 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
     if not 0 < observation < 100_000_000_000:
         raise HTTPException(422, '来源版本时间无效')
     key = external_key or 'manual:' + ident()
-    previous = conn.execute('SELECT * FROM notice_ingest_receipts WHERE user_id=? AND external_key=? ORDER BY created_at DESC,rowid DESC LIMIT 1', (uid, key)).fetchone()
+    previous, round_separated = _previous_round(conn,uid,key,title,published_at,separate_rounds=separate_rounds)
     prior_record=conn.execute('SELECT title,published_at,source_url,fingerprint FROM notices WHERE id=? AND user_id=?',(previous['notice_id'],uid)).fetchone() if previous else None
     # A publisher can correct only its title/publication metadata. Still retire
     # the old judgement, but do not let a duplicate forwarding channel oscillate
@@ -247,9 +277,9 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
         conn.execute('UPDATE notices SET updated_at=? WHERE id=?', (now, nid))
     audit(conn, uid, nid, 'source_update' if changed else 'create_notice' if created else 'notice_source_received',
           before=dict(prior_record) if prior_record else None,
-          after={'title': title,'published_at':published_at,'source_label': source_label, 'receipt_id': rid,'metadata_changed':metadata_changed})
+          after={'title': title,'published_at':published_at,'source_label': source_label, 'receipt_id': rid,'metadata_changed':metadata_changed,'round_separated':round_separated})
     return {'notice_id': nid, 'receipt_id': rid, 'created': created, 'updated': changed,
-            'duplicate': bool(duplicate),'metadata_changed':metadata_changed}
+            'duplicate': bool(duplicate),'metadata_changed':metadata_changed,'round_separated':round_separated}
 
 
 def intake_state(conn, nid):

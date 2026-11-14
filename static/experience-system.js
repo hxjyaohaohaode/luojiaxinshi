@@ -214,57 +214,103 @@ export function initializeExperience() {
   watch(document.body);
 }
 
-export function createToastPresenter({esc, icon,owner=()=>null}) {
+export function createToastPresenter({esc, icon, owner = () => null}) {
   const host = document.querySelector('#toast');
-  let timer, remaining = 0, duration = 0, started = 0, progress, paused = true, revision=0;
-  function close() {revision++;clearTimeout(timer); progress?.cancel(); paused = true; host.className = ''; host.replaceChildren();}
+  let timer, remaining = 0, duration = 0, started = 0, progress, paused = true, revision = 0, persistent = false;
+  let positionFrame = 0;
+  function position() {
+    positionFrame = 0;
+    if (!host.classList.contains('visible')) return;
+    const viewport = window.visualViewport;
+    const visibleBottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
+    let bottom = Math.max(16, innerHeight - visibleBottom + 12);
+    for (const target of document.querySelectorAll('.mobile-bottom-nav, #chat-composer')) {
+      const rect = target.getBoundingClientRect();
+      if (!rect.width || !rect.height || getComputedStyle(target).visibility === 'hidden' || rect.top >= visibleBottom) continue;
+      bottom = Math.max(bottom, innerHeight - rect.top + 12);
+    }
+    host.style.setProperty('--toast-bottom', `${bottom}px`);
+  }
+  const queuePosition = () => {
+    if (!positionFrame && host.classList.contains('visible')) positionFrame = requestAnimationFrame(position);
+  };
+  function close() {
+    revision++; clearTimeout(timer); progress?.cancel(); progress = null; paused = true;
+    host.className = ''; host.replaceChildren();
+  }
   function pause() {
-    if (paused) return;
-    paused = true;
-    clearTimeout(timer);
+    if (paused || persistent) return;
+    paused = true; clearTimeout(timer);
     remaining = Math.max(0, remaining - (performance.now() - started));
     progress?.pause();
   }
   function resume() {
-    if (!host.classList.contains('visible') || !paused) return;
-    paused = false;
-    clearTimeout(timer); started = performance.now();
-    if(motionAllowed() && progress){progress.currentTime=duration-remaining;progress.play();}else progress?.cancel();
+    if (!host.classList.contains('visible') || !paused || persistent) return;
+    paused = false; clearTimeout(timer); started = performance.now();
+    if (motionAllowed() && progress) { progress.currentTime = duration - remaining; progress.play(); }
+    else progress?.cancel();
     timer = setTimeout(close, remaining);
   }
   host.addEventListener('pointerenter', pause);
-  host.addEventListener('pointerleave', () => {if (!host.contains(document.activeElement)) resume();});
+  host.addEventListener('pointerleave', () => { if (!host.contains(document.activeElement)) resume(); });
   host.addEventListener('focusin', pause);
-  host.addEventListener('focusout', event => {if (!host.contains(event.relatedTarget)) resume();});
-  host.addEventListener('click', event => {if (event.target.closest('[data-toast-close]')) close();});
+  host.addEventListener('focusout', event => { if (!host.contains(event.relatedTarget)) resume(); });
+  host.addEventListener('click', event => { if (event.target.closest('[data-toast-close]')) close(); });
+  host.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); close(); } });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pause(); else if (!host.matches(':hover') && !host.contains(document.activeElement)) resume();
   });
+  window.addEventListener('resize', queuePosition, {passive: true});
+  window.visualViewport?.addEventListener('resize', queuePosition, {passive: true});
+  window.visualViewport?.addEventListener('scroll', queuePosition, {passive: true});
+  new MutationObserver(queuePosition).observe(document.querySelector('#app'), {childList: true, subtree: true});
+  const dialog = document.querySelector('#dialog');
+  dialog?.addEventListener('close', () => { if (host.parentElement === dialog) document.body.append(host); queuePosition(); });
   const present = (message, error = false, options = {}) => {
-    const ticket=++revision,account=owner();
-    clearTimeout(timer); progress?.cancel(); paused = true;
-    remaining = Math.max(error ? 7000 : 4500, Math.min(15000, Number.isFinite(options.duration) ? options.duration : String(message).length * 90));
+    const ticket = ++revision, account = owner();
+    clearTimeout(timer); progress?.cancel(); progress = null; paused = true;
+    // Errors and conflicts remain actionable until dismissed; elapsed time is
+    // only meaningful for a success receipt that needs no further decision.
+    persistent = options.persistent ?? (error || options.duration === 0);
+    remaining = Math.max(4500, Math.min(15000, Number.isFinite(options.duration) ? options.duration : String(message).length * 90));
     duration = remaining;
-    host.innerHTML = `<span class="toast-symbol" aria-hidden="true">${icon(error ? 'info' : 'check')}</span><span class="toast-copy">${esc(message)}</span><button type="button" class="icon-button" aria-label="关闭提示" data-toast-close>${icon('close')}</button><span class="toast-lifetime" aria-hidden="true"></span>`;
+    (dialog?.open ? dialog : document.body).append(host);
+    host.setAttribute('role', error ? 'alert' : 'status');
+    host.setAttribute('aria-live', error ? 'assertive' : 'polite');
+    host.setAttribute('aria-atomic', 'true');
+    host.innerHTML = `<span class="toast-symbol" aria-hidden="true">${icon(error ? 'info' : 'check')}</span><span class="toast-copy">${esc(message)}</span><button type="button" class="icon-button" aria-label="关闭提示" data-toast-close>${icon('close')}</button>${persistent ? '' : '<span class="toast-lifetime" aria-hidden="true"></span>'}`;
     host.className = 'visible' + (error ? ' error' : '');
-    if(options.action){
+    if (options.action) {
       host.classList.add('has-action');
-      const action=document.createElement('button');action.type='button';action.className='button small toast-action';action.textContent=options.action.label||'撤销';host.querySelector('[data-toast-close]').before(action);
-      action.addEventListener('click',async()=>{
-        if(account!==owner()){close();return;}
-        if(action.disabled)return;action.disabled=true;pause();
-        try{await options.action.run();if(ticket===revision&&account===owner())present(options.action.success||'已撤销。');}
-        catch(cause){if(ticket===revision&&account===owner())present(cause.message||'撤销未完成，请稍后重试。',true,{...options,duration:15000});}
+      const action = document.createElement('button');
+      action.type = 'button'; action.className = 'button small toast-action'; action.textContent = options.action.label || '撤销';
+      host.querySelector('[data-toast-close]').before(action);
+      action.addEventListener('click', async () => {
+        if (account !== owner()) { close(); return; }
+        if (action.disabled) return;
+        action.disabled = true; pause();
+        try {
+          await options.action.run();
+          if (ticket === revision && account === owner()) {
+            if (options.action.success === false) close();
+            else present(options.action.success || (action.textContent === '撤销' ? '已撤销。' : '已完成操作。'));
+          }
+        } catch (cause) {
+          if (ticket === revision && account === owner()) present(cause.message || '操作未完成，请重试。', true, options);
+        }
       });
     }
     if (motionAllowed()) {
       animateSurface(host.querySelector('.toast-symbol'), 0);
-      progress = host.querySelector('.toast-lifetime').animate([{transform: 'scaleX(1)'}, {transform: 'scaleX(0)'}], {duration: remaining, fill: 'forwards'});
-      const animation = progress;
-      running.add(animation);animation.finished.catch(() => {}).finally(() => running.delete(animation));
+      if (!persistent) {
+        progress = host.querySelector('.toast-lifetime').animate([{transform: 'scaleX(1)'}, {transform: 'scaleX(0)'}], {duration: remaining, fill: 'forwards'});
+        const animation = progress;
+        running.add(animation); animation.finished.catch(() => {}).finally(() => running.delete(animation));
+      }
     }
-    resume();
+    position(); resume();
     if (document.hidden || host.matches(':hover') || host.contains(document.activeElement)) pause();
   };
+  present.clear = close;
   return present;
 }

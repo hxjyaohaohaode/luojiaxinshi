@@ -1,4 +1,4 @@
-import {taskTimeLabel} from './notice-timing.js';
+import {taskTimeLabel,scheduledEditor,readScheduled,scheduledLabel} from './notice-timing.js';
 import {beginFormFeedback} from './ui-request.js';
 import {workflowStage,stageOptions,handlingEditor,readMilestones,installHandlingEditor,syncHandlingFields} from './workflow-kinds.js';
 import {animateLocalPanel,setDetailsExpanded,finishReferenceMotion} from './reference-interactions.js';
@@ -9,7 +9,7 @@ import {mountHandlingAssistant} from './handling-assistant.js';
 import {handlingGuide} from './handling-route.js';
 export const stageNames={preparing:'准备中',submitted:'已提交，等结果',supplement:'待补件',accepted:'已受理',rejected:'未通过',blocked:'卡住了'};
 export const changeNames={correction:'要求更正',postponement:'提前 / 延期',cancellation:'通知取消',restoration:'恢复办理',supplement:'补充要求',unverified:'待确认的消息'};
-const fieldNames={title:'事项',details:'办理说明',due_date:'截止日期',due_time:'截止时刻',deadline_text:'期限原文',materials:'材料清单',submission:'提交方式',location:'办理地点',contact:'联系方式',status:'事项状态'};
+const fieldNames={scheduled:'活动时间 / 办理时段',title:'事项',details:'办理说明',due_date:'截止日期',due_time:'截止时刻',deadline_text:'期限原文',materials:'材料清单',submission:'提交方式',location:'办理地点',contact:'联系方式',status:'事项状态'};
 const statusNames={pending:'待完成',done:'已完成',cancelled:'已取消'};
 
 export function taskMatchesFilter(task,filter){
@@ -30,7 +30,7 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
   const select=(label,name,options,value)=>`<label class="field">${label}<select name="${name}">${Object.entries(options).map(([v,l])=>`<option value="${v}" ${v===value?'selected':''}>${l}</option>`).join('')}</select></label>`;
   const btn=(text,attrs,primary=false)=>`<button type="button" class="button ${primary?'primary':''}" ${attrs}>${text}</button>`;
   const stamp=n=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short',hour12:false}).format(new Date(n*1000));
-  const format=v=>Array.isArray(v)?v.join('、'):statusNames[v]||v||'没写明';
+  const format=v=>v&&typeof v==='object'&&!Array.isArray(v)?scheduledLabel({scheduled:v}):Array.isArray(v)?v.join('、'):statusNames[v]||v||'没写明';
 
   function badges(t){
     const w=t.workflow;if(!w)return '';
@@ -189,14 +189,22 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     if(kind==='unverified'){root.innerHTML='<p class="small muted">这条消息会先记在这则通知下，原来的期限和待办都不变。确认是真的，再记一条正式变动。</p>';return;}
     root.innerHTML='<h3>选出受影响的事项</h3>'+changeNotice.tasks.map(t=>{
       const saved=values[t.id]||{},eligible=kind==='cancellation'?t.status==='pending':kind==='restoration'?t.status==='cancelled':true;
-      return `<fieldset class="change-target" data-target="${t.id}"><label class="check"><input type="checkbox" name="target" value="${t.id}" ${saved.selected&&eligible?'checked':''} ${eligible?'':'disabled'}><span><strong>${esc(t.data.title)}</strong><small>${statusNames[t.status]} · 原截止 ${esc(t.data.due_date||'没写明')}${eligible?'':' · 这次不适用'}</small></span></label>${!['cancellation','restoration'].includes(kind)?`<div class="target-fields" ${saved.selected?'':'hidden'}><p class="small muted">只勾要改的项，没勾的保持不变。</p>${['due_date','due_time','deadline_text','materials','submission','location','contact','details'].map(k=>`<div class="change-field"><label class="check"><input type="checkbox" name="patch-${k}" ${saved.fields?.[k]?'checked':''}><span>修改${fieldNames[k]}</span></label>${k==='materials'||k==='details'?area(fieldNames[k],k,saved.values?.[k]??(Array.isArray(t.data[k])?t.data[k].join('\n'):t.data[k]||''),2,k==='materials'?'maxlength="10000"':'maxlength="3000"'):field(fieldNames[k],k,saved.values?.[k]??t.data[k]??'',k==='due_date'?'date':k==='due_time'?'time':'text',`maxlength="${k==='submission'?1000:500}"`)}</div>`).join('')}</div>`:''}</fieldset>`;
+      return `<fieldset class="change-target" data-target="${t.id}"><label class="check"><input type="checkbox" name="target" value="${t.id}" ${saved.selected&&eligible?'checked':''} ${eligible?'':'disabled'}><span><strong>${esc(t.data.title)}</strong><small>${statusNames[t.status]} · 原截止 ${esc(t.data.due_date||'没写明')}${eligible?'':' · 这次不适用'}</small></span></label>${!['cancellation','restoration'].includes(kind)?`<div class="target-fields" ${saved.selected?'':'hidden'}><p class="small muted">只勾要改的项，没勾的保持不变。</p>${['due_date','due_time','scheduled','deadline_text','materials','submission','location','contact','details'].map(k=>`<div class="change-field"><label class="check"><input type="checkbox" name="patch-${k}" ${saved.fields?.[k]?'checked':''}><span>修改${fieldNames[k]}</span></label>${k==='scheduled'?scheduledEditor({scheduled:saved.values?.scheduled!==undefined?saved.values.scheduled:t.data.scheduled},field,esc):k==='materials'||k==='details'?area(fieldNames[k],k,saved.values?.[k]??(Array.isArray(t.data[k])?t.data[k].join('\n'):t.data[k]||''),2,k==='materials'?'maxlength="10000"':'maxlength="3000"'):field(fieldNames[k],k,saved.values?.[k]??t.data[k]??'',k==='due_date'?'date':k==='due_time'?'time':'text',`maxlength="${k==='submission'?1000:500}"`)}</div>`).join('')}</div>`:''}</fieldset>`;
     }).join('');
+    syncChangeControls();
     if(!changeNotice.tasks.length)root.insertAdjacentHTML('beforeend','<p class="small muted">这则通知还没有待办。可以先记下这条消息，或者回到通知里加个步骤。</p>');
+  }
+
+  function syncChangeControls(){
+    for(const target of document.querySelectorAll('#change-form [data-target]')){
+      const fields=target.querySelector('[data-scheduled-fields]');
+      if(fields)fields.disabled=!target.querySelector('[name=target]')?.checked||!target.querySelector('[name=patch-scheduled]')?.checked||!target.querySelector('[name=use_scheduled]')?.checked;
+    }
   }
 
   function readChange(){
     const f=$('#change-form');if(!f)return null;const fd=new FormData(f),targets={};
-    for(const el of f.querySelectorAll('[data-target]')){const fields={},values={};for(const i of el.querySelectorAll('[name^="patch-"]')){const k=i.name.slice(6);fields[k]=i.checked;values[k]=el.querySelector(`[name="${k}"]`).value;}targets[el.dataset.target]={selected:el.querySelector('[name=target]').checked,fields,values};}
+    for(const el of f.querySelectorAll('[data-target]')){const fields={},values={};for(const i of el.querySelectorAll('[name^="patch-"]')){const k=i.name.slice(6);fields[k]=i.checked;values[k]=k==='scheduled'?readScheduled(el,{scheduled:changeNotice.tasks.find(t=>t.id===el.dataset.target)?.data.scheduled}):el.querySelector(`[name="${k}"]`).value;}targets[el.dataset.target]={selected:el.querySelector('[name=target]').checked,fields,values};}
     return {kind:fd.get('kind'),text:fd.get('text'),source_label:fd.get('source_label'),source_url:fd.get('source_url'),published_at:fd.get('published_at'),targets};
   }
 
@@ -243,7 +251,7 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
         let cacheWarning='';try{await drafts.retire(key,submittedCache);}catch{cacheWarning='；不过旧草稿没清理掉，可以检查一下暂存内容';}if(request===state.dialogRequest){$('#dialog').close();displayTaskUpdate(result);}toast('进度保存好了'+cacheWarning,!!cacheWarning);
       }else if(form.id==='change-form'){
         const d=changeSnapshot,targets=[];
-        for(const [tid,s] of Object.entries(d.targets)){if(!s.selected)continue;const patch={};for(const [k,on] of Object.entries(s.fields||{}))if(on)patch[k]=k==='materials'?s.values[k].split('\n').map(x=>x.trim()).filter(Boolean):['due_date','due_time'].includes(k)?s.values[k]||null:s.values[k].trim();targets.push({task_id:tid,version:noticeSnapshot.tasks.find(t=>t.id===tid).version,action:d.kind==='cancellation'?'cancel':d.kind==='restoration'?'restore':'revise',patch});}
+        for(const [tid,s] of Object.entries(d.targets)){if(!s.selected)continue;const patch={};for(const [k,on] of Object.entries(s.fields||{}))if(on)patch[k]=k==='scheduled'?s.values[k]:k==='materials'?s.values[k].split('\n').map(x=>x.trim()).filter(Boolean):['due_date','due_time'].includes(k)?s.values[k]||null:s.values[k].trim();targets.push({task_id:tid,version:noticeSnapshot.tasks.find(t=>t.id===tid).version,action:d.kind==='cancellation'?'cancel':d.kind==='restoration'?'restore':'revise',patch});}
         const n=noticeSnapshot,c=await api(`/notices/${n.id}/changes`,{method:'POST',json:{...d,published_at:toTime(d.published_at),targets,notice_version:n.version}});
         let cacheWarning='';try{await drafts.retire(key,submittedCache);}catch{cacheWarning='；不过旧草稿没清理掉，可以检查一下暂存内容';}if(request===state.dialogRequest){form.remove();if(routeId===state.renderId)await route();await openChange(n.id,c.id);}toast('变动记下了，待办还没改'+cacheWarning,!!cacheWarning);
       }else if(form.id==='change-decision-form'){
@@ -260,7 +268,7 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
 
   document.addEventListener('submit',e=>{if(['workflow','change','decision','calendar-check'].includes(e.target.dataset.workspaceForm)){e.preventDefault();submit(e.target,e.submitter?.name==='complete'?'complete':'apply');}});
   document.addEventListener('input',e=>{if(e.target.matches('[data-dependency-search]'))for(const label of document.querySelectorAll('[data-dependency-label]'))label.hidden=!label.dataset.dependencyLabel.includes(e.target.value.toLowerCase());if(e.target.closest('#workflow-form,#change-form'))persist();});
-  document.addEventListener('change',e=>{const form=e.target.closest('#workflow-form,#change-form');if(!form)return;if(e.target.name==='action_kind')$('[data-optional-choice]').hidden=e.target.value!=='optional';if(form.id==='change-form'&&e.target.name==='kind')renderTargets(e.target.value);if(e.target.name==='target'){const fields=e.target.closest('[data-target]').querySelector('.target-fields');if(fields)fields.hidden=!e.target.checked;}persist();});
+  document.addEventListener('change',e=>{const form=e.target.closest('#workflow-form,#change-form');if(!form)return;if(e.target.name==='action_kind')$('[data-optional-choice]').hidden=e.target.value!=='optional';if(form.id==='change-form'&&e.target.name==='kind')renderTargets(e.target.value);if(e.target.name==='target'){const fields=e.target.closest('[data-target]').querySelector('.target-fields');if(fields)fields.hidden=!e.target.checked;}if(form.id==='change-form')syncChangeControls();persist();});
   document.addEventListener('click',async e=>{
     const b=e.target.closest('[data-workflow-task],[data-change-new],[data-change-open],[data-calendar-check],[data-workflow-export],[data-dismiss-change],[data-workflow-focus]');if(!b||b.disabled)return;
     if(b.dataset.workflowFocus){

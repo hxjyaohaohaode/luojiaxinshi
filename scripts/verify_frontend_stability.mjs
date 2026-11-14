@@ -1,3 +1,6 @@
+import {waitForReaderStable} from './reader_stability_checks.mjs';
+import {browserExecutable} from './browser-runtime.mjs';
+import {openReplyMenu} from './reply_menu_checks.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Regression cases for the five v9 browser comments. Mutations use a synthetic service only. */
 import fs from 'node:fs/promises';
@@ -34,8 +37,8 @@ async function delayedReadingAnchor(browser){
  }finally{await probe.close();}
 }
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
- const settleReader=async()=>{await page.evaluate(async()=>{window.__chatViewportHeld=(await import('/static/chat-viewport.js')).chatViewportHeld;});await page.waitForFunction(()=>!window.__chatViewportHeld(document.querySelector('#chat-thread')));};
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
+ const settleReader=()=>waitForReaderStable(page);
  page.on('pageerror',e=>report.errors.push({engine,error:e.message}));
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(e){report.checks.push({engine,name,ok:false,error:e.message});console.log('FAIL',engine,name,e.message.slice(0,350));await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  const nav=async route=>{await page.goto(origin+'/#'+route);await page.locator('#content:not([inert])').waitFor();};
@@ -85,8 +88,10 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await page.route('**/api/speech/config',route=>route.fulfill({json:{configured:true,models:{default:'synthetic-voice'},voice:'synthetic'}}));
   await page.route('**/api/speech/synthesize',async route=>{synthesis++;await new Promise(r=>setTimeout(r,180));await route.fulfill({contentType:'audio/wav',body:wave});});
   await check('repeated play pause close reopen reuses generated audio',async()=>{
-   const speak=page.locator('[data-chat-action=speak]').last();await speak.click();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
-   await speak.click();await speak.click();assert.equal(synthesis,1);await page.locator('.reply-audio [aria-label="关闭播放器"]').click();await speak.click();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
+   const reply=page.locator('.message-assistant').last(),speak=reply.locator('[data-chat-action=speak]');
+   const useSpeech=async()=>{await openReplyMenu(reply);await speak.click();};
+   await useSpeech();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
+   await useSpeech();await useSpeech();assert.equal(synthesis,1);await page.locator('.reply-audio [aria-label="关闭播放器"]').click();await useSpeech();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
    assert.ok((await page.locator('.reply-audio').boundingBox()).height<70);
   });
   for(const width of [1413,1024,1651])await check(`source reflow keeps nodes font draft audio and visible content ${width}`,async()=>{
@@ -102,7 +107,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   });
   await page.locator('.reply-audio [aria-label="关闭播放器"]').click();await page.screenshot({path:path.join(out,engine+'-chat.png')});
   await check('used memory appears as a small accessible SVG',async()=>{
-   const result=await page.evaluate(async()=>{const {ConversationView}=await import('/static/genui/chat-presenter.js'),host=document.createElement('div');document.body.append(host);const view=new ConversationView(host,{feature:{enabled:false},sources:[]});view.draw([{id:'synthetic-memory-receipt',conversation_id:'test',role:'assistant',status:'complete',content:'合成测试',grounding:{memory_operations:[{status:'used',id:'m1'}]}}]);const icon=host.querySelector('.memory-use-icon'),rect=icon?.getBoundingClientRect(),answer={svg:icon?.querySelectorAll('svg').length,label:icon?.getAttribute('aria-label'),w:rect?.width,h:rect?.height};view.dispose();host.remove();return answer;});assert.equal(result.svg,1);assert.ok(result.label.includes('1 条记忆'));assert.ok(result.w<=32&&result.h<=32,JSON.stringify(result));
+   const result=await page.evaluate(async()=>{const {ConversationView}=await import('/static/genui/chat-presenter.js'),host=document.createElement('div');document.body.append(host);const view=new ConversationView(host,{feature:{enabled:false},sources:[]});view.draw([{id:'synthetic-memory-receipt',conversation_id:'test',role:'assistant',status:'complete',content:'合成测试',grounding:{memory_operations:[{status:'used',id:'m1'}]}}]);const icon=host.querySelector('.memory-use-icon'),rect=icon?.getBoundingClientRect(),glyph=icon?.querySelector('svg')?.getBoundingClientRect(),answer={svg:icon?.querySelectorAll('svg').length,label:icon?.getAttribute('aria-label'),w:rect?.width,h:rect?.height,glyphWidth:glyph?.width,glyphHeight:glyph?.height};view.dispose();host.remove();return answer;});assert.equal(result.svg,1);assert.ok(result.label.includes('1 条记忆'));assert.ok(result.glyphWidth>0&&result.glyphHeight>0&&result.glyphWidth<=32&&result.glyphHeight<=32,JSON.stringify(result));assert.ok(result.w>=43.9&&result.h>=43.9,JSON.stringify(result));
   });
  }catch(error){report.checks.push({engine,name:'fixture or critical flow',ok:false,error:error.message.slice(0,900)});console.log('FAIL',engine,error.message.slice(0,300));}finally{await browser.close();}
 }

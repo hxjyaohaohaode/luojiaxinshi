@@ -8,7 +8,8 @@ def seed(client):
         'version':n['version'],'reviewed':True,
         'tasks':[task(n,title=f'看板事项 {i}') for i in range(3)]})
     assert response.status_code==200,response.text
-    return client.get('/api/tasks').json()
+    # Read the same bounded projection that supplies the visible board.
+    return client.get('/api/tasks/page',params={'status':'all'}).json()['items']
 
 
 def body(record,lane='action',**kwargs):
@@ -29,6 +30,25 @@ def test_board_order_survives_refresh_without_changing_requirements(env):
     assert next(t for t in records if t['id']==d['id'])['data']==d['data']
     # Original task version / calendar export is unaffected by a priority-only move.
     assert [t['version'] for t in ordered]==[1,1,1]
+
+
+def test_first_move_preserves_paged_order_when_legacy_update_order_differs(env):
+    c=account(env);seed(c)
+    before=c.get('/api/tasks/page',params={'status':'all'}).json()['items']
+    a,b,d=before
+    # Force the full legacy list into the reverse of the visible page without
+    # changing the created_at/id order or the original requirements.
+    with env[0].state.db.connect(write=True) as conn:
+        base=max(item['updated_at'] for item in before)+1
+        for index,item in enumerate(before):
+            conn.execute('UPDATE tasks SET updated_at=? WHERE id=?',(base+index,item['id']))
+    assert [t['id'] for t in c.get('/api/tasks').json()]==[d['id'],b['id'],a['id']]
+    result=move(c,d,before_id=a['id'])
+    assert result.status_code==200,result.text
+    persisted=c.get('/api/tasks/page',params={'status':'all'}).json()['items']
+    ordered=sorted(persisted,key=lambda t:t['workflow']['data']['board_order'])
+    assert [t['id'] for t in ordered]==[d['id'],a['id'],b['id']]
+    assert {t['id']:t['data'] for t in persisted}=={t['id']:t['data'] for t in before}
 
 
 def test_move_completion_and_undo_are_atomic_and_do_not_claim_submission(env):

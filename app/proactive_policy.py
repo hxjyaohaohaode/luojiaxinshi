@@ -134,7 +134,8 @@ def delivered_refs(conn,table,uid,device_id=None):
     for row in conn.execute('SELECT payload FROM '+table+' WHERE user_id=? AND state IN '+states+scope,params):
         try:value=json.loads(row['payload'])
         except (ValueError,TypeError):continue
-        if isinstance(value,dict):found.update(x for x in value.get('receipt_refs',[]) if isinstance(x,str))
+        if isinstance(value,dict):
+            found.update(x for name in ('receipt_refs','event_refs') for x in value.get(name,[]) if isinstance(x,str))
     return found
 
 def receipt_payload(payload,notices):

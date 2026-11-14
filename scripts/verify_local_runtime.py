@@ -6,8 +6,11 @@ The JSON report is synthetic engineering evidence, not a user study or a capacit
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
+import argparse
 import json
+import math
 import os
+import platform
 import re
 from pathlib import Path
 import secrets
@@ -30,8 +33,8 @@ from app.models import TaskData
 from app.security import new_invite
 from app.console import configure_text_output
 
-USERS=5
-NOTICES_PER_USER=20
+DEFAULT_USERS=5
+DEFAULT_NOTICES_PER_USER=20
 
 
 def cleanup_fixture(scratch, artifact_root):
@@ -52,6 +55,13 @@ def cleanup_fixture(scratch, artifact_root):
 
 def main():
     configure_text_output()
+    from audit_full_suite import fingerprint
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--users',type=int,default=DEFAULT_USERS,choices=range(2,16))
+    parser.add_argument('--notices-per-user',type=int,default=DEFAULT_NOTICES_PER_USER,choices=range(1,51))
+    parser.add_argument('--output',default='artifacts/runtime-acceptance.json')
+    args=parser.parse_args();users=args.users;notices_per_user=args.notices_per_user
+    implementation_before=fingerprint()
     artifact_root=(ROOT/'artifacts').resolve()
     artifact_root.mkdir(exist_ok=True)
     scratch=tempfile.TemporaryDirectory(prefix='runtime-check-',dir=artifact_root)
@@ -70,9 +80,9 @@ def main():
     from synthetic_auth import verified_registration
     fixture_app=create_app(Settings(temporary/'data',origin=origin,ai_api_key=''))
     with TestClient(fixture_app,base_url=origin,headers={'Origin':origin,'X-Requested-With':'campus-notice'}) as fixture:
-        for index in range(USERS):
+        for index in range(users):
             verified_registration(fixture,{'username':f'runtime_{index}','display_name':f'并发测试账号 {index}',
-                'password':password,'accepted_terms':True})
+                'password':password,'accepted_terms':True,**({'invite':new_invite(database,'admin')} if index==0 else {})})
     clients=[]
     metrics=[]
     operation_metrics={}
@@ -147,6 +157,11 @@ def main():
         assert data['ai']['configured'] is False
         client.headers['X-CSRF-Token']=data['csrf']
 
+    def task_snapshot(rows):
+        # Stable business identity and content, excluding derived clock labels
+        # and the export marker changed by the calendar check itself.
+        return {row['id']:{key:row[key] for key in ('notice_id','status','version','data')} for row in rows}
+
     def user_flow(index):
         client=clients[index]
         request(client,'POST','/api/auth/login',json={'username':f'runtime_{index}','password':password})
@@ -154,7 +169,8 @@ def main():
         day=(datetime.now(timezone.utc)+timedelta(days=7)).date().isoformat()
         first_notice=None
         first_task=None
-        for number in range(NOTICES_PER_USER):
+        confirmed_task_ids=set()
+        for number in range(notices_per_user):
             marker=f'【虚构并发测试 {index}-{number}】'
             notice=request(client,'POST','/api/notices',data={
                 'title':marker+'测试通知','body':marker+f' 请本人于 {day} 17:00 前核对申请材料。',
@@ -166,6 +182,7 @@ def main():
                    for label in ['核对材料','保存回执']]
             confirmation={'version':draft['version'],'reviewed':True,'tasks':tasks}
             saved=request(client,'POST',f'/api/notices/{nid}/confirm',json=confirmation).json()
+            confirmed_task_ids.update(saved['task_ids'])
             if number==0:
                 replay=request(client,'POST',f'/api/notices/{nid}/confirm',json=confirmation).json()
                 assert replay['replayed'] and replay['task_ids']==saved['task_ids']
@@ -181,40 +198,50 @@ def main():
             assert len(current)==2*(number+1)
             assert all(f'【虚构并发测试 {index}-' in task['data']['title'] for task in current)
         notices=request(client,'GET','/api/notices').json()
-        assert len(notices)==NOTICES_PER_USER
+        assert len(notices)==notices_per_user
         pending=[task for task in current if task['status']=='pending']
         calendar=request(client,'POST','/api/calendar/export',json={
             'task_ids':[task['id'] for task in pending],
             'versions':{task['id']:task['version'] for task in pending}})
-        assert len(Calendar.from_ical(calendar.content).walk('VEVENT'))==NOTICES_PER_USER
-        return first_notice,first_task,tasks[0]
+        assert len(Calendar.from_ical(calendar.content).walk('VEVENT'))==notices_per_user
+        snapshot=task_snapshot(current)
+        assert set(snapshot)==confirmed_task_ids
+        return first_notice,first_task,tasks[0],snapshot
 
     try:
         start(temporary/'data')
         clients=[httpx.Client(base_url=origin,timeout=20,trust_env=False,
                              headers={'Origin':origin,'X-Requested-With':'campus-notice'})
-                 for _ in range(USERS)]
-        print('Running five isolated users against the real HTTP service...',flush=True)
+                 for _ in range(users)]
+        print(f'Running {users} isolated users against the real HTTP service...',flush=True)
         workload_started=time.perf_counter()
-        with ThreadPoolExecutor(max_workers=USERS) as pool:
-            results=list(pool.map(user_flow,range(USERS)))
+        with ThreadPoolExecutor(max_workers=users) as pool:
+            results=list(pool.map(user_flow,range(users)))
         workload_seconds=time.perf_counter()-workload_started
         for index,client in enumerate(clients):
-            other_notice,other_task,task_data=results[(index+1)%USERS]
+            other_notice,other_task,task_data,_=results[(index+1)%users]
             request(client,'GET','/api/notices/'+other_notice,expected=404)
             request(client,'PUT','/api/tasks/'+other_task,expected=404,
                     json={'version':2,'data':task_data,'status':'done','reason':'隔离性验证'})
         print('Concurrency, idempotency, stale writes, calendar exports and isolation passed.',flush=True)
+        lock_timings=request(clients[0],'GET','/api/admin/readiness').json()['database_locks']
+        assert lock_timings['observed'] and lock_timings['failed_acquisitions']==0
         backup=temporary/'snapshot.sqlite3'
-        database.backup(backup)
+        backup_started=time.perf_counter();database.backup(backup)
+        backup_seconds=time.perf_counter()-backup_started
+        restart_started=time.perf_counter()
         stop()
         start(temporary/'data')
-        for client in clients:
-            assert len(request(client,'GET','/api/tasks').json())==NOTICES_PER_USER*2
-        print('Forced process stop and restart preserved all confirmed tasks.',flush=True)
+        for index,client in enumerate(clients):
+            saved=request(client,'GET','/api/tasks').json()
+            assert len(saved)==notices_per_user*2
+            assert task_snapshot(saved)==results[index][3]
+        restart_verified_seconds=time.perf_counter()-restart_started
+        print('Process stop and restart preserved all confirmed task identities and business content.',flush=True)
         stop()
         recovered=temporary/'recovered'/'campus.sqlite3'
-        restore_database(backup,recovered)
+        restore_started=time.perf_counter();restore_database(backup,recovered)
+        restore_file_seconds=time.perf_counter()-restore_started
         with closing(sqlite3.connect(recovered)) as checked:
             assert checked.execute('PRAGMA integrity_check').fetchone()[0]=='ok'
             assert checked.execute('SELECT COUNT(*) FROM sessions').fetchone()[0]==0
@@ -225,26 +252,46 @@ def main():
             request(client,'POST','/api/auth/login',json={'username':f'runtime_{index}','password':password})
             session(client)
             saved=request(client,'GET','/api/tasks').json()
-            assert len(saved)==NOTICES_PER_USER*2
-            assert sum(task['status']=='done' for task in saved)==NOTICES_PER_USER
-            assert request(client,'GET','/api/edit-cache/new-notice').json()['revision']==NOTICES_PER_USER
+            assert len(saved)==notices_per_user*2
+            assert task_snapshot(saved)==results[index][3]
+            assert sum(task['status']=='done' for task in saved)==notices_per_user
+            assert request(client,'GET','/api/edit-cache/new-notice').json()['revision']==notices_per_user
+        restore_verified_seconds=time.perf_counter()-restore_started
         timings=sorted(elapsed for elapsed,_ in metrics)
+        def rank(values,p):return values[max(0,math.ceil(len(values)*p)-1)]
         status_counts={str(code):sum(status==code for _,status in metrics) for code in sorted({code for _,code in metrics})}
         operations=[]
         for (method,route,status),samples in sorted(operation_metrics.items()):
             values=sorted(samples)
             operations.append({'method':method,'route':route,'status':status,'samples':len(values),
-                               'p50_ms':round(values[len(values)//2],1),
-                               'p95_ms':round(values[min(len(values)-1,int(.95*len(values)))],1),
+                               'p50_ms':round(rank(values,.5),1),
+                               'p95_ms':round(rank(values,.95),1),
                                'max_ms':round(values[-1],1)})
+        crud=sorted(value for (method,route,status),samples in operation_metrics.items()
+                    if 200<=status<300 and route.startswith(('/api/notices','/api/tasks','/api/edit-cache'))
+                    for value in samples)
         report={'verified_at':datetime.now(timezone.utc).isoformat(),'result':'passed',
-                'synthetic_test':True,'live_model_calls':0,'concurrent_users':USERS,
-                'notices_saved':USERS*NOTICES_PER_USER,'tasks_saved':USERS*NOTICES_PER_USER*2,
+                'environment':{'python':platform.python_version(),'platform':platform.platform()},
+                'implementation_sha256':implementation_before,
+                'synthetic_test':True,'live_model_calls':0,'concurrent_users':users,
+                'notices_saved':users*notices_per_user,'tasks_saved':users*notices_per_user*2,
                 'http_requests':len(metrics),'response_status_counts':status_counts,
-                'operations':operations,
+                'operations':operations,'database_locks_before_restart':lock_timings,
+                'percentile_method':'nearest_rank',
+                'ordinary_crud_latency_ms':{'samples':len(crud),'p50':round(rank(crud,.5),1),'p95':round(rank(crud,.95),1),'max':round(crud[-1],1)},
+                'engineering_targets':{
+                    'scope':'Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.',
+                    'ordinary_crud_p95':{'limit_ms_exclusive':1000,'passed':rank(crud,.95)<1000},
+                    'write_total_wait_p95':{'limit_ms_exclusive':100,'passed':lock_timings['wait']['p95_ms']<100},
+                    'write_acquisitions':{'allowed_failures':0,'passed':lock_timings['failed_acquisitions']==0}},
+                'recovery_observations':{'backup_seconds':round(backup_seconds,3),'restart_verified_seconds':round(restart_verified_seconds,3),
+                    'restore_file_seconds':round(restore_file_seconds,3),'restore_verified_seconds':round(restore_verified_seconds,3),
+                    'confirmed_tasks_lost_in_fixture':0,'task_identity_and_business_content_equal':True,
+                    'process_stop_method':'owned process tree taskkill /T /F' if os.name=='nt' else 'owned process SIGTERM; SIGKILL only if stop timeout',
+                    'snapshot_scope':'All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation.'},
                 'workload_seconds':round(workload_seconds,2),
-                'request_latency_ms':{'median':round(timings[len(timings)//2],1),
-                                      'p95':round(timings[int((len(timings)-1)*.95)],1),
+                'request_latency_ms':{'median':round(rank(timings,.5),1),
+                                      'p95':round(rank(timings,.95),1),
                                       'max':round(timings[-1],1)},
                 'restart_preserved_tasks':True,'restore_preserved_tasks_and_edit_caches':True,
                 'restored_old_sessions_rejected':True,'cross_account_access_rejected':True,
@@ -257,8 +304,14 @@ def main():
             client.close()
         cleanup_fixture(scratch,artifact_root)
     report['elapsed_seconds']=round(time.perf_counter()-started,2)
-    (artifact_root/'runtime-acceptance.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    report['implementation_unchanged']=fingerprint()==implementation_before
+    if not report['implementation_unchanged']:
+        report['result']='invalidated_code_changed_during_run'
+    report_path=(ROOT/args.output).resolve();report_path.parent.mkdir(parents=True,exist_ok=True)
+    report_path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report,ensure_ascii=False),flush=True)
+    if not report['implementation_unchanged']:
+        raise SystemExit(1)
 
 
 if __name__=='__main__':

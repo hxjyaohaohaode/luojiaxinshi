@@ -105,12 +105,21 @@ def _stamp(value):
         return None
 
 
-def candidates(conn, uid, now):
+def candidates(conn, uid, now, *, include_suppressed=False):
     """Current truth, recomputed before sending; stored jobs are never the truth."""
     from .proactive_policy import preferences,assess,delivery_slot
     from .proactive_feedback import saved,apply as apply_feedback
     from .workflow import enrich_tasks
     from .insights import deadline_of
+    from .notification_routing import notice_modes,receipt_decision
+    saved_profile=conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0]
+    notification_pref=preferences(saved_profile)
+    routes=notice_modes(conn,uid,notification_pref)
+    from .campus_policy import suppress_external_notice
+    suppressed_notices={}
+    def inactive_notice(nid):
+        if nid not in suppressed_notices:suppressed_notices[nid]=suppress_external_notice(conn,nid,now)
+        return suppressed_notices[nid]
     tasks = []
     for row in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=?', (uid,)):
         item = dict(row)
@@ -121,19 +130,25 @@ def candidates(conn, uid, now):
     change_versions = {row['id']: dict(row) for row in conn.execute(
         "SELECT id,created_at,updated_at,version FROM notice_changes WHERE user_id=? AND state='pending'", (uid,))}
 
-    def add(key, at, title, body, url, tag, created_at=0):
+    def add(key, at, title, body, url, tag, created_at=0, *, expires_at=None):
         if at is None or at < now - 86400:
             return
         items[key] = {'due_at': int(at), 'created_at': created_at,
+                      'expires_at': int(expires_at if expires_at is not None else at + 86400),
                       'payload': {'user_id': uid, 'title': title[:90], 'body': body[:200], 'url': url, 'tag': tag}}
+        if url.startswith('/#notice/'):
+            nid=url.removeprefix('/#notice/')
+            items[key]['notice_id']=nid
+            if nid in routes:items[key]['route_mode']=routes[nid]
+            if inactive_notice(nid):items[key]['suppression_reason']='发布方标为历史参考或已超过其显式有效期；站内原记录保留'
 
-    def deadline_reminders(plans, title, body, url, tag):
+    def deadline_reminders(plans, title, body, url, tag, expires_at):
         # After a restart or a newly enabled device, collapse superseded
         # offsets into the most recent due reminder instead of ringing twice.
         latest_due = max((at for _, at in plans if at <= now), default=None)
         for key, at in plans:
             if at > now or at == latest_due:
-                add(key, at, title, body, url, tag)
+                add(key, at, title, body, url, tag, expires_at=expires_at)
 
     for task in tasks:
         data, workflow = task['data'], task['workflow']['data']
@@ -162,13 +177,13 @@ def candidates(conn, uid, now):
                 for days in (1, 0):
                     moment = int((morning - timedelta(days=days)).timestamp())
                     plans.append((f'deadline-date:{tid}:{days}:{moment}', moment))
-                deadline_reminders(plans, title, f'正式截止日期：{deadline:%m月%d日}；原通知未写明时刻，请查看办理要求', url, 'task:' + tid)
+                deadline_reminders(plans, title, f'正式截止日期：{deadline:%m月%d日}；原通知未写明时刻，请查看办理要求', url, 'task:' + tid, deadline.replace(hour=23,minute=59,second=59).timestamp()+1)
             elif not all_day and deadline.timestamp() > now:
                 plans = []
                 for seconds in (86400, 3600):
                     moment = int(deadline.timestamp()) - seconds
                     plans.append((f'deadline:{tid}:{seconds}:{moment}', moment))
-                deadline_reminders(plans, title, f'正式截止：{deadline:%m月%d日 %H:%M}，请查看当前办理状态', url, 'task:' + tid)
+                deadline_reminders(plans, title, f'正式截止：{deadline:%m月%d日 %H:%M}，请查看当前办理状态', url, 'task:' + tid, deadline.timestamp())
         for kind, at, body in (('reminder', _stamp(data.get('reminder_at')), '到了你设置的提醒时间'),
                                ('followup', _stamp(workflow.get('followup_at')), '到了跟进时间，请查看办理进展')):
             if kind != 'reminder' or not any(issue.get('blocking') for issue in task.get('schedule_issues', [])):
@@ -177,14 +192,14 @@ def candidates(conn, uid, now):
         if slot and slot.get('confirmed') and slot.get('start_time'):
             at = _stamp(slot['start_date'] + 'T' + slot['start_time'] + '+08:00')
             if at and at > now:
-                add(f'event:{tid}:{at}', at - 900, title, f"活动开始：{slot['start_date']} {slot['start_time']}，请查看地点和准备事项", url, 'task:' + tid)
+                add(f'event:{tid}:{at}', at - 900, title, f"活动开始：{slot['start_date']} {slot['start_time']}，请查看地点和准备事项", url, 'task:' + tid, expires_at=at)
     from .notice_automation import profile_hash
     from .qq_group_intake import quiet_notices
     quiet = quiet_notices(conn,uid)
-    saved_profile=conn.execute('SELECT profile FROM users WHERE id=?',(uid,)).fetchone()[0]
     user_profile=profile_hash(saved_profile);notification_pref=preferences(saved_profile)
     chosen={t['notice_id'] for t in tasks if t['data'].get('scope')=='personal' and t['status']!='cancelled' and not t.get('action_excluded')}
     for update in conn.execute("SELECT u.id,u.created_at,n.id AS notice_id,n.title FROM notice_ingest_updates u JOIN notices n ON n.id=u.notice_id WHERE n.user_id=? AND u.state='pending'", (uid,)):
+        if inactive_notice(update['notice_id']):continue
         if update['notice_id'] in chosen:
             add('intake-change:' + update['id'], update['created_at'], update['title'], '来源内容已更新，已有办理进度已保留，请核对变化', '/#notice/' + update['notice_id'], 'notice:' + update['notice_id'])
             continue
@@ -198,6 +213,7 @@ def candidates(conn, uid, now):
         if decision['feedback']['mode']!='include':
             if not current or decision['quality']!='passed' or not decision['recommended']:continue
             if decision['relevance']!='matches_known' and not decision['interest_match'] and notification_pref.mode!='all':continue
+        decision=receipt_decision(decision,notification_pref,routes.get(notice['id']))
         slot=delivery_slot(max(update['created_at'],notice['updated_at']),decision,notification_pref)
         if slot:
             add('intake-change:' + update['id'],slot[1],update['title'],'你关注的信息有可核对的新内容，可以查看是否需要加入待办','/#notice/'+update['notice_id'],'notice:'+update['notice_id'],update['created_at'])
@@ -212,6 +228,7 @@ def candidates(conn, uid, now):
         AND NOT EXISTS(SELECT 1 FROM notice_delivery_suppressions s WHERE s.notice_id=n.id)
         AND r.external_key NOT LIKE 'manual:%' AND r.external_key NOT LIKE 'conversation:%'""", (uid, now - 3*86400))
     for row in rows:
+        if inactive_notice(row['id']):continue
         if row['id'] in quiet:continue
         check = conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?', (row['id'],)).fetchone()
         current_draft = (row['status'] == 'draft' and row['draft_version'] == row['version'] and check
@@ -233,6 +250,7 @@ def candidates(conn, uid, now):
                 continue
         assessed=current_draft and decision['quality']=='passed'
         decision_at=max(row['created_at'],row['updated_at']) if assessed else row['created_at']
+        decision=receipt_decision(decision,notification_pref,routes.get(row['id']))
         slot=delivery_slot(decision_at,decision,notification_pref)
         if slot is None:continue
         bucket,due=slot
@@ -249,7 +267,13 @@ def candidates(conn, uid, now):
             items[key]['received_items']=notices
             items[key]['payload']['priority']=min((n['priority'] for n in notices),default='R')
             items[key]['payload']['policy_version']='proactive-policy-v1'
-    return items
+    from .notification_events import extra_candidates, apply_policy
+    items.update(extra_candidates(conn, uid, now))
+    for event in items.values():
+        if event.get('notice_id') in routes:event['route_mode']=routes[event['notice_id']]
+        if event.get('notice_id') and inactive_notice(event['notice_id']):
+            event['suppression_reason']='发布方标为历史参考或已超过其显式有效期；站内原记录保留'
+    return apply_policy(items, notification_pref, now, include_suppressed=include_suppressed)
 
 
 def receipt_summary(notices):
@@ -266,8 +290,11 @@ def reconcile(conn, uid, now):
     device_keys = {device['id']: set() for device in devices}
     for device in devices:
         seen=delivered_refs(conn,'push_outbox',uid,device['id'])
-        for key, value in current.items():
+        from .notification_events import channel_events
+        for key, value in channel_events(current,seen,device['created_at']).items():
             payload = value['payload']
+            if value.get('prospective') and value['due_at'] < device['created_at']:
+                continue
             if key.startswith('received:'):
                 received = [item for item in value['received_items'] if item['created_at'] >= device['created_at'] and item.get('ref') not in seen]
                 if not received:
@@ -324,10 +351,12 @@ def tick(db, now=None, settings=None):
     now = clock()
     with db.connect(write=True) as conn:
         users = [r[0] for r in conn.execute('SELECT DISTINCT user_id FROM push_devices WHERE enabled=1')]
-        for uid in users:
-            reconcile(conn, uid, now)
         conn.execute("UPDATE push_outbox SET state='pending' WHERE state='leased' AND lease_until<?", (now,))
         conn.execute("DELETE FROM push_outbox WHERE state IN ('accepted','cancelled','failed') AND finished_at<?", (now - 30 * 86400,))
+    # One account's recomputation must not hold the write lock for every user.
+    from .notification_coordination import coordinate
+    for uid in users:
+        coordinate(db,uid,'push',clock(),reconcile)
     for _ in range(12):
         now = clock()
         with db.connect(write=True) as conn:
@@ -445,7 +474,9 @@ def install(app, db, user):
                 ORDER BY COALESCE(finished_at,lease_until-60) DESC,rowid DESC LIMIT 1""", (current['id'],)).fetchone()
             failures = conn.execute("SELECT COUNT(*) FROM push_outbox WHERE user_id=? AND state='failed'", (current['id'],)).fetchone()[0]
             pending = conn.execute("SELECT COUNT(*) FROM push_outbox WHERE user_id=? AND state IN ('pending','leased')", (current['id'],)).fetchone()[0]
-        return {'enabled': any(d['enabled'] for d in devices), 'devices': devices, 'last_delivery': dict(last) if last else None, 'failures': failures, 'pending_count': pending}
+        return {'enabled': any(d['enabled'] for d in devices), 'devices': devices, 'device_policy':'all_enabled_devices',
+                'device_policy_note':'按事件发送到本人全部已启用设备，每台设备单独去重；关闭或退出本机不会替其他设备撤销授权。',
+                'last_delivery': dict(last) if last else None, 'failures': failures, 'pending_count': pending}
 
     @app.post('/api/push/test', status_code=202)
     def test_delivery(payload: Endpoint, current=Depends(user)):

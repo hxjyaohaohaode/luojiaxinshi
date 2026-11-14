@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /** Independent browser contexts, real storage and routes, captured synthetic SMS. */
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -7,15 +8,15 @@ import {randomUUID} from 'node:crypto';
 
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/pilot-workspace-browser');
-const report={fixture:'Independent desktop/mobile browser contexts, real application APIs, local SMS capture',checks:[],errors:[],timings:[]};
+const report={fixture:'Independent desktop/mobile browser contexts, real application APIs, local SMS capture',network_fixture:{desktop_service_workers:'block',reason:'Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior.'},checks:[],errors:[],timings:[],cold_imports:[]};
 await fs.mkdir(out,{recursive:true});
 const password='PilotFixtureOnly2026!';
 const measured=(engine,name,elapsed,status)=>report.timings.push({engine,name,ms:Math.round(elapsed*10)/10,status});
 
 for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',').entries()){
-  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+  const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
   const [a,b,c]=await Promise.all([
-    browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'}),
+    browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce',serviceWorkers:'block'}),
     browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),
     browser.newContext({viewport:{width:1240,height:850},reducedMotion:'reduce'}),
   ]);
@@ -72,6 +73,62 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
     const elapsed=performance.now()-start;
     measured(engine,label,elapsed,'visible');
     assert.ok(elapsed<5000,label+' exceeded the five-second local visibility target');
+  }
+  async function coldCollaborationExit(mode){
+    // A new document has not initialized collaboration. Delay the real module
+    // request, not its API or response, then leave through the actual UI.
+    const page=await a.newPage();
+    page.setDefaultTimeout(12000);
+    page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
+    const moduleUrl=/(?:^|\/)collaboration(?:-[A-Z0-9]{8})?\.js(?:\?.*)?$/;
+    const optionsPath='/api/collaboration/tasks/'+tid+'/options',optionsRequests=[];
+    let release,held,holdTimer;
+    const gate=new Promise(resolve=>{release=resolve;});
+    const captured=new Promise(resolve=>{held=resolve;});
+    const evidence={engine,mode,module_held:false,options_before_release:null,options_after_release:null};report.cold_imports.push(evidence);
+    const holdModule=async route=>{evidence.module_held=true;held(route.request());await gate;await route.continue();};
+    page.on('request',request=>{if(new URL(request.url()).pathname===optionsPath)optionsRequests.push(request.url());});
+    await page.route(moduleUrl,holdModule);
+    try{
+      await nav(page,'tasks');
+      evidence.service_worker_controller=await page.evaluate(()=>navigator.serviceWorker?.controller?.scriptURL||null);
+      assert.equal(evidence.service_worker_controller,null,'The cold module delay must not be service-worker controlled');
+      await page.locator('.task-primary[data-workflow-task="'+tid+'"]').click();
+      const button=page.locator('#workflow-form [data-collaboration-start]');
+      await button.evaluate(node=>{window.pilotColdCollaborationButton=node;});
+      const [request]=await Promise.all([
+        Promise.race([captured,new Promise((_,reject)=>{holdTimer=setTimeout(()=>reject(new Error('The real collaboration module was not held by the route handler within 10 seconds')),10000);})]),button.click(),
+      ]);clearTimeout(holdTimer);
+      evidence.options_before_release=optionsRequests.length;
+      assert.equal(optionsRequests.length,0,'The held cold module must not have read collaboration recipients');
+      assert.equal(await button.isDisabled(),true,'The cold entry stays pending until its real import settles');
+      const target=mode==='close'?'tasks':'notice/'+task.notice_id;
+      if(mode==='close')await page.locator('#dialog').getByRole('button',{name:'关闭',exact:true}).click();
+      else await page.locator('#workflow-form .workflow-task-head a[href="#'+target+'"]').click();
+      await page.waitForFunction(target=>{
+        const content=document.querySelector('#content');
+        return location.hash==='#'+target&&content?.dataset.page===target&&!content.inert&&!document.querySelector('#dialog')?.open;
+      },target);
+      const received=page.waitForResponse(response=>response.url()===request.url());
+      release();
+      assert.equal((await received).status(),200);
+      // The original DOM node can be detached after navigation. Its pending
+      // state settles only after the application's import/entry handler ends.
+      await page.waitForFunction(()=>window.pilotColdCollaborationButton&&!window.pilotColdCollaborationButton.disabled);
+      evidence.options_after_release=optionsRequests.length;
+      assert.equal(optionsRequests.length,0,'A late import must not read recipients for an abandoned dialog');
+      assert.equal(await page.locator('#dialog').evaluate(node=>node.open),false);
+      assert.equal(await page.locator('[data-workspace-form=collaboration]').count(),0);
+      assert.equal(await page.evaluate(()=>location.hash),'#'+target);
+    }catch(error){
+      await page.screenshot({path:path.join(out,engine+'-cold-collaboration-'+mode+'-failure.png')}).catch(()=>{});
+      throw error;
+    }finally{
+      clearTimeout(holdTimer);
+      release();
+      await page.unrouteAll({behavior:'wait'});
+      await page.close();
+    }
   }
   try{
     console.log('Pilot workspace: '+engine);
@@ -147,8 +204,10 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
         tid=saved.task_ids[0];
       },()=>mobile.getByText(title,{exact:true}).waitFor());
       mobile.off('request',track);
-      assert.ok(calls.includes('/api/tasks'));
+      assert.ok(calls.includes('/api/tasks/page'),'The other device refreshes the real paginated task collection');
+      assert.ok(!calls.includes('/api/tasks'),'The task list must not fetch the full task collection');
       assert.ok(!calls.includes('/api/notices'),'A task list refresh must not download the notice library');
+      assert.ok(!calls.includes('/api/notices/page'),'A task list refresh must not fetch notice pages');
       task=(await api(a,'/tasks/'+tid+'/workflow')).task;
     });
     await check('an open notice receives a new source and the updated material count',async()=>{
@@ -218,6 +277,8 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
       assert.equal(await mobile.locator('#workflow-form [name=outcome]').inputValue(),'这段本人编辑要保留');
       await mobile.keyboard.press('Escape');
     });
+    await check('a cold collaboration import respects closing the workflow',()=>coldCollaborationExit('close'));
+    await check('a cold collaboration import respects navigation away from the workflow',()=>coldCollaborationExit('route'));
     await check('scoped collaboration is received, returned, supplemented and resolved across devices',async()=>{
       await nav(counselor,'collaboration');
       await mobile.bringToFront();

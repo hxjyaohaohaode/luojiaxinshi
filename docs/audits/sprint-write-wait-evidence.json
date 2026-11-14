@@ -1,0 +1,1071 @@
+{
+  "schema_version": 2,
+  "recorded_at": "2026-11-14T07:05:49.799868+00:00",
+  "status": "current_frozen_local_five_and_ten_user_write_wait_condition_not_met",
+  "scope": "隔离本地Uvicorn、合成账号、真实HTTP和SQLite；不是生产容量上限、学校批准或真人试用验收。不同运行与诊断样本不相加。 history完整保留初始诊断；其中较早的5人通过与建议仅代表当时单轮结果，已由当前冻结实测更新，不是5人稳定通过声明。",
+  "unchanged_targets": {
+    "ordinary_crud_p95_ms_exclusive": 1000,
+    "write_total_wait_p95_ms_exclusive": 100,
+    "allowed_failed_write_acquisitions": 0,
+    "percentile_method": "nearest_rank"
+  },
+  "adopted_implementation": {
+    "change": "同一规范化数据库路径的进程内FIFO写入准入；正常读取并行，SQLite仍决定跨进程锁。",
+    "timing": "写入总等待从准入前起算，包含排队、连接准备及SQLite BEGIN IMMEDIATE等待；共同使用15秒预算。持锁从成功BEGIN到提交或回滚完成。",
+    "shared_cache_enabled": false,
+    "cross_thread_connection_pool_added": false,
+    "schema_warmup_experiment_adopted": false,
+    "targeted_regression": {
+      "artifact": "artifacts/sprint-final/write-coordination.xml",
+      "passed": 49,
+      "elapsed_seconds": 20.48,
+      "new_coordination_cases": 10,
+      "scope": "FIFO/路径别名、读并行、超时与取消、真实连接失败、提交/回滚/关闭故障、总等待计时及既有容量/恢复边界；不是全项目测试总数。"
+    }
+  },
+  "current_conclusion": {
+    "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "local_five_user_write_wait_gate_passed": false,
+    "local_ten_user_write_wait_gate_passed": false,
+    "local_functional_and_recovery_assertions_passed": true,
+    "five_user_stable_pass_claimed": false,
+    "ten_user_capacity_acceptance_claimed": false,
+    "school_approval_or_real_user_acceptance_claimed": false,
+    "decision": "保留原100ms总等待门槛及全部失败记录；保持当前FIFO准入、每次事务退出关闭连接合同，不引入未验证的接力、共享cache或连接池，不再扩大性能实验。功能回归、工程性能及学校/真人验收分别记录。",
+    "identity_role": "local_observation",
+    "identity_scope": "本对象原head_sha及implementation_sha256指最近独立本地v3观测身份；当前代码候选另列，未重写原始实测指纹。",
+    "current_code_candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "current_code_candidate_tree_sha": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+    "current_ci_linux_implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+    "current_ci_windows_implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+    "current_ci_shared_runner_observations_override_local_failures": false
+  },
+  "independent_local_observations": [
+    {
+      "kind": "previous_frozen_five_users",
+      "environment_class": "independent_local",
+      "artifact": "artifacts/sprint-final/runtime-5-final.json",
+      "artifact_sha256": "efff698e2d76d5be95840001cc499ab912226e566ed61b642cd3b4e6ac1967c3",
+      "verified_at": "2026-11-14T05:28:49.729979+00:00",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "functional_fixture_result": "passed",
+      "users": 5,
+      "http_requests": 766,
+      "response_status_counts": {
+        "200": 651,
+        "401": 5,
+        "404": 10,
+        "409": 100
+      },
+      "workload_seconds": 18.9,
+      "elapsed_seconds": 25.44,
+      "write_total_wait": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 32.309,
+        "p95_ms": 88.957,
+        "max_ms": 266.867
+      },
+      "hold": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 12.87,
+        "p95_ms": 44.331,
+        "max_ms": 280.472
+      },
+      "failed_acquisitions": 0,
+      "metric_scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 115.2,
+        "p95": 219.1,
+        "max": 623.6
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.038,
+        "restart_verified_seconds": 1.798,
+        "restore_file_seconds": 0.053,
+        "restore_verified_seconds": 2.371,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true
+    },
+    {
+      "kind": "previous_frozen_ten_users",
+      "environment_class": "independent_local",
+      "artifact": "artifacts/sprint-final/runtime-10-final.json",
+      "artifact_sha256": "93acb602d16d08cbc7065f6e2e303fbc4e662f7c6369f5594e5d248da6a72a6d",
+      "verified_at": "2026-11-14T05:30:13.987626+00:00",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "functional_fixture_result": "passed",
+      "users": 10,
+      "http_requests": 1531,
+      "response_status_counts": {
+        "200": 1301,
+        "401": 10,
+        "404": 20,
+        "409": 200
+      },
+      "workload_seconds": 42.28,
+      "elapsed_seconds": 50.1,
+      "write_total_wait": {
+        "total_observations": 1588,
+        "samples": 1588,
+        "p50_ms": 79.095,
+        "p95_ms": 178.891,
+        "max_ms": 382.656
+      },
+      "hold": {
+        "total_observations": 1588,
+        "samples": 1588,
+        "p50_ms": 9.132,
+        "p95_ms": 82.005,
+        "max_ms": 279.103
+      },
+      "failed_acquisitions": 0,
+      "metric_scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+      "ordinary_crud": {
+        "samples": 1250,
+        "p50": 265.9,
+        "p95": 481.6,
+        "max": 638.9
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.047,
+        "restart_verified_seconds": 2.005,
+        "restore_file_seconds": 0.067,
+        "restore_verified_seconds": 2.959,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true
+    },
+    {
+      "kind": "current_frozen_five_users",
+      "environment_class": "independent_local",
+      "artifact": "artifacts/sprint-final/runtime-5-final-v3.json",
+      "artifact_sha256": "de9900fc22b75570723923a48feb8042a3b45110f716c67d3b3a43254582b514",
+      "verified_at": "2026-11-14T06:16:29.313540+00:00",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "functional_fixture_result": "passed",
+      "users": 5,
+      "http_requests": 766,
+      "response_status_counts": {
+        "200": 651,
+        "401": 5,
+        "404": 10,
+        "409": 100
+      },
+      "workload_seconds": 22.29,
+      "elapsed_seconds": 29.68,
+      "write_total_wait": {
+        "total_observations": 778,
+        "samples": 778,
+        "p50_ms": 37.126,
+        "p95_ms": 114.149,
+        "max_ms": 556.198
+      },
+      "hold": {
+        "total_observations": 778,
+        "samples": 778,
+        "p50_ms": 14.51,
+        "p95_ms": 54.483,
+        "max_ms": 126.385
+      },
+      "failed_acquisitions": 0,
+      "metric_scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 128.7,
+        "p95": 282.6,
+        "max": 431.0
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.001,
+        "restore_file_seconds": 0.098,
+        "restore_verified_seconds": 2.512,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true
+    },
+    {
+      "kind": "current_frozen_ten_users",
+      "environment_class": "independent_local",
+      "artifact": "artifacts/sprint-final/runtime-10-final-v3.json",
+      "artifact_sha256": "dad211352fdc361ebc98e6be97dec8fdb7dfe668820e848c10a61b3ce90e0fa8",
+      "verified_at": "2026-11-14T06:17:38.850075+00:00",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "functional_fixture_result": "passed",
+      "users": 10,
+      "http_requests": 1531,
+      "response_status_counts": {
+        "200": 1301,
+        "401": 10,
+        "404": 20,
+        "409": 200
+      },
+      "workload_seconds": 56.05,
+      "elapsed_seconds": 64.83,
+      "write_total_wait": {
+        "total_observations": 1629,
+        "samples": 1629,
+        "p50_ms": 94.066,
+        "p95_ms": 272.906,
+        "max_ms": 755.516
+      },
+      "hold": {
+        "total_observations": 1629,
+        "samples": 1629,
+        "p50_ms": 11.493,
+        "p95_ms": 92.466,
+        "max_ms": 1103.639
+      },
+      "failed_acquisitions": 0,
+      "metric_scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+      "ordinary_crud": {
+        "samples": 1250,
+        "p50": 327.0,
+        "p95": 743.1,
+        "max": 1903.5
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.027,
+        "restore_file_seconds": 0.089,
+        "restore_verified_seconds": 3.275,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true
+    }
+  ],
+  "historical_comparison": {
+    "comparison_order": "每个二元数组为previous_frozen→current_frozen；不同运行的样本不合并。",
+    "source_comparison": {
+      "from_git_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "to_git_head": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "paths": [
+        "app/",
+        "scripts/verify_local_runtime.py"
+      ],
+      "git_diff_empty": true,
+      "interpretation": "这两提交的后端与运行时验收脚本内容无差异；整体实现摘要因其他前端/测试改动而不同。"
+    },
+    "runs": [
+      {
+        "users": 5,
+        "previous_artifact": "artifacts/sprint-final/runtime-5-final.json",
+        "current_artifact": "artifacts/sprint-final/runtime-5-final-v3.json",
+        "same_http_operation_counts": true,
+        "same_reported_environment": true,
+        "write_samples_delta": 2,
+        "workload_seconds": [
+          18.9,
+          22.29
+        ],
+        "write_total_wait_p95_ms": [
+          88.957,
+          114.149
+        ],
+        "hold_p95_ms": [
+          44.331,
+          54.483
+        ],
+        "ordinary_crud_p95_ms": [
+          219.1,
+          282.6
+        ],
+        "get_tasks_200_p95_ms": [
+          156.8,
+          257.8
+        ]
+      },
+      {
+        "users": 10,
+        "previous_artifact": "artifacts/sprint-final/runtime-10-final.json",
+        "current_artifact": "artifacts/sprint-final/runtime-10-final-v3.json",
+        "same_http_operation_counts": true,
+        "same_reported_environment": true,
+        "write_samples_delta": 41,
+        "workload_seconds": [
+          42.28,
+          56.05
+        ],
+        "write_total_wait_p95_ms": [
+          178.891,
+          272.906
+        ],
+        "hold_p95_ms": [
+          82.005,
+          92.466
+        ],
+        "ordinary_crud_p95_ms": [
+          481.6,
+          743.1
+        ],
+        "get_tasks_200_p95_ms": [
+          344.4,
+          693.5
+        ]
+      }
+    ],
+    "observations": [
+      "当前5人仅多2次写等待样本，HTTP各路由/状态样本不变，却同时出现hold及wait P95上升；不能解释为仅增加业务操作。",
+      "当前10人多41次写等待样本，workload由42.28s到56.05s，GET /tasks、成功写和409请求尾部均上升；聚合记录没有具名事务时间线或CPU数据。",
+      "当前10人最大hold1103.639ms不能凭旧诊断指定为某个worker、GIL、notify_all或宿主噪声；同一系统版本字段也不证明运行时资源条件完全相同。"
+    ]
+  },
+  "diagnostic_reassessment": {
+    "applies_to_current_v3_callsite_attribution": false,
+    "summary_artifact": "artifacts/sprint-final/write-diagnostic-10-live/summary.json",
+    "summary_sha256": "5d506c6f02e897800576f8a4172f4c84d9bed65fe924e3dec92ad27699e2843d",
+    "diagnostic_repository_implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+    "scope": "旧scratch采样含注入开销，1589次事务含停服；readiness为停服前1588样本。以下占比仅为旧采样总持锁贡献，不是当前v3的新归因，也不是可保证消除的延迟。",
+    "diagnostic_transactions": 1589,
+    "diagnostic_total_hold_ms": 30020.38,
+    "contributions": [
+      {
+        "group": "stale_update_409",
+        "transactions": 200,
+        "hold_total_ms": 3513.43,
+        "share_of_diagnostic_hold_percent": 11.7,
+        "callers": [
+          {
+            "caller": "main.py:1098:update_task",
+            "status": 409,
+            "transactions": 200,
+            "hold_total_ms": 3513.43
+          }
+        ]
+      },
+      {
+        "group": "memory_job_and_maintenance",
+        "transactions": 100,
+        "hold_total_ms": 3246.48,
+        "share_of_diagnostic_hold_percent": 10.81,
+        "callers": [
+          {
+            "caller": "memory_learning.py:700:drain_jobs",
+            "status": null,
+            "transactions": 72,
+            "hold_total_ms": 2371.8
+          },
+          {
+            "caller": "memory_learning.py:746:drain_jobs",
+            "status": null,
+            "transactions": 28,
+            "hold_total_ms": 874.68
+          }
+        ]
+      },
+      {
+        "group": "empty_worker_preflight_candidates",
+        "transactions": 18,
+        "hold_total_ms": 750.87,
+        "share_of_diagnostic_hold_percent": 2.5,
+        "callers": [
+          {
+            "caller": "notice_automation.py:173:run_once",
+            "status": null,
+            "transactions": 3,
+            "hold_total_ms": 348.92
+          },
+          {
+            "caller": "campus.py:469:drain_publications",
+            "status": null,
+            "transactions": 9,
+            "hold_total_ms": 336.54
+          },
+          {
+            "caller": "push_delivery.py:352:tick",
+            "status": null,
+            "transactions": 3,
+            "hold_total_ms": 47.53
+          },
+          {
+            "caller": "push_delivery.py:362:tick",
+            "status": null,
+            "transactions": 3,
+            "hold_total_ms": 17.88
+          }
+        ]
+      }
+    ],
+    "evidence_boundaries": [
+      "旧首查询采样与冷schema探针支持冷连接schema/语句准备及并发争用是主要候选；详见history的原证据与明确限制。",
+      "memory_learning.drain_jobs已有只读候选队列检查；notification_coordination.coordinate已有账号revision及60s兜底预检；不能作为尚未实现的优化重复提出。",
+      "当前publication/memory/push空闲轮询分别为5/10/15秒；较长负载允许更多后台tick，但缺本轮各tick时间，不能认定其造成性能退化。",
+      "operations监测先等60秒；报告总elapsed还包含重启恢复，不能用64.83秒总时长断言监测事务落入56.05秒负载。",
+      "运行时脚本清空真实模型、QQ/微信公众号及邮件凭证；不把当前无供应商的合成运行归因于外部网络发送。"
+    ]
+  },
+  "unadopted_options_read_only": [
+    {
+      "option": "empty_worker_read_preflight",
+      "adopted": false,
+      "implemented_or_experimented_in_this_review": false,
+      "bounded_design": "校园分发、自动整理及push空队列先只读探测，有候选后仍在writer内重新claim、授权检查及发送前复核。",
+      "reason": "旧18次候选合计750.87ms、占旧hold2.50%；可以减少无效事务，但无当前实测证明足以补回5人14.149ms超限。"
+    },
+    {
+      "option": "stale_task_owner_version_read_preflight",
+      "adopted": false,
+      "implemented_or_experimented_in_this_review": false,
+      "bounded_design": "只读本人/版本预检拒绝已陈旧请求，成功路径仍在writer内重复owner/version与业务约束检查。",
+      "reason": "旧409事务占11.70%hold，但成功请求会增加冷只读连接；需独立验证总成本、错误顺序及权限，不据旧占比直接合入。"
+    },
+    {
+      "option": "schema_warmup_before_begin",
+      "adopted": false,
+      "implemented_or_experimented_in_this_review": false,
+      "reason": "历史注入实验总wait仍152.876ms>100，即使hold降至7.707ms也不通过；完整原实验与其不同源码摘要保留在history。"
+    },
+    {
+      "option": "handoff_clean_connection_only_to_existing_fifo_successor",
+      "adopted": false,
+      "implemented_or_experimented_in_this_review": false,
+      "potential_benefit": "若保持已解析schema与statement cache，可真正减少密集写入的重复准备，而非只将工作移到BEGIN前；尚无本方案性能实测。",
+      "current_contract_sources": [
+        "app/db.py:Database.connect",
+        "app/write_coordination.py:_Gate",
+        "app/write_coordination.py:_after_fork",
+        "app/backups.py:restore_database",
+        "tests/test_write_coordination.py"
+      ],
+      "specific_incompatibilities_and_requirements": [
+        "当前sqlite3.connect未覆盖check_same_thread，默认True；跨线程交接需显式改变此合同。本机sqlite3.threadsafety=3并不能替代Windows及失败路径验证。",
+        "Database.connect直接yield原始CapacityConnection且退出必close；没有每次借用的失效代理或cursor跟踪。只看in_transaction=False不能让前借用者保留的conn/未耗尽cursor失效，也不保证所有cursor已finalize。",
+        "同路径不同Database实例的usage_limits可以不同；复用须逐次重设用量配置、row_factory、剩余busy_timeout与连接函数/PRAGMA状态，不能携带上次会话配置。",
+        "commit、rollback、重设或close异常时须丢弃连接；当前factory故障回归假定新建连接，复用需要额外的成功租约退出、残留游标和跨线程故障证据。",
+        "释放时有后继不保证后继随后未超时/取消；最后等待者消失时仍须唯一close。当前weak gate与at_fork只管理队列，不管理待交接raw handle，需明确释放及子进程丢弃路径。",
+        "当前restore拒绝覆盖已有目标而恢复到新空目录，所以不是已发现热覆盖漏洞；但连续非空队列会延长句柄生命，仍需明确文件身份、停服drain及Windows句柄释放合同。"
+      ],
+      "reason": "已超出简单写入准入修补，需连接/游标租约生命周期与跨平台回归；本轮保持退出关闭连接，不为门槛牺牲正确性。"
+    },
+    {
+      "option": "sqlite_shared_cache_or_cross_thread_connection_pool",
+      "adopted": false,
+      "implemented_or_experimented_in_this_review": false,
+      "reason": "未验证锁语义、连接状态隔离及恢复/Windows句柄生命周期；未引入此类变更。"
+    }
+  ],
+  "ci_shared_runner_observations": [
+    {
+      "platform": "ubuntu-latest",
+      "run_id": 43565458564,
+      "run_number": 51,
+      "run_attempt": 1,
+      "job_id": 132358199815,
+      "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "actual_checkout_merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "source_artifact_id": 14102084219,
+      "source_artifact_name": "unit-reports-ubuntu-latest",
+      "archive_path": "artifacts/ci-readonly/run-43565458564-linux.zip",
+      "github_digest": "sha256:95ba489a70b4f10c253f32f824490130165834ec3c1f83d94b38b898fcb95c22",
+      "archive_digest_matches_github": true,
+      "runtime_artifact": "artifacts/ci-readonly/run-43565458564-linux/runtime-acceptance.json",
+      "runtime_sha256": "98a758fd713bb29c2943570a799b04048d007e640467cbf16695d21e3730a6de",
+      "job_log": "artifacts/ci-readonly/run-43565458564-linux.log",
+      "runtime_json_equals_actual_job_log_json": true,
+      "verified_at": "2026-11-14T06:24:24.906749+00:00",
+      "environment": {
+        "python": "3.12.16",
+        "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43"
+      },
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "write_total_wait": {
+        "total_observations": 775,
+        "samples": 775,
+        "p50_ms": 23.71,
+        "p95_ms": 67.627,
+        "max_ms": 99.795
+      },
+      "hold": {
+        "total_observations": 775,
+        "samples": 775,
+        "p50_ms": 10.164,
+        "p95_ms": 40.612,
+        "max_ms": 63.153
+      },
+      "failed_acquisitions": 0,
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 92.4,
+        "p95": 160.5,
+        "max": 246.4
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.025,
+        "restart_verified_seconds": 1.522,
+        "restore_file_seconds": 0.04,
+        "restore_verified_seconds": 1.777,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "interpretation": "本次共享Ubuntu runner未复现本地5人114.149ms超限；该单轮67.627ms通过不覆盖本地失败，不能据此宣称5人稳定达标。"
+    },
+    {
+      "platform": "windows-latest",
+      "run_id": 43565458564,
+      "run_number": 51,
+      "run_attempt": 1,
+      "job_id": 132362236442,
+      "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "actual_checkout_merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "source_artifact_id": 14103021458,
+      "source_artifact_name": "unit-reports-windows-latest",
+      "archive_path": "artifacts/ci-readonly/run-43565458564-windows.zip",
+      "github_digest": "sha256:af7ea3ef0c4381df265bc448bb2084cc71d7c9c0ef048cb41b3a43da58a0ee0f",
+      "archive_digest_matches_github": true,
+      "runtime_artifact": "artifacts/ci-readonly/run-43565458564-windows/runtime-acceptance.json",
+      "runtime_sha256": "450f78926d442c3cedddd3f3c8bdbbfd6bd4a76bdb473664cce5e964a4c037ba",
+      "job_log": "artifacts/ci-readonly/run-43565458564-windows.log",
+      "runtime_json_equals_actual_job_log_json": true,
+      "verified_at": "2026-11-14T06:33:55.145289+00:00",
+      "environment": {
+        "python": "3.12.10",
+        "platform": "Windows-2025Server-10.0.26100-SP0"
+      },
+      "implementation_sha256": "879a24ddf158cd45a30d57e87a1313cf313820c783c4ef03a3544d3b93208d55",
+      "implementation_unchanged": true,
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "write_total_wait": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 28.338,
+        "p95_ms": 67.687,
+        "max_ms": 100.851
+      },
+      "hold": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 9.898,
+        "p95_ms": 44.934,
+        "max_ms": 108.362
+      },
+      "failed_acquisitions": 0,
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 101.9,
+        "p95": 194.3,
+        "max": 348.7
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.034,
+        "restart_verified_seconds": 2.008,
+        "restore_file_seconds": 0.064,
+        "restore_verified_seconds": 2.756,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process tree taskkill /T /F",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "interpretation": "本次共享Windows runner的67.687ms是独立单轮观察；与Ubuntu使用同Git合并提交，但保留各平台自身摘要，不覆盖本地5/10人未达100ms。"
+    },
+    {
+      "platform": "ubuntu-latest",
+      "run_id": 43567666000,
+      "run_number": 52,
+      "run_attempt": 1,
+      "job_id": 132364928987,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "source_artifact_id": 14102804791,
+      "source_artifact_name": "unit-reports-ubuntu-latest",
+      "source_artifact_size_bytes": 160848,
+      "archive_path": "artifacts/ci-readonly/run-43567666000-linux.zip",
+      "github_digest": "sha256:66566433c22e52a021be334fc59db1a5688e1939b7447549cb0f76f160341430",
+      "archive_digest_matches_github": true,
+      "runtime_artifact": "artifacts/ci-readonly/run-43567666000-linux/runtime-acceptance.json",
+      "runtime_sha256": "039dbf7521527ada188ae4dd623739f03933f7c8177fa22456d598706ceb9b79",
+      "job_log": "artifacts/ci-readonly/run-43567666000-linux.log",
+      "job_log_sha256": "071a713bf4711e6e79b15ffc0e4cffb9386d3610cc4fca9cafbeb80f38099d03",
+      "runtime_json_equals_actual_job_log_json": true,
+      "verified_at": "2026-11-14T06:52:29.283784+00:00",
+      "environment": {
+        "python": "3.12.16",
+        "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43"
+      },
+      "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+      "implementation_unchanged": true,
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "write_total_wait": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 27.389,
+        "p95_ms": 76.713,
+        "max_ms": 111.288
+      },
+      "hold": {
+        "total_observations": 776,
+        "samples": 776,
+        "p50_ms": 10.623,
+        "p95_ms": 40.837,
+        "max_ms": 65.546
+      },
+      "failed_acquisitions": 0,
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 106.3,
+        "p95": 187.9,
+        "max": 222.4
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.027,
+        "restart_verified_seconds": 1.569,
+        "restore_file_seconds": 0.043,
+        "restore_verified_seconds": 2.009,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "interpretation": "本次共享ubuntu-latest runner五人单轮总写等待P95 76.713ms；同样采用含FIFO排队、连接准备、SQLite BEGIN的完整口径。该观察不覆盖最近独立本地五人114.149ms及十人272.906ms失败，不据此宣称五人稳定达标或学校批准。"
+    },
+    {
+      "platform": "windows-latest",
+      "run_id": 43567666000,
+      "run_number": 52,
+      "run_attempt": 1,
+      "job_id": 132369108059,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "source_artifact_id": 14103437268,
+      "source_artifact_name": "unit-reports-windows-latest",
+      "source_artifact_size_bytes": 64182,
+      "archive_path": "artifacts/ci-readonly/run-43567666000-windows.zip",
+      "github_digest": "sha256:84bbafae60a5bf7d56528a64c9283415eac3bdc7d80baf1df92ad2c303f5fb8b",
+      "archive_digest_matches_github": true,
+      "runtime_artifact": "artifacts/ci-readonly/run-43567666000-windows/runtime-acceptance.json",
+      "runtime_sha256": "3f7532993529177fd11a8a45e232ff29a26a7415e87cdebf4f4f8af3e1689942",
+      "job_log": "artifacts/ci-readonly/run-43567666000-windows.log",
+      "job_log_sha256": "e8c20776236ef7e84c4222cfe623b0fd8e6f5c9e653c8a0ad208b834febe29a7",
+      "runtime_json_equals_actual_job_log_json": true,
+      "verified_at": "2026-11-14T07:02:23.590093+00:00",
+      "environment": {
+        "python": "3.12.10",
+        "platform": "Windows-2025Server-10.0.26100-SP0"
+      },
+      "implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+      "implementation_unchanged": true,
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "write_total_wait": {
+        "total_observations": 772,
+        "samples": 772,
+        "p50_ms": 21.315,
+        "p95_ms": 55.371,
+        "max_ms": 106.412
+      },
+      "hold": {
+        "total_observations": 772,
+        "samples": 772,
+        "p50_ms": 7.255,
+        "p95_ms": 35.758,
+        "max_ms": 106.193
+      },
+      "failed_acquisitions": 0,
+      "ordinary_crud": {
+        "samples": 625,
+        "p50": 84.2,
+        "p95": 147,
+        "max": 287.4
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.031,
+        "restart_verified_seconds": 1.427,
+        "restore_file_seconds": 0.053,
+        "restore_verified_seconds": 1.848,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process tree taskkill /T /F",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "interpretation": "本次共享windows-latest runner五人单轮总写等待P95 55.371ms；同样采用含FIFO排队、连接准备、SQLite BEGIN的完整口径。该观察不覆盖最近独立本地五人114.149ms及十人272.906ms失败，不据此宣称五人稳定达标或学校批准。"
+    }
+  ],
+  "pending_ci_observations": [],
+  "history": [
+    {
+      "record_type": "initial_fifo_and_cold_schema_diagnosis",
+      "original_report_sha256": "031c16c03071be00e4742117c6d6d83fc29835ba0e96f1a9e1e84c3e4964fb27",
+      "historical_status_superseded_by_current_frozen_local_measurements": true,
+      "record": {
+        "schema_version": 1,
+        "recorded_at": "2026-11-14T05:25:58Z",
+        "status": "five_user_engineering_condition_met_ten_user_expansion_not_met",
+        "scope": "隔离本地Uvicorn、合成账号、真实HTTP和SQLite；不是生产容量上限、学校批准或真人试用验收。不同运行与诊断样本不相加。",
+        "unchanged_targets": {
+          "ordinary_crud_p95_ms_exclusive": 1000,
+          "write_total_wait_p95_ms_exclusive": 100,
+          "allowed_failed_write_acquisitions": 0,
+          "percentile_method": "nearest_rank"
+        },
+        "adopted_implementation": {
+          "change": "同一规范化数据库路径的进程内FIFO写入准入；正常读取并行，SQLite仍决定跨进程锁。",
+          "timing": "写入总等待从准入前起算，包含排队、连接准备及SQLite BEGIN IMMEDIATE等待；共同使用15秒预算。持锁从成功BEGIN到提交或回滚完成。",
+          "shared_cache_enabled": false,
+          "cross_thread_connection_pool_added": false,
+          "schema_warmup_experiment_adopted": false,
+          "targeted_regression": {
+            "artifact": "artifacts/sprint-final/write-coordination.xml",
+            "passed": 49,
+            "elapsed_seconds": 20.48,
+            "new_coordination_cases": 10,
+            "scope": "FIFO/路径别名、读并行、超时与取消、真实连接失败、提交/回滚/关闭故障、总等待计时及既有容量/恢复边界；不是全项目测试总数。"
+          }
+        },
+        "independent_runtime_runs": [
+          {
+            "kind": "before_fifo",
+            "artifact": "artifacts/sprint-final/runtime-5-before-writer-admission.json",
+            "verified_at": "2026-11-14T05:01:50.559486+00:00",
+            "implementation_sha256": null,
+            "version_limit": "原报告未记录实现摘要；仅能定位为FIFO准入优化前，不能追补为最终提交的成绩。",
+            "users": 5,
+            "http_requests": 766,
+            "functional_fixture_result": "passed",
+            "wait_samples": 775,
+            "wait_p95_ms": 129.035,
+            "wait_max_ms": 1832.123,
+            "wait_scope": "旧指标为SQLite BEGIN IMMEDIATE等待；当时没有进程内准入队列，连接准备尚未纳入旧字段。后续指标口径更完整。",
+            "write_wait_gate_passed": false,
+            "hold_p95_ms": 30.287,
+            "failed_acquisitions": 0,
+            "ordinary_crud_samples": 625,
+            "ordinary_crud_p50_ms": 61.3,
+            "ordinary_crud_p95_ms": 203.5,
+            "ordinary_crud_max_ms": 1883.6
+          },
+          {
+            "kind": "fifo_five_users",
+            "artifact": "artifacts/sprint-final/runtime-5-users-after-admission.json",
+            "verified_at": "2026-11-14T05:11:23.739784+00:00",
+            "implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+            "implementation_unchanged": true,
+            "users": 5,
+            "http_requests": 766,
+            "functional_fixture_result": "passed",
+            "wait_samples": 776,
+            "write_total_wait_p95_ms": 75.304,
+            "write_total_wait_max_ms": 127.713,
+            "write_wait_gate_passed": true,
+            "hold_p95_ms": 39.018,
+            "failed_acquisitions": 0,
+            "ordinary_crud_samples": 625,
+            "ordinary_crud_p50_ms": 99.1,
+            "ordinary_crud_p95_ms": 173.9,
+            "ordinary_crud_max_ms": 250.3,
+            "restart_and_restore_task_identity_and_content_equal": true,
+            "tradeoff": "等待尾部和CRUD尾部下降，CRUD中位数由61.3ms升至99.1ms；保留这一成本，不只报告改善项。"
+          },
+          {
+            "kind": "fifo_ten_users",
+            "artifact": "artifacts/sprint-final/runtime-10-users-after-admission.json",
+            "verified_at": "2026-11-14T05:12:22.377567+00:00",
+            "implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+            "implementation_unchanged": true,
+            "users": 10,
+            "http_requests": 1531,
+            "functional_fixture_result": "passed",
+            "wait_samples": 1589,
+            "write_total_wait_p95_ms": 166.57,
+            "write_total_wait_max_ms": 306.797,
+            "write_wait_gate_passed": false,
+            "hold_p95_ms": 75.84,
+            "hold_max_ms": 219.066,
+            "failed_acquisitions": 0,
+            "ordinary_crud_samples": 1250,
+            "ordinary_crud_p95_ms": 443.8,
+            "restart_and_restore_task_identity_and_content_equal": true,
+            "interpretation": "功能和恢复断言通过，但原100ms扩大工程条件未通过，不能标成10人容量验收成功。"
+          }
+        ],
+        "diagnostic_attribution": {
+          "release_acceptance_evidence": false,
+          "runtime_artifact": "artifacts/sprint-final/runtime-10-users-instrumented-live.json",
+          "transaction_artifact": "artifacts/sprint-final/write-diagnostic-10-live/writes-13.jsonl",
+          "summary_artifact": "artifacts/sprint-final/write-diagnostic-10-live/summary.json",
+          "repository_implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+          "runtime_overlay": "scratch sitecustomize按调用点采样SQL类别/耗时及线程CPU，存在采样开销；不记录SQL参数、正文或身份。仓库指纹不包含此注入代码。",
+          "transactions_including_shutdown": 1589,
+          "readiness_wait_samples_before_shutdown": 1588,
+          "evidence": [
+            "200笔最终返回409的update事务没有业务写入，只有一条own_task业务SELECT；该组hold P95为91.563ms，最慢一笔140.708ms中该SELECT占138.762ms。",
+            "最慢manual事务hold159.081ms，own_notice查询组占148.578ms；memory_jobs最慢样本的首SELECT占123.737ms。后续多数语句不足1ms。",
+            "按首SELECT调用点分组的执行时间约占总持锁时间71.12%；同一调用点重复执行时该诊断会合并时长，不能把该占比称为逐条首语句的精确因果比例。"
+          ],
+          "cold_connection_probe": {
+            "artifact": "artifacts/sprint-final/write-diagnostic-10-live/schema-probe.json",
+            "implementation_sha256": null,
+            "version_limit": "同轮隔离Database结构探针自身没有记录源码摘要；不补造提交对应关系。",
+            "schema_objects": {
+              "tables": 198,
+              "indexes": 280,
+              "triggers": 247
+            },
+            "sequential_samples": 20,
+            "first_select_1_p95_ms": 4.625,
+            "ten_thread_samples": 200,
+            "concurrent_first_select_1_p95_ms": 192.855,
+            "concurrent_first_select_thread_cpu_p95_ms": 80.294,
+            "following_table_query_p95_ms": 0.201,
+            "inference": "主要尾部集中于新连接的首次schema/语句准备及其并发争用；未隔离SQLite内部互斥机制，不声称已证明GIL、内存分配器或notify_all是唯一原因。"
+          },
+          "excluded_capture": {
+            "artifact": "artifacts/sprint-final/runtime-10-users-instrumented.json",
+            "reason": "首次采样没有在子服务退出前留存事务明细，仅留下父进程初始化记录；未将其用于持锁调用点归因。"
+          }
+        },
+        "unadopted_experiment": {
+          "artifact": "artifacts/sprint-final/runtime-10-users-experimental-schema-warmup.json",
+          "verified_at": "2026-11-14T05:24:38.135433+00:00",
+          "repository_implementation_sha256": "bf21573be9d3bd98f6234157f3962bdc8e71ac034f38ad9c4ac495fc736f854e",
+          "repository_implementation_unchanged_during_run": true,
+          "version_limit": "与593f967运行的仓库版本不同，且另有未进入仓库指纹的scratch运行时注入；只能作受控诊断，不是产品版本准入成绩。",
+          "runtime_overlay": "按数据库路径短暂串行冷schema准备，将SELECT 1放在BEGIN前；公平写队列顺序不变，准备仍计入总等待和原15秒预算；正常数据读取继续并行。",
+          "users": 10,
+          "http_requests": 1531,
+          "functional_fixture_result": "passed",
+          "wait_samples": 1553,
+          "write_total_wait_p95_ms": 152.876,
+          "write_wait_gate_passed": false,
+          "hold_p95_ms": 7.707,
+          "failed_acquisitions": 0,
+          "ordinary_crud_p95_ms": 348.4,
+          "adopted": false,
+          "reason": "虽然持锁与HTTP尾部改善，总等待仍超过原100ms门槛；没有通过移动计时起点、放宽门槛或引入连接池/shared cache把结果标绿。"
+        },
+        "decision": {
+          "performance_product_code_change_after_diagnostic": false,
+          "change_scope": "本项诊断未再改数据库、写入准入或业务产品代码；其他任务的并行改动仅由各自版本指纹限定，不归入本项性能改善。",
+          "five_user_scope": "仅可作为首批小范围工程试运行建议的依据，须另行取得参与及学校所需授权；不代表学校批准。",
+          "ten_user_expansion": "原等待门槛未通过，保留失败报告，不扩大通过声明。",
+          "next_gate": "统一冻结后的全项目回归与对应提交CI另行记录，本文件不替代它们。",
+          "load_generators_stopped": true
+        }
+      }
+    }
+  ],
+  "review_actions": {
+    "product_source_edited": false,
+    "tests_edited": false,
+    "local_load_or_experiment_started": false,
+    "only_document_changed": "docs/audits/sprint-write-wait-evidence.json",
+    "master_release_state_owned_by_root": true
+  },
+  "ci_runtime_verification_artifact": "artifacts/ci-readonly/run-43567666000-runtime-verification.json",
+  "applicability_to_later_candidate": {
+    "local_observation_head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "local_observation_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "current_code_candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "current_code_candidate_tree_sha": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+    "current_ci_run_id": 43567666000,
+    "current_ci_run_number": 52,
+    "current_ci_linux_implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+    "current_ci_windows_implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+    "source_comparison": {
+      "previous_head": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "local_comparison_commit": "ec200b86fc4059363405c2903dd69cb2e98f218c",
+      "local_comparison_tree_sha": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+      "official_remote_head": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "official_remote_tree_sha": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+      "tree_equality_verified": true,
+      "changed_paths": [
+        "scripts/verify_pilot_workspace.mjs",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "official_metadata": "artifacts/ci-readonly/run-43567666000-root-official.json"
+    },
+    "product_and_runtime_code_unchanged": true,
+    "independent_local_runtime_reexecuted_for_current_candidate": false,
+    "interpretation": "05498ae到最终远程6b15c仅修改两份browser fixture；正式远程head的Git tree与本地可比较提交完全相同。产品后端、数据库实现与runtime脚本均未变，因此d55下原始独立本地结果仍适用于相同产品实现；不改写其原始指纹、不冒称以a817重新执行。共享CI新结果独立记录。"
+  },
+  "ci_runtime_verification_artifacts": [
+    "artifacts/ci-readonly/run-43565458564-runtime-verification.json",
+    "artifacts/ci-readonly/run-43567666000-runtime-verification.json"
+  ]
+}

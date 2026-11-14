@@ -26,6 +26,8 @@ class Arrangement(Strict):
     repeat_until: str | None = None
     location: str = Field(default='', max_length=300)
     notes: str = Field(default='', max_length=3000)
+    # Explicit per-arrangement consent. Importing a course never opts it in.
+    reminder_minutes: int | None = Field(default=None,ge=0,le=10080,strict=True)
 
     @field_validator('start_date', 'end_date', 'repeat_until')
     @classmethod

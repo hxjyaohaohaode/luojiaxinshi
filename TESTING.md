@@ -32,7 +32,7 @@
 
 浏览器回归还检查共享表单的按钮重复监听只发出一次请求，以及修正后只恢复契约兼容的已编辑字段、未编辑初值采用新稿。另有真实模型产物的离线回放脚本，验证实际生成程序的计算、非法输入、保存重算、手机布局及继续提问；它与合成测试和真实模型网络耗时分别记录。
 
-当前版本 1.23.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
+当前版本 1.24.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
 
 ## 测试体系与运行命令
 
@@ -41,6 +41,7 @@
 ```powershell
 python -m pip install -r requirements-dev.txt
 npm ci --ignore-scripts
+npm run build:check
 ```
 
 | 层级 | 命令 | 范围与边界 |
@@ -52,8 +53,8 @@ npm ci --ignore-scripts
 | 浏览器回归 | `python scripts/run_browser_checks.py` | 在 `127.0.0.1:8786` 启动 `scripts/push_preview_server.py` 合成夹具，覆盖 Chromium、Firefox、WebKit 的既有界面回归，以及自然导入、个人材料、来源收件和持久推送。夹具沿用原有演示数据，来源读取与推送投递全部在本机模拟。可用 `--suite 脚本名` 只重跑一组。报告写入 `artifacts/<套件目录>/report.json`，日志在 `artifacts/ci-browser/` |
 | 异步保存与恢复 | `python scripts/run_continuity_browser_checks.py` | 三组保留的检查全部执行；每组使用系统分配的独立临时端口、全新合成数据库及经过验证码流程创建的夹具账号，手机／桌面与日历横屏等既有尺寸均保留。规范报告和原始场景记录位于 `artifacts/continuity-browser/`，不会复用真实服务 |
 | Agent 浏览器 | `python scripts/run_agent_browser_checks.py` | 在 `127.0.0.1:8793` 启动 `scripts/agent_preview_server.py` 离线夹具，运行 `tests/agent-browser.mjs`、`agent-adaptive-browser.mjs`、`agent-fusion-browser.mjs`、`agent-quality-browser.mjs`、`composer-browser.mjs`。汇总在 `artifacts/ci-agent-browser/results.json` |
-| 真实进程 | `python scripts/verify_local_runtime.py` | 随机本机端口启动真实服务进程，5 个合成账号并发提交、确认、修改通知与待办，再验证账号隔离、幂等、日历导出、停止重启和备份恢复。结果写入 `artifacts/runtime-acceptance.json`。不调用 AI，也不代表生产容量 |
-| 协议与依赖 | `python scripts/genui_catalog.py --check`、`python scripts/evaluate_genui.py`、`npm audit --omit=dev`、`python -m pip_audit -r requirements.lock --strict` | 组件目录一致性、离线 GenUI 样例、npm 生产依赖与 Python 锁定依赖的已知漏洞审计 |
+| 真实进程 | `python scripts/verify_local_runtime.py` | 随机本机端口启动真实服务进程，默认5个合成账号；可显式指定 `--users 10 --notices-per-user 20 --output artifacts/pilot-runtime-10.json`。验证并发收件与修改、隔离、幂等、日历、重启和恢复。JSON分别报告正常CRUD、各路由、写入总等待／持有及恢复实测，默认输出 `artifacts/runtime-acceptance.json`。功能通过后仍须逐项核对试点性能门槛，不代表生产容量 |
+| 协议与依赖 | `python scripts/genui_catalog.py --check`、`python scripts/evaluate_genui.py`、`npm audit`、`python -m pip_audit -r requirements.lock --strict` | 组件目录一致性、离线 GenUI 样例、全部 npm 锁定依赖（包括构建工具）与 Python 锁定依赖的已知漏洞审计 |
 | 离线检索与容量 | `python scripts/verify_retrieval_quality.py`、`python scripts/verify_campus_capacity.py` | 合成全文尾部证据与截取偏移一致性、10,000 则通知的收件／全文检索／归组候选／容量拒绝和重复重放。测量结果属于本机单进程检查，不代表校园生产吞吐或真实模型准确率 |
 | 发布包 | `python scripts/build_release.py` | 按白名单打包源码到 `releases/`，并检查包内没有 `data/`、`artifacts/` 和 `.env` |
 
@@ -90,14 +91,14 @@ npm ci --ignore-scripts
 
 | 测试 | 覆盖内容 |
 |---|---|
-| `tests/test_account_and_insights.py`（新增） | 注册与邀请注册都必须同意隐私政策和用户协议，同意按 `POLICY_VERSION` 记录；政策版本与已有同意记录分开保存，登录后不自动弹窗或补写同意；`GET /api/legal` 返回模型服务方和备份保留天数。注销账号要求正确密码和“注销账号”确认词，之后该账号在所有带 `user_id` 的表和全文索引中不留文字，其他账号数据不受影响。提醒中心覆盖已过期、24 小时内截止、未确认期限标注、本人提醒、重复课程安排和未整理通知，并排除远期、他人负责和已完成的事项。`/api/reminders`、`/api/insights` 只返回本人数据，普通账号访问 `/api/admin/insights` 返回 403，管理员看板只含计数、不含通知标题或账号名。通知列表带有 `applicability` 字段 |
+| `tests/test_account_and_insights.py`（新增） | 注册与邀请注册都必须同意隐私政策和用户协议，同意按 `POLICY_VERSION` 记录；政策版本与已有同意记录分开保存，登录后不自动弹窗或补写同意；`GET /api/legal` 返回模型服务方和备份保留天数。注销账号要求正确密码和“注销账号”确认词；删除本人私域及全文索引、关闭私密分享。1.24.0 的 `test_campus_sprint.py` 另验证对方最小脱敏回执、已正式发布的公告／原件按接收权限保留、发布者名称脱敏，不能概括为所有历史记录均消失。提醒中心覆盖已过期、24 小时内截止、未确认期限标注、本人提醒、重复课程安排和未整理通知，并排除远期、他人负责和已完成的事项。`/api/reminders`、`/api/insights` 只返回本人数据，普通账号访问 `/api/admin/insights` 返回 403，管理员看板只含计数、不含通知标题或账号名。通知列表带有 `applicability` 字段 |
 | `tests/test_mimo_speech.py` | 默认配置下声音复刻请求返回 403，且不会发到模型服务；WAV 写入 RIFF INFO 隐式标识后音频帧不变、重复标注不叠加，非 WAV 数据原样返回 |
 | `tests/test_speech_cache.py` | 语音缓存重放返回同一份已加标识的 WAV |
-| `tests/test_boundaries.py` | 前端脚本返回 `Cache-Control: no-cache` 和 ETag，带 `If-None-Match` 时返回 304；首页仍为 `no-store` |
+| `tests/test_boundaries.py` | 原生源脚本返回 `Cache-Control: no-cache` 和 ETag，带 `If-None-Match` 时返回 304；首页仍为 `no-store`。1.24.0 的内容哈希构建资源另由 `test_frontend_bundle.py` 验证 immutable 缓存和产物完整性 |
 | `tests/test_workflow.py` | 邀请注册夹具补充同意字段，适配新的注册要求 |
 | `tests/test_verification_evidence.py` | 随已删除的证据导出脚本移除两项依赖它的测试，保留浏览器夹具限流重置只作用于自有合成数据库的边界测试 |
 
-本轮结果见本轮提交的 CI 与本地运行。以下改动目前没有专门的自动化断言，依靠现有浏览器回归和人工查看：通知整理与聊天的独立并发槽、统一样式入口 `static/styles.css`、12px 字号下限、`static/choreography.js` 编排动效，以及平板、手机横屏和矮屏的响应式修复。
+上列为历史版本新增测试。当前完整结果以本轮提交的 CI 与本地运行记录为准；1.24.0 新增对构建样式层、完成回执动效、移动点击区及窄屏的自动化断言，但有限视口不能推断所有平板、横屏、输入法或真机条件均已验收。
 
 ## 保留的异步交互回归
 
@@ -156,7 +157,7 @@ npm ci --ignore-scripts
 
 最后一次代码修改后重新执行全部检查，以同一份源码为基础。整轮之间修改代码，原批次只保留为诊断记录，不计为冻结版本通过。完整入口和范围见 [main 整轮验收](docs/proactive/MAIN_SYNC.md)，CI 的全部任务见 `.github/workflows/checks.yml`。
 
-后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、十四组通用浏览器、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
+后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、当前16组通用浏览器（以本提交 `run_browser_checks.py` 的 `SUITES` 及实际报告为准）、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
 
 本地完整一轮通过后再正常推送，检查新 main 提交实际触发的 Actions 全部 jobs，再确认功能分支已合入并清理。旧提交、局部补跑、离线模型夹具及桌面模拟视口不替代当前 main CI、真实渠道或真实试点验收。
 
@@ -165,3 +166,11 @@ npm ci --ignore-scripts
 后端每个分片默认最多 2400 秒，超时返回失败并只终止该分片创建的进程树。Windows 单机四片曾实测用时 2396.67 秒，因此 CI 将同一分组分配到四个独立作业，各作业限时仍为 45 分钟，未提高分片期限或删除用例。执行前移除同名旧 JUnit；缺失报告不能通过。分片保留逐用例日志和超过 90 秒时的线程栈，便于区分慢用例、等待和退出阻塞。
 
 `--only-shard 1` 仅供上述 CI 调度，不替代本地全量命令。`--merge-partitions artifacts/windows-partitions` 要求同一源码的所有声明分片，并核对每个 JUnit 用例所属文件及计数。需要重跑时应重跑完整 workflow；不同 attempt 的部分成功不能拼成当前整轮验收。
+
+## 冲刺新增回归与证据口径
+
+新增 `test_sprint_lists.py`、`test_sprint_notifications.py`、`test_sprint_official_time.py`、`test_campus_sprint.py`、`test_intake_round_isolation.py`、`test_notice_phase_tracking.py`、`test_source_fetch_contracts.py` 以及分页、名册前端行为测试。真实浏览器入口 `verify_sprint_ui.mjs` 已加入默认门禁；源网络、模型和外发通道仍使用隔离的合成输入。
+
+`verify_campus_capacity.py` 对相同一万条样本并排测量旧全量读法与新分页、完整语义筛选、全文索引及短中文查询。每项记录冷态、五次热态 P50/P95、响应体及正确性；五样本 P95 使用最近秩最大值，不冒称生产 SLA。
+
+本次执行环境禁止提升权限启动本地浏览器；该限制不会被记为通过。浏览器实际结果以指定提交的 CI 报告为准。真实手机后台/锁屏、真实消息供应商、独立人工标注和校园现场使用仍是独立验收，不能由 CI 合成数据替代。

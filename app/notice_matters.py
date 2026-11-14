@@ -44,6 +44,8 @@ def initialize(conn):
     if version and (version[0] != '1' or not TABLES.issubset(tables)):
         raise ValueError('通知事项归组版本不兼容或缺少必要数据表')
     conn.executescript(SCHEMA)
+    from .notice_tracking import initialize as initialize_tracking
+    initialize_tracking(conn)
 
 
 def own(conn, uid, nid):
@@ -73,19 +75,92 @@ def different_round(left, right):
     return bool(a and b and a != b)
 
 
+def group_context_candidates(conn,uid,notice):
+    """Explainable hypotheses from durable receipts in one authorized group.
+
+    QQ callbacks currently do not retain a verified reply/thread relationship.
+    These edges therefore mean nearby receipts, never same author/thread or an
+    authoritative correction. Reading a candidate never changes either notice.
+    """
+    window=10*60
+    rows=conn.execute('''SELECT b.notice_id,b.id AS other_delivery_id,b.event_key AS other_event_key,
+        b.created_at AS other_received_at,b.observed_at AS other_observed_at,b.title AS other_title,
+        ib.reasons AS other_signals,ib.category AS other_category,
+        a.id AS current_delivery_id,a.event_key AS current_event_key,
+        a.created_at AS current_received_at,a.observed_at AS current_observed_at,a.title AS current_title,
+        ia.reasons AS current_signals,ia.category AS current_category,
+        a.app_id,a.group_id,COALESCE(p.name,'') AS group_name
+        FROM qq_group_deliveries a
+        JOIN qq_group_subscriptions s USING(user_id,app_id,group_id)
+        JOIN qq_authorized_groups g USING(app_id,group_id)
+        JOIN qq_group_delivery_info ia ON ia.delivery_id=a.id
+        JOIN qq_group_deliveries b ON b.user_id=a.user_id AND b.app_id=a.app_id
+          AND b.group_id=a.group_id AND b.created_at BETWEEN a.created_at-? AND a.created_at+?
+        JOIN qq_group_delivery_info ib ON ib.delivery_id=b.id
+        JOIN notices n ON n.id=b.notice_id AND n.user_id=a.user_id
+        LEFT JOIN qq_group_intake_settings p USING(user_id,app_id,group_id)
+        WHERE a.user_id=? AND a.notice_id=? AND a.state='delivered' AND b.state='delivered'
+          AND b.notice_id<>a.notice_id AND ia.category<>'discussion' AND ib.category<>'discussion'
+          AND (a.observed_at<=1 OR b.observed_at<=1 OR abs(a.observed_at-b.observed_at)<=?)
+        ORDER BY abs(a.created_at-b.created_at),b.created_at DESC,b.id LIMIT 120''',
+        (window,window,uid,notice['id'],window)).fetchall()
+    result={}
+    substantive={'change','material','deadline','action','announcement','link'}
+    for row in rows:
+        left=set(json.loads(row['current_signals']));right=set(json.loads(row['other_signals']))
+        # A short follow-up can name the missing material without attaching a
+        # file yet; this is still only a candidate, not proof of its target.
+        for signals,title in ((left,row['current_title']),(right,row['other_title'])):
+            if re.search(r'补件|补交|补传|后补|补发|补充.{0,8}(?:材料|附件|模板)|新版模板',title):
+                signals.add('material')
+        if not substantive.intersection(left) or not substantive.intersection(right):continue
+        # Both actual platform timestamps are required before claiming their
+        # message order; otherwise only the local receipt order is known.
+        platform_time=row['current_observed_at']>1 and row['other_observed_at']>1
+        a=row['current_observed_at'] if platform_time else row['current_received_at']
+        b=row['other_observed_at'] if platform_time else row['other_received_at']
+        later=left if a>b else right if b>a else left|right
+        signals=sorted(later.intersection({'change','material'}))
+        if not signals:continue
+        nid=row['notice_id']
+        if nid in result:continue
+        elapsed=int(abs(a-b))
+        basis={'kind':'qq_group_adjacent','verified':False,'app_id':row['app_id'],'group_id':row['group_id'],
+            'group_name':row['group_name'],'window_seconds':window,'elapsed_seconds':elapsed,
+            'time_basis':'platform_observed_at' if platform_time else 'local_received_at',
+            'delivery_ids':[row['current_delivery_id'],row['other_delivery_id']],
+            'message_keys':[row['current_event_key'],row['other_event_key']],
+            'signals':signals,'thread_id':None,'same_author':None}
+        label='群“'+row['group_name']+'”' if row['group_name'] else '同一已授权群'
+        reason=label+'内相隔不超过10分钟的'+('消息' if platform_time else '收件')+'；其中含'+('更正' if signals==['change'] else '附件或补充材料' if signals==['material'] else '更正及附件')+'提示'
+        result[nid]={'context':basis,'score':.73,'reasons':[reason,
+            '仅为邻近候选，未取得回复线程或同作者依据；请分别核对原文，不据此更改正式时间或合并材料']}
+    return result
+
+
 def suggest(conn, uid, notice, current_group):
     ignored = {r['right_id'] if r['left_id']==notice['id'] else r['left_id']:r for r in conn.execute('SELECT * FROM notice_relation_dismissals WHERE user_id=? AND (left_id=? OR right_id=?)', (uid,notice['id'],notice['id']))}
     members = {n['id'] for n in current_group['members']} if current_group else {notice['id']}
     needle = compact_title(notice['title'])
-    if len(needle) < 6:return []
+    contexts=group_context_candidates(conn,uid,notice)
+    if len(needle) < 6 and not contexts:return []
     results = []
-    for row in conn.execute('SELECT id,title,source_label,published_at,version,created_at,status FROM notices WHERE user_id=? AND id<>?', (uid,notice['id'])):
+    subset=' AND id IN (SELECT value FROM json_each(?))' if len(needle)<6 else ''
+    params=(uid,notice['id'],dumps(list(contexts))) if subset else (uid,notice['id'])
+    for row in conn.execute('SELECT id,title,source_label,published_at,version,created_at,status FROM notices WHERE user_id=? AND id<>?'+subset,params):
         other = dict(row)
         if other['id'] in members or different_round(notice,other):continue
         dismissed = ignored.get(other['id'])
+        context=contexts.get(other['id'])
         if dismissed:
+            # A new file/version does not turn the same weak neighboring
+            # messages into a new relationship after the owner rejected it.
+            if context:continue
             versions = {dismissed['left_id']:dismissed['left_version'],dismissed['right_id']:dismissed['right_version']}
             if versions[notice['id']]==notice['version'] and versions[other['id']]==other['version']:continue
+        if context:
+            results.append({**other,**context})
+            continue
         candidate = compact_title(other['title'])
         matcher = SequenceMatcher(None,needle,candidate,autojunk=False)
         score = matcher.ratio()
@@ -163,8 +238,27 @@ def detach(conn,uid,nid):
 
 
 def annotate(conn,uid,records):
-    mapping = {r['notice_id']:dict(r) for r in conn.execute('SELECT m.notice_id,g.id,g.title,g.version,(SELECT COUNT(*) FROM notice_matter_members a WHERE a.matter_id=g.id) AS member_count FROM notice_matter_members m JOIN notice_matters g ON g.id=m.matter_id WHERE g.user_id=?',(uid,))}
-    for n in records:n['matter']=mapping.get(n['id'])
+    if not records:return records
+    selected=dumps([record['id'] for record in records])
+    # Group and phase are both optional metadata for the same owner-scoped page.
+    # Load them together, including current versions for phase evidence checks.
+    rows=conn.execute('''SELECT n.id AS notice_id,n.version AS current_notice_version,
+        g.id,g.title,g.version,
+        (SELECT COUNT(*) FROM notice_matter_members a WHERE a.matter_id=g.id) AS member_count,
+        p.version AS phase_version,p.notice_version,p.data
+        FROM notices n
+        LEFT JOIN notice_matter_members m ON m.notice_id=n.id
+        LEFT JOIN notice_matters g ON g.id=m.matter_id AND g.user_id=n.user_id
+        LEFT JOIN notice_phase_tracking p ON p.notice_id=n.id AND p.user_id=n.user_id
+        WHERE n.user_id=? AND n.id IN (SELECT value FROM json_each(?))''',(uid,selected)).fetchall()
+    mapping={r['notice_id']:{key:r[key] for key in ('notice_id','id','title','version','member_count')}
+             for r in rows if r['id'] is not None}
+    from .notice_tracking import summarize_rows
+    tracking=summarize_rows(conn,uid,({'notice_id':r['notice_id'],'current_notice_version':r['current_notice_version'],
+        'version':r['phase_version'],'notice_version':r['notice_version'],'data':r['data']} for r in rows))
+    for n in records:
+        n['matter']=mapping.get(n['id'])
+        n['phase_tracking']=tracking.get(n['id'])
     return records
 
 
@@ -216,6 +310,8 @@ class Token(Strict):
 
 
 def install(app,db,user):
+    from .notice_tracking import install as install_tracking
+    install_tracking(app,db,user)
     @app.get('/api/notices/{nid}/matter')
     def read(nid:str,current=Depends(user)):
         with db.connect() as conn:

@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 // Synthetic application workflow; no real school submission or model calls.
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import {createRequire} from 'node:module';
 const out=path.resolve('artifacts/task-materials-browser'),root=path.resolve('.');await fs.mkdir(out,{recursive:true});
 const require=createRequire(path.join(root,'package.json')),{chromium}=require('playwright');
 const seed={username:'workflow.demo',password:'Mvp-Verification-Only-2026'};
-const browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()});
+const browser=await chromium.launch({headless:true,executablePath:browserExecutable(chromium)});
 const page=await browser.newPage({viewport:{width:1440,height:1000},locale:'zh-CN',timezoneId:'Asia/Shanghai',reducedMotion:'reduce'});
 const report={synthetic_data:true,external_calls:false,checks:[],errors:[]};page.on('pageerror',e=>report.errors.push(e.message));
 const api=(url,method='GET',data=null,form=false)=>page.evaluate(async({url,method,data,form})=>{

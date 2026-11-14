@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Real controls and scroll gestures in an isolated account; no paid model.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -10,28 +11,34 @@ assert.equal((await api.post('/api/auth/login',{data:{username:'openui-preview',
 const headers={'X-CSRF-Token':(await(await api.get('/api/session')).json()).csrf};
 const created=await api.post('/api/conversations',{headers,data:{title:'紧凑聊天布局验收'}});assert.equal(created.status(),200);const chat=await created.json();
 const response=await api.post('/api/conversations/'+chat.id+'/messages/stream',{headers,data:{version:chat.version,content:Array(18).fill('合成布局验收：检查单行输入、阅读收起标题以及向上滚动恢复。').join('\n\n'),request_id:crypto.randomUUID(),allow_external_processing:true}});assert.equal(response.status(),200);
-const browser=await engine.launch({headless:true,...(process.platform==='win32'&&name==='chromium'?{channel:'msedge'}:{})});
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(process.platform==='win32'&&name==='chromium'?{channel:'msedge'}:{})});
 const context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871},reducedMotion:'reduce'});
 const page=await context.newPage(),checks=[],errors=[];page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);
-const geometry=()=>page.evaluate(()=>{const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};return {form:rect(document.querySelector('#chat-composer')),input:rect(document.querySelector('#chat-input')),plus:rect(document.querySelector('.composer-plus')),voice:rect(document.querySelector('.composer-entry>.composer-voice')),send:rect(document.querySelector('.send-button')),header:rect(document.querySelector('.chat-heading')),thread:rect(document.querySelector('#chat-thread')),note:rect(document.querySelector('.chat-footnote')),width:innerWidth,scroll:document.documentElement.scrollWidth};});
+const geometry=()=>page.evaluate(()=>{const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};return {form:rect(document.querySelector('#chat-composer')),input:rect(document.querySelector('#chat-input')),plus:rect(document.querySelector('.composer-plus')),send:rect(document.querySelector('.send-button')),header:rect(document.querySelector('.chat-heading')),thread:rect(document.querySelector('#chat-thread')),note:rect(document.querySelector('.chat-footnote')),width:innerWidth,scroll:document.documentElement.scrollWidth};});
 try{
   await page.goto(origin+'/#chat/'+chat.id,{waitUntil:'domcontentloaded'});const input=page.locator('#chat-input');await page.locator('#content:not([inert])').waitFor();await input.waitFor();
   const empty=await geometry();assert.ok(empty.form.height<=58,JSON.stringify(empty));
   for(const value of ['输入一行内容','连续单行文字'.repeat(120)]){
     await input.fill(value);const current=await geometry();assert.ok(Math.abs(current.form.height-empty.form.height)<=1);assert.equal(await input.getAttribute('wrap'),'off');
-    for(const key of ['plus','voice','send'])assert.ok(Math.abs(current[key].y+current[key].height/2-(current.input.y+current.input.height/2))<=3,JSON.stringify(current));
+    for(const key of ['plus','send'])assert.ok(Math.abs(current[key].y+current[key].height/2-(current.input.y+current.input.height/2))<=3,JSON.stringify(current));
   }
   await input.fill('第一行\n第二行\n第三行');const expanded=await geometry();assert.ok(expanded.input.height>=empty.input.height+35);
   await input.fill(Array(20).fill('显式换行后的输入').join('\n'));assert.ok((await geometry()).input.height<=144);
   await input.fill('');assert.ok(Math.abs((await geometry()).form.height-empty.form.height)<=1);checks.push('空白、短单行和长单行保持一行；显式换行增高，删除后收回');
-  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();assert.ok(await page.locator('#composer-menu').isVisible());await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
+  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();assert.ok(await page.locator('#composer-menu').isVisible());assert.ok(await page.locator('#composer-menu .composer-voice').isVisible());await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
   const before=await geometry();assert.ok(before.note.height<=18);await page.screenshot({path:out+'/desktop.png',caret:'initial'});
   await input.focus();await page.evaluate(()=>{document.querySelector('#chat-thread').scrollTop=100;});
   assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('reading-content')),false);
   await page.mouse.move(before.thread.x+before.thread.width/2,before.thread.y+100);await page.mouse.wheel(0,240);
   await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chat-heading')).opacity==='0');
   const hidden=await geometry();assert.ok(Math.abs(hidden.thread.height-before.thread.height)<1);assert.ok(Math.abs(hidden.thread.y-before.thread.y)<1);await page.screenshot({path:out+'/reading.png',caret:'initial'});
-  await page.evaluate(async()=>{const {scrollChatToEnd}=await import('/static/chat-viewport.js');scrollChatToEnd(document.querySelector('#chat-thread'));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});assert.equal(await page.locator('.chat-heading').evaluate(n=>getComputedStyle(n).opacity),'0','A programmatic follow after a real gesture must not reopen the heading');
+  // Exercise the application's own scroll handler. Importing the source file
+  // here would create a different WeakMap instance when the app is bundled.
+  const beforeJump=await page.locator('#chat-thread').evaluate(node=>node.scrollTop);
+  await page.locator('#chat-jump-latest').click();
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  assert.ok(Math.abs(await page.locator('#chat-thread').evaluate(node=>node.scrollTop)-beforeJump)>1,'The real jump control must actually move to the latest reply');
+  assert.equal(await page.locator('.chat-heading').evaluate(n=>getComputedStyle(n).opacity),'0','The application scroll after a real reading gesture must not reopen the heading');
   const frameHeading=page.frameLocator('iframe.openui-frame').locator('h1,h2,h3,p').first();await frameHeading.waitFor();const readingTarget=await frameHeading.boundingBox();await page.mouse.move(readingTarget.x+Math.min(80,readingTarget.width/2),readingTarget.y+readingTarget.height/2);
   await page.mouse.wheel(0,-100);await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chat-heading')).opacity==='1');
   await page.mouse.wheel(0,180);await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chat-heading')).opacity==='0');
@@ -50,7 +57,7 @@ try{
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();
     assert.ok(size.form.height<=60&&size.form.bottom<=height+1&&size.scroll<=width+1&&size.thread.height>90,JSON.stringify(size));
-    for(const key of ['plus','voice','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=36);
+    for(const key of ['plus','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=44);
     await page.screenshot({path:out+'/'+label+'.png',caret:'initial'});
   }checks.push('手机、平板和键盘高度保持一行，触控按钮可达，无页面横向溢出');
   await input.fill('');await page.locator('#composer-file-input').setInputFiles({name:'布局验收.txt',mimeType:'text/plain',buffer:Buffer.from('用于布局检查的合成附件。')});

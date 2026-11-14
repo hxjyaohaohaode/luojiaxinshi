@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /* Synthetic accounts, real API and rendered controls. No model or external delivery. */
 import {chromium,firefox,webkit} from 'playwright';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import path from 'node:path';
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/notice-matters-browser');await fs.mkdir(out,{recursive:true});
 const report={synthetic:true,live_model_calls:0,external_messages:0,checks:[],errors:[]};
 for(const [name,engine] of Object.entries({chromium,firefox,webkit})){
- const browser=await engine.launch({headless:true,executablePath:engine.executablePath()}),page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+ const browser=await engine.launch({headless:true,executablePath:browserExecutable(engine)}),page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
  page.setDefaultTimeout(12000);page.on('pageerror',e=>report.errors.push({browser:name,message:e.message}));
  const check=async(title,fn)=>{await fn();report.checks.push({browser:name,title,passed:true});};
  const api=(url,method='GET',json=null)=>page.evaluate(async({url,method,json})=>{const s=await fetch('/api/session').then(r=>r.json());const r=await fetch('/api'+url,{method,headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':s.csrf,...(json?{'Content-Type':'application/json'}:{})},...(json?{body:JSON.stringify(json)}:{})});if(!r.ok)throw Error(await r.text());return r.json();},{url,method,json});

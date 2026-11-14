@@ -21,9 +21,6 @@ export function mountTaskMaterials(host,{task,api,state,esc,timeInput,toTime,onS
   const current=()=>host.isConnected&&owner===state.session?.user?.id&&dialog===state.dialogRequest;
   const mode=()=>host.closest('form')?.elements.execution_mode.value;
   const syncMode=()=>{host.hidden=mode()!=='submission'&&!task.data.materials.length&&!bundle?.materials.length;const editor=host.querySelector('.personal-submission-editor');if(editor)editor.hidden=mode()!=='submission';};
-  if(!document.querySelector('[data-task-material-style]')){
-    const link=document.createElement('link');link.rel='stylesheet';link.href=new URL('./task-materials.css',import.meta.url).href;link.dataset.taskMaterialStyle='';document.head.append(link);
-  }
   const message=(text,error=false)=>{const node=host.querySelector('[data-material-status]');if(node){node.textContent=text;node.classList.toggle('error',error);}};
   const formatDate=value=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short',hour12:false}).format(new Date(typeof value==='number'?value*1000:value));
   const url=version=>esc(version.download_url);

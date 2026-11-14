@@ -1,0 +1,15 @@
+.notice-lifecycle { max-width: 100%; }
+.notice-lifecycle h3,.notice-lifecycle h4 { margin: .2rem 0 .65rem; }
+.lifecycle-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.notice-lifecycle .field { min-width:0; }
+.notice-lifecycle details { padding:.8rem 0; }
+.notice-lifecycle summary { cursor:pointer; padding:.35rem 0; font-weight:600; }
+.lifecycle-evidence { max-height:24rem; overflow:auto; }
+.lifecycle-evidence-row { display:flex; align-items:flex-start; gap:.75rem; padding:.8rem .35rem; }
+.lifecycle-evidence-row>input { flex:0 0 auto; margin-top:.3rem; }
+.lifecycle-evidence-row>span { display:grid; gap:.4rem; min-width:0; overflow-wrap:anywhere; }
+.lifecycle-evidence-row:has(input:checked) { background:var(--surface-soft,#eff6f1); }
+.lifecycle-links { display:grid; gap:.8rem; padding-inline-start:1.2rem; }
+.lifecycle-links li>span { display:block; }
+.notice-lifecycle [hidden] { display:none!important; }
+@media(max-width:560px) { .lifecycle-grid { grid-template-columns:1fr; gap:.65rem; } .notice-lifecycle input,.notice-lifecycle select { min-height:44px; } }

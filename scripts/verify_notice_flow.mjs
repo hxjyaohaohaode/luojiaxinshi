@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /** Existing inputs through persisted actions; synthetic data and real local APIs. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -9,7 +10,7 @@ await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic local data, real application storage and routes; link provider is a declared fixture',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
   console.log('Notice flow: '+engine);
-  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+  const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
   const page=await browser.newPage({viewport:{width:1440,height:900},locale:'zh-CN',timezoneId:'America/Los_Angeles'});
   page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
   page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
@@ -119,6 +120,9 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     await check('unreadable links leave pasted content intact for fallback',async()=>{
       await nav('new');await page.locator('[name=body]').fill('失败后保留的正文 '+unique);await page.locator('[data-read-url]').fill('https://notice-fixture.example/failure');await page.locator('[data-read-link]').click();await page.getByText('示例链接暂时不可读取，请粘贴正文或上传原件',{exact:true}).waitFor();
       assert.equal(await page.locator('[name=body]').inputValue(),'失败后保留的正文 '+unique);assert.equal(await page.locator('[name=link_preview]').inputValue(),'');
+      const failure=page.locator('#toast.visible.error').filter({hasText:'示例链接暂时不可读取，请粘贴正文或上传原件'});
+      await failure.locator('[data-toast-close]').click();await failure.waitFor({state:'hidden'});
+      assert.equal(await page.locator('[name=body]').inputValue(),'失败后保留的正文 '+unique,'Acknowledging a persistent error must not clear the fallback text');
     });
     await check('batch partial success survives retry; duplicates reuse the notice unless another batch is selected',async()=>{
       await nav('intake');let cards=page.locator('[data-intake-entry]');await cards.nth(0).locator('.intake-metadata>summary').click();await cards.nth(0).locator('[name=title]').fill('批量通知 A '+unique);await cards.nth(0).locator('[name=body]').fill('独立的批量正文 '+unique);

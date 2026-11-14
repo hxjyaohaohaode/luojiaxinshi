@@ -29,8 +29,11 @@ def lane_for(task, automatic=False):
 
 
 def ordered(tasks):
-    # Python's stable sort preserves the default deadline order for untouched cards.
-    return sorted(tasks,key=lambda task:(task['workflow']['data'].get('board_order') is None,
+    # The visible paged board starts in created_at/id descending order. A first
+    # drag must preserve that order for all untouched cards, including hidden
+    # records, instead of inheriting the legacy full-list updated_at order.
+    baseline=sorted(tasks,key=lambda task:(task['created_at'],task['id']),reverse=True)
+    return sorted(baseline,key=lambda task:(task['workflow']['data'].get('board_order') is None,
                                          task['workflow']['data'].get('board_order') or 0))
 
 

@@ -1,3 +1,5 @@
+import {browserOverride} from './browser-runtime.mjs';
+import {openReplyMenu} from './reply_menu_checks.mjs';
 // Request routing is isolated from service workers; worker delivery has its own real-browser suite.
 // Native application modules and real browser gestures; synthetic, isolated data.
 import assert from 'node:assert/strict';
@@ -18,7 +20,7 @@ const previous={id:'b'.repeat(32),parent_id:'2'.repeat(32),role:'assistant',stat
 const latest={...previous,id:'d'.repeat(32),content:content('当前版',18),created_at:at+1530};
 const versions=[previous,latest];let selected=latest;
 const snapshot=()=>({...chat,processing:false,messages:[{id:a1.parent_id,role:'user',status:'complete',content:'请读取合成材料',created_at:at},a1,{id:latest.parent_id,role:'user',status:'complete',content:'请整理执行结果',created_at:at+1500},{...selected,versions,version_index:versions.findIndex(v=>v.id===selected.id)}]});
-const browser=await engine.launch({headless:true,...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})});
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})});
 const context=await browser.newContext({serviceWorkers:'block',storageState:await api.storageState(),viewport:{width:1651,height:871}});
 await context.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async()=>{},writeText:async text=>{window.__copied=text;}}});});
 const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',error=>errors.push(String(error)));
@@ -73,9 +75,9 @@ try{
   assert.ok(midWidth<anchor.width&&midWidth>expanded,'Material grid should interpolate');assert.ok(Math.abs(await page.evaluate(()=>window.__anchor.getBoundingClientRect().top)-anchor.top)<30);
   await page.getByRole('button',{name:'收起材料',exact:true}).click();await settle();assert.ok(Math.abs(await page.evaluate(()=>window.__anchor.getBoundingClientRect().top)-anchor.top)<3);
   await page.getByRole('button',{name:'回到最新 ↓',exact:true}).click();await settle();assert.ok(await page.locator('#chat-thread').evaluate(n=>n.scrollHeight-n.scrollTop-n.clientHeight<3),'An explicit jump releases the previous reflow anchor');
-  const previousButton=currentReply().getByRole('button',{name:'上一版回复',exact:true});await previousButton.scrollIntoViewIfNeeded();await settle();const footerY=await currentReply().locator('.message-footer').evaluate(n=>n.getBoundingClientRect().top);
+  await openReplyMenu(currentReply());const previousButton=currentReply().getByRole('button',{name:'上一版回复',exact:true});await previousButton.scrollIntoViewIfNeeded();await settle();const footerY=await currentReply().locator('.message-footer').evaluate(n=>n.getBoundingClientRect().top);
   await previousButton.click();await currentReply().locator('.gu-markdown').filter({hasText:'上一版第 1 段'}).waitFor();await settle();const changedY=await currentReply().locator('.message-footer').evaluate(n=>n.getBoundingClientRect().top);assert.ok(Math.abs(changedY-footerY)<4,JSON.stringify({footerY,changedY}));
-  await currentReply().getByRole('button',{name:'下一版回复',exact:true}).click();await settle();assert.ok(Math.abs(await currentReply().locator('.message-footer').evaluate(n=>n.getBoundingClientRect().top)-footerY)<4);
+  await openReplyMenu(currentReply());await currentReply().getByRole('button',{name:'下一版回复',exact:true}).click();await settle();assert.ok(Math.abs(await currentReply().locator('.message-footer').evaluate(n=>n.getBoundingClientRect().top)-footerY)<4);
   checks.push('材料侧滑与正文重排有短延时；切换长短版本保留消息操作区的阅读锚点，不吸到底部');
   for(const [label,width,height]of [['desktop',1651,871],['mobile',390,844],['keyboard',390,420]]){await page.setViewportSize({width,height});await settle();await page.locator('#chat-thread').evaluate(n=>n.scrollTop=n.scrollHeight);await page.screenshot({path:out+'/'+label+'.png'});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));const gap=await page.evaluate(()=>{const r=document.querySelector('#chat-thread'),m=r.querySelector('.message:last-child');return r.getBoundingClientRect().bottom-m.getBoundingClientRect().bottom;});assert.ok(gap<5,JSON.stringify({label,gap}));if(label==='mobile'){await toggle.click();await settle();await work.locator('.work-trace-link').click();const dialogTrace=page.locator('#dialog .execution-trace');await dialogTrace.locator('.trace-record').first().click();assert.ok(await dialogTrace.locator('.trace-layout').evaluate(n=>getComputedStyle(n).gridTemplateColumns.trim().split(/\s+/).length===1));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:out+'/mobile-trace.png'});await page.keyboard.press('Escape');await toggle.click();await settle();}}
   checks.push('桌面、手机、键盘高度无横向溢出，回复末尾多余空白已移除');

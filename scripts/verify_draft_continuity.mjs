@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 import {artifactPath} from './mvp_check_runtime.mjs';
 import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
@@ -16,7 +17,7 @@ for(const name of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',
     if(!registered.ok())throw new Error('Owned synthetic account login failed: '+registered.status());
     const session=await (await auth.get('/api/session')).json();headers={Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf};storageState=await auth.storageState();
   }finally{await auth.dispose();}
-  const browser=await engines[name].launch({headless:true,executablePath:engines[name].executablePath()});
+  const browser=await engines[name].launch({headless:true,executablePath:browserExecutable(engines[name])});
   try{
   for(const viewport of sizes){
     const context=await browser.newContext({viewport,reducedMotion:'reduce',storageState,serviceWorkers:'block'});

@@ -15,6 +15,22 @@ def junit(path):
             sum(c.find('error') is not None for c in cases), sum(c.find('skipped') is not None for c in cases)]
 
 
+def browser_counts(data):
+    """Preserve explicit suite failures without counting the same error twice."""
+    checks, errors = data['checks'], data['errors']
+    if not isinstance(checks, list) or not isinstance(errors, list):
+        raise ValueError('Browser report checks and errors must be lists')
+    failures = sum(not check.get('ok', check.get('passed', False))
+                   for check in checks if isinstance(check, dict))
+    error_count = len(errors)
+    failed = data.get('passed') is False or data.get('ok') is False or bool(data.get('error'))
+    # Some suites append only completed check names, then fail an assertion.
+    # Their top-level failure must remain visible even without a failed case.
+    if failed and not failures and not error_count:
+        failures = 1
+    return [len(checks), failures, error_count, 0]
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--kind', choices=['unit', 'browser', 'continuity', 'all'], default='all')
@@ -27,7 +43,8 @@ def main():
         except (OSError, ET.ParseError):
             values = ['report unavailable', '-', '-', '-']
         rows.append([label, *values])
-    browsers = [('Browser stability', 'artifacts/frontend-v9-browser/report.json'),
+    browsers = [('Sprint workflows and loading performance', 'artifacts/sprint-ui-browser/report.json'),
+                ('Browser stability', 'artifacts/frontend-v9-browser/report.json'),
                 ('Browser regression', 'artifacts/frontend-v8-browser/report.json'),
                 ('Reference interactions', 'artifacts/reference-interactions-browser/report.json'),
                 ('Workspace interactions', 'artifacts/workspace-interactions-browser/report.json'),
@@ -66,7 +83,7 @@ def main():
     for label, path in selected:
         try:
             data = json.loads((ROOT/path).read_text(encoding='utf-8'))
-            rows.append([label, len(data['checks']), sum(not c.get('ok', c.get('passed', False)) for c in data['checks'] if isinstance(c, dict)), len(data['errors']), 0])
+            rows.append([label, *browser_counts(data)])
         except (OSError, ValueError, KeyError, TypeError):
             rows.append([label, 'report unavailable', '-', '-', '-'])
     text = '## Verification results\n\nCommit: `'+os.getenv('GITHUB_SHA', 'local')+'`\n\n'

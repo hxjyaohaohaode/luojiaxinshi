@@ -1,11 +1,13 @@
+import {createCollaborationFollowup} from './collaboration-followup.js';
 import {beginFormFeedback,captureUiContext} from './ui-request.js';
 
-const states={sent:'待接收',accepted:'办理中',supplement:'待补件',resubmitted:'已补交，待接收',resolved:'协作办结',withdrawn:'已撤回'};
-const actions={send:'发起协作',accept:'接收办理',request_supplement:'退回补件',resubmit:'补交材料',resolve:'保存办结回执',withdraw:'撤回协作'};
+const states={sent:'待接收',accepted:'办理中',supplement:'待补件',resubmitted:'已补交，待接收',resolved:'协作办结',withdrawn:'已撤回',declined:'已拒收 / 不再负责',retained:'对方注销后的留存回执'};
+const actions={send:'发起协作',accept:'接收办理',request_supplement:'退回补件',resubmit:'补交材料',resolve:'保存办结回执',withdraw:'撤回协作',transfer:'转交另一位负责人',decline:'拒收 / 不再负责',account_deleted:'对方账号已注销'};
 const date=value=>new Intl.DateTimeFormat('zh-CN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Shanghai'}).format(new Date(value*1000));
 
 export function createCollaborationUI({state,api,esc,showDialog,toast}){
   const $=selector=>document.querySelector(selector);
+  const followupUI=createCollaborationFollowup({state,api,esc,showDialog,toast,onChanged:({caseId,followup})=>{if(record?.id===caseId)record.personal_followup=followup;}});
   let side='recipient',page=1,owner=null,record=null,sequence=0,saving=false;
   function choices(files){
     if(!files?.length)return '';
@@ -26,19 +28,19 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
     const options=item.actions.map(key=>'<option value="'+key+'">'+actions[key]+'</option>').join('');
     return '<form data-workspace-form="collaboration" data-case-id="'+esc(item.id)+'" data-version="'+item.version+'" data-request-id="'+crypto.randomUUID()+'" class="stack">'+
       '<label class="field">下一步<select name="action">'+options+'</select></label>'+
-      '<label class="field">办理说明或回执<textarea name="note" rows="3" maxlength="2000">'+esc(note)+'</textarea></label>'+
+      '<label class="field">办理说明或回执<textarea name="note" rows="3" maxlength="2000" '+(['request_supplement','decline','resolve'].includes(item.actions[0])?'required':'')+'>'+esc(note)+'</textarea></label>'+
       choices(item.file_choices)+'<div class="form-footer"><button type="submit" class="button primary">确认操作</button></div></form>';
   }
   function status(item){
-    return states[item.state]+(item.recipient_available?'':' · 原接收范围已变更');
+    return (states[item.state]||item.state)+(item.retained?' · 只读':item.recipient_available?'':' · 原接收范围已变更');
   }
   function paint(item){
     $('#content').innerHTML='<section class="stack collaboration-page"><div class="page-title"><a class="small" href="#collaboration">返回协作办理</a><h1>'+esc(item.title)+'</h1></div>'+
       '<section class="panel stack" aria-label="协作状态"><p data-collaboration-status role="status">'+status(item)+'</p>'+
-      '<p class="small muted">发起人 '+esc(item.sender)+' · 接收人 '+esc(item.recipient)+'</p>'+
+      (item.retained?'<p class="alert info">'+esc(item.retention_note||'对方账号已注销，只保留必要的脱敏协作回执，文件分享已撤销。')+'</p>':'<p class="small muted">发起人 '+esc(item.sender)+' · 接收人 '+esc(item.recipient)+'</p>')+
       (item.task_id?'<a class="small" href="#tasks/'+esc(item.task_id)+'">打开我的原事项</a>':'')+
       '<p class="small muted">这里记录站内协作。校方手续请按原通知渠道办理。</p>'+
-      '<div data-collaboration-action>'+actionForm(item)+'</div></section>'+
+      (!item.retained?'<button type="button" class="button small" data-collaboration-followup>设置本人跟进</button>':'')+'<div data-collaboration-action>'+actionForm(item)+'</div>'+(!item.retained&&item.recipient_id&&item.task_id&&!['resolved','withdrawn'].includes(item.state)?'<button type="button" class="button small" data-collaboration-transfer>转交另一位负责人</button>':'')+'</section>'+
       '<section class="panel stack" aria-label="办理记录"><h2>办理记录</h2><div data-collaboration-history>'+history(item)+'</div></section></section>';
   }
   function receive(item){
@@ -89,8 +91,8 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
       (result.has_more?'<button class="button small" data-collaboration-page="1">下一页</button>':'')+'</div></section>';
     return true;
   }
-  async function start(tid){
-    const view=captureUiContext(state);
+  async function start(tid,view=captureUiContext(state)){
+    if(!view.sameDialog())return;
     const item=await api('/collaboration/tasks/'+encodeURIComponent(tid)+'/options');
     if(!view.sameDialog())return;
     if(!item.recipients.length){
@@ -104,12 +106,28 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
       choices(item.files)+'<p class="small muted">对方能看到这项标题、说明和你勾选的材料版本。</p>'+
       '<div class="form-footer"><button type="submit" class="button primary">发送给所选接收人</button></div></form>');
   }
+  async function transfer(item){
+    const view=captureUiContext(state),options=await api('/collaboration/tasks/'+encodeURIComponent(item.task_id)+'/options');if(!view.sameDialog())return;
+    const recipients=options.recipients.filter(person=>person.id!==item.recipient_id);
+    if(!recipients.length){showDialog('转交协作','<p>当前授权范围没有其他可选择的负责人。原协作与个人记录保留。</p>');return;}
+    showDialog('转交另一位负责人',`<form data-workspace-form="collaboration-transfer" data-case-id="${esc(item.id)}" data-version="${item.version}" data-task-version="${options.version}" data-request-id="${crypto.randomUUID()}" class="stack"><h3>${esc(options.title)}</h3><p class="small muted">旧协作将关闭文件分享并保留历史。新负责人只收到本次说明及你重新勾选的文件版本，不会自动复制旧材料或旧对话。</p><label class="field">新负责人<select name="recipient_id">${recipients.map(person=>`<option value="${esc(person.id)}">${esc(person.display_name)} · ${person.role==='counselor'?'辅导员':'学院管理员'}</option>`).join('')}</select></label><label class="field">转交原因与需要协助的事项<textarea name="note" required maxlength="2000" rows="3"></textarea></label>${choices(options.files)}<button type="submit" class="button primary">确认转交</button></form>`);
+  }
+  document.addEventListener('submit',async event=>{
+    const form=event.target;if(form.dataset.workspaceForm!=='collaboration-transfer')return;event.preventDefault();
+    const finish=beginFormFeedback(form);if(!finish)return;const view=captureUiContext(state,form),values=new FormData(form);form.inert=true;
+    try{
+      const files=values.getAll('shared_file').map(value=>{const [material_id,version]=value.split(':');return {material_id,version:Number(version)};});
+      const item=await api('/collaboration/'+encodeURIComponent(form.dataset.caseId)+'/transfer',{method:'POST',json:{version:Number(form.dataset.version),task_version:Number(form.dataset.taskVersion),recipient_id:values.get('recipient_id'),note:values.get('note'),files,request_id:form.dataset.requestId}});
+      if(!view.sameUser())return;toast('协作已转交；旧材料分享已关闭');if(view.sameDialog())$('#dialog').close();if(view.sameRoute())location.hash='#collaboration/'+item.id;
+    }catch(error){if(view.sameDialog())toast(error.message,true);}finally{form.inert=false;finish();}
+  });
   document.addEventListener('click',async event=>{
-    const button=event.target.closest('[data-collaboration-start],[data-collaboration-side],[data-collaboration-page],[data-collaboration-rebase]');
+    const button=event.target.closest('[data-collaboration-side],[data-collaboration-page],[data-collaboration-rebase],[data-collaboration-transfer],[data-collaboration-followup]');
     if(!button||button.disabled)return;
     button.disabled=true;
     try{
-      if(button.dataset.collaborationStart)await start(button.dataset.collaborationStart);
+      if(button.hasAttribute('data-collaboration-followup')&&record)await followupUI.open(record.id);
+      else if(button.hasAttribute('data-collaboration-transfer')&&record)await transfer(record);
       else if(button.hasAttribute('data-collaboration-rebase')&&record){
         const root=$('[data-collaboration-action]');
         const form=root.querySelector('form'),selection=new FormData(form);
@@ -159,8 +177,9 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
   document.addEventListener('change',event=>{
     const input=event.target;
     if(input.name!=='action'||input.form?.dataset.workspaceForm!=='collaboration')return;
+    input.form.elements.note.required=['request_supplement','decline','resolve'].includes(input.value);
     const files=input.form.querySelector('[data-collaboration-files]');
     if(files){files.hidden=input.value!=='resubmit';files.disabled=files.hidden;}
   });
-  return {render,saving:()=>saving};
+  return {render,start,saving:()=>saving};
 }

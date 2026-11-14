@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Replay the actual paid-model artifact; all subsequent browser work is offline.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -6,7 +7,7 @@ const name=process.env.OPENUI_BROWSER||'chromium',engine={chromium,firefox,webki
 const out=process.env.OPENUI_ARTIFACT_DIR||'artifacts/openui-live/browser/chromium',origin='http://127.0.0.1:8794';await mkdir(out,{recursive:true});
 const api=await request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin,'X-Requested-With':'campus-notice'}});
 assert.equal((await api.post('/api/auth/login',{data:{username:'openui-preview',password:'OpenUIFixture2026!'}})).status(),200);
-const browser=await engine.launch({headless:true,...(process.platform==='win32'&&name==='chromium'?{channel:'msedge'}:{})});
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(process.platform==='win32'&&name==='chromium'?{channel:'msedge'}:{})});
 const context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1440,height:1000},reducedMotion:'reduce'});
 const page=await context.newPage(),errors=[],checks=[];page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(String(e)));
 try{

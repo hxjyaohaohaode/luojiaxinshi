@@ -46,19 +46,20 @@ def relation(left,right):
 
 def candidates(primary,config,entries):
     origin=primary.get('origin') or {};base=origin.get('url','')
-    host=urlsplit(config['url']).hostname;prefix=config.get('article_path_prefix','/')
+    from .source_sync import article_allowed
+    prefix=config.get('article_path_prefix','/')
     current={'title':primary.get('name',''),'published_at':origin.get('published_at')}
     choices={}
     for item in origin.get('related_links',[]):
         if not isinstance(item,dict):continue
         url=public_url(item.get('url'));label=item.get('title','')
-        if not url or url==base or urlsplit(url).hostname!=host or not urlsplit(url).path.startswith(prefix):continue
+        if not url or url==base or not article_allowed(url,config) or not urlsplit(url).path.startswith(prefix):continue
         # Require a matter-specific title even for a direct link, avoiding menus.
         score=relation(current,{'title':label,'published_at':None})
         if score:choices[url]={'url':url,'title':label,'relationship':'linked_candidate','score':score+1}
     for item in entries:
         url=public_url(item.get('url'))
-        if not url or url==base or urlsplit(url).hostname!=host or not urlsplit(url).path.startswith(prefix):continue
+        if not url or url==base or not article_allowed(url,config) or not urlsplit(url).path.startswith(prefix):continue
         score=relation(current,item)
         if score and url not in choices:choices[url]={**item,'relationship':'index_candidate','score':score}
     return sorted(choices.values(),key=lambda item:(-item['score'],item['url']))[:MAX_RELATED]
@@ -71,11 +72,12 @@ async def read_network(primary,config,entries,*,read=None):
     proposed=candidates(root,config,entries)
     origin['related_search']={'scope':'authorized_source_index_and_links','candidates':proposed,
         'limit':MAX_RELATED,'complete':False,'errors':[]}
-    report=origin['related_search'];host=urlsplit(config['url']).hostname
+    from .source_sync import article_allowed
+    report=origin['related_search']
     async def fetch(item):
         try:
             source,_=await reader(item['url'])
-            if urlsplit(source.get('origin',{}).get('url','')).hostname!=host:
+            if not article_allowed(source.get('origin',{}).get('url',''),config):
                 raise HTTPException(422,'关联原文跳转出了授权来源域名')
             # A current original is retained as its own source; this edge is not
             # an assertion of supersession or the user's eligibility.
@@ -105,12 +107,14 @@ async def read_network(primary,config,entries,*,read=None):
 
 def provenance(sources):
     from .source_coverage import coverage
-    keys=('url','retrieved_at','published_at','parent_url','relationship','relationship_verified','warnings','attachments','received_attachments','related_search','retained_snapshots')
+    keys=('url','retrieved_at','published_at','parent_url','relationship','relationship_verified','warnings','attachments','received_attachments','related_search','retained_snapshots',
+          'feed_service_url','feed_entry_id','source_identity','allowed_article_origins','listed_published_at',
+          'list_snapshot_sha256','subscription_rule_version','subscription_config_hash','raw_sha256','acquisition','parser_version')
     return [{'source_id':s['id'],'coverage':coverage(s),**{key:s.get('origin',{})[key] for key in keys if key in (s.get('origin') or {})}}
             for s in sources if s.get('origin')]
 
 
-def retain_unavailable(conn,uid,external_key,materials):
+def retain_unavailable(conn,uid,external_key,materials,*,title='',published_at=None):
     """A transient auxiliary failure cannot remove a previously read extension.
 
     The current root records which old snapshots were retained. Reusing a byte
@@ -123,7 +127,8 @@ def retain_unavailable(conn,uid,external_key,materials):
     failed=missing|{e['url'] for e in errors if e.get('url')}
     if any(not e.get('url') for e in errors):failed.update(c['url'] for c in report.get('candidates',[]))
     if not failed:return materials
-    receipt=conn.execute('SELECT notice_id FROM notice_ingest_receipts WHERE user_id=? AND external_key=? ORDER BY created_at DESC,rowid DESC LIMIT 1',(uid,external_key)).fetchone()
+    from .notice_ingest import _previous_round,infer_title
+    receipt,_=_previous_round(conn,uid,external_key,title or origin.get('title') or infer_title(materials),published_at or origin.get('published_at'))
     if not receipt:return materials
     previous=[]
     # Another collector of the same notice can have obtained a newer snapshot.
@@ -131,8 +136,10 @@ def retain_unavailable(conn,uid,external_key,materials):
     # collector key's older receipt and silently undo the newer attachment.
     for row in conn.execute('''SELECT s.*,o.data AS origin_json FROM sources s JOIN notices n ON n.id=s.notice_id
             JOIN notice_source_origins o ON o.source_id=s.id WHERE s.notice_id=? AND n.user_id=? AND s.active=1
-            ORDER BY s.created_at,s.id''',(receipt[0],uid)):
-        previous.append({**dict(row),'sections':json.loads(row['sections']),'origin':json.loads(row['origin_json'])})
+            ORDER BY s.created_at,s.id''',(receipt['notice_id'],uid)):
+        from .campus_assets import hydrate_source
+        source=hydrate_source(conn,dict(row))
+        previous.append({**source,'sections':json.loads(row['sections']),'origin':json.loads(row['origin_json'])})
     known={s['sha256'] for s in materials};retained=[]
     for _ in range(len(previous)):
         changed=False

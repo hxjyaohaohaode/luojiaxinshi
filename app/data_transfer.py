@@ -7,7 +7,7 @@ from .usage_limits import check_count, check_storage, limits_for
 from fastapi import Depends,HTTPException
 from pydantic import Field,ValidationError
 from .db import audit,dumps,ident
-from .models import Strict,Profile,TaskData,safe_url
+from .models import Strict,Profile,TaskData,ScheduledTime,safe_url
 from .schedule import Arrangement
 from .security import rate_limit
 from .workflow import WorkflowData, ChangeProposal, PATCH_FIELDS, validate_dependency_graph
@@ -82,6 +82,8 @@ def historical_impact(items):
                 if name=='materials':
                     if not isinstance(value,list) or len(value)>30:raise ValueError('历史材料清单不正确')
                     values[side]=[text(v,500) for v in value]
+                elif name=='scheduled':
+                    values[side]=None if value is None else ScheduledTime.model_validate(value).model_dump()
                 else:values[side]=None if value is None else text(value,3000)
             diff[name]=values
         warnings=item.get('warnings',[])
@@ -192,6 +194,9 @@ def validate(data, capacity=None):
         context=Context.model_validate(c.get('context',{'version':0})).model_dump()
         chats.append({'key':key('chat',c),'title':text(c.get('title'),100),'sources':sources(c.get('sources',[])),'messages':messages,'context':context})
     arrangements=[{'key':key('arrangement',x),'data':Arrangement.model_validate(x.get('data',{})).model_dump()} for x in collection(data,'arrangements',capacity.arrangements)]
+    for arrangement in arrangements:
+        # A portable record is historical data, not consent for a new channel.
+        arrangement['data']['reminder_minutes']=None
     catalog=[{'key':key('catalog',x),'data':CatalogItem.model_validate(x).model_dump()} for x in collection(data,'source_catalog',capacity.sources)]
     from .memory import Memory,Project
     projects=[];memories=[]
@@ -225,9 +230,13 @@ def install_data_transfer(app,db,user):
         from .notice_matters import validate_import_groups
         try:imported_matters=validate_import_groups(payload.data.get('notice_matters',[]),db.usage_limits.notices)
         except ValueError as exc:raise HTTPException(422,str(exc)) from None
+        from .notice_tracking import validate_import_tracking,import_tracking
+        try:imported_tracking=validate_import_tracking(payload.data.get('notice_phase_tracking',[]),db.usage_limits.notices)
+        except (ValueError,ValidationError,TypeError,KeyError):raise HTTPException(422,'通知阶段历史格式不正确') from None
         counts={k:len(data[k]) for k in ['memory_projects','memories','notices','conversations','arrangements','source_catalog'] if data[k] or k in ['notices','conversations','arrangements','source_catalog']}
         warnings=['只新增记录，不覆盖现有记录；重复导入相同记录会跳过。','附件原件不在 JSON 备份内，恢复提取文字；对话恢复为可读文字，生成式互动状态和事实引用编号不恢复；消息引用快照与表情保留。','导入待办的正式期限需重新核对，提醒时间清空；不会自动向外部日历写入。']
         warnings.append('办理记录、回执及变更前后值按历史保留；原待确认变更转为待核实线索，设备提醒验证需要重新进行。')
+        warnings.append('导入个人安排的外发提醒均关闭，需逐项重新开启；导入个人资料不会改变当前账号的通知授权与免打扰偏好。')
         if payload.data.get('task_material_archive'):
             warnings.append('此文件中的本人办理材料版本目录和提交快照仅供查阅，本次 JSON 导入不恢复这些记录或文件原件。完整恢复请使用管理员数据库备份；原件可在各待办中单独下载。')
         if any(n['quality_receipt'] for n in data['notices']):warnings.append('逐条核对记录作为导入历史保留，不视为当前版本已重新核实；缺失来源保留引句但不能跳转。')
@@ -235,6 +244,7 @@ def install_data_transfer(app,db,user):
         if data['memories'] or data['memory_projects']:
             warnings.append('项目与记忆按导出文件中的启用状态恢复；原对话来源关联不迁移，历史声明不恢复其他账号权限；项目缺失时拒绝该次导入。')
         if imported_matters:warnings.append('事项归组按原通知标识恢复；请一并导入组内通知，已有归组不会被导入操作改写。')
+        if imported_tracking:warnings.append('通知阶段、名单核对与异议窗口仅作为可查历史保留；当前阶段重新待核对，不恢复身份结论或外发提醒。')
         if not payload.confirm:return {'digest':digest,'counts':counts,'warnings':warnings,'matter_count':len(imported_matters)}
         if payload.digest!=digest:raise HTTPException(409,'文件在预览后发生变化，请重新预览')
         now=int(time.time());added=0;skipped=0
@@ -369,9 +379,11 @@ def install_data_transfer(app,db,user):
             except ValueError as exc:raise HTTPException(422,str(exc)) from None
             from .notice_matters import import_groups
             import_groups(conn,current['id'],imported_matters)
+            import_tracking(conn,current['id'],imported_tracking)
             if payload.apply_profile:
                 # Importing an editable profile must never replace an identity contact.
                 existing=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
-                profile={**data['profile'],'phone':existing.get('phone','')}
+                profile={**data['profile'],'phone':existing.get('phone',''),
+                         'notification_preferences':existing.get('notification_preferences',{})}
                 conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(profile),current['id']))
         return {'added':added,'skipped':skipped,'warnings':warnings}

@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from scripts.run_openui_browser_checks import ensure_fixture_port_free
 OUT = ROOT / 'artifacts' / 'ci-browser'
-SUITES = [('verify_frontend_stability.mjs', 'frontend-v9-browser'),
+SUITES = [('verify_sprint_ui.mjs', 'sprint-ui-browser'),
+          ('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_frontend_review.mjs', 'frontend-v8-browser'),
           ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
           ('verify_workspace_interactions.mjs', 'workspace-interactions-browser'),
@@ -58,7 +59,8 @@ def main():
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
     env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
-    env['PILOT_BROWSER_FIXTURE']='1' if not selected or 'verify_pilot_workspace.mjs' in selected else '0'
+    env['PILOT_BROWSER_FIXTURE']='1' if not selected or any(name in selected for name in ['verify_pilot_workspace.mjs','verify_sprint_ui.mjs']) else '0'
+    env['SPRINT_BROWSER_FIXTURE']='1' if not selected or 'verify_sprint_ui.mjs' in selected else '0'
     env['QQ_GROUP_BROWSER_FIXTURE']='1' if not selected or 'verify_qq_group_intake_ui.mjs' in selected else '0'
     for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD'):
         env.pop(key, None)

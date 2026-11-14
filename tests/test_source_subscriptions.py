@@ -8,6 +8,7 @@ from app import source_sync
 from app.documents import text_source
 from tests.test_workflow import env, account
 from tests.test_integrations import configured, event, bind
+from tests.source_trial_fixture import successful_rule_trial
 
 
 def website(c):
@@ -18,7 +19,7 @@ def website(c):
 
 def enable(c,sid,**overrides):
     payload={'url':'https://school.example.edu.cn/notices/','mode':'html','article_path_prefix':'/info/','enabled':True,'interval_minutes':30,**overrides}
-    result=c.put('/api/source-catalog/'+sid+'/subscription',json=payload)
+    with successful_rule_trial():result=c.put('/api/source-catalog/'+sid+'/subscription',json=payload)
     assert result.status_code==200,result.text
     return result.json()
 

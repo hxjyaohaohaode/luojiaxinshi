@@ -23,7 +23,7 @@ const $$=(s,root=document)=>[...root.querySelectorAll(s)];
 const imageKinds=new Set(['png','jpg','jpeg','webp','gif','bmp','tif','tiff']);
 const videoKinds=new Set(['mp4','webm']);
 
-export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI}){
+export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI,loadTasks}){
   const replySpeech=createReplySpeech({api,toast,owner:()=>state.session?.user?.id});
   const lastKey=()=>`luojia:last-chat:${state.session.user.id}`;
   const remember=id=>{try{if(id)localStorage.setItem(lastKey(),id);else localStorage.removeItem(lastKey());}catch{}};
@@ -113,7 +113,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     attachments?.dispose();attachments=null;creatingConversation=null;composerResize?.disconnect();
     streaming?.controller.abort();streaming=null;cancelAnimationFrame(paintFrame);paintFrame=0;presenter?.dispose();presenter=null;
     clearTimeout(pollTimer);clearTimeout(feedbackTimer);files=[];sending=false;materialQuery="";materialRenderKey='';materialMatches=null;materialSearch?.dispose();historySearch?.dispose();
-    const results=await Promise.all([catalog||api('/conversations'),branchView?Promise.resolve(branchView):id?(restored||api('/conversations/'+encodeURIComponent(id))):Promise.resolve(null),drafts.load(branchView?'branch:'+branchDraft.originId+':'+branchDraft.messageId:id?'chat:'+id:'chat-new'),state.session.genui?.enabled?api('/arrangements'):Promise.resolve([]),state.session.genui?.enabled?api('/tasks'):Promise.resolve([])]);
+    const results=await Promise.all([catalog||api('/conversations'),branchView?Promise.resolve(branchView):id?(restored||api('/conversations/'+encodeURIComponent(id))):Promise.resolve(null),drafts.load(branchView?'branch:'+branchDraft.originId+':'+branchDraft.messageId:id?'chat:'+id:'chat-new'),state.session.genui?.enabled?api('/arrangements'):Promise.resolve([]),state.session.genui?.enabled?loadTasks():Promise.resolve([])]);
     if(renderId!==state.renderId)return;
     historyItems=results[0];current=results[1];chatFeedback.reset(current);hostArrangements=results[3];hostTasks=results[4];drafts.activate(key());
     $('#content').innerHTML=`<div id="chat-workspace" class="chat-workspace ${current?'has-conversation':''}">
@@ -125,8 +125,8 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         <div id="composer-attachments" class="composer-attachments" aria-label="待发送附件" hidden></div>
         <input id="composer-file-input" type="file" multiple accept="${materialFormats}" hidden>
         <button type="button" class="icon-button composer-plus" data-chat-action="composer-menu" aria-label="添加附件与更多选项" aria-expanded="false" aria-controls="composer-menu">${icon('plus')}</button>
-        <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button type="button" class="icon-button composer-emoji" data-chat-action="emoji-picker" aria-label="表情与表情包" aria-expanded="false">☺</button><button type="button" class="icon-button composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')}</button><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
-        <div class="composer-actions" id="composer-menu" hidden>${call(icon('upload')+' 添加文件与图片','pick-attachments','','small plain')}${call(icon('folder')+' 添加文件夹','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
+        <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
+        <div class="composer-actions" id="composer-menu" aria-label="输入选项" hidden><button type="button" class="button small plain composer-emoji" data-chat-action="emoji-picker" aria-label="表情与表情包" aria-expanded="false"><span aria-hidden="true">☺</span> 表情与表情包</button><button type="button" class="button small plain composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')} 语音输入</button>${call(icon('upload')+' 添加文件与图片','pick-attachments','','small plain')}${call(icon('folder')+' 添加文件夹','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
         <span id="chat-shortcuts" class="sr-only">Enter 发送，Shift 加 Enter 换行。中文输入法选词时不会发送。</span>
         <div class="composer-status sr-only"><span class="autosave-status" role="status"></span><span id="chat-count">${current?.sources.length||0} 份材料 · 仅本人可见</span></div>
       </form>
@@ -354,7 +354,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       if(turn===submission){if(streaming===pending)streaming=null;accepting=false;sending=false;if(active(cid)&&renderId===state.renderId)update();}
     }
   }
-  function setComposerMenu(open){const menu=$('#composer-menu');if(!menu)return;menu.hidden=!open;$('.composer-plus')?.setAttribute('aria-expanded',String(open));}
+  function setComposerMenu(open){const menu=$('#composer-menu');if(!menu)return;menu.hidden=!open;$('.composer-plus')?.setAttribute('aria-expanded',String(open));if(open)menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});}
   document.addEventListener('click',event=>{if(!event.target.closest('#chat-composer'))setComposerMenu(false);});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('#composer-menu')&&!$('#composer-menu').hidden){setComposerMenu(false);$('.composer-plus')?.focus();}});
   let railKey='';
@@ -445,11 +445,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     try{
       if(branchDraft&&action==='remove-source')return;
       if(action==='composer-menu'){setComposerMenu($('#composer-menu').hidden);}
-      else if(action==='dictate'){await dictate($('#chat-input'),control,{api,toast,ask});}
+      else if(action==='dictate'){setComposerMenu(false);await dictate($('#chat-input'),control,{api,toast,ask});}
       else if(action==='quote')chooseQuote(id);
       else if(action==='clear-quote'){replyTarget=null;drawComposerContext();persist();}
       else if(action==='jump-message'){const target=$$('#chat-thread [data-message-id]').find(node=>node.dataset.messageId===id);if(target){target.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});target.classList.add('message-reference-target');setTimeout(()=>target.classList.remove('message-reference-target'),1800);}else toast('原消息已移除或属于其他回复版本，引用片段已保留。');}
-      else if(action==='emoji-picker')emojiPicker();
+      else if(action==='emoji-picker'){setComposerMenu(false);emojiPicker();}
       else if(action==='emoji-reaction')emojiPicker(id);
       else if(action==='close-emoji')closeEmoji();
       else if(action==='pick-sticker'){closeEmoji();const file=$('#composer-file-input');file.accept='.gif,.png,.jpg,.jpeg,.webp';file.click();}

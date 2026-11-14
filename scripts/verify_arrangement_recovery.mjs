@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 import {artifactPath} from './mvp_check_runtime.mjs';
 import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
@@ -10,7 +11,7 @@ const sizes=JSON.parse(process.env.MVP_VIEWPORTS||'[[320,740],[390,844],[768,102
 const fixture=title=>({title,category:'personal',start_date:'2026-10-19',end_date:'2026-10-19',start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:null,location:'虚构验收地点',notes:'工程测试，不代表真实安排。'});
 try{
 for(const engine of (process.env.MVP_BROWSERS||'chromium,firefox,webkit').split(',')){
-  const browser=await engines[engine].launch({headless:true,executablePath:engines[engine].executablePath()});
+  const browser=await engines[engine].launch({headless:true,executablePath:browserExecutable(engines[engine])});
   try{
     const context=await browser.newContext({reducedMotion:'reduce',serviceWorkers:'block'}),headers={Origin:origin,'X-Requested-With':'campus-notice'};
     const registration=await context.request.post(origin+'/api/auth/login',{headers,data:{username:'workflow.demo',password:'Mvp-Verification-Only-2026'}});
