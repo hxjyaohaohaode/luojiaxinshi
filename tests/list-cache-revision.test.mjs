@@ -24,7 +24,7 @@ function workspace(size=60){
     if(parts&&Number(parts[0])!==pageRevision)throw Object.assign(new Error('list changed'),{status:409,detail:{code:'list_changed'}});
     const status=url.searchParams.get('status'),selected=rows.filter(item=>!status||status==='all'||item.status===status),offset=parts?Number(parts[1]):0,limit=Number(url.searchParams.get('limit'));
     const body={items:structuredClone(selected.slice(offset,offset+limit)),total:selected.length,has_more:offset+limit<selected.length,next_cursor:offset+limit<selected.length?pageRevision+':'+(offset+limit):null,snapshot:'page-'+pageRevision};
-    if(holdNext){const hold=holdNext;holdNext=null;await hold.promise;}
+    if(holdNext){const hold=holdNext;holdNext=null;hold.started.resolve();await hold.promise;}
     return body;
   };
   const projection=createWorkspaceProjection({api,owner:()=>owner,context:()=>route});
@@ -35,7 +35,7 @@ function workspace(size=60){
   const list=createPagedList({api,path:'/tasks/page',owner:()=>owner,context:()=>route,revision:()=>latestOwner===owner?latest?.revision??null:null,onChange:()=>paints++});
   const clock=createListClock('tasks');
   const refresh=async()=>clock.refresh(list,await project(true),{owner:'alice',reload:options=>list.reload(options)});
-  return {rows,list,projection,project,refresh,pageReads,projectionReads:()=>projectionReads,paints:()=>paints,route:value=>{route=value;},owner:value=>{owner=value;},mutate:change=>{change(rows);revision++;pageRevision++;},advanceProjection:()=>revision++,holdPage:()=>{holdNext=deferred();return holdNext;}};
+  return {rows,list,projection,project,refresh,pageReads,projectionReads:()=>projectionReads,paints:()=>paints,route:value=>{route=value;},owner:value=>{owner=value;},mutate:change=>{change(rows);revision++;pageRevision++;},advanceProjection:()=>revision++,holdPage:()=>{holdNext={...deferred(),started:deferred()};return holdNext;}};
 }
 
 for(const operation of ['insert','delete','status'])test('a cached pending list detects an off-route '+operation+' after the home projection advances',async()=>{
@@ -206,4 +206,107 @@ test('a range refresh in a new route view cannot reuse an old-view pending reque
     const result=await current;assert.equal(result.total,55);assert.equal(result.items.length,55);assert.equal(result.items[0].id,'new-view-task');
     hold.resolve();assert.equal(await older,null);
   }finally{hold.resolve();await older;}
+});
+
+for(const change of ['domain invalidation','shared projection'])test('an explicit next-page target survives a newer '+change+' refresh that starts while the append is in flight',async()=>{
+  const app=workspace(54);await app.project();await app.list.load({status:'all'});await app.refresh();
+  const hold=app.holdPage(),more=app.list.more();
+  try{
+    app.mutate(rows=>rows.unshift(task('insert-during-append')));
+    if(change==='domain invalidation')listRevisions.invalidateChangedLists(new Set(['tasks']),[app.list]);else await app.project();
+    const background=app.list.reload({preserveRange:true});await background;hold.resolve();
+    const result=await more;
+    assert.equal(app.list.snapshot().items.length,55,'A stable refresh may not replace the requested next-page range with only its committed prefix');
+    assert.equal(result?.items.length,55,'The original user promise must resolve with the completed requested range');
+    assert.deepEqual(result.items.map(item=>item.id),app.rows.map(item=>item.id));
+    assert.equal(result.has_more,false);assert.equal(result.projection_stale,false);
+  }finally{hold.resolve();await more;}
+});
+
+test('repeated more clicks coalesce across a superseding range refresh without requesting a third page',async()=>{
+  const app=workspace(140);await app.project();await app.list.load({status:'all'});await app.refresh();
+  const hold=app.holdPage(),more=app.list.more();
+  try{
+    app.list.invalidate();const background=app.list.reload({preserveRange:true});
+    const repeat=app.list.more();assert.equal(repeat,more);
+    await background;hold.resolve();const result=await more;
+    assert.equal(result.items.length,100);assert.equal(app.list.snapshot().items.length,100);assert.equal(result.has_more,true);
+    assert.equal(app.pageReads.filter(path=>new URL(path,'https://fixture').searchParams.get('cursor')?.endsWith(':100')).length,0);
+  }finally{hold.resolve();await more;}
+});
+
+for(const change of ['owner','route','filter'])test('an in-flight explicit next-page target cannot be transferred across a '+change+' change',async()=>{
+  const app=workspace(54);await app.project();await app.list.load({status:'all'});await app.refresh();
+  const hold=app.holdPage(),more=app.list.more();
+  try{
+    if(change==='owner')app.owner('bob');else if(change==='route')app.route('calendar');else await app.list.load({status:'done'});
+    hold.resolve();assert.equal(await more,null);
+    assert.equal(app.pageReads.length,change==='filter'?3:2);
+    if(change==='filter')assert.equal(app.list.snapshot().items.length,0);
+  }finally{hold.resolve();await more;}
+});
+
+test('a superseding background paint gate does not discard an already in-flight explicit next-page target',async()=>{
+  const app=workspace(54);await app.project();await app.list.load({status:'all'});await app.refresh();
+  const hold=app.holdPage(),more=app.list.more();
+  try{
+    app.list.invalidate();assert.equal(await app.list.reload({preserveRange:true,canApply:()=>false}),null);
+    hold.resolve();const result=await more;
+    assert.equal(result?.items.length,54);assert.equal(app.list.snapshot().items.length,54);
+  }finally{hold.resolve();await more;}
+});
+
+test('a next-page intent in cursor-conflict recovery survives a newer stable refresh with the same requested range',async()=>{
+  const app=workspace(54);await app.project();await app.list.load({status:'all'});await app.refresh();
+  app.mutate(rows=>rows.push(task('cursor-revision-two')));
+  const hold=app.holdPage(),more=app.list.more();
+  try{
+    await hold.started.promise;assert.ok(app.pageReads[1].includes('cursor='));assert.ok(!app.pageReads[2].includes('cursor='));
+    app.mutate(rows=>rows.push(task('cursor-revision-three')));app.list.invalidate();
+    await app.list.reload({preserveRange:true});hold.resolve();const result=await more;
+    assert.equal(result?.items.length,56);assert.deepEqual(result.items.map(item=>item.id),app.rows.map(item=>item.id));
+    assert.equal(result.has_more,false);assert.equal(app.list.snapshot().error,'');
+  }finally{hold.resolve();await more;}
+});
+
+test('multiple newer refreshes retain one fixed next-page target and old responses cannot settle it early',async()=>{
+  const app=workspace(140);await app.project();await app.list.load({status:'all'});await app.refresh();
+  const appendHold=app.holdPage(),more=app.list.more(),refreshHold=app.holdPage();let older,current,currentHold,settled=false;more.then(()=>{settled=true;});
+  try{
+    app.list.invalidate();older=app.list.reload({preserveRange:true});
+    currentHold=app.holdPage();app.list.invalidate();current=app.list.reload({preserveRange:true});
+    appendHold.resolve();refreshHold.resolve();await older;await Promise.resolve();
+    assert.equal(settled,false,'An obsolete append or refresh cannot complete the still-current user range request');
+    currentHold.resolve();const result=await more;await current;
+    assert.equal(result.items.length,100);assert.equal(app.list.snapshot().items.length,100);assert.equal(result.has_more,true);
+    assert.equal(app.list.snapshot().items.length,100);assert.equal(app.pageReads.some(path=>new URL(path,'https://fixture').searchParams.get('cursor')?.endsWith(':100')),false);
+  }finally{appendHold.resolve();refreshHold.resolve();currentHold?.resolve();await more;await older;await current;}
+});
+
+for(const failure of ['network','invalid response'])test('a real '+failure+' failure in a superseding refresh cancels the original more intent and keeps the visible prefix',async()=>{
+  const hold=deferred();let reads=0;
+  const list=createPagedList({owner:()=> 'alice',context:()=> 'tasks',path:'/tasks/page',api:async()=>{
+    const call=++reads;
+    if(call===1)return {items:Array.from({length:50},(_,i)=>task('task-'+i)),total:54,has_more:true,next_cursor:'next'};
+    if(call===2){await hold.promise;return {items:Array.from({length:4},(_,i)=>task('task-'+(50+i))),total:54,has_more:false,next_cursor:null};}
+    if(failure==='network')throw Error('读取更新失败');return {items:null,total:54};
+  }});
+  await list.load({status:'all'});const more=list.more();
+  try{
+    list.invalidate();assert.equal(await list.reload({preserveRange:true}),null);hold.resolve();assert.equal(await more,null);
+    assert.equal(list.snapshot().items.length,50);assert.match(list.snapshot().error,failure==='network'?/读取更新失败/:/列表响应不完整/);
+    await Promise.resolve();await Promise.resolve();assert.equal(list.snapshot().items.length,50);assert.equal(reads,3);
+  }finally{hold.resolve();await more;}
+});
+
+test('a confirmed board move and undo preserve the complete loaded range even before the shared revision advances',async()=>{
+  const app=workspace(54);await app.project();await app.list.load({status:'all',sort:'board'});await app.list.more();await app.refresh();
+  const original=app.rows.map(item=>item.id),moved=app.rows[50];
+  app.mutate(rows=>{rows.splice(50,1);rows.splice(49,0,moved);});
+  const result=await app.list.load({status:'all',sort:'board'},{force:true,preserveRange:true});
+  const expected=[...original.slice(0,49),original[50],original[49],...original.slice(51)];
+  assert.equal(result.items.length,54);assert.deepEqual(result.items.map(item=>item.id),expected);
+  app.mutate(rows=>{rows.splice(49,1);rows.splice(50,0,moved);});
+  const undone=await app.list.load({status:'all',sort:'board'},{force:true,preserveRange:true});
+  assert.equal(undone.items.length,54);assert.deepEqual(undone.items.map(item=>item.id),original);
 });

@@ -12,26 +12,37 @@ export function createPagedList({api, path, owner, context = () => null, revisio
     clearTimeout(moreTimer); moreTimer = null;
     const entry = queuedMore; queuedMore = null; entry?.resolve(null);
   }
+  function finishMore(entry, value) {
+    if (queuedMore !== entry) return;
+    clearTimeout(moreTimer); moreTimer = null; queuedMore = null; entry.resolve(value);
+  }
+  function startMore(entry, explicit = false) {
+    if (queuedMore !== entry) return;
+    if (!moreScopeMatches(entry) || (!explicit && data.error)) { cancelMore(); return; }
+    if (data.loading) return;
+    const work = stale() ? request(false, true, {preserveRange:true,targetSize:entry.targetSize}) :
+      data.has_more && data.next_cursor ? request(true) : null;
+    if (!work) { finishMore(entry, snapshot()); return; }
+    const startedTicket = epoch;
+    // The request may be superseded by a newer stable refresh. Only the
+    // current request's commit/failure may settle this user intention.
+    work.catch(error => {
+      if (queuedMore !== entry || startedTicket !== epoch) return;
+      clearTimeout(moreTimer); moreTimer = null; queuedMore = null; entry.reject(error);
+    });
+  }
   function scheduleMore() {
-    if (!queuedMore || queuedMore.running || moreTimer) return;
+    if (!queuedMore || moreTimer) return;
     // Finish the refresh's own callers before starting the user's next page;
     // otherwise an older continuation could overwrite the appended state.
     moreTimer = setTimeout(() => {
       moreTimer = null; const entry = queuedMore;
-      if (!entry) return;
-      if (!moreScopeMatches(entry) || data.error) { cancelMore(); return; }
-      if (data.loading) return;
-      entry.running = true;
-      const work = stale() ? request(false, true, {preserveRange:true,targetSize:data.items.length+(data.has_more?limit:0)}) :
-        data.has_more && data.next_cursor ? request(true) : Promise.resolve(snapshot());
-      work.then(value => { if (queuedMore === entry) queuedMore = null; entry.resolve(value); }, error => {
-        if (queuedMore === entry) queuedMore = null; entry.reject(error);
-      });
+      if (entry) startMore(entry);
     }, 0);
   }
   function queueMore() {
     if (!queuedMore) {
-      const entry = {uid:account,key,view:context(),running:false};
+      const entry = {uid:account,key,view:context(),targetSize:data.items.length+(data.has_more?limit:0)};
       entry.promise = new Promise((resolve,reject) => { entry.resolve = resolve; entry.reject = reject; });
       queuedMore = entry;
     }
@@ -47,6 +58,12 @@ export function createPagedList({api, path, owner, context = () => null, revisio
   }
   async function request(append = false, refreshed = false, {preserveRange = false, targetSize = 0, canApply = () => true, equal = (a,b) => JSON.stringify(a) === JSON.stringify(b)} = {}) {
     const ticket = ++epoch, uid = account, view = context();
+    // Stable data can change after the user has already started an append.
+    // A same-scope refresh inherits that explicit range instead of reducing
+    // the user's pending request to the last committed first page.
+    if (!append && queuedMore && moreScopeMatches(queuedMore) && data.loaded) {
+      preserveRange = true; targetSize = Math.max(targetSize, queuedMore.targetSize);
+    }
     // Capture before starting I/O. A newer shared projection cannot certify
     // an older in-flight page, or the unchanged prefix of an appended page.
     const requestedRevision = revision(), prefixRevision = dataRevision;
@@ -107,7 +124,9 @@ export function createPagedList({api, path, owner, context = () => null, revisio
           // An interaction can block a background paint without invalidating
           // the user's queued request. It runs with its own scope and gate.
           // Real failures or a changed owner/view/filter never release it.
-          if (committed || deferredByGate) scheduleMore(); else cancelMore();
+          if (committed && queuedMore && moreScopeMatches(queuedMore) &&
+              (append || data.items.length >= queuedMore.targetSize || !data.has_more)) finishMore(queuedMore, snapshot());
+          else if (committed || deferredByGate) scheduleMore(); else cancelMore();
         }
       }
     })();
@@ -135,9 +154,8 @@ export function createPagedList({api, path, owner, context = () => null, revisio
       if (data.loaded && data.has_more && requestView === context() && requestMode?.preserveRange && !requestMode.append) return queueMore();
       return pending || Promise.resolve(null);
     }
-    if (stale()) return request(false, true, {preserveRange:true,targetSize:data.items.length+(data.has_more?limit:0)});
-    if (!data.has_more || !data.next_cursor) return Promise.resolve(snapshot());
-    return request(true);
+    if (!stale() && (!data.has_more || !data.next_cursor)) return Promise.resolve(snapshot());
+    const promise = queueMore(); startMore(queuedMore, true); return promise;
   }
   function patch(mapper, {canApply = () => true, equal = (a,b) => JSON.stringify(a) === JSON.stringify(b)} = {}) {
     if (account !== owner() || requestView !== context() || !data.loaded || data.loading || !canApply()) return null;

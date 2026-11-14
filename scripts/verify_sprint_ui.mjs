@@ -9,7 +9,7 @@ const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-brows
 const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=26;
 const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',network_fixture:{service_workers:'block',reason:'Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs.'},status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],mobile_controls:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
-report.review_regressions={clock_ranges:[],board_ranges:[],publication_retries:[],publication_cancellations:[],list_cache_routes:[]};
+report.review_regressions={clock_ranges:[],board_ranges:[],list_ranges:[],publication_retries:[],publication_cancellations:[],list_cache_routes:[]};
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
 await saveReport();
@@ -34,7 +34,7 @@ for(const engine of engines){
   };
   const watchCelebration=()=>page.evaluate(()=>{window.__sprintConfetti=0;new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1&&node.matches('.confetti-bit'))window.__sprintConfetti++;}).observe(document.body,{childList:true});});
   const taskResponse=(query,response)=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===query&&response.request().method()==='GET';};
-  const searchTasks=async query=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
+  const searchTasks=async(query,extraMatch=()=>true)=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response)&&extraMatch(response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
   const settledTaskSearch=async(query,total)=>{await page.waitForFunction(({query,total})=>document.querySelector('#task-search')?.value===query&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 '+Math.min(total,50)+' / '+total+' 项',{query,total});};
   const publicationPayload=request=>{
     const data=request.postData()?.match(/name="data"\r?\n\r?\n([\s\S]*?)\r?\n--/);assert.ok(data,'The actual multipart publication request carries its data part');return JSON.parse(data[1]);
@@ -208,9 +208,21 @@ for(const engine of engines){
         assert.equal(refreshed.status(),200,await refreshed.text());result=await refreshed.json();
       }finally{page.off('response',observeMove);page.off('request',observeRefresh);}
       assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
-      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},result.items.map(item=>item.id));
+      const expectedAfterMove=[...ordered.slice(0,49),moved,ordered[49],...ordered.slice(51)];
+      Object.assign(evidence,{loaded:ordered.length,moved_id:moved,from_index:50,to_index:49,expected_after_move_ids:expectedAfterMove,move_first_response_ids:result.items.map(item=>item.id),refresh_request_after_move_response:true});await saveReport();
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},expectedAfterMove);
+      const retained=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));
+      assert.deepEqual(retained,expectedAfterMove,'Moving a card must retain the entire already loaded range in the exact new order');
+      evidence.after_move_full_ids=retained;await saveReport();
+      // A retained range is not a fresh first page. Establish that separate
+      // condition through two actual search changes, then keep the original
+      // first-page membership, exact order and subsequent-more assertions.
+      const isBoardFirstResponse=response=>{const url=new URL(response.url());return url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');};
+      const narrowed=await searchTasks(needle,isBoardFirstResponse);assert.equal(narrowed.total,1);await settledTaskSearch(needle,1);
+      const firstAgain=await searchTasks(prefix,isBoardFirstResponse);assert.equal(firstAgain.items.length,50);assert.equal(firstAgain.items[49].id,moved);await settledTaskSearch(prefix,54);
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},firstAgain.items.map(item=>item.id));
       const ids=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.deepEqual(ids,[...ordered.slice(0,49),moved]);
-      Object.assign(evidence,{loaded:ordered.length,moved_id:moved,from_index:50,to_index:49,after_first_page:ids,refresh_request_after_move_response:true});await saveReport();
+      Object.assign(evidence,{after_first_page:ids,first_page_query_transition:[prefix,needle,prefix]});await saveReport();
       await page.screenshot({path:path.join(out,engine+'-desktop-board-page-move.png')});
       const [listResponse]=await Promise.all([page.waitForResponse(response=>{const url=new URL(response.url());return response.request().method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort')&&!url.searchParams.has('cursor');}),page.locator('[data-task-view=list]').click()]);
       assert.equal(listResponse.status(),200,await listResponse.text());const list=await listResponse.json();
@@ -220,10 +232,23 @@ for(const engine of engines){
     });
     await page.locator('#task-search').fill(prefix);
     await check('task list reports a bounded first page and loads the remaining real records',async()=>{
-      await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
-      assert.equal(await page.locator('#task-results .task-row').count(),50);
-      await page.locator('[data-action=task-more]').click();await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项');
-      assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
+      const evidence={engine,status:'running',requests:[],receipts:[]},reads=[];report.review_regressions.list_ranges.push(evidence);await saveReport();
+      const isPage=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort');};
+      const observeRequest=request=>{if(isPage(request))evidence.requests.push({path:new URL(request.url()).pathname+new URL(request.url()).search,at:new Date().toISOString()});};
+      const observeResponse=response=>{if(!isPage(response.request()))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};evidence.receipts.push(receipt);reads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(item=>item.id),total:body.total,detail:body.detail}),error=>{receipt.parse_error=error.message;}));};
+      page.on('request',observeRequest);page.on('response',observeResponse);
+      try{
+        await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
+        assert.equal(await page.locator('#task-results .task-row').count(),50);
+        evidence.before_ids=await page.locator('#task-results .task-row').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));await saveReport();
+        await page.locator('[data-action=task-more]').click();await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项');
+        assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
+        evidence.status='passed';
+      }finally{
+        page.off('request',observeRequest);page.off('response',observeResponse);await Promise.all(reads);
+        evidence.final_dom=await page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results .task-row')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent}));
+        if(evidence.status!=='passed')evidence.status='incomplete';await saveReport();
+      }
     });
     await check('full collection search finds a record beyond the initial page',async()=>{
       assert.equal((await searchTasks(needle)).total,1);await settledTaskSearch(needle,1);

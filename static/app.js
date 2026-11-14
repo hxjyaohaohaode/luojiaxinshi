@@ -863,7 +863,7 @@ const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id
   try{
     const result=await requestBoardMove(id,{task_version:old.version,workflow_version:old.workflow.version,...placement});
     if(state.session?.user?.id!==owner)return;
-    if(location.hash.startsWith('#tasks'))await loadTaskList(true);else state.tasks=result.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
+    if(location.hash.startsWith('#tasks'))await loadTaskList(true,{preserveRange:true});else state.tasks=result.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
     if(location.hash==='#tasks')taskList();
     toast(placement.lane==='closed'&&old.status==='pending'?'已标记完成':'位置已保存',false,{duration:15000,action:{label:'撤销',run:async()=>{
       if(state.session?.user?.id!==owner)return;
@@ -873,7 +873,7 @@ const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id
         const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();throw Error(boardMoveError(error,refreshed));
       }
       if(state.session?.user?.id!==owner)return;
-      if(location.hash.startsWith('#tasks'))await loadTaskList(true);else state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(result.undo.lane);}
+      if(location.hash.startsWith('#tasks'))await loadTaskList(true,{preserveRange:true});else state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(result.undo.lane);}
     }}});
   }catch(error){
     if(state.session?.user?.id===owner){const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(taskLane(findTask(id)||old));}toast(boardMoveError(error,refreshed),true);}throw error;
