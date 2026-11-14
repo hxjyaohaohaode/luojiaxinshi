@@ -39,18 +39,22 @@ function noticeLayout({width,height,phase,measurement='observation',wait=false})
     const target=animation.effect?.target,timing=animation.effect?.getComputedTiming?.();
     if(!(target instanceof Element)||!(animation.pending||animation.playState==='running')||!Number.isFinite(timing?.endTime))continue;
     if(!(target===shell||target===workspace||target===content||drawer?.contains(target)||content?.contains(target)))continue;
-    const rectCount=target.getClientRects().length;let closedDetails=null;
+    const rectCount=target.getClientRects().length;let boxVisible=null,visibilityError=null,closedDetails=null;
+    try{if(typeof target.checkVisibility==='function')boxVisible=target.checkVisibility();}catch(error){visibilityError=String(error);}
     for(let parent=target.parentElement;parent;parent=parent.parentElement){
       if(parent.tagName!=='DETAILS'||parent.open)continue;
       const summary=[...parent.children].find(child=>child.tagName==='SUMMARY');
-      if(!summary?.contains(target)){closedDetails=describe(parent);break;}
+      if(!summary?.contains(target)){
+        closedDetails={...describe(parent),open:parent.open,summary_contains_target:false,content_visibility:null,content_visibility_error:null};
+        try{closedDetails.content_visibility=getComputedStyle(parent,'::details-content').contentVisibility||null;}catch(error){closedDetails.content_visibility_error=String(error);}break;
+      }
     }
-    // Firefox can retain unstarted transitions for the non-rendered contents
-    // of closed details. Keep their evidence, but still wait for every visible
-    // transition, reveal transition and motion that has actually started.
+    // Closed details can retain layout boxes inside content-visibility:hidden.
+    // Require both native nonpainting signals; opacity, CSS visibility and
+    // offscreen content are not opted into checkVisibility's extra filters.
     const dormant=animation.pending&&animation.currentTime===0&&animation.startTime===null;
-    const hiddenPending=dormant&&!!animation.transitionProperty&&!['display','visibility','content-visibility'].includes(animation.transitionProperty)&&rectCount===0&&!!closedDetails;
-    active.push({target:describe(target),play_state:animation.playState,pending:animation.pending,current_time:animation.currentTime,start_time:animation.startTime,end_time:timing.endTime,transition:animation.transitionProperty||null,rendering:{client_rect_count:rectCount,closed_details:closedDetails},blocks_readiness:!hiddenPending});
+    const hiddenPending=dormant&&!!animation.transitionProperty&&!['display','visibility','content-visibility'].includes(animation.transitionProperty)&&boxVisible===false&&closedDetails?.content_visibility==='hidden';
+    active.push({target:describe(target),play_state:animation.playState,pending:animation.pending,current_time:animation.currentTime,start_time:animation.startTime,end_time:timing.endTime,transition:animation.transitionProperty||null,rendering:{client_rect_count:rectCount,check_visibility:boxVisible,check_visibility_error:visibilityError,closed_details:closedDetails},blocks_readiness:!hiddenPending});
   }
   const drawerStyle=drawer?getComputedStyle(drawer):null,mobile=matchMedia('(max-width:850px)').matches,bounds={drawer:box(drawer),workspace:box(workspace),content:box(content),results:box(results),first_record:box(results?.querySelector('.notice-card,.matter-library-card'))};
   const checks={viewport:innerWidth===width&&innerHeight===height,route_ready:location.hash==='#notices'&&content?.dataset.page==='notices'&&!content.inert&&!content.closest('[inert]')&&results?.getAttribute('aria-busy')==='false',structure_present:!!shell&&!!drawer&&!!bounds.first_record,menu_closed:!!shell&&!shell.classList.contains('menu-open'),drawer_in_place:!mobile||(drawerStyle?.visibility==='hidden'&&!!bounds.drawer&&bounds.drawer.right<=1),finite_motion_finished:active.every(item=>!item.blocks_readiness),targets_visible:Object.values(targets).every(item=>item.rect?.width>0&&item.rect?.height>0&&item.ancestry.every(parent=>parent.display!=='none'&&parent.visibility==='visible'&&parent.opacity>=.999)),targets_receive_pointer:Object.values(targets).every(item=>item.receives_pointer)};

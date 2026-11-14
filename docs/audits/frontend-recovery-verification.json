@@ -2,7 +2,7 @@
   "schema_version": 1,
   "record_type": "frontend_recovery_integrated_local_verification",
   "recorded_at": "2026-11-14T16:22:13.409369+00:00",
-  "status": "ci71_failed_followup_requires_new_candidate_and_merged_main_verification",
+  "status": "ci72_failed_reviewed_followup_requires_new_candidate_and_merged_main_verification",
   "base_candidate_sha": "be6b534af63d1c6e13320725b4a9fbc07cf870aa",
   "base_candidate_tree": "3aec820100eeda1c7cf9f4b84b3de8363380e572",
   "base_main_sha": "37150dc650f7c40783a84e718a102b9413b815fe",
@@ -3317,5 +3317,2143 @@
     "next_candidate_actual_ci": "not_yet_published_or_verified",
     "merged_main_actual_push_ci": "not_yet_merged_or_verified",
     "historical_record_policy": "CI70 and CI71 failures and unrecorded identities remain unchanged. Prior local source hashes bind their original stages; this block binds the followup source bytes."
+  },
+  "ci72_complete_result": {
+    "run": {
+      "id": 43618159004,
+      "number": 72,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43618159004",
+      "event": "pull_request",
+      "head_sha": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+      "head_branch": "codex/frontend-finish-2026-11-14",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_attempt": 1,
+      "created_at": "2026-11-14T16:54:31Z",
+      "updated_at": "2026-11-14T17:20:48Z"
+    },
+    "actual_checkout": "4c60d7f6fefc3a760c63acc58a0fdf1f17278b5b",
+    "tree": "2c3538b5e252e72277b08b1fb27907450bb12a01",
+    "jobs": [
+      {
+        "id": 132517676757,
+        "name": "Async save and recovery",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517676870,
+        "name": "Windows backend (4/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517676900,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      {
+        "id": 132517676907,
+        "name": "tests (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517676954,
+        "name": "Windows backend (1/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517676961,
+        "name": "Windows backend (2/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517676996,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132517677017,
+        "name": "Windows backend (3/4)",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 132522131582,
+        "name": "tests (windows-latest)",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "unit": {
+      "systems": {
+        "linux": {
+          "python": {
+            "tests": 1903,
+            "passed": 1901,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 2,
+            "unique_identities": 1903,
+            "baseline_count": 1875,
+            "baseline_missing": []
+          },
+          "node": {
+            "tests": 461,
+            "passed": 461,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "unique_identities": 461,
+            "baseline_count": 411,
+            "baseline_missing": []
+          }
+        },
+        "windows": {
+          "python": {
+            "tests": 1903,
+            "passed": 1902,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 1,
+            "unique_identities": 1903,
+            "baseline_count": 1875,
+            "baseline_missing": []
+          },
+          "node": {
+            "tests": 461,
+            "passed": 461,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "unique_identities": 461,
+            "baseline_count": 411,
+            "baseline_missing": []
+          }
+        }
+      },
+      "same_identities_across_os": {
+        "python": true,
+        "node": true
+      },
+      "backend_files": 140,
+      "implementation_fingerprints": {
+        "linux": "381601462eb563dfaff5b8698aa34d8a5cd6690a1c7da78955de65f270f7f18a",
+        "windows": "802746edb60562cfdbd65bd49960374b26539c8b9274fe71dd0364e86aeaec14"
+      },
+      "windows_crlf_converted_files": [
+        "scripts/local-runtime.ps1",
+        "deploy/modelscope/.dockerignore",
+        "deploy/modelscope/Dockerfile",
+        "start.ps1",
+        "stop.ps1",
+        "requirements.lock",
+        "requirements-dev.txt",
+        ".env.example",
+        "Dockerfile",
+        ".dockerignore",
+        "Caddyfile",
+        "pytest.ini",
+        ".gitattributes"
+      ],
+      "fingerprint_boundary": "Linux fingerprint uses exact candidate Git blobs. Windows fingerprint is independently reproduced from those same blobs with CRLF checkout conversion only on text paths that the candidate .gitattributes does not pin to LF. This reproduces the actual advertised Windows fingerprint; runner global Git configuration itself is not inferred as an observation.",
+      "archives": {
+        "unit-reports-ubuntu-latest": {
+          "artifact_id": 14123426307,
+          "bytes": 173113,
+          "sha256": "b292e6151c398344d1cf72d6bc8197db4604c826dcbb6b09c2b896d87837a816"
+        },
+        "unit-reports-windows-latest": {
+          "artifact_id": 14123523183,
+          "bytes": 72312,
+          "sha256": "c69ddd9ddf6c80f7c5ecf6b6229c733d3cf0fba4671b26fb020da706b6aea9b5"
+        },
+        "windows-backend-1-attempt-1": {
+          "artifact_id": 14123238236,
+          "bytes": 29343,
+          "sha256": "7c604cc51c05dfa7f54b20a5ac90d654eee45f38060771899f5d85bbc85720f2"
+        },
+        "windows-backend-2-attempt-1": {
+          "artifact_id": 14123462693,
+          "bytes": 27019,
+          "sha256": "c33b69a99debc328328932155f8a7d86cb5388297506b3f952ce2945a17c7955"
+        },
+        "windows-backend-3-attempt-1": {
+          "artifact_id": 14123187933,
+          "bytes": 25664,
+          "sha256": "c7e55e655b4e80134387b89618b6e0ac455645831d320eb024997375a37753b6"
+        },
+        "windows-backend-4-attempt-1": {
+          "artifact_id": 14123871861,
+          "bytes": 29226,
+          "sha256": "3b1315d18a7fad773bfce07f4d96d834ac575b9152c6497f6d63e00f5212ddbc"
+        }
+      },
+      "acceptance_met": true
+    },
+    "browser": {
+      "report_slots": 36,
+      "statuses": {
+        "passed": 34,
+        "incomplete": 2
+      },
+      "recorded_checks": 1131,
+      "passed_checks": 1127,
+      "failed_checks": 4,
+      "expected_checks": 1146,
+      "expected_checks_not_recorded": 15,
+      "complete_success": false,
+      "original_ci69_subset": {
+        "reports": 33,
+        "expected_checks": 1056,
+        "recorded_checks": 1056,
+        "passed_checks": 1056,
+        "ordered_identities_equal": true
+      },
+      "archive": {
+        "bytes": 28457102,
+        "sha256": "f14c69daadf54b1591476d0ee969e276284106850a074ec3592a535cd56d09e4"
+      },
+      "new_observations": {
+        "expected": {
+          "authentication_concurrency": 6,
+          "late_legal": 3,
+          "draft_attachment_races": 3,
+          "corrected_error_toast": 3
+        },
+        "recorded": {
+          "authentication_concurrency": 6,
+          "late_legal": 3,
+          "draft_attachment_races": 2,
+          "corrected_error_toast": 3
+        },
+        "complete_success": false
+      },
+      "failures": [
+        {
+          "report": "frontend-finish-browser",
+          "engine": "firefox",
+          "name": "notification title and receive action share a compact row with independent usable controls",
+          "ok": false,
+          "error": "page.waitForFunction: Timeout 12000ms exceeded.\n    at settleLayout (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_frontend_finish.mjs:83:223)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_frontend_finish.mjs:119:9\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_frontend_finish.mjs:79:79)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_frontend_finish.mjs:113:5"
+        },
+        {
+          "report": "campus-administration-browser",
+          "engine": "chromium",
+          "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+          "ok": false,
+          "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+        },
+        {
+          "report": "campus-administration-browser",
+          "engine": "firefox",
+          "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+          "ok": false,
+          "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+        },
+        {
+          "report": "campus-administration-browser",
+          "engine": "webkit",
+          "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+          "ok": false,
+          "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+        }
+      ],
+      "missing_checks_boundary": "15 identities were not recorded: Firefox frontend finish 6 and three later campus checks per engine (9). They are neither executed nor passed."
+    },
+    "continuity": {
+      "checks": 990,
+      "passed": 990,
+      "failed": 0,
+      "expected_checks": 990,
+      "expected_checks_not_recorded": 0,
+      "complete_success": true,
+      "download_sha256": "39f63674ac5e1be81bf075ec86365cf8d01b0a1efcbb19ac1abdbd3dd55d7e9d"
+    },
+    "container": {
+      "run": 43618159004,
+      "candidate": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+      "actual_checkout": "4c60d7f6fefc3a760c63acc58a0fdf1f17278b5b",
+      "tree": "2c3538b5e252e72277b08b1fb27907450bb12a01",
+      "archives": {
+        "shared-host-compose-config": {
+          "status": "verified",
+          "artifact_id": 14123230234,
+          "archive": "local-evidence/shared-host-compose-config.zip",
+          "metadata": "local-evidence/shared-host-compose-config.metadata.json",
+          "bytes": 2773,
+          "sha256": "eab65d99e05a250f4807d160ccbdb56fd80fcd09dfb02b351bd8daca99cf68ee",
+          "entries": [
+            {
+              "path": "local-evidence/shared-host-config.json",
+              "bytes": 15585,
+              "sha256": "27376605a31c87bb35bad15eaaf2de06ca8b9f1ee48298afe94a0325a61e5aa9"
+            }
+          ]
+        },
+        "proxy-network-compose-config": {
+          "status": "verified",
+          "artifact_id": 14123160335,
+          "archive": "local-evidence/proxy-network-compose-config.zip",
+          "metadata": "local-evidence/proxy-network-compose-config.metadata.json",
+          "bytes": 2620,
+          "sha256": "b65c54c7c5e3c2dc4ede81a2d3bc9210d9f3b1423aa3761dc1484fd5a20bd2aa",
+          "entries": [
+            {
+              "path": "local-evidence/proxy-network-config.json",
+              "bytes": 14391,
+              "sha256": "23290d40a2187a53283c66a5a225e0405c9ce3ca42031c9a2933aa59fa31fbd0"
+            }
+          ]
+        }
+      },
+      "modes": {
+        "loopback": {
+          "original": "local-evidence/shared-host-config.json",
+          "original_sha256": "27376605a31c87bb35bad15eaaf2de06ca8b9f1ee48298afe94a0325a61e5aa9",
+          "actual_result": "passed",
+          "docker_compose_version": "5.1.3",
+          "actual_case_count": 14,
+          "actual_missing_variable_rejections": 12,
+          "verifier_sha256": "24453a1c61d8a9b17cff47bd3e53b2b363430ae57c3d505daaaeca5104735105",
+          "template_sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae",
+          "cases": [
+            {
+              "case": "project-a",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "project-b",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "missing-CAMPUS_PROJECT_NAME",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_IMAGE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_ENV_FILE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-APP_ORIGIN",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TRUSTED_PROXY_IPS",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOOPBACK_PORT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_MEMORY_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_CPU_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PIDS_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TMPFS_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_FILES",
+              "exit_code": 1,
+              "expected_success": false
+            }
+          ],
+          "networks": [
+            {
+              "campus-private": {
+                "name": "campus-config-a_campus-private",
+                "driver": "bridge",
+                "driver_opts": {
+                  "com.docker.network.bridge.gateway_mode_ipv4": "nat"
+                },
+                "ipam": {},
+                "enable_ipv6": false
+              }
+            },
+            {
+              "campus-private": {
+                "name": "campus-config-b_campus-private",
+                "driver": "bridge",
+                "driver_opts": {
+                  "com.docker.network.bridge.gateway_mode_ipv4": "nat"
+                },
+                "ipam": {},
+                "enable_ipv6": false
+              }
+            }
+          ],
+          "issues": [],
+          "acceptance_met": true
+        },
+        "proxy-network": {
+          "original": "local-evidence/proxy-network-config.json",
+          "original_sha256": "23290d40a2187a53283c66a5a225e0405c9ce3ca42031c9a2933aa59fa31fbd0",
+          "actual_result": "passed",
+          "docker_compose_version": "5.1.3",
+          "actual_case_count": 14,
+          "actual_missing_variable_rejections": 12,
+          "verifier_sha256": "24453a1c61d8a9b17cff47bd3e53b2b363430ae57c3d505daaaeca5104735105",
+          "template_sha256": "b73b7ceb9814c5e4f4ae805aae4025ffdaa35a61804cd0f1f5c719304166d443",
+          "cases": [
+            {
+              "case": "project-a",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "project-b",
+              "exit_code": 0,
+              "expected_success": true
+            },
+            {
+              "case": "missing-CAMPUS_PROJECT_NAME",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_IMAGE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_ENV_FILE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-APP_ORIGIN",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TRUSTED_PROXY_IPS",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_MEMORY_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_CPU_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PIDS_LIMIT",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_TMPFS_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_SIZE",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_LOG_MAX_FILES",
+              "exit_code": 1,
+              "expected_success": false
+            },
+            {
+              "case": "missing-CAMPUS_PROXY_NETWORK",
+              "exit_code": 1,
+              "expected_success": false
+            }
+          ],
+          "networks": [
+            {
+              "campus-proxy": {
+                "name": "campus-config-proxy",
+                "ipam": {},
+                "external": true
+              }
+            },
+            {
+              "campus-proxy": {
+                "name": "campus-config-proxy",
+                "ipam": {},
+                "external": true
+              }
+            }
+          ],
+          "issues": [],
+          "acceptance_met": true
+        }
+      },
+      "issues": [],
+      "boundary": "Compose evidence only renders isolated synthetic configuration. Actual image build/start/smoke are separate required job steps. Neither proves deployment, physical user devices, external providers, or an existing shared host network.",
+      "job": {
+        "status": "verified",
+        "job_id": 132517676996,
+        "metadata": "local-evidence/container-job-132517676996.json",
+        "log": "local-evidence/container-job-132517676996.log",
+        "log_sha256": "5e1a327c9dae5d6b434d2aa2fc92b4c44156faea8e6d747e248bc3beec2a24e9",
+        "actual_checkouts": [
+          "4c60d7f6fefc3a760c63acc58a0fdf1f17278b5b"
+        ],
+        "actual_status": "completed",
+        "actual_conclusion": "success",
+        "non_successful_steps": [
+          {
+            "name": "Diagnose an isolated container failure",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10
+          }
+        ]
+      },
+      "required_steps": [
+        {
+          "name": "Verify shared-host Compose isolation without starting services",
+          "actual_matches": [
+            {
+              "name": "Verify shared-host Compose isolation without starting services",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Verify container proxy network isolation without starting services",
+          "actual_matches": [
+            {
+              "name": "Verify container proxy network isolation without starting services",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Run docker build -t campus-notice:ci .",
+          "actual_matches": [
+            {
+              "name": "Run docker build -t campus-notice:ci .",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Start the isolated container without credentials or host data",
+          "actual_matches": [
+            {
+              "name": "Start the isolated container without credentials or host data",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            }
+          ],
+          "actually_succeeded": true
+        },
+        {
+          "name": "Verify health, non-root runtime, database and UI prompt resources",
+          "actual_matches": [
+            {
+              "name": "Verify health, non-root runtime, database and UI prompt resources",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ],
+          "actually_succeeded": true
+        }
+      ],
+      "acceptance_met": true
+    },
+    "container_runtime_observations": {
+      "run": 43618159004,
+      "head": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+      "checkout": "4c60d7f6fefc3a760c63acc58a0fdf1f17278b5b",
+      "tree": "2c3538b5e252e72277b08b1fb27907450bb12a01",
+      "source_log": "local-evidence/container-job-132517676996.log",
+      "source_log_sha256": "5e1a327c9dae5d6b434d2aa2fc92b4c44156faea8e6d747e248bc3beec2a24e9",
+      "job_metadata": "local-evidence/container-job-132517676996.json",
+      "all_required_steps_actually_succeeded": true,
+      "observations": [
+        {
+          "line": 1347,
+          "text": "2026-11-14T16:55:33.6878637Z #18 exporting manifest sha256:512c36d3f4527620fd991878b5546b6d7f5493a097b3abe99fe2e1bf40862358 done"
+        },
+        {
+          "line": 1348,
+          "text": "2026-11-14T16:55:33.6880107Z #18 exporting config sha256:23785a48e688aa8d974d1fb9b9c8b68bd3b63fb02b4e70167cc69625093abbc5 done"
+        },
+        {
+          "line": 1350,
+          "text": "2026-11-14T16:55:33.6883251Z #18 exporting manifest list sha256:488027a3bcb9b85f33fe509b2ea595322104b06dece43f0b22a5c90f7244b955 done"
+        },
+        {
+          "line": 1351,
+          "text": "2026-11-14T16:55:33.6884425Z #18 naming to docker.io/library/campus-notice:ci done"
+        },
+        {
+          "line": 1362,
+          "text": "2026-11-14T16:55:40.1123461Z 151d2577d9944625acc6e8c3fd1da077f9a590377fbdbfe134d62939aa80adcc",
+          "context": "stdout after docker run"
+        },
+        {
+          "line": 1382,
+          "text": "2026-11-14T16:55:43.6424117Z {\"database\": \"ok\", \"schema\": \"4\", \"users\": 0, \"ai_configured\": false, \"ai_model\": \"mimo-v2.6-pro\", \"origin\": \"https://campus-ci.invalid\"}"
+        }
+      ],
+      "runtime_assertions": [
+        "health JSON status ok",
+        "runtime UID equals 10001",
+        "manage.py check succeeded",
+        "UI capability prompt module length >1000",
+        "legacy RTF/DOC parser returned expected text",
+        "HTTP homepage contains app root"
+      ],
+      "assertion_boundary": "The original shell script ran with bash -e and its official step succeeded. Except the separately printed database check, successful assertion values were not individually printed as raw bodies.",
+      "scope": "Only the isolated CI container. No deployment, existing user data or external provider was exercised."
+    },
+    "root_visual_inspection": {
+      "scope": "Root directly inspected these two original CI72 failure screenshots; visual observations do not substitute for execution.",
+      "images": [
+        {
+          "path": "browser-continuity/browser/campus-administration-browser/chromium-student-failure.png",
+          "observation": "Lifecycle form retains the entered note and shows the generic data field error above save/cancel controls. The request validity and validator root cause are established separately by API reproduction.",
+          "sha256": "5f4e717f05281ff67d71d0dcea9949d9b6ae52f8338862679d63aeff8334de26"
+        },
+        {
+          "path": "browser-continuity/browser/frontend-finish-browser/firefox-failure.png",
+          "observation": "At narrow width the notice title, receive action, filter, search field, notice cards and bottom navigation remain visible. Screenshot appearance alone does not establish hit testing or animation completion.",
+          "sha256": "191e27474602be3be2e4f87530e009ba5c3a96c253a3d2cbf6926e8ecb8dc0ad"
+        }
+      ]
+    },
+    "audit_file_sha256": {
+      "workflow-final.json": "1f63fb644dd1b4ea8827675c7d7ce3c8835fe2ee1f7aa30b78e1c975ebdb6413",
+      "unit-container/unit-junit-audit.json": "0dba274ebc285aa61d7f2952df008cad3bc1199c54710bbcc95903fde775fa23",
+      "unit-container/container-evidence-audit.json": "0370aeca019062d0c0669a1844fcc419a3431e818694b207b3d2060b45fe747d",
+      "unit-container/container-runtime-observations.json": "9bdafabca7b73cf9a72a2260dc7c998fecb1af569a87be59261b2315d6e678b0",
+      "browser-continuity/browser-report-audit.json": "1b51ee266dbd29c9c7b98b533dec52163763a5b2d9ffdce62aa8ccee0e29eb79",
+      "browser-continuity/continuity-report-audit.json": "ab93cf2d1dc0961cf8b8930b15aee5c9c9c68f54086955c6020d1c9dfbcd7fa1",
+      "browser-continuity/appended-regressions-semantic-verification.json": "2fde04e0376e5bc17502a7d1c46548a92f9bc58a86099994a6b828b778490000",
+      "root-visual-inspection.json": "cc0a6a37277b3fefd7c1e7cd1f94b40481e2e2a97a55751e9a50686d95fc8347"
+    },
+    "acceptance_met": false,
+    "next_candidate_and_merged_main": "Each must execute and pass its own complete workflow and raw-artifact audit. CI72 passing subsets do not replace either gate."
+  },
+  "ci72_followup": {
+    "recorded_at": "2026-11-14T17:26:28.086581+00:00",
+    "stage": "reviewed_local_followup_before_next_candidate_publication",
+    "base_candidate": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+    "local_evidence": {
+      "lifecycle_repair": {
+        "original_proof_sha256": "1000b13ae3d499ed5210387a31af3c52c020440f07fe8a7c7979194d8ed82285",
+        "record": {
+          "schema_version": 1,
+          "generated_at": "2026-11-14T17:24:45.422140+00:00",
+          "scope": "Restore only the two existing lifecycle evidence/identity business messages without weakening validation or exposing dynamic validator errors.",
+          "source_before": {
+            "head": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+            "files": {
+              "app/main.py": {
+                "sha256": "ef60e1e3d6b52ee4592388069faa8590e223eec81f848fa4b20eae5f4c9af0de",
+                "bytes": 79822
+              },
+              "app/notice_tracking.py": {
+                "sha256": "e227cf5fb16156194c5b5a3108ed555f01c423033efbe924f44ff26c2344b1d3",
+                "bytes": 19337
+              },
+              "tests/test_notice_phase_tracking.py": {
+                "sha256": "c2f9605013ca8c1244450bd71be77898fba0bdb7c7758e3337ba523d90567617",
+                "bytes": 9404
+              },
+              "static/notice-lifecycle.js": {
+                "sha256": "6cc11041c4595a57a0fa4029d9dd2f0eb449c3b1cd05ba4cf9cef6f6712936ce",
+                "bytes": 15653
+              },
+              "scripts/verify_campus_administration.mjs": {
+                "sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d",
+                "bytes": 37453
+              }
+            }
+          },
+          "source_after": {
+            "app/main.py": {
+              "path": "app/main.py",
+              "bytes": 80417,
+              "sha256": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3"
+            },
+            "app/notice_tracking.py": {
+              "path": "app/notice_tracking.py",
+              "bytes": 19461,
+              "sha256": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb"
+            },
+            "tests/test_notice_phase_tracking.py": {
+              "path": "tests/test_notice_phase_tracking.py",
+              "bytes": 11904,
+              "sha256": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f"
+            }
+          },
+          "official_ci_red": {
+            "run_id": 43618159004,
+            "candidate": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+            "report": {
+              "path": "local-evidence/report.json",
+              "bytes": 241802,
+              "sha256": "181ca92ca3dfd01efc4de237d9c1e2fac822dea86c7d1b1dff04d736d7f454c2"
+            },
+            "log": {
+              "path": "local-evidence/verify_campus_administration.mjs.log",
+              "bytes": 162,
+              "sha256": "d9f08379ee352c11597c23ac5656210ef6967525e0183c1a94fadbbce8ed2e3c"
+            },
+            "expected_checks": 33,
+            "recorded_checks": 24,
+            "passed_checks": 21,
+            "failed_checks": 3,
+            "not_recorded_checks": 9,
+            "failures": [
+              {
+                "engine": "chromium",
+                "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+                "ok": false,
+                "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+              },
+              {
+                "engine": "firefox",
+                "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+                "ok": false,
+                "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+              },
+              {
+                "engine": "webkit",
+                "name": "official lifecycle claims require selected source evidence and explicit personal identity verification",
+                "ok": false,
+                "error": "AssertionError [ERR_ASSERTION]: The input did not match the regular expression /原文依据/. Input:\n\n'字段不符合要求，请检查：data'\n\n    at file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:250:156\n    at async check (file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:150:104)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_campus_administration.mjs:248:5"
+              }
+            ],
+            "lifecycle_receipts": [
+              {
+                "engine": "chromium",
+                "actor": "student",
+                "path": "/notices/8c53ccc7e6b742acac9cc3caae529458/lifecycle-tracking",
+                "method": "PUT",
+                "status": 422,
+                "body_sha256": "ed09da53860afd6b30d56823ab7bb3ed843bc3a541c299cbab4f7874c5a9d717",
+                "at": 1794676516577
+              },
+              {
+                "engine": "firefox",
+                "actor": "student",
+                "path": "/notices/817441f07df44f45894a2f732766f069/lifecycle-tracking",
+                "method": "PUT",
+                "status": 422,
+                "body_sha256": "ed09da53860afd6b30d56823ab7bb3ed843bc3a541c299cbab4f7874c5a9d717",
+                "at": 1794676540551
+              },
+              {
+                "engine": "webkit",
+                "actor": "student",
+                "path": "/notices/d55305a44e184f3abdb2f61249424ea2/lifecycle-tracking",
+                "method": "PUT",
+                "status": 422,
+                "body_sha256": "ed09da53860afd6b30d56823ab7bb3ed843bc3a541c299cbab4f7874c5a9d717",
+                "at": 1794676571626
+              }
+            ],
+            "lifecycle_record_count": 0,
+            "audit_record_count": 0,
+            "source_boundary": "Official early artifacts retain safe response hashes, not submitted request JSON or full error response bytes; their immutable failures and counts are retained."
+          },
+          "baseline_real_api_reproduction": {
+            "path": "local-evidence/baseline-reproduction.json",
+            "bytes": 3915,
+            "sha256": "7043f397f894aeece31f50ecaa6ef5799eac98b13f05f7f5603c28434e53092b",
+            "request_scope": "Real TestClient requests constructed from the actual GET lifecycle defaults and the unchanged frontend form field mapping. These are local requests, not claimed captures of CI request bodies.",
+            "diagnosis": "TrackingData after-validation raises one value_error at data with the existing evidence or identity explanation. RequestValidationError handling formerly discarded that meaning and returned only the field path.",
+            "actual_response_sha256_matches_all_three_official_receipts": true,
+            "valid_evidence_and_identity_already_saved_with_200": true
+          },
+          "repair": {
+            "production_files": [
+              "app/main.py",
+              "app/notice_tracking.py"
+            ],
+            "custom_error_codes": [
+              "lifecycle_evidence_required",
+              "lifecycle_identity_required"
+            ],
+            "public_message_condition": "Exactly one validation error, exact location (body,data), and exact allowlisted code. The response is a fixed string lookup; error msg, ctx and input are never reflected.",
+            "unchanged_contracts": [
+              "422 on missing source evidence",
+              "422 on unverified personal identity",
+              "strict boolean identity input",
+              "real source citation matching",
+              "owner and version checks",
+              "mixed/structural errors retain the original generic response",
+              "valid correction saves with 200"
+            ],
+            "browser_script_unchanged": true,
+            "frontend_request_construction_unchanged": true
+          },
+          "red": {
+            "command": [
+              "local-evidence/python",
+              "-m",
+              "pytest",
+              "tests/test_notice_phase_tracking.py::test_lifecycle_business_validation_is_actionable_and_retryable",
+              "tests/test_notice_phase_tracking.py::test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input",
+              "-q",
+              "--junitxml=/workspace/scratch/badc46d66a9d/recovery-audit/campus-lifecycle-errors/red.xml"
+            ],
+            "cwd": "local-evidence/luojiaxinshi",
+            "started_at": "2026-11-14T17:21:41.399915+00:00",
+            "source_sha256": {
+              "app/main.py": "ef60e1e3d6b52ee4592388069faa8590e223eec81f848fa4b20eae5f4c9af0de",
+              "app/notice_tracking.py": "e227cf5fb16156194c5b5a3108ed555f01c423033efbe924f44ff26c2344b1d3",
+              "tests/test_notice_phase_tracking.py": "3231037e4526a713fc064b4f819a78a062a4bf0799b052a0340d9a5901bc41a2"
+            },
+            "elapsed_seconds": 3.9978318529974786,
+            "exit_code": 1,
+            "log": "local-evidence/red.log",
+            "junit_xml": "local-evidence/red.xml",
+            "tests": 3,
+            "statuses": {
+              "failed": 2,
+              "passed": 1
+            },
+            "unique_identities": 3,
+            "by_file": {
+              "tests.test_notice_phase_tracking": 3
+            },
+            "cases": [
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_business_validation_is_actionable_and_retryable[missing-source-evidence]",
+                "status": "failed",
+                "failure": {
+                  "message": "AssertionError: assert {'detail': '字段不符合要求，请检查：data'} == {'detail': '请...知或相关通知中的原文依据'}\n  \n  Differing items:\n  {'detail': '字段不符合要求，请检查：data'} != {'detail': '请选择当前通知或相关通知中的原文依据'}\n  Use -v to get more diff"
+                }
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_business_validation_is_actionable_and_retryable[unverified-personal-identity]",
+                "status": "failed",
+                "failure": {
+                  "message": "AssertionError: assert {'detail': '字段不符合要求，请检查：data'} == {'detail': '请...凭同名或模糊匹配认定结果'}\n  \n  Differing items:\n  {'detail': '字段不符合要求，请检查：data'} != {'detail': '请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果'}\n  Use -v to get more diff"
+                }
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input",
+                "status": "passed",
+                "failure": null
+              }
+            ],
+            "log_artifact": {
+              "path": "local-evidence/red.log",
+              "bytes": 4961,
+              "sha256": "38d93b670c0ee8860295fbcd9fd0917970b834bd619cf3830ce26a09e628ef8d"
+            },
+            "junit_artifact": {
+              "path": "local-evidence/red.xml",
+              "bytes": 5234,
+              "sha256": "fea432c17bd9c0481f8212cc4424b7d9eb3fcd22d0eb4f2abdf5127c8852a44b"
+            }
+          },
+          "green": {
+            "command": [
+              "local-evidence/python",
+              "-m",
+              "pytest",
+              "tests/test_notice_phase_tracking.py",
+              "tests/test_workflow.py",
+              "-q",
+              "--junitxml=/workspace/scratch/badc46d66a9d/recovery-audit/campus-lifecycle-errors/green.xml"
+            ],
+            "cwd": "local-evidence/luojiaxinshi",
+            "started_at": "2026-11-14T17:23:06.647152+00:00",
+            "source_sha256": {
+              "app/main.py": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3",
+              "app/notice_tracking.py": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb",
+              "tests/test_notice_phase_tracking.py": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f",
+              "tests/test_workflow.py": "59faec22d6732aff81feb866109d1fc6e482d190394a5d60211181c7abb60095"
+            },
+            "elapsed_seconds": 44.014228259002266,
+            "exit_code": 0,
+            "log": "local-evidence/green.log",
+            "junit_xml": "local-evidence/green.xml",
+            "tests": 40,
+            "statuses": {
+              "passed": 40
+            },
+            "unique_identities": 40,
+            "by_file": {
+              "tests.test_notice_phase_tracking": 11,
+              "tests.test_workflow": 29
+            },
+            "cases": [
+              {
+                "identity": "tests.test_notice_phase_tracking::test_unannounced_lead_has_real_personal_followup_without_official_deadline",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_publicity_expiry_never_becomes_final_and_dates_need_actual_quotes",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_results_require_identity_check_and_keep_followup_task_receipts",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_business_validation_is_actionable_and_retryable[missing-source-evidence]",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_business_validation_is_actionable_and_retryable[unverified-personal-identity]",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_tracking_is_owner_scoped_versioned_and_invalidated_by_corrected_evidence",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_tracking_survives_backup_and_rejects_missing_tables",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_portable_phase_history_preserves_quotes_without_restoring_result_or_reminders",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_batched_phase_summary_keeps_related_version_and_owner_checks[False]",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_notice_phase_tracking::test_batched_phase_summary_keeps_related_version_and_owner_checks[True]",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_explicit_manual_draft_is_persisted_without_automatically_creating_tasks",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_health_and_authentication",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_invite_single_use_and_password_policy",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_csrf_origin_and_host_checks",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_account_and_attachment_isolation_even_admin",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_duplicate_notice_explicit_override",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_manual_workflow_idempotency_and_stale_writes",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_parallel_confirmation_creates_only_one_task",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_supplement_stale_draft_and_revision_preserves_status_notes",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_unconfigured_ai_honest_failure",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_ai_only_generates_draft_and_preserves_usage",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_ai_failure_is_retryable_and_no_false_success",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_ai_evidence_rejects_fabricated_quote_and_source",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_missing_year_and_invented_time_are_not_inferred",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_relative_date_requires_original_publication",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_materials_review_integer_response_round_trip",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_incomplete_materials_block_deadline_until_resolution",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_ics_round_trip_timezone_all_day_and_injection",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_cancel_marks_calendar_dirty_and_exports_cancelled",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_own_data_export_excludes_password_sessions_api_key",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_delete_cascades_private_data",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_password_rotation_revokes_other_sessions",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_login_rate_limit",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_upload_limits_and_no_silent_truncation",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_failed_attachment_is_kept_and_visible",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_docx_parser_and_zip_bomb_guard",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_pdf_encrypted_is_rejected_and_image_only_pages_remain_reviewable",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_backup_integrity_and_restore[utf-8]",
+                "status": "passed",
+                "failure": null
+              },
+              {
+                "identity": "tests.test_workflow::test_backup_integrity_and_restore[cp1252]",
+                "status": "passed",
+                "failure": null
+              }
+            ],
+            "log_artifact": {
+              "path": "local-evidence/green.log",
+              "bytes": 614,
+              "sha256": "5f06f6a80a5c431349bf03bc96a3e9f680acfe52545bb121911422e0c8c88561"
+            },
+            "junit_artifact": {
+              "path": "local-evidence/green.xml",
+              "bytes": 5153,
+              "sha256": "1c5419b6f027a819312b99fffe9449a7229034077621ff35d19963494ea09b49"
+            },
+            "new_case_identities": 3,
+            "existing_phase_tracking_cases": 8,
+            "existing_workflow_cases": 29
+          },
+          "identity_check": {
+            "original_test_functions": 7,
+            "original_functions_ast_unchanged": true,
+            "added_test_functions": [
+              "test_lifecycle_business_validation_is_actionable_and_retryable",
+              "test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input"
+            ],
+            "added_case_identities": 3,
+            "browser_and_frontend_files_unchanged": {
+              "static/notice-lifecycle.js": true,
+              "scripts/verify_campus_administration.mjs": true
+            },
+            "baseline_snapshot_matches_git_commit": {
+              "app/main.py": true,
+              "app/notice_tracking.py": true,
+              "tests/test_notice_phase_tracking.py": true,
+              "static/notice-lifecycle.js": true,
+              "scripts/verify_campus_administration.mjs": true
+            },
+            "business_regression_function_ast_identical_in_red_and_green": true,
+            "field_guard_refinement": "After the original red run, the same one field-error case was strengthened from the string true representative to 0, 1, string true and string false. Its case identity is unchanged. The exact original red test source is retained and its SHA matches red-run.json.",
+            "red_test_source": {
+              "path": "local-evidence/test_notice_phase_tracking.red.py",
+              "sha256": "3231037e4526a713fc064b4f819a78a062a4bf0799b052a0340d9a5901bc41a2"
+            },
+            "final_source_sha256": {
+              "app/main.py": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3",
+              "app/notice_tracking.py": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb",
+              "tests/test_notice_phase_tracking.py": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f"
+            },
+            "artifact": {
+              "path": "local-evidence/identity-check.json",
+              "bytes": 1601,
+              "sha256": "beecb9597e40f6a53fb21a4f81ddad6211a435487c06425273c10804e46a688e"
+            }
+          },
+          "independent_handler_boundary_review": {
+            "artifact": {
+              "path": "local-evidence/ci72-lifecycle-handler-review.json",
+              "bytes": 2670,
+              "sha256": "f1819e409d45510a357fd8359231df08b833bc16ca6595b277897f9e23c6dd2c"
+            },
+            "scope": "Product reviewer inspected the actual registered RequestValidationError handler with controlled boundary inputs. This supplements the real HTTP tests and is not counted as product/API/browser case identities."
+          },
+          "limits": [
+            "The repaired full campus browser flow has not run again; the official CI72 campus result remains 21 passed, 3 failed, 9 unrecorded.",
+            "The 3 new Python case identities are appended to the existing file, preserving all original function ASTs and the source file partition inventory.",
+            "The generic field-guard case was strengthened after its initial red run without adding an identity; the two failing business-error cases are AST-identical between red and green, and the exact red test source is retained.",
+            "No build, commit, push, production deployment, or Firefox-helper change was performed."
+          ]
+        }
+      },
+      "lifecycle_handler_review": {
+        "original_proof_sha256": "f1819e409d45510a357fd8359231df08b833bc16ca6595b277897f9e23c6dd2c",
+        "record": {
+          "scope": "Controlled RequestValidationError values execute the real handler registered by create_app; not HTTP or browser acceptance. Actual API red/green is separately owned by recovery_audit.",
+          "source_sha256": {
+            "app/main.py": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3",
+            "app/notice_tracking.py": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb"
+          },
+          "cases": [
+            {
+              "name": "lifecycle_evidence_required",
+              "actual": {
+                "detail": "请选择当前通知或相关通知中的原文依据"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "lifecycle_identity_required",
+              "actual": {
+                "detail": "请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "nested-location",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data.evidence"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "query-location",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "root-location",
+              "actual": {
+                "detail": "字段不符合要求，请检查："
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "unknown-code",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "code-prefix",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "code-whitespace",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "untrusted-message",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "two-whitelisted-errors",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data, data"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "mixed-errors",
+              "actual": {
+                "detail": "字段不符合要求，请检查：data, version"
+              },
+              "safe_fixed_or_generic_message": true
+            },
+            {
+              "name": "empty-errors",
+              "actual": {
+                "detail": "字段不符合要求，请检查："
+              },
+              "safe_fixed_or_generic_message": true
+            }
+          ],
+          "passed": true
+        }
+      },
+      "lifecycle_final_review": {
+        "original_proof_sha256": "647722223c1607f0981b984d8cb2820543989af692d67477caaa6ef9bead6430",
+        "record": {
+          "verdict": "no_blocking_issue; approved for candidate integration, not a browser pass",
+          "reviewed_proof_sha256": "1000b13ae3d499ed5210387a31af3c52c020440f07fe8a7c7979194d8ed82285",
+          "actual_xml": {
+            "red": {
+              "cases": 3,
+              "unique_identities": 3,
+              "failed": 2,
+              "errors": 0,
+              "skipped": 0,
+              "sha256": "fea432c17bd9c0481f8212cc4424b7d9eb3fcd22d0eb4f2abdf5127c8852a44b"
+            },
+            "green": {
+              "cases": 40,
+              "unique_identities": 40,
+              "failed": 0,
+              "errors": 0,
+              "skipped": 0,
+              "sha256": "1c5419b6f027a819312b99fffe9449a7229034077621ff35d19963494ea09b49"
+            }
+          },
+          "original_phase_test_functions_unchanged": 7,
+          "new_collected_case_identities": 3,
+          "same_business_regression_ast_in_red_and_green": true,
+          "field_guard_strengthened_after_red_in_same_identity_and_history_preserved": true,
+          "browser_and_frontend_unchanged": true,
+          "fixed_exact_handler_branch": {
+            "error_count": 1,
+            "location": [
+              "body",
+              "data"
+            ],
+            "codes": [
+              "lifecycle_evidence_required",
+              "lifecycle_identity_required"
+            ],
+            "dynamic_error_fields_exposed": false
+          },
+          "source_after": {
+            "app/main.py": {
+              "path": "app/main.py",
+              "bytes": 80417,
+              "sha256": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3"
+            },
+            "app/notice_tracking.py": {
+              "path": "app/notice_tracking.py",
+              "bytes": 19461,
+              "sha256": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb"
+            },
+            "tests/test_notice_phase_tracking.py": {
+              "path": "tests/test_notice_phase_tracking.py",
+              "bytes": 11904,
+              "sha256": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f"
+            }
+          },
+          "independent_handler_review": "ci72-lifecycle-handler-review.json",
+          "official_ci72_status_unchanged": {
+            "campus_passed": 21,
+            "campus_failed": 3,
+            "campus_not_recorded": 9
+          }
+        }
+      },
+      "firefox_candidate": {
+        "original_proof_sha256": "14d56de54367c58070951bbeea6720960380add016bb70e41ea077024f399b02",
+        "record": {
+          "kind": "Minimum native nonpainting probe correction; no real browser acceptance claimed",
+          "base_head": "a977a8d1975aca53fe822016ea8f151e2260b6d7",
+          "base_checkout": "4c60d7f6fefc3a760c63acc58a0fdf1f17278b5b",
+          "files": {
+            "original-verify_frontend_finish.mjs": {
+              "sha256": "f4ca27266aeec74b51a59a2cde871939037cb4aed99a47fb8becdb3291acd967",
+              "bytes": 40645
+            },
+            "verify_frontend_finish.mjs": {
+              "sha256": "3a9b885873121b88cd68ac356729423fa089befcb3eca0b0c66003f02a299255",
+              "bytes": 41224
+            },
+            "native-nonpainting-motion.patch": {
+              "sha256": "5c1e9771950bc32bb7c64dd174078c7e305ebc68e8c2ad2913f4704ebc503108",
+              "bytes": 4273
+            },
+            "probe-contract.mjs": {
+              "sha256": "f91499457412ef3afabcb3901b161f1b623f2532c36b96d7b53913d18be5905e",
+              "bytes": 11586
+            },
+            "probe-contract-proof.json": {
+              "sha256": "6018a525fb6033abc3704d8b13f25e362f595df3df2b4b2b947c08146600503e",
+              "bytes": 6432
+            },
+            "official-failure-evidence.json": {
+              "sha256": "3762783bf9282894bca78b47a83b27cae1abcd6baadf735d524aaf691cd8fbc1",
+              "bytes": 6494
+            }
+          },
+          "only_function_changed": "noticeLayout",
+          "formal_names": [
+            "notification title and receive action share a compact row with independent usable controls",
+            "actual doubled notification text remains readable and controls remain reachable at narrow widths",
+            "a conflicting publication draft preserves missing originals across copying and reload until explicit removal",
+            "reselecting a copied draft attachment permits one new publication while leaving the conflicting original unchanged",
+            "monitor refresh and independent saves preserve both editable drafts including input made during a held real response",
+            "the final detail flows finish with the declared worker precondition and no uncaught page errors",
+            "an acknowledged draft save preserves later attachment removal and text until the next real save persists them"
+          ],
+          "formal_checks_per_engine": 7,
+          "formal_checks_total": 21,
+          "timeout_ms": 12000,
+          "new_condition": "Closed non-summary ancestor, dormant finite CSS transition outside reveal properties, actual checkVisibility() false with default options, and ::details-content computed contentVisibility hidden; all active records and client rectangle counts retained. Missing or throwing APIs do not permit readiness.",
+          "historical_boundary": "CI72 proves retained boxes and the closed ancestor, not either new native signal. Next actual CI must provide both new raw values."
+        }
+      },
+      "firefox_probe": {
+        "original_proof_sha256": "6018a525fb6033abc3704d8b13f25e362f595df3df2b4b2b947c08146600503e",
+        "record": {
+          "method": "Controlled DOM states execute the extracted original/revised noticeLayout function. This does not substitute for real Firefox/Chromium/WebKit CI.",
+          "source_original_sha256": "f4ca27266aeec74b51a59a2cde871939037cb4aed99a47fb8becdb3291acd967",
+          "source_revised_sha256": "3a9b885873121b88cd68ac356729423fa089befcb3eca0b0c66003f02a299255",
+          "only_noticeLayout_changed": true,
+          "timeout_ms": 12000,
+          "formal_identities_unchanged": true,
+          "checks": [
+            {
+              "name": "dormant transition in closed content has no rendered boxes",
+              "expected_finite_motion_finished": true,
+              "original": true,
+              "revised": true,
+              "revised_ready": true,
+              "ok": true
+            },
+            {
+              "name": "native suppressed closed content retains a layout rectangle",
+              "expected_finite_motion_finished": true,
+              "original": false,
+              "revised": true,
+              "revised_ready": true,
+              "ok": true
+            },
+            {
+              "name": "outer closed details still hides nested summary content",
+              "expected_finite_motion_finished": true,
+              "original": true,
+              "revised": true,
+              "revised_ready": true,
+              "ok": true
+            },
+            {
+              "name": "a native visible target remains blocking even under closed details",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "native visible cannot be overridden by a hidden pseudo-element signal",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "native false alone cannot override a visible pseudo-element",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "native false alone cannot override an unsupported pseudo-element",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "missing native API remains blocking even with no rectangles",
+              "expected_finite_motion_finished": false,
+              "original": true,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "throwing native API remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": true,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "throwing pseudo-element API remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "direct summary subtree is never exempt",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "details element itself is not its own hidden descendant",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "open details empty boxes do not justify an exemption",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "display contents without a closed ancestor remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "zero area with a native visible client rectangle remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "opacity zero with a native visible client rectangle remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "hidden drawer is not broadly exempted",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "started running transition remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "pending motion with elapsed time remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "pending motion with an assigned start time remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "a generic animation is not treated as a CSS transition",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "display reveal transition remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "visibility reveal transition remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "content-visibility reveal transition remains blocking",
+              "expected_finite_motion_finished": false,
+              "original": false,
+              "revised": false,
+              "revised_ready": false,
+              "ok": true
+            },
+            {
+              "name": "a missed visible-control hit test still prevents readiness",
+              "expected_finite_motion_finished": true,
+              "original": true,
+              "revised": true,
+              "revised_ready": false,
+              "ok": true
+            }
+          ],
+          "two_frame_checks": {
+            "one_frame_rejected": true,
+            "two_frames_accepted": true,
+            "geometry_change_resets": true,
+            "visible_pending_keeps_blocking": true
+          },
+          "passed": true,
+          "real_browser_status": "not_run; next official run required"
+        }
+      },
+      "firefox_patch_review": {
+        "original_proof_sha256": "cf1955ab70c8afb1a8ea7b1ad44c2f8b4cfc42a6e19f3edc34c68624f1614989",
+        "record": {
+          "scope": "Independent read-only second review of the candidate patch and verified CI72 original; no browser replay or claim of candidate runtime success.",
+          "official_run_id": 43618159004,
+          "official_failure_sha256": "b46a66fbc8e63ff9b23ef59b27bcfe8a726ebc543c51526ed2c4e118b51644d8",
+          "official_check_results": {
+            "chromium": {
+              "recorded": 7,
+              "passed": 7
+            },
+            "firefox": {
+              "recorded": 1,
+              "passed": 0
+            },
+            "webkit": {
+              "recorded": 7,
+              "passed": 7
+            }
+          },
+          "official_firefox_final": {
+            "at_ms": 13877,
+            "checks": {
+              "viewport": true,
+              "route_ready": true,
+              "structure_present": true,
+              "menu_closed": true,
+              "drawer_in_place": true,
+              "finite_motion_finished": false,
+              "targets_visible": true,
+              "targets_receive_pointer": true
+            },
+            "active_count": 9,
+            "all_pending_at_zero_with_unset_start": true,
+            "all_closed_details_retained_client_rect_count": 1,
+            "native_check_visibility_recorded": false,
+            "details_pseudo_content_visibility_recorded": false
+          },
+          "source_sha256": {
+            "old": "f4ca27266aeec74b51a59a2cde871939037cb4aed99a47fb8becdb3291acd967",
+            "new": "3a9b885873121b88cd68ac356729423fa089befcb3eca0b0c66003f02a299255",
+            "patch": "5c1e9771950bc32bb7c64dd174078c7e305ebc68e8c2ad2913f4704ebc503108"
+          },
+          "independent_checks": {
+            "outside_noticeLayout_byte_identical": true,
+            "old_source_equals_current_repository_at_review": true,
+            "all_active_retained": true,
+            "native_false_and_pseudo_hidden_required": true,
+            "no_opacity_visibility_or_auto_options_enabled": true,
+            "missing_or_throwing_signals_block": true,
+            "closed_non_summary_ancestor_only": true,
+            "started_and_reveal_motion_still_block": true,
+            "unchanged_other_seven_readiness_gates": true,
+            "unchanged_two_stable_frames": true,
+            "unchanged_timeout_ms": 12000,
+            "unchanged_formal_identities": 21
+          },
+          "primary_sources": [
+            "https://html.spec.whatwg.org/multipage/rendering.html#the-details-and-summary-elements",
+            "https://drafts.csswg.org/cssom-view/#dom-element-checkvisibility"
+          ],
+          "verdict": "no_blocking_code_or_contract_issue; next official candidate browser run must independently record and validate both native signals"
+        }
+      },
+      "firefox_raw_auditor_review": {
+        "original_proof_sha256": "20907a26c5d2a4601044cec8f7163007ffcf4bd366678f41a40780f9db6cc05d",
+        "record": {
+          "verdict": "no_blocking_issue_in_v4_contract",
+          "auditor_sha256": "187b6b78ffb5f304e8835e1312da294bc1ec460038fdece3fcd20a3ee6e8b30d",
+          "selfcheck_sha256": "2f48eda7645e501d4e464c782e943beb8a25b4347536d992b758b0b5cbbddc60",
+          "diff_review": "Only the native/pseudo-element rendering schema and exemption predicate changed from v3; unconditional required snapshots and explicit observed phases remain. Both observed signals, closed non-summary ancestry, dormant non-reveal CSS transition, error consistency and exact booleans are required. Rectangle count is diagnostic only.",
+          "independently_executed": {
+            "actual_ci72_rejected": true,
+            "ci72_missing_phases": 4,
+            "ci72_native_observations_missing_and_reported": true,
+            "all_15_phase_stub_ready_fixture_rejected": true,
+            "stub_validated_snapshots": 0,
+            "stub_issues": 72
+          },
+          "reviewed_negative_controls": 25,
+          "scope": "No actual new browser run; CI72 original remains unchanged and is not retroactively reinterpreted."
+        }
+      }
+    },
+    "current_sources": {
+      "app/main.py": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3",
+      "app/notice_tracking.py": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb",
+      "tests/test_notice_phase_tracking.py": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f",
+      "scripts/verify_frontend_finish.mjs": "3a9b885873121b88cd68ac356729423fa089befcb3eca0b0c66003f02a299255"
+    },
+    "expected_next_counts": {
+      "python_per_os": 1906,
+      "node_per_os": 461,
+      "python_source_files": 140,
+      "browser": 1146,
+      "continuity": 990
+    },
+    "gate_boundary": "Local API/probe passes are not browser passes. Both new native visibility signals must be present in next official raw snapshots. Historical CI71 and CI72 contracts and failures remain unchanged. Candidate and actual merged-main push CI must each pass independently.",
+    "raw_audit_v4_frozen": {
+      "original_proof_sha256": "755e71bd953942db06e2f6bc5356b6773f5f2e676d256384d6597c63b522b909",
+      "record": {
+        "kind": "Independent next-candidate browser audit preparation, not a CI execution result",
+        "next_run_id": null,
+        "next_head": null,
+        "actual_checkout": null,
+        "pending_binding": "Next run/head/checkout must be supplied and verified against exact Git blobs and official job logs.",
+        "expected_reports": 36,
+        "expected_browser_checks": 1146,
+        "expected_continuity_checks": 990,
+        "legacy_actual_identities": 1056,
+        "ci70_preserved_definitions": 84,
+        "ci70_actual_records": 38,
+        "appended_definitions": 6,
+        "new_suite_counts": [
+          36,
+          21,
+          33
+        ],
+        "source_contract": {
+          "scripts/verify_account_lifecycle.mjs": {
+            "sha256": "0d85832166b8b81f180e89ce84df5d160b272256c6c8e24f475bfed086b03640",
+            "bytes": 53172
+          },
+          "scripts/verify_frontend_finish.mjs": {
+            "sha256": "3a9b885873121b88cd68ac356729423fa089befcb3eca0b0c66003f02a299255",
+            "bytes": 41224
+          },
+          "scripts/verify_campus_administration.mjs": {
+            "sha256": "71adbd568108b7383e00e72799191c76cde23920a726438278eb5f6ad0bfd63d",
+            "bytes": 37453
+          },
+          "scripts/verify_sprint_ui.mjs": {
+            "sha256": "a7a2c6cb9e36e62cd97708a727a878cdcf92721b4ee069756a662e9b372a8739",
+            "bytes": 80833
+          },
+          "scripts/run_browser_checks.py": {
+            "sha256": "0f7dc443e8166fefabd1d10bc1dc60abaedd192e4a3aa35c640f30df5a81ccba",
+            "bytes": 7287
+          },
+          "scripts/run_continuity_browser_checks.py": {
+            "sha256": "02cbbdf7b62beac5ae6de6cf03fb76c30a11d43710029306c345bf40132429a3",
+            "bytes": 7773
+          },
+          "static/auth.js": {
+            "sha256": "d9cb2a89c04eb3260a23448b87df421c92d58ac849914a59cafac581e0fd9b44",
+            "bytes": 12219
+          },
+          "static/app.js": {
+            "sha256": "df0e8497fdf3bc2f8eee0b7a5e80fa0814dcab8948d84d190d51f5f0309110f5",
+            "bytes": 149301
+          },
+          "static/campus.js": {
+            "sha256": "8c0ce576f23c3991ba71351f8fbc771d64b40753fa72e7681229890e49ab3d90",
+            "bytes": 63180
+          }
+        },
+        "source_working_tree_match_at_freeze": true,
+        "formal_identities_unchanged_from_v3": true,
+        "files": {
+          "README.md": {
+            "sha256": "b834b53f395fba7f128ff43c50d7b7cdab5dab334c2dfee5dfcae9d8386f519b",
+            "bytes": 3687
+          },
+          "README.previous.md": {
+            "sha256": "01d70b5c7b6187a9887b4a2755b0e5eb4d46d20401909c561d536951205bcd51",
+            "bytes": 5613
+          },
+          "audit_account_lifecycle.py": {
+            "sha256": "3dde063fa1b5ac837ebf7bad1b9515ca3a3ed4b777c8141c44e91c91f8fa4dda",
+            "bytes": 25857
+          },
+          "audit_browser.py": {
+            "sha256": "9ff749b07eb53f0fb114c5f9e52227a209976f63da774eff52698e4fb4d6fddd",
+            "bytes": 25288
+          },
+          "audit_campus_administration.py": {
+            "sha256": "32da4cb8cda5350e86b4589b4c949438de70cbf3120ca46d9e83b19c23f49d75",
+            "bytes": 11927
+          },
+          "audit_context.py": {
+            "sha256": "b5ad646923dcc7033db37d6d2f1e658563d10967030754d402e5347e2c3c32b3",
+            "bytes": 7954
+          },
+          "audit_continuity.py": {
+            "sha256": "8acab368047a21aa1b4dd6b6689b885ae8f23c7eab2128b9d89fbf07dc1c6a68",
+            "bytes": 8293
+          },
+          "audit_early.py": {
+            "sha256": "5be683c0b80d9b2b65c4d50359e24ed47c293a7f10e5880f456c21ff4d747c52",
+            "bytes": 7205
+          },
+          "audit_frontend_finish.py": {
+            "sha256": "f7ef22410538fdbf783585db3a4d492579955e366229eaffe138f092ba131327",
+            "bytes": 8408
+          },
+          "audit_grouping.py": {
+            "sha256": "14800b90b26e70c698efc496d05432e824e74304f7b9d177e5ff50c504606f68",
+            "bytes": 24531
+          },
+          "audit_regressions.py": {
+            "sha256": "f79bff016a7dbaf226e0a6c3777884182f6da9c3fe580b78859d09879e884a25",
+            "bytes": 2742
+          },
+          "baseline-report-contracts.json": {
+            "sha256": "2533aa5d952e5d381de7b5e0d08ea8e1037502e5ee7b7606e2c5bfa515b8099e",
+            "bytes": 155625
+          },
+          "board_semantics.py": {
+            "sha256": "594acc8a08e3af16e5f12f3a0e4c31fdfa67f2e57ee3fc28a9587c7e7043a54f",
+            "bytes": 8251
+          },
+          "check_layout_auditor.py": {
+            "sha256": "5b895722500eadaa9f950822610795ad30af56738c1b20cf05cfbb196cd4b6f1",
+            "bytes": 6395
+          },
+          "finish_layout_semantics.py": {
+            "sha256": "187b6b78ffb5f304e8835e1312da294bc1ec460038fdece3fcd20a3ee6e8b30d",
+            "bytes": 10088
+          },
+          "layout-auditor-selfcheck.json": {
+            "sha256": "2f48eda7645e501d4e464c782e943beb8a25b4347536d992b758b0b5cbbddc60",
+            "bytes": 3616
+          },
+          "new_suite_semantics.py": {
+            "sha256": "9ef80db8270a84fd6f487a55d3c7087f5a36833e02cec409b44e832099881b7e",
+            "bytes": 9152
+          },
+          "race_semantics.py": {
+            "sha256": "c37b3d1b88e7b80fa8b9dad6975d611c52eb33d80646d13fa54c5a325b263fec",
+            "bytes": 12711
+          },
+          "report-contracts.json": {
+            "sha256": "cd656745de20ac5cbbcb9303375d7fba6148c793c9c208b35c0466f3d306bbb2",
+            "bytes": 213330
+          },
+          "report_contracts.py": {
+            "sha256": "050e80cbe5e6d75ee9001f8fc7803a8aadfe6c681cbe3a535eb84b0d7783d62c",
+            "bytes": 11697
+          },
+          "save_ci_artifact.py": {
+            "sha256": "419c7d176c34318a29cfa4d10f02ae195cb9d1a6e909989d580e3f6396e2c30b",
+            "bytes": 1950
+          },
+          "verify_visual_review.py": {
+            "sha256": "305834b6c97f6cb1faa73f3ef274cca991cc119f39a913722b3bda8f45fe049b",
+            "bytes": 3784
+          }
+        },
+        "peer_review": {
+          "agent": "/root/product_review",
+          "path": "local-evidence/ci72-layout-auditor-v4-review.json",
+          "sha256": "20907a26c5d2a4601044cec8f7163007ffcf4bd366678f41a40780f9db6cc05d",
+          "layout_auditor_sha256": "187b6b78ffb5f304e8835e1312da294bc1ec460038fdece3fcd20a3ee6e8b30d",
+          "status": "no blocking issue"
+        },
+        "unchanged_historical_audits": {
+          "ci71_browser": {
+            "path": "local-evidence/browser-report-audit.json",
+            "sha256": "acc4f0c6eefbbab902c2f7683abf57ed53318ea8da118448b6b7a4b8edf9f6dc"
+          },
+          "ci71_continuity": {
+            "path": "local-evidence/continuity-report-audit.json",
+            "sha256": "5e93ac1cd90dc363f1f04163c7ee5a64978443240c0abf4d3f0b2666db395b3b"
+          },
+          "ci72_browser": {
+            "path": "local-evidence/browser-report-audit.json",
+            "sha256": "1b51ee266dbd29c9c7b98b533dec52163763a5b2d9ffdce62aa8ccee0e29eb79"
+          },
+          "ci72_continuity": {
+            "path": "local-evidence/continuity-report-audit.json",
+            "sha256": "ab93cf2d1dc0961cf8b8930b15aee5c9c9c68f54086955c6020d1c9dfbcd7fa1"
+          }
+        },
+        "selfcheck": "layout-auditor-selfcheck.json",
+        "no_current_run_acceptance": true
+      }
+    },
+    "python_collection": {
+      "original_proof_sha256": "b613f685f07f1b54ce5c222569432f7abbe9a2a07ebda20f93878d82e4279224",
+      "record": {
+        "scope": "One full Python collect-only invocation. No test bodies or product tests executed.",
+        "command": [
+          "local-evidence/python",
+          "local-evidence/collect-only-fixed.py"
+        ],
+        "pytest_arguments": [
+          "-q",
+          "--collect-only",
+          "tests",
+          "-q"
+        ],
+        "cwd": "local-evidence/luojiaxinshi",
+        "started_at": "2026-11-14T17:27:04.869133+00:00",
+        "elapsed_seconds": 2.5657865639950614,
+        "exit_code": 0,
+        "collected_count": 1906,
+        "unique_identities": 1906,
+        "duplicate_identities": [],
+        "source_file_count": 140,
+        "source_files": [
+          "tests/test_account_and_insights.py",
+          "tests/test_action_plans.py",
+          "tests/test_action_workflow.py",
+          "tests/test_agent_authoring.py",
+          "tests/test_agent_chat.py",
+          "tests/test_agent_fusion.py",
+          "tests/test_agent_quality.py",
+          "tests/test_agent_runtime.py",
+          "tests/test_agent_workspace.py",
+          "tests/test_answer_format.py",
+          "tests/test_attachment_referrer.py",
+          "tests/test_audit_reports.py",
+          "tests/test_boundaries.py",
+          "tests/test_browser_feedback.py",
+          "tests/test_browser_fixture_ports.py",
+          "tests/test_browser_preview.py",
+          "tests/test_campus_imports.py",
+          "tests/test_campus_permissions.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_submissions.py",
+          "tests/test_change_review.py",
+          "tests/test_chat_continuity.py",
+          "tests/test_chat_media.py",
+          "tests/test_cli.py",
+          "tests/test_composer_media.py",
+          "tests/test_conversation_tools.py",
+          "tests/test_deadline_evidence.py",
+          "tests/test_edit_cache.py",
+          "tests/test_environment_isolation.py",
+          "tests/test_evidence_acquisition.py",
+          "tests/test_execution.py",
+          "tests/test_experience.py",
+          "tests/test_flexible_workflow.py",
+          "tests/test_frontend_bundle.py",
+          "tests/test_full_audit_regressions.py",
+          "tests/test_genui_core.py",
+          "tests/test_genui_prompt.py",
+          "tests/test_genui_state.py",
+          "tests/test_genui_transport.py",
+          "tests/test_grounding.py",
+          "tests/test_group_context_candidates.py",
+          "tests/test_group_delivery.py",
+          "tests/test_handling_assistant.py",
+          "tests/test_insight_data.py",
+          "tests/test_intake_round_isolation.py",
+          "tests/test_integrations.py",
+          "tests/test_legacy_office.py",
+          "tests/test_local_runtime_ownership.py",
+          "tests/test_long_replies.py",
+          "tests/test_mail_budget_claim.py",
+          "tests/test_mail_clock_regressions.py",
+          "tests/test_mail_delivery.py",
+          "tests/test_material_queue.py",
+          "tests/test_memory_autonomy_v5.py",
+          "tests/test_memory_context.py",
+          "tests/test_memory_engine.py",
+          "tests/test_memory_lifecycle.py",
+          "tests/test_memory_lifecycle_v3.py",
+          "tests/test_memory_reliability_v4.py",
+          "tests/test_memory_tree_v6.py",
+          "tests/test_memory_usability_v7.py",
+          "tests/test_message_interactions.py",
+          "tests/test_mimo_speech.py",
+          "tests/test_model_capacity.py",
+          "tests/test_model_catalog.py",
+          "tests/test_model_consent.py",
+          "tests/test_motion_assets.py",
+          "tests/test_mvp_evaluation.py",
+          "tests/test_notice_automation.py",
+          "tests/test_notice_budget.py",
+          "tests/test_notice_focus.py",
+          "tests/test_notice_images.py",
+          "tests/test_notice_intake.py",
+          "tests/test_notice_matters.py",
+          "tests/test_notice_modes.py",
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_notice_queue.py",
+          "tests/test_notice_references.py",
+          "tests/test_notice_repair.py",
+          "tests/test_notice_resolution.py",
+          "tests/test_notice_semantics.py",
+          "tests/test_notice_stream.py",
+          "tests/test_notice_timing.py",
+          "tests/test_notification_coordination.py",
+          "tests/test_notification_dispatch_quiet.py",
+          "tests/test_notification_review_regressions.py",
+          "tests/test_official_sources.py",
+          "tests/test_openui.py",
+          "tests/test_operations_monitor.py",
+          "tests/test_pdf_visual.py",
+          "tests/test_pilot_access.py",
+          "tests/test_pilot_workspace.py",
+          "tests/test_presentation_routing.py",
+          "tests/test_proactive_monitoring.py",
+          "tests/test_proactive_policy.py",
+          "tests/test_proactive_tracking.py",
+          "tests/test_profile_patch.py",
+          "tests/test_public_http.py",
+          "tests/test_push_delivery.py",
+          "tests/test_qq_group_intake.py",
+          "tests/test_recovery.py",
+          "tests/test_reminder_occurrences.py",
+          "tests/test_reply_preview.py",
+          "tests/test_response_contract.py",
+          "tests/test_retrieval_scope.py",
+          "tests/test_review_format_recovery.py",
+          "tests/test_review_observation.py",
+          "tests/test_runtime_fixture_cleanup.py",
+          "tests/test_runtime_metrics.py",
+          "tests/test_schedule.py",
+          "tests/test_shared_host_config.py",
+          "tests/test_source_cache_policy.py",
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_source_presets.py",
+          "tests/test_source_subscriptions.py",
+          "tests/test_speech_cache.py",
+          "tests/test_sprint_campus_delivery.py",
+          "tests/test_sprint_lists.py",
+          "tests/test_sprint_notifications.py",
+          "tests/test_sprint_observability.py",
+          "tests/test_sprint_official_time.py",
+          "tests/test_stage_budget.py",
+          "tests/test_stream_job.py",
+          "tests/test_student_inbox.py",
+          "tests/test_task_board.py",
+          "tests/test_task_briefing.py",
+          "tests/test_task_materials.py",
+          "tests/test_unified_intake.py",
+          "tests/test_usage_limits.py",
+          "tests/test_verification.py",
+          "tests/test_verification_evidence.py",
+          "tests/test_visual_evidence.py",
+          "tests/test_web_evidence.py",
+          "tests/test_work_summary.py",
+          "tests/test_workflow.py",
+          "tests/test_workflow_migration.py",
+          "tests/test_workspace.py",
+          "tests/test_workspace_projection.py",
+          "tests/test_write_coordination.py"
+        ],
+        "source_file_inventory_equal_ci72": true,
+        "baseline_count": 1903,
+        "baseline_missing": [],
+        "added": [
+          [
+            "tests.test_notice_phase_tracking",
+            "test_lifecycle_business_validation_is_actionable_and_retryable[missing-source-evidence]"
+          ],
+          [
+            "tests.test_notice_phase_tracking",
+            "test_lifecycle_business_validation_is_actionable_and_retryable[unverified-personal-identity]"
+          ],
+          [
+            "tests.test_notice_phase_tracking",
+            "test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input"
+          ]
+        ],
+        "baseline_linux_windows_identities_equal": true,
+        "baseline_artifacts": {
+          "linux": {
+            "path": "local-evidence/linux-python-identities.json",
+            "bytes": 235370,
+            "sha256": "3370ce748bdc0500a5de84d4ebed6eee803d77f127899cbc816ba996f20a7e2a"
+          },
+          "windows": {
+            "path": "local-evidence/windows-python-identities.json",
+            "bytes": 235370,
+            "sha256": "3370ce748bdc0500a5de84d4ebed6eee803d77f127899cbc816ba996f20a7e2a"
+          },
+          "unit_audit": {
+            "path": "local-evidence/unit-junit-audit.json",
+            "bytes": 70270,
+            "sha256": "0dba274ebc285aa61d7f2952df008cad3bc1199c54710bbcc95903fde775fa23"
+          }
+        },
+        "runtest_protocol_calls": [],
+        "test_bodies_executed": false,
+        "source_unchanged_during_collection": true,
+        "source_hashes": {
+          "app/main.py": {
+            "path": "app/main.py",
+            "bytes": 80417,
+            "sha256": "62818d2c0d53b97a4a3fee93d9a5a4f942593bd574b838fb71d304df32755cb3"
+          },
+          "app/notice_tracking.py": {
+            "path": "app/notice_tracking.py",
+            "bytes": 19461,
+            "sha256": "7ad7be11d2507ba0023b1b72c8865f43bf7b1671926b4d45237cab46dde7a2cb"
+          },
+          "tests/test_notice_phase_tracking.py": {
+            "path": "tests/test_notice_phase_tracking.py",
+            "bytes": 11904,
+            "sha256": "4b432b6d2039ce64679f311f732db4ca2d7de35d00aff77cfe795103ff610b2f"
+          }
+        },
+        "identities_artifact": {
+          "path": "local-evidence/collected-identities-final.json",
+          "bytes": 235784,
+          "sha256": "39b01e9b8bf7209d608fe08e5ec0489ab76392584e461fa3ea8c55551bd02725"
+        },
+        "nodeids_artifact": {
+          "path": "local-evidence/collected-nodeids-final.json",
+          "bytes": 211006,
+          "sha256": "9e308c3f67b56b678984ead1aad11586a14d147e879cdea6b34e9300095992d9"
+        },
+        "log_artifact": {
+          "path": "local-evidence/collection-final.log",
+          "bytes": 5267,
+          "sha256": "95715140d9310555c70f56c98445980469ce941011e1981c1347c953d3dd2c56"
+        },
+        "runner_artifact": {
+          "path": "local-evidence/collect-only-fixed.py",
+          "bytes": 5834,
+          "sha256": "8ecf5ef755d10cb73adb9a49cfff933ec8083cb210fdef683d3cc70e24afdbf2"
+        },
+        "issues": [],
+        "acceptance_met": true,
+        "preflight_failure": {
+          "path": "local-evidence/collection-proof.json",
+          "reason": "The first scratch wrapper omitted the repository from sys.path and encountered ModuleNotFoundError: app; its original artifacts remain unchanged. No test bodies executed."
+        }
+      }
+    }
   }
 }

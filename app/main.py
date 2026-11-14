@@ -231,7 +231,16 @@ def create_app(settings=None):
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, exc):
-        fields=', '.join('.'.join(str(x) for x in e['loc'][1:]) for e in exc.errors()[:5])
+        errors=exc.errors()
+        lifecycle_messages={
+            'lifecycle_evidence_required':'请选择当前通知或相关通知中的原文依据',
+            'lifecycle_identity_required':'请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果',
+        }
+        # Only these fixed business errors are public; never echo validator context or input.
+        if len(errors)==1 and tuple(errors[0]['loc'])==('body','data'):
+            message=lifecycle_messages.get(errors[0]['type'])
+            if message:return JSONResponse({'detail':message},status_code=422)
+        fields=', '.join('.'.join(str(x) for x in e['loc'][1:]) for e in errors[:5])
         return JSONResponse({'detail':'字段不符合要求，请检查：'+fields},status_code=422)
 
     @app.exception_handler(sqlite3.OperationalError)
