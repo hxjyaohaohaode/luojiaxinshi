@@ -1,0 +1,1255 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-14T13:50:04.350442+00:00",
+  "base_main_commit": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+  "record_type": "prepared_candidate_local_evidence_before_new_remote_ci",
+  "product_scope": "Keep the existing notice-library grouping display preference continuously available through loading, empty/error results, and retries; retain owner reset and listing/authorization semantics.",
+  "proofs": {
+    "deterministic_product_red_green": {
+      "path": "/workspace/scratch/0a6433f08acc/library-controls-evidence/verification.json",
+      "bytes": 17760,
+      "sha256": "bb990cb44b1de3e43d78d2fae49230584493f622cb6a85d36c9f3f38ea6e363b",
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T13:35:40.161818+00:00",
+        "base_commit": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "worktree": "/workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup",
+        "branch": "codex/library-controls-followup-2026-11-14",
+        "files_changed": [
+          "static/library.js",
+          "tests/library-controls.test.mjs"
+        ],
+        "product_change": "Keep the grouping display preference permanently mounted in its existing refinement section. Loading, empty results, errors, and absence of grouped rows no longer hide or disable it. The real owner reset and user-driven aria-pressed behavior remain unchanged.",
+        "source_sha256_before": "69399495b7fea00935da407e90618e0fc241247052f4daa835f406e59cee252d",
+        "source_sha256_after": "1df3ef6661d17fa915f3761c0c28e5f12de7aa6627ae440ff7600b773e1467a6",
+        "test_sha256": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0",
+        "product_diff": "diff --git a/static/library.js b/static/library.js\nindex be538b7..6110d53 100644\n--- a/static/library.js\n+++ b/static/library.js\n@@ -223,8 +223,10 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio\n     $('#library-source').value=source;$('#library-sort').value=sort;\n     $('#library-sort-note').textContent=sort==='priority'?'优先呈现已有事项的变更、有据期限和已核对的相关机会；其余内容仍可完整查找。':sort==='published'?'按原记录发布时间排序；未标注的排在后面，可切换按收录时间查看。':sort==='collected'?'按加入本账号的时间排序。':'按通知记录最近更新的时间排序，不等同于原文发布时间。';\n     const hasGroups=state.notices.some(n=>n.matter);\n-    if(hasGroups&&!$('[data-library-group]'))$('.library-refine').insertAdjacentHTML('beforeend','<button type=\"button\" class=\"button small\" data-library-group aria-pressed=\"true\">按事项归组</button>');\n-    const groupButton=$('[data-library-group]');if(groupButton){groupButton.hidden=!hasGroups;groupButton.setAttribute('aria-pressed',String(grouped));}\n+    // Grouping is a display preference, including while a new query has no\n+    // loaded rows. Keep its live control stable through loading and errors.\n+    if(!$('[data-library-group]'))$('.library-refine').insertAdjacentHTML('beforeend','<button type=\"button\" class=\"button small\" data-library-group aria-pressed=\"true\">按事项归组</button>');\n+    $('[data-library-group]').setAttribute('aria-pressed',String(grouped));\n \n     const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;\n     const items=value.items,units=grouped?groupNotices(items):items.map(n=>({notices:[n]}));\n",
+        "case_identities": [
+          "grouping is a selectable display preference before the first page and on an ungrouped or empty page",
+          "a debounced search keeps the same grouping control selectable while pending and preserves its chosen mode on response",
+          "a empty search result keeps grouping selectable and its choice survives retry",
+          "a error search result keeps grouping selectable and its choice survives retry",
+          "an owner change resets the grouping preference and an old pending response cannot restore another owner mode or records"
+        ],
+        "before": {
+          "recorded_at": "2026-11-14T13:34:31.200129+00:00",
+          "head": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+          "command": [
+            "node",
+            "--test",
+            "tests/library-controls.test.mjs"
+          ],
+          "exit_code": 1,
+          "source_sha256": "69399495b7fea00935da407e90618e0fc241247052f4daa835f406e59cee252d",
+          "test_sha256": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0",
+          "log_sha256": "7c22b86a607ba9ef0e30e2148a5dba1575b84dd8298c1e2d6e36d034b8486e52",
+          "scope": "Actual createLibraryUI and actual PagedList, layout-free DOM, controlled debounce and page transport; no native browser event claim.",
+          "path": "/workspace/scratch/0a6433f08acc/library-controls-evidence/before.log",
+          "raw_log": "✖ grouping is a selectable display preference before the first page and on an ungrouped or empty page (19.771107ms)\n✖ a debounced search keeps the same grouping control selectable while pending and preserves its chosen mode on response (28.920443ms)\n✖ a empty search result keeps grouping selectable and its choice survives retry (6.521654ms)\n✖ a error search result keeps grouping selectable and its choice survives retry (7.900629ms)\n✖ an owner change resets the grouping preference and an old pending response cannot restore another owner mode or records (3.618292ms)\nℹ tests 5\nℹ suites 0\nℹ pass 0\nℹ fail 5\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 252.846417\n\n✖ failing tests:\n\ntest at tests/library-controls.test.mjs:65:1\n✖ grouping is a selectable display preference before the first page and on an ungrouped or empty page (19.771107ms)\n  AssertionError [ERR_ASSERTION]: The display choice must not depend on the first response containing a group\n      at TestContext.<anonymous> (file:///workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/tests/library-controls.test.mjs:68:36)\n      at Test.runInAsyncScope (node:async_hooks:227:14)\n      at Test.run (node:internal/test_runner/test:1402:25)\n      at Test.start (node:internal/test_runner/test:1262:17)\n      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: undefined,\n    expected: true,\n    operator: '==',\n    diff: 'simple'\n  }\n\ntest at tests/library-controls.test.mjs:80:1\n✖ a debounced search keeps the same grouping control selectable while pending and preserves its chosen mode on response (28.920443ms)\n  AssertionError [ERR_ASSERTION]: Loading must not remove the live control\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/tests/library-controls.test.mjs:90:44)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n\ntest at tests/library-controls.test.mjs:100:40\n✖ a empty search result keeps grouping selectable and its choice survives retry (6.521654ms)\n  AssertionError [ERR_ASSERTION]: A settled empty/error page must retain the display choice\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/tests/library-controls.test.mjs:106:10)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n\ntest at tests/library-controls.test.mjs:100:40\n✖ a error search result keeps grouping selectable and its choice survives retry (7.900629ms)\n  AssertionError [ERR_ASSERTION]: A settled empty/error page must retain the display choice\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/tests/library-controls.test.mjs:106:10)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n    generatedMessage: false,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n\ntest at tests/library-controls.test.mjs:115:1\n✖ an owner change resets the grouping preference and an old pending response cannot restore another owner mode or records (3.618292ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n  \n  true !== false\n  \n      at TestContext.<anonymous> (file:///workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/tests/library-controls.test.mjs:121:44)\n      at async Test.run (node:internal/test_runner/test:1409:7)\n      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: true,\n    expected: false,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\n",
+          "tests": 5,
+          "passed": 0,
+          "failed": 5,
+          "failure_class": "5 actual visibility / availability AssertionError failures, not missing imports or harness errors"
+        },
+        "after": {
+          "recorded_at": "2026-11-14T13:34:48.340374+00:00",
+          "head": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+          "command": [
+            "node",
+            "--test",
+            "tests/library-controls.test.mjs"
+          ],
+          "exit_code": 0,
+          "source_sha256": "1df3ef6661d17fa915f3761c0c28e5f12de7aa6627ae440ff7600b773e1467a6",
+          "test_sha256": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0",
+          "log_sha256": "88dd835c7bced204a818b1f9ac8d547d8a4d0f411c675b1ca67ba1943ca9336e",
+          "path": "/workspace/scratch/0a6433f08acc/library-controls-evidence/after.log",
+          "raw_log": "✔ grouping is a selectable display preference before the first page and on an ungrouped or empty page (39.689954ms)\n✔ a debounced search keeps the same grouping control selectable while pending and preserves its chosen mode on response (4.965672ms)\n✔ a empty search result keeps grouping selectable and its choice survives retry (8.714979ms)\n✔ a error search result keeps grouping selectable and its choice survives retry (3.737226ms)\n✔ an owner change resets the grouping preference and an old pending response cannot restore another owner mode or records (5.653068ms)\nℹ tests 5\nℹ suites 0\nℹ pass 5\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 265.290854\n",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0
+        },
+        "same_test_bytes_before_and_after": true,
+        "original_tracked_tests_unchanged": {
+          "all_blob_hashes_match_base": true,
+          "tracked_entries_compared": 219
+        },
+        "lightweight_checks": [
+          {
+            "command": [
+              "git",
+              "diff",
+              "--check"
+            ],
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "node",
+              "--check",
+              "static/library.js"
+            ],
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+          },
+          {
+            "command": [
+              "node",
+              "--check",
+              "tests/library-controls.test.mjs"
+            ],
+            "exit_code": 0,
+            "stdout": "",
+            "stderr": ""
+          }
+        ],
+        "independent_original_product_observation": {
+          "path": "/workspace/scratch/0a6433f08acc/notice-matters-observation/observation.json",
+          "sha256": "91e326d038d3e76d79167d676ab264020bed84fd80e942be99d17807a4a97035",
+          "record": {
+            "schema_version": 1,
+            "recorded_at": "2026-11-14T13:31:11.573Z",
+            "scope": "Read-only scratch Node controlled observation; actual unmodified createLibraryUI with its real createPagedList and controlled deferred page responses. Minimal presentation DOM; no browser hit testing or physical-device claim. This is not an additional adopted test or a rerun of CI67.",
+            "source_sha256": {
+              "static/library.js": "69399495b7fea00935da407e90618e0fc241247052f4daa835f406e59cee252d",
+              "static/paged-list.js": "25af7b4f52140bfe4d6bcb0bc15a36f0c63e72b0348f87ee0ca6774cc466517c",
+              "static/list-clock.js": "8ed5532a106a1b13ef35dbb2c34179e27d2d66fa12464f43fa643b6bc1b566e5"
+            },
+            "harness_sha256": "d391b5f064d64edb66a9e53e2f9c0087ff8502187d3166dae9bc6db487ac70a6",
+            "observations": [
+              {
+                "at_ms": 0,
+                "type": "hidden_write",
+                "selector": "[data-library-group]",
+                "before": false,
+                "after": true
+              },
+              {
+                "at_ms": 0,
+                "type": "api_started",
+                "url": "/notices/page?intent=current&relevance=all&sort=priority&status=all&limit=50"
+              },
+              {
+                "at_ms": 0,
+                "type": "hidden_write",
+                "selector": "[data-library-group]",
+                "before": true,
+                "after": false
+              },
+              {
+                "at_ms": 0,
+                "type": "snapshot",
+                "label": "initial_grouped",
+                "hidden": false,
+                "pressed": "true",
+                "query": "",
+                "loaded_ids": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "loading": false,
+                "group_card": true,
+                "individual_cards": 1
+              },
+              {
+                "at_ms": 0,
+                "type": "input",
+                "target": "#library-search",
+                "hidden": false
+              },
+              {
+                "at_ms": 0,
+                "type": "snapshot",
+                "label": "query_queued_old_page_still_visible",
+                "hidden": false,
+                "pressed": "true",
+                "query": "webkit synthetic-query",
+                "loaded_ids": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "loading": false,
+                "group_card": true,
+                "individual_cards": 1
+              },
+              {
+                "at_ms": 0,
+                "type": "click",
+                "target": "[data-library-group]",
+                "hidden": false
+              },
+              {
+                "at_ms": 0,
+                "type": "snapshot",
+                "label": "first_toggle_individual",
+                "hidden": false,
+                "pressed": "false",
+                "query": "webkit synthetic-query",
+                "loaded_ids": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "loading": false,
+                "group_card": false,
+                "individual_cards": 3
+              },
+              {
+                "at_ms": 0,
+                "type": "hypothetical_native_pointerdown_boundary",
+                "target": "[data-library-group]",
+                "hidden": false,
+                "native_event_not_simulated": true
+              },
+              {
+                "at_ms": 180,
+                "type": "hidden_write",
+                "selector": "[data-library-group]",
+                "before": false,
+                "after": true
+              },
+              {
+                "at_ms": 180,
+                "type": "api_started",
+                "url": "/notices/page?intent=current&q=webkit+synthetic-query&relevance=all&sort=priority&status=all&limit=50"
+              },
+              {
+                "at_ms": 180,
+                "type": "snapshot",
+                "label": "query_started_before_any_response",
+                "hidden": true,
+                "pressed": "false",
+                "query": "webkit synthetic-query",
+                "loaded_ids": [],
+                "loading": true,
+                "group_card": false,
+                "individual_cards": 0
+              },
+              {
+                "at_ms": 180,
+                "type": "native_pointerup_not_reproduced",
+                "reason": "No browser/layout engine; whether this transition swallowed CI67 click is unknown."
+              },
+              {
+                "at_ms": 180,
+                "type": "hidden_write",
+                "selector": "[data-library-group]",
+                "before": true,
+                "after": false
+              },
+              {
+                "at_ms": 180,
+                "type": "snapshot",
+                "label": "query_response_restores_same_button",
+                "hidden": false,
+                "pressed": "false",
+                "query": "webkit synthetic-query",
+                "loaded_ids": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "loading": false,
+                "group_card": false,
+                "individual_cards": 3
+              },
+              {
+                "at_ms": 180,
+                "type": "click",
+                "target": "[data-library-group]",
+                "hidden": false
+              },
+              {
+                "at_ms": 180,
+                "type": "snapshot",
+                "label": "actual_delegated_click_when_ready",
+                "hidden": false,
+                "pressed": "true",
+                "query": "webkit synthetic-query",
+                "loaded_ids": [
+                  "a",
+                  "b",
+                  "c"
+                ],
+                "loading": false,
+                "group_card": true,
+                "individual_cards": 1
+              }
+            ],
+            "conclusion": {
+              "actual_product_observation": "Changing the search filter clears the paged collection and sets the existing grouping button hidden=true until the query response arrives, even though grouping preference and previously loaded group membership were already known.",
+              "actual_delegated_click_result": "A delivered second delegated click toggles grouping and renders the grouped card synchronously; the response itself does not reset grouped.",
+              "class_of_risk": "The live grouping control transiently disappears during a query request; pointer hit-testing may be affected if the transition falls within a press.",
+              "historical_ci67_unique_cause_proven": false,
+              "native_webkit_lost_click_reproduced": false
+            }
+          }
+        },
+        "limitations": {
+          "native_pointer_hit_test_simulated": false,
+          "historical_ci67_unique_cause_proven": false,
+          "historical_ci67_failure_retained": true,
+          "local_browser_run": false,
+          "local_full_suite_or_load_run": false,
+          "shared_ci67_linux_wait_176_871ms_failure_unchanged": true,
+          "browser_followup": "The original WebKit report contains no pointer target/aria-pressed trace. These deterministic UI/controller regressions prove the transient-control defect and its repair, but real-browser integration still requires the next CI."
+        },
+        "event_mechanism_reference": {
+          "url": "https://w3c.github.io/uievents/#events-mouseevent-event-order",
+          "scope": "Different down/up targets may dispatch click to a common ancestor. Hidden is not DOM removal. This reference supports the interaction-risk mechanism, not proof of the historical WebKit event sequence."
+        },
+        "committed": false
+      }
+    },
+    "independent_original_product_observation": {
+      "path": "/workspace/scratch/0a6433f08acc/notice-matters-observation/observation.json",
+      "bytes": 5163,
+      "sha256": "91e326d038d3e76d79167d676ab264020bed84fd80e942be99d17807a4a97035",
+      "record": {
+        "schema_version": 1,
+        "recorded_at": "2026-11-14T13:31:11.573Z",
+        "scope": "Read-only scratch Node controlled observation; actual unmodified createLibraryUI with its real createPagedList and controlled deferred page responses. Minimal presentation DOM; no browser hit testing or physical-device claim. This is not an additional adopted test or a rerun of CI67.",
+        "source_sha256": {
+          "static/library.js": "69399495b7fea00935da407e90618e0fc241247052f4daa835f406e59cee252d",
+          "static/paged-list.js": "25af7b4f52140bfe4d6bcb0bc15a36f0c63e72b0348f87ee0ca6774cc466517c",
+          "static/list-clock.js": "8ed5532a106a1b13ef35dbb2c34179e27d2d66fa12464f43fa643b6bc1b566e5"
+        },
+        "harness_sha256": "d391b5f064d64edb66a9e53e2f9c0087ff8502187d3166dae9bc6db487ac70a6",
+        "observations": [
+          {
+            "at_ms": 0,
+            "type": "hidden_write",
+            "selector": "[data-library-group]",
+            "before": false,
+            "after": true
+          },
+          {
+            "at_ms": 0,
+            "type": "api_started",
+            "url": "/notices/page?intent=current&relevance=all&sort=priority&status=all&limit=50"
+          },
+          {
+            "at_ms": 0,
+            "type": "hidden_write",
+            "selector": "[data-library-group]",
+            "before": true,
+            "after": false
+          },
+          {
+            "at_ms": 0,
+            "type": "snapshot",
+            "label": "initial_grouped",
+            "hidden": false,
+            "pressed": "true",
+            "query": "",
+            "loaded_ids": [
+              "a",
+              "b",
+              "c"
+            ],
+            "loading": false,
+            "group_card": true,
+            "individual_cards": 1
+          },
+          {
+            "at_ms": 0,
+            "type": "input",
+            "target": "#library-search",
+            "hidden": false
+          },
+          {
+            "at_ms": 0,
+            "type": "snapshot",
+            "label": "query_queued_old_page_still_visible",
+            "hidden": false,
+            "pressed": "true",
+            "query": "webkit synthetic-query",
+            "loaded_ids": [
+              "a",
+              "b",
+              "c"
+            ],
+            "loading": false,
+            "group_card": true,
+            "individual_cards": 1
+          },
+          {
+            "at_ms": 0,
+            "type": "click",
+            "target": "[data-library-group]",
+            "hidden": false
+          },
+          {
+            "at_ms": 0,
+            "type": "snapshot",
+            "label": "first_toggle_individual",
+            "hidden": false,
+            "pressed": "false",
+            "query": "webkit synthetic-query",
+            "loaded_ids": [
+              "a",
+              "b",
+              "c"
+            ],
+            "loading": false,
+            "group_card": false,
+            "individual_cards": 3
+          },
+          {
+            "at_ms": 0,
+            "type": "hypothetical_native_pointerdown_boundary",
+            "target": "[data-library-group]",
+            "hidden": false,
+            "native_event_not_simulated": true
+          },
+          {
+            "at_ms": 180,
+            "type": "hidden_write",
+            "selector": "[data-library-group]",
+            "before": false,
+            "after": true
+          },
+          {
+            "at_ms": 180,
+            "type": "api_started",
+            "url": "/notices/page?intent=current&q=webkit+synthetic-query&relevance=all&sort=priority&status=all&limit=50"
+          },
+          {
+            "at_ms": 180,
+            "type": "snapshot",
+            "label": "query_started_before_any_response",
+            "hidden": true,
+            "pressed": "false",
+            "query": "webkit synthetic-query",
+            "loaded_ids": [],
+            "loading": true,
+            "group_card": false,
+            "individual_cards": 0
+          },
+          {
+            "at_ms": 180,
+            "type": "native_pointerup_not_reproduced",
+            "reason": "No browser/layout engine; whether this transition swallowed CI67 click is unknown."
+          },
+          {
+            "at_ms": 180,
+            "type": "hidden_write",
+            "selector": "[data-library-group]",
+            "before": true,
+            "after": false
+          },
+          {
+            "at_ms": 180,
+            "type": "snapshot",
+            "label": "query_response_restores_same_button",
+            "hidden": false,
+            "pressed": "false",
+            "query": "webkit synthetic-query",
+            "loaded_ids": [
+              "a",
+              "b",
+              "c"
+            ],
+            "loading": false,
+            "group_card": false,
+            "individual_cards": 3
+          },
+          {
+            "at_ms": 180,
+            "type": "click",
+            "target": "[data-library-group]",
+            "hidden": false
+          },
+          {
+            "at_ms": 180,
+            "type": "snapshot",
+            "label": "actual_delegated_click_when_ready",
+            "hidden": false,
+            "pressed": "true",
+            "query": "webkit synthetic-query",
+            "loaded_ids": [
+              "a",
+              "b",
+              "c"
+            ],
+            "loading": false,
+            "group_card": true,
+            "individual_cards": 1
+          }
+        ],
+        "conclusion": {
+          "actual_product_observation": "Changing the search filter clears the paged collection and sets the existing grouping button hidden=true until the query response arrives, even though grouping preference and previously loaded group membership were already known.",
+          "actual_delegated_click_result": "A delivered second delegated click toggles grouping and renders the grouped card synchronously; the response itself does not reset grouped.",
+          "class_of_risk": "The live grouping control transiently disappears during a query request; pointer hit-testing may be affected if the transition falls within a press.",
+          "historical_ci67_unique_cause_proven": false,
+          "native_webkit_lost_click_reproduced": false
+        }
+      }
+    },
+    "independent_product_review": {
+      "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43598000153-library-controls-review.json",
+      "bytes": 2290,
+      "sha256": "c5728d7822c62add6d79f53943f7248fae17c8cdb665dce834337cabe21be9de",
+      "record": {
+        "schema_version": 1,
+        "reviewed_at": "2026-11-14T13:35:44.568246+00:00",
+        "scope": "Independent read-only review of the proposed product patch and existing controlled test evidence. No test/browser/load run or source edits by this reviewer.",
+        "base_main": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "files": {
+          "luojiaxinshi-library-followup/static/library.js": "1df3ef6661d17fa915f3761c0c28e5f12de7aa6627ae440ff7600b773e1467a6",
+          "luojiaxinshi-library-followup/tests/library-controls.test.mjs": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0",
+          "library-controls-evidence/before.json": "140ecfcdce72d1ee56732cc64e67cb8be48f59d1caec203d76799cfe80394ce0",
+          "library-controls-evidence/after.json": "c1fb1f51c5d59322c68c48bcc7f2d0c41f9df62a18045881e61518eb06b234a3",
+          "library-controls-evidence/before.log": "7c22b86a607ba9ef0e30e2148a5dba1575b84dd8298c1e2d6e36d034b8486e52",
+          "library-controls-evidence/after.log": "88dd835c7bced204a818b1f9ac8d547d8a4d0f411c675b1ca67ba1943ca9336e"
+        },
+        "observations": [
+          "The product patch changes only grouping control creation/visibility, keeping a display preference in the original collapsed filter panel. It does not alter API parameters, data filtering, cursor binding or page ownership.",
+          "The existing owner-change initialization still resets grouped=true; the same grouping preference controls the original groupNotices rendering.",
+          "The five tests call the actual ESM createLibraryUI and internal PagedList. Their DOM does not precreate the grouping button: actual insertAdjacentHTML creates it and rejects duplicate insertion.",
+          "The controlled 179+1ms boundary uses the original debounce; pending/empty/error/retry and owner/late-response behavior are explicitly asserted.",
+          "Original source produced five concrete visibility AssertionErrors; the exact same test bytes produced five passes with the new source. This is distinct from proving the native historical WebKit click trajectory."
+        ],
+        "concrete_blockers": [],
+        "limits": [
+          "No local browser execution or new CI green claimed.",
+          "The main67 original timeout remains historical evidence; the controlled visibility bug is proved separately, and native lost-click causation is not uniquely established."
+        ]
+      }
+    },
+    "browser_fixture_contract": {
+      "path": "/workspace/scratch/0a6433f08acc/library-controls-evidence/browser-fixture-contract.json",
+      "bytes": 5794,
+      "sha256": "fcf7fda896508c4e96d2206f6cce4c814e1c5d0986d9a35928084d19801e8736",
+      "record": {
+        "verified_at": "2026-11-14T13:46:42.597719+00:00",
+        "baseline_commit": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "script": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup/scripts/verify_notice_matters.mjs",
+          "sha256": "69244a26a3ec3e9a5deb11f9dcd3de984c23dcf7569a10d499bba300badbf03a",
+          "bytes": 28153,
+          "baseline_sha256": "943d604f70b89d1cba2bc7ccbede348bf5364f58ce676089d1720172b910f76e"
+        },
+        "patch": {
+          "path": "/workspace/scratch/0a6433f08acc/library-controls-evidence/browser-script.patch",
+          "sha256": "c822423d116af997137667c2c8601cfac689ad78651652f1231defdba7f1382c"
+        },
+        "actual_commands": [
+          {
+            "command": [
+              "node",
+              "--check",
+              "scripts/verify_notice_matters.mjs"
+            ],
+            "cwd": "/workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup",
+            "returncode": 0,
+            "log": "/workspace/scratch/0a6433f08acc/library-controls-evidence/browser-script-syntax.log",
+            "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "command": [
+              "git",
+              "diff",
+              "--check",
+              "--",
+              "scripts/verify_notice_matters.mjs"
+            ],
+            "cwd": "/workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup",
+            "returncode": 0,
+            "log": "/workspace/scratch/0a6433f08acc/library-controls-evidence/browser-script-diff.log",
+            "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "original_case_contract": {
+          "ordered_names": [
+            "capacity screen reports effective campus limits and current usage",
+            "related notices are review candidates; a different year is excluded",
+            "preview shows both originals and confirms grouping through the form",
+            "library groups related notices and can switch back to individual records",
+            "an intervening task edit rejects the stale preview and offers a fresh review",
+            "detail and confirmation remain usable on mobile and with keyboard-height viewport",
+            "moving one notice out dissolves a two-member group and preserves both notices"
+          ],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "formal_checks_per_engine": 7,
+          "formal_checks_total": 21,
+          "names_and_order_unchanged": true,
+          "unchanged_non_group_check_indices_zero_based": [
+            0,
+            1,
+            2,
+            4,
+            5,
+            6
+          ],
+          "group_original_actions_in_order": [
+            "await go('notices')",
+            "await page.locator('#library-search').fill(tag)",
+            "await page.locator('.matter-library-card').filter({hasText:'奖学金申请与补充 '+tag}).waitFor()",
+            "await (await reveal('[data-library-group]')).click()",
+            "await page.locator(`a.notice-card[href=\"#notice/${a.id}\"]`).waitFor()",
+            "await page.locator(`a.notice-card[href=\"#notice/${b.id}\"]`).waitFor()",
+            "await (await reveal('[data-library-group]')).click()",
+            "await page.locator('.matter-library-card').filter({hasText:tag}).waitFor()"
+          ],
+          "normal_context_service_worker_policy_unchanged": true,
+          "normal_query_completion_not_awaited_before_original_toggles": true,
+          "default_timeout_ms": 12000,
+          "runner_timeout_seconds": 360,
+          "runner_bytes_unchanged": true,
+          "sleep_calls_added": 0,
+          "retry_clicks_added": 0
+        },
+        "new_observation_scope": {
+          "normal": "Original default-SW page and original action order; read-only pointer/click/pressed/DOM and all real query receipts, completion checks after the original sequence.",
+          "controlled": "Separate context explicitly blocks SW, logs in through the real form as the same actual owner, and holds all exact new q GET/no-cursor original server responses during one controlled stage. No response status/body is replaced.",
+          "controlled_per_engine": 1,
+          "controlled_formal_check_ids_added": 0,
+          "guarantees": [
+            "Actual handler entry and upstream response are observed before the pending-state click.",
+            "The same connected, visible, enabled button remains in the empty loading result state; one real click changes aria-pressed from true to false before release.",
+            "Actual completed responses are all checked; cancelled predecessors retain their Request identities and real abort receipts.",
+            "Release restores the original individual a/b cards; a second single real click restores the group.",
+            "Body SHA equality is checked for each actually delivered held response.",
+            "Same-owner identity comes from actual session responses in both contexts.",
+            "Captured DOM and network time domains are explicitly separate.",
+            "All held waits use 12000ms bounds, finally releases/removes routes/closes context, primary errors survive cleanup.",
+            "Response-body observations settle before report write; failures remain in report and no missing check is fabricated.",
+            "Controlled page errors fail the script and are recorded."
+          ]
+        },
+        "executed_browser_validation": false,
+        "browser_status": "Pending a new real CI run; no local browser was launched.",
+        "ci67_original_failure": {
+          "run_id": 43598000153,
+          "failure_evidence_path": "ci-evidence/43598000153/notice-matters-failure-evidence.json",
+          "failure_evidence_sha256": "c380711636010d4d6bcb46ad458ffa61d859f346d5956b773d7aee3f07ba1131",
+          "causal_limit": "The independent real-UI control disappearance is reproducible, but original CI67 did not record pointer delivery or pressed state. This repair does not retroactively establish its unique failure timing."
+        },
+        "source_scope": "Only scripts/verify_notice_matters.mjs was edited by requirements_audit; library.js and Node regression are independently owned by campus_workflows. No commit, push, build or browser run was performed here."
+      }
+    },
+    "independent_fixture_review": {
+      "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/run-43598000153-library-fixture-review.json",
+      "bytes": 2754,
+      "sha256": "a790e0493fb0f06316ba73fc138c17eebf9147e535615c786ebdb2a6bad401f4",
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T13:47:57.654326+00:00",
+        "scope": "Independent read-only source and fixture review; no browser or test execution",
+        "historical_run": 43598000153,
+        "historical_main": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "reviewed_file": "scripts/verify_notice_matters.mjs",
+        "reviewed_sha256": "69244a26a3ec3e9a5deb11f9dcd3de984c23dcf7569a10d499bba300badbf03a",
+        "formal_check_names_unchanged": true,
+        "formal_check_names": [
+          "capacity screen reports effective campus limits and current usage",
+          "related notices are review candidates; a different year is excluded",
+          "preview shows both originals and confirms grouping through the form",
+          "library groups related notices and can switch back to individual records",
+          "an intervening task edit rejects the stale preview and offers a fresh review",
+          "detail and confirmation remain usable on mobile and with keyboard-height viewport",
+          "moving one notice out dissolves a two-member group and preserves both notices"
+        ],
+        "engines": 3,
+        "expected_formal_checks": 21,
+        "default_timeout_ms": 12000,
+        "normal_default_service_worker_context_preserved": true,
+        "normal_original_toggle_order_preserved_without_waiting_for_query_response_first": true,
+        "controlled_scope": {
+          "independent_context_service_workers": "block",
+          "actual_ui_login_and_session_owner_equality": true,
+          "request_match": "GET, exact origin /api/notices/page, exact q, no cursor",
+          "holds_all_matching_requests_entering_before_release": true,
+          "uses_original_route_fetch_response_and_validates_delivered_body_sha256": true,
+          "complete_responses_all_validated_no_passing_response_selection": true,
+          "incomplete_requests_require_actual_abort_or_cancellation_receipt": true,
+          "same_live_visible_enabled_control_clicked_once_during_loading": true,
+          "no_new_notice_or_group_writes": true,
+          "page_errors_recorded_before_navigation_and_fail_process": true
+        },
+        "cleanup": {
+          "release_before_wait": true,
+          "bounded_wait_ms": 12000,
+          "primary_error_preserved": true,
+          "tracked_request_completion_and_body_jobs_settled": true,
+          "listeners_routes_context_cleaned": true
+        },
+        "conclusion": "No concrete blocking control-flow defect found in reviewed version; approved for integration, actual browser verification pending.",
+        "historical_causality_limit": "CI67 records a WebKit second-toggle group-card timeout, but no original pointer/pressed/query-response timing. The separate actual-library controlled observation proves transient hidden control during query loading, not native WebKit hit loss or the unique cause of CI67.",
+        "product_review": "artifacts/ci-readonly/run-43598000153-library-controls-review.json"
+      }
+    },
+    "integrated_local_node_and_build": {
+      "path": "/workspace/scratch/0a6433f08acc/library-controls-integrated/verification.json",
+      "bytes": 13484,
+      "sha256": "27dd8179bdf23e3cf4d2ed0351fea37e8ed41f1d648ddc6b569d6586e4f42ff9",
+      "record": {
+        "started_at": "2026-11-14T13:47:53.030661+00:00",
+        "base_commit": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "scope": "Actual local working-tree Node and reproducible frontend build verification, not remote CI or a browser/real-provider/load execution.",
+        "source_files": {
+          "static/library.js": "1df3ef6661d17fa915f3761c0c28e5f12de7aa6627ae440ff7600b773e1467a6",
+          "tests/library-controls.test.mjs": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0",
+          "scripts/verify_notice_matters.mjs": "69244a26a3ec3e9a5deb11f9dcd3de984c23dcf7569a10d499bba300badbf03a"
+        },
+        "steps": [
+          {
+            "name": "frontend-build",
+            "command": [
+              "node",
+              "scripts/build_frontend.mjs"
+            ],
+            "started_at": "2026-11-14T13:47:53.030680+00:00",
+            "finished_at": "2026-11-14T13:47:57.043211+00:00",
+            "seconds": 4.012646,
+            "exit_code": 0,
+            "log": "/workspace/scratch/0a6433f08acc/library-controls-integrated/frontend-build.log",
+            "log_sha256": "32ebd0687733b2fcca35dc2f859efad1e615dfcba906d7eeaf8388fa852b2cb4"
+          },
+          {
+            "name": "node-invocation",
+            "command": [
+              "node",
+              "--test",
+              "--test-reporter=spec",
+              "--test-reporter-destination=/workspace/scratch/0a6433f08acc/library-controls-integrated/node-spec.log",
+              "--test-reporter=junit",
+              "--test-reporter-destination=/workspace/scratch/0a6433f08acc/library-controls-integrated/node.xml",
+              "tests/action-plans.test.mjs",
+              "tests/agent-work.test.mjs",
+              "tests/audio-wav.test.mjs",
+              "tests/auth-feedback.test.mjs",
+              "tests/auth-toast-lifecycle.test.mjs",
+              "tests/branch-preview.test.mjs",
+              "tests/calendar.test.mjs",
+              "tests/campus-imports.test.mjs",
+              "tests/campus-publication-retry.test.mjs",
+              "tests/campus-publication-submission.test.mjs",
+              "tests/campus-roster.test.mjs",
+              "tests/chat-feedback.test.mjs",
+              "tests/chat-outbox.test.mjs",
+              "tests/chat-policy.test.mjs",
+              "tests/chat-wait.test.mjs",
+              "tests/citations.test.mjs",
+              "tests/collaboration-followup.test.mjs",
+              "tests/command-search.test.mjs",
+              "tests/compliance-ui.test.mjs",
+              "tests/continuity.test.mjs",
+              "tests/data-sync.test.mjs",
+              "tests/dictation-segments.test.mjs",
+              "tests/execution-trace.test.mjs",
+              "tests/feedback.test.mjs",
+              "tests/genui-charts.test.mjs",
+              "tests/genui-composition.test.mjs",
+              "tests/genui-core.test.mjs",
+              "tests/genui-editorial.test.mjs",
+              "tests/genui-form-reliability.test.mjs",
+              "tests/genui-interaction.test.mjs",
+              "tests/genui-math.test.mjs",
+              "tests/genui-openui.test.mjs",
+              "tests/genui-plot.test.mjs",
+              "tests/genui-transport.test.mjs",
+              "tests/getting-started.test.mjs",
+              "tests/handling-route.test.mjs",
+              "tests/library-controls.test.mjs",
+              "tests/list-cache-revision.test.mjs",
+              "tests/list-clock.test.mjs",
+              "tests/memory-assist.test.mjs",
+              "tests/memory-drafts.test.mjs",
+              "tests/memory-intents.test.mjs",
+              "tests/memory-list-text.test.mjs",
+              "tests/memory-notice.test.mjs",
+              "tests/motion.test.mjs",
+              "tests/natural-intake.test.mjs",
+              "tests/notice-files.test.mjs",
+              "tests/notice-focus.test.mjs",
+              "tests/notice-intake.test.mjs",
+              "tests/notice-matters.test.mjs",
+              "tests/notice-modes.test.mjs",
+              "tests/notice-preparation.test.mjs",
+              "tests/notice-progress.test.mjs",
+              "tests/notice-quality.test.mjs",
+              "tests/notice-resolution.test.mjs",
+              "tests/notice-timing.test.mjs",
+              "tests/overview.test.mjs",
+              "tests/paged-list-mutation.test.mjs",
+              "tests/paged-list.test.mjs",
+              "tests/presentation.test.mjs",
+              "tests/proactive-notifications.test.mjs",
+              "tests/push-notifications.test.mjs",
+              "tests/record-preview.test.mjs",
+              "tests/reference-interactions.test.mjs",
+              "tests/reminders.test.mjs",
+              "tests/review-observation.test.mjs",
+              "tests/speech-text.test.mjs",
+              "tests/student-inbox.test.mjs",
+              "tests/task-summary.test.mjs",
+              "tests/task-views.test.mjs",
+              "tests/verification.test.mjs",
+              "tests/work-context.test.mjs",
+              "tests/workspace-projection.test.mjs"
+            ],
+            "started_at": "2026-11-14T13:47:57.122121+00:00",
+            "finished_at": "2026-11-14T13:48:00.669849+00:00",
+            "seconds": 3.547757,
+            "exit_code": 0,
+            "log": "/workspace/scratch/0a6433f08acc/library-controls-integrated/node-invocation.log",
+            "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "name": "frontend-build-check",
+            "command": [
+              "node",
+              "scripts/build_frontend.mjs",
+              "--check"
+            ],
+            "started_at": "2026-11-14T13:48:00.676262+00:00",
+            "finished_at": "2026-11-14T13:48:05.218082+00:00",
+            "seconds": 4.541853,
+            "exit_code": 0,
+            "log": "/workspace/scratch/0a6433f08acc/library-controls-integrated/frontend-build-check.log",
+            "log_sha256": "94288eaef6c3995800c0b694686fe5bca0e58f1de34389566260720c0dd53573"
+          }
+        ],
+        "implementation_sha256": "7c376dd117aab5625215574af188a89af798ffae43a571af88d20de1ec8c70cf",
+        "finished_at": "2026-11-14T13:48:05.279214+00:00",
+        "node": {
+          "tests": 363,
+          "unique": 363,
+          "passed": 363,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "junit": "/workspace/scratch/0a6433f08acc/library-controls-integrated/node.xml",
+          "junit_sha256": "bff61687363c233850ff16432caa3f5ea82570a46e2a56b04f108b2b6365ba5f",
+          "spec_log": "/workspace/scratch/0a6433f08acc/library-controls-integrated/node-spec.log",
+          "spec_log_sha256": "c2301fe1bde4136161167626639c6c12b1584b2a24e9de13e3feaf5d02f8177f",
+          "previous_case_count": 358,
+          "previous_cases_all_retained": true,
+          "added_case_ids": [
+            [
+              "test",
+              "a debounced search keeps the same grouping control selectable while pending and preserves its chosen mode on response"
+            ],
+            [
+              "test",
+              "a empty search result keeps grouping selectable and its choice survives retry"
+            ],
+            [
+              "test",
+              "a error search result keeps grouping selectable and its choice survives retry"
+            ],
+            [
+              "test",
+              "an owner change resets the grouping preference and an old pending response cannot restore another owner mode or records"
+            ],
+            [
+              "test",
+              "grouping is a selectable display preference before the first page and on an ungrouped or empty page"
+            ]
+          ]
+        },
+        "frontend_build": {
+          "checked": false,
+          "entries": {
+            "js": "/static/dist/app-REBIDUH7.js",
+            "css": "/static/dist/styles-BHHEBXRE.css"
+          },
+          "files": 25,
+          "source_files": 194,
+          "metrics": {
+            "static/dist/chunks/operations-CWOQ6DW4.js": {
+              "bytes": 11088,
+              "gzip": 4540,
+              "brotli": 3591
+            },
+            "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": {
+              "bytes": 13129,
+              "gzip": 5349,
+              "brotli": 4318
+            },
+            "static/dist/chunks/insights-J6NHPJTV.js": {
+              "bytes": 8924,
+              "gzip": 3469,
+              "brotli": 2918
+            },
+            "static/dist/chunks/calendar-45THDV6Z.js": {
+              "bytes": 43913,
+              "gzip": 15664,
+              "brotli": 13372
+            },
+            "static/dist/app-REBIDUH7.js": {
+              "bytes": 435608,
+              "gzip": 148976,
+              "brotli": 116687
+            },
+            "static/dist/chunks/chunk-VHWCVQYR.js": {
+              "bytes": 15828,
+              "gzip": 5811,
+              "brotli": 4735
+            },
+            "static/dist/chunks/memory-CMBMXAQ5.js": {
+              "bytes": 89005,
+              "gzip": 30170,
+              "brotli": 24955
+            },
+            "static/dist/chunks/collaboration-CMBOZBVL.js": {
+              "bytes": 16484,
+              "gzip": 6400,
+              "brotli": 5307
+            },
+            "static/dist/chunks/charts-UCDSXHVD.js": {
+              "bytes": 6016,
+              "gzip": 2968,
+              "brotli": 2630
+            },
+            "static/dist/chunks/chat-3FTYZ52U.js": {
+              "bytes": 188379,
+              "gzip": 64664,
+              "brotli": 54324
+            },
+            "static/dist/chunks/chunk-ZE6GBC5S.js": {
+              "bytes": 31845,
+              "gzip": 13470,
+              "brotli": 11528
+            },
+            "static/dist/chunks/chunk-HHFMEND4.js": {
+              "bytes": 3677,
+              "gzip": 1609,
+              "brotli": 1483
+            },
+            "static/dist/chunks/chunk-URIZXBGG.js": {
+              "bytes": 6306,
+              "gzip": 2501,
+              "brotli": 2288
+            },
+            "static/dist/chunks/chunk-52VEMMR4.js": {
+              "bytes": 38252,
+              "gzip": 7656,
+              "brotli": 6518
+            },
+            "static/dist/chunks/sources-AO7MVCU5.js": {
+              "bytes": 43018,
+              "gzip": 14947,
+              "brotli": 12606
+            },
+            "static/dist/chunks/chunk-KRBNAJD2.js": {
+              "bytes": 10968,
+              "gzip": 4029,
+              "brotli": 3386
+            },
+            "static/dist/chunks/chunk-43FC37BF.js": {
+              "bytes": 129909,
+              "gzip": 37373,
+              "brotli": 26365
+            },
+            "static/dist/chunks/chunk-OFOGQT63.js": {
+              "bytes": 7269,
+              "gzip": 2809,
+              "brotli": 2408
+            },
+            "static/dist/chunks/chunk-5XLQ4GUR.js": {
+              "bytes": 9941,
+              "gzip": 3899,
+              "brotli": 3377
+            },
+            "static/dist/chunks/campus-I3DPT7PW.js": {
+              "bytes": 59855,
+              "gzip": 19239,
+              "brotli": 16460
+            },
+            "static/dist/chunks/chunk-O5S2CXFI.js": {
+              "bytes": 3727,
+              "gzip": 1639,
+              "brotli": 1376
+            },
+            "static/dist/chunks/chunk-HWBRJJQM.js": {
+              "bytes": 1319,
+              "gzip": 715,
+              "brotli": 583
+            },
+            "static/dist/styles-BHHEBXRE.css": {
+              "bytes": 600224,
+              "gzip": 114998,
+              "brotli": 89590
+            },
+            "static/dist/index.html": {
+              "bytes": 1525,
+              "gzip": 775,
+              "brotli": 514
+            }
+          }
+        },
+        "frontend_build_check": {
+          "checked": true,
+          "entries": {
+            "js": "/static/dist/app-REBIDUH7.js",
+            "css": "/static/dist/styles-BHHEBXRE.css"
+          },
+          "files": 25,
+          "source_files": 194,
+          "metrics": {
+            "static/dist/chunks/operations-CWOQ6DW4.js": {
+              "bytes": 11088,
+              "gzip": 4540,
+              "brotli": 3591
+            },
+            "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": {
+              "bytes": 13129,
+              "gzip": 5349,
+              "brotli": 4318
+            },
+            "static/dist/chunks/insights-J6NHPJTV.js": {
+              "bytes": 8924,
+              "gzip": 3469,
+              "brotli": 2918
+            },
+            "static/dist/chunks/calendar-45THDV6Z.js": {
+              "bytes": 43913,
+              "gzip": 15664,
+              "brotli": 13372
+            },
+            "static/dist/app-REBIDUH7.js": {
+              "bytes": 435608,
+              "gzip": 148976,
+              "brotli": 116687
+            },
+            "static/dist/chunks/chunk-VHWCVQYR.js": {
+              "bytes": 15828,
+              "gzip": 5811,
+              "brotli": 4735
+            },
+            "static/dist/chunks/memory-CMBMXAQ5.js": {
+              "bytes": 89005,
+              "gzip": 30170,
+              "brotli": 24955
+            },
+            "static/dist/chunks/collaboration-CMBOZBVL.js": {
+              "bytes": 16484,
+              "gzip": 6400,
+              "brotli": 5307
+            },
+            "static/dist/chunks/charts-UCDSXHVD.js": {
+              "bytes": 6016,
+              "gzip": 2968,
+              "brotli": 2630
+            },
+            "static/dist/chunks/chat-3FTYZ52U.js": {
+              "bytes": 188379,
+              "gzip": 64664,
+              "brotli": 54324
+            },
+            "static/dist/chunks/chunk-ZE6GBC5S.js": {
+              "bytes": 31845,
+              "gzip": 13470,
+              "brotli": 11528
+            },
+            "static/dist/chunks/chunk-HHFMEND4.js": {
+              "bytes": 3677,
+              "gzip": 1609,
+              "brotli": 1483
+            },
+            "static/dist/chunks/chunk-URIZXBGG.js": {
+              "bytes": 6306,
+              "gzip": 2501,
+              "brotli": 2288
+            },
+            "static/dist/chunks/chunk-52VEMMR4.js": {
+              "bytes": 38252,
+              "gzip": 7656,
+              "brotli": 6518
+            },
+            "static/dist/chunks/sources-AO7MVCU5.js": {
+              "bytes": 43018,
+              "gzip": 14947,
+              "brotli": 12606
+            },
+            "static/dist/chunks/chunk-KRBNAJD2.js": {
+              "bytes": 10968,
+              "gzip": 4029,
+              "brotli": 3386
+            },
+            "static/dist/chunks/chunk-43FC37BF.js": {
+              "bytes": 129909,
+              "gzip": 37373,
+              "brotli": 26365
+            },
+            "static/dist/chunks/chunk-OFOGQT63.js": {
+              "bytes": 7269,
+              "gzip": 2809,
+              "brotli": 2408
+            },
+            "static/dist/chunks/chunk-5XLQ4GUR.js": {
+              "bytes": 9941,
+              "gzip": 3899,
+              "brotli": 3377
+            },
+            "static/dist/chunks/campus-I3DPT7PW.js": {
+              "bytes": 59855,
+              "gzip": 19239,
+              "brotli": 16460
+            },
+            "static/dist/chunks/chunk-O5S2CXFI.js": {
+              "bytes": 3727,
+              "gzip": 1639,
+              "brotli": 1376
+            },
+            "static/dist/chunks/chunk-HWBRJJQM.js": {
+              "bytes": 1319,
+              "gzip": 715,
+              "brotli": 583
+            },
+            "static/dist/styles-BHHEBXRE.css": {
+              "bytes": 600224,
+              "gzip": 114998,
+              "brotli": 89590
+            },
+            "static/dist/index.html": {
+              "bytes": 1525,
+              "gzip": 775,
+              "brotli": 514
+            }
+          }
+        },
+        "implementation_unchanged_during_node_and_check": true,
+        "backend_suite_executed": false,
+        "local_browser_executed": false,
+        "load_executed": false,
+        "remote_ci_validated": false
+      }
+    },
+    "windows_fingerprint_prediction": {
+      "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/sprint-final/library-controls-windows-fingerprint-calibration.json",
+      "bytes": 3807,
+      "sha256": "4e3fe495443e34ca6fca0231edad08e859465da46e948052a7c8f743cda95137",
+      "record": {
+        "record_type": "read_only_calibrated_prediction_not_new_CI_observation",
+        "verified_at": "2026-11-14T13:49:49.534763+00:00",
+        "baseline_commit": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+        "candidate_scope": "Integrated working tree /workspace/scratch/0a6433f08acc/luojiaxinshi-library-followup before remote candidate identity is assigned",
+        "baseline_selected_input_count": 722,
+        "candidate_selected_input_count": 723,
+        "baseline_linux_reconstructed_equals_observed": "5f06785eb58102f9d5528d310a843e4dc5a1b376ee60b4c282df81a5d457117d",
+        "baseline_windows_reconstructed_equals_actual_CI66_and_CI67": "6d51f258574415f2553d4437aeb510d65e1eaac1f163d5767a06879e926f322b",
+        "candidate_linux_reconstructed_equals_integration_record": "7c376dd117aab5625215574af188a89af798ffae43a571af88d20de1ec8c70cf",
+        "candidate_windows_calibrated_prediction": "6959c70bb8f7524048b74d3abaeee1357cf2a9b9b457b948835b180618619875",
+        "current_selected_inputs_unchanged_during_read": true,
+        "fingerprint_function_unchanged_sha256": "98e2760a9217197aeaab1732d75e03a6b3ddd01722747b9061df05359bad8e73",
+        "gitattributes_unchanged_sha256": "0197041589fd8dae7dbc59cec4492851147893716894d478e1199210d5b775bf",
+        "method": {
+          "input_order": "Actual audit_full_suite.py folders then exact root file list; path UTF-8 followed by bytes",
+          "baseline_source": "git ls-tree and git cat-file --batch of actual cb75 commit",
+          "candidate_source": "Actual current selected working-tree file bytes, including new test and rebuilt artifacts",
+          "windows_order": "PureWindowsPath sort; PurePosixPath gives identical candidate digest",
+          "byte_rule": "Preserve raw bytes for actual eol=lf suffixes; other selected text inputs normalize LF/CRLF to CRLF. Prior pinned CRLF bytes in explicit LF suffix files remain raw, as calibrated from actual Windows fingerprint."
+        },
+        "changed_selected_inputs": [
+          {
+            "path": "scripts/verify_notice_matters.mjs",
+            "before_sha256": "943d604f70b89d1cba2bc7ccbede348bf5364f58ce676089d1720172b910f76e",
+            "after_sha256": "69244a26a3ec3e9a5deb11f9dcd3de984c23dcf7569a10d499bba300badbf03a"
+          },
+          {
+            "path": "static/dist/app-EXBTH7EL.js",
+            "before_sha256": "7578ff92c5134791830d7a601f2dfcb1cf8e6e517ad4e977fe3c62a668087188",
+            "after_sha256": null
+          },
+          {
+            "path": "static/dist/app-REBIDUH7.js",
+            "before_sha256": null,
+            "after_sha256": "7d9ea21df8da4f6fae212107d59437f7592bc5dd96e759bb596645748640d387"
+          },
+          {
+            "path": "static/dist/index.html",
+            "before_sha256": "6b1004288a9ed1acc7f510bd82985e16e8d019e9e2b80e4cf4c5d1a6494d1b0e",
+            "after_sha256": "b559af428e4d0d0e53fc6254117438d3d80a3773f3494f942afddb0abb103278"
+          },
+          {
+            "path": "static/dist/manifest.json",
+            "before_sha256": "671eeaaf44f9c85a18464ee90c32364306daceda0f3ab342b82dc85dc2efd21c",
+            "after_sha256": "2ef6caebb569e9c83525ca9976803fb0f41c2b74616011bca96d7169ede6e336"
+          },
+          {
+            "path": "static/library.js",
+            "before_sha256": "69399495b7fea00935da407e90618e0fc241247052f4daa835f406e59cee252d",
+            "after_sha256": "1df3ef6661d17fa915f3761c0c28e5f12de7aa6627ae440ff7600b773e1467a6"
+          },
+          {
+            "path": "tests/library-controls.test.mjs",
+            "before_sha256": null,
+            "after_sha256": "bf3603e07813aea7fe9cf47a03b5ecac43733f48cedc7f587f1c8f1f2b23b3a0"
+          }
+        ],
+        "not_executed": [
+          "tests",
+          "browsers",
+          "load",
+          "Windows runtime"
+        ],
+        "limits": [
+          "This value is a calibrated prediction, not an actual Windows CI observation.",
+          "Future original logs, checkout, per-shard fingerprints and within-run unchanged flags remain authoritative.",
+          "No claim that CI67 browser or Linux wait target passed; this read-only identity calculation does not alter that historical evidence."
+        ]
+      }
+    }
+  },
+  "known_failed_main_run": {
+    "id": 43598000153,
+    "head": "cb75e0fcf9284903f5047ec1f7840d045ce24c87",
+    "conclusion": "failure",
+    "archive": "sprint-review-ci-67-main-failure.json",
+    "archive_sha256": "f02418965ccd8916b3811f89c3b9fc282349697305d37daeb1e7abde5c212b67"
+  },
+  "previous_candidate_success": {
+    "id": 43597522932,
+    "archive": "sprint-review-ci-66-candidate-success.json",
+    "archive_sha256": "03b2b27bc8351ad01763a52fbdaccdd283e25da8ec1ecb525fd26ee7bf6f9adc"
+  },
+  "current_execution_identity": {
+    "linux_working_tree_fingerprint": "7c376dd117aab5625215574af188a89af798ffae43a571af88d20de1ec8c70cf",
+    "frontend_js": "/static/dist/app-REBIDUH7.js",
+    "frontend_css": "/static/dist/styles-BHHEBXRE.css",
+    "frontend_outputs": 25,
+    "frontend_source_files": 194,
+    "node_cases": 363,
+    "old_node_cases_retained": 358,
+    "added_node_cases": 5,
+    "windows_predicted_not_yet_observed_fingerprint": "6959c70bb8f7524048b74d3abaeee1357cf2a9b9b457b948835b180618619875"
+  },
+  "event_mechanism_reference": {
+    "url": "https://www.w3.org/TR/2026/WD-pointerevents4-20261008/",
+    "status": "W3C Working Draft, 8 October 2026",
+    "sections": [
+      "3.3.12.3 Event dispatch",
+      "11.3 Mouse Event Order"
+    ],
+    "role": "Mechanism reference only; not runtime evidence establishing the unique historical CI67 click target."
+  },
+  "observation_clock_and_event_limits": {
+    "network_clock": "Node Date.now",
+    "dom_clock": "document performance.now",
+    "cross_clock_comparison_allowed": false,
+    "capture_microtask_field": "pressed_after_dispatch is only the observation read from a microtask queued in a capturing listener; it is not treated as proof that the complete click dispatch has finished. The awaited-click snapshots establish the final pressed state."
+  },
+  "remaining_gates": {
+    "candidate_full_ci_verified": false,
+    "merged_main_full_ci_verified": false,
+    "local_browser_run": false,
+    "new_independent_load_run": false,
+    "historical_ci67_unique_native_event_cause_proven": false,
+    "historical_ci67_shared_linux_wait_target_passed": false,
+    "external_acceptance_conditions_unchanged": true,
+    "conditional_extensions_unchanged": true
+  }
+}
