@@ -193,7 +193,10 @@ for(const [engineIndex,engine] of engines.entries()){
     });
     await check(2,async()=>{
       let n=await api(student,'/notices/'+nid);
-      if(!n.materials_complete){await action(student,'/notices/'+nid+'/materials','POST',async()=>{await(await reveal(student,'[data-action=materials]')).click();await student.page.locator('#dialog [data-action=accept-dialog]').click();});await student.page.waitForFunction(()=>document.querySelector('[data-action=materials]')?.textContent.includes('改为材料未齐'));assert.equal((await api(student,'/notices/'+nid)).materials_complete,true);}
+      // Notice responses expose an integer flag; the materials request uses a boolean.
+      assert.ok(n.materials_complete===0||n.materials_complete===1,'materials_complete must be the integer flag 0 or 1');
+      if(n.materials_complete===0){await action(student,'/notices/'+nid+'/materials','POST',async()=>{await(await reveal(student,'[data-action=materials]')).click();await student.page.locator('#dialog [data-action=accept-dialog]').click();});await student.page.waitForFunction(()=>document.querySelector('[data-action=materials]')?.textContent.includes('改为材料未齐'));}
+      assert.equal((await api(student,'/notices/'+nid)).materials_complete,1);
       await action(student,'/notices/'+nid+'/manual','POST',()=>student.page.locator('[data-action=manual]').click());await student.page.locator('[data-action=add-task]').click();
       const editor=student.page.locator('[data-editor]').first();await(await reveal(student,'[data-editor] [name=title]')).fill('本人核对与领取 '+tag);
       await(await reveal(student,'[data-editor] [name=notes]')).fill('本人私有办理备注 '+student.username);await(await reveal(student,'#draft-form [name=reviewed]')).check();

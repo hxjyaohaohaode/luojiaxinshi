@@ -168,9 +168,10 @@ PROXY_REQUIRED = REQUIRED - {'CAMPUS_LOOPBACK_PORT'} | {'CAMPUS_PROXY_NETWORK'}
 class ProxyComposeCLI(ComposeCLI):
     """Controlled JSON rendering; real network existence is deliberately untested."""
 
-    def __init__(self, violation=None, accept_missing=None):
+    def __init__(self, violation=None, accept_missing=None, network_fields=None):
         super().__init__(accept_missing=accept_missing)
         self.violation, self.inputs = violation, []
+        self.network_fields = network_fields or {}
 
     def __call__(self, command, **options):
         if command == ['docker', 'compose', 'version', '--short']:
@@ -196,6 +197,7 @@ class ProxyComposeCLI(ComposeCLI):
                   'volumes': {'campus-data': {'name': project + '_campus-data'}},
                   'networks': {'campus-proxy': {'external': True,
                                'name': values.get('CAMPUS_PROXY_NETWORK', 'campus-config-proxy')}}}
+        result['networks']['campus-proxy'].update(copy.deepcopy(self.network_fields))
         if self.violation == 'published-port':
             app['ports'] = [{'host_ip': '0.0.0.0', 'published': '8765', 'target': 8765, 'protocol': 'tcp'}]
         elif self.violation == 'host-network':
@@ -262,3 +264,43 @@ def test_proxy_network_mode_rejects_a_silently_defaulted_external_network(verifi
     assert result['checks'][-1]['exit_code'] == 0 and result['checks'][-1]['expected_success'] is False
     assert result['checks'][-1]['stdout'] == cli.outputs['missing-CAMPUS_PROXY_NETWORK']
     assert result['services_started'] is False
+
+
+def test_proxy_network_mode_accepts_the_empty_ipam_normalization(verifier, monkeypatch, tmp_path):
+    # Compose 5.1.3 emits this empty object for an external network; it does not
+    # grant this project ownership of any IPAM settings or network lifecycle.
+    cli = ProxyComposeCLI(network_fields={'ipam': {}})
+    code, result = invoke_proxy(verifier, cli, monkeypatch, tmp_path)
+    assert code == 0 and result['result'] == 'passed'
+    assert result['configured_projects'] == 2 and result['missing_required_variables_rejected'] == 12
+    assert len(result['checks']) == 14 and len(cli.calls) == 15 and result['services_started'] is False
+    for row in result['checks'][:2]:
+        assert row['configuration']['networks']['campus-proxy'] == {
+            'name': 'campus-config-proxy', 'external': True, 'ipam': {}}
+        assert row['stdout'] == cli.outputs[row['case']]
+    assert all(row['exit_code'] != 0 for row in result['checks'][2:])
+
+
+@pytest.mark.parametrize('network_fields', [
+    {'ipam': {'driver': 'default'}},
+    {'ipam': {'config': []}},
+    {'ipam': {'config': [{'subnet': '192.0.2.0/24'}]}},
+    {'ipam': None},
+    {'ipam': []},
+    {'ipam': {}, 'driver': 'bridge'},
+    {'ipam': {}, 'config': []},
+    {'ipam': {}, 'labels': {}},
+], ids=['ipam-driver', 'ipam-empty-config', 'ipam-subnet', 'ipam-null',
+        'ipam-array', 'network-driver', 'network-config', 'extra-network-key'])
+def test_proxy_network_mode_rejects_managed_or_noncanonical_network_fields(verifier, monkeypatch, tmp_path, network_fields):
+    cli = ProxyComposeCLI(network_fields=network_fields)
+    code, result = invoke_proxy(verifier, cli, monkeypatch, tmp_path)
+    assert code == 1 and result['result'] == 'failed' and result['mode'] == 'proxy-network'
+    assert result['services_started'] is False and result['error'].startswith('AssertionError')
+    assert 'pre-existing proxy network' in result['error']
+    assert len(result['checks']) == 2 and len(cli.calls) == 3
+    for row in result['checks']:
+        assert row['stdout'] == cli.outputs[row['case']]
+        network = row['configuration']['networks']['campus-proxy']
+        for key, value in network_fields.items():
+            assert network[key] == value

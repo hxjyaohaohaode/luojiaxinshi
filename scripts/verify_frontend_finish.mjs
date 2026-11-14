@@ -39,10 +39,21 @@ function noticeLayout({width,height,phase,measurement='observation',wait=false})
     const target=animation.effect?.target,timing=animation.effect?.getComputedTiming?.();
     if(!(target instanceof Element)||!(animation.pending||animation.playState==='running')||!Number.isFinite(timing?.endTime))continue;
     if(!(target===shell||target===workspace||target===content||drawer?.contains(target)||content?.contains(target)))continue;
-    active.push({target:describe(target),play_state:animation.playState,pending:animation.pending,current_time:animation.currentTime,start_time:animation.startTime,end_time:timing.endTime,transition:animation.transitionProperty||null});
+    const rectCount=target.getClientRects().length;let closedDetails=null;
+    for(let parent=target.parentElement;parent;parent=parent.parentElement){
+      if(parent.tagName!=='DETAILS'||parent.open)continue;
+      const summary=[...parent.children].find(child=>child.tagName==='SUMMARY');
+      if(!summary?.contains(target)){closedDetails=describe(parent);break;}
+    }
+    // Firefox can retain unstarted transitions for the non-rendered contents
+    // of closed details. Keep their evidence, but still wait for every visible
+    // transition, reveal transition and motion that has actually started.
+    const dormant=animation.pending&&animation.currentTime===0&&animation.startTime===null;
+    const hiddenPending=dormant&&!!animation.transitionProperty&&!['display','visibility','content-visibility'].includes(animation.transitionProperty)&&rectCount===0&&!!closedDetails;
+    active.push({target:describe(target),play_state:animation.playState,pending:animation.pending,current_time:animation.currentTime,start_time:animation.startTime,end_time:timing.endTime,transition:animation.transitionProperty||null,rendering:{client_rect_count:rectCount,closed_details:closedDetails},blocks_readiness:!hiddenPending});
   }
   const drawerStyle=drawer?getComputedStyle(drawer):null,mobile=matchMedia('(max-width:850px)').matches,bounds={drawer:box(drawer),workspace:box(workspace),content:box(content),results:box(results),first_record:box(results?.querySelector('.notice-card,.matter-library-card'))};
-  const checks={viewport:innerWidth===width&&innerHeight===height,route_ready:location.hash==='#notices'&&content?.dataset.page==='notices'&&!content.inert&&!content.closest('[inert]')&&results?.getAttribute('aria-busy')==='false',structure_present:!!shell&&!!drawer&&!!bounds.first_record,menu_closed:!!shell&&!shell.classList.contains('menu-open'),drawer_in_place:!mobile||(drawerStyle?.visibility==='hidden'&&!!bounds.drawer&&bounds.drawer.right<=1),finite_motion_finished:active.length===0,targets_visible:Object.values(targets).every(item=>item.rect?.width>0&&item.rect?.height>0&&item.ancestry.every(parent=>parent.display!=='none'&&parent.visibility==='visible'&&parent.opacity>=.999)),targets_receive_pointer:Object.values(targets).every(item=>item.receives_pointer)};
+  const checks={viewport:innerWidth===width&&innerHeight===height,route_ready:location.hash==='#notices'&&content?.dataset.page==='notices'&&!content.inert&&!content.closest('[inert]')&&results?.getAttribute('aria-busy')==='false',structure_present:!!shell&&!!drawer&&!!bounds.first_record,menu_closed:!!shell&&!shell.classList.contains('menu-open'),drawer_in_place:!mobile||(drawerStyle?.visibility==='hidden'&&!!bounds.drawer&&bounds.drawer.right<=1),finite_motion_finished:active.every(item=>!item.blocks_readiness),targets_visible:Object.values(targets).every(item=>item.rect?.width>0&&item.rect?.height>0&&item.ancestry.every(parent=>parent.display!=='none'&&parent.visibility==='visible'&&parent.opacity>=.999)),targets_receive_pointer:Object.values(targets).every(item=>item.receives_pointer)};
   const scroll=Object.fromEntries([['html',document.documentElement],['body',document.body],['shell',shell],['workspace',workspace],['content',content]].map(([name,node])=>[name,node?{left:node.scrollLeft,top:node.scrollTop,width:node.scrollWidth,height:node.scrollHeight,client_width:node.clientWidth,client_height:node.clientHeight}:null]));
   const snapshot={at_ms:performance.now(),phase,measurement,route:location.hash,viewport:{width:innerWidth,height:innerHeight},mobile,drawer:{class_name:drawer?.className||null,shell_class:shell?.className||null,visibility:drawerStyle?.visibility||null,transform:drawerStyle?.transform||null},bounds,targets,active_finite_animations:active,scroll,checks,ready:Object.values(checks).every(Boolean)};
   if(!wait)return snapshot;

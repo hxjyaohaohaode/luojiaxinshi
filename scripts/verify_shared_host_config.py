@@ -143,7 +143,11 @@ def verify(root: Path, *, mode: str = "loopback", diagnostics: dict | None = Non
                 assert set(app["networks"]) == {"campus-proxy"} and set(data["networks"]) == {"campus-proxy"}
                 assert app["networks"]["campus-proxy"]["aliases"] == [project + "-app"], "Use only the project-specific proxy alias"
                 network = data["networks"]["campus-proxy"]
-                assert network == {"name": fixture["CAMPUS_PROXY_NETWORK"], "external": True}, "Use the explicit pre-existing proxy network without managing its lifecycle"
+                expected_network = {"name": fixture["CAMPUS_PROXY_NETWORK"], "external": True}
+                # Compose 5.1.3 may emit an empty IPAM object for an external
+                # network. Accept only that normalization, never IPAM settings
+                # or any additional network-management fields.
+                assert network in (expected_network, {**expected_network, "ipam": {}}), "Use the explicit pre-existing proxy network without managing its lifecycle"
         assert first["volumes"]["campus-data"]["name"] != second["volumes"]["campus-data"]["name"]
         if mode == "loopback":
             assert first["networks"]["campus-private"]["name"] != second["networks"]["campus-private"]["name"]
