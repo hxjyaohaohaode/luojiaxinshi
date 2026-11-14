@@ -141,9 +141,12 @@ function clearSession({returnTo=false,keepInvite=false}={}){
   }
 }
 async function api(path, options={}) {
-  const {json,blob,...opts}=options;
+  const {json,blob,rotateSession=false,...opts}=options;
   const method=(opts.method||'GET').toUpperCase(),get=method==='GET';
-  const requestedSession=state.session;
+  const requestedSession=state.session,requestedOwner=requestedSession?.user?.id,requestedCsrf=requestedSession?.csrf;
+  const sameRequestedSession=()=>state.session===requestedSession&&requestedSession?.user?.id===requestedOwner&&requestedSession?.csrf===requestedCsrf;
+  const invalidateSession=error=>{clearSession({returnTo:true});history.replaceState(null,'','#login');authPage();toast(error.message,true);};
+  const changedSessionError=()=>{const error=new Error('当前登录状态已变化，请重新打开这项操作。');error.status=409;return error;};
   const cacheable=requestedSession&&!blob&&get&&['/notices','/tasks','/arrangements'].includes(path);
   const saved=cacheable?projections.get(path):null;
   const headers = {'X-Requested-With':'campus-notice',...(opts.headers||{})};
@@ -153,28 +156,49 @@ async function api(path, options={}) {
   }
   if(saved?.session===requestedSession)headers['If-None-Match']=saved.tag;
   if(json!==undefined){headers['Content-Type']='application/json';opts.body=JSON.stringify(json);}
+  // Password commits revoke the old cookie before its replacement response arrives.
+  // Defer only that session's invalidation; concurrent requests still fail.
+  let rotation=null;
+  if(rotateSession){
+    if(rotateSession!==true||path!=='/auth/password'||method!=='POST'||!requestedOwner)throw Error('当前操作不能更新登录状态。');
+    if(state.sessionRotation?.owner===requestedOwner){const error=new Error('账号安全信息正在更新，请稍候核对结果。');error.status=409;throw error;}
+    rotation={session:requestedSession,owner:requestedOwner,csrf:requestedCsrf,unauthorized:null,adopted:false};
+    state.sessionRotation=rotation;
+  }
   let response;
   const readController=get&&!opts.signal?new AbortController():null;
   const readTimer=readController?setTimeout(()=>readController.abort(),25000):null;
+  try{
   // WebKit may start replacing a document before pagehide, while a background read is starting.
   try{response=await fetch('/api'+path,{keepalive:get&&!blob,...opts,...(readController?{signal:readController.signal}:{}),headers,credentials:'same-origin'});}
   catch(error){clearTimeout(readTimer);const e=new Error(error.name==='AbortError'?'网络有点慢，已保存的内容都还在，稍后刷新一下就好。':'连接断开了，检查一下网络后再试。已保存的内容不会丢。');e.status=0;throw e;}
-  try{
   if(response.status===304&&saved?.session===requestedSession&&state.session===requestedSession)return structuredClone(saved.value);
   if(!response.ok){let body;try{body=await response.json();}catch{body={detail:'服务暂时开小差了，请稍后再试'};}
     const d=body.detail;const message=typeof d==='string'?d:Array.isArray(d)?d.map(item=>String(item.msg||'请检查填写内容').replace(/^Value error, /,'')).join('；'):d?.message;const e=new Error(message||'没有成功，检查一下填写的内容再试试');e.status=response.status;e.detail=d;e.retryAfter=Number(response.headers.get('Retry-After'))||0;
-    if(response.status===401&&requestedSession?.user?.id&&state.session===requestedSession){
-      clearSession({returnTo:true});
-      history.replaceState(null,'','#login');
-      authPage();toast(e.message,true);
+    if(response.status===401&&requestedOwner){
+      const pending=state.sessionRotation;
+      if(!sameRequestedSession()||(pending&&pending!==rotation&&pending.session===requestedSession&&pending.owner===requestedOwner&&pending.csrf===requestedCsrf)){
+        if(sameRequestedSession()&&pending)pending.unauthorized=e;
+        const changed=changedSessionError();changed.responseStatus=401;changed.detail=d;changed.retryAfter=e.retryAfter;
+        throw changed;
+      }
+      invalidateSession(e);
     }
     throw e;}
-  const value=await (blob?response.blob():response.json());
-  if(requestedSession&&state.session!==requestedSession){
-    const error=new Error('当前登录状态已变化，请重新打开这项操作。');
-    error.status=409;
-    throw error;
-  }
+  let value=await (blob?response.blob():response.json());
+  if(rotation){
+    const next=value?.session;
+    if(!next||typeof next!=='object'||Array.isArray(next)||!next.user||typeof next.user!=='object'||Array.isArray(next.user)||next.user.id!==requestedOwner||typeof next.csrf!=='string'||!next.csrf.trim()){
+      const error=new Error('登录信息未能确认，请重新登录后核对账号安全信息。');error.status=502;throw error;
+    }
+    const current=state.session;
+    // An authenticated account refresh may already have adopted this exact
+    // credential. Keep its newer profile and return the accepted current object.
+    if(current?.user?.id===requestedOwner&&current.csrf===next.csrf)value={...value,session:current};
+    else if(sameRequestedSession())state.session=next;
+    else throw changedSessionError();
+    rotation.adopted=true;
+  }else if(requestedSession&&state.session!==requestedSession)throw changedSessionError();
   if(requestedSession&&!['GET','HEAD'].includes(method)&&!path.startsWith('/edit-cache/')){
     workspaceMutation++;
     dataSync?.notify();
@@ -183,7 +207,13 @@ async function api(path, options={}) {
   if(cacheable&&tag)projections.set(path,{session:requestedSession,tag,value:structuredClone(value)});
   return value;
   }catch(error){if(readController?.signal.aborted){const e=new Error('网络有点慢，已保存的内容都还在，稍后刷新一下就好。');e.status=0;throw e;}throw error;}
-  finally{clearTimeout(readTimer);}
+  finally{
+    clearTimeout(readTimer);
+    if(rotation){
+      if(state.sessionRotation===rotation)delete state.sessionRotation;
+      if(!rotation.adopted&&rotation.unauthorized&&sameRequestedSession())invalidateSession(rotation.unauthorized);
+    }
+  }
 }
 function showDialog(title,body,{replaceHistory=false}={}){
   persistCurrentForms();if(replaceHistory)dialogNavigation.clear();else dialogNavigation.remember(title);state.dialogRequest=(state.dialogRequest||0)+1;const request=state.dialogRequest,d=$('#dialog');
@@ -1092,7 +1122,7 @@ async function refreshWorkspace(domains,revision){
   if(changed('notices','tasks','calendar','reminders','collaboration','account','clock'))reminders.refresh();
   // The list controllers already painted their completed request once.
   // Re-rendering here would undo their preserved scroll and keyboard target.
-  if(home&&(notices||tasks||arrangements||changed('account','clock'))){overviewUI.render();gettingStarted.mount();}
+  if(home&&(notices||tasks||arrangements||changed('account','clock')))preserveListViewport(()=>{overviewUI.render();gettingStarted.mount();});
   else if(page==='tasks'&&!tasks&&changed('account'))taskList();
   else if(page==='calendar'&&(tasks||arrangements||changed('account')))calendarUI.applyRecords(arrangements);
   else if(page==='chat'&&(tasks||arrangements||changed('chat','account'))){

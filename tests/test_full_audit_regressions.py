@@ -198,11 +198,17 @@ def test_automation_drains_finished_work_without_sleeping_between_ready_jobs(env
 
 def test_restricted_old_article_does_not_back_off_successful_index_discovery(env,monkeypatch):
     from fastapi import HTTPException
+    from types import SimpleNamespace
     from app import source_sync
     from tests.test_source_subscriptions import website,enable
     c=account(env);sid=website(c);enable(c,sid)
+    # Model slow acquisition without changing the process-wide clock or sleeping.
+    clock=[1800000000]
+    monkeypatch.setattr(source_sync,'time',SimpleNamespace(time=lambda:clock[0]))
     base='https://school.example.edu.cn'
-    async def index(config):return [{'url':base+'/info/public.htm','title':'公开通知','published_at':None},
+    async def index(config):
+        clock[0]+=5
+        return [{'url':base+'/info/public.htm','title':'公开通知','published_at':None},
         {'url':base+'/info/login.htm','title':'历史内部通知','published_at':None}]
     async def read(url):
         if url.endswith('login.htm'):raise HTTPException(422,'需要学校登录，不能冒充读到正文')
@@ -210,9 +216,14 @@ def test_restricted_old_article_does_not_back_off_successful_index_discovery(env
         return source,'公开通知'
     monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
     for _ in range(3):
+        started_at=clock[0]
         result=asyncio.run(source_sync.sync_source(env[0].state.db,sid,force=True))
         assert result['error'] and '登录' in result['error']
-        assert result['next_poll']-result['checked_at']<=result['config']['interval_minutes']*60+3
+        with env[0].state.db.connect() as conn:
+            run=conn.execute('SELECT started_at,finished_at FROM source_acquisition_runs WHERE source_id=? ORDER BY started_at DESC,rowid DESC LIMIT 1',(sid,)).fetchone()
+        assert result['checked_at']==run['started_at']==started_at
+        assert run['finished_at']==clock[0]==started_at+5
+        assert result['next_poll']==run['finished_at']+result['config']['interval_minutes']*60
     assert len(c.get('/api/notices').json())==1
 
 
