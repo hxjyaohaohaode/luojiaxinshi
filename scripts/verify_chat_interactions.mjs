@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {chromium,firefox,webkit,request} from 'playwright';
 const name=process.env.OPENUI_BROWSER||'chromium',engine={chromium,firefox,webkit}[name],origin='http://127.0.0.1:8794',out=process.env.OPENUI_ARTIFACT_DIR||'artifacts/chat-interactions/'+name;
-await mkdir(out,{recursive:true});const checks=[],errors=[];
+await mkdir(out,{recursive:true});const checks=[],errors=[],observations={};
 const api=await request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin,'X-Requested-With':'campus-notice'}});
 assert.equal((await api.post('/api/auth/login',{data:{username:'openui-preview',password:'OpenUIFixture2026!'}})).status(),200);
 const csrf=(await(await api.get('/api/session')).json()).csrf;
@@ -60,9 +60,44 @@ try{
   await page.waitForTimeout(1000);const progress=await copy.locator('.action-success-countdown').evaluate(n=>parseFloat(getComputedStyle(n).strokeDashoffset));assert.ok(progress>.1&&progress<.5,String(progress));
   await copy.click();await page.waitForTimeout(4200);assert.equal(await copy.getAttribute('data-action-success'),'true');await page.waitForTimeout(950);assert.equal(await copy.getAttribute('data-action-success'),null);assert.equal(await copy.getAttribute('aria-label'),'复制回复');assert.ok(Math.abs((await copy.boundingBox()).width-before.width)<1);
   checks.push('真实复制成功显示5秒勾选环；再次点击重新计时，结束恢复原图标且不抖动');
-  const stream=await page.evaluate(async()=>{
-    const {StreamMarkdownView}=await import('/static/genui/stream-text.js');const host=document.createElement('div');host.className='stream-test';document.querySelector('#chat-thread').append(host);const view=new StreamMarkdownView(host);view.render('水墨渐显',{streaming:true});const first=[...host.querySelectorAll('.ink-glyph')].map(n=>n.textContent).join('');await new Promise(resolve=>setTimeout(resolve,340));const paragraph=host.querySelector('p');view.render('水墨渐显，接着清晰呈现新的文字。',{streaming:true});const next=[...host.querySelectorAll('.ink-glyph')].map(n=>n.textContent).join(''),same=paragraph===host.querySelector('p'),copy=host.textContent;view.render('水墨渐显，接着清晰呈现新的文字。',{streaming:false});const replay=host.querySelectorAll('.ink-glyph').length;view.dispose();host.remove();return {first,next,same,copy,replay};
-  });assert.equal(stream.first,'水墨渐显');assert.ok(stream.same);assert.ok(!stream.next.includes('水墨渐显'));assert.equal(stream.copy,'水墨渐显，接着清晰呈现新的文字。');assert.equal(stream.replay,0);
+  const streamHandle=await page.evaluateHandle(async()=>{
+    const {StreamMarkdownView}=await import('/static/genui/stream-text.js');
+    const host=document.createElement('div');host.className='stream-test';document.querySelector('#chat-thread').append(host);
+    const started=performance.now(),events=[];
+    for(const type of ['animationstart','animationend'])host.addEventListener(type,event=>{
+      if(event.target.matches('.ink-glyph'))events.push({type,text:event.target.textContent,elapsed_ms:performance.now()-started,animation_name:event.animationName});
+    });
+    const view=new StreamMarkdownView(host);view.render('水墨渐显',{streaming:true});
+    const initialGlyphs=[...host.querySelectorAll('.ink-glyph')],paragraph=host.querySelector('p');
+    return {host,view,paragraph,initialGlyphs,events,started,observation:{first:initialGlyphs.map(n=>n.textContent).join(''),initial_glyph_count:initialGlyphs.length,initial_document_hidden:document.hidden}};
+  });
+  let stream;
+  try{
+    // A fixed delay cannot establish that the first animation has completed.
+    // Keep the existing default timeout and observe the real lifecycle before
+    // asking whether appending text animates any already-settled characters.
+    await page.waitForFunction(state=>state.host.querySelectorAll('.ink-glyph').length===0,streamHandle);
+    stream=await streamHandle.evaluate(state=>{
+      const {host,view,paragraph,initialGlyphs,observation}=state;
+      observation.before_append={elapsed_ms:performance.now()-state.started,glyph_count:host.querySelectorAll('.ink-glyph').length,original_glyphs_connected:initialGlyphs.filter(n=>n.isConnected).length,paragraph_retained:paragraph===host.querySelector('p'),text:host.textContent};
+      view.render('水墨渐显，接着清晰呈现新的文字。',{streaming:true});
+      const glyphs=[...host.querySelectorAll('.ink-glyph')];
+      Object.assign(observation,{next:glyphs.map(n=>n.textContent).join(''),same:paragraph===host.querySelector('p'),copy:host.textContent,reused_glyph_count:glyphs.filter(n=>initialGlyphs.includes(n)).length});
+      view.render('水墨渐显，接着清晰呈现新的文字。',{streaming:false});
+      observation.replay=host.querySelectorAll('.ink-glyph').length;
+      return observation;
+    });
+  }finally{
+    observations.stream=await streamHandle.evaluate(state=>{
+      const observation={...state.observation,events:state.events,finished_elapsed_ms:performance.now()-state.started,remaining_glyphs:[...state.host.querySelectorAll('.ink-glyph')].map(n=>n.textContent).join(''),document_hidden:document.hidden};
+      state.view.dispose();state.host.remove();return observation;
+    });
+    await streamHandle.dispose();
+    // Persist the actual precondition and results before assertions so a failed
+    // engine leaves evidence instead of only the final assertion's message.
+    await writeFile(out+'/report.json',JSON.stringify({passed:false,incomplete:true,phase:'stream_assertions',browser:name,checks,errors,observations},null,2));
+  }
+  assert.equal(stream.first,'水墨渐显');assert.equal(stream.before_append.glyph_count,0);assert.equal(stream.before_append.original_glyphs_connected,0);assert.ok(stream.before_append.paragraph_retained);assert.equal(stream.before_append.text,'水墨渐显');assert.ok(stream.same);assert.ok(!stream.next.includes('水墨渐显'));assert.equal(stream.next,'，接着清晰呈现新的文字。');assert.equal(stream.reused_glyph_count,0);assert.equal(stream.copy,'水墨渐显，接着清晰呈现新的文字。');assert.equal(stream.replay,0);
   await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.evaluate(async()=>{const {StreamMarkdownView}=await import('/static/genui/stream-text.js');const root=document.createElement('div');document.body.append(root);const view=new StreamMarkdownView(root);view.render('减少动态效果时直接显示',{streaming:true});const n=root.querySelectorAll('.ink-glyph').length;view.dispose();root.remove();return n;}),0);await page.emulateMedia({reducedMotion:'no-preference'});
   const typography=await page.evaluate(async()=>{const {protectOrphans}=await import('/static/genui/typography.js');const root=document.createElement('div');root.className='gu-markdown';root.style.width='79px';const p=document.createElement('p');p.textContent='这段中文内容需要保护。';root.append(p);document.body.append(root);const text=p.textContent;protectOrphans(root);const tail=root.querySelector('.prose-tail'),range=document.createRange();range.selectNodeContents(tail);const rects=[...range.getClientRects()];const result={same:p.textContent===text,tail:tail.textContent,lines:new Set(rects.map(r=>r.y)).size};root.remove();return result;});assert.ok(typography.same&&typography.lines===1&&typography.tail.includes('保护'));
   checks.push('流式只晕染新字符，段落节点保留，最终文字不重播；减少动态效果生效，尾字保护不改变复制内容');
@@ -109,6 +144,6 @@ try{
     await pullTouch();assert.equal(await touchPage.locator('.chat-end-gesture').getAttribute('data-armed'),'true');const movedTop=await touchPage.locator('#chat-thread').evaluate(n=>n.getBoundingClientRect().top);assert.ok(originalTop-movedTop>=50,'All prose must move up with the touch gesture');await touchPage.screenshot({path:out+'/touch-release.png'});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await touchPage.getByRole('button',{name:'取消新建对话',exact:true}).waitFor();await touchPage.screenshot({path:out+'/touch-cancel.png'});await touchPage.getByRole('button',{name:'取消新建对话',exact:true}).click();await touchPage.waitForTimeout(1300);assert.ok(touchPage.url().endsWith('/'+chat.id));
     await pullTouch();await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await touchPage.waitForURL('**/#chat/new');await touchPage.locator('#chat-composer[data-cache-key="chat-new"]').waitFor();await mobile.close();checks.push('原生手机触摸整段文字上移；回拉与释放后取消均有效，确认窗口结束才新建');
   }
-  assert.deepEqual(errors,[]);await writeFile(out+'/report.json',JSON.stringify({passed:true,browser:name,checks,errors},null,2));console.log(JSON.stringify({passed:true,browser:name,checks,errors},null,2));
-}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});const gesture=await page.evaluate(()=>({wheels:window.__wheelDebug,button:document.querySelector('.chat-end-gesture')?.outerHTML,processing:!!document.querySelector('.is-streaming'),reply:document.querySelector('.message-assistant:last-child')?.textContent?.slice(-600),toast:document.querySelector('#toast')?.textContent})).catch(()=>null);await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors,gesture,selectedVersion:selected?.id},null,2));throw error;}
+  assert.deepEqual(errors,[]);await writeFile(out+'/report.json',JSON.stringify({passed:true,browser:name,checks,errors,observations},null,2));console.log(JSON.stringify({passed:true,browser:name,checks,errors,observations},null,2));
+}catch(error){await page.screenshot({path:out+'/failure.png'}).catch(()=>{});const gesture=await page.evaluate(()=>({wheels:window.__wheelDebug,button:document.querySelector('.chat-end-gesture')?.outerHTML,processing:!!document.querySelector('.is-streaming'),reply:document.querySelector('.message-assistant:last-child')?.textContent?.slice(-600),toast:document.querySelector('#toast')?.textContent})).catch(()=>null);await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors,observations,gesture,selectedVersion:selected?.id},null,2));throw error;}
 finally{await context.close();await browser.close();await api.dispose();}

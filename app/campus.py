@@ -110,6 +110,8 @@ def initialize(conn):
     conn.executescript(ROSTER_SCHEMA)
     from .campus_policy import SCHEMA as POLICY_SCHEMA
     conn.executescript(POLICY_SCHEMA)
+    from .campus_submissions import initialize as initialize_submissions
+    initialize_submissions(conn)
 
 
 class Scope(Strict):
@@ -534,6 +536,7 @@ def drain_publications(db, *, publication_id=None, limit=DELIVERY_BATCH_SIZE):
 def install(app, db, user):
     from .campus_drafts import install as install_drafts
     from .campus_roster import install as install_roster
+    from .campus_submissions import install as install_submissions
     # A review page from a previous process must be checked afresh. Committed
     # publication request IDs remain replayable after restart independently.
     with db.connect(write=True) as conn:
@@ -541,6 +544,7 @@ def install(app, db, user):
         conn.execute('DELETE FROM campus_roster_previews WHERE result IS NULL')
     install_drafts(app,db,user)
     install_roster(app,db,user)
+    install_submissions(app,db,user)
 
     @app.get('/api/campus/context')
     def context(current=Depends(user)):
@@ -732,11 +736,16 @@ def install(app, db, user):
             'files': [{'name': f['name'], 'sha256': f['sha256']} for f in files]}).encode()).hexdigest()
         with db.connect(write=True) as conn:
             own = publisher(conn, current['id'], payload)
+            from .campus_submissions import require_not_cancelled
+            require_not_cancelled(conn,current['id'],payload.request_id)
             previous = conn.execute('SELECT * FROM campus_publications WHERE publisher_id=? AND request_id=?', (current['id'], payload.request_id)).fetchone()
             if previous:
                 if previous['request_digest'] != digest:
                     raise HTTPException(409, '该提交编号已用于不同内容，请检查已发布记录')
-                return publication_view(conn, previous)
+                # Idempotency does not extend today's college or scope access.
+                # The separate cancellation endpoint can return the owner's
+                # minimal committed receipt without disclosing old contents.
+                return publication_view(conn, publication_for(conn,previous['id'],current['id']))
             selected = recipients(conn, own['college_id'], payload)
             require_audience_review(conn,current['id'],own['college_id'],payload,selected,payload.audience_review)
             if len(selected)>MAX_RECIPIENTS:
@@ -747,6 +756,9 @@ def install(app, db, user):
                     (current['id'],payload.draft_id,own['college_id'])).fetchone()
                 if draft is None or draft['version']!=payload.draft_version:
                     raise HTTPException(409,'发布草稿已变化，请重新核对已保存的内容和附件')
+                if json.loads(draft['data']).get('pending_attachment_names'):
+                    raise HTTPException(409, {'code':'publication_attachments_pending',
+                        'message':'这份草稿仍有待重新选择的附件，请补充原件或明确选择不再附加后保存，再核对发布。'})
                 saved_files=draft_files(conn,current['id'],payload.draft_id)
                 known={(f['name'],f['sha256']) for f in saved_files}
                 files=saved_files+[f for f in files if (f['name'],f['sha256']) not in known]

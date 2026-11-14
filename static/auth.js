@@ -63,6 +63,7 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
     const returnHash=state.loginReturn?.owner===session.user.id?state.loginReturn.hash:location.hash;
     const canReturn=/^#(?:dashboard|notices|notice|tasks|calendar|chat|sources|memory|settings|campus|insights|intake|new)(?:\/[A-Za-z0-9_-]+)*$/.test(returnHash);
     state.session=session;state.loginReturn=null;state.invite='';
+    toast.clear();
     try{sessionStorage.removeItem('campus.registration.invite');}catch{}
     history.replaceState(null,'',canReturn?returnHash:'#dashboard');
     await route();

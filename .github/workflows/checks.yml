@@ -206,6 +206,32 @@ jobs:
       - name: Run the browser suites against synthetic data
         id: browser-suites
         run: python scripts/run_browser_checks.py
+      - name: Preserve main browser diagnostics before the remaining suites
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: main-browser-diagnostics
+          path: |
+            artifacts/ci-browser/results.json
+            artifacts/ci-browser/*.mjs.log
+            artifacts/sprint-ui-browser/report.json
+            artifacts/frontend-v9-browser/report.json
+            artifacts/frontend-v8-browser/report.json
+            artifacts/reference-interactions-browser/report.json
+            artifacts/workspace-interactions-browser/report.json
+            artifacts/visual-review-browser/report.json
+            artifacts/notice-flow-browser/report.json
+            artifacts/task-board-browser/report.json
+            artifacts/natural-intake-browser/report.json
+            artifacts/task-materials-browser/report.json
+            artifacts/source-inbox-browser/report.json
+            artifacts/push-browser/report.json
+            artifacts/notice-matters-browser/report.json
+            artifacts/source-presets-browser/report.json
+            artifacts/pilot-workspace-browser/report.json
+            artifacts/qq-group-intake-browser/report.json
+          retention-days: 14
+          if-no-files-found: warn
       - name: Verify embedded Agent approvals, UI, media and incremental rendering
         if: ${{ !cancelled() && steps.browser-suites.outcome != 'skipped' }}
         run: python scripts/run_agent_browser_checks.py
@@ -237,6 +263,7 @@ jobs:
           name: synthetic-browser-reports
           path: |
             artifacts/sprint-ui-browser/*
+            artifacts/ci-browser/results.json
             artifacts/ci-browser/verify_sprint_ui.mjs.log
             artifacts/frontend-v9-browser/report.json
             artifacts/frontend-v9-browser/*.png
@@ -263,6 +290,8 @@ jobs:
             artifacts/ci-browser/verify_natural_intake.mjs.log
             artifacts/ci-browser/verify_task_materials.mjs.log
             artifacts/ci-browser/verify_source_inbox.mjs.log
+            artifacts/ci-browser/verify_source_presets_ui.mjs.log
+            artifacts/ci-browser/verify_pilot_workspace.mjs.log
             artifacts/ci-browser/verify_notice_matters.mjs.log
             artifacts/ci-browser/verify_qq_group_intake_ui.mjs.log
             artifacts/ci-browser/verify_push_browser.mjs.log
@@ -283,6 +312,8 @@ jobs:
             artifacts/reference-fusion/browser/*.png
             artifacts/agent-quality-browser/performance.json
             artifacts/composer-browser/results.json
+            artifacts/composer-browser/failure.json
+            artifacts/composer-browser/geometry.json
             artifacts/composer-browser/*.png
             artifacts/openui-browser/*/report.json
             artifacts/openui-browser/*/*.png

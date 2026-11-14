@@ -216,7 +216,13 @@ def candidates(conn, uid, now, *, include_suppressed=False):
         decision=receipt_decision(decision,notification_pref,routes.get(notice['id']))
         slot=delivery_slot(max(update['created_at'],notice['updated_at']),decision,notification_pref)
         if slot:
-            add('intake-change:' + update['id'],slot[1],update['title'],'你关注的信息有可核对的新内容，可以查看是否需要加入待办','/#notice/'+update['notice_id'],'notice:'+update['notice_id'],update['created_at'])
+            key='intake-change:' + update['id']
+            add(key,slot[1],update['title'],'你关注的信息有可核对的新内容，可以查看是否需要加入待办','/#notice/'+update['notice_id'],'notice:'+update['notice_id'],update['created_at'])
+            if key in items:
+                # An unchosen source update follows the receipt policy, whose
+                # routing and quiet-hour slot have already been resolved.
+                items[key]['category']='receipt'
+                items[key]['route_mode']='immediate' if decision['delivery']=='near_term' else 'digest'
     # Group new external receipts into two-minute digests, rather than pushing
     # every forwarded message or replaying the whole library on first enable.
     buckets = {}
@@ -256,7 +262,8 @@ def candidates(conn, uid, now, *, include_suppressed=False):
         bucket,due=slot
         if assessed and decision['delivery']=='near_term':bucket='ready:'+bucket
         receipt_ref=row['id']+':'+str(row['version'])+':'+user_profile+(':'+decision['quality'] if assessed else ':review')
-        group=buckets.setdefault(bucket,{'due':due,'notices':[]})
+        group=buckets.setdefault(bucket,{'due':due,'notices':[],
+            'route_mode':'immediate' if decision['delivery']=='near_term' else 'digest'})
         group['due']=max(group['due'],due)
         group['notices'].append({'id':row['id'],'created_at':row['created_at'],'relevance':relevance,
                                 'priority':decision['priority'],'quality':decision['quality'],'ref':receipt_ref})
@@ -265,6 +272,10 @@ def candidates(conn, uid, now, *, include_suppressed=False):
         add(key,group['due'],'新收到的通知',receipt_summary(notices),'/#notices','notice-inbox',max(n['created_at'] for n in notices))
         if key in items:
             items[key]['received_items']=notices
+            # Every member passed receipt_decision with its current owner
+            # override. Do not suppress it a second time using the category
+            # default, or apply one member's private notice ID to the group.
+            items[key]['route_mode']=group['route_mode']
             items[key]['payload']['priority']=min((n['priority'] for n in notices),default='R')
             items[key]['payload']['policy_version']='proactive-policy-v1'
     from .notification_events import extra_candidates, apply_policy
@@ -358,8 +369,9 @@ def tick(db, now=None, settings=None):
     for uid in users:
         coordinate(db,uid,'push',clock(),reconcile)
     for _ in range(12):
-        now = clock()
         with db.connect(write=True) as conn:
+            # FIFO/SQLite admission may itself cross a validity/quiet boundary.
+            now = clock()
             job = conn.execute("""SELECT o.* FROM push_outbox o JOIN push_devices d ON d.id=o.device_id
                 WHERE d.enabled=1 AND d.user_id=o.user_id AND o.state='pending' AND o.due_at<=? AND o.next_attempt<=?
                 ORDER BY o.due_at,o.rowid LIMIT 1""", (now, now)).fetchone()

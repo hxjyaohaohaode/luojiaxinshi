@@ -72,10 +72,11 @@ def deletion_impact(conn,uid):
         FROM collaboration_cases c WHERE c.sender_id=? OR c.recipient_id=?''',(uid,uid,uid,uid)).fetchone()
     counts={label:conn.execute('SELECT count(*) FROM '+table+' WHERE user_id=?',(uid,)).fetchone()[0]
             for label,table in [('notices','notices'),('tasks','tasks'),('conversations','conversations'),
-                               ('arrangements','arrangements'),('publication_drafts','campus_drafts')]}
+                               ('arrangements','arrangements'),('publication_drafts','campus_drafts'),
+                               ('publication_cancellations','campus_submission_cancellations')]}
     return {'deleted':counts,'retained_counterparty_receipts':int(affected['student_receipts'] or 0)+int(affected['staff_receipts'] or 0),
             'shared_file_access':'revoked','backup_retention_days':retention_days(),
-            'retention_note':'本人通知、附件、对话、待办、日程和发布草稿将删除。协作对方只保留参与事项的必要动作、时间和自己填写的说明；你的身份、私人说明和文件授权会移除。',
+            'retention_note':'本人通知、附件、对话、待办、日程、发布草稿和已停止的发布请求记录将删除。协作对方只保留参与事项的必要动作、时间和自己填写的说明；你的身份、私人说明和文件授权会移除。',
             'publication_note':'已向他人发布的学院公告及不可变原件仍属于对方收到的正式版本；发布者姓名改为已注销发布者，不再授予新访问权限。'}
 
 

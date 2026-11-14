@@ -239,13 +239,15 @@ class Database:
                 from .listing import TABLES as LISTING_TABLES
                 from .observability import TABLES as OBSERVABILITY_TABLES
                 from .notification_coordination import TABLES as COORDINATION_TABLES
+                from .campus_submissions import TABLES as SUBMISSION_TABLES
                 for key, required in (('campus_sprint_schema_version',SPRINT_TABLES),
                                       ('source_fetch_schema_version',FETCH_TABLES),
                                       ('source_observation_schema_version',OBSERVATION_TABLES),
                                       ('notice_tracking_schema_version',TRACKING_TABLES),
                                       ('bounded_lists_version',LISTING_TABLES),
                                       ('observability_schema_version',OBSERVABILITY_TABLES),
-                                      ('notification_coordination_schema_version',COORDINATION_TABLES)):
+                                      ('notification_coordination_schema_version',COORDINATION_TABLES),
+                                      ('campus_submission_schema_version',SUBMISSION_TABLES)):
                     marker=conn.execute('SELECT value FROM meta WHERE key=?',(key,)).fetchone()
                     if marker and (marker[0]!='1' or not required.issubset(tables)):
                         raise RuntimeError('数据库扩展版本不兼容或必要记录缺失，未改写：'+key)

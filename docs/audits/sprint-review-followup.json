@@ -1,0 +1,2271 @@
+{
+  "schema_version": 1,
+  "title": "珞珈信使：首轮 main 合并后自动审查补修与冻结验收",
+  "generated_at": "2026-11-14T07:50:02.308967+00:00",
+  "status": "whole_repository_verification_in_progress",
+  "baseline_main_sha": "71f23009baf16825168304df7fa4e1455065d147",
+  "first_main_ci": {
+    "run_id": 43570104944,
+    "head_sha": "71f23009baf16825168304df7fa4e1455065d147",
+    "event": "push",
+    "conclusion": "success",
+    "successful_jobs": 9,
+    "verification_scope": "Official metadata verified; no claim that run52 raw counts were independently recounted for run54. This is before the corrective changes."
+  },
+  "local_frozen_code": {
+    "commit": "29ce79282ec772a9470f0db092fd1eb1de866c0a",
+    "tree": "7e0b6fb8d0b3942a6f60fe602db622715fd92708",
+    "implementation_sha256": "956d87e97ab18a86baa06b6613d7b97523ae03f6e6e7337b53193b34eb9d5121",
+    "backend_files": 138,
+    "browser_scope": "The extra browser scenarios have not yet run. A delivery-only fixture wait correction is being reviewed separately; product changes remain frozen."
+  },
+  "source_attachments": [
+    {
+      "name": "珞珈信使_冲刺前全量审查与优化清单.md",
+      "sha256": "01f8056c1e854265370341e06429e378d9ec335237a8dec15e4449a7e2fa9bd1",
+      "lines": 1466
+    },
+    {
+      "name": "前端组件交互参考_209项依赖与交互描述_强化提示词版.md",
+      "sha256": "98c07567e531526f136504526353ed221c37d25f853334c3997e8ad40988fee0",
+      "lines": 690
+    }
+  ],
+  "original_inventory_preservation": {
+    "requirements": 128,
+    "requirements_original_array_sha256": "1bf97ea08381df3d92cc9724ec90cdcd67cf8b0398a6739d4ff37b221a3234ff",
+    "frontend_requirements": 25,
+    "frontend_original_array_sha256": "a4932fc1f2185853cd070e37cb2b7c054d584c93cb4ac9a0acab00a76c8836f7",
+    "component_references": 209,
+    "component_original_array_sha256": "b4affd4518514ad2df51ea23cc487d048bb9ebacac9e10542d89005ebcab6abd",
+    "conditional_p2": 8,
+    "external_acceptance_conditions": 51,
+    "upstream_source_demo_inspected_ids": [
+      114,
+      115,
+      133
+    ],
+    "remaining_upstream_source_demo_uninspected": 206
+  },
+  "automatic_review_source": {
+    "captured_at": "2026-11-14 07:18:13 UTC",
+    "source_pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
+    "merged_main_before_followup": "71f23009baf16825168304df7fa4e1455065d147",
+    "capture_sha256": "8b2c7b5cb957e1c9d6e8faa71b04dd855423a21fc0487d4bbc14184c8fb96e99",
+    "original_capture_state": "review findings captured; each requires independent reproduction",
+    "reviewed_comments": [
+      {
+        "id": 4571588135,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571588135",
+        "path": "app/notification_events.py",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5901789450,
+        "body_sha256": "5dd1d4efbdd94413d301ed4afe15f359fd6b06469b5498a72188c816411c3e9c",
+        "finding": "开始时刻提醒在声明的有效窗口结束前被提前丢弃。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      },
+      {
+        "id": 4571588137,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571588137",
+        "path": "app/notification_events.py",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5901789450,
+        "body_sha256": "be330eb0b0ca49f86cbf5861361ed118ee4e8b8ccae344251980a91eefcb7f50",
+        "finding": "收件合并后丢失本人覆盖路由，被类别默认值错误压制。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      },
+      {
+        "id": 4571588139,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571588139",
+        "path": "static/campus.js",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5901789450,
+        "body_sha256": "754ff418665ed338b193f3ee35b24d29f67da4011551c1c763da9751fe0f5892",
+        "finding": "发布实际成功但响应丢失后，先保存已经删除的旧草稿导致重试无法到达幂等端点。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      },
+      {
+        "id": 4571728274,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571728274",
+        "path": "app/listing.py",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5901972185,
+        "body_sha256": "90ea4bfebacea5cc4eb5e0aa85c51529a50f102d0e96fd706b04b5f1984dc3c4",
+        "finding": "第二页看板卡片移动后，首次重新读取仍按创建顺序，移动结果被排除。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      },
+      {
+        "id": 4571931507,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571931507",
+        "path": "static/app.js",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5902250495,
+        "body_sha256": "f1b439dfdcf3e6a4d3e1cc2118b171852ce83a65c25b329239e62e225b8e3bef",
+        "finding": "分钟刷新仅重读第一页，已经加载的后续记录消失。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      },
+      {
+        "id": 4571931511,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571931511",
+        "path": "app/notification_events.py",
+        "commit_id": "a7767d8c2c6dce0fab6389d08652ef2fb30e8bc8",
+        "review_id": 5902250495,
+        "body_sha256": "10126767fe6ab3aab6a356c4e9b99dda777fe7c7cacbb648b3d08cf30d9f838e",
+        "finding": "未采纳的收件更正重复计算摘要时刻，推迟到有效窗口之外。",
+        "disposition": "reproduced_and_corrected; targeted evidence below; whole-candidate gates still pending"
+      }
+    ],
+    "reviews": [
+      {
+        "id": 5901789450,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#pullrequestreview-5901789450",
+        "commit_id": "6145f129169aae160d7ae9fcf3ccda3f42cbdbae",
+        "submitted_at": "2026-11-14T05:02:02Z",
+        "state": "COMMENTED",
+        "body_sha256": "89d05cff56f44468d52a1b0912e4e08f56473542dd1927b10514c4390aa57638"
+      },
+      {
+        "id": 5901972185,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#pullrequestreview-5901972185",
+        "commit_id": "32c5ce524d553c869816d0264e9cf84b57febe39",
+        "submitted_at": "2026-11-14T05:40:07Z",
+        "state": "COMMENTED",
+        "body_sha256": "f5fdf38a84abc98a579cb427b3f90d49504317b06939486c461af5e6890d9e64"
+      },
+      {
+        "id": 5902250495,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#pullrequestreview-5902250495",
+        "commit_id": "05498ae154403c239ee4efddca0041fd530ce6c3",
+        "submitted_at": "2026-11-14T06:24:34Z",
+        "state": "COMMENTED",
+        "body_sha256": "3c0b19363f4535398b80d6844e90f6a4304569e8dad30a0cea18559c200500a1"
+      }
+    ]
+  },
+  "targeted_evidence": {
+    "notifications": {
+      "source_path": "artifacts/review-notifications/verification.json",
+      "sha256": "6d8d23d685062def5f648310ccc62ea433a49f1bfb839afd7b9aa278e818025c",
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T07:23:54.383446+00:00",
+        "baseline_commit": "71f23009baf16825168304df7fa4e1455065d147",
+        "branch": "codex/sprint-review-2026-11-14",
+        "review_comments": [
+          {
+            "id": 4571588135,
+            "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571588135",
+            "finding": "开始时提醒须保留到声明的60秒宽限，修前+1/+15/+59秒均漏发"
+          },
+          {
+            "id": 4571588137,
+            "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571588137",
+            "finding": "收件聚合丢失已解析的本人事项/来源规则，被off/in_app类别默认值再次抑制"
+          },
+          {
+            "id": 4571931511,
+            "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571931511",
+            "finding": "未选入本人待办的来源更新被误归task，已排好的摘要被再次顺延至失效"
+          }
+        ],
+        "owned_source": {
+          "app/notification_events.py": {
+            "working_sha256": "6a43234be1b307395c77b66acdbdf8fe4dca62bbaecd1015ae4d4f70f9d88fe3",
+            "baseline_sha256": "1f4e568e8ba962b356b42a38f7b4f96b3cc8118a7c88e85bb893d323c963b723"
+          },
+          "app/push_delivery.py": {
+            "working_sha256": "9ed7178ee3ed6fe6ef33b7aab2d216c46ce381b4a4cd3f52aeca9136df028e9f",
+            "baseline_sha256": "46b6e702fd879316b942f1de6b3f7f829ebd899d66e5e7009ee548994d0ba86c"
+          },
+          "tests/test_notification_review_regressions.py": {
+            "working_sha256": "1d7b32e3c5faf46d7e0fcdce01a4c1273b9eb8e1c2a2168458d14ac0856e7c65"
+          }
+        },
+        "before": {
+          "junit": "artifacts/review-notifications/before.xml",
+          "junit_sha256": "1517a25ccfdaa2bedc6547351bb9789c5218299c3e0d1951251b89827fb9f504",
+          "log": "artifacts/review-notifications/before.log",
+          "log_sha256": "207bf7a7a784013eb4212a75b099104b9645ef678426a170ef1e6e9d4ff8cf6a",
+          "tests": 18,
+          "passed": 2,
+          "failures": 16,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 13.602
+        },
+        "after": {
+          "junit": "artifacts/review-notifications/after.xml",
+          "junit_sha256": "d84b822b1b43c9a8885030e9bee4e575bbbc34be61acb26b83da9c2e876d968d",
+          "log": "artifacts/review-notifications/after.log",
+          "log_sha256": "8f35de843f314f48740e6e7b9529542954a667a5b4b72f744f742f07f8d8a334",
+          "tests": 18,
+          "passed": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 16.481
+        },
+        "compatibility_regression": {
+          "junit": "artifacts/review-notifications/regression.xml",
+          "junit_sha256": "bb66ca35d648a6cfbe240f836866581175e49054287ff4e08dca6c65648b6912",
+          "log": "artifacts/review-notifications/regression.log",
+          "log_sha256": "3db4f8a1aadf5bffde9a87264683dd50899ff638428883c5e97b784bd83a9f28",
+          "tests": 108,
+          "passed": 108,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 86.339
+        },
+        "comparison": {
+          "same_18_testcase_names_before_after": true,
+          "cases": [
+            {
+              "name": "test_start_time_reminder_survives_poll_grace_in_both_channels[1]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_start_time_reminder_survives_poll_grace_in_both_channels[15]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_start_time_reminder_survives_poll_grace_in_both_channels[59]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_start_time_reminder_survives_poll_grace_in_both_channels[60]",
+              "before": "passed",
+              "after": "passed"
+            },
+            {
+              "name": "test_start_time_grace_does_not_override_quiet_hours_or_expiry",
+              "before": "passed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[immediate-notice-off]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[immediate-notice-in_app]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[immediate-source-off]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[immediate-source-in_app]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[digest-notice-off]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[digest-notice-in_app]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[digest-source-off]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_receipt_route_override_survives_aggregation_in_both_channels[digest-source-in_app]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_mixed_receipt_routes_keep_slots_private_and_revoke_digest_before_sending",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_unchosen_source_update_digest_is_scheduled_once_and_not_replayed[False-notice]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_unchosen_source_update_digest_is_scheduled_once_and_not_replayed[False-source]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_unchosen_source_update_digest_is_scheduled_once_and_not_replayed[True-notice]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "name": "test_unchosen_source_update_digest_is_scheduled_once_and_not_replayed[True-source]",
+              "before": "failed",
+              "after": "passed"
+            }
+          ],
+          "counts_scope": "108兼容回归包含新增18例；不同运行不累加为独立案例总数。修前失败日志保持原样。"
+        },
+        "commands": {
+          "before_after": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_notification_review_regressions.py --tb=short --junitxml=artifacts/review-notifications/{before,after}.xml",
+          "compatibility": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_notification_review_regressions.py tests/test_sprint_notifications.py tests/test_push_delivery.py tests/test_mail_delivery.py tests/test_proactive_policy.py tests/test_proactive_tracking.py tests/test_sprint_campus_delivery.py tests/test_notification_coordination.py tests/test_sprint_observability.py --tb=short --junitxml=artifacts/review-notifications/regression.xml"
+        },
+        "verified_behavior": [
+          "push和mail均经真实当前候选、各自reconcile和send前重核，只有外部传输被本地捕获",
+          "+1/+15/+59秒提醒一次，+60秒撤销，免打扰不得跨有效窗口发送",
+          "off/in_app类别下notice/source显式immediate/digest共8组合保持有效",
+          "混合immediate/digest独立排期，未授权blocked/foreign收件不入摘要；排队后撤销digest会在发前取消",
+          "未选来源更新在含或不含免打扰的两种情况下只排一次摘要；切换为immediate不重放已接受event_refs",
+          "已有已选本人事项、校园参考/过期/撤权、协作权限、渠道同意、基线及幂等回归通过"
+        ],
+        "scope_limits": [
+          "合成业务与捕获传输，不声明真实推送展示、收件阅读或供应商验收",
+          "未调整性能门槛，未重跑性能负载，既有本地5/10人写等待失败保持",
+          "仅两份通知产品文件和一个新测试文件；未改已提交docs/审查总账，未commit/push"
+        ],
+        "initial_review_scope_note": "原有顶层verified_at、owned_source、before/after/compatibility_regression、scope_limits均为首次3条PR通知问题的历史快照，保持原值；本次交叉审查新增结果及当前源码身份见cross_review。",
+        "cross_review": {
+          "verified_at": "2026-11-14T07:37:10.284577+00:00",
+          "baseline_commit": "71f23009baf16825168304df7fa4e1455065d147",
+          "prior_verification_sha256": "b85f1e66c15eb4c0fc827c667639ce89469fe0798735687e9a572e89c15b988d",
+          "current_owned_source_sha256": {
+            "app/notification_events.py": "047f97d2c6bef9f9e0bac53d5b16df8ea7aed833e60e189ae7186f95813b7919",
+            "app/push_delivery.py": "8a45059ea4ce8c53818b26a7c90eac916adeb5d8ca95382f5e05c8425e376638",
+            "app/mail_delivery.py": "7a2b1e3b7d0563cd1c282d27f4e959342ce8057968e68f6a2ed0124148f1c993",
+            "tests/test_notification_review_regressions.py": "1d7b32e3c5faf46d7e0fcdce01a4c1273b9eb8e1c2a2168458d14ac0856e7c65",
+            "tests/test_mail_clock_regressions.py": "3ee53ed473777a40daf2d7722312cc2d0e0d0457a5723ab79ee28f45a31ca6fa",
+            "tests/test_notification_dispatch_quiet.py": "e6e7bc5daba14c9eb6a0926460da89c2d70a249d0df12fc93eb3a3938ed4af5b"
+          },
+          "findings": [
+            {
+              "id": "mail_dispatch_clock",
+              "source": "context_audit只读交叉审查后由root授权确定性复现",
+              "problem": "mail.tick复用批次入口moment；前序provider或预算等待跨过有效期后，仍以旧时刻提交后序邮件。",
+              "before": {
+                "junit": "artifacts/review-notifications/mail-clock-before.xml",
+                "junit_sha256": "98aca46cd291bbcabc1281aa568c70c9301990fcdcfe43362c09a73aa1a13da4",
+                "log": "artifacts/review-notifications/mail-clock-before.log",
+                "log_sha256": "1164c474a9fdc1c95e71ad24b3b9e67e22f3a263786130f1adb174aa200dec2c",
+                "tests": 6,
+                "passed": 3,
+                "failures": 3,
+                "errors": 0,
+                "skipped": 0,
+                "seconds": 6.23
+              },
+              "fix": "先只读找待发ID，预算完成后取得write连接，再读取生产当前时钟并重新读取pending行、reconcile及本人邮件同意/目标地址，最后标sending；每owner协调及finished_at也取当前clock，显式now保持固定。"
+            },
+            {
+              "id": "late_quiet_dispatch",
+              "source": "root要求检查LJ073实际发前免打扰语义，随后经两渠道真实tick复现",
+              "problem": "原due处在免打扰之前的积压事件，在实际tick已经进入免打扰时仍外发。",
+              "before": {
+                "junit": "artifacts/review-notifications/dispatch-quiet-before.xml",
+                "junit_sha256": "f35270423c13140daad0cdb12d1e363a4bba51067bf9299325af945cbafd2ea8",
+                "log": "artifacts/review-notifications/dispatch-quiet-before.log",
+                "log_sha256": "e9352e87ddf25192326386d92a40ba0e6f1b71b57b73fbff9c9a52527e962170",
+                "tests": 5,
+                "passed": 1,
+                "failures": 4,
+                "errors": 0,
+                "skipped": 0,
+                "seconds": 7.004
+              },
+              "fix": "共享候选保留已解析receipt摘要槽；到期且仍有效的事件若实际now位于quiet窗口则延到本次quiet结束，若超expires取消；仅非receipt正式更正/review且当前显式urgent opt-in例外。push在最终write准入后取clock。"
+            }
+          ],
+          "after": {
+            "junit": "artifacts/review-notifications/dispatch-after.xml",
+            "junit_sha256": "344617ee36b7aae50dc8dd2e2ca7ea45667e30f88c2f30c849e882f807a4e55f",
+            "log": "artifacts/review-notifications/dispatch-after.log",
+            "log_sha256": "4b03ada97373909601f1005d79feeba1edde4d62b9c44c6c7983bb56a6615100",
+            "tests": 11,
+            "passed": 11,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "seconds": 11.109
+          },
+          "compatibility_regression": {
+            "junit": "artifacts/review-notifications/dispatch-regression.xml",
+            "junit_sha256": "06cb2eb0f9147346c05fe716818e72e64d101abdf3136e99f581258a42fe1f00",
+            "log": "artifacts/review-notifications/dispatch-regression.log",
+            "log_sha256": "512283396e02564ea8adb8a283374916a302d9528c0077782cfe281ec58b4514",
+            "tests": 119,
+            "passed": 119,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "seconds": 87.786
+          },
+          "cases": [
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_live_mail_tick_rechecks_expiry_after_the_previous_provider_returns",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_live_mail_tick_rechecks_expiry_after_real_budget_accounting",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_explicit_mail_now_keeps_its_fixed_simulation_semantics",
+              "before": "passed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_mail_rechecks_owner_consent_and_new_quiet_settings_before_the_next_send[consent]",
+              "before": "passed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_mail_rechecks_owner_consent_and_new_quiet_settings_before_the_next_send[quiet]",
+              "before": "passed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_mail_clock_regressions.py::test_live_mail_clock_does_not_replay_ambiguous_provider_submission",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_notification_dispatch_quiet.py::test_late_delivery_waits_for_current_quiet_end_and_still_sends_once[reminder]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_notification_dispatch_quiet.py::test_late_delivery_waits_for_current_quiet_end_and_still_sends_once[receipt]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_notification_dispatch_quiet.py::test_late_quiet_deferral_cancels_an_arrangement_past_its_valid_window",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_notification_dispatch_quiet.py::test_late_formal_change_only_bypasses_quiet_with_current_explicit_opt_in[False]",
+              "before": "failed",
+              "after": "passed"
+            },
+            {
+              "identity": "tests/test_notification_dispatch_quiet.py::test_late_formal_change_only_bypasses_quiet_with_current_explicit_opt_in[True]",
+              "before": "passed",
+              "after": "passed"
+            }
+          ],
+          "preserved_history": {
+            "initial_18_test_source_unchanged": true,
+            "initial_18_before_after_logs_and_junit_unchanged": true,
+            "initial_108_compatibility_logs_and_junit_unchanged": true,
+            "counts_do_not_add_runs": true
+          },
+          "commands": {
+            "mail_before": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_mail_clock_regressions.py --tb=short --junitxml=artifacts/review-notifications/mail-clock-before.xml",
+            "quiet_before": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_notification_dispatch_quiet.py --tb=short --junitxml=artifacts/review-notifications/dispatch-quiet-before.xml",
+            "after": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_mail_clock_regressions.py tests/test_notification_dispatch_quiet.py --tb=short --junitxml=artifacts/review-notifications/dispatch-after.xml",
+            "compatibility": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest -q tests/test_mail_clock_regressions.py tests/test_notification_dispatch_quiet.py tests/test_notification_review_regressions.py tests/test_sprint_notifications.py tests/test_push_delivery.py tests/test_mail_delivery.py tests/test_proactive_policy.py tests/test_proactive_tracking.py tests/test_sprint_campus_delivery.py tests/test_notification_coordination.py tests/test_sprint_observability.py --tb=short --junitxml=artifacts/review-notifications/dispatch-regression.xml"
+          },
+          "safety_contracts": [
+            "真实候选、持久队列及发送前复核；仅时钟和供应商传输可控",
+            "最终锁内只claim仍pending且仍允许的记录，并发旧peek无权再次claim sending/accepted/uncertain记录",
+            "未把已提交的sending/uncertain改回pending；不确定供应商结果仍不自动重发",
+            "新的免打扰结束时仍发送一次，已接受refs在偏好变化后不重放",
+            "首封完成后的关闭渠道同意与修改quiet设置继续撤销下一封",
+            "预算等待在最终有效期/同意/quiet检查之前；应用预算计数不等于供应商实际账单"
+          ],
+          "limits": [
+            "声明的是开始调用供应商前的当前条件复核，不保证供应商接收/展示/本人阅读时刻",
+            "119例包含原18例与新增11例，不与历史108轮累加",
+            "域回归时其他代理仍在整合其负责文件；整树冻结回归由root独立执行",
+            "未改旧docs、性能门槛或性能记录；未commit/push，未运行性能负载"
+          ]
+        }
+      }
+    },
+    "publication_recovery": {
+      "source_path": "artifacts/review-fixes/campus-submissions-verification.json",
+      "sha256": "f0931cfdf6b1be446b9c18dc752c8939478349b19fcae4003791d89589fd2bf2",
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T07:43:42.229474+00:00",
+        "baseline_commit": "71f23009baf16825168304df7fa4e1455065d147",
+        "branch": "codex/sprint-review-2026-11-14",
+        "status": "targeted_implementation_verified_whole_tree_regression_pending",
+        "findings": [
+          {
+            "kind": "stale_draft_recovery_dead_end",
+            "evidence": "A confirmed pending request retained an obsolete draft version; retry and token renewal could not resolve it and a new request was blocked by the client pending intent."
+          },
+          {
+            "kind": "missing_attachment_metadata_not_durable",
+            "evidence": "The split editor required original attachments to be selected again, but an empty file-list autosave could clear the missing marker; the backend did not store that state or enforce it on publication."
+          },
+          {
+            "kind": "cross_college_idempotent_read",
+            "evidence": "A publisher reassigned to another college could replay an old request ID and receive the previous college full publication view; the real new regression returned 200 before the scope check fix."
+          }
+        ],
+        "source_hashes_at_verification": {
+          "app/campus_submissions.py": "04c04d1677455b0bdc5da2fb90c99075bebc314378cd3aabc0dcd7f624939df4",
+          "app/campus.py": "59b76f175c2ae881ea0fe4b1893d190a567b0fe68aa09b9729c9e1dd2db45f84",
+          "app/campus_drafts.py": "bce6ccbf53faccc289e64bee07063137b68b712e71a4d4875c5cac747873c472",
+          "app/db.py": "8d73e87f07db39dc949ac48a9aeaf9e598fa3615ed0f7d5f1a848615574c5a5b",
+          "app/backups.py": "483339d3756889ff995b05caab8aeff8f34b73cd4eff1ed5e4656c5820b42555",
+          "app/account.py": "aa86d00c28cb25656429045d5d8e57fda23685abc0260365114660a4b225867d",
+          "tests/test_campus_submissions.py": "e9908381c19ccd1f096140f1c5532140f38c2df83938614f25f15a20a59e9151"
+        },
+        "root_owned_integration": {
+          "app/main.py": {
+            "sha256": "ef60e1e3d6b52ee4592388069faa8590e223eec81f848fa4b20eae5f4c9af0de",
+            "purpose": "account_records.campus_submission_cancellations export helper; edited by root, not this agent"
+          }
+        },
+        "source_notes": [
+          "After the 70-test run, only the module docstring and backup comment were clarified to state the snapshot/RPO limit; executable behavior and tests did not change. Syntax and diff checks passed afterward.",
+          "The complete integration fingerprint and final frozen suite results are assigned by root; this record does not claim full-tree or browser success."
+        ],
+        "original_red": {
+          "junit": "artifacts/review-fixes/campus-submissions-before.xml",
+          "junit_sha256": "a8a87f158179f8fe715b01862af8fba7f35f797e538cbb19c972b78b948c6cf3",
+          "log": "artifacts/review-fixes/campus-submissions-before.log",
+          "log_sha256": "095993016f6a214f506f1b9cde63ec5f60f54c32cf1c7e2c3e030b5589f66e8f",
+          "tests": 3,
+          "passed": 0,
+          "failures": 3,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 5.627,
+          "cases": [
+            {
+              "identity": "tests.test_campus_submissions::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request",
+              "state": "failed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation",
+              "state": "failed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_survive_legacy_saves_and_block_publication",
+              "state": "failed"
+            }
+          ]
+        },
+        "cross_college_red": {
+          "junit": "artifacts/review-fixes/campus-submissions-cross-college-before.xml",
+          "junit_sha256": "16df1e985d791031d758b536a97d53abbefc717ea36616c811b9e2c760d71757",
+          "log": "artifacts/review-fixes/campus-submissions-cross-college-before.log",
+          "log_sha256": "c03c101f285972d454302046eeaadf5bfbd1a4578df536d038e0e2dc26ae36a2",
+          "tests": 1,
+          "passed": 0,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 3.041,
+          "cases": [
+            {
+              "identity": "tests.test_campus_submissions::test_cross_college_reassignment_keeps_only_the_owners_minimal_submission_receipt",
+              "state": "failed"
+            }
+          ]
+        },
+        "initial_fixture_failure": {
+          "junit": "artifacts/review-fixes/campus-submissions-after-initial.xml",
+          "junit_sha256": "64f346f4149795e7be1bc450f4a11cd6761de42f2945d0cc1e2be41f877f3331",
+          "log": "artifacts/review-fixes/campus-submissions-after-initial.log",
+          "log_sha256": "2670b3d1e9a5786076a4e41af05c8cae278090ed13669fadff7400731f05e9fc",
+          "tests": 19,
+          "passed": 18,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 26.376,
+          "cases": [
+            {
+              "identity": "tests.test_campus_submissions::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancelling_an_already_published_request_only_returns_its_identity",
+              "state": "failed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_response_loss_and_restart_never_reopen_the_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_and_publish_have_one_atomic_outcome_under_competing_requests",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_is_owner_scoped_and_preserves_current_publisher_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[short]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[invalid request-id]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_survive_legacy_saves_and_block_publication",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names0]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names1]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names2]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names3]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names4]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_tombstones_survive_backup_restore_without_restoring_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[missing_table]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[future_marker]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pre_extension_database_migrates_to_empty_cancellation_ledger",
+              "state": "passed"
+            }
+          ]
+        },
+        "intermediate_green": {
+          "junit": "artifacts/review-fixes/campus-submissions-after.xml",
+          "junit_sha256": "2533059493d3f87a3c6ae3e1aa2b587750d44bd041ed4490b097fb85456d0b4f",
+          "log": "artifacts/review-fixes/campus-submissions-after.log",
+          "log_sha256": "375b1d03f905e44c42243f760a40ce82f99bcf207cfd5389a0055e4bc1fbe4d0",
+          "tests": 20,
+          "passed": 20,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 28.204,
+          "cases": [
+            {
+              "identity": "tests.test_campus_submissions::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancelling_an_already_published_request_only_returns_its_identity",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_response_loss_and_restart_never_reopen_the_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_and_publish_have_one_atomic_outcome_under_competing_requests",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_is_owner_scoped_and_preserves_current_publisher_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[short]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[invalid request-id]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_survive_legacy_saves_and_block_publication",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names0]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names1]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names2]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names3]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names4]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_tombstones_survive_backup_restore_without_restoring_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[missing_table]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[future_marker]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pre_extension_database_migrates_to_empty_cancellation_ledger",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancelled_submission_is_exported_but_cascades_on_account_deletion",
+              "state": "passed"
+            }
+          ]
+        },
+        "final_regression": {
+          "junit": "artifacts/review-fixes/campus-submissions-regression.xml",
+          "junit_sha256": "db4cd5be41f15b199e07e191a7609bec64c15596aed4eb3759166cc033fe6546",
+          "log": "artifacts/review-fixes/campus-submissions-regression.log",
+          "log_sha256": "b8d624d9f42af274b7ea74fd185881d31dca81bffbc8c7a27526c33e607b5bc0",
+          "tests": 70,
+          "passed": 70,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 99.876,
+          "cases": [
+            {
+              "identity": "tests.test_campus_submissions::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancelling_an_already_published_request_only_returns_its_identity",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_response_loss_and_restart_never_reopen_the_request",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_and_publish_have_one_atomic_outcome_under_competing_requests",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_is_owner_scoped_and_preserves_current_publisher_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cross_college_reassignment_keeps_only_the_owners_minimal_submission_receipt",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[short]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[invalid request-id]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_survive_legacy_saves_and_block_publication",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names0]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names1]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names2]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names3]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names4]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancel_tombstones_survive_backup_restore_without_restoring_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[missing_table]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[future_marker]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_pre_extension_database_migrates_to_empty_cancellation_ledger",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_submissions::test_cancelled_submission_is_exported_but_cascades_on_account_deletion",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_explicit_roles_and_scoped_roster_do_not_open_private_data",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_all_college_counselor_scope_must_be_explicit",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_college_grade_class_and_attachments_reach_only_intended_students",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_correction_withdrawal_and_authorization_changes_keep_personal_data",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_delivery_failure_isolated_and_retry_has_no_duplicates",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_explicit_backfill_only_delivers_to_newly_eligible_members",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_review_rejects_a_changed_recipient_set_and_keeps_retry_idempotent",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_counselor_records_are_not_hidden_by_other_publishers",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_permissions::test_cross_college_and_backup_restore_do_not_revive_grants",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_missing_expired_review_rejected_but_committed_retry_is_returned",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_review_changes_when_same_identity_is_reauthorized",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_shared_immutable_attachment_batches_survive_restart_and_keep_owner_boundary",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_queued_delivery_rechecks_member_and_publisher_authority",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_server_draft_version_and_files_restore_then_publish_once",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_official_restore_has_new_evidence_and_does_not_reopen_personal_work",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_recipient_deletion_preserves_students_minimal_receipt_and_revokes_files",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_sender_deletion_anonymizes_staff_receipt_and_scope_is_still_enforced",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_decline_closes_only_collaboration_and_blocks_shared_download",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_roster_preflight_normalizes_years_reports_every_error_and_replays_once",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_roster_preflight_rejects_membership_changes_and_cannot_self_escalate",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_backup_restore_requires_new_grants_and_fresh_review_before_queue_retry",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_transfer_requires_sender_reselection_and_never_copies_private_history",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_publisher_deletion_keeps_already_received_original_and_anonymizes_author",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_campus_audit_cursor_does_not_lose_or_repeat_rows",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_decline_reminder_is_an_owned_current_scope_event_not_a_school_result",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_normalization_preview_shows_exact_recipient_change_without_mutating_it",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_process_restart_invalidates_uncommitted_review_but_preserves_draft",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_publication_rollback_keeps_all_versions_and_exact_immutable_originals",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_campus_sprint::test_manager_corrections_charge_the_actual_version_author_without_losing_old_material",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_registration_requires_and_records_policy_consent",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_invite_registration_also_requires_consent",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_existing_account_can_accept_updated_policy",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_account_deletion_removes_every_personal_record",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_reminders_cover_overdue_unconfirmed_and_personal_reminders",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_reminder_and_insight_endpoints_are_owner_scoped",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_admin_insights_are_aggregate_only",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_notice_list_exposes_relevance",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_reminder_read_archive_restore_persist_without_completing_tasks",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_bulk_read_is_owner_scoped_and_marks_only_submitted_snapshot",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_changed_deadline_reappears_as_unread",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_reminder_identity_tracks_urgency_and_new_sources_not_relative_wording",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_account_and_insights::test_all_reminders_are_available_for_bulk_read_not_only_first_sixty",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_rejected_restore_leaves_no_destination_database[unrelated]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_rejected_restore_leaves_no_destination_database[future]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_rejected_restore_leaves_no_destination_database[broken_relations]",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_existing_restore_target_is_never_overwritten",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_opening_future_schema_does_not_add_tables",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_restore_publish_failure_leaves_no_partial_file",
+              "state": "passed"
+            },
+            {
+              "identity": "tests.test_recovery::test_restore_publication_race_preserves_new_file",
+              "state": "passed"
+            }
+          ]
+        },
+        "new_case_count": 21,
+        "new_cases": [
+          {
+            "identity": "tests.test_campus_submissions::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancelling_an_already_published_request_only_returns_its_identity",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_response_loss_and_restart_never_reopen_the_request",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancel_and_publish_have_one_atomic_outcome_under_competing_requests",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_is_owner_scoped_and_preserves_current_publisher_authority",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cross_college_reassignment_keeps_only_the_owners_minimal_submission_receipt",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[short]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_request_identifiers_are_bounded[invalid request-id]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_survive_legacy_saves_and_block_publication",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names0]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names1]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names2]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names3]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pending_attachment_names_are_only_bounded_metadata[names4]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancel_tombstones_survive_backup_restore_without_restoring_authority",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[missing_table]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancellation_schema_damage_cannot_be_silently_recreated_or_restored[future_marker]",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_pre_extension_database_migrates_to_empty_cancellation_ledger",
+            "state": "passed"
+          },
+          {
+            "identity": "tests.test_campus_submissions::test_cancelled_submission_is_exported_but_cascades_on_account_deletion",
+            "state": "passed"
+          }
+        ],
+        "history_notes": [
+          "The first post-change run had 18 passes and 1 failure because an unchanged-receipt assertion compared entire live projections containing evaluation times. The final assertion compares exact rows from six business tables plus recipient IDs, retaining stronger content/delivery invariants. The original log is preserved.",
+          "The 20-case intermediate green preceded the minimal owner-receipt permission refinement and the new cross-college case. It is historical evidence; the 70-case run is the final targeted result.",
+          "70 includes all 21 new cases and 49 existing cases. Repeated runs are not added as unique test counts."
+        ],
+        "api_contract": {
+          "cancel": "POST /api/campus/submissions/{request_id}/cancel; no request body",
+          "cancelled": {
+            "state": "cancelled"
+          },
+          "already_committed": {
+            "state": "published",
+            "publication_id": "existing id"
+          },
+          "cancelled_publication_post": {
+            "status": 409,
+            "detail_code": "publication_cancelled"
+          },
+          "missing_attachment_publication_post": {
+            "status": 409,
+            "detail_code": "publication_attachments_pending"
+          },
+          "ownership": "Current publisher role remains necessary. Request records are scoped by owner. A previously committed own request returns only its minimal operation receipt after a scope/college change; full publication POST replay and detail access retain current college/scope checks.",
+          "rate_limit": "60 cancellation attempts per current owner per hour using the existing application limiter",
+          "attachment_names": "At most 3 nonblank names, each 1..255 characters. They are metadata only. Omission preserves prior pending names; an explicit empty array resolves the missing-attachment gate."
+        },
+        "verified_behavior": [
+          "Cancel and publish compete within BEGIN IMMEDIATE; exactly one durable outcome is observed.",
+          "A publication already parsed before cancellation is denied after the cancellation commits.",
+          "Repeated cancellation and a lost first response do not create a second decision or publish anything.",
+          "Cancelling an already committed request leaves exact publication, original, delivery, notice and source rows unchanged.",
+          "The same request ID in another account has independent state; a student or anonymous user cannot cancel as a publisher.",
+          "Missing attachment names survive reload and a legacy text-only save; publication remains blocked until explicit resolution.",
+          "Restored cancelled IDs remain blocked after fresh organizational grants; restore itself does not regrant campus authority.",
+          "The personal export includes only this owner cancellation records; a portable import into another account does not restore those request states.",
+          "Deleting the account cascades cancellation records while retaining other owners records.",
+          "A pre-extension database adds an empty ledger; a present marker with missing table or unsupported future version refuses startup and restore."
+        ],
+        "backup_scope": {
+          "sequence_tested": [
+            "commit cancellation",
+            "create SQLite backup",
+            "restore that backup",
+            "fresh login and explicit campus reauthorization",
+            "retry the cancelled ID and verify 409"
+          ],
+          "limit": "Only cancellations present in the restored snapshot are preserved. A snapshot created before a later cancellation cannot recover it; normal restore RPO, cleared sessions/consents and fresh authorization restrictions remain applicable."
+        },
+        "commands": {
+          "red": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_campus_submissions.py::test_stale_draft_can_be_stopped_without_reusing_its_confirmed_request tests/test_campus_submissions.py::test_an_already_parsed_late_publication_cannot_bypass_committed_cancellation tests/test_campus_submissions.py::test_pending_attachment_names_survive_legacy_saves_and_block_publication --disable-warnings --tb=short --junitxml=artifacts/review-fixes/campus-submissions-before.xml",
+          "cross_college_red": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_campus_submissions.py::test_cross_college_reassignment_keeps_only_the_owners_minimal_submission_receipt --disable-warnings --tb=short --junitxml=artifacts/review-fixes/campus-submissions-cross-college-before.xml",
+          "final_regression": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_campus_submissions.py tests/test_campus_permissions.py tests/test_campus_sprint.py tests/test_account_and_insights.py tests/test_recovery.py --disable-warnings --tb=short --junitxml=artifacts/review-fixes/campus-submissions-regression.xml"
+        },
+        "limits": [
+          "Synthetic campus identities and documents; no real school or supplier calls.",
+          "No performance gate or prior failed performance observation was changed.",
+          "Source/test changes are uncommitted; frontend integration and final full regression are separate root-owned gates."
+        ],
+        "source_freeze_utc": "2026-11-14T07:44:23.782924+00:00",
+        "independent_review": {
+          "reviewer": "campus_workflows",
+          "mode": "read_only_source_and_raw_evidence_review",
+          "findings": "No concrete additional defect found. Owner/transaction, minimal receipt versus scoped full view, missing attachment gate, snapshot restoration, deletion cascade and portable export boundaries checked.",
+          "evidence": "All 7 owned source/test hashes and root main hash matched; original red 3, cross-college red 1 and final 70-case JUnit/log counts and hashes independently checked; 21 new plus 49 existing cases; no tests rerun."
+        }
+      }
+    },
+    "frontend": {
+      "source_path": "artifacts/review-followup/frontend-verification.json",
+      "sha256": "43d98307c15d5f8395e53d22ee01457468dd7238c17a565de2a194e502149879",
+      "record": {
+        "frozen_at": "2026-11-14T07:43:24.294579+00:00",
+        "base_commit": "71f23009baf16825168304df7fa4e1455065d147",
+        "branch": "codex/sprint-review-2026-11-14",
+        "before": {
+          "log": "artifacts/review-followup/frontend-before.log",
+          "tests": 7,
+          "passed": 5,
+          "failed": 2,
+          "failures": [
+            {
+              "name": "lost publication response replays the confirmed payload before touching its deleted draft",
+              "observed": "Publication endpoint reached once, expected twice; deleted draft PUT blocked idempotent replay."
+            },
+            {
+              "name": "clock refresh preserves every loaded page and only exposes the complete refreshed range",
+              "observed": "50 rows after clock refresh, expected previously loaded 60."
+            }
+          ]
+        },
+        "after": {
+          "focused": {
+            "command": "node --test tests/campus-publication-retry.test.mjs tests/campus-publication-submission.test.mjs tests/paged-list.test.mjs tests/list-clock.test.mjs tests/workspace-projection.test.mjs",
+            "log": "artifacts/review-followup/frontend-focused.log",
+            "tests": 35,
+            "passed": 35,
+            "failed": 0,
+            "skipped": 0
+          },
+          "all_node": {
+            "command": "npm test",
+            "log": "artifacts/review-followup/frontend-node-all.log",
+            "tests": 302,
+            "passed": 302,
+            "failed": 0,
+            "skipped": 0
+          },
+          "syntax": "All eight affected product modules and the sprint browser script passed node --check.",
+          "diff_check": "git diff --check passed."
+        },
+        "browser": {
+          "status": "pending_ci",
+          "local_browser_run": false,
+          "suite": "scripts/verify_sprint_ui.mjs",
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "previous_checks_per_engine": 20,
+          "checks_per_engine": 25,
+          "expected_checks": 75,
+          "unchanged_previous_checks": [
+            "cold and warm loads expose usable input and record honest performance evidence",
+            "first arrival guide is optional, honest about unverified identity, and persisted per account",
+            "the skipped guide remains accessible from the personal page",
+            "54 actual tasks are committed through ordinary intake and confirmation",
+            "home totals and calendar use the full lightweight account projection",
+            "task list reports a bounded first page and loads the remaining real records",
+            "full collection search finds a record beyond the initial page",
+            "an obsolete query response cannot overwrite the latest server filter",
+            "failed completion rolls back and persistent error stays above the mobile navigation",
+            "confirmed completion persists and task controls have separate 44 pixel targets",
+            "a pending submission opens its handling record without completion or celebration",
+            "notification matrix and plan are actual account data; category change is saved",
+            "per-notice override preserves all other preferences",
+            "lifecycle editor opens from the original notice with explicit phase and evidence controls",
+            "composer prioritizes text and its More menu supports keyboard exit at 320 pixels",
+            "secondary reply actions remain available behind an accessible disclosure",
+            "warm chat reload records route asset costs and retains usable composer",
+            "another account does not inherit dismissal and shows its actual authorized identity",
+            "incomplete publication draft and attachment survive a full browser reload",
+            "new routes and interactions finish without uncaught page errors"
+          ],
+          "new_checks": [
+            "a clock-only signal preserves all 54 loaded tasks, focused node and scroll without reloading unchanged full records",
+            "a card loaded from the second board page remains on page one after an actual upward move",
+            "a committed publication with a lost response retries the identical confirmed payload without saving its deleted draft",
+            "an uncertain publication survives reload and its recovery preserves new draft input and unresolved attachment names",
+            "stopping an uncommitted publication preserves its draft and rejects a later replay of the stopped request"
+          ],
+          "timeout_seconds": 360,
+          "note": "The clock regression controls only the existing revision endpoint clock signal; collection data comes from actual application APIs. No product testing route was added."
+        },
+        "boundaries": [
+          "Original publication payload is durable in owner-scoped edit-cache before external publishing; retries retain request_id and original draft version.",
+          "New input uses a separate server draft; unresolved attachment names are explicit metadata, never claimed as copied files.",
+          "Stopping an uncertain publication uses a server tombstone, not local cache deletion; published receipts do not withdraw or restore notices.",
+          "Warm ordinary lists merge only lightweight clock fields; unchanged display values cause no page read or DOM paint.",
+          "Sensitive filters refill the full loaded range only on relevant signature changes; unknown or changed stable projection revisions also force a real range refresh.",
+          "A stale time-sensitive cursor reloads the previous range plus the requested next page without showing a first-page-only intermediate state.",
+          "Board requests explicitly use sort=board; list requests retain their original sort."
+        ],
+        "not_run": [
+          "Production build (reserved for root)",
+          "Actual new browser regression execution (reserved for GitHub CI)"
+        ],
+        "owned_files_sha256": {
+          "static/app.js": "42ca3ead8d389c20f9152c160ca935e7a70e070270d85c737cf024ce7e028e69",
+          "static/campus.js": "f81721050fd5cf00171232e59449437cb885ee59a971c771fbf972f1d4760df1",
+          "static/library.js": "8a485b07a6d5f556db9c179251c867b5abca47a6a8a2e8a989b25640fcbe81fd",
+          "static/paged-list.js": "9e13331bd584abe4af05f89185bbfbddf414f0af149c1273b4b63b83cb092dce",
+          "static/workspace-projection.js": "865c07d93cc18a924fbd775aa8cc1e60820ea29176cfc5a505cd38e955a8d1cd",
+          "static/campus-publication-submission.js": "7a69f2d69ab45b4a0af14b728010102880300870c93a98a7753f45ef2851171b",
+          "static/list-clock.js": "15e9a130e22d0d2a3285c2fbcea44d0ca440c3498593b0fbb8b233c536869e25",
+          "static/list-viewport.js": "c92e247156f6c42e1505a5c25c9fd462f3bdb97bc2bc9fba635fb2fd65ddb291",
+          "tests/paged-list.test.mjs": "f044cdb9425cb12d684c82df2ac886ffd0a56f669b2ff3e95888cf88688cadde",
+          "tests/workspace-projection.test.mjs": "65bea504dd83f732bb0cb253ae5c15ad5f7e5f5cc36d3eb6115d4fa8b8b10c3c",
+          "tests/campus-publication-retry.test.mjs": "dc1d4de718e94255daf21cb8aeb96ccf5d3bcc6c901d880a0d87047088a4855a",
+          "tests/campus-publication-submission.test.mjs": "886f38b7dcdd2cfab18f3553ceb7b312ed31ee75b993f5c335026164987cbaea",
+          "tests/list-clock.test.mjs": "70cc532fa0cf87e814d84d6f5ef3b9e7d1e6fd3086a143b21b9b073ad3ef29ef",
+          "scripts/verify_sprint_ui.mjs": "e3a847a22ccb53567aa0d0920cd3efc782bed9260cbbbce1745b5c9938e08f60"
+        },
+        "logs_sha256": {
+          "frontend-before.log": "3f82371f2fca4fee2235be3db1899e7ab7490a597c71f25672872247aa5aea0d",
+          "frontend-focused.log": "4e3b3be248c76a81ee8ab12eb740713a95d1a09d6a7f7df65e191d8cb1439c02",
+          "frontend-node-all.log": "f9fa2b67f422af09e7ee6268a307a04d25281fc53d5c41084406ea0195bc11ee"
+        }
+      }
+    },
+    "board_order": {
+      "source_path": "artifacts/review-fixes/task-board-verification.json",
+      "sha256": "a6705e2cbadeec1298bae93a1707e36243c1f7f86d9300676147a9e84b61c0a1",
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T07:27:56.056438+00:00",
+        "source_freeze_utc": "2026-11-14T07:25:38.261205+00:00",
+        "baseline_commit": "71f23009baf16825168304df7fa4e1455065d147",
+        "branch": "codex/sprint-review-2026-11-14",
+        "review_comment": {
+          "id": 4571728274,
+          "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4#discussion_r4571728274",
+          "finding": "超过50项时，第二页卡片置顶保存成功后，创建时间分页再次选取原前50项，导致优先卡片从首屏消失。"
+        },
+        "status": "local_targeted_verified_full_suite_and_browser_pending",
+        "current_source": {
+          "app/listing.py": {
+            "working_sha256": "9c9ea82efa3096e54696a404a72701de8d47d517fbcf82c0f505e93df9e4284e",
+            "baseline_sha256": "574a7aebf4ec00e5b4984c450300cd74bf2d7acc150d31d35fe0427299920c32"
+          },
+          "app/task_board.py": {
+            "working_sha256": "ae6355354ff34ea26f6b45b82542d10d782dd375f2ceb401a21beb95fa65bd7c",
+            "baseline_sha256": "ae6355354ff34ea26f6b45b82542d10d782dd375f2ceb401a21beb95fa65bd7c"
+          },
+          "app/main.py": {
+            "working_sha256": "1ded0ea0a026a6dc923f89a35913fc2389220f1acc10f9ae4826f7d22a04d5d3",
+            "baseline_sha256": "35b474dd3ef7908e247d8d35915deb915e1be148f52b3cd10003877bfe4ac964"
+          },
+          "tests/test_task_board.py": {
+            "working_sha256": "d40962ceda5a8abd05ff418a5bf811f57791df33a69298b3bd11fca7ea5a3a6f",
+            "baseline_sha256": "5ed3fc39d4e06ab7d902ef2e5b27be188ab4722e7782646d0557dae16c5ce842"
+          }
+        },
+        "source_hash_scope": "当前文件字节指纹。listing.py 与 test_task_board.py 与上述 freeze 指纹一致；task_board.py 未改；main.py 是 root 当前整合版本（包含 sort 接线及其他获授权修改），不声称这些散列在历史 red 时已经存在。",
+        "before": {
+          "junit": "artifacts/review-fixes/task-board-before.xml",
+          "junit_sha256": "5b85837cab9734a74aeb69e05dfee4bdaa4155d9c026dd99944de2d60de2f960",
+          "log": "artifacts/review-fixes/task-board-before.log",
+          "log_sha256": "c1a78a19d83e1c9b0edf551385b490c293f363acdc948440626306f42679badc",
+          "tests": 1,
+          "failures": 1,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 2.256,
+          "passed": 0,
+          "case_names": [
+            "tests.test_task_board::test_second_page_card_moved_to_top_survives_the_board_first_page_reload"
+          ]
+        },
+        "after": {
+          "junit": "artifacts/review-fixes/task-board-after.xml",
+          "junit_sha256": "d1f6a56ae014ab641f430887dd2aa81e3fec7635df84c129741ee315e1ac89fe",
+          "log": "artifacts/review-fixes/task-board-after.log",
+          "log_sha256": "d15436809425925a1bdfcb4cad3178d023d085304e4cf5811df4513285c3f8f2",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 4.507,
+          "passed": 3,
+          "case_names": [
+            "tests.test_task_board::test_second_page_card_moved_to_top_survives_the_board_first_page_reload",
+            "tests.test_task_board::test_board_page_cursor_binds_owner_filters_and_explicit_sort_mode",
+            "tests.test_task_board::test_board_pages_preserve_each_complete_lane_and_filtered_hidden_cards"
+          ]
+        },
+        "compatibility_regression": {
+          "junit": "artifacts/review-fixes/task-board-focused.xml",
+          "junit_sha256": "c972e1e3017a104bf87485528034e01a09bd33604fba48ed53ab3cd181cb036b",
+          "log": "artifacts/review-fixes/task-board-focused.log",
+          "log_sha256": "6261b2ea22db9a326972bbbe09039e4a6185169578f379372a717f22d1bdbf89",
+          "tests": 42,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 27.444,
+          "passed": 42,
+          "case_names": [
+            "tests.test_task_board::test_second_page_card_moved_to_top_survives_the_board_first_page_reload",
+            "tests.test_task_board::test_board_page_cursor_binds_owner_filters_and_explicit_sort_mode",
+            "tests.test_task_board::test_board_pages_preserve_each_complete_lane_and_filtered_hidden_cards",
+            "tests.test_task_board::test_board_order_survives_refresh_without_changing_requirements",
+            "tests.test_task_board::test_first_move_preserves_paged_order_when_legacy_update_order_differs",
+            "tests.test_task_board::test_move_completion_and_undo_are_atomic_and_do_not_claim_submission",
+            "tests.test_task_board::test_followup_is_personal_placement_and_can_be_reordered",
+            "tests.test_task_board::test_completion_gate_failure_keeps_both_order_and_status",
+            "tests.test_task_board::test_stale_move_and_stale_undo_cannot_overwrite_new_progress",
+            "tests.test_task_board::test_board_anchor_is_owner_scoped_and_filtered_moves_preserve_hidden_cards",
+            "tests.test_task_board::test_cancelled_card_cannot_be_reopened_by_drag",
+            "tests.test_task_board::test_undo_survives_a_moved_neighbor_without_overwriting_it",
+            "tests.test_task_board::test_concurrent_moves_of_the_same_card_have_one_winner",
+            "tests.test_sprint_lists::test_all_pages_cover_the_exact_inventory_with_bounded_bodies",
+            "tests.test_sprint_lists::test_index_matches_body_title_short_chinese_and_literal_punctuation",
+            "tests.test_sprint_lists::test_index_tracks_source_revisions_archive_delete_and_transaction_rollback",
+            "tests.test_sprint_lists::test_cursor_is_owner_filter_and_revision_bound",
+            "tests.test_sprint_lists::test_semantic_filters_are_applied_before_pagination_and_cache_invalidates",
+            "tests.test_sprint_lists::test_task_semantics_dates_and_selected_ids_are_owner_scoped",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[0]",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[101]",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[-1]",
+            "tests.test_usage_limits::test_campus_defaults_and_private_usage_endpoint",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[[]]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"unknown\":1}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"notices\":false}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"storage_bytes\":0}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"notices\":-1}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"automation_daily_max\":1}]",
+            "tests.test_usage_limits::test_existing_account_can_cross_old_200_notice_limit_and_import_same_export",
+            "tests.test_usage_limits::test_configured_capacity_applies_to_manual_intake_import_and_duplicate_replay",
+            "tests.test_usage_limits::test_conversation_capacity_covers_notice_promotion_and_existing_account",
+            "tests.test_usage_limits::test_automation_default_and_maximum_follow_deployment_policy",
+            "tests.test_usage_limits::test_storage_policy_is_shared_across_notices_and_conversation_copy",
+            "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+            "tests.test_workspace_projection::test_complete_projection_over_fifty_matches_inventory_dates_flags_and_reduces_payload",
+            "tests.test_workspace_projection::test_minute_refresh_recalculates_deadline_followup_and_notice_age_without_body_reads",
+            "tests.test_workspace_projection::test_stable_mutation_and_restore_instance_force_complete_light_snapshot",
+            "tests.test_workspace_projection::test_private_cache_and_etags_never_cross_accounts_or_survive_deleted_auth",
+            "tests.test_workspace_projection::test_cache_expiry_eviction_and_oversize_never_return_stale_partial_inventory",
+            "tests.test_workspace_projection::test_calendar_text_search_keeps_full_owner_inventory_without_returning_text",
+            "tests.test_workspace_projection::test_received_publication_validity_rechecks_clock_without_changing_stable_revision"
+          ]
+        },
+        "new_cases": [
+          {
+            "name": "test_second_page_card_moved_to_top_survives_the_board_first_page_reload",
+            "before": "failed",
+            "after": "passed",
+            "coverage": [
+              "60项真实确认生成",
+              "第二页第56项移动到顶部",
+              "move与reload均HTTP200",
+              "首次50项重载包含顶部目标",
+              "完整两页不漏不重",
+              "普通列表创建顺序保持",
+              "原data/version/status不变",
+              "move后旧board游标409"
+            ]
+          },
+          {
+            "name": "test_board_page_cursor_binds_owner_filters_and_explicit_sort_mode",
+            "before": "not_run",
+            "after": "passed",
+            "coverage": [
+              "board与created游标签名隔离422",
+              "owner与filter绑定422",
+              "无效sort422",
+              "显式created兼容既有cursor",
+              "selected IDs不会返回其他账号任务"
+            ]
+          },
+          {
+            "name": "test_board_pages_preserve_each_complete_lane_and_filtered_hidden_cards",
+            "before": "not_run",
+            "after": "passed",
+            "coverage": [
+              "60项多lane与同rank交错",
+              "每页7项跨完整集合无遗漏重复",
+              "action/followup各自相对顺序",
+              "pending/followup语义筛选先于分页",
+              "lane与IDs筛选保序",
+              "隐藏卡片持久优先级不被筛选改变"
+            ]
+          }
+        ],
+        "commands": {
+          "before": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_task_board.py::test_second_page_card_moved_to_top_survives_the_board_first_page_reload -q --tb=short --junitxml=artifacts/review-fixes/task-board-before.xml > artifacts/review-fixes/task-board-before.log 2>&1",
+          "after": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_task_board.py::test_second_page_card_moved_to_top_survives_the_board_first_page_reload tests/test_task_board.py::test_board_page_cursor_binds_owner_filters_and_explicit_sort_mode tests/test_task_board.py::test_board_pages_preserve_each_complete_lane_and_filtered_hidden_cards -q --tb=short --junitxml=artifacts/review-fixes/task-board-after.xml > artifacts/review-fixes/task-board-after.log 2>&1",
+          "compatibility": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_task_board.py tests/test_sprint_lists.py tests/test_usage_limits.py tests/test_workspace_projection.py --disable-warnings --tb=short --junitxml=artifacts/review-fixes/task-board-focused.xml > artifacts/review-fixes/task-board-focused.log 2>&1"
+        },
+        "api_contract": {
+          "board": "GET /api/tasks/page?sort=board",
+          "default": "sort omitted or created preserves created_at_desc_id_desc and preexisting filter signature",
+          "board_order": "board_order_asc_created_at_desc_id_desc",
+          "invalid_or_mismatched_cursor_status": 422,
+          "changed_revision_cursor_status": 409
+        },
+        "implementation_notes": [
+          "完整本人筛选集合先复用 task_board.ordered，再按游标切页。",
+          "普通看板排序只读id/created_at/board_order元数据，缓存只存ID；语义筛选复用原有enrich规则。",
+          "已选实体和附件查询继续复用owner过滤；未降低既有search<15 SELECT门槛。"
+        ],
+        "independent_review": {
+          "reviewer": "campus_workflows",
+          "mode": "read_only_source_review",
+          "finding": "未发现具体缺陷；未另跑测试。"
+        },
+        "counts_scope": "42项联合回归已经包含3项新用例，不把red/green/联合运行相加为独立用例数。",
+        "scope_limits": [
+          "本报告不宣称新候选全量测试或浏览器已通过。",
+          "无真实通知外发、无性能负载重跑、未变更原性能门槛。",
+          "未改已提交docs；本任务未commit/push。"
+        ]
+      }
+    },
+    "minute_cursor": {
+      "source_path": "artifacts/review-list-clock/verification.json",
+      "sha256": "b350719ddf8e9663902677f223f3f49a23bd00ff0bccfac5f5747588f235e006",
+      "record": {
+        "issue": "Clock-only list refresh could discard pages; static cursor signatures also expired each minute.",
+        "requirements": [
+          "LJ-117",
+          "LJ-119"
+        ],
+        "before": {
+          "junit": "artifacts/review-list-clock/before.xml",
+          "junit_sha256": "3e9326989816299a7de9938c9b3b44e26bc0791297435b0781508fd9f809a994",
+          "log": "artifacts/review-list-clock/before.log",
+          "log_sha256": "8947f06bd25408c1ca5db8691d19fbb8e35fef78cead4cb2557763ebc8883cf8",
+          "tests": 7,
+          "passed": 2,
+          "failures": 5,
+          "errors": 0,
+          "skipped": 0,
+          "elapsed_seconds": 6.206,
+          "case_ids": [
+            "tests.test_sprint_lists::test_stable_task_filter_cursor_survives_minute_without_losing_revision_guard[]",
+            "tests.test_sprint_lists::test_stable_task_filter_cursor_survives_minute_without_losing_revision_guard[board]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[collected]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[published]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[updated]",
+            "tests.test_sprint_lists::test_time_sensitive_page_cursor_still_requires_refresh_after_minute[tasks]",
+            "tests.test_sprint_lists::test_time_sensitive_page_cursor_still_requires_refresh_after_minute[notices]"
+          ]
+        },
+        "after": {
+          "junit": "artifacts/review-list-clock/after.xml",
+          "junit_sha256": "4b7d507695a402f9129715620c6ebe575220c40b0f4337e4a2d81912a70c8025",
+          "log": "artifacts/review-list-clock/after.log",
+          "log_sha256": "67b447ec33f123b1eac3ec2fd92d87d83adee7d003cf57928191ac7f9aab8940",
+          "tests": 49,
+          "passed": 49,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "elapsed_seconds": 34.885,
+          "case_ids": [
+            "tests.test_sprint_lists::test_all_pages_cover_the_exact_inventory_with_bounded_bodies",
+            "tests.test_sprint_lists::test_index_matches_body_title_short_chinese_and_literal_punctuation",
+            "tests.test_sprint_lists::test_index_tracks_source_revisions_archive_delete_and_transaction_rollback",
+            "tests.test_sprint_lists::test_cursor_is_owner_filter_and_revision_bound",
+            "tests.test_sprint_lists::test_semantic_filters_are_applied_before_pagination_and_cache_invalidates",
+            "tests.test_sprint_lists::test_task_semantics_dates_and_selected_ids_are_owner_scoped",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[0]",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[101]",
+            "tests.test_sprint_lists::test_page_limits_cannot_turn_into_full_reads[-1]",
+            "tests.test_sprint_lists::test_stable_task_filter_cursor_survives_minute_without_losing_revision_guard[]",
+            "tests.test_sprint_lists::test_stable_task_filter_cursor_survives_minute_without_losing_revision_guard[board]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[collected]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[published]",
+            "tests.test_sprint_lists::test_stable_notice_filter_cursor_survives_minute[updated]",
+            "tests.test_sprint_lists::test_time_sensitive_page_cursor_still_requires_refresh_after_minute[tasks]",
+            "tests.test_sprint_lists::test_time_sensitive_page_cursor_still_requires_refresh_after_minute[notices]",
+            "tests.test_task_board::test_second_page_card_moved_to_top_survives_the_board_first_page_reload",
+            "tests.test_task_board::test_board_page_cursor_binds_owner_filters_and_explicit_sort_mode",
+            "tests.test_task_board::test_board_pages_preserve_each_complete_lane_and_filtered_hidden_cards",
+            "tests.test_task_board::test_board_order_survives_refresh_without_changing_requirements",
+            "tests.test_task_board::test_first_move_preserves_paged_order_when_legacy_update_order_differs",
+            "tests.test_task_board::test_move_completion_and_undo_are_atomic_and_do_not_claim_submission",
+            "tests.test_task_board::test_followup_is_personal_placement_and_can_be_reordered",
+            "tests.test_task_board::test_completion_gate_failure_keeps_both_order_and_status",
+            "tests.test_task_board::test_stale_move_and_stale_undo_cannot_overwrite_new_progress",
+            "tests.test_task_board::test_board_anchor_is_owner_scoped_and_filtered_moves_preserve_hidden_cards",
+            "tests.test_task_board::test_cancelled_card_cannot_be_reopened_by_drag",
+            "tests.test_task_board::test_undo_survives_a_moved_neighbor_without_overwriting_it",
+            "tests.test_task_board::test_concurrent_moves_of_the_same_card_have_one_winner",
+            "tests.test_usage_limits::test_campus_defaults_and_private_usage_endpoint",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[[]]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"unknown\":1}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"notices\":false}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"storage_bytes\":0}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"notices\":-1}]",
+            "tests.test_usage_limits::test_capacity_configuration_rejects_ambiguous_values[{\"automation_daily_max\":1}]",
+            "tests.test_usage_limits::test_existing_account_can_cross_old_200_notice_limit_and_import_same_export",
+            "tests.test_usage_limits::test_configured_capacity_applies_to_manual_intake_import_and_duplicate_replay",
+            "tests.test_usage_limits::test_conversation_capacity_covers_notice_promotion_and_existing_account",
+            "tests.test_usage_limits::test_automation_default_and_maximum_follow_deployment_policy",
+            "tests.test_usage_limits::test_storage_policy_is_shared_across_notices_and_conversation_copy",
+            "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+            "tests.test_workspace_projection::test_complete_projection_over_fifty_matches_inventory_dates_flags_and_reduces_payload",
+            "tests.test_workspace_projection::test_minute_refresh_recalculates_deadline_followup_and_notice_age_without_body_reads",
+            "tests.test_workspace_projection::test_stable_mutation_and_restore_instance_force_complete_light_snapshot",
+            "tests.test_workspace_projection::test_private_cache_and_etags_never_cross_accounts_or_survive_deleted_auth",
+            "tests.test_workspace_projection::test_cache_expiry_eviction_and_oversize_never_return_stale_partial_inventory",
+            "tests.test_workspace_projection::test_calendar_text_search_keeps_full_owner_inventory_without_returning_text",
+            "tests.test_workspace_projection::test_received_publication_validity_rechecks_clock_without_changing_stable_revision"
+          ]
+        },
+        "before_source": {
+          "phase": "before clock-specific cursor correction, after board-order correction",
+          "base_commit": "71f23009baf16825168304df7fa4e1455065d147",
+          "source_sha256": {
+            "app/listing.py": "9c9ea82efa3096e54696a404a72701de8d47d517fbcf82c0f505e93df9e4284e",
+            "app/main.py": "1ded0ea0a026a6dc923f89a35913fc2389220f1acc10f9ae4826f7d22a04d5d3",
+            "tests/test_sprint_lists.py": "121e75704251f3bbc97ea4b4a8a203e8185d8c197a9ce243c7c3c0b731dd277f"
+          },
+          "scope": "targeted worktree; not a frozen whole-repository run"
+        },
+        "after_source_sha256": {
+          "app/listing.py": "96ae67c02902e404e552bd8235b4fa8e125c4cb232c2081c865cc54129f8e8ec",
+          "tests/test_sprint_lists.py": "121e75704251f3bbc97ea4b4a8a203e8185d8c197a9ce243c7c3c0b731dd277f"
+        },
+        "verified_at": "2026-11-14T07:37:02.048615+00:00",
+        "scope": "Targeted worktree verification; later frozen full runs independently bind the complete implementation.",
+        "invariants": [
+          "Owner/filter HMAC and committed revision checks retained",
+          "One-hour cursor expiry retained",
+          "Clock lease retained for task followup/soon and notice temporal intent/priority/deadline",
+          "Stable list ordering unchanged",
+          "Original search query budget unchanged"
+        ]
+      }
+    },
+    "owner_private_publication_cache": {
+      "junit": "artifacts/review-fixes/edit-cache.xml",
+      "sha256": "ab4a05dcbe9a46e95c53c7b052dc61acbefc70efb9ef386d3235829065ffa30c",
+      "tests": 10,
+      "passed": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "case_ids": [
+        "tests.test_edit_cache::test_cache_round_trip_is_private_and_durable",
+        "tests.test_edit_cache::test_stale_tab_cannot_overwrite_or_resurrect_cleared_draft",
+        "tests.test_edit_cache::test_notice_cache_ownership_version_and_delete_cascade",
+        "tests.test_edit_cache::test_task_form_cache_retired_after_versioned_save",
+        "tests.test_edit_cache::test_cache_keys_are_bounded_and_validated[arbitrary]",
+        "tests.test_edit_cache::test_cache_keys_are_bounded_and_validated[notice:not-an-id:1]",
+        "tests.test_edit_cache::test_cache_keys_are_bounded_and_validated[new-notice-2]",
+        "tests.test_edit_cache::test_cache_keys_are_bounded_and_validated[task:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:0]",
+        "tests.test_edit_cache::test_cache_payload_limit",
+        "tests.test_edit_cache::test_pending_campus_publication_cache_is_private_versioned_and_not_authorization"
+      ]
+    }
+  },
+  "independent_local_runtime": [
+    {
+      "artifact": "artifacts/sprint-review-followup/runtime-5.json",
+      "sha256": "fe0b1489042cbda1bc656862e65256e7de99dc97ba0d47d77064b696ffc9af3e",
+      "record": {
+        "verified_at": "2026-11-14T07:47:06.203209+00:00",
+        "result": "passed",
+        "environment": {
+          "python": "3.12.14",
+          "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+        },
+        "implementation_sha256": "956d87e97ab18a86baa06b6613d7b97523ae03f6e6e7337b53193b34eb9d5121",
+        "synthetic_test": true,
+        "live_model_calls": 0,
+        "concurrent_users": 5,
+        "notices_saved": 100,
+        "tasks_saved": 200,
+        "http_requests": 766,
+        "response_status_counts": {
+          "200": 651,
+          "401": 5,
+          "404": 10,
+          "409": 100
+        },
+        "operations": [
+          {
+            "method": "GET",
+            "route": "/api/admin/readiness",
+            "status": 200,
+            "samples": 1,
+            "p50_ms": 17.8,
+            "p95_ms": 17.8,
+            "max_ms": 17.8
+          },
+          {
+            "method": "GET",
+            "route": "/api/edit-cache/new-notice",
+            "status": 200,
+            "samples": 5,
+            "p50_ms": 14.0,
+            "p95_ms": 15.0,
+            "max_ms": 15.0
+          },
+          {
+            "method": "GET",
+            "route": "/api/notices",
+            "status": 200,
+            "samples": 5,
+            "p50_ms": 76.3,
+            "p95_ms": 106.4,
+            "max_ms": 106.4
+          },
+          {
+            "method": "GET",
+            "route": "/api/notices/{id}",
+            "status": 404,
+            "samples": 5,
+            "p50_ms": 14.3,
+            "p95_ms": 16.9,
+            "max_ms": 16.9
+          },
+          {
+            "method": "GET",
+            "route": "/api/session",
+            "status": 200,
+            "samples": 10,
+            "p50_ms": 18.9,
+            "p95_ms": 171.1,
+            "max_ms": 171.1
+          },
+          {
+            "method": "GET",
+            "route": "/api/tasks",
+            "status": 200,
+            "samples": 110,
+            "p50_ms": 73.6,
+            "p95_ms": 193.8,
+            "max_ms": 346.9
+          },
+          {
+            "method": "GET",
+            "route": "/api/tasks",
+            "status": 401,
+            "samples": 5,
+            "p50_ms": 8.9,
+            "p95_ms": 36.0,
+            "max_ms": 36.0
+          },
+          {
+            "method": "POST",
+            "route": "/api/auth/login",
+            "status": 200,
+            "samples": 10,
+            "p50_ms": 157.0,
+            "p95_ms": 388.5,
+            "max_ms": 388.5
+          },
+          {
+            "method": "POST",
+            "route": "/api/calendar/export",
+            "status": 200,
+            "samples": 5,
+            "p50_ms": 86.5,
+            "p95_ms": 228.1,
+            "max_ms": 228.1
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices",
+            "status": 200,
+            "samples": 100,
+            "p50_ms": 99.9,
+            "p95_ms": 184.6,
+            "max_ms": 270.8
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices/{id}/confirm",
+            "status": 200,
+            "samples": 105,
+            "p50_ms": 141.8,
+            "p95_ms": 269.6,
+            "max_ms": 448.1
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices/{id}/manual",
+            "status": 200,
+            "samples": 100,
+            "p50_ms": 144.1,
+            "p95_ms": 291.0,
+            "max_ms": 331.1
+          },
+          {
+            "method": "PUT",
+            "route": "/api/edit-cache/new-notice",
+            "status": 200,
+            "samples": 100,
+            "p50_ms": 139.8,
+            "p95_ms": 242.8,
+            "max_ms": 453.3
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 200,
+            "samples": 100,
+            "p50_ms": 134.2,
+            "p95_ms": 267.1,
+            "max_ms": 331.9
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 404,
+            "samples": 5,
+            "p50_ms": 15.6,
+            "p95_ms": 20.9,
+            "max_ms": 20.9
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 409,
+            "samples": 100,
+            "p50_ms": 136.5,
+            "p95_ms": 248.0,
+            "max_ms": 352.3
+          }
+        ],
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 777,
+            "samples": 777,
+            "p50_ms": 34.762,
+            "p95_ms": 101.063,
+            "max_ms": 149.677
+          },
+          "hold": {
+            "total_observations": 777,
+            "samples": 777,
+            "p50_ms": 14.434,
+            "p95_ms": 44.859,
+            "max_ms": 93.121
+          }
+        },
+        "percentile_method": "nearest_rank",
+        "ordinary_crud_latency_ms": {
+          "samples": 625,
+          "p50": 123.3,
+          "p95": 261.5,
+          "max": 453.3
+        },
+        "engineering_targets": {
+          "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+          "ordinary_crud_p95": {
+            "limit_ms_exclusive": 1000,
+            "passed": true
+          },
+          "write_total_wait_p95": {
+            "limit_ms_exclusive": 100,
+            "passed": false
+          },
+          "write_acquisitions": {
+            "allowed_failures": 0,
+            "passed": true
+          }
+        },
+        "recovery_observations": {
+          "backup_seconds": 0.046,
+          "restart_verified_seconds": 2.013,
+          "restore_file_seconds": 0.055,
+          "restore_verified_seconds": 2.198,
+          "confirmed_tasks_lost_in_fixture": 0,
+          "task_identity_and_business_content_equal": true,
+          "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+          "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+        },
+        "workload_seconds": 20.05,
+        "request_latency_ms": {
+          "median": 123.3,
+          "p95": 262.9,
+          "max": 453.3
+        },
+        "restart_preserved_tasks": true,
+        "restore_preserved_tasks_and_edit_caches": true,
+        "restored_old_sessions_rejected": true,
+        "cross_account_access_rejected": true,
+        "stale_updates_rejected": true,
+        "idempotent_replays_passed": true,
+        "elapsed_seconds": 27.08,
+        "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+        "implementation_unchanged": true
+      }
+    },
+    {
+      "artifact": "artifacts/sprint-review-followup/runtime-10.json",
+      "sha256": "f688b57e30cd002e108ac06a0398eae2bc76c47c987238f74cd5997877459e66",
+      "record": {
+        "verified_at": "2026-11-14T07:48:00.159439+00:00",
+        "result": "passed",
+        "environment": {
+          "python": "3.12.14",
+          "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+        },
+        "implementation_sha256": "956d87e97ab18a86baa06b6613d7b97523ae03f6e6e7337b53193b34eb9d5121",
+        "synthetic_test": true,
+        "live_model_calls": 0,
+        "concurrent_users": 10,
+        "notices_saved": 200,
+        "tasks_saved": 400,
+        "http_requests": 1531,
+        "response_status_counts": {
+          "200": 1301,
+          "401": 10,
+          "404": 20,
+          "409": 200
+        },
+        "operations": [
+          {
+            "method": "GET",
+            "route": "/api/admin/readiness",
+            "status": 200,
+            "samples": 1,
+            "p50_ms": 16.7,
+            "p95_ms": 16.7,
+            "max_ms": 16.7
+          },
+          {
+            "method": "GET",
+            "route": "/api/edit-cache/new-notice",
+            "status": 200,
+            "samples": 10,
+            "p50_ms": 13.5,
+            "p95_ms": 17.4,
+            "max_ms": 17.4
+          },
+          {
+            "method": "GET",
+            "route": "/api/notices",
+            "status": 200,
+            "samples": 10,
+            "p50_ms": 58.9,
+            "p95_ms": 236.1,
+            "max_ms": 236.1
+          },
+          {
+            "method": "GET",
+            "route": "/api/notices/{id}",
+            "status": 404,
+            "samples": 10,
+            "p50_ms": 13.4,
+            "p95_ms": 21.4,
+            "max_ms": 21.4
+          },
+          {
+            "method": "GET",
+            "route": "/api/session",
+            "status": 200,
+            "samples": 20,
+            "p50_ms": 22.1,
+            "p95_ms": 367.4,
+            "max_ms": 416.6
+          },
+          {
+            "method": "GET",
+            "route": "/api/tasks",
+            "status": 200,
+            "samples": 220,
+            "p50_ms": 210.4,
+            "p95_ms": 366.4,
+            "max_ms": 457.6
+          },
+          {
+            "method": "GET",
+            "route": "/api/tasks",
+            "status": 401,
+            "samples": 10,
+            "p50_ms": 7.8,
+            "p95_ms": 18.1,
+            "max_ms": 18.1
+          },
+          {
+            "method": "POST",
+            "route": "/api/auth/login",
+            "status": 200,
+            "samples": 20,
+            "p50_ms": 137.0,
+            "p95_ms": 685.5,
+            "max_ms": 688.7
+          },
+          {
+            "method": "POST",
+            "route": "/api/calendar/export",
+            "status": 200,
+            "samples": 10,
+            "p50_ms": 145.1,
+            "p95_ms": 206.3,
+            "max_ms": 206.3
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices",
+            "status": 200,
+            "samples": 200,
+            "p50_ms": 168.0,
+            "p95_ms": 280.5,
+            "max_ms": 459.1
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices/{id}/confirm",
+            "status": 200,
+            "samples": 210,
+            "p50_ms": 338.3,
+            "p95_ms": 513.2,
+            "max_ms": 711.7
+          },
+          {
+            "method": "POST",
+            "route": "/api/notices/{id}/manual",
+            "status": 200,
+            "samples": 200,
+            "p50_ms": 360.6,
+            "p95_ms": 517.9,
+            "max_ms": 671.8
+          },
+          {
+            "method": "PUT",
+            "route": "/api/edit-cache/new-notice",
+            "status": 200,
+            "samples": 200,
+            "p50_ms": 331.0,
+            "p95_ms": 501.5,
+            "max_ms": 608.5
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 200,
+            "samples": 200,
+            "p50_ms": 325.0,
+            "p95_ms": 463.2,
+            "max_ms": 668.6
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 404,
+            "samples": 10,
+            "p50_ms": 13.9,
+            "p95_ms": 20.8,
+            "max_ms": 20.8
+          },
+          {
+            "method": "PUT",
+            "route": "/api/tasks/{id}",
+            "status": 409,
+            "samples": 200,
+            "p50_ms": 322.7,
+            "p95_ms": 479.1,
+            "max_ms": 664.0
+          }
+        ],
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 1590,
+            "samples": 1590,
+            "p50_ms": 79.774,
+            "p95_ms": 165.573,
+            "max_ms": 264.046
+          },
+          "hold": {
+            "total_observations": 1590,
+            "samples": 1590,
+            "p50_ms": 9.056,
+            "p95_ms": 83.654,
+            "max_ms": 196.857
+          }
+        },
+        "percentile_method": "nearest_rank",
+        "ordinary_crud_latency_ms": {
+          "samples": 1250,
+          "p50": 276.1,
+          "p95": 473.4,
+          "max": 711.7
+        },
+        "engineering_targets": {
+          "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+          "ordinary_crud_p95": {
+            "limit_ms_exclusive": 1000,
+            "passed": true
+          },
+          "write_total_wait_p95": {
+            "limit_ms_exclusive": 100,
+            "passed": false
+          },
+          "write_acquisitions": {
+            "allowed_failures": 0,
+            "passed": true
+          }
+        },
+        "recovery_observations": {
+          "backup_seconds": 0.059,
+          "restart_verified_seconds": 1.834,
+          "restore_file_seconds": 0.063,
+          "restore_verified_seconds": 3.026,
+          "confirmed_tasks_lost_in_fixture": 0,
+          "task_identity_and_business_content_equal": true,
+          "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+          "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+        },
+        "workload_seconds": 43.19,
+        "request_latency_ms": {
+          "median": 277.7,
+          "p95": 476.1,
+          "max": 711.7
+        },
+        "restart_preserved_tasks": true,
+        "restore_preserved_tasks_and_edit_caches": true,
+        "restored_old_sessions_rejected": true,
+        "cross_account_access_rejected": true,
+        "stale_updates_rejected": true,
+        "idempotent_replays_passed": true,
+        "elapsed_seconds": 50.19,
+        "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+        "implementation_unchanged": true
+      }
+    }
+  ],
+  "capacity_10000": {
+    "artifact": "artifacts/sprint-review-followup/capacity.json",
+    "sha256": "745e4c7eb344419c166bb2484fa551ce87c6fe4d34862108e962592eee6c1d78",
+    "record": {
+      "synthetic": true,
+      "live_model_calls": 0,
+      "external_messages": 0,
+      "notices": 10000,
+      "payload_bytes": 20992851,
+      "timings": {
+        "intake_at_10000_records_ms": 48.8,
+        "list_10000_records_ms": 957.81,
+        "full_text_search_10000_records_ms": 978.94,
+        "matter_candidates_10000_records_ms": 87.26,
+        "duplicate_replay_at_capacity_ms": 54.37
+      },
+      "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
+      "interactive_pages": {
+        "collected_page": {
+          "cold_ms": 40.93,
+          "warm_p50_ms": 37.04,
+          "warm_p95_ms": 38.46,
+          "samples_ms": [
+            40.93,
+            37.04,
+            33.7,
+            35.91,
+            38.46,
+            38.15
+          ],
+          "max_payload_bytes": 106681,
+          "total": 10000
+        },
+        "semantic_current_page": {
+          "cold_ms": 601.97,
+          "warm_p50_ms": 42.0,
+          "warm_p95_ms": 43.43,
+          "samples_ms": [
+            601.97,
+            43.43,
+            38.45,
+            38.21,
+            43.43,
+            42.0
+          ],
+          "max_payload_bytes": 106705,
+          "total": 10000
+        },
+        "indexed_body_search": {
+          "cold_ms": 95.04,
+          "warm_p50_ms": 68.2,
+          "warm_p95_ms": 77.02,
+          "samples_ms": [
+            95.04,
+            68.2,
+            65.25,
+            77.02,
+            65.85,
+            68.26
+          ],
+          "max_payload_bytes": 3070,
+          "total": 1
+        },
+        "short_chinese_search": {
+          "cold_ms": 104.41,
+          "warm_p50_ms": 116.47,
+          "warm_p95_ms": 136.6,
+          "samples_ms": [
+            104.41,
+            113.65,
+            115.23,
+            116.47,
+            121.29,
+            136.6
+          ],
+          "max_payload_bytes": 111965,
+          "total": 9999
+        }
+      },
+      "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+      "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+    }
+  },
+  "whole_backend_rounds": [],
+  "frontend_frozen_round": null,
+  "current_ci": null,
+  "main_delivery": null,
+  "performance_gate": {
+    "ordinary_crud_limit_ms_exclusive": 1000,
+    "write_total_wait_limit_ms_exclusive": 100,
+    "write_wait_5_users_p95_ms": 101.063,
+    "write_wait_10_users_p95_ms": 165.573,
+    "five_users_passed": false,
+    "ten_users_passed": false,
+    "history_preserved": "sprint-write-wait-evidence.json; earlier 114.149 / 272.906 ms observations retain their original identities and are not replaced or relabeled."
+  },
+  "limits": [
+    "Synthetic fixtures are not real student, staff, device or provider acceptance.",
+    "No real messages or paid model calls were sent.",
+    "Cumulative at least five days of actual practice, independently labeled model evaluation and institutional authorization remain external conditions.",
+    "The previous three live official-source reader attempts failed at public DNS; unrelated website reads do not substitute for application E2E.",
+    "Conditional P2 requirements and the missing root license choice remain explicit; they are not silently implemented with invented institutional rules.",
+    "Node and backend rounds overlap targeted suites; their counts are not added together as distinct cases."
+  ],
+  "delivery_fixture_delta": {
+    "from_local_code": "29ce79282ec772a9470f0db092fd1eb1de866c0a",
+    "changed_implementation_paths": [
+      "scripts/verify_sprint_ui.mjs"
+    ],
+    "old_script_sha256": "e3a847a22ccb53567aa0d0920cd3efc782bed9260cbbbce1745b5c9938e08f60",
+    "new_script_sha256": "12d5b2c5fbd7d0b970454c55f25ff8fe850095fb0a29ea6ebdfde8d0fff4c176",
+    "delivery_implementation_sha256": "c37a239d419d1743bca32658836e3a34d241ad4e7ff90b2b30157ff76f5927f0",
+    "changes": [
+      "Await actual retry POST and product-owned navigation instead of navigating away before the retry can send.",
+      "Await manual draft save completion rather than an earlier autosave message.",
+      "Await serialized real revision probes before checking final DOM stability."
+    ],
+    "product_build_backend_tests_node_tests_runtime_scripts_identical": true,
+    "backend_node_runtime_applicability": "Original local identity is retained. Only the real-browser verification script differs; that script is not executed in the local backend, Node, runtime or capacity rounds. The final candidate requires its own complete CI.",
+    "old_20_browser_checks_preserved": true,
+    "browser_checks_per_engine": 25,
+    "browser_timeout_seconds_unchanged": 360,
+    "browser_actual_result": "pending"
+  }
+}
