@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Measurable visual regressions, with screenshots for human review.
  * These assertions are bounds/alignment checks, not a claim about aesthetics.
@@ -12,7 +13,7 @@ await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic local data only; measurements do not replace visual review',checks:[],errors:[],measurements:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
  console.log('Visual review: '+engine);
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
  const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871},locale:'en-US',timezoneId:'America/Los_Angeles'});page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const settle=async()=>{await page.waitForFunction(()=>!document.getAnimations().some(a=>a.playState==='running'&&a.effect?.getTiming().iterations!==Infinity&&a.effect?.target?.getClientRects?.().length&&a.effect?.target?.checkVisibility?.()!==false&&!a.effect?.target?.closest('#toast')));await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));};

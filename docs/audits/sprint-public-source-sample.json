@@ -1,0 +1,57 @@
+{
+  "sampled_at": "2026-11-14T04:08:44.258372+00:00",
+  "method": "production public read functions; anonymous GET; two articles at most per existing preset; no subscriptions or external writes",
+  "results": [
+    {
+      "preset": {
+        "id": "whu-sres-notices",
+        "name": "资环院通知公告",
+        "institution": "武汉大学资源与环境科学学院",
+        "url": "https://sres.whu.edu.cn/xxgk/tzgg.htm",
+        "article_path_prefix": "/info/3771/",
+        "purpose": "资源与环境科学学院通知公告当前列表；保留原文、发布日期和附件，需校内权限的页面明确提示"
+      },
+      "started_at": "2026-11-14T04:08:44.161280+00:00",
+      "articles": [],
+      "list": {
+        "success": false,
+        "status": 502,
+        "error": "来源连接失败，将按订阅间隔重试；已有通知保留"
+      }
+    },
+    {
+      "preset": {
+        "id": "whu-notices",
+        "name": "武汉大学通知公告",
+        "institution": "武汉大学",
+        "url": "https://www.whu.edu.cn/tzgg.htm",
+        "article_path_prefix": "/info/5231/",
+        "purpose": "学校通知公告当前列表中的公开原文；需要校内权限的文章会提示未能读取"
+      },
+      "started_at": "2026-11-14T04:08:44.197101+00:00",
+      "articles": [],
+      "list": {
+        "success": false,
+        "status": 502,
+        "error": "来源连接失败，将按订阅间隔重试；已有通知保留"
+      }
+    },
+    {
+      "preset": {
+        "id": "whu-journal-affairs",
+        "name": "新闻与传播学院学生事务",
+        "institution": "武汉大学新闻与传播学院",
+        "url": "https://journal.whu.edu.cn/undergraduate/affairs/index",
+        "article_path_prefix": "/undergraduate/",
+        "purpose": "学院学生事务栏目当前列表，包含该栏目实际发布的本科生和研究生通知"
+      },
+      "started_at": "2026-11-14T04:08:44.217778+00:00",
+      "articles": [],
+      "list": {
+        "success": false,
+        "status": 502,
+        "error": "来源连接失败，将按订阅间隔重试；已有通知保留"
+      }
+    }
+  ]
+}

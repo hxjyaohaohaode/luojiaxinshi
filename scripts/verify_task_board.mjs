@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Real pointer movement with isolated synthetic tasks, never the user's data. */
 import fs from 'node:fs/promises';
@@ -9,7 +10,7 @@ const origin=process.env.CAMPUS_VERIFY_ORIGIN||'http://127.0.0.1:8786',out=path.
 await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic tasks; real pointer events, storage, conflict guards and undo',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromium,firefox,webkit').split(',')){
-  const browser=await pw[engine].launch({headless:true,...(process.platform==='win32'&&engine==='chromium'?{channel:'msedge'}:{})});
+  const browser=await pw[engine].launch({headless:true,...browserOverride(pw[engine]),...(process.platform==='win32'&&engine==='chromium'?{channel:'msedge'}:{})});
   const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1440,height:950},locale:'zh-CN'});page.setDefaultTimeout(12000);
   page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
   const api=(url,method='GET',data=null,form=false)=>page.evaluate(async({url,method,data,form})=>{

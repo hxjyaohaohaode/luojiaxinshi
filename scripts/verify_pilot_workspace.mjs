@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /** Independent browser contexts, real storage and routes, captured synthetic SMS. */
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -13,7 +14,7 @@ const password='PilotFixtureOnly2026!';
 const measured=(engine,name,elapsed,status)=>report.timings.push({engine,name,ms:Math.round(elapsed*10)/10,status});
 
 for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',').entries()){
-  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+  const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
   const [a,b,c]=await Promise.all([
     browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'}),
     browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'}),

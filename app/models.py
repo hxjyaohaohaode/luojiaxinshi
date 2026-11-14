@@ -36,6 +36,14 @@ class NotificationPreferences(Strict):
     digest_hour: int = Field(default=18,ge=0,le=23,strict=True)
     quiet_start: str = Field(default='',max_length=5)
     quiet_end: str = Field(default='',max_length=5)
+    receipt_delivery: Literal['immediate','digest','in_app','off'] = 'immediate'
+    task_delivery: Literal['immediate','digest','in_app','off'] = 'immediate'
+    arrangement_delivery: Literal['immediate','digest','in_app','off'] = 'immediate'
+    collaboration_delivery: Literal['immediate','digest','in_app','off'] = 'in_app'
+    source_health_delivery: Literal['immediate','digest','in_app','off'] = 'in_app'
+    source_delivery: dict[Annotated[str,Field(pattern='^[a-f0-9]{32}$')],Literal['immediate','digest','in_app','off']] = Field(default_factory=dict,max_length=200)
+    notice_delivery: dict[Annotated[str,Field(pattern='^[a-f0-9]{32}$')],Literal['immediate','digest','in_app','off']] = Field(default_factory=dict,max_length=1000)
+    allow_urgent_during_quiet: bool = Field(default=False,strict=True)
     interest_terms: list[Annotated[str,Field(min_length=1,max_length=40)]] = Field(default_factory=list,max_length=20)
     muted_terms: list[Annotated[str,Field(min_length=1,max_length=40)]] = Field(default_factory=list,max_length=20)
 

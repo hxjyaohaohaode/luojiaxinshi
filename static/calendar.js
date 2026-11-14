@@ -17,6 +17,8 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   let monthElement=null;
   const monthResize=new ResizeObserver(fitMonthEvents);
   let formRequest='',listPage=1,listDay=false,weekStartsOn=1,pickerMonth='',pickerMode='day';
+  let appliedQuery='',taskMatches=null,searchTimer,searchRequest=0,searchBusy=false,searchError='',detailRequest=0,searchTaskVersion='';
+  const taskVersionKey=()=>state.tasks.map(task=>task.id+':'+task.version).join('|');
   const startWeek=day=>(weekStartsOn===0?sundayStart:weekStart)(day);
   const gridDays=day=>Array.from({length:42},(_,i)=>addDays(startWeek(day.slice(0,7)+'-01'),i));
   const weekLabels=()=>weekStartsOn===0?['日','一','二','三','四','五','六']:weekdays;
@@ -26,7 +28,30 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   compactWeek.addEventListener('change',()=>{if(belongs())refresh();});
   const belongs=()=>(location.hash==='#calendar'||/^#calendar\/[A-Za-z0-9_-]+$/.test(location.hash))&&$('#calendar-body');
   const range=()=>view==='day'||(view==='list'&&listDay)?[selected,selected]:view==='week'?[startWeek(selected),addDays(startWeek(selected),6)]:[selected.slice(0,7)+'-01',addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1)];
-  function filter(list){return list.filter(e=>visible.has(e.kind)&&(!query||(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())));}
+  function filter(list){return list.filter(e=>visible.has(e.kind)&&(!appliedQuery||(e.source==='task'?taskMatches?.has(e.id):(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(appliedQuery.trim().toLocaleLowerCase()))));}
+  function searchFeedback(){
+    for(const root of document.querySelectorAll('[data-calendar-search-status]')){
+      root.replaceChildren();root.hidden=!searchBusy&&!searchError;
+      if(searchBusy)root.textContent='正在查找，当前保留上次结果。';
+      else if(searchError){root.textContent='尚未更新查找结果：'+searchError+'。'+(appliedQuery?'当前显示“'+appliedQuery+'”的上次结果。':'当前保留原有安排。');const retry=document.createElement('button');retry.type='button';retry.className='button small plain';retry.dataset.calendarSearchRetry='';retry.textContent='重新查找';root.append(retry);}
+    }
+    $('#calendar-body')?.setAttribute('aria-busy',String(searchBusy));
+  }
+  function searchCalendar(value){
+    query=value;listPage=1;clearTimeout(searchTimer);const request=++searchRequest,session=state.session,render=state.renderId;searchError='';
+    if(!query.trim()){appliedQuery='';taskMatches=null;searchBusy=false;refresh();return;}
+    searchBusy=true;refresh();
+    searchTimer=setTimeout(async()=>{
+      if(request!==searchRequest||session!==state.session||render!==state.renderId||!belongs())return;
+      const term=query,versions=taskVersionKey();
+      try{
+        const result=await api('/workspace/calendar-search?'+new URLSearchParams({q:term}));
+        if(request!==searchRequest||session!==state.session||render!==state.renderId||!belongs()||query!==term)return;
+        if(result.query!==term.trim()||!Array.isArray(result.task_ids))throw Error('查找范围暂未完整返回，请重试');
+        taskMatches=new Set(result.task_ids);appliedQuery=term;searchTaskVersion=versions;searchBusy=false;refresh();
+      }catch(error){if(request===searchRequest&&session===state.session&&render===state.renderId&&belongs()){searchBusy=false;searchError=error.message;searchFeedback();}}
+    },250);
+  }
   const preferenceKey=()=>`luojia:calendar:${owner}`;
   const displayValue=value=>Array.isArray(value)?JSON.stringify(value):value??null;
   function saveCalendarDisplay(values){
@@ -46,6 +71,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     for(const input of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))input.checked=showDone;
   }
   function reset(){
+    clearTimeout(searchTimer);searchRequest++;appliedQuery='';taskMatches=null;searchBusy=false;searchError='';
     owner=state.session.user.id;selected=dayKey();listDay=false;listPage=1;view=phone.matches?'list':'month';query='';showDone=false;visible=new Set(Object.keys(kinds));records=[];weekStartsOn=state.session.user.profile.week_starts_on??1;
     appliedDisplay={};
     try{const saved=JSON.parse(localStorage.getItem(preferenceKey())||'null');if(saved){if(['day','week','month','list'].includes(saved.view))view=saved.view;if(Array.isArray(saved.visible))visible=new Set(saved.visible.filter(k=>k in kinds));showDone=saved.showDone===true;}}catch{}
@@ -53,13 +79,14 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   async function render(renderId=state.renderId,projection){
     if(owner!==state.session.user.id)reset();
     const items=projection??await api('/arrangements');if(renderId!==state.renderId)return;records=items;
-    $('#content').innerHTML=`<section class="calendar-workspace"><h1 class="sr-only">我的日历</h1><div class="calendar-layout"><aside class="calendar-sidebar"><div id="calendar-mini"></div><details class="calendar-filters" open><summary>显示内容</summary><div class="calendar-filter-fields">${Object.entries(kinds).map(([k,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${k}" checked><i class="calendar-dot ${k}" aria-hidden="true"></i>${label}</label>`).join('')}<label class="check calendar-done"><input type="checkbox" id="calendar-show-done">包含已完成待办</label><label class="calendar-search"><span class="sr-only">搜索日历安排</span>${icon('search')}<input type="search" id="calendar-query" placeholder="查找安排" value="${esc(query)}"></label><div class="calendar-filter-actions"><button type="button" class="link-button small" data-calendar-action="reset-filters" hidden>重置筛选</button><button type="button" class="link-button small" data-calendar-action="undated" id="calendar-undated" hidden></button></div></div></details><div class="calendar-side-note">${companion('planning','calendar-companion')}<p>把时间理顺，<br>也留一点空白。</p></div></aside><div class="calendar-main"><header class="calendar-toolbar"><div class="calendar-navigation">${control(icon('back'),'previous','aria-label="上一个日期范围"','icon-button')}${control(icon('arrow'),'next','aria-label="下一个日期范围"','icon-button')}<h2><button type="button" id="calendar-title" class="calendar-date-trigger" data-calendar-action="date-picker" aria-label="点选日期、周或月份"></button></h2>${control('今','today','aria-label="回到今天"','small calendar-today')}</div><div class="calendar-tools"><button type="button" class="icon-button calendar-import" data-campus-import="courses" aria-label="导入课表" title="导入课表">${icon('down')}</button>${control(icon('settings'),'options','aria-label="显示与导出"','icon-button')}${control(icon('plus'),'new','aria-label="新建安排"','icon-button calendar-add')}</div><div class="tabs calendar-view-tabs" role="tablist" aria-label="日历视图">${[['day','日'],['week','周'],['month','月'],['list','列表']].map(([v,label])=>`<button type="button" role="tab" class="tab" data-calendar-view="${v}">${label}</button>`).join('')}</div></header><span id="calendar-count" class="sr-only" role="status"></span><div id="calendar-body" role="tabpanel" aria-label="日历安排"></div><section id="calendar-selection" class="calendar-selection"></section></div></div></section>`;
+    $('#content').innerHTML=`<section class="calendar-workspace"><h1 class="sr-only">我的日历</h1><div class="calendar-layout"><aside class="calendar-sidebar"><div id="calendar-mini"></div><details class="calendar-filters" open><summary>显示内容</summary><div class="calendar-filter-fields">${Object.entries(kinds).map(([k,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${k}" checked><i class="calendar-dot ${k}" aria-hidden="true"></i>${label}</label>`).join('')}<label class="check calendar-done"><input type="checkbox" id="calendar-show-done">包含已完成待办</label><label class="calendar-search"><span class="sr-only">搜索日历安排</span>${icon('search')}<input type="search" id="calendar-query" maxlength="500" placeholder="查找安排" value="${esc(query)}"></label><div class="small muted" role="status" data-calendar-search-status hidden></div><div class="calendar-filter-actions"><button type="button" class="link-button small" data-calendar-action="reset-filters" hidden>重置筛选</button><button type="button" class="link-button small" data-calendar-action="undated" id="calendar-undated" hidden></button></div></div></details><div class="calendar-side-note">${companion('planning','calendar-companion')}<p>把时间理顺，<br>也留一点空白。</p></div></aside><div class="calendar-main"><header class="calendar-toolbar"><div class="calendar-navigation">${control(icon('back'),'previous','aria-label="上一个日期范围"','icon-button')}${control(icon('arrow'),'next','aria-label="下一个日期范围"','icon-button')}<h2><button type="button" id="calendar-title" class="calendar-date-trigger" data-calendar-action="date-picker" aria-label="点选日期、周或月份"></button></h2>${control('今','today','aria-label="回到今天"','small calendar-today')}</div><div class="calendar-tools"><button type="button" class="icon-button calendar-import" data-campus-import="courses" aria-label="导入课表" title="导入课表">${icon('down')}</button>${control(icon('settings'),'options','aria-label="显示与导出"','icon-button')}${control(icon('plus'),'new','aria-label="新建安排"','icon-button calendar-add')}</div><div class="tabs calendar-view-tabs" role="tablist" aria-label="日历视图">${[['day','日'],['week','周'],['month','月'],['list','列表']].map(([v,label])=>`<button type="button" role="tab" class="tab" data-calendar-view="${v}">${label}</button>`).join('')}</div></header><span id="calendar-count" class="sr-only" role="status"></span><div id="calendar-body" role="tabpanel" aria-label="日历安排"></div><section id="calendar-selection" class="calendar-selection"></section></div></div></section>`;
     readDisplay();
     if(matchMedia('(max-width:1000px)').matches)$('.calendar-filters').open=false;
-    refresh();
+    refresh();if(query.trim())searchCalendar(query);
   }
   function refresh(){
     if(!belongs())return;
+    searchFeedback();
     for(const input of document.querySelectorAll('#calendar-query,#calendar-option-query'))if(input.value!==query)input.value=query;
     monthResize.disconnect();monthElement=null;
     const positionKey=view+':'+selected,previousScroll=$('.time-calendar-scroll');
@@ -160,7 +187,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     return `<div class="calendar-agenda">${list.slice((listPage-1)*12,listPage*12).map(e=>agendaRow(e)).join('')}</div><div class="calendar-pagination">${control(icon('back'),'list-prev',listPage===1?'disabled':'','small')}<span>${listDay?'当日':view==='week'?'本周':'本月'} ${list.length} 项 · ${listPage} / ${pages}</span>${wholeMonth}${control(icon('arrow'),'list-next',listPage===pages?'disabled':'','small')}</div>`;
   }
   function options(){
-    showDialog('显示与导出',`<div class="stack"><label class="field">每周从哪一天开始<select id="calendar-week-start" aria-label="每周开始日期"><option value="1" ${weekStartsOn===1?'selected':''}>周一</option><option value="0" ${weekStartsOn===0?'selected':''}>周日</option></select></label><fieldset class="calendar-option-group"><legend>显示哪些安排</legend>${Object.entries(kinds).map(([kind,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${kind}" ${visible.has(kind)?'checked':''}><i class="calendar-dot ${kind}"></i>${label}</label>`).join('')}<label class="check"><input type="checkbox" id="calendar-option-done" ${showDone?'checked':''}>包含已完成待办</label></fieldset><label class="field">查找安排<input id="calendar-option-query" type="search" value="${esc(query)}" placeholder="课程、地点或备注"></label><label class="field">跳转日期<input id="calendar-option-date" type="date" min="2000-01-01" max="2100-12-31" value="${selected}"></label><div class="row wrap">${control('重置筛选','reset-filters','','small plain')}${control('回到今天','today','','small')}${control('学期与周次','semester','','small')}${control('导出与提醒','exports','','small')}${control('还没定日期的待办','undated','','small')}</div><p class="small muted">日、周视图会显示完整的 24 小时。跨天的安排按天分段，箭头表示接着前一天，或延续到第二天。</p><div class="form-footer"><button type="button" class="button primary" data-action="close-dialog">完成</button></div></div>`);
+    showDialog('显示与导出',`<div class="stack"><label class="field">每周从哪一天开始<select id="calendar-week-start" aria-label="每周开始日期"><option value="1" ${weekStartsOn===1?'selected':''}>周一</option><option value="0" ${weekStartsOn===0?'selected':''}>周日</option></select></label><fieldset class="calendar-option-group"><legend>显示哪些安排</legend>${Object.entries(kinds).map(([kind,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${kind}" ${visible.has(kind)?'checked':''}><i class="calendar-dot ${kind}"></i>${label}</label>`).join('')}<label class="check"><input type="checkbox" id="calendar-option-done" ${showDone?'checked':''}>包含已完成待办</label></fieldset><label class="field">查找安排<input id="calendar-option-query" type="search" maxlength="500" value="${esc(query)}" placeholder="课程、地点或备注"></label><div class="small muted" role="status" data-calendar-search-status hidden></div><label class="field">跳转日期<input id="calendar-option-date" type="date" min="2000-01-01" max="2100-12-31" value="${selected}"></label><div class="row wrap">${control('重置筛选','reset-filters','','small plain')}${control('回到今天','today','','small')}${control('学期与周次','semester','','small')}${control('导出与提醒','exports','','small')}${control('还没定日期的待办','undated','','small')}</div><p class="small muted">日、周视图会显示完整的 24 小时。跨天的安排按天分段，箭头表示接着前一天，或延续到第二天。</p><div class="form-footer"><button type="button" class="button primary" data-action="close-dialog">完成</button></div></div>`);
     const stack=$('#calendar-week-start').closest('.stack');stack.classList.add('calendar-options');
     const feedback=document.createElement('section');feedback.className='calendar-option-preview';feedback.innerHTML='<p id="calendar-option-status" role="status"></p><div id="calendar-option-preview"></div>';stack.prepend(feedback);
     stack.querySelector('.form-footer button').textContent='查看日历';
@@ -184,12 +211,22 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     const allDay=dayEntries.filter(e=>e.allDay);
     return `${allDay.length?`<div class="calendar-allday-events" aria-label="全天安排">${allDay.map(e=>eventButton(e)).join('')}</div>`:''}${view==='week'?'<p class="calendar-scroll-hint">左右滑动查看整周</p>':''}<div class="time-calendar-scroll" tabindex="0" aria-label="${view==='week'?'周课表，可左右和上下滚动':'当日时间安排，可上下滚动'}"><div class="time-calendar ${view==='day'?'single-day':''}" data-columns="${days.length}"><div class="time-grid-header"><span>时间</span>${days.map(day=>`<button type="button" class="${dateClasses(day)}" data-calendar-day="${day}"><small>周${weekdays[(new Date(day+'T00:00:00Z').getUTCDay()+6)%7]}</small><strong>${Number(day.slice(-2))}</strong></button>`).join('')}</div><div class="time-grid-body" data-height="${height}" data-hour-height="${scale}"><div class="time-labels">${Array.from({length:endHour-startHour+1},(_,i)=>`<span data-top="${i*scale}">${String(startHour+i).padStart(2,'0')}:00</span>`).join('')}</div>${days.map(day=>`<div class="time-day" data-day="${day}" data-height="${height}">${layoutTimed(dayEntries.filter(e=>e.day===day)).map(e=>eventButton(e,'timed-event',`${(e.begin/60-startHour)*scale+1},${Math.min(height-(e.begin/60-startHour)*scale-1,Math.max(18,(e.finish-e.begin)/60*scale-2))},${e.lane/e.lanes*100},${100/e.lanes}`)).join('')}</div>`).join('')}</div></div></div>${dayEntries.length?'':`<div class="calendar-day-empty"><span>这段时间空着。</span>${control('新建安排','new','','small plain')}</div>`}`;
   }
-  function detail(key){
-    const event=entries.find(e=>e.key===key);if(!event)return;
-    const record=event.source==='arrangement'?records.find(r=>r.id===event.id):state.tasks.find(t=>t.id===event.id),d=record.data;
+  async function detail(key){
+    let event=entries.find(e=>e.key===key);if(!event)return;
+    let record=event.source==='arrangement'?records.find(r=>r.id===event.id):state.tasks.find(t=>t.id===event.id);
+    if(!record)return;
+    if(record.projection==='light'){
+      const request=++detailRequest,context=captureUiContext(state);
+      record=(await api('/tasks/'+encodeURIComponent(record.id)+'/workflow')).task;
+      if(request!==detailRequest||!context.sameDialog()||!belongs())return;
+      state.tasks=state.tasks.map(task=>task.id===record.id?record:task);
+      event=calendarEntries([], [record],event.day,event.day,{showDone:true}).find(item=>item.key===key);
+      if(!event){refresh();toast('这项安排已更新，请在最新日期中查看。');return;}
+    }
+    const d=record.data;
     showDialog(event.title,`<div class="event-detail"><div class="calendar-detail-hero"><span class="event-category ${event.kind}"><i class="calendar-dot ${event.kind}"></i>${kinds[event.kind]}${event.done?' · 已完成':''}</span><div class="event-when">${event.allDay?'全天':esc(event.start+(event.end?' — '+event.end:''))}</div><span class="muted">${pretty(event.day)}</span></div><dl class="calendar-detail-meta">${event.location?'<dt>地点</dt><dd>'+esc(event.location)+'</dd>':''}${event.recurring?'<dt>重复</dt><dd>'+({weekly:'每周',biweekly:'每两周'}[d.repeat])+'，至 '+esc(d.repeat_until)+'</dd>':''}${event.notes?'<dt>备注</dt><dd class="preserve-lines">'+esc(event.notes)+'</dd>':''}</dl>${event.verified===false?'<p class="alert">这个期限还没确认，对照原通知看看吧。</p>':''}${event.source==='task'?`<div class="form-footer"><button type="button" class="button" data-calendar-action="source" data-id="${record.notice_id}">查看原通知</button>${control('查看与编辑待办','edit-task',`data-id="${record.id}"`,'primary')}</div>`:`<div class="form-footer">${control('删除'+(event.recurring?'整组安排':''),'delete',`data-id="${record.id}"`,'danger')}${control('编辑'+(event.recurring?'重复安排':''),'edit',`data-id="${record.id}"`,'primary')}</div>`}</div>`);
   }
-  const emptyArrangement=()=>({title:'',category:'personal',start_date:selected,end_date:selected,start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:null,location:'',notes:''});
+  const emptyArrangement=()=>({title:'',category:'personal',start_date:selected,end_date:selected,start_time:'09:00',end_time:'10:00',repeat:'none',repeat_until:null,location:'',notes:'',reminder_minutes:null});
   async function creationStatus(requestId){
     try{return await api('/arrangements/requests/'+encodeURIComponent(requestId));}
     catch(error){
@@ -214,7 +251,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
       const action=button.dataset.arrangementRecovery;
       if(action==='retry'){await editor();return;}
       if(action==='view'){
-        selected=saved.data.start_date;view='day';query='';visible.add(saved.data.category);
+        selected=saved.data.start_date;view='day';query='';appliedQuery='';taskMatches=null;visible.add(saved.data.category);
         records=records.filter(r=>r.id!==saved.id);records.push(saved);refresh();detail(saved.id+':'+selected);return;
       }
       root.inert=true;button.classList.add('request-pending');button.setAttribute('aria-busy','true');
@@ -242,14 +279,14 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     editRecord=record;const creatingAnother=!record&&pendingCreates.has(cached.payload?.request_id);const retired=cached.retired;drafts.activate(key);const restore=creatingAnother||retired?null:cached.payload?.data;
     const d=restore||record?.data||emptyArrangement();
     formRequest=(!creatingAnother&&!retired&&cached.payload?.request_id)||crypto.randomUUID();
-    showDialog(record?'编辑安排':'新建安排',`<form id="arrangement-form" data-workspace-form="calendar" data-cache-key="${key}" data-request-id="${formRequest}" class="stack">${field('安排名称','title',d.title,'text','required maxlength="160" autofocus placeholder="例如：课程、办理材料、和朋友的约定"')}<div class="form-grid"><label class="field">分类<select name="category" aria-label="分类">${['course','activity','personal'].map(k=>`<option value="${k}" ${d.category===k?'selected':''}>${kinds[k]}</option>`).join('')}</select></label><label class="check calendar-all-day"><input type="checkbox" name="all_day" ${d.start_time?'':'checked'}>全天安排</label>${field('开始日期','start_date',d.start_date,'date','required min="2000-01-01" max="2100-12-31"')}${field('结束日期','end_date',d.end_date,'date','required min="2000-01-01" max="2100-12-31"')}<div data-schedule-time ${d.start_time?'':'hidden'}>${field('开始时间','start_time',d.start_time||'09:00','time','required')}</div><div data-schedule-time ${d.start_time?'':'hidden'}>${field('结束时间','end_time',d.end_time||'10:00','time','required')}</div></div><details class="schedule-options" ${d.location||d.notes||d.repeat!=='none'?'open':''}><summary>地点、重复和备注</summary><div class="stack">${field('地点（选填）','location',d.location,'text','maxlength="300" placeholder="校区、教学楼或办理地点"')}<div class="form-grid"><label class="field">重复<select name="repeat" aria-label="重复"><option value="none" ${d.repeat==='none'?'selected':''}>不重复</option><option value="weekly" ${d.repeat==='weekly'?'selected':''}>每周</option><option value="biweekly" ${d.repeat==='biweekly'?'selected':''}>每两周（隔周）</option></select></label><div id="repeat-until-field" ${d.repeat==='none'?'hidden':''}>${field('最后重复日期','repeat_until',d.repeat_until||'','date','min="2000-01-01" max="2100-12-31"')}</div></div>${area('备注（选填）','notes',d.notes,3,'maxlength="3000" placeholder="要带的材料、课程周次或留给自己的话"')}</div></details>${record&&d.repeat!=='none'?'<p class="small muted">保存后，整组重复安排会一起更新。</p>':''}<div class="form-footer"><span class="small muted spacer">北京时间<span class="autosave-status" role="status"></span></span><button type="submit" class="button primary">保存安排</button></div></form>`);
+    showDialog(record?'编辑安排':'新建安排',`<form id="arrangement-form" data-workspace-form="calendar" data-cache-key="${key}" data-request-id="${formRequest}" class="stack">${field('安排名称','title',d.title,'text','required maxlength="160" autofocus placeholder="例如：课程、办理材料、和朋友的约定"')}<div class="form-grid"><label class="field">分类<select name="category" aria-label="分类">${['course','activity','personal'].map(k=>`<option value="${k}" ${d.category===k?'selected':''}>${kinds[k]}</option>`).join('')}</select></label><label class="check calendar-all-day"><input type="checkbox" name="all_day" ${d.start_time?'':'checked'}>全天安排</label>${field('开始日期','start_date',d.start_date,'date','required min="2000-01-01" max="2100-12-31"')}${field('结束日期','end_date',d.end_date,'date','required min="2000-01-01" max="2100-12-31"')}<div data-schedule-time ${d.start_time?'':'hidden'}>${field('开始时间','start_time',d.start_time||'09:00','time','required')}</div><div data-schedule-time ${d.start_time?'':'hidden'}>${field('结束时间','end_time',d.end_time||'10:00','time','required')}</div></div><label class="field">提前提醒<select name="reminder_minutes"><option value="" ${d.reminder_minutes==null?'selected':''}>不设置提醒</option>${[0,5,15,30,60,1440,10080,...(d.reminder_minutes!=null?[d.reminder_minutes]:[])].filter((value,index,list)=>list.indexOf(value)===index).sort((a,b)=>a-b).map(minutes=>`<option value="${minutes}" ${d.reminder_minutes===minutes?'selected':''}>${minutes===0?'开始时':minutes>=1440?'提前 '+(minutes/1440)+' 天':'提前 '+minutes+' 分钟'}</option>`).join('')}</select><small>课程默认不提醒。实际外发还需开启类别与设备渠道；全天安排以北京时间 09:00 作为提醒基准。</small></label><details class="schedule-options" ${d.location||d.notes||d.repeat!=='none'?'open':''}><summary>地点、重复和备注</summary><div class="stack">${field('地点（选填）','location',d.location,'text','maxlength="300" placeholder="校区、教学楼或办理地点"')}<div class="form-grid"><label class="field">重复<select name="repeat" aria-label="重复"><option value="none" ${d.repeat==='none'?'selected':''}>不重复</option><option value="weekly" ${d.repeat==='weekly'?'selected':''}>每周</option><option value="biweekly" ${d.repeat==='biweekly'?'selected':''}>每两周（隔周）</option></select></label><div id="repeat-until-field" ${d.repeat==='none'?'hidden':''}>${field('最后重复日期','repeat_until',d.repeat_until||'','date','min="2000-01-01" max="2100-12-31"')}</div></div>${area('备注（选填）','notes',d.notes,3,'maxlength="3000" placeholder="要带的材料、课程周次或留给自己的话"')}</div></details>${record&&d.repeat!=='none'?'<p class="small muted">保存后，整组重复安排会一起更新。</p>':''}<div class="form-footer"><span class="small muted spacer">北京时间<span class="autosave-status" role="status"></span></span><button type="submit" class="button primary">保存安排</button></div></form>`);
     if(legacyStatus){const note=document.createElement('p');note.className='alert';note.dataset.creationStatus='legacy';note.textContent='上次有没有存上，去日历里看一眼吧。已经有的话直接打开编辑，别重复新建。';$('#arrangement-form').prepend(note);}
     syncForm();
   }
-  function readForm(form){const f=new FormData(form),all=f.get('all_day')==='on',repeat=f.get('repeat');return {title:f.get('title'),category:f.get('category'),start_date:f.get('start_date'),end_date:f.get('end_date'),start_time:all?null:f.get('start_time'),end_time:all?null:f.get('end_time'),repeat,repeat_until:repeat==='none'?null:f.get('repeat_until')||null,location:f.get('location'),notes:f.get('notes')};}
+  function readForm(form){const f=new FormData(form),all=f.get('all_day')==='on',repeat=f.get('repeat');return {title:f.get('title'),category:f.get('category'),start_date:f.get('start_date'),end_date:f.get('end_date'),start_time:all?null:f.get('start_time'),end_time:all?null:f.get('end_time'),repeat,repeat_until:repeat==='none'?null:f.get('repeat_until')||null,reminder_minutes:f.get('reminder_minutes')===''?null:Number(f.get('reminder_minutes')),location:f.get('location'),notes:f.get('notes')};}
   function syncForm(){const form=$('#arrangement-form');if(!form)return;const all=form.elements.all_day.checked,repeat=form.elements.repeat.value;for(const wrap of form.querySelectorAll('[data-schedule-time]')){wrap.hidden=all;wrap.querySelector('input').disabled=all;}$('#repeat-until-field').hidden=repeat==='none';form.elements.repeat_until.required=repeat!=='none';if(repeat!=='none')$('.schedule-options').open=true;}
   function stash(){const f=$('#arrangement-form');if(f){const key=f.dataset.cacheKey;if(drafts.peek(key).retired)return;const snapshot={data:readForm(f),request_id:f.dataset.requestId};if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(key).payload))drafts.stage(key,snapshot);}}
-  document.addEventListener('input',e=>{if(e.target.id==='calendar-query'||e.target.id==='calendar-option-query'){query=e.target.value;listPage=1;refresh();}if(e.target.closest('#arrangement-form'))stash();});
+  document.addEventListener('input',e=>{if(e.target.id==='calendar-query'||e.target.id==='calendar-option-query')searchCalendar(e.target.value);if(e.target.closest('#arrangement-form'))stash();});
   document.addEventListener('change',e=>{
     const el=e.target;if(el.id==='calendar-week-start'){
       const view=captureUiContext(state,el),base=structuredClone(state.session.user.profile),value=Number(el.value);el.disabled=true;
@@ -284,12 +321,13 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     if(tab){view=tab.dataset.calendarView;listDay=false;listPage=1;saveCalendarDisplay({calendar_view:view});refresh();}
     const cell=e.target.closest('[data-calendar-cell]');if(cell&&!item&&!button){selected=cell.dataset.calendarCell;view='week';refresh();return;}
     if(date){selected=date.dataset.calendarDay;listPage=1;if(date.closest('#calendar-mini')){if(view==='list')listDay=true;else view='day';}else if(date.classList.contains('month-date'))view='week';const focusMonth=date.classList.contains('month-date');refresh();if(focusMonth)$(`.time-grid-header [data-calendar-day="${selected}"]`)?.focus({preventScroll:true});else document.querySelector(`.period-week-header [data-calendar-day="${selected}"],.time-grid-header [data-calendar-day="${selected}"],#calendar-mini [data-calendar-day="${selected}"]`)?.focus({preventScroll:true});}
-    if(item)detail(item.dataset.calendarEvent);
+    if(item){item.disabled=true;try{await detail(item.dataset.calendarEvent);}catch(error){toast(error.message,true);}finally{if(item.isConnected)item.disabled=false;}return;}
+    if(e.target.closest('[data-calendar-search-retry]')){searchCalendar(query);return;}
     if(!button)return;const action=button.dataset.calendarAction,id=button.dataset.id;button.disabled=true;
     try{
       if(action==='list-prev'||action==='list-next'){listPage+=action==='list-prev'?-1:1;refresh();}
       else if(action==='list-month'){listDay=false;listPage=1;refresh();}
-      else if(action==='reset-filters'){visible=new Set(Object.keys(kinds));showDone=false;query='';listPage=1;for(const el of document.querySelectorAll('[data-calendar-kind]'))el.checked=true;for(const el of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))el.checked=false;saveCalendarDisplay({calendar_kinds:[...visible],calendar_show_done:false});refresh();}
+      else if(action==='reset-filters'){clearTimeout(searchTimer);searchRequest++;appliedQuery='';taskMatches=null;searchBusy=false;searchError='';visible=new Set(Object.keys(kinds));showDone=false;query='';listPage=1;for(const el of document.querySelectorAll('[data-calendar-kind]'))el.checked=true;for(const el of document.querySelectorAll('#calendar-show-done,#calendar-option-done'))el.checked=false;saveCalendarDisplay({calendar_kinds:[...visible],calendar_show_done:false});refresh();}
       else if(action==='options-back'){options();}
       else if(action==='today'){selected=dayKey();refresh();if($('#calendar-option-date'))$('#calendar-option-date').value=selected;}
       else if(action==='previous'||action==='next'){const n=action==='next'?1:-1,candidate=view==='month'||(view==='list'&&!listDay)?shiftMonth(selected,n):addDays(selected,n*(view==='week'?7:1));if(candidate>='2000-01-01'&&candidate<='2100-12-31'){selected=candidate;listPage=1;refresh();}}
@@ -314,12 +352,12 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     }catch(error){toast(error.message,true);}finally{button.disabled=false;if(document.activeElement===document.body&&button.isConnected&&!$('#dialog').open)button.focus({preventScroll:true});}
   });
   document.addEventListener('keydown',e=>{const cell=e.target.closest('.month-date');if(!cell)return;const n={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];if(n){e.preventDefault();selected=addDays(cell.dataset.calendarDay,n);refresh();focusMonthControl($(`.month-date[data-calendar-day="${selected}"]`));}});
-  window.addEventListener('hashchange',()=>{stash();if(!belongs()){monthResize.disconnect();monthElement=null;}});
+  window.addEventListener('hashchange',()=>{stash();if(!belongs()){clearTimeout(searchTimer);searchRequest++;searchBusy=false;detailRequest++;monthResize.disconnect();monthElement=null;}});
   phone.addEventListener('change',()=>{if(belongs())refresh();});
   compactWeek.addEventListener('change',()=>{if(belongs())refresh();});
   function openRecord(id){
     const record=records.find(r=>r.id===id);if(!record)throw Error('这项日程已经删掉了，或者不在你的账号里。');
-    selected=record.data.start_date;visible.add(record.data.category||'personal');query='';refresh();
+    selected=record.data.start_date;visible.add(record.data.category||'personal');query='';appliedQuery='';taskMatches=null;refresh();
     const event=entries.find(e=>e.id===id);
     if(event)detail(event.key);else editor(record);
   }
@@ -327,7 +365,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     if(!belongs()||owner!==state.session?.user?.id)return;
     if(items)records=items;
     readDisplay();
-    refresh();
+    refresh();if(query.trim()&&searchTaskVersion!==taskVersionKey())searchCalendar(query);
   }
   return {render,refresh,applyRecords,persist:stash,openRecord};
 }

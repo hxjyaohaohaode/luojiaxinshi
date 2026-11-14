@@ -1,10 +1,11 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /* Real routes and UI, with a synthetic source reader in push_preview_server.py. */
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/source-inbox-browser');await fs.mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()}),page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+const browser=await chromium.launch({headless:true,executablePath:browserExecutable(chromium)}),page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
 page.setDefaultTimeout(10000);
 const report={synthetic:true,external_source_requests:0,live_model_calls:0,checks:[],errors:[]};page.on('pageerror',e=>report.errors.push(e.message));
 const api=(url,method='GET',json=null)=>page.evaluate(async({url,method,json})=>{const session=await fetch('/api/session').then(r=>r.json());const r=await fetch('/api'+url,{method,headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf,...(json?{'Content-Type':'application/json'}:{})},...(json?{body:JSON.stringify(json)}:{})});if(!r.ok)throw Error(await r.text());return r.json();},{url,method,json});

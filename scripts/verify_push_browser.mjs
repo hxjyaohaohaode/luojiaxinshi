@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /* Real application APIs and Service Worker; only browser subscription/provider delivery are simulated. */
 import {chromium} from 'playwright';
 import {createECDH,randomBytes} from 'node:crypto';
@@ -7,7 +8,7 @@ import assert from 'node:assert/strict';
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/push-browser');await fs.mkdir(out,{recursive:true});
 const report={synthetic:true,external_push_requests:0,real_device_delivery_verified:false,checks:[],errors:[]};
 const ecdh=createECDH('prime256v1');ecdh.generateKeys();const keys={p256dh:ecdh.getPublicKey().toString('base64url'),auth:randomBytes(16).toString('base64url')};
-const browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()}),context=await browser.newContext({permissions:['notifications'],viewport:{width:1440,height:900}});
+const browser=await chromium.launch({headless:true,executablePath:browserExecutable(chromium)}),context=await browser.newContext({permissions:['notifications'],viewport:{width:1440,height:900}});
 await context.addInitScript(({keys})=>{
  const key='synthetic.push.subscription';window.__pushCalls={subscribe:0,permission:0};
  const restore=()=>{const raw=localStorage.getItem(key);if(!raw)return null;const value=JSON.parse(raw);return {...value,toJSON:()=>value,async unsubscribe(){localStorage.removeItem(key);return true;}};};

@@ -32,6 +32,8 @@ jobs:
           java-version: '21'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
+      - name: Require reproducible frontend bundles and route chunks
+        run: npm run build:check
       - name: Install the checksum-pinned legacy Office parser
         run: python scripts/install_legacy_parser.py
       - name: Run every backend file in isolated shards
@@ -86,6 +88,8 @@ jobs:
           java-version: '21'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
+      - name: Require reproducible frontend bundles and route chunks
+        run: npm run build:check
       - run: python scripts/install_legacy_parser.py
       - name: Run this exact declared backend partition
         run: python scripts/audit_full_suite.py --workers 4 --only-shard ${{ matrix.shard }} --output artifacts/ci/windows-backend
@@ -116,6 +120,8 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
+      - name: Require reproducible frontend bundles and route chunks
+        run: npm run build:check
       - name: Download every partition from this exact workflow attempt
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -187,6 +193,8 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
+      - name: Require reproducible frontend bundles and route chunks
+        run: npm run build:check
       - name: Verify all preinstalled browsers can launch
         run: >-
           node --input-type=module -e 'import { chromium, firefox, webkit } from "playwright";
@@ -226,6 +234,8 @@ jobs:
         with:
           name: synthetic-browser-reports
           path: |
+            artifacts/sprint-ui-browser/*
+            artifacts/ci-browser/verify_sprint_ui.mjs.log
             artifacts/frontend-v9-browser/report.json
             artifacts/frontend-v9-browser/*.png
             artifacts/frontend-v8-browser/report.json
@@ -302,6 +312,8 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: npm ci --ignore-scripts
+      - name: Require reproducible frontend bundles and route chunks
+        run: npm run build:check
       - name: Verify every retained async-save and recovery scenario
         run: python scripts/run_continuity_browser_checks.py
       - name: Write all continuity counts

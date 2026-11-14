@@ -49,3 +49,9 @@ GitHub Actions 只在仓库检查环境中运行，不进入产品包。以下�
 Apache Tika 的主许可证为 Apache-2.0，发行包中的依赖和插件仍按其各自的许可及声明处理。Temurin 的 OpenJDK 运行时按 GPLv2 with Classpath Exception 等随包许可提供，原 `legal/` 与 `NOTICE` 保留。Linux 镜像通过系统包安装 Java，不把本机 Windows JRE 复制入镜像。许可依据为对应下载发行包内的许可文件；这里的工程记录不替代其完整文本。
 
 本轮主动监控与 Harness 的上游仓库核查另见 `docs/proactive/upstream-review-2026-11-02.json`，其版本、维护时间及许可证信息带核查日期；借鉴方案与本项目运行依赖分别记录。
+
+## 冲刺审查的前端构建（2026-11-13，America/Los_Angeles）
+
+新增仅开发依赖 `esbuild 0.28.2`，使用上游 MIT 许可证。由锁定的 `package-lock.json` 安装，用于合并有顺序的 CSS 层和输出按路由加载的 ESM 文件；服务端运行及浏览器均不下载构建器。许可证全文见 `docs/licenses/esbuild/LICENSE.txt`。没有引入 React 或组件参考站的运行框架。
+
+运行 `npm run build` 生成内容哈希文件和来源清单，`npm run build:check` 在 CI 逐字节核对可重现输出；只压缩公共静态文件，API 与 SSE 仍维持原响应语义。参考组件的逐项适用性与具体采用证据另见本轮审查账本，不把演示站许可等同于全站素材授权。

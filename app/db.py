@@ -232,6 +232,23 @@ class Database:
                 version=conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
                 if version is None or version[0] not in {'1','2','3','4','5'}:
                     raise RuntimeError('数据库版本不兼容，禁止直接降级')
+                from .campus import SPRINT_TABLES
+                from .source_fetch import TABLES as FETCH_TABLES
+                from .source_sync import OBSERVATION_TABLES
+                from .notice_tracking import TABLES as TRACKING_TABLES
+                from .listing import TABLES as LISTING_TABLES
+                from .observability import TABLES as OBSERVABILITY_TABLES
+                from .notification_coordination import TABLES as COORDINATION_TABLES
+                for key, required in (('campus_sprint_schema_version',SPRINT_TABLES),
+                                      ('source_fetch_schema_version',FETCH_TABLES),
+                                      ('source_observation_schema_version',OBSERVATION_TABLES),
+                                      ('notice_tracking_schema_version',TRACKING_TABLES),
+                                      ('bounded_lists_version',LISTING_TABLES),
+                                      ('observability_schema_version',OBSERVABILITY_TABLES),
+                                      ('notification_coordination_schema_version',COORDINATION_TABLES)):
+                    marker=conn.execute('SELECT value FROM meta WHERE key=?',(key,)).fetchone()
+                    if marker and (marker[0]!='1' or not required.issubset(tables)):
+                        raise RuntimeError('数据库扩展版本不兼容或必要记录缺失，未改写：'+key)
                 from .verification import TABLES as VERIFICATION_TABLES
                 from .mail_delivery import TABLES as MAIL_TABLES
                 from .delivery_policy import TABLES as DELIVERY_POLICY_TABLES
@@ -344,6 +361,14 @@ class Database:
             conn.executescript(COLLABORATION_SCHEMA)
             from .workspace_sync import initialize as init_workspace_sync
             init_workspace_sync(conn)
+            from .listing import initialize as init_listing
+            init_listing(conn)
+            from .observability import initialize as init_observability
+            init_observability(conn)
+            from .notification_coordination import initialize as init_notification_coordination
+            init_notification_coordination(conn)
+            conn.execute("INSERT OR IGNORE INTO meta VALUES('campus_sprint_schema_version','1')")
+            conn.commit()
 
     @contextmanager
     def connect(self, write=False):
@@ -361,15 +386,25 @@ class Database:
         conn.execute("PRAGMA foreign_keys=ON")
         conn.execute("PRAGMA busy_timeout=15000")
         conn.execute("PRAGMA secure_delete=ON")
+        holding_since=None
         try:
             if write:
-                conn.execute("BEGIN IMMEDIATE")
+                from .runtime_metrics import record
+                waiting_since=time.perf_counter()
+                try:conn.execute("BEGIN IMMEDIATE")
+                except BaseException:
+                    record(self.path,'wait',(time.perf_counter()-waiting_since)*1000,failed=True)
+                    raise
+                record(self.path,'wait',(time.perf_counter()-waiting_since)*1000)
+                holding_since=time.perf_counter()
             yield conn
             conn.commit()
         except BaseException:
             conn.rollback()
             raise
         finally:
+            if holding_since is not None:
+                record(self.path,'hold',(time.perf_counter()-holding_since)*1000)
             conn.close()
 
     def backup(self, destination: Path):
@@ -392,6 +427,8 @@ class Database:
 
 
 def audit(conn, user_id, notice_id, action, before=None, after=None, task_id=None):
-    conn.execute("INSERT INTO audit(user_id,notice_id,task_id,action,before_json,after_json,created_at) VALUES(?,?,?,?,?,?,?)",
+    result=conn.execute("INSERT INTO audit(user_id,notice_id,task_id,action,before_json,after_json,created_at) VALUES(?,?,?,?,?,?,?)",
                  (user_id, notice_id, task_id, action, dumps(before) if before is not None else None,
                   dumps(after) if after is not None else None, int(time.time())))
+    from .observability import request_id
+    if request_id.get():conn.execute('INSERT INTO request_audit_links VALUES(?,?)',(result.lastrowid,request_id.get()))

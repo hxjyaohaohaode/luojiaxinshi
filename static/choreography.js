@@ -23,12 +23,19 @@ const ITEMS = [
 ].join(',');
 
 const live = new Set();
+const celebrations = new Map();
 function track(animation) {
   live.add(animation);
   animation.finished.catch(() => {}).finally(() => live.delete(animation));
   return animation;
 }
-export function cancelChoreography() { for (const animation of live) animation.cancel(); live.clear(); }
+export function cancelChoreography() {
+  for (const animation of live) animation.cancel();
+  live.clear();
+  for (const [control, timer] of celebrations) { clearTimeout(timer); control.classList.remove('just-checked'); }
+  celebrations.clear();
+  document.querySelectorAll('.confetti-bit').forEach(bit => bit.remove());
+}
 
 function inViewport(node, margin = 160) {
   const rect = node.getBoundingClientRect();
@@ -185,12 +192,14 @@ function installHoverFollower(selector, itemSelector) {
 
 // 完成一项：勾选框回弹，并洒出几片品牌色小纸片。
 export function celebrateCheck(control) {
-  if (!control) return;
+  // Called only after the owner-bound mutation confirms completion. A click,
+  // optimistic paint or opening the handling panel is not a completed task.
+  if (!control?.isConnected || !motionAllowed() || !inViewport(control, 0)) return;
+  clearTimeout(celebrations.get(control));
   control.classList.remove('just-checked');
   void control.offsetWidth;
   control.classList.add('just-checked');
-  setTimeout(() => control.classList.remove('just-checked'), 700);
-  if (!motionAllowed()) return;
+  celebrations.set(control, setTimeout(() => { control.classList.remove('just-checked'); celebrations.delete(control); }, 700));
   const rect = control.getBoundingClientRect();
   const colors = ['#2f7d54', '#b88a3e', '#7fb064', '#e5a3ad', '#115740'];
   for (let i = 0; i < 9; i++) {
@@ -201,11 +210,11 @@ export function celebrateCheck(control) {
     bit.style.top = rect.top + rect.height / 2 + 'px';
     document.body.append(bit);
     const angle = (Math.PI * 2 * i) / 9 + Math.random() * .4, distance = 26 + Math.random() * 22;
-    const animation = bit.animate([
+    const animation = track(bit.animate([
       {transform: 'translate(-50%,-50%) scale(.6) rotate(0deg)', opacity: 1},
       {transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(1) rotate(${120 + i * 40}deg)`, opacity: .95, offset: .55},
       {transform: `translate(calc(-50% + ${Math.cos(angle) * distance * 1.25}px), calc(-50% + ${Math.sin(angle) * distance * 1.25 + 18}px)) scale(.4) rotate(${200 + i * 50}deg)`, opacity: 0},
-    ], {duration: 760 + Math.random() * 200, easing: EASE_OUT});
+    ], {duration: 760 + Math.random() * 200, easing: EASE_OUT}));
     animation.finished.catch(() => {}).finally(() => bit.remove());
   }
 }
@@ -294,8 +303,4 @@ export function initializeChoreography() {
   };
   new MutationObserver(watch).observe(document.querySelector('#app'), {childList: true});
   watch();
-  document.addEventListener('click', event => {
-    const control = event.target.closest('[data-action="toggle-task"]');
-    if (control && !control.classList.contains('checked')) requestAnimationFrame(() => celebrateCheck(control));
-  }, true);
 }

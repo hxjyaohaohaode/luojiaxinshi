@@ -1,8 +1,8 @@
 // Read/archive state belongs to the account; task completion stays independent.
 import {captureUiContext} from './ui-request.js';
-const KIND_ICON = {overdue:'clock', due:'calendar', reminder:'bell', followup:'history', change:'shield', arrangement:'calendar',notice_event:'calendar', notice:'doc',collaboration:'check'};
+const KIND_ICON = {overdue:'clock', due:'calendar', reminder:'bell', followup:'history', change:'shield', arrangement:'calendar',notice_event:'calendar', notice:'doc',collaboration:'check',source_health:'shield',notice_phase:'doc'};
 const NOTIFIED_KEY = 'campus.reminders.notified', ENABLED_KEY = 'campus.reminders.browser';
-const REMINDER_GROUPS=[['overdue','已过期限'],['due','即将截止'],['change','通知变更'],['collaboration','协作办理'],['followup','等待跟进'],['reminder','个人提醒'],['calendar','日程安排'],['notice','待整理通知'],['other','其他提醒']];
+const REMINDER_GROUPS=[['overdue','已过期限'],['due','即将截止'],['change','通知变更'],['collaboration','协作办理'],['followup','等待跟进'],['reminder','个人提醒'],['calendar','日程安排'],['notice','待整理通知'],['source_health','来源读取状态'],['notice_phase','公示与结果'],['other','其他提醒']];
 export function reminderGroups(items){
   const key=item=>['arrangement','notice_event'].includes(item.kind)?'calendar':REMINDER_GROUPS.some(([kind])=>kind===item.kind)?item.kind:'other';
   return REMINDER_GROUPS.map(([id,label])=>({id,label,items:items.filter(item=>key(item)===id)})).filter(group=>group.items.length);
@@ -25,6 +25,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
     if(item.task_id)return '#tasks/'+encodeURIComponent(item.task_id);
     if(item.arrangement_id)return '#calendar/'+encodeURIComponent(item.arrangement_id);
     if(item.notice_id)return '#notice/'+encodeURIComponent(item.notice_id);
+    if(item.kind==='source_health'||item.source_id)return '#sources';
     return item.kind==='notice'?'#notices':'#tasks';
   }
   function itemLink(item,compact=false) {

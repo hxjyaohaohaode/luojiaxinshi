@@ -32,7 +32,7 @@
 
 浏览器回归还检查共享表单的按钮重复监听只发出一次请求，以及修正后只恢复契约兼容的已编辑字段、未编辑初值采用新稿。另有真实模型产物的离线回放脚本，验证实际生成程序的计算、非法输入、保存重算、手机布局及继续提问；它与合成测试和真实模型网络耗时分别记录。
 
-当前版本 1.23.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
+当前版本 1.24.0。本文说明测试体系、运行方法、本轮新增的测试和尚未完成的外部验收。通过数量不在这里手写，以对应提交的 [GitHub Actions](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/workflows/checks.yml) 运行记录和本地实际输出为准。
 
 ## 测试体系与运行命令
 
@@ -41,6 +41,7 @@
 ```powershell
 python -m pip install -r requirements-dev.txt
 npm ci --ignore-scripts
+npm run build:check
 ```
 
 | 层级 | 命令 | 范围与边界 |
@@ -165,3 +166,11 @@ npm ci --ignore-scripts
 后端每个分片默认最多 2400 秒，超时返回失败并只终止该分片创建的进程树。Windows 单机四片曾实测用时 2396.67 秒，因此 CI 将同一分组分配到四个独立作业，各作业限时仍为 45 分钟，未提高分片期限或删除用例。执行前移除同名旧 JUnit；缺失报告不能通过。分片保留逐用例日志和超过 90 秒时的线程栈，便于区分慢用例、等待和退出阻塞。
 
 `--only-shard 1` 仅供上述 CI 调度，不替代本地全量命令。`--merge-partitions artifacts/windows-partitions` 要求同一源码的所有声明分片，并核对每个 JUnit 用例所属文件及计数。需要重跑时应重跑完整 workflow；不同 attempt 的部分成功不能拼成当前整轮验收。
+
+## 冲刺新增回归与证据口径
+
+新增 `test_sprint_lists.py`、`test_sprint_notifications.py`、`test_sprint_official_time.py`、`test_campus_sprint.py`、`test_intake_round_isolation.py`、`test_notice_phase_tracking.py`、`test_source_fetch_contracts.py` 以及分页、名册前端行为测试。真实浏览器入口 `verify_sprint_ui.mjs` 已加入默认门禁；源网络、模型和外发通道仍使用隔离的合成输入。
+
+`verify_campus_capacity.py` 对相同一万条样本并排测量旧全量读法与新分页、完整语义筛选、全文索引及短中文查询。每项记录冷态、五次热态 P50/P95、响应体及正确性；五样本 P95 使用最近秩最大值，不冒称生产 SLA。
+
+本次执行环境禁止提升权限启动本地浏览器；该限制不会被记为通过。浏览器实际结果以指定提交的 CI 报告为准。真实手机后台/锁屏、真实消息供应商、独立人工标注和校园现场使用仍是独立验收，不能由 CI 合成数据替代。

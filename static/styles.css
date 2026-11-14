@@ -35,6 +35,9 @@
 @import url('/static/workspace-layout.css') layer(legacy);
 @import url('/static/genui/answer-surface.css') layer(legacy);
 @import url('/static/composer.css') layer(legacy);
+@import url('/static/notice-matters.css') layer(legacy);
+@import url('/static/campus.css') layer(legacy);
+@import url('/static/task-materials.css') layer(legacy);
 
 @import url('/static/system/tokens.css') layer(system);
 @import url('/static/system/base.css') layer(system);
@@ -68,3 +71,8 @@
 @import url('/static/system/content-priority.css') layer(system);
 
 @import url('/static/system/chat-conversation.css') layer(system);
+
+@import url('/static/system/campus-roster.css') layer(system);
+@import url('/static/system/notice-lifecycle.css') layer(system);
+@import url('/static/system/collaboration-followup.css') layer(system);
+@import url('/static/system/getting-started.css') layer(system);

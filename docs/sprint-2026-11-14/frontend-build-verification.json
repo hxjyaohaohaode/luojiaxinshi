@@ -1,0 +1,167 @@
+{
+  "scope": "Final frontend local gates; actual browser results require GitHub CI",
+  "performed_at": "2026-11-14T04:51:18.088Z",
+  "node": "v24.22.1",
+  "platform": "linux",
+  "commands": [
+    {
+      "command": "npm run build",
+      "exit_code": 0
+    },
+    {
+      "command": "npm run build:check",
+      "exit_code": 0
+    },
+    {
+      "command": "npm test",
+      "exit_code": 0,
+      "tests": 275,
+      "passed": 275
+    },
+    {
+      "command": ".venv/bin/python -m pytest tests/test_frontend_bundle.py tests/test_audit_reports.py -q",
+      "exit_code": 0,
+      "tests": 23,
+      "passed": 23
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "build": {
+    "checked": true,
+    "entries": {
+      "js": "/static/dist/app-JL3KAYN2.js",
+      "css": "/static/dist/styles-BKR4PFDD.css"
+    },
+    "files": 24,
+    "source_files": 191,
+    "metrics": {
+      "static/dist/chunks/operations-CWOQ6DW4.js": {
+        "bytes": 11088,
+        "gzip": 4540,
+        "brotli": 3591
+      },
+      "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": {
+        "bytes": 13129,
+        "gzip": 5349,
+        "brotli": 4318
+      },
+      "static/dist/chunks/insights-J6NHPJTV.js": {
+        "bytes": 8924,
+        "gzip": 3469,
+        "brotli": 2918
+      },
+      "static/dist/chunks/calendar-45THDV6Z.js": {
+        "bytes": 43913,
+        "gzip": 15664,
+        "brotli": 13372
+      },
+      "static/dist/app-JL3KAYN2.js": {
+        "bytes": 431372,
+        "gzip": 147295,
+        "brotli": 115099
+      },
+      "static/dist/chunks/chunk-VHWCVQYR.js": {
+        "bytes": 15828,
+        "gzip": 5811,
+        "brotli": 4735
+      },
+      "static/dist/chunks/memory-BFXNPUUY.js": {
+        "bytes": 88942,
+        "gzip": 30139,
+        "brotli": 24891
+      },
+      "static/dist/chunks/collaboration-AR26JSE5.js": {
+        "bytes": 16552,
+        "gzip": 6402,
+        "brotli": 5307
+      },
+      "static/dist/chunks/charts-UCDSXHVD.js": {
+        "bytes": 6016,
+        "gzip": 2968,
+        "brotli": 2630
+      },
+      "static/dist/chunks/chat-3FTYZ52U.js": {
+        "bytes": 188379,
+        "gzip": 64664,
+        "brotli": 54324
+      },
+      "static/dist/chunks/chunk-ZE6GBC5S.js": {
+        "bytes": 31845,
+        "gzip": 13470,
+        "brotli": 11528
+      },
+      "static/dist/chunks/chunk-HHFMEND4.js": {
+        "bytes": 3677,
+        "gzip": 1609,
+        "brotli": 1483
+      },
+      "static/dist/chunks/chunk-URIZXBGG.js": {
+        "bytes": 6306,
+        "gzip": 2501,
+        "brotli": 2288
+      },
+      "static/dist/chunks/chunk-52VEMMR4.js": {
+        "bytes": 38252,
+        "gzip": 7656,
+        "brotli": 6518
+      },
+      "static/dist/chunks/sources-AO7MVCU5.js": {
+        "bytes": 43018,
+        "gzip": 14947,
+        "brotli": 12606
+      },
+      "static/dist/chunks/chunk-KRBNAJD2.js": {
+        "bytes": 10968,
+        "gzip": 4029,
+        "brotli": 3386
+      },
+      "static/dist/chunks/chunk-43FC37BF.js": {
+        "bytes": 129909,
+        "gzip": 37373,
+        "brotli": 26365
+      },
+      "static/dist/chunks/chunk-OFOGQT63.js": {
+        "bytes": 7269,
+        "gzip": 2809,
+        "brotli": 2408
+      },
+      "static/dist/chunks/chunk-5XLQ4GUR.js": {
+        "bytes": 9941,
+        "gzip": 3899,
+        "brotli": 3377
+      },
+      "static/dist/chunks/campus-JHXVYY32.js": {
+        "bytes": 50936,
+        "gzip": 16547,
+        "brotli": 14086
+      },
+      "static/dist/chunks/chunk-HWBRJJQM.js": {
+        "bytes": 1319,
+        "gzip": 715,
+        "brotli": 583
+      },
+      "static/dist/styles-BKR4PFDD.css": {
+        "bytes": 600210,
+        "gzip": 114991,
+        "brotli": 89582
+      },
+      "static/dist/index.html": {
+        "bytes": 1525,
+        "gzip": 774,
+        "brotli": 514
+      }
+    }
+  },
+  "browser": {
+    "state": "not_executed_locally",
+    "reason": "Local browser launch is blocked by environment permissions; fixed Chromium/Firefox/WebKit CI is required. No privilege bypass.",
+    "suite": "scripts/verify_sprint_ui.mjs"
+  },
+  "node22": {
+    "state": "not_executed_locally",
+    "gate": "GitHub CI uses Node22 and validates the identical committed output."
+  }
+}

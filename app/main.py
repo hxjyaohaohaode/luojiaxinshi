@@ -12,7 +12,7 @@ import threading
 import time
 from urllib.parse import quote, urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -100,7 +100,8 @@ class RequestGuard:
                            "frame-ancestors 'self'; sandbox allow-scripts").encode('ascii')
                 # 图片等资源按天缓存；脚本与样式每次用 ETag 重新校验（未变化时返回 304），
                 # 避免每次打开页面重新下载全部前端代码；接口与首页仍不缓存。
-                cache=b'public, max-age=86400' if path.startswith('/static/assets/') else b'no-cache' if path.startswith('/static/') else b'no-store'
+                immutable=bool(re.fullmatch(r'/static/dist/(?:chunks/|assets/)?[A-Za-z0-9_-]+-[A-Z0-9]{8}\.(?:js|css|png|svg|webm|woff2)',path))
+                cache=b'public, max-age=31536000, immutable' if immutable else b'public, max-age=86400' if path.startswith('/static/assets/') else b'no-cache' if path.startswith('/static/') else b'no-store'
                 extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview or openui_frame else b'DENY'),
                        (b'referrer-policy',b'no-referrer'),(b'cache-control',cache),
                        (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
@@ -164,9 +165,28 @@ def create_app(settings=None):
         group_worker=asyncio.create_task(run_group_delivery(db,settings))
         from .qq_group_media import run_worker as run_group_media
         group_media_worker=asyncio.create_task(run_group_media(db,settings))
+        async def publication_delivery():
+            from .campus import drain_publications
+            while True:
+                try:
+                    await run_in_threadpool(drain_publications,db)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as error:
+                    logging.getLogger('campus').error('publication_delivery_failed error=%s',type(error).__name__)
+                await asyncio.sleep(5)
+        publication_worker=asyncio.create_task(publication_delivery())
+        async def operations_monitor():
+            from .operations_monitor import tick
+            while True:
+                await asyncio.sleep(60)
+                try:await run_in_threadpool(tick,db,settings)
+                except Exception as error:logging.getLogger('campus').error('operations_monitor_failed error=%s',type(error).__name__)
+        monitor_worker=asyncio.create_task(operations_monitor())
         application.state.worker_tasks={'backups':worker,'execution':lease_worker,'knowledge':memory_worker,
             'sources':source_worker,'web_push':push_worker,'email':mail_worker,
-            'notice_analysis':automation_worker,'groups':group_worker,'group_attachments':group_media_worker}
+            'notice_analysis':automation_worker,'groups':group_worker,'group_attachments':group_media_worker,
+            'publications':publication_worker,'operations':monitor_worker}
         try:
             yield
         finally:
@@ -187,16 +207,24 @@ def create_app(settings=None):
             group_worker.cancel()
             group_media_worker.cancel()
             mail_worker.cancel()
+            publication_worker.cancel()
+            monitor_worker.cancel()
             await asyncio.gather(lease_worker,memory_worker,source_worker,push_worker,automation_worker,
-                                 group_worker,group_media_worker,mail_worker,return_exceptions=True)
+                                 group_worker,group_media_worker,mail_worker,publication_worker,monitor_worker,return_exceptions=True)
             await run_in_threadpool(runtime.close)
 
     app=FastAPI(title='校园通知智能转办助手',docs_url=None,redoc_url=None,openapi_url=None,lifespan=lifespan)
     app.state.db, app.state.settings = db, settings
     app.state.worker_tasks={}
     app.state.execution=runtime
+    from .frontend_assets import StaticCompression,built_index
+    frontend_index=built_index(ROOT)
+    app.state.frontend_bundled=bool(frontend_index)
+    app.add_middleware(StaticCompression)
     app.add_middleware(RequestGuard,origin=settings.origin,production=settings.production)
     app.add_middleware(TrustedHostMiddleware,allowed_hosts=[urlparse(settings.origin).hostname])
+    from .observability import RequestTrace
+    app.add_middleware(RequestTrace)
     heavy_lock=threading.BoundedSemaphore(2)
     # 通知整理单独限流：聊天一轮可能持续很久，不能因此让通知整理返回“繁忙”。
     notice_lock=threading.BoundedSemaphore(2)
@@ -258,6 +286,9 @@ def create_app(settings=None):
         columns='id,name,kind,sha256,status,sections,warning,active,created_at'+(',content' if include_content else '')
         for row in conn.execute('SELECT '+columns+' FROM sources WHERE notice_id=? ORDER BY created_at,rowid',(nid,)):
             source=dict(row)
+            if include_content:
+                from .campus_assets import hydrate_source
+                source=hydrate_source(conn,source)
             source['sections']=json.loads(source['sections'])
             if source['id'] in origins:source['origin']=origins[source['id']]
             if not active_only or source['active']:
@@ -279,25 +310,16 @@ def create_app(settings=None):
         task=dict(row)
         task['data']=json.loads(task['data'])
         task['needs_calendar_sync']=task['exported_version'] is not None and task['exported_version']!=task['version']
-        data=task['data']
-        now=datetime.now(CST)
-        task['overdue']=False
-        task['due_soon']=False
-        if task['status']=='pending' and data.get('due_date') and data.get('deadline_confirmed'):
-            if data.get('due_time'):
-                deadline=datetime.fromisoformat(data['due_date']+'T'+data['due_time']).replace(tzinfo=CST)
-                task['overdue']=deadline<now
-                task['due_soon']=now<=deadline<=now+timedelta(days=7)
-            else:
-                day=datetime.fromisoformat(data['due_date']).date()
-                task['overdue']=day<now.date()
-                task['due_soon']=now.date()<=day<=now.date()+timedelta(days=7)
+        from .task_timing import deadline_flags
+        task.update(deadline_flags(task))
         return task
 
     def detailed_notice(conn,nid,uid):
         record=own_notice(conn,nid,uid)
         from .notice_intake import disposition
         record['handling']=disposition(conn,nid)
+        from .campus_policy import notice_publication_context
+        record['publication_context']=notice_publication_context(conn,nid)
         active=notice_processing(conn,record,settings.ai_timeout)
         record.pop('processing_token',None)
         if record['status']=='processing' and not active:
@@ -486,6 +508,9 @@ def create_app(settings=None):
             saved=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
             if payload.phone!=saved.get('phone',''):raise HTTPException(422,'请在账号安全中验证后修改手机号')
             value=payload.model_dump()
+            from .notification_routing import validate_owner_routes
+            validate_owner_routes(conn,current['id'],payload.notification_preferences,saved.get('notification_preferences',{}))
+            value['notification_preferences']=payload.notification_preferences.model_dump()
             for key in DISPLAY_PREFERENCES:
                 if key not in payload.model_fields_set and key in saved:value[key]=saved[key]
             conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(value),current['id']))
@@ -506,6 +531,8 @@ def create_app(settings=None):
                 raise HTTPException(409,{'code':'profile_conflict','message':'这些资料已在另一处修改。本次填写已保留，请先核对最新值。',
                                          'fields':conflicts,'profile':saved})
             updated=Profile.model_validate({**saved,**changes})
+            from .notification_routing import validate_owner_routes
+            validate_owner_routes(conn,current['id'],updated.notification_preferences,saved['notification_preferences'])
             if updated.model_dump()!=saved:
                 conn.execute('UPDATE users SET profile=? WHERE id=?',(updated.model_dump_json(),current['id']))
         return {'profile':updated.model_dump()}
@@ -583,6 +610,17 @@ def create_app(settings=None):
     def find_notices(q:str='',current=Depends(user)):
         with db.connect() as conn:
             return search_notices(conn,current['id'],q)
+
+    @app.get('/api/notices/page')
+    def paged_notices(limit:int=50,cursor:str='',q:str='',status:str='',disposition:str='',source:str='',
+                      intent:str='',relevance:str='',from_day:str=Query('',alias='from'),to_day:str=Query('',alias='to'),
+                      sort:str='collected',ids:str='',current=Depends(user)):
+        from .listing import notice_page
+        if not 1<=limit<=100 or len(cursor)>4096 or len(source)>200:
+            raise HTTPException(422,'分页大小须为 1–100，游标或来源筛选过长')
+        with db.connect() as conn:
+            return notice_page(conn,current['id'],limit=limit,cursor=cursor,q=q,status=status,disposition=disposition,source=source,
+                               intent=intent,relevance=relevance,from_day=from_day,to_day=to_day,sort=sort,ids=ids)
 
     async def parse_form(request,uid):
         form=await request.form(max_files=5,max_fields=16,max_part_size=120000)
@@ -750,6 +788,8 @@ def create_app(settings=None):
         with db.connect() as conn:
             own_notice(conn,nid,current['id'])
             source=conn.execute('SELECT * FROM sources WHERE id=? AND notice_id=?',(sid,nid)).fetchone()
+            from .campus_assets import hydrate_source
+            source=hydrate_source(conn,source)
             if source is None or source['content'] is None:
                 raise HTTPException(404,'附件不存在')
             from .chat_media import VIDEO_MIME,video_response
@@ -769,6 +809,8 @@ def create_app(settings=None):
             existing=conn.execute('SELECT conversation_id FROM integration_receipts WHERE receipt_key=?',(receipt,)).fetchone()
             if existing and existing['conversation_id'] and conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(existing['conversation_id'],current['id'])).fetchone():return {'conversation_id':existing['conversation_id']}
             rows=conn.execute('SELECT * FROM sources WHERE notice_id=? AND active=1 ORDER BY created_at,rowid',(nid,)).fetchall()
+            from .campus_assets import hydrate_source
+            rows=[hydrate_source(conn,row) for row in rows]
             if len(rows)>12:raise HTTPException(400,'本通知附件超过单次对话上限，请选取相关材料另建对话')
             from .usage_limits import check_count, check_storage
             check_count(conn,current['id'],'conversations','conversations','会话')
@@ -989,7 +1031,11 @@ def create_app(settings=None):
     def list_tasks(conn,uid):
         items=[serialize_task(r) for r in conn.execute('SELECT t.*,n.title AS notice_title FROM tasks t JOIN notices n ON n.id=t.notice_id WHERE t.user_id=? ORDER BY t.updated_at DESC',(uid,))]
         attachments={}
-        for row in conn.execute("SELECT s.id,s.notice_id,s.name,s.kind,s.status,length(s.content) AS size FROM sources s JOIN notices n ON s.notice_id=n.id WHERE n.user_id=? AND s.active=1 AND s.content IS NOT NULL ORDER BY s.created_at",(uid,)):
+        for row in conn.execute("""SELECT s.id,s.notice_id,s.name,s.kind,s.status,COALESCE(length(s.content),length(m.content)) AS size
+            FROM sources s JOIN notices n ON s.notice_id=n.id
+            LEFT JOIN campus_material_refs r ON r.source_id=s.id
+            LEFT JOIN campus_materials m ON m.publication_id=r.publication_id AND m.version=r.version AND m.position=r.position
+            WHERE n.user_id=? AND s.active=1 AND (s.content IS NOT NULL OR m.content IS NOT NULL) ORDER BY s.created_at""",(uid,)):
             attachments.setdefault(row['notice_id'],[]).append(dict(row))
         for item in items:item['attachments']=attachments.get(item['notice_id'],[])
         return enrich_tasks(conn, items)
@@ -1001,8 +1047,20 @@ def create_app(settings=None):
             return projection(conn,request,current,'tasks',('tasks','notices','account','clock'),
                               lambda:list_tasks(conn,current['id']))
 
+    @app.get('/api/tasks/page')
+    def paged_tasks(limit:int=50,cursor:str='',q:str='',status:str='',notice_id:str='',lane:str='',scope:str='',day:str='',ids:str='',current=Depends(user)):
+        from .listing import task_page
+        if not 1<=limit<=100 or len(cursor)>4096 or len(notice_id)>100:
+            raise HTTPException(422,'分页大小须为 1–100，游标或事项标识过长')
+        with db.connect() as conn:
+            return task_page(conn,current['id'],serialize_task,limit=limit,cursor=cursor,q=q,status=status,notice_id=notice_id,lane=lane,scope=scope,day=day,ids=ids)
+
+    from .workspace_projection import install as install_workspace_projection
+    install_workspace_projection(app,db,user,list_tasks)
     from .insights import install as install_insights
     install_insights(app,db,user,admin,list_tasks)
+    from .notification_events import install as install_notification_events
+    install_notification_events(app,db,settings,user)
 
     def update_task_record(conn,uid,tid,payload):
         old=own_task(conn,tid,uid)
@@ -1093,6 +1151,8 @@ def create_app(settings=None):
             material_archive=export_task_materials(conn,current['id'])
             from .notice_matters import export_groups
             matters=export_groups(conn,current['id'])
+            from .notice_tracking import export_tracking
+            phase_tracking=export_tracking(conn,current['id'])
             account_records={'contacts':verification.contacts(conn,current['id']),
                 'consents':[dict(r) for r in conn.execute('SELECT version,accepted_at FROM account_consents WHERE user_id=?',(current['id'],))],
                 'mail_deliveries':[dict(r) for r in conn.execute('SELECT state,created_at,finished_at,error FROM mail_outbox WHERE user_id=? ORDER BY created_at',(current['id'],))]}
@@ -1100,6 +1160,7 @@ def create_app(settings=None):
                 'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'memory_archive':memory_archive,'note':'含记忆来源与历史、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
         result['task_material_archive']=material_archive
         result['notice_matters']=matters
+        result['notice_phase_tracking']=phase_tracking
         result['account_records']=account_records
         result['note']+=' 联系方式与邮件投递记录仅作本人数据导出；导入不会恢复身份验证或提醒授权。'
         result['note']+=' 本人办理材料及固定提交版本的目录与记录已附带；二进制文件请在对应待办下载。完整恢复请使用数据库备份。'
@@ -1120,6 +1181,8 @@ def create_app(settings=None):
         return {'ok':True,'message':'通知、原件、草稿、待办及历史已删除；请自行删除外部日历副本。备份按保留期限清理。'}
 
     from .data_transfer import install_data_transfer
+    from .observability import install as install_observability
+    install_observability(app,db,settings,user,admin,own_notice)
     install_data_transfer(app,db,user)
     from .notice_intake import install as install_intake
     install_intake(app,db,user,own_notice,expect_version,detailed_notice)
@@ -1160,6 +1223,6 @@ def create_app(settings=None):
 
     @app.get('/')
     def index():
-        return FileResponse(ROOT/'static'/'index.html')
+        return FileResponse(frontend_index or ROOT/'static'/'index.html')
 
     return app

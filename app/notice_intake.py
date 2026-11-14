@@ -106,7 +106,8 @@ async def _read_link(url, allowed_host=None, referrer=None):
     # query/fragment values and send only to that same public source host.
     parent=urlsplit(referrer) if referrer and public_url(referrer) else None
     try:
-        async with asyncio.timeout(20), httpx.AsyncClient(transport=PublicHTTPTransport(), trust_env=False,
+        from .source_fetch import transport
+        async with asyncio.timeout(20), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
                 follow_redirects=False, timeout=httpx.Timeout(15, connect=5)) as client:
             for _ in range(4):
                 if not public_url(url):
@@ -194,6 +195,9 @@ async def _read_link(url, allowed_host=None, referrer=None):
                     if total_chars([source]) > MAX_CHARS:
                         raise HTTPException(422, f'链接正文超过 {MAX_CHARS:,} 字，请按事项拆分后粘贴或上传；未截断')
                     source['origin'] = origin
+                    if response.headers.get('x-luojia-content-sha256'):
+                        origin.update(raw_sha256=response.headers['x-luojia-content-sha256'],
+                            acquisition=response.headers.get('x-luojia-cache','fetched'),parser_version='2')
                     return source, title
             raise HTTPException(422, '链接跳转次数过多，请打开最终原文链接再试')
     except (httpx.HTTPError, OSError, ValueError, LookupError, TimeoutError):

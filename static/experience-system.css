@@ -60,7 +60,9 @@ dialog[open]::backdrop { animation: backdrop-arrive 240ms ease-out; }
 #toast {
   display: flex; align-items: center; gap: 12px; width: max-content; max-width: min(500px,calc(100vw - 32px)); padding: 14px 12px 14px 16px;
   background: #fffefb; color: var(--ink); border: 1px solid #d5e1d5; border-radius: 16px;
-  box-shadow: 0 12px 38px #133c2c21; overflow: hidden; z-index: 300;
+  box-shadow: 0 12px 38px #133c2c21; overflow: auto; z-index: 300;
+  bottom: max(var(--toast-bottom, 16px), calc(env(safe-area-inset-bottom) + 16px));
+  max-height: calc(var(--visual-height, 100dvh) - 32px);
 }
 #toast:not(.visible) { visibility: hidden; pointer-events: none; }
 #toast.visible { pointer-events: auto; }
@@ -69,7 +71,7 @@ dialog[open]::backdrop { animation: backdrop-arrive 240ms ease-out; }
 #toast.error .toast-symbol { color: #9b4537; background: #f9e9e1; }
 .toast-copy { font-size: 13px; line-height: 1.7; flex: 1; min-width: 0; overflow-wrap: anywhere; }
 #toast .toast-action { color: var(--green); }
-#toast .icon-button { width: 40px; min-width: 40px; height: 40px; min-height: 40px; color: #70816d; flex-shrink: 0; }
+#toast .icon-button { width: 44px; min-width: 44px; height: 44px; min-height: 44px; color: #70816d; flex-shrink: 0; }
 .toast-lifetime { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #73a063; transform-origin: left; }
 #toast.error .toast-lifetime { background: #bc8573; }
 @media (max-width:480px) {

@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Synthetic end-to-end check through the original chat, provider stream and DB.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -7,7 +8,7 @@ const engineName=process.env.OPENUI_BROWSER||'chromium',engine={chromium,firefox
 const origin='http://127.0.0.1:8794',out=process.env.OPENUI_ARTIFACT_DIR||'artifacts/openui-browser';await mkdir(out,{recursive:true});
 const login=await request.newContext({baseURL:origin,extraHTTPHeaders:{Origin:origin,'X-Requested-With':'campus-notice'}});
 assert.equal((await login.post('/api/auth/login',{data:{username:'openui-preview',password:'OpenUIFixture2026!'}})).status(),200);
-const browser=await engine.launch({headless:true,...(process.platform==='win32'&&engineName==='chromium'?{channel:'msedge'}:{})});
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(process.platform==='win32'&&engineName==='chromium'?{channel:'msedge'}:{})});
 const context=await browser.newContext({storageState:await login.storageState(),viewport:{width:1440,height:1000},reducedMotion:'reduce'});
 const page=await context.newPage(),errors=[],checks=[],frameRequests=[],captureWarnings=[];let capturing=false;page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',m=>{if(m.type()==='error'){

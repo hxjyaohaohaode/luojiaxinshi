@@ -1,0 +1,5498 @@
+{
+  "schema_version": 1,
+  "title": "珞珈信使冲刺 128 项证据总账",
+  "reviewed_at": "2026-11-14T04:49:14.430238+00:00",
+  "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+  "source_attachments": [
+    {
+      "name": "珞珈信使_冲刺前全量审查与优化清单.md",
+      "sha256": "01f8056c1e854265370341e06429e378d9ec335237a8dec15e4449a7e2fa9bd1",
+      "lines": 1466
+    },
+    {
+      "name": "前端组件交互参考_209项依赖与交互描述_强化提示词版.md",
+      "sha256": "98c07567e531526f136504526353ed221c37d25f853334c3997e8ad40988fee0",
+      "lines": 690
+    }
+  ],
+  "source_extraction": "docs/sprint-2026-11-14/requirements-extracted.json",
+  "status_semantics": {
+    "实现证据": "存在且已核对对应源码或明确边界，不等于所有条件已满足。",
+    "已执行定向验证": "对应测试文件在记录的定向运行范围内；逐条限制仍有效，不能推断全部断言涵盖每一自然语言要求。",
+    "待冻结全套": "最终完整工作树尚待全量后端、Node、构建、浏览器、交叉平台与 GitHub CI 冻结结果。",
+    "真实外部验收": "需要真实供应商、来源、设备、人员、标注或目标部署条件，当前仍待。",
+    "条件扩展": "原清单 P2：需求／平台授权条件未确立；不冒充已经实现。"
+  },
+  "counts": {
+    "requirements": 128,
+    "priorities": {
+      "P1": 118,
+      "P2": 8,
+      "P0": 2
+    },
+    "status_labels": {
+      "实现证据": 120,
+      "已执行定向验证": 62,
+      "待冻结全套": 128,
+      "真实外部验收": 51,
+      "条件扩展": 8
+    }
+  },
+  "validation_runs": [
+    {
+      "id": "source-domain-109",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "passed": 109,
+      "warnings": 1,
+      "seconds": 59.85,
+      "time": "2026-11-14T04:33:53Z",
+      "scope_files": [
+        "tests/test_notice_phase_tracking.py",
+        "tests/test_source_cache_policy.py",
+        "tests/test_source_fetch_contracts.py",
+        "tests/test_intake_round_isolation.py",
+        "tests/test_notice_matters.py",
+        "tests/test_source_subscriptions.py",
+        "tests/test_source_presets.py",
+        "tests/test_evidence_acquisition.py",
+        "tests/test_unified_intake.py",
+        "tests/test_proactive_tracking.py",
+        "tests/test_proactive_monitoring.py"
+      ],
+      "document": "docs/audits/sprint-sources-evidence.md",
+      "limits": "缓存策略修复后、LJ-019 新邻近候选改动前执行；不代表后来完整分支已冻结通过。"
+    },
+    {
+      "id": "campus-domain-54-plus-rename",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "passed": 55,
+      "scope_files": [
+        "tests/test_campus_sprint.py",
+        "tests/test_campus_policies.py",
+        "tests/test_campus_permissions.py",
+        "tests/test_pilot_workspace.py",
+        "tests/test_account_and_insights.py"
+      ],
+      "document": "docs/audits/sprint-campus-evidence.md",
+      "limits": "54 项同轮 87.48 秒，名称更正新增 1 项另轮 3.23 秒；不是 55 项同一次冻结执行。"
+    },
+    {
+      "id": "campus-node-6",
+      "kind": "node_unit",
+      "result": "passed",
+      "passed": 6,
+      "scope_files": [
+        "tests/campus-roster.test.mjs",
+        "tests/collaboration-followup.test.mjs"
+      ],
+      "document": "docs/audits/sprint-campus-evidence.md"
+    },
+    {
+      "id": "frontend-node-270",
+      "kind": "node_unit",
+      "result": "passed",
+      "passed": 270,
+      "scope_files": [
+        "tests/*.test.mjs"
+      ],
+      "document": "docs/sprint-2026-11-14/frontend-25.json",
+      "limits": "前端原冻结前 npm test；不自动证明真实浏览器几何、读屏、软键盘或后续新增模块。"
+    },
+    {
+      "id": "root-targeted",
+      "kind": "synthetic_backend",
+      "result": "reported_passed_scope_pending",
+      "passed": 23,
+      "scope_files": [],
+      "limits": "根执行者报告的定向结果，精确文件与后续新增用例由主执行记录核实后更新，未归为单项完整通过。"
+    },
+    {
+      "id": "qq-context-domain-41",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "passed": 41,
+      "warnings": 1,
+      "seconds": 35.28,
+      "scope_files": [
+        "tests/test_group_context_candidates.py",
+        "tests/test_notice_matters.py",
+        "tests/test_qq_group_intake.py",
+        "tests/test_group_delivery.py",
+        "tests/test_source_subscriptions.py",
+        "tests/test_intake_round_isolation.py"
+      ],
+      "document": "docs/audits/sprint-sources-evidence.md",
+      "limits": "LJ-019 新增 6 项＋相应旧群收件、事项、来源及年度合同，实际签名合成回调；不代表真实 QQ 平台验收。"
+    }
+  ],
+  "observed_local_metrics": {
+    "runtime_http": {
+      "verified_at": "2026-11-14T04:25:37.234482+00:00",
+      "result": "passed",
+      "synthetic_test": true,
+      "live_model_calls": 0,
+      "concurrent_users": 5,
+      "notices_saved": 100,
+      "tasks_saved": 200,
+      "http_requests": 765,
+      "response_status_counts": {
+        "200": 650,
+        "401": 5,
+        "404": 10,
+        "409": 100
+      },
+      "request_latency_ms": {
+        "median": 66.5,
+        "p95": 257.3,
+        "max": 1406.1
+      },
+      "elapsed_seconds": 22.67,
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+    },
+    "capacity": {
+      "synthetic": true,
+      "live_model_calls": 0,
+      "external_messages": 0,
+      "notices": 10000,
+      "payload_bytes": 20992851,
+      "timings": {
+        "intake_at_10000_records_ms": 37.95,
+        "list_10000_records_ms": 1079.29,
+        "full_text_search_10000_records_ms": 1545.04,
+        "matter_candidates_10000_records_ms": 81.0,
+        "duplicate_replay_at_capacity_ms": 29.89
+      },
+      "interactive_pages": {
+        "collected_page": {
+          "cold_ms": 39.05,
+          "warm_p50_ms": 35.18,
+          "warm_p95_ms": 50.83,
+          "samples_ms": [
+            39.05,
+            31.83,
+            37.09,
+            50.83,
+            32.46,
+            35.18
+          ],
+          "max_payload_bytes": 105304,
+          "total": 10000
+        },
+        "semantic_current_page": {
+          "cold_ms": 488.02,
+          "warm_p50_ms": 33.36,
+          "warm_p95_ms": 38.83,
+          "samples_ms": [
+            488.02,
+            32.24,
+            36.46,
+            33.12,
+            38.83,
+            33.36
+          ],
+          "max_payload_bytes": 105367,
+          "total": 10000
+        },
+        "indexed_body_search": {
+          "cold_ms": 64.74,
+          "warm_p50_ms": 76.25,
+          "warm_p95_ms": 115.23,
+          "samples_ms": [
+            64.74,
+            113.01,
+            60.72,
+            115.23,
+            64.31,
+            76.25
+          ],
+          "max_payload_bytes": 3043,
+          "total": 1
+        },
+        "short_chinese_search": {
+          "cold_ms": 104.92,
+          "warm_p50_ms": 99.65,
+          "warm_p95_ms": 107.18,
+          "samples_ms": [
+            104.92,
+            99.65,
+            88.33,
+            103.32,
+            107.18,
+            93.76
+          ],
+          "max_payload_bytes": 110597,
+          "total": 9999
+        }
+      },
+      "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+      "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+    },
+    "record_scope": "本地现存产物，生成时已读取；尚非全部后续改动冻结后的最终数字。最终精简证据由根执行者写入 sprint-validation.json。"
+  },
+  "final_gates": {
+    "frozen_backend_round1": "pending",
+    "frozen_backend_round2": "pending",
+    "frozen_node": "pending",
+    "frontend_build_reproducibility": "pending",
+    "application_browsers": "pending",
+    "github_main_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+    "github_ci_run_url": null,
+    "github_main_delivery": "pending",
+    "actual_devices_and_providers": "not_completed",
+    "independent_human_benchmark": "not_completed",
+    "five_day_campus_pilot": "not_completed"
+  },
+  "repository_license": {
+    "root_license_file": null,
+    "status": "owner_decision_required",
+    "note": "未擅自给项目选择开源许可。"
+  },
+  "dependencies": {
+    "esbuild": "0.28.2",
+    "kind": "development_build_only",
+    "runtime_dependency_changes": "none_intended_require_lockfile_diff_check"
+  },
+  "reference_validation": {
+    "checked_files": 198,
+    "missing_files": []
+  },
+  "requirements": [
+    {
+      "id": "LJ-001",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "首次到达说明“现在能用什么”。普通个人账号可先收件办理，学院身份单独显示待核实；可选引导能跳过并找回。",
+      "source_line": 159,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增首页“现在能用什么”三步说明，可跳过且持久保存于本人 profile，设置页可重新打开；说明个人收件不等待学院核实，自填教师／系统管理员不获得学院发布身份。失败保留说明与输入，账号／路由回包有守卫。",
+        "files": [
+          "static/getting-started.js",
+          "static/system/getting-started.css",
+          "static/work-context.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename",
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/getting-started.test.mjs",
+          "tests/work-context.test.mjs",
+          "tests/test_pilot_workspace.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "新引导单元与实际浏览器完整链以最终冻结记录为准，不把源码存在当作实际 UI 验收。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-002",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "注册、验证码、找回密码真实供应商联调。错码/旧码/限流/延迟/重复点击有恢复路径，不能把供应商接受写成本人已收到。",
+      "source_line": 160,
+      "implementation": {
+        "state": "implemented_contract_external_unverified",
+        "summary": "验证码挑战、限流、单次校验、找回密码及供应商适配已有服务端合同；前端按实际挑战与失败回执恢复，不把供应商受理说成本人收到了。",
+        "files": [
+          "app/verification.py",
+          "app/cloud_messages.py",
+          "static/auth.js",
+          "static/auth-feedback.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/test_verification.py",
+          "tests/test_verification_evidence.py",
+          "tests/auth-feedback.test.mjs"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实邮件／短信供应商凭据、网络、配额及手机收码联调没有本轮通过证据；须覆盖旧码、错码、延迟、重复点击和真实收件。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-003",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "统一自填身份、已核实学院身份、系统管理身份的标签。自选教师不解锁发布，直接链接无权时不泄露内容。",
+      "source_line": 161,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "自填个人资料与当前校园成员授权分别读取；页面可用工作身份由服务端权限决定，学院发布与跨院读取仍有后端拒绝。",
+        "files": [
+          "static/work-context.js",
+          "static/app.js",
+          "app/campus.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename",
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/work-context.test.mjs",
+          "tests/test_campus_permissions.py",
+          "tests/test_pilot_workspace.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "实际学院身份确认需要有权管理者核验；自选教师不是正式任职证明。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-004",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "学院、年级、班级规范化和迁移预览。处理“2026/2026级/一年级”、同名班、空值和历史名称；迁移前后收件对象可核对。",
+      "source_line": 162,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`campus_roster.py`提供NFKC和空白规范化，`2026`转为`2026级`，对`一年级`提示而不猜。预览显示原身份、规范后身份和已有正式受众的增减账号。`campus-roster.js`提供表格、CSV、JSON录入及逐行核对。",
+        "files": [
+          "app/campus_roster.py",
+          "static/campus-roster.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_normalization_preview_shows_exact_recipient_change_without_mutating_it`；Node表格解析4例。"
+      },
+      "external_acceptance": [
+        "现有授权仍按明确年级／班级范围；旧发布范围不会被名称迁移隐式扩大。院方需确认模糊历史名称对应哪一届。"
+      ],
+      "remaining": [
+        "现有授权仍按明确年级／班级范围；旧发布范围不会被名称迁移隐式扩大。院方需确认模糊历史名称对应哪一届。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-005",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "组织成员批量导入先预检再提交：重复账号、未注册、冲突班级、越权范围逐项说明；重放不重复授权。",
+      "source_line": 163,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "最多500行；重复、未注册、无效字段、角色和跨院越权逐行报告；只提交明确选中的有效行。预检绑定目标及操作者授权，10分钟有效，原预检重放幂等。",
+        "files": [
+          "app/campus_roster.py",
+          "static/campus-roster.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_roster_preflight_normalizes_years_reports_every_error_and_replays_once`、`test_roster_preflight_rejects_membership_changes_and_cannot_self_escalate`。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "账号注册和真实身份核验仍由现有注册流程、管理者完成；不伪造学籍验证。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-006",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "撤权、转班、离院、毕业与离任交接贯通。新权限即时生效；本人旧记录、旧事项后续更正和私密新内容有明确边界。",
+      "source_line": 164,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "成员变更、后台执行、发布管理、协作读写均检查当前范围；旧个人通知与原件保留，新范围不自动开放旧内容。原发布由当前本院管理者管理；跨负责人协作需学生重新确认分享。",
+        "files": [
+          "app/campus.py",
+          "app/collaboration.py",
+          "app/collaboration_followups.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_permissions.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "既有`test_correction_withdrawal_and_authorization_changes_keep_personal_data`；新增队列撤权、转交、跟进撤权用例。"
+      },
+      "external_acceptance": [
+        "学校毕业、任期与离院规则未提供，使用明确授予／修改／移除授权，不按年龄或自填年级自动推定。旧事项更正只给原收件且当前仍有权限者。"
+      ],
+      "remaining": [
+        "学校毕业、任期与离院规则未提供，使用明确授予／修改／移除授权，不按年龄或自填年级自动推定。旧事项更正只给原收件且当前仍有权限者。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-007",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "班委/发布协作者最小权限。可拟稿或协助范围内操作，不能直接等同辅导员；是否发布需单独授权。",
+      "source_line": 165,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "未引入“班委即辅导员”的隐式提权；保持现有正式角色和范围校验。",
+        "files": [
+          "app/campus.py",
+          "docs/CAMPUS_PERMISSIONS.md"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "P2：独立拟稿／协助角色尚未建立，须明确可操作范围、发布授权和交接规则后实现。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-008",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "如确需独立审核员、多学院或多角色，建立角色/范围/期限模型；禁止用前端角色切换模拟服务端授权。",
+      "source_line": 166,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "未用前端身份切换模拟多学院／审核员授权；当前校园授权模型边界保持明确。",
+        "files": [
+          "app/campus.py",
+          "static/work-context.js",
+          "docs/CAMPUS_PERMISSIONS.md"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "P2：多学院、多角色与独立审核员需真实组织范围、期限及职责规则，当前不宣称已有此模型。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-009",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "多设备登录、共享手机退出、会话过期、迟到响应、离线缓存和Push绑定切换验证；旧账号数据不能出现在新账号页面。",
+      "source_line": 167,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "原会话、CSRF、账号切换清理与迟到响应守卫保留；新分页和懒加载仍绑定 owner／route／请求代次，防旧账号回包落入新页。",
+        "files": [
+          "app/security.py",
+          "static/app.js",
+          "static/paged-list.js",
+          "static/data-sync.js",
+          "app/push_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/test_workflow.py",
+          "tests/paged-list.test.mjs",
+          "tests/data-sync.test.mjs",
+          "tests/test_push_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "共享手机、多实际设备、浏览器缓存与后台 Push 换绑仍需实体终端矩阵。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-010",
+      "section": "A. 账号、身份与组织：LJ-001—010",
+      "priority": "P0",
+      "priority_qualifier": "条件P0",
+      "nature": "修复+决策",
+      "cost": "M",
+      "requirement": "F05注销影响与历史留存：明确本人/对方记录边界，注销前预告，必要回执脱敏保留、文件授权回收；测试学生/受理人/发布人分别注销。",
+      "source_line": 168,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`deletion-impact`展示影响；注销前保留对方最小脱敏回执，删被注销者私人说明和文件元数据，撤文件授权；已接收的正式原件继续可查，发布人匿名。",
+        "files": [
+          "app/account.py",
+          "app/collaboration.py",
+          "app/campus_assets.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "受理人、学生、发布人分别注销3例；协作跟进随case删除，未授权人仍404。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "留存仅限参与事项必要动作、时间和存续方自己的说明；数据库备份依既有保留期轮换，不宣称立即物理抹除全部历史备份。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-011",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "每个来源展示“手动/自动已接通/未配置/暂停/失败”、可读范围和最后成功；仅登记公众号名称不能显示自动同步成功。",
+      "source_line": 174,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`source_sync.status`、来源卡片分别显示手动、等待、自动、部分可读、失败、暂停；显示尝试、无采集错误检查与范围。登记公众号不自动显示接通。",
+        "files": [
+          "app/source_sync.py",
+          "static/sources.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_source_subscriptions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实 QQ／公众号凭据及平台后台状态，本轮没有联调通过证据。"
+      ],
+      "remaining": [
+        "真实 QQ／公众号凭据及平台后台状态，本轮没有联调通过证据。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "深化并合成验证"
+    },
+    {
+      "id": "LJ-012",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "来源目录有真实覆盖证据：入口、栏目列表、正文、附件分别记录最后验证与规则版本；空列表区分真无内容和解析失效。",
+      "source_line": 175,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`source_acquisition_runs` 保存规则／配置哈希、入口状态、列表快照、正文与附件回执；空 Feed 明确为空；异常 HTML 不算空栏目。`test_source_fetch_contracts`。",
+        "files": [
+          "app/source_sync.py",
+          "app/notice_network.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "独立入口未实际读取仍为 registered_only；实网 DNS 失败，不能填造验证时间。"
+      ],
+      "remaining": [
+        "独立入口未实际读取仍为 registered_only；实网 DNS 失败，不能填造验证时间。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "深化并合成验证"
+    },
+    {
+      "id": "LJ-013",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "L",
+      "requirement": "公共官网采集与个人订阅分层：同栏目可复用一次公开抓取，每人仍独立收件/进度；私有群/授权公众号不能跨账号共享。",
+      "source_line": 176,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "两账号相同栏目复用一次匿名列表＋正文抓取，分别建立本人记录；越权读返回 404。`test_trusted_cross_origin_feed_public_cache_and_304_owner_separation`。",
+        "files": [
+          "app/source_fetch.py",
+          "app/notice_ingest.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_source_cache_policy.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "当前共享 HTTP 响应，解析及个人收件仍分别运行；未声称大型公共抓取集群或跨账号共享私有消息。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "深化并合成验证"
+    },
+    {
+      "id": "LJ-014",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "列表/正文条件请求、缓存与域名级限速；304正常处理，失败退避，尊重Retry-After，一个慢域名不拖住全部来源。",
+      "source_line": 177,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "ETag／Last-Modified、304、最多 30 秒缓存、64 MiB 缓存上限、持久域名租约、Retry-After；no-store／private／Set-Cookie 与不支持的 Vary 清除旧公共缓存；no-cache／max-age=0 每次复验；Age、Date、Expires 与更短有效期不被忽略。域名队列不占住另一域名空闲 worker。",
+        "files": [
+          "app/source_fetch.py",
+          "app/source_sync.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_source_cache_policy.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实站点速率／长时吞吐仍须在部署环境验证；本轮未做高频实网压测。"
+      ],
+      "remaining": [
+        "真实站点速率／长时吞吐仍须在部署环境验证；本轮未做高频实网压测。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "深化并合成验证"
+    },
+    {
+      "id": "LJ-015",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "来源改版分型、隔离试跑、版本回滚。规则候选须真实读取列表与正文后启用；不能把AI生成选择器当修复完成。",
+      "source_line": 178,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`trial_rule`、`apply_trial`、PUT、首次预设与 rollback 共用生产 reader；失败原子保留旧版；版本冲突拒绝；回滚保持暂停；回执保留安装版本。",
+        "files": [
+          "app/source_sync.py",
+          "static/sources.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_source_presets.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "新站改版仍需真实页面样本；规则历史与合成样本不证明未来页面结构永远可用。"
+      ],
+      "remaining": [
+        "新站改版仍需真实页面样本；规则历史与合成样本不证明未来页面结构永远可用。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "新增强制门禁并验证"
+    },
+    {
+      "id": "LJ-016",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F12受信Feed跨域契约。Feed服务、允许原文域名、真实发布方分离；拦截未授权目标和危险重定向，保留原因。",
+      "source_line": 179,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "精确 origin、真实发布方与 Feed 服务分离；默认仍同域；危险地址／跨域重定向在发请求前拦截；拒绝原因和 Feed ID 持久化。",
+        "files": [
+          "app/source_sync.py",
+          "app/source_fetch.py",
+          "app/notice_network.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "未擅自添加第三方 Feed 服务或声称外部提供方已授权。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "修复并验证"
+    },
+    {
+      "id": "LJ-017",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "首次导入、历史补采、断点恢复和暂停清晰。显示时间/数量边界，历史基线默认不刷屏；暂停不删除个人未完任务。",
+      "source_line": 180,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "首轮当前列表建立静默历史基线；积压条目持久化；一次处理有上限；暂停保留通知和任务。`test_initial_website_snapshot_stays_readable_but_only_later_notices_are_announced`。",
+        "files": [
+          "app/source_sync.py",
+          "static/sources.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_source_subscriptions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "不把当前栏目页等同全部历史；未实现无边界历史翻页补采。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "既有行为复验并补显示"
+    },
+    {
+      "id": "LJ-018",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "L",
+      "requirement": "QQ私聊与获准群真实联调：平台权限、群主授权、逐成员订阅、@/普通消息、退群、迟到撤权、附件过期与重投。",
+      "source_line": 181,
+      "implementation": {
+        "state": "implemented_contract_external_unverified",
+        "summary": "`test_source_subscriptions`、`test_qq_group_intake` 有群主授权、成员订阅、退群、迟到撤权、附件过期与重投场景。",
+        "files": [
+          "app/integrations.py",
+          "app/group_delivery.py",
+          "app/qq_group_intake.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_qq_group_intake.py",
+          "tests/test_source_subscriptions.py",
+          "tests/test_group_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮未对真实 QQ 私聊／群、平台普通消息与 @ 权限做实机联调；不能标验收通过。"
+      ],
+      "remaining": [
+        "本轮未对真实 QQ 私聊／群、平台普通消息与 @ 权限做实机联调；不能标验收通过。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "合成合同保留；真实验收待完成"
+    },
+    {
+      "id": "LJ-019",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "多条连发/短更正/后补附件/转发卡片做上下文关联候选；“延期了”不能无依据直接修改正式日期。",
+      "source_line": 182,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`notice_matters.group_context_candidates` 只读取同 owner、同一当前获授权群的持久分发回执；10 分钟邻近且有更正／附件／补交信号才提候选。保留 delivery ID、message key、实际时间依据、规则窗口，未有线程或同作者证据明确为 null。复用原归组预览／确认／排除；已排除的弱邻近依据不因附件新版本复活。`test_group_context_candidates` 六例及相关群域共 41 项通过。",
+        "files": [
+          "app/notice_matters.py",
+          "app/qq_group_intake.py",
+          "app/group_delivery.py",
+          "static/notice-matters.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_group_context_candidates.py",
+          "tests/test_notice_matters.py",
+          "tests/test_proactive_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "没有保留可核实回复线程时只称邻近候选，绝不编造 thread；实际 QQ 授权与真实连续消息语料仍需联调。无任何候选自动改期限、合并通知或提交材料。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "新增群内邻近候选并验证"
+    },
+    {
+      "id": "LJ-020",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "获授权公众号真实内容/图片/附件/分页/失效联调；明确不是读取个人所有关注公众号，失去授权后正确停止。",
+      "source_line": 183,
+      "implementation": {
+        "state": "implemented_contract_external_unverified",
+        "summary": "授权发布账号同步已有游标、更正、分页、失效与管理员边界；`test_publisher_continuous_sync_keeps_cursor_updates_and_admin_scope` 等。",
+        "files": [
+          "app/publisher_sync.py",
+          "app/integrations.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_source_subscriptions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "不是读取个人关注列表；本轮无真实公众号图片／附件／失权联调通过记录。"
+      ],
+      "remaining": [
+        "不是读取个人关注列表；本轮无真实公众号图片／附件／失权联调通过记录。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有合成合同复验；真实待完成"
+    },
+    {
+      "id": "LJ-021",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "如试点确实使用邮箱收通知，新增入站转发或OAuth/IMAP适配；出站验证码和邮件提醒不等于已有入站邮件能力。",
+      "source_line": 184,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "入站邮箱是清单中的条件 P2 项；本次没有真实入站邮件接口的完成证据。",
+        "files": [
+          "app/cloud_messages.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "出站验证码和提醒邮件不算入站能力；需试点确认渠道与授权后接入。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ],
+      "domain_report_status": "条件尚未建立"
+    },
+    {
+      "id": "LJ-022",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "微信群、教务SSO、企微/钉钉/飞书按实际渠道确定接口与授权；未接通先提供真实人工导入，不能做假连接按钮。",
+      "source_line": 185,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "未连接的平台保留人工导入，来源页明确学校 SSO 仍需开放；没有伪造连接成功按钮。",
+        "files": [
+          "static/sources.js",
+          "app/notice_intake.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "微信群、教务 SSO、企微／钉钉／飞书的实际范围和授权仍未建立本轮验收证据。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ],
+      "domain_report_status": "已知边界保留"
+    },
+    {
+      "id": "LJ-023",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "粘贴、URL、图片、PDF、Office与批量导入统一回执；部分成功可重试失败项，保留原文/原件/来源/时间，重复不重收。",
+      "source_line": 186,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`notice_intake`／`notice_ingest` 保留正文、原件、出处、时间及重复回执；`test_unified_intake`、`test_evidence_acquisition` 覆盖重投、不同账号、版本还原与失败。",
+        "files": [
+          "app/notice_intake.py",
+          "app/notice_ingest.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_unified_intake.py",
+          "tests/test_evidence_acquisition.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "不把受支持的文件类型等同所有真实 Office／扫描样本都可读；真实复杂批量样本仍需人工验收。"
+      ],
+      "remaining": [
+        "不把受支持的文件类型等同所有真实 Office／扫描样本都可读；真实复杂批量样本仍需人工验收。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有链路复验"
+    },
+    {
+      "id": "LJ-024",
+      "section": "B. 来源、采集与收件：LJ-011—024",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化+验收",
+      "cost": "M",
+      "requirement": "附件发现、下载、解析、核对、用于判断分层。扫描页、表格、低清图、缺页、超时、旧Office有样本和失败恢复，保留页码/出处与未读范围。",
+      "source_line": 187,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`source_coverage` 区分取得原件、解析失败、待视觉核对、未读附件、保留旧快照；测试覆盖扫描、超时、第五份附件、旧 Office 失败及解压大小。",
+        "files": [
+          "app/source_coverage.py",
+          "app/documents.py",
+          "app/notice_network.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_evidence_acquisition.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮没有新的低清真实扫描／缺页人工标准；机器接收成功不是语义核对完成。"
+      ],
+      "remaining": [
+        "本轮没有新的低清真实扫描／缺页人工标准；机器接收成功不是语义核对完成。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "分层合同复验"
+    },
+    {
+      "id": "LJ-025",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "“尚未正式公告”显式跟踪：传闻、往年规律、官方预告分别标记；允许个人跟进，不伪造正式截止/报名入口。",
+      "source_line": 193,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`notice_phase_tracking` 区分个人线索、往年规律、官方预告；未公告只允许本人查进展安排，不创建正式窗口。独立安排幂等，复用真实日历。",
+        "files": [
+          "app/notice_tracking.py",
+          "static/notice-lifecycle.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "线索真实性仍需本人核对；系统不猜测公告日期。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "新增并验证"
+    },
+    {
+      "id": "LJ-026",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "预告→正式公告→补充→公示→结果建立关系并保留独立证据；自动关联只提候选，不自动赋予正式效力。",
+      "source_line": 194,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "每则通知保留独立原文与版本；事项归组保留独立任务／期限；阶段跟踪绑定显式相关通知版本；相关版本变化触发 review_required。",
+        "files": [
+          "app/notice_tracking.py",
+          "app/notice_matters.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_notice_matters.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "自动相似度仅作候选，不能证明正式效力或覆盖关系。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "深化并验证"
+    },
+    {
+      "id": "LJ-027",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "已公告但尚未开放：发布时间、开放时间、本人截止、活动时间分开；可先准备，开放提醒须有明确依据。",
+      "source_line": 195,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`TaskData.scheduled` 的 event/window 与 due_date、published_at 分离；`test_notice_timing` 检查独立事件与提醒。",
+        "files": [
+          "app/models.py",
+          "app/notice_lifecycle.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_notice_timing.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "不凭发布时间生成开放提醒；真实开放平台／个人资格仍由使用者核实。"
+      ],
+      "remaining": [
+        "不凭发布时间生成开放提醒；真实开放平台／个人资格仍由使用者核实。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "已有模型与合同复核"
+    },
+    {
+      "id": "LJ-028",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "“已发但未采到”可诊断：显示最后尝试/成功、来源失败、覆盖范围和人工补收入口，不把没采到解释为没有通知。",
+      "source_line": 196,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "来源页有尝试、成功、错误、范围、积压与人工转入；`recent_failures` 只返回本人已启用来源；同故障稳定键含最近成功轮次。",
+        "files": [
+          "app/source_sync.py",
+          "static/sources.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "应用 DNS 失败就是未完成采集，不能解释为学校没有通知。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "深化并验证"
+    },
+    {
+      "id": "LJ-029",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "校级原发、学院细化、群转发、截图与口头转述的来源链清楚；区分发布单位、转载单位、文中提及单位。",
+      "source_line": 197,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "来源原文、parent_url、relationship、Feed 服务／真实发布方、列表／正文日期分别保留；候选关系有未核实标记。",
+        "files": [
+          "app/notice_network.py",
+          "app/notice_ingest.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_evidence_acquisition.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "发布／转载／提及单位的语言语义仍需人工核对，不凭名称关键词自动认证组织身份。"
+      ],
+      "remaining": [
+        "发布／转载／提及单位的语言语义仍需人工核对，不凭名称关键词自动认证组织身份。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "深化并验证"
+    },
+    {
+      "id": "LJ-030",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "校级截止与学院内部截止并存，冲突并排核对；不能用收到时间或AI置信度自动决定哪个更有效。",
+      "source_line": 198,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`test_group_preserves_independent_requirements_deadlines_and_personal_plans` 保留校级与学院通知各自任务、期限和个人计划。",
+        "files": [
+          "app/notice_matters.py",
+          "app/workflow.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_notice_matters.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "冲突效力由本人依据核实；收到时间和模型置信度不决定优先级。"
+      ],
+      "remaining": [
+        "冲突效力由本人依据核实；收到时间和模型置信度不决定优先级。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有关系复验"
+    },
+    {
+      "id": "LJ-031",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P0",
+      "priority_qualifier": "条件P0",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F03同URL跨年度/批次新建事项。覆盖同批更正、相似模板新年、第二轮、补录、迟到旧版及旧材料历史。",
+      "source_line": 199,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`test_intake_round_isolation` 四场景：复用 URL 跨年、同批更正、迟到旧版、同文第二轮／补录、同业务年跨日历年、明确校园发布修订。",
+        "files": [
+          "app/notice_ingest.py",
+          "app/notice_network.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_intake_round_isolation.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "保守结构规则不能解决没有任何年份／批次线索的语义歧义；可用既有人工新副本、归组与拆分。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "修复并验证"
+    },
+    {
+      "id": "LJ-032",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "同文多入口去重保留所有出处；相似标题但不同对象/轮次不误合并；人工拆分/合并保留可追踪关系。",
+      "source_line": 200,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "相同正文跨入口复用但保留收件出处；不同年份／批次不合并；人工归组／拆分保留各自通知和办理记录。`test_unified_intake`、`test_notice_matters`。",
+        "files": [
+          "app/notice_ingest.py",
+          "app/notice_matters.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_unified_intake.py",
+          "tests/test_notice_matters.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "字节相同文件的新名称是元数据，校园共享原件名称历史由校园专项核查；未把相似标题直接判同一事项。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "既有去重复验并加轮次保护"
+    },
+    {
+      "id": "LJ-033",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "必办、自愿、待资格核实、仅知悉、不适用、考虑中分别呈现；一条通知可包含多种动作，不强制全部变待办。",
+      "source_line": 201,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "现有任务 action_kind／participation、通知知悉／不适用处理和逐动作条件分离；阶段跟踪没有替代这些状态。",
+        "files": [
+          "app/models.py",
+          "app/proactive_policy.py",
+          "app/workflow.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_proactive_policy.py",
+          "tests/test_action_workflow.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "多动作真实校园通知仍需样本验证；未知资格不等于不适用。"
+      ],
+      "remaining": [
+        "多动作真实校园通知仍需样本验证；未知资格不等于不适用。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有工作流与适用判断复核"
+    },
+    {
+      "id": "LJ-034",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "“为什么与我有关”可查看已核实条件、自填资料与未知条件；纠错影响后续判断但不改写原公告。",
+      "source_line": 202,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`proactive_policy.assess` 只使用当前通知／画像版本且已核对的适用结论；兴趣关键词只影响偏好，不认证资格；不充分结论保留待核实。",
+        "files": [
+          "app/proactive_policy.py",
+          "app/notice_automation.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_proactive_policy.py",
+          "tests/test_proactive_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮未取得真实画像与独立人工适用标准，不能报告真实判断准确率。"
+      ],
+      "remaining": [
+        "本轮未取得真实画像与独立人工适用标准，不能报告真实判断准确率。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有证据门槛复核"
+    },
+    {
+      "id": "LJ-035",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "时间抽取区分日期/时刻/范围/时区/待定；无具体时刻不自行补23:59，无结束时间不编活动时长。",
+      "source_line": 203,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "原文日期、时刻、范围、明确时区分别校验；异议窗口复用 `deadline_evidence`。未知时刻不保存 23:59，未知活动结束不编时长。",
+        "files": [
+          "app/deadline_evidence.py",
+          "app/models.py",
+          "app/notice_tracking.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_notice_timing.py",
+          "tests/test_workflow.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "相对日期需要原文发布日期和时区；省略年份不能仅据今年猜补。"
+      ],
+      "remaining": [
+        "相对日期需要原文发布日期和时区；省略年份不能仅据今年猜补。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有合同复验＋新窗口复用"
+    },
+    {
+      "id": "LJ-036",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F02活动/窗口正式改期：开始、结束、跨日、提前/延期、取消时刻；旧日历、个人计划、依赖事项都给影响说明。",
+      "source_line": 204,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "正式 event／window 改期绑定当前原文证据与通知版本；支持开始、结束、跨日及撤销结束时刻，保留本人计划并给依赖影响；不以个人安排冒充正式更正。",
+        "files": [
+          "app/workflow.py",
+          "app/models.py",
+          "static/workflow.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_official_time.py",
+          "tests/test_change_review.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "定向源文件与测试存在；最终全分支冻结回归结果由主执行记录填入。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ],
+      "domain_report_status": "主工作流专项负责"
+    },
+    {
+      "id": "LJ-037",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "地点、提交入口、联系人、资格、模板、费用口径变化逐字段比较；突出已准备/已提交材料受哪些影响。",
+      "source_line": 205,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "来源更新先成为待核对变化，保留旧证据、已提交／已准备历史；`test_action_workflow` 与 `test_change_review` 覆盖要求变化和依赖。",
+        "files": [
+          "app/workflow.py",
+          "app/action_review.py",
+          "app/task_materials.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_change_review.py",
+          "tests/test_task_materials.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "复杂费用／模板语义仍需真实样本，未声称全部自然语言变化可自动解释。"
+      ],
+      "remaining": [
+        "复杂费用／模板语义仍需真实样本，未声称全部自然语言变化可自动解释。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有变更／材料合同复核"
+    },
+    {
+      "id": "LJ-038",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "原文404、下架、栏目移除、平台采集失败和正式撤回分别处理；来源不可访问不得自动取消本人任务。",
+      "source_line": 206,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "HTTP／连接／附件失败记为来源问题；保留已读旧快照并标本轮未复查；不自动取消任务。`test_failed_related_recheck_preserves_last_snapshot_and_original_retrieval_time`。",
+        "files": [
+          "app/notice_network.py",
+          "app/source_sync.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_proactive_tracking.py",
+          "tests/test_source_subscriptions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "原文撤回需要正式证据，404、维护、权限失败与正式取消不同。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "失败保护复验"
+    },
+    {
+      "id": "LJ-039",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "取消只影响明确对象/场次；恢复必须有新依据，重新核对日期和要求；保留已做历史，不复活所有旧提醒。",
+      "source_line": 207,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "既有变更目标、版本和证据约束；取消／恢复不抹除历史，已完成保护与设备日历提示独立。`test_cancellation_restoration_and_completed_protection`。",
+        "files": [
+          "app/workflow.py",
+          "app/action_review.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_change_review.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "不把恢复关注当作资格恢复；真实场次歧义需核实。"
+      ],
+      "remaining": [
+        "不把恢复关注当作资格恢复；真实场次歧义需核实。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有取消恢复合同复核"
+    },
+    {
+      "id": "LJ-040",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "多批次、多场次、本硕博、年级差异与联合团队拆分子流程；大事项聚合不吞掉各自期限和资格。",
+      "source_line": 208,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "事项聚合保留成员通知，各自期限和任务不合并；新轮次、跨年度隔离。",
+        "files": [
+          "app/notice_matters.py",
+          "app/notice_ingest.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_notice_matters.py",
+          "tests/test_intake_round_isolation.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本硕博／联合团队的具体子流程仍依真实材料拆分，不按名单或标题自行推断。"
+      ],
+      "remaining": [
+        "本硕博／联合团队的具体子流程仍依真实材料拆分，不按名单或标题自行推断。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有聚合复验＋轮次隔离"
+    },
+    {
+      "id": "LJ-041",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "公示/异议模板：公示结束不等最终结果，异议意愿、材料、窗口和回执独立；同名名单不能模糊命中即下结论。",
+      "source_line": 209,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "公示结束标记与结果无自动转换；异议意愿、明确窗口、现有任务材料和回执独立；本人结果需要身份核实说明；有越权／伪造引句／过期版本测试。",
+        "files": [
+          "app/notice_tracking.py",
+          "static/notice-lifecycle.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "同名检索不能直接下结论；本轮没有真实异议业务办理／官方受理回执。"
+      ],
+      "remaining": [
+        "同名检索不能直接下结论；本轮没有真实异议业务办理／官方受理回执。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "新增并验证"
+    },
+    {
+      "id": "LJ-042",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "结果后的入选/落选/候补/补录、名额确认、领取、签约、报到作为后续动作；已过报名期不压掉结果提醒。",
+      "source_line": 210,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "支持入围、入选、未入选、候补、补录；关联确认名额／领取／签约／报到等真实任务；主通知模块 `phase_updates` 用当前阶段版本生成独立事件，不以旧报名期限抑制。",
+        "files": [
+          "app/notice_tracking.py",
+          "app/notification_events.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "外发仍按主通知模块的本人偏好与渠道授权，未做真实设备到达验收；本人记录不等于学校最终确认。"
+      ],
+      "remaining": [
+        "外发仍按主通知模块的本人偏好与渠道授权，未做真实设备到达验收；本人记录不等于学校最终确认。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "新增动作关联并集成独立事件"
+    },
+    {
+      "id": "LJ-043",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "归档/不参加/已完成后仍可接收确实影响本人的新更正；恢复关注不等于重新开放或重新符合资格。",
+      "source_line": 211,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "更正保留已完成任务与材料，不因旧阶段完成而丢弃来源更新；`test_completed_action_still_receives_correction_reminder`、变更复核链。",
+        "files": [
+          "app/notice_ingest.py",
+          "app/proactive_policy.py",
+          "app/push_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_proactive_tracking.py",
+          "tests/test_push_delivery.py",
+          "tests/test_unified_intake.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "新更正仍需本人核实效力与资格；不会自动复活所有旧提醒。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ],
+      "domain_report_status": "既有更正保护复验"
+    },
+    {
+      "id": "LJ-044",
+      "section": "C. 通知的完整生命周期：LJ-025—044",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "原文状态、平台处理状态、个人办理状态、触达状态分开命名和显示；“已读/已核对/已提交/已受理/已办结”不得混用。",
+      "source_line": 212,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "原文阶段、采集覆盖、平台处理、个人办理、提交／受理和触达分开；生命周期面板关联现有回执而不覆盖任务进度。",
+        "files": [
+          "app/notice_tracking.py",
+          "app/source_coverage.py",
+          "app/workflow.py",
+          "app/notification_events.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_action_workflow.py",
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "Provider accepted 不代表设备展示或本人已读，官方办理结果需独立依据。"
+      ],
+      "remaining": [
+        "Provider accepted 不代表设备展示或本人已读，官方办理结果需独立依据。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "分层深化"
+    },
+    {
+      "id": "LJ-045",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "首页/待办首先回答“下一步做什么、何时、为什么卡住”；完整流程保留在详情，避免多个警告标签代替行动。",
+      "source_line": 218,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增统一任务摘要，每行集中主状态、关键时间与下一步；依赖、补件、待结果等完整原因保留在办理详情。",
+        "files": [
+          "static/task-summary.js",
+          "static/app.js",
+          "app/workflow.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/task-summary.test.mjs",
+          "tests/test_action_workflow.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-046",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "前置未完成时明确哪些准备仍可做；受阻、等待他人、等待结果、尚未开放分开，并有合理跟进时间。",
+      "source_line": 219,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "办理工作流保留依赖关系与可准备步骤；受阻、等他人、等结果、尚未开放分别表达；本人跟进时刻与官方期限独立。",
+        "files": [
+          "app/workflow.py",
+          "app/action_review.py",
+          "app/handling_assistant.py",
+          "static/workflow.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_change_review.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-047",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "一通知多任务/可选步骤/先线上后纸质/本人自定义步骤维持一致；一个子任务完成不能自动代表全部办理完成。",
+      "source_line": 220,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "沿用一通知多任务、动作种类、前置关系和本人自定义流程；各任务独立状态，阶段归组与后续跟踪不自动完成全部动作。",
+        "files": [
+          "app/workflow.py",
+          "app/models.py",
+          "app/notice_tracking.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_workflow.py",
+          "tests/test_notice_phase_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-048",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "模板文件、本人的填写版本、已提交包分离；提交冻结文件版本/哈希/时间/去向，新补件不篡改旧回执。",
+      "source_line": 221,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "原通知模板、本人材料版本与提交快照分表存储；提交固定版本、哈希、去向和时间，补件追加不会改写旧提交包。",
+        "files": [
+          "app/task_materials.py",
+          "app/workflow.py",
+          "static/task-materials.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_task_materials.py",
+          "tests/test_action_workflow.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-049",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "误选材料、上传中断、同名新版本、删除/撤回、容量满有恢复；被他人已接收的固定版本按授权与留存规则处理。",
+      "source_line": 222,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "已有材料版本、幂等上传、旧版本冲突、容量门禁和授权下载；校园共享原件补齐实际字节计量及原件引用，最小留存回收对方文件授权。",
+        "files": [
+          "app/task_materials.py",
+          "app/campus_assets.py",
+          "app/collaboration.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_task_materials.py",
+          "tests/test_campus_sprint.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实大文件和移动网络中断恢复仍须现场样本验证。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-050",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "真实提交与本站记录区别清楚。外部表单只打开链接不能显示已提交；本人确认需有明确去向及可选凭据。",
+      "source_line": 223,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "外部链接打开与本人记录提交分开；提交须本人明确去向和时间，可附凭据；系统没有校外表单回执时不显示学校已受理。",
+        "files": [
+          "app/task_materials.py",
+          "app/workflow.py",
+          "static/workflow.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_task_materials.py",
+          "tests/test_action_workflow.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-051",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "提交→受理→补件→再提交→驳回/结果/办结保留每段证据；无外部回执时标本人记录，不伪装学校确认。",
+      "source_line": 224,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "办理记录保留提交、受理、补件、补交、驳回／结果和办结各阶段；协作受理是范围内真实站内动作，外部状态按本人记录标注。",
+        "files": [
+          "app/workflow.py",
+          "app/collaboration.py",
+          "app/task_materials.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_pilot_workspace.py",
+          "tests/test_campus_sprint.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-052",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "重复提交、双击、断线重试、旧版本409均保留输入、只生成一次业务动作；冲突有具体恢复入口。",
+      "source_line": 225,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "事务、版本和请求回执约束双击／断线重试；旧版本返回 409 并保留表单，正式改期拒绝无依据或外部 owner 的变更。",
+        "files": [
+          "app/workflow.py",
+          "app/task_materials.py",
+          "app/campus.py",
+          "static/workflow.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_workflow.py",
+          "tests/test_sprint_official_time.py",
+          "tests/test_task_materials.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "所有真实浏览器输入保留与焦点恢复仍由冻结浏览器套件验证。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-053",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "不参加/撤销申请/取消本人计划与学校取消分离；后续可恢复本人关注，不删除原文和历史。",
+      "source_line": 226,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "本人不参加、申请撤回、取消个人安排与校方正式取消分别保留；恢复关注不更改原文资格或抹去旧办理回执。",
+        "files": [
+          "app/workflow.py",
+          "app/notice_intake.py",
+          "app/schedule.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_action_workflow.py",
+          "tests/test_schedule.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-054",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "课程、个人安排、官方活动、报名截止在日历有明确类型；个人拖动安排不能悄悄改官方截止。",
+      "source_line": 227,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "课程、安排、正式 event／window 与截止分别建模；日历读取各自类型，个人安排编辑不覆盖正式期限；课程外发需每项显式选择。",
+        "files": [
+          "app/schedule.py",
+          "app/workflow.py",
+          "static/calendar.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_schedule.py",
+          "tests/test_sprint_official_time.py",
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-055",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化+验收",
+      "cost": "M",
+      "requirement": "ICS导出、本人确认导入、真机提醒验证分层；按设备保存核对记录，验证稳定UID、更正/取消和重复导入。",
+      "source_line": 228,
+      "implementation": {
+        "state": "implemented_contract_external_unverified",
+        "summary": "既有 ICS 稳定 UID、版本变更／取消及往返解析合同保留；设备导入核对是本人记录且绑定版本，不能等同设备已提醒。",
+        "files": [
+          "app/workflow.py",
+          "app/schedule.py",
+          "static/calendar.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_workflow.py",
+          "tests/test_action_workflow.py",
+          "tests/test_schedule.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "实际 Android／iOS／桌面日历导入、重复导入及更正取消提醒须实体设备记录。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-056",
+      "section": "D. 办理、材料与个人日程：LJ-045—056",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "订阅式日历/CalDAV/外部日历API作为独立功能评估；可撤销令牌、版本变更、权限和真实终端同步均需验收。",
+      "source_line": 229,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "保持当前显式 ICS 导出与本人核对；没有把文件下载称为订阅式日历。",
+        "files": [
+          "app/schedule.py",
+          "static/calendar.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "P2：CalDAV／订阅令牌／外部日历 API 尚未实现，需决定终端、授权、撤销及同步规则。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-057",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "发布草稿持久化、附件状态、自动保存提示和离开恢复；草稿不分发、不提醒、不算已发布。",
+      "source_line": 235,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`campus_drafts.py`保存未完整正文／范围和原附件；每人最多50份；版本冲突409；刷新、重启、另一端可取；发布成功删本草稿。前端自动保存状态和冲突保留输入。",
+        "files": [
+          "app/campus_drafts.py",
+          "static/campus.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_server_draft_version_and_files_restore_then_publish_once`、重启保草稿用例。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "草稿不分发、不提醒、不计为已发布；网络失败而未保存的输入须继续重试。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-058",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F01服务端强制受众复核；人数相同但成员变化也要失效；发布预览分学生/工作人员和具体范围。",
+      "source_line": 236,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "随机复核凭据绑定发布人完整授权、受众范围、具体成员／角色／授权版本；省略、过期、同人数换人、重启旧签名均拒绝；已提交请求按幂等回执恢复。",
+        "files": [
+          "app/campus.py",
+          "static/campus.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_missing_expired_review_rejected_but_committed_retry_is_returned`、`test_review_changes_when_same_identity_is_reauthorized`、既有同人数换人用例、正常重启用例。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "核对不是校方审批。旧请求的幂等重放仍先验证当前发布权限，不能借重放绕过撤权。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-059",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "零学生、空范围、预计附件总量、超限和身份将失效在发布前提示；不能只给“共3人”掩盖无人属于目标学生群。",
+      "source_line": 237,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "复核分学生和工作人员；零学生单列警告；返回1000人／3附件／8MiB容量边界，附件投影带实际size／SHA。单文件5MiB、文本总量10000字，原件和草稿存储预算强制执行。",
+        "files": [
+          "app/campus.py",
+          "app/campus_assets.py",
+          "app/campus_drafts.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "现有范围预览与文件验证；新增真正写入版本的作者预算用例；63人附件样本。"
+      },
+      "external_acceptance": [
+        "没有机构任职到期数据，不显示虚构的“身份即将过期”；执行时仍查当前授权。容量上限不是吞吐量保证。"
+      ],
+      "remaining": [
+        "没有机构任职到期数据，不显示虚构的“身份即将过期”；执行时仍查当前授权。容量上限不是吞吐量保证。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-060",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "L",
+      "requirement": "F06附件共享引用与分批持久分发；任务回执快速返回，逐人失败可恢复，角色/范围变化在执行时复核。",
+      "source_line": 238,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "`campus_assets.py`不可变原件＋归属通知的授权引用；短事务逐人处理，默认每批24人；后台续传、逐人失败、撤权复核；逻辑容量保持。",
+        "files": [
+          "app/campus.py",
+          "app/campus_assets.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "63人×约1.03MiB合成PNG超过旧50MiB门槛：1份原件、63个引用，重建DB连接续完；旧版下载与跨账号404；队列撤权及失败重试。"
+      },
+      "external_acceptance": [
+        "测试证明此样本与故障边界，不据此宣称全部硬件上的1000人性能。"
+      ],
+      "remaining": [
+        "测试证明此样本与故障边界，不据此宣称全部硬件上的1000人性能。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-061",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "已发布正文/附件更正有版本和影响摘要；回滚旧内容也产生新版本，不重写审计历史。",
+      "source_line": 239,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "正式版本史和授权原件下载、正文／标题／附件摘要；回滚新建版本，记录原因与目标版本。有效期沿用所选历史版本。同内容附件改名更新本人名称，保存旧新名审计，不换source_id／原件。",
+        "files": [
+          "app/campus.py",
+          "app/campus_assets.py",
+          "app/campus_policy.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_publication_rollback_keeps_all_versions_and_exact_immutable_originals`、政策回滚、`test_official_attachment_rename_keeps_source_citations_bytes_and_name_history`。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "回滚不重写过去审计；撤回版本须走正式恢复。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-062",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "发布方撤回后正式恢复链路，显示撤回→恢复及新版本；本人任务restoration不能代替发布方恢复。",
+      "source_line": 240,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "独立`restore`接口，要求当前撤回版本及实际说明；保留撤回→恢复链，生成新版本、重新投递原合法受众。个人任务状态不被强制恢复。",
+        "files": [
+          "app/campus.py",
+          "app/campus_policy.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_official_restore_has_new_evidence_and_does_not_reopen_personal_work`：3版历史、原notice_id、个人task版本和data不变、学生403。"
+      },
+      "external_acceptance": [
+        "正式恢复由当前有权发布者／管理者确认原文依据；系统不杜撰恢复公告。"
+      ],
+      "remaining": [
+        "正式恢复由当前有权发布者／管理者确认原文依据；系统不杜撰恢复公告。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-063",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "新入班/晚加入补发当前有效版本；已收不重复、撤回不补发、历史过期明确说明；补发不自动重启旧任务。",
+      "source_line": 241,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "补发强制当前版本＋新受众复核。当前授权成员才可新增，已收不重复、撤回不补发。显式有效期／历史参考由发布人填写；过期／参考须确认参考用途并抑制外发。",
+        "files": [
+          "app/campus_policy.py",
+          "app/campus.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_policies.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_expired_backfill_requires_version_audience_and_reference_confirmation`、政策继承／回滚、历史任务外发抑制、既有补发用例。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "不从正文猜有效期；未填显示“未设置有效期”。历史站内记录保留，补发不创建或重启任务。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-064",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "如学院需要送审：拟稿、送审、驳回、撤回、修改重审、审批失效、并发审核；修改内容后旧审批不能继续生效。",
+      "source_line": 242,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "保持原清单“如学院需要”的P2条件，没有把受众核对冒充独立审批。",
+        "files": [
+          "app/campus.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "权限模型只有现有四类职责；接口不提供假审核通过状态。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "需明确拟稿人、审核员、审批失效与权限条件，尚未建立独立送审流。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-065",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "L",
+      "requirement": "定时发布：编辑/取消/失权/错过时刻/重启补偿有规则；执行时重核受众、附件与审批，不误发重复公告。",
+      "source_line": 243,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "保持P2独立功能边界；本轮持久队列处理的是已经明确发布的收件任务，草稿不因时间而自动发布。",
+        "files": [
+          "app/campus_drafts.py",
+          "app/campus.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "草稿零分发、正常重启只续已有队列。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "未建立定时发布及送审执行链，不能把后台分发队列称为定时公告。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-066",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "发布统计分站内分发、渠道接受、用户打开、显式回执；不将私人待办完成率默认暴露为管理看板。",
+      "source_line": 244,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "站内分发独立显示。`campus_policy.delivery_evidence`仅用现存30天Push／邮件收件引用台账计算状态、次数、不同账号数，显示供应商接受≠展示。本人打开、显式回执无证据时为null／unknown。",
+        "files": [
+          "app/campus_policy.py",
+          "static/campus-delivery-evidence.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_policies.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_publication_channel_metrics_only_count_linked_existing_ledger_evidence`：多设备人数去重、31天外记录排除、无引用不猜、邮箱／设备／私人标题不泄露。"
+      },
+      "external_acceptance": [
+        "无真实平台回执时不宣称真实发送成功；没有发布级打开／确认采集，就如实显示未知，不从私人办理数据推断。"
+      ],
+      "remaining": [
+        "无真实平台回执时不宣称真实发送成功；没有发布级打开／确认采集，就如实显示未知，不从私人办理数据推断。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-067",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "协作接收、拒收/不再负责、补件、补交、办结、撤回和超时跟进完善；跨负责人转交需重新确认分享范围。",
+      "source_line": 245,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增拒收／不再负责、重新确认负责人和材料的转交、每人独立跟进时刻。改期／取消有版本；跟进不更改校方截止、原task或对方设置；关闭／撤权／注销停止。",
+        "files": [
+          "app/collaboration.py",
+          "app/collaboration_followups.py",
+          "static/collaboration-followup.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "原协作完整链；新增拒收、转交、稳定个人跟进、范围撤销和删除用例；北京时间输入转换Node用例。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "跟进到期后按本人提醒偏好计算，未到期计划在协作详情可见；不冒充校方超时结论。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-068",
+      "section": "E. 发布、审核与协作：LJ-057—068",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "交接与审计按职责范围分页筛选；只共享明确选定的通知/材料版本，系统管理员和无关成员仍不可读。",
+      "source_line": 246,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "发布记录按权限SQL过滤、分页搜索；管理审计使用before_id游标及action筛选；协作收件箱在SQL分页合并活动和留存回执；材料分享固定明确版本。",
+        "files": [
+          "app/campus.py",
+          "app/collaboration.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_sprint.py",
+          "tests/test_campus_policies.py",
+          "tests/test_campus_permissions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed",
+        "domain_specific_record": "`test_campus_audit_cursor_does_not_lose_or_repeat_rows`、原跨账号／跨院／私有材料测试、转交拒绝受理人自行扩大共享。"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "系统管理员不能仅凭系统身份读取协作；辅导员查看本人合法发布版本史，不扩大为整个组织审计读取权。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-campus-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-069",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "建立统一提醒事件与通道矩阵：新公告、开放、期限、改期、取消、补件、结果、跟进、来源故障分别定义。",
+      "source_line": 252,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "统一类别与具体事件矩阵覆盖新公告、开放、期限、更正、取消、补件、公示结果、跟进与来源失败；计划只反映当前授权和版本。",
+        "files": [
+          "app/notification_events.py",
+          "app/notification_routing.py",
+          "static/proactive-notifications.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-070",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "F04按认可范围补个人安排/课程/协作离线提醒；先明确每类支持什么渠道，课表导入不默认强开提醒。",
+      "source_line": 253,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "个人安排／课程新增逐项 reminder_minutes 显式授权，协作进度和个人跟进共用当前队列；课程导入与 JSON 恢复不默认恢复外发同意。",
+        "files": [
+          "app/notification_events.py",
+          "app/schedule.py",
+          "app/collaboration_followups.py",
+          "app/push_delivery.py",
+          "app/mail_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_sprint_notifications.py",
+          "tests/test_campus_sprint.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-071",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "首次开启渠道明确授权、邮箱验证、设备绑定、所含内容和作用范围；通道尚不可用不显示绿色已启用。",
+      "source_line": 254,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "设备权限、渠道配置、验证邮箱与本人同意分别校验；读取通道状态和运行就绪，缺配置不返回可发送成功。",
+        "files": [
+          "app/push_delivery.py",
+          "app/mail_delivery.py",
+          "app/verification.py",
+          "app/observability.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_push_delivery.py",
+          "tests/test_mail_delivery.py",
+          "tests/test_sprint_observability.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-072",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "按类别/事项/来源设置立即、摘要、仅站内、不提醒；本人任务提醒与来源新收件偏好可分别管理。",
+      "source_line": 255,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "类别、本人通知及实际来源各可配置立即／摘要／仅站内／关闭；来源路由 ID 按 owner 验证，多来源使用保守限制并允许本人事项显式覆盖。",
+        "files": [
+          "app/notification_routing.py",
+          "app/notification_events.py",
+          "app/models.py",
+          "static/proactive-notifications.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_notifications.py",
+          "tests/test_sprint_observability.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-073",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "免打扰、临近截止、提前/紧急更正冲突可解释；是否突破静默须用户明确选择，不能由AI暗中决定。",
+      "source_line": 256,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "免打扰、摘要和有效窗口统一计算；延后至失效窗口外即抑制，紧急更正突破静默须本人显式 allow_urgent_during_quiet。",
+        "files": [
+          "app/notification_events.py",
+          "app/proactive_policy.py",
+          "app/models.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-074",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "稍后提醒与自定义时刻可撤销，若晚于截止清晰提醒；改期、取消、办结会重新核对旧计划。",
+      "source_line": 257,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留个人稍后／自定时间与正式期限分离；正式提前触发旧计划核对，取消、完成与删除撤销发送；协作跟进可改期或取消。",
+        "files": [
+          "app/workflow.py",
+          "app/action_review.py",
+          "app/notification_events.py",
+          "app/collaboration_followups.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_change_review.py",
+          "tests/test_push_delivery.py",
+          "tests/test_campus_sprint.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-075",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "同一事项多来源、多更正、多渠道聚合但保留关键差异；摘要窗口内又取消的消息不能继续当有效行动发送。",
+      "source_line": 258,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "各通道按真实 event_refs／receipt_refs 聚合仍有效摘要；已接受组成项不因偏好变化重发，发送前重算取消和失效项。",
+        "files": [
+          "app/notification_events.py",
+          "app/proactive_policy.py",
+          "app/push_delivery.py",
+          "app/mail_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_notifications.py",
+          "tests/test_push_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-076",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "首次历史导入、设备新绑定、恢复备份、停机积压不重放海量历史提醒；仅处理仍有效且符合偏好的事件。",
+      "source_line": 259,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "来源历史基线、新设备基线、邮件同意时点及恢复环境隔离；导入不恢复外发同意，停机后仅考虑仍有效事件。",
+        "files": [
+          "app/push_delivery.py",
+          "app/mail_delivery.py",
+          "app/backups.py",
+          "app/data_transfer.py",
+          "app/source_sync.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_sprint_notifications.py",
+          "tests/test_push_delivery.py",
+          "tests/test_source_subscriptions.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-077",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "“为什么没提醒/为什么又提醒”详情：不适用、静默、摘要、未授权、设备失效、已取消、失败、状态未知可见。",
+      "source_line": 260,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "计划 API 展示类别、原时刻、偏好延迟、抑制原因和可用通道；站内、队列与最近投递台账分开，失败和未知状态不隐去。",
+        "files": [
+          "app/notification_events.py",
+          "app/push_delivery.py",
+          "app/mail_delivery.py",
+          "static/reminders.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_notifications.py",
+          "tests/test_push_delivery.py",
+          "tests/test_mail_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-078",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "计划、排队、发送中、供应商接受、未知、设备展示、本人打开分层；仅记录可证明状态，不写虚假已读。",
+      "source_line": 261,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留计划、排队、发送中、provider accepted、uncertain 等可证实层级；无设备展示／本人打开采集证据时不补造状态。",
+        "files": [
+          "app/push_delivery.py",
+          "app/mail_delivery.py",
+          "app/campus_policy.py",
+          "static/campus-delivery-evidence.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_push_delivery.py",
+          "tests/test_mail_delivery.py",
+          "tests/test_campus_policies.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-079",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "重试、租约过期、429、限流、服务崩溃、邮件uncertain覆盖；未知已发结果不盲目自动重发。",
+      "source_line": 262,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "持久租约、有限重试、429 与已失效设备清理；未知邮件提交结果进入 uncertain 而不盲目重发；旧 worker 不覆盖新租约或用户解绑。",
+        "files": [
+          "app/push_delivery.py",
+          "app/mail_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_push_delivery.py",
+          "tests/test_mail_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-080",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "多设备主设备/全部设备策略、退出解绑、换账号、过期订阅、撤销权限与锁屏隐私验证。",
+      "source_line": 263,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "采用所有本人已启用设备分别投递与独立去重；Push 状态 API 明确返回 all_enabled_devices 及中文边界，逐设备关闭不替其他设备撤权。未擅自改默认策略或伪装已有主设备选项。",
+        "files": [
+          "app/push_delivery.py",
+          "static/proactive-notifications.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_push_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-081",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "L",
+      "requirement": "Android、iOS、桌面在前台/后台/锁屏/浏览器关闭/断网恢复真机矩阵；明确系统条件和不能保证的场景。",
+      "source_line": 264,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "工程合同区分前台站内、Push 与邮件；实体系统条件和后台/锁屏限制保留，不能由模拟 push 或供应商接受推断展示。",
+        "files": [
+          "app/push_delivery.py",
+          "app/mail_delivery.py",
+          "docs/proactive/PILOT_RUNTIME.md"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_push_delivery.py",
+          "tests/test_mail_delivery.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [
+        "Android、iOS、桌面前台／后台／锁屏／浏览器关闭／断网恢复真机矩阵本轮未完成。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-082",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "已完成或已读旧版但新更正影响本人时仍可提醒；不相关判断在资格/对象改变后允许重核，防永久压制。",
+      "source_line": 265,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "旧完成或已读不会吞掉新版重要更正；适用判断绑定当前通知和个人资料版本，资格改变可重新核对，旧审核不永久抑制。",
+        "files": [
+          "app/push_delivery.py",
+          "app/proactive_policy.py",
+          "app/notice_automation.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_push_delivery.py",
+          "tests/test_proactive_tracking.py",
+          "tests/test_change_review.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-083",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "管理者公告不能强开学生外发渠道；敏感事项默认最小锁屏摘要，完整内容回到鉴权页面。",
+      "source_line": 266,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "校园发布只决定合法站内分发；学生外发须本人偏好和渠道同意，协作／结果／来源故障默认锁屏文案不含私人材料细节。",
+        "files": [
+          "app/campus.py",
+          "app/notification_events.py",
+          "app/push_delivery.py",
+          "app/mail_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_campus_permissions.py",
+          "tests/test_sprint_notifications.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-084",
+      "section": "F. 提醒、投递与用户控制：LJ-069—084",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "运维告警独立于学生提醒：来源持续失败、最老队列年龄、凭证过期、磁盘/备份、预算；去重、确认和恢复通知闭环。",
+      "source_line": 267,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增独立管理员运维事件及站内消息，检测最老逾期队列、连续来源失败、磁盘、备份时效、登记凭证期限与额度计数；持久去重、接手确认、恢复和复发分开，unknown 不自动关闭事故；恢复实例不沿用原环境。",
+        "files": [
+          "app/operations_monitor.py",
+          "app/observability.py",
+          "static/operations.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_operations_monitor.py",
+          "tests/test_sprint_observability.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实渠道／设备端到端与实际故障恢复须附各平台证据，当前合成合同不能替代。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-085",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F07样式分层和组件所有权整理，确认最终断点/字号/间距；学院页与事项页纳入统一层序，删除被覆盖旧策略。",
+      "source_line": 273,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "学院、事项、材料 CSS 进入统一 legacy/system 层序；删除独立无层 link 和运行时材料 link，修正 bundle 相对路径。已有各 feature CSS 保持必要规则，未凭静态猜测整片删除。",
+        "files": [
+          "static/styles.css",
+          "static/index.html",
+          "static/task-materials.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "npm run build；现有 visual / source-inbox / pilot suites"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-086",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "保持珞珈绿、白底和当前导航习惯；制定手机/桌面密度token，避免每个页面继续各写一套尺寸补丁。",
+      "source_line": 274,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留珞珈绿/白底与原导航。统一 control-target=44px 和 page/row 密度 token，明确 850px 断点；没有 scale 全页缩小。",
+        "files": [
+          "static/system/tokens.css",
+          "static/system/responsive-density.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "新 sprint suite 320/390/1280 及原 visual suites"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-087",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F08点击面积与视觉大小分离，重点更多菜单/勾选/拖动/聊天按钮；不用统一scale缩小，触达面积不相互覆盖。",
+      "source_line": 275,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "任务勾选、更多、拖动、聊天入口用独立 44px 格；删除桌面负 margin 并保留视觉图标大小。",
+        "files": [
+          "static/system/workspace-clarity.css",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "sprint: task targets and 320px composer geometry"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-088",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机通知页压缩顶部层数：标题与收件动作同行，搜索主行，次要筛选收起并显示生效摘要；首条内容更早出现。",
+      "source_line": 276,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "主行搜索和收通知；来源/日期/关系/展示方式在明确 disclosure 内，筛选摘要保持可见，列表范围显示已加载/总匹配。",
+        "files": [
+          "static/library.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "source-inbox / visual / sprint pagination"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-089",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "首页/待办每行一个主状态、一个关键日期、一句下一步；多警告收为可展开摘要，重要变更仍明显。",
+      "source_line": 277,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "一项主状态、一项关键时间和下一步；重要变更优先，多警告放更多菜单，未核实时间不冒充有效期限。",
+        "files": [
+          "static/task-summary.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "tests/task-summary.test.mjs"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-090",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机待办分组与列表策略统一；长标题自适应，拖动有菜单/键盘替代，点击正文与完成/更多区域不打架。",
+      "source_line": 278,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留分组、长标题换行；拖动入口明确提供点按/Enter 位置选择；当前加载范围写明，避免把 50 项当全部。",
+        "files": [
+          "static/task-views.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_task_board.mjs；sprint task geometry"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-091",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "S",
+      "requirement": "F09完成动效只响应服务端成功；失败回滚、打开办理、阻塞/补件、撤销/取消均不播放完成庆祝。",
+      "source_line": 279,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "移除全局点击捕获庆祝；只有同账号/同路由的服务端 done 回执后庆祝。失败回滚、打开办理、撤回均不庆祝。",
+        "files": [
+          "static/choreography.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "sprint failed PUT + no confetti + real persisted completion"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-092",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "通知详情按标题→本人关联→关键时间→下一步→原文证据组织；正文/原文/附件/更正关系可直接定位，重要内容不藏hover。",
+      "source_line": 280,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留原 noticeFocus 证据顺序；公开阶段/公示/结果入口接真实生命周期编辑器，原文证据和版本关系可达。",
+        "files": [
+          "static/app.js",
+          "static/system/content-priority.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_notice_flow / notice_matters；sprint lifecycle entry"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-093",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机办理面板保留固定标题/滚动内容/底部保存，压缩重复说明；错误自动定位，软键盘不遮保存，关闭可恢复草稿。",
+      "source_line": 281,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留固定标题/滚动正文/保存区与服务器草稿机制；新增正式活动/办理窗口编辑；未勾选时间补丁的 required 输入禁用，避免隐藏字段阻止保存。",
+        "files": [
+          "static/workflow.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_draft_continuity / notice_flow；official-time API tests"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-094",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "收件表单文本/链接/附件批量回执一致；进度、失败、取消、补传明确，重试不丢已成功材料。",
+      "source_line": 282,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "保留现有附件/文本/链接 intake 队列及失败重试、成功材料保留机制；没有用 CSS 把回执隐藏成加载装饰。",
+        "files": [
+          "static/app.js",
+          "static/notice-intake.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-095",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机聊天输入优先保留文字与发送；附件/表情/录音按频率组织；输入法、语音取消、附件恢复和短视口测试。",
+      "source_line": 283,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "文字与发送独立占位，表情和语音进入更多菜单；录音中控制仍移动到原录音面板可停止/取消。输入法与草稿恢复逻辑保留。",
+        "files": [
+          "static/chat.js",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-096",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "聊天回复工具栏不出现孤立图标行；复制/再生成/版本/分享有清晰层级，次要动作收入菜单但键盘可达。",
+      "source_line": 284,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "复制/引用等常用动作保留，朗读/版本/重生成/分支/分享进入有标签 disclosure；Escape 返回 summary 焦点。",
+        "files": [
+          "static/genui/chat-presenter.js",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-097",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "AI流式正文、引用和生成界面保留滚动锚点；用户上滑时不吸回底部，停止/重试/断流状态与真实任务一致。",
+      "source_line": 285,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "保留已存在的用户上滑/流式读写/停止/断线恢复语义；本轮没有换掉对话运行时。懒加载不改变真实 stream API。",
+        "files": [
+          "static/chat-viewport.js",
+          "static/chat.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_chat_layout / chat_recovery / reference_interactions / openui suites"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-098",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机记忆页默认只留搜索、当前范围和必要筛选；高级筛选折叠，开始选择后再显示批量工具，返回保留条件。",
+      "source_line": 286,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "高级筛选改为原生 details，搜索与当前范围保持主位；批量选择工具与原返回条件机制保留。",
+        "files": [
+          "static/memory-tree.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "verify_reference_interactions / memory continuity suites"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-099",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "来源卡收起后仍显示手动/自动/暂停/失败及最近成功；手机压缩不能隐藏决定收件可靠性的事实。",
+      "source_line": 287,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "来源代理新增规则试读、应用、回滚、跨域 Feed 发布者；卡片收起仍展示真实读取状态与最近成功。该文件由来源审计代理负责验证。",
+        "files": [
+          "static/sources.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "source-presets / source-inbox suites；来源代理后端回归"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-100",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "日历手机优先清楚日程列表/日/周切换，月视图拥挤有收纳；滚动、拖动、长按与官方时间修改边界明确。",
+      "source_line": 288,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留手机默认 agenda 与明确日/周视图；安排新增显式 reminder_minutes，默认不提醒课程；无虚构锁屏送达保证。正式活动时段编辑走原变更确认。",
+        "files": [
+          "static/calendar.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "arrangement_recovery / notice_flow；新 reminder API tests"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-101",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "学院发布/成员/审计窄屏使用字段明确的行或分步表单；不能把桌面大表格简单整体缩小。",
+      "source_line": 289,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "480px 表单单列，导航仍可横向滚动且触达 44px；批量成员前后对照、持久草稿、附件、真实受众复核、投递版本、撤回/恢复/回滚、历史参考补发均接真实 API。",
+        "files": [
+          "static/campus.js",
+          "static/system/workspace-clarity.css",
+          "static/campus-roster.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "sprint persisted draft；pilot workspace / campus API tests"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-102",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "空、加载、旧内容刷新、无结果、失败、无权限、离线、已删除分别展示；每种有具体下一步和内容新鲜度。",
+      "source_line": 290,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "分页区分加载、保留旧范围刷新、无匹配与失败；失败有重试，409 list_changed 保留筛选重新读。角色和删除结果依后端处理，不把读取失败当空列表。",
+        "files": [
+          "static/paged-list.js",
+          "static/library.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "tests/paged-list.test.mjs；原 owner/route/isolation tests"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-103",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "Toast与底部导航/软键盘安全区互不遮挡；普通提示短，冲突/失败有常驻入口及核对动作，不能只要求“刷新”。",
+      "source_line": 291,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "测量实际底部导航/聊天输入和 visualViewport，错误常驻；成功提示暂停于 hover/focus/hidden；dialog 上层可操作，异步 Undo 按真实结果反馈。",
+        "files": [
+          "static/experience-system.js",
+          "static/experience-system.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "sprint persistent failure/mobile nav；需真实软键盘设备补验证"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-104",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "搜索/筛选/排序/多选作用范围明确；清空一条件不清空全部，旧搜索响应不能覆盖新结果，返回恢复位置和焦点。",
+      "source_line": 292,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "所有筛选在服务器完整集合执行；50 项分页/总匹配/加载范围明确；请求带 epoch/账号/路由守卫；返回恢复滚动及可定位焦点。重入尚未完成路由会重发新读，不永远停加载。",
+        "files": [
+          "static/paged-list.js",
+          "static/library.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "tests/paged-list.test.mjs (5)；sprint >50 and stale query"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-105",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "长中文、URL、混排、附件名、姓名和学院名可读；关键日期/状态不继续缩到11px，省略内容可展开。",
+      "source_line": 293,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "最终覆盖层关键中文字号提高到 12px，任务标题/日期不压到 11px；回复工具有文字、文件和公告正文保留展开。",
+        "files": [
+          "static/system/workspace-clarity.css",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "visual/layout suites；320px 断点新增检查"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-106",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "键盘、读屏、焦点返回、对话框语义、颜色对比、200%字号/缩放、中文输入法全链路验证；不只有布局不溢出。",
+      "source_line": 294,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增菜单 keyboard/Escape/焦点回归，Native dialog/details/fieldset 和错误 live region；保留已有读屏名字及键盘移动。",
+        "files": [
+          "static/system/workspace-clarity.css",
+          "static/genui/chat-presenter.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过"
+      },
+      "external_acceptance": [
+        "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
+      ],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-107",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "统一动画生命周期：减少动画、个人关闭、后台标签、离屏、卸载均停止清理；多动效不抢输入和滚动。",
+      "source_line": 295,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "完成动画集中跟踪与取消；后台、reduced-motion、个人关闭、路由切换、账号切换清理；离屏不启动庆祝。保留现有 observer/输入响应。",
+        "files": [
+          "static/choreography.js",
+          "static/experience-system.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "已有 motion tests；sprint failed mutation；CI runtime pending"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-108",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "保持同一动作在列表/详情/搜索/跨端中的状态和文案；乐观更新失败保留上下文，实际成功后才显示成功。",
+      "source_line": 296,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "任务提交后重读当前分页投影；草稿/发布/重试/渠道供应商接受均用实际回执语义；拒收、转交、个人跟进与最小留存回执分别标明。",
+        "files": [
+          "static/app.js",
+          "static/campus.js",
+          "static/collaboration.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "pending",
+        "planned_checks": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-109",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "严格执行209参考采用记录：序号→源码变体→依赖→交互机制→品牌适配→真实API→各状态验证→许可。35优先候选不等于全部安装。",
+      "source_line": 297,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "209 逐项保留原编号/URL/依赖描述/适用场景/不采用理由；本轮实际打开并检查源码与交互的只有 114/115/133，采纳原生交互原则，不复制源码，不新增运行时库。",
+        "files": [
+          "docs/sprint-2026-11-14/components-209.json",
+          "docs/sprint-2026-11-14/reference-source-review.json"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "reference_demos_observed_application_pending",
+        "planned_checks": "源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "209 项为逐项采用审查账本；实际源码与 demo 检查只有 114／115／133，其余未实操，未全部安装。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/frontend-25.json",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-110",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P2",
+      "priority_qualifier": "P2",
+      "nature": "新增",
+      "cost": "M",
+      "requirement": "深色、舒适/紧凑偏好等按需求单独确定；当前浅色为基线，不先做无完整主题体系的假开关。",
+      "source_line": 298,
+      "implementation": {
+        "state": "conditional_not_implemented",
+        "summary": "保留浅色与珞珈绿基线，没有加入无完整配色系统的假主题开关；统一当前断点密度不等于用户可选主题／密度方案。",
+        "files": [
+          "static/system/tokens.css",
+          "static/system/responsive-density.css"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "P2：深色及舒适／紧凑偏好需产品确认和完整可访问性验收，当前不宣称已实现。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "待冻结全套",
+        "条件扩展"
+      ]
+    },
+    {
+      "id": "LJ-111",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化+验收",
+      "cost": "M",
+      "requirement": "针对时间、对象、材料、地点、前置、结果构建校园样本集；包含无时间/冲突/扫描/跨页/转述，分别报告误报、漏报与人工修订。",
+      "source_line": 304,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "[evaluate_mvp.py](../../scripts/evaluate_mvp.py)、[评测格式](../mvp-evaluation/FORMAT.md)、`test_mvp_evaluation` 已检查至少 10 开发／20 独立测试、事项家族隔离、原件／人工标准／配置哈希、不可删除失败分母、重复预测 FP 和缺结果 not_run。候选目录标记 `candidate_registry_only`，各项尚无独立人工标注且不具冻结资格。",
+        "files": [
+          "scripts/evaluate_mvp.py",
+          "docs/mvp-evaluation/FORMAT.md",
+          "docs/mvp-evaluation/public-notice-candidates.json"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_mvp_evaluation.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "工具既有，不是本轮新成果；没有真实冻结集与模型指标。历史候选 URL、HTML 解析 fixture、合成测试都不能替代人工标准。程序能核对声明格式，不能认证“人工独立”的真实性。"
+      ],
+      "remaining": [
+        "工具既有，不是本轮新成果；没有真实冻结集与模型指标。历史候选 URL、HTML 解析 fixture、合成测试都不能替代人工标准。程序能核对声明格式，不能认证“人工独立”的真实性。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-112",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "事实、推测、建议、个人意愿分开；每个重要字段可追到原文/页码，缺附件/覆盖不足时明确未知，不生成假引文。",
+      "source_line": 305,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "`notice_semantics` 对全部来源／任务进行有界复核；`deadline_evidence`、`notice_references`、`source_coverage` 区分引句、未知、缺附件；已有伪造引句、错来源、失效版本、扫描待核对测试。",
+        "files": [
+          "app/notice_semantics.py",
+          "app/deadline_evidence.py",
+          "app/notice_references.py",
+          "app/source_coverage.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109"
+        ],
+        "test_files": [
+          "tests/test_notice_semantics.py",
+          "tests/test_evidence_acquisition.py",
+          "tests/test_notice_phase_tracking.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮仅把这些门槛复用到新阶段／异议窗口，并补跨年度与 Feed 证据；未改成凭模型置信度认定事实。PDF／图像真实语义准确率仍未测得。"
+      ],
+      "remaining": [
+        "本轮仅把这些门槛复用到新阶段／异议窗口，并补跨年度与 Feed 证据；未改成凭模型置信度认定事实。PDF／图像真实语义准确率仍未测得。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-113",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "原文含指令、恶意链接、提示注入时仅作为待分析材料；不能扩大工具权限、读取他人资料、自动外发或提交。",
+      "source_line": 306,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "`agent_runtime/tools.py` 的资料查询显式受 server uid／scope 控制；写文件、沙箱执行、MCP 调用经过批准与精确参数；子代理无写权限。`test_agent_runtime`／`test_agent_chat` 有越权、取消、权限收回、MCP重定向、目录穿越、重复请求与最终发布门。",
+        "files": [
+          "app/agent_runtime/tools.py",
+          "app/agent_runtime/chat.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_agent_runtime.py",
+          "tests/test_agent_chat.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "未发现本轮来源改动扩大 AI 工具权限。来源正文始终是材料，不能授权取他人资料或外发。本结论是代码边界审查，不能宣称通过所有提示注入攻防；生产 MCP／Docker 和真实模型对抗仍需环境证据。"
+      ],
+      "remaining": [
+        "未发现本轮来源改动扩大 AI 工具权限。来源正文始终是材料，不能授权取他人资料或外发。本结论是代码边界审查，不能宣称通过所有提示注入攻防；生产 MCP／Docker 和真实模型对抗仍需环境证据。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-114",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "分层记忆可查看来源、更新时间、适用范围、纠正/遗忘；自填和系统核实分离，旧年级/旧兴趣不永久影响判断。",
+      "source_line": 307,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "`memory_lifecycle`／`memory_policy`／`memory_reliability` 及 v3—v7 测试覆盖来源、适用域、时效、跨项目、撤回、反馈、忘记旧版本、修改后的上下文作废。",
+        "files": [
+          "app/memory_lifecycle.py",
+          "app/memory_policy.py",
+          "app/memory_reliability.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_memory_lifecycle_v3.py",
+          "tests/test_memory_reliability_v4.py",
+          "tests/test_memory_tree_v6.py",
+          "tests/test_memory_usability_v7.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮未重写已有记忆体系；过期／禁用／来源撤销不得作为当前依据。真实长期使用和身份变更仍需人工案例，不将自填资料升级为学校认证。"
+      ],
+      "remaining": [
+        "本轮未重写已有记忆体系；过期／禁用／来源撤销不得作为当前依据。真实长期使用和身份变更仍需人工案例，不将自填资料升级为学校认证。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-115",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "模型断流/超时/取消/额度耗尽/版本过时保留原件和可手工流程；重试和后台恢复不重复收费，运行状态可解释。",
+      "source_line": 308,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "`test_notice_stream`、`test_notice_budget`、`test_notice_repair`、`test_execution`、`test_agent_runtime` 覆盖流未终结、预算前置、版本变化、取消、重启标失效、保留原件、显式重试及调用记账。",
+        "files": [
+          "app/notice_stream.py",
+          "app/execution.py",
+          "app/notice_repair.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_notice_stream.py",
+          "tests/test_notice_budget.py",
+          "tests/test_notice_repair.py",
+          "tests/test_execution.py",
+          "tests/test_agent_runtime.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮没发付费请求，不能报告真实供应商断流成功率或账单。既有有界补正请求会记入调用量；“保留草稿与原件”不等于“远端供应商一定未计费”。"
+      ],
+      "remaining": [
+        "本轮没发付费请求，不能报告真实供应商断流成功率或账单。既有有界补正请求会记入调用量；“保留草稿与原件”不等于“远端供应商一定未计费”。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-116",
+      "section": "H. AI、记忆与判断可靠性：LJ-111—116",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "生成式UI沙箱、代码审查、持久状态、复制/分享、版本切换与迟到响应验证；不借生成界面绕过宿主鉴权或用户确认。",
+      "source_line": 309,
+      "implementation": {
+        "state": "existing_reviewed",
+        "summary": "`genui.py` 有受限表达式与数据键校验；`openui.js` 使用仅 allow-scripts 的 opaque iframe，宿主消息带实例边界；`genui_state`／`test_genui_state` 校验控件、快照、版本与所有权。前端 Node 套件含状态、恢复、复制、传输和事件检查。",
+        "files": [
+          "app/genui.py",
+          "app/genui_state.py",
+          "static/genui/openui.js",
+          "static/genui/sandbox-runtime.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_genui_state.py",
+          "tests/test_genui_core.py",
+          "tests/test_agent_chat.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "本轮前端专项另行处理集成；这里没有新浏览器实测证据。合成／源码证据不代替真实手机、读屏、完整浏览器隔离与迟到消息验收。"
+      ],
+      "remaining": [
+        "本轮前端专项另行处理集成；这里没有新浏览器实测证据。合成／源码证据不代替真实手机、读屏、完整浏览器隔离与迟到消息验收。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ],
+      "domain_report_status": "既有能力只读审查"
+    },
+    {
+      "id": "LJ-117",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F10通知/任务游标分页和轻量投影，正文/附件按需；新增/删除/筛选时不漏不重，首屏数据不随总历史线性增长。",
+      "source_line": 315,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增 owner／筛选／修订绑定游标和每页最多 50 项轻量投影；正文与附件保留详情读取；新增、删除或筛选变化使旧游标明确失效。另加完整轻量工作区投影供首页／日历等，避免用首 50 条代替完整账号。",
+        "files": [
+          "app/listing.py",
+          "app/list_filters.py",
+          "app/workspace_projection.py",
+          "static/paged-list.js",
+          "static/workspace-projection.js",
+          "static/library.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/test_sprint_lists.py",
+          "tests/paged-list.test.mjs",
+          "tests/workspace-projection.test.mjs"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "新工作区投影尚在根集成定向验证，最后冻结及 1 万条完整语义对照由最终运行记录更新。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-118",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "全文索引与按字段搜索，保留正文/材料出处和权限过滤；用1万条样本对照结果正确性、P50/P95与响应体。",
+      "source_line": 316,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "FTS5 索引覆盖标题／正文等可读内容、短中文与字面标点回退，owner 过滤与事务内触发更新；记录 1 万条固定合成数据的冷／热查询及响应体。",
+        "files": [
+          "app/listing.py",
+          "scripts/verify_campus_capacity.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_lists.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "五个热样本的 P95 为 nearest-rank 最大值，仅为本机微基准，不代表校园并发生产性能。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-119",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "看板/提醒共享增量投影，稳定数据与分钟时钟派生拆分；没变化时不重读重绘全列表，跨分钟必要状态仍准确。",
+      "source_line": 317,
+      "implementation": {
+        "state": "integration_in_progress",
+        "summary": "新增 /api/workspace/projection：按数据库／本人／提交修订缓存完整轻量数据，时间变化仅返回 intent、tracking、推荐及任务时效差量；notice_queue 纯重算与 task_timing 复用原业务公式，草稿仅作为内部稳定依据。",
+        "files": [
+          "app/workspace_projection.py",
+          "app/notice_queue.py",
+          "app/task_timing.py",
+          "app/workspace_sync.py",
+          "static/workspace-projection.js",
+          "static/data-sync.js",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/workspace-projection.test.mjs",
+          "tests/data-sync.test.mjs",
+          "tests/test_workspace.py",
+          "tests/test_insight_data.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价待最终定向／全套记录。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-120",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F11 CSS合并/去重、JS按路由加载、缓存和压缩验证；记录冷/热启动请求数、传输体积、解析、交互与长任务。",
+      "source_line": 318,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增精确 esbuild 构建、原生路由懒加载、CSS 层合并、内容哈希资源及静态压缩；源文件变化或产物缺失回退源入口，build:check 防陈旧包。",
+        "files": [
+          "scripts/build_frontend.mjs",
+          "app/frontend_assets.py",
+          "static/styles.css",
+          "static/app.js",
+          "package.json",
+          "package-lock.json"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_frontend_bundle.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "真实应用冷／热请求、传输与可输入时点由 verify_sprint_ui 三引擎执行后填入；标准 API 不支持精确解析耗时就记 unknown，不编造。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-121",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "长列表DOM、批量选择、筛选、文件预览内存与滚动优化；虚拟化需保留键盘、读屏、定位，不仅追求帧率。",
+      "source_line": 319,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "列表页使用有界分页和明确加载范围，批量选择遵循所选记录；没有以盲目虚拟化破坏焦点、读屏或定位；首页／日历使用完整轻量投影，原文按需加载。",
+        "files": [
+          "static/paged-list.js",
+          "static/library.js",
+          "static/task-views.js",
+          "static/workspace-projection.js",
+          "app/listing.py",
+          "app/workspace_projection.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "frontend-node-270"
+        ],
+        "test_files": [
+          "tests/paged-list.test.mjs",
+          "tests/workspace-projection.test.mjs",
+          "tests/test_sprint_lists.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "实体文件预览内存、长时滚动和真实辅助技术待浏览器／设备验收；新投影集成待根冻结结果。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-122",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "数据库范围查询/索引/短事务、发布列表SQL分页；以目标活跃用户和峰值测试锁等待，达到阈值后再评估数据库迁移。",
+      "source_line": 320,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。",
+        "files": [
+          "app/listing.py",
+          "app/notice_matters.py",
+          "app/campus.py",
+          "app/collaboration.py",
+          "scripts/verify_local_runtime.py",
+          "scripts/verify_campus_capacity.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_sprint_lists.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_local_runtime_ownership.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-123",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "队列按事件增量协调、发送前复核、定期兜底；来源/模型/解析/分发各自并发和预算，避免一个慢任务拖死整站。",
+      "source_line": 321,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "新增每 owner／channel 已提交 revision 协调：未变账户不写事务、不重算，改变立即协调、60 秒兜底；发送前仍无条件复核当前授权／期限。来源域名公平、群附件、模型分析、校园分发分别受并发与预算限制。",
+        "files": [
+          "app/notification_coordination.py",
+          "app/source_sync.py",
+          "app/source_fetch.py",
+          "app/notice_automation.py",
+          "app/group_delivery.py",
+          "app/campus.py",
+          "app/push_delivery.py",
+          "app/mail_delivery.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "campus-domain-54-plus-rename",
+          "qq-context-domain-41"
+        ],
+        "test_files": [
+          "tests/test_notification_coordination.py",
+          "tests/test_source_fetch_contracts.py",
+          "tests/test_source_cache_policy.py",
+          "tests/test_sprint_notifications.py",
+          "tests/test_group_delivery.py",
+          "tests/test_campus_sprint.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "运行预算与队列长时恢复需结合实际部署负载验证，不把单个合成慢源用例当全站吞吐承诺。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-124",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "L",
+      "requirement": "从零部署、升级、数据迁移、备份恢复、回滚、磁盘满、损坏备份、重复进程、停机补偿演练；记录恢复耗时与丢失窗口。",
+      "source_line": 322,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "保留从零部署、明确 schema 门禁、完整数据库备份和恢复；新增来源、校园、阶段、投影及观测表纳入升级／备份校验，恢复后渠道、复核授权和环境证据不会沿用。",
+        "files": [
+          "app/db.py",
+          "app/backups.py",
+          "scripts/verify_local_runtime.py",
+          "scripts/build_release.py",
+          "README.md",
+          "TESTING.md",
+          "OPERATIONS.md"
+        ]
+      },
+      "verification": {
+        "executed_runs": [
+          "source-domain-109",
+          "campus-domain-54-plus-rename"
+        ],
+        "test_files": [
+          "tests/test_workflow.py",
+          "tests/test_workflow_migration.py",
+          "tests/test_schedule.py",
+          "tests/test_notice_phase_tracking.py",
+          "tests/test_campus_sprint.py",
+          "tests/test_sprint_observability.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "真实生产磁盘满、部署回滚、远端损坏备份、停机恢复的 RTO／丢失窗口需在目标环境记实；本地演练只证明所测范围。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "已执行定向验证",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-125",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "管理就绪与观测面板：配置存在、连接成功、真实端到端分别记录；请求ID贯穿收件/判断/任务/投递，日志脱敏。",
+      "source_line": 323,
+      "implementation": {
+        "state": "implemented_or_strengthened",
+        "summary": "就绪面板将配置存在、已记录连接成功、管理员端到端证据分开；服务端随机 request_id 关联本人通知审计与后续步骤，权限内追踪不返回私密凭据。根前端同步修正“已配置即已接通”的旧顶栏文案。",
+        "files": [
+          "app/observability.py",
+          "static/operations.js",
+          "app/main.py",
+          "app/db.py",
+          "static/app.js"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_sprint_observability.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "管理员手工填入的验收仍是其声明，系统不能认证真实外部设备和独立验收真实性。"
+      ],
+      "remaining": [
+        "后台历史事件可能没有 HTTP request_id，按本人通知／事务记录关联，不伪造统一旧链路 ID。"
+      ],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-126",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "F13 README、运行文档、能力表、测试口径统一；锁定版本、第三方采用登记和许可证，说明当前仓库自身许可选择。",
+      "source_line": 324,
+      "implementation": {
+        "state": "implemented_with_owner_decision_pending",
+        "summary": "README／TESTING／第三方登记与构建门禁更新；新增 esbuild 仅为开发构建依赖且精确锁为 0.28.2，现有运行时依赖保持；209 组件采用不等于批量引库。",
+        "files": [
+          "README.md",
+          "TESTING.md",
+          "OPERATIONS.md",
+          "THIRD_PARTY_NOTICES.md",
+          "package.json",
+          "package-lock.json",
+          "requirements.lock",
+          "docs/licenses/esbuild/LICENSE.txt"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_frontend_bundle.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [],
+      "remaining": [
+        "仓库当前未发现根 LICENSE。项目自身许可证属于所有者授权决定，本轮不得擅选；现状态须在交付说明中直说，不能称许可证已齐全。"
+      ],
+      "evidence_documents": [
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套"
+      ]
+    },
+    {
+      "id": "LJ-127",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "L",
+      "requirement": "实际角色三轮、真实手机、真实供应商、校园样本独立验收；CI合成结果、源码结论、真机结果各自记录，不互相替代。",
+      "source_line": 325,
+      "implementation": {
+        "state": "external_acceptance_pending",
+        "summary": "正常链、异常恢复与权限／并发多轮工程回归分别记录；脚本、源码、模拟供应商、真实公开读取、实际应用浏览器和实体设备层级分开。",
+        "files": [
+          "scripts/audit_full_suite.py",
+          "scripts/run_browser_checks.py",
+          "scripts/verify_sprint_ui.mjs",
+          "scripts/verify_local_runtime.py",
+          "scripts/evaluate_mvp.py"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "实际角色三轮、真实供应商、真实手机、独立人工校园样本、累计不少于 5 天现场实践或场景验证与单位确认没有本轮完成证据。"
+      ],
+      "remaining": [],
+      "evidence_documents": [
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-campus-evidence.md",
+        "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
+      ],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    },
+    {
+      "id": "LJ-128",
+      "section": "I. 性能、运行与交付：LJ-117—128",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "制定试点容量与发布门槛：人数/日收件/高峰/设备/数据期限/支持渠道/成功率/时延/费用预算；小范围分批扩大并保留回退。",
+      "source_line": 326,
+      "implementation": {
+        "state": "implemented_with_pilot_definition_pending",
+        "summary": "新增可审阅工程发布门槛：首批最多 5 人，10 人并发隔离样本全部达标后才建议扩大至 10；每日每人 20 收件为工程负载档；正常非 AI CRUD P95<1秒、写锁等待 P95<100ms 且零超时，权限／幂等／stale 断言全过。预算未知不自动批量，保留原隐私及回退契约；这些均非院方批准或实测结果。",
+        "files": [
+          "docs/PILOT_RELEASE_GATES.md",
+          "scripts/pilot_preflight.py",
+          "scripts/verify_campus_capacity.py",
+          "scripts/verify_local_runtime.py",
+          "app/runtime_metrics.py",
+          "docs/CAMPUS_CAPACITY_AND_MATTERS.md",
+          "docs/proactive/PILOT_RUNTIME.md"
+        ]
+      },
+      "verification": {
+        "executed_runs": [],
+        "test_files": [
+          "tests/test_local_runtime_ownership.py",
+          "tests/test_model_capacity.py"
+        ],
+        "freeze_suite": "pending",
+        "browser": "not_assessed"
+      },
+      "external_acceptance": [
+        "实际试点人数／日收件／峰值／设备／留存期／费用预算和可接受成功率、时延需真实院方范围；本轮样本不能代替该容量承诺。"
+      ],
+      "remaining": [],
+      "evidence_documents": [],
+      "status_labels": [
+        "实现证据",
+        "待冻结全套",
+        "真实外部验收"
+      ]
+    }
+  ]
+}

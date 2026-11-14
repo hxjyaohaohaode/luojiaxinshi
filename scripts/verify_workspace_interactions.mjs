@@ -1,3 +1,5 @@
+import {waitForReaderStable} from './reader_stability_checks.mjs';
+import {browserExecutable} from './browser-runtime.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Real component flows against the owned synthetic fixture on 8786. */
 import fs from 'node:fs/promises';
@@ -13,8 +15,8 @@ const base=process.env.WORKSPACE_BASE_URL||'http://127.0.0.1:8786';
 const out=path.resolve('artifacts/workspace-interactions-browser');await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic workspace interactions; simulated provider; no real user data',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()}),page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(12000);
- const settleReader=async()=>{await page.evaluate(async()=>{window.__chatViewportHeld=(await import('/static/chat-viewport.js')).chatViewportHeld;});await page.waitForFunction(()=>!window.__chatViewportHeld(document.querySelector('#chat-thread')));};
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])}),page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(12000);
+ const settleReader=()=>waitForReaderStable(page);
  page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
  const check=async(name,fn)=>{console.log('CHECK',engine,name);try{await fn();report.checks.push({engine,name,ok:true});}catch(error){console.log('FAIL',engine,name,error.message.slice(0,500));report.checks.push({engine,name,ok:false,error:error.message});await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png')}).catch(()=>{});}};
  // Toast lifetimes intentionally pause while focused or hovered. Only wait

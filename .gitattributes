@@ -1,2 +1,13 @@
+# Build source hashes and committed bundles must be byte-identical on Windows/Linux.
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+*.json text eol=lf
+*.webmanifest text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
 # Keep shared reference files byte-identical on every platform, including CSV/Markdown.
 项目资料/** -text

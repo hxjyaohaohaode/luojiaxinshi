@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 /** Existing inputs through persisted actions; synthetic data and real local APIs. */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -9,7 +10,7 @@ await fs.mkdir(out,{recursive:true});
 const report={fixture:'Synthetic local data, real application storage and routes; link provider is a declared fixture',checks:[],errors:[]};
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
   console.log('Notice flow: '+engine);
-  const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+  const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
   const page=await browser.newPage({viewport:{width:1440,height:900},locale:'zh-CN',timezoneId:'America/Los_Angeles'});
   page.setDefaultTimeout(12000);page.setDefaultNavigationTimeout(45000);
   page.on('pageerror',error=>report.errors.push({engine,error:error.message}));

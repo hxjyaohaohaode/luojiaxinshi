@@ -72,7 +72,10 @@ def seed_pilot():
     from synthetic_auth import verified_registration
     settings=app.state.settings
     with TestClient(app,base_url=settings.origin,headers={'Origin':settings.origin,'X-Requested-With':'campus-notice'}) as client:
-        for username,role in [('pilot-site','admin'),('pilot-counselor','user')]:
+        accounts=[('pilot-site','admin'),('pilot-counselor','user')]
+        if os.getenv('SPRINT_BROWSER_FIXTURE')=='1':
+            accounts.extend(('sprint-'+engine,'user') for engine in ['chromium','firefox','webkit'])
+        for username,role in accounts:
             verified_registration(client,{'username':username,'display_name':username,
                 'password':'PilotFixtureOnly2026!','accepted_terms':True,'invite':new_invite(app.state.db,role)})
             client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf']

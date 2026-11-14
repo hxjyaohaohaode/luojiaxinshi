@@ -1,0 +1,6 @@
+.collaboration-followup{display:grid;gap:var(--space-3,12px);max-width:38rem}
+.collaboration-followup p{margin:0;line-height:1.65}
+.collaboration-followup input[type=datetime-local]{width:100%;min-height:44px}
+.collaboration-followup .button,.collaboration-followup .link-button{min-height:44px}
+.collaboration-followup [data-collaboration-followup-status]:empty{display:none}
+@media(max-width:520px){.collaboration-followup .row>.button{flex:1 1 12rem}}

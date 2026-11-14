@@ -846,8 +846,10 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                     if row and not (self.access.get('library') or self.access.get('attachments') and row['conversation_id'] == self.cid):
                         raise AgentError('原文不在本轮资料范围内')
                 elif storage_kind == 'notice' and self.access.get('library'):
-                    row = conn.execute('''SELECT s.sections,NULL AS full_sections,s.kind,s.content,s.status,s.warning,s.sha256 FROM sources s JOIN notices n ON n.id=s.notice_id
+                    row = conn.execute('''SELECT s.id,s.sections,NULL AS full_sections,s.kind,s.content,s.status,s.warning,s.sha256 FROM sources s JOIN notices n ON n.id=s.notice_id
                         WHERE s.id=? AND n.user_id=? AND s.active=1''', (args.source_id, self.uid)).fetchone()
+                    from ..campus_assets import hydrate_source
+                    row = hydrate_source(conn, row)
                 if row:sections = json.loads(row['full_sections'] or row['sections'])
             from ..visual_evidence import register_images,is_visual_reference,IMAGE_MIME
             from ..pdf_visual import pending_pages,PAGE_MARKER,visual_locator

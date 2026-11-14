@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Request routing is isolated from service workers; worker delivery has its own real-browser suite.
 // Native application modules and real browser gestures; synthetic, isolated data.
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ const previous={id:'b'.repeat(32),parent_id:'2'.repeat(32),role:'assistant',stat
 const latest={...previous,id:'d'.repeat(32),content:content('当前版',18),created_at:at+1530};
 const versions=[previous,latest];let selected=latest;
 const snapshot=()=>({...chat,processing:false,messages:[{id:a1.parent_id,role:'user',status:'complete',content:'请读取合成材料',created_at:at},a1,{id:latest.parent_id,role:'user',status:'complete',content:'请整理执行结果',created_at:at+1500},{...selected,versions,version_index:versions.findIndex(v=>v.id===selected.id)}]});
-const browser=await engine.launch({headless:true,...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})});
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})});
 const context=await browser.newContext({serviceWorkers:'block',storageState:await api.storageState(),viewport:{width:1651,height:871}});
 await context.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async()=>{},writeText:async text=>{window.__copied=text;}}});});
 const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',error=>errors.push(String(error)));

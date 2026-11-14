@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 // Real app, signed synthetic webhooks and a loopback fixture for the QQ file response.
 import assert from 'node:assert/strict';
 import {createPrivateKey,sign} from 'node:crypto';
@@ -18,7 +19,7 @@ for(const engine of [chromium,firefox,webkit]){
   let browser,page;
   const check=async(title,fn)=>{await fn();report.checks.push({browser:name,title,passed:true});};
   try{
-    browser=await engine.launch({headless:true,executablePath:engine.executablePath()});
+    browser=await engine.launch({headless:true,executablePath:browserExecutable(engine)});
     page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
     page.setDefaultTimeout(12000);
     page.on('pageerror',error=>report.errors.push(name+': '+error.message));

@@ -44,6 +44,11 @@ def publication(audience='class', *, request_id='campus-request-0001', title='�
 
 
 def publish(client, payload, files=None):
+    # Production publications require a fresh, explicit audience review.
+    if 'audience_review' not in payload:
+        review=client.post('/api/campus/audience-review',json={k:payload[k] for k in ('audience','grade','class_name')})
+        if review.status_code!=200:return review
+        payload={**payload,'audience_review':review.json()['review']}
     if files is None:
         return client.post('/api/campus/publications', json=payload)
     return client.post('/api/campus/publications', data={'data': json.dumps(payload, ensure_ascii=False)}, files=files)
@@ -172,19 +177,21 @@ def test_explicit_backfill_only_delivers_to_newly_eligible_members(env):
     _, manager, counselor, one, two, three = actors(env)
     sent = publish(counselor, publication()).json()
     endpoint = '/api/campus/publications/' + sent['id'] + '/deliver-new'
-    assert one.post(endpoint).status_code == 403
+    assert one.post(endpoint,json={'version':1,'audience_review':'0'*64}).status_code == 403
     assert assign(manager, 'student-two', 'student', version=1, **CLASS1).status_code == 200
     assert two.get('/api/notices').json() == []
-    first = counselor.post(endpoint)
+    reviewed=counselor.post('/api/campus/audience-review',json={'audience':'class',**CLASS1}).json()
+    payload={'version':1,'audience_review':reviewed['review']}
+    first = counselor.post(endpoint,json=payload)
     assert first.status_code == 200, first.text
     assert first.json()['delivery']['added'] == 1
     assert len(one.get('/api/notices').json()) == len(two.get('/api/notices').json()) == 1
     assert three.get('/api/notices').json() == []
-    assert counselor.post(endpoint).json()['delivery']['added'] == 0
+    assert counselor.post(endpoint,json=payload).json()['delivery']['added'] == 0
     assert len(two.get('/api/notices').json()) == 1
     assert counselor.post('/api/campus/publications/' + sent['id'] + '/withdraw',
                           json={'version': 1, 'reason': '测试撤回'}).status_code == 200
-    assert counselor.post(endpoint).status_code == 409
+    assert counselor.post(endpoint,json=payload).status_code == 409
 
 
 def test_review_rejects_a_changed_recipient_set_and_keeps_retry_idempotent(env):

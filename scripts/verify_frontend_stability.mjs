@@ -1,3 +1,5 @@
+import {waitForReaderStable} from './reader_stability_checks.mjs';
+import {browserExecutable} from './browser-runtime.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Regression cases for the five v9 browser comments. Mutations use a synthetic service only. */
 import fs from 'node:fs/promises';
@@ -34,8 +36,8 @@ async function delayedReadingAnchor(browser){
  }finally{await probe.close();}
 }
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
- const settleReader=async()=>{await page.evaluate(async()=>{window.__chatViewportHeld=(await import('/static/chat-viewport.js')).chatViewportHeld;});await page.waitForFunction(()=>!window.__chatViewportHeld(document.querySelector('#chat-thread')));};
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1413,height:871}});page.setDefaultTimeout(20000);
+ const settleReader=()=>waitForReaderStable(page);
  page.on('pageerror',e=>report.errors.push({engine,error:e.message}));
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(e){report.checks.push({engine,name,ok:false,error:e.message});console.log('FAIL',engine,name,e.message.slice(0,350));await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  const nav=async route=>{await page.goto(origin+'/#'+route);await page.locator('#content:not([inert])').waitFor();};
@@ -85,7 +87,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await page.route('**/api/speech/config',route=>route.fulfill({json:{configured:true,models:{default:'synthetic-voice'},voice:'synthetic'}}));
   await page.route('**/api/speech/synthesize',async route=>{synthesis++;await new Promise(r=>setTimeout(r,180));await route.fulfill({contentType:'audio/wav',body:wave});});
   await check('repeated play pause close reopen reuses generated audio',async()=>{
-   const speak=page.locator('[data-chat-action=speak]').last();await speak.click();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
+   const speak=page.locator('[data-chat-action=speak]').last();await page.locator('.message-assistant .reply-more > summary').last().click();await speak.click();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
    await speak.click();await speak.click();assert.equal(synthesis,1);await page.locator('.reply-audio [aria-label="关闭播放器"]').click();await speak.click();await page.waitForFunction(()=>document.querySelector('.reply-audio audio')?.src.startsWith('blob:'));assert.equal(synthesis,1);
    assert.ok((await page.locator('.reply-audio').boundingBox()).height<70);
   });

@@ -1,3 +1,4 @@
+import {browserExecutable} from './browser-runtime.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** The 20 browser comments, exercised against the isolated synthetic fixture. */
 import fs from 'node:fs/promises';
@@ -12,7 +13,7 @@ const output=path.resolve('artifacts/frontend-v8-browser');await fs.mkdir(output
 const report={fixture:'synthetic, no external model calls',checks:[],errors:[]};
 const sizes=[[1651,871],[1280,720],[1024,768],[768,1024],[390,844],[320,640],[844,390]];
 for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
- const browser=await pw[engine].launch({headless:true,executablePath:pw[engine].executablePath()});
+ const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
  const page=await browser.newPage({serviceWorkers:'block',viewport:{width:1651,height:871}});page.setDefaultTimeout(12000);
  let activeCheck='startup';
  page.on('pageerror',e=>report.errors.push({engine,check:activeCheck,url:page.url(),error:e.message,stack:e.stack}));
@@ -193,8 +194,8 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
   await check('20 leaving an unused branch never creates a conversation; sending creates one',async()=>{
    await nav('chat/'+chat.id);let writes=0,emptyDraftWrites=0;const count=()=>api('/conversations');
    const listener=req=>{if(req.method()==='PUT'&&decodeURIComponent(new URL(req.url()).pathname).includes('/edit-cache/branch:'))emptyDraftWrites++;if(req.method()==='POST'&&/\/messages\/[^/]+\/branch$/.test(new URL(req.url()).pathname))writes++;};page.on('request',listener);
-   const before=(await count()).length;await page.locator('[data-chat-action=branch]').last().click();await page.waitForURL(/#chat\/[a-f0-9]+\/branch\/[a-f0-9]+$/);await page.locator('#content:not([inert])').waitFor();assert.equal(writes,0);assert.equal((await count()).length,before);
-   await nav('tasks');assert.equal((await count()).length,before);assert.equal(emptyDraftWrites,0);await nav('chat/'+chat.id);await page.locator('[data-chat-action=branch]').last().click();await page.waitForURL(/#chat\/[a-f0-9]+\/branch\/[a-f0-9]+$/);await page.locator('#content:not([inert])').waitFor();await page.waitForFunction(()=>document.querySelector('#content')?.dataset.page.includes('/branch/')&&!document.querySelector('#content').inert);await page.locator('#chat-input').fill('从这个分支继续前端工程验收');await page.locator('#chat-composer [type=submit]').click();
+   const before=(await count()).length;await page.locator('.message-assistant .reply-more > summary').last().click();await page.locator('[data-chat-action=branch]').last().click();await page.waitForURL(/#chat\/[a-f0-9]+\/branch\/[a-f0-9]+$/);await page.locator('#content:not([inert])').waitFor();assert.equal(writes,0);assert.equal((await count()).length,before);
+   await nav('tasks');assert.equal((await count()).length,before);assert.equal(emptyDraftWrites,0);await nav('chat/'+chat.id);await page.locator('.message-assistant .reply-more > summary').last().click();await page.locator('[data-chat-action=branch]').last().click();await page.waitForURL(/#chat\/[a-f0-9]+\/branch\/[a-f0-9]+$/);await page.locator('#content:not([inert])').waitFor();await page.waitForFunction(()=>document.querySelector('#content')?.dataset.page.includes('/branch/')&&!document.querySelector('#content').inert);await page.locator('#chat-input').fill('从这个分支继续前端工程验收');await page.locator('#chat-composer [type=submit]').click();
    await page.waitForFunction(()=>/^#chat\/[a-f0-9]{32}$/.test(location.hash));await page.waitForFunction(()=>[...document.querySelectorAll('.message-user')].some(e=>e.textContent.includes('从这个分支继续前端工程验收')));assert.equal(writes,1);assert.equal((await count()).length,before+1);page.off('request',listener);
   });
  }catch(error){report.checks.push({engine,name:'fixture or critical flow',ok:false,error:error.message.slice(0,900)});console.log('FAIL',engine,error.message.slice(0,300));}

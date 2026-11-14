@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Original SSE, persisted checkpoints and browser reloads; isolated synthetic data.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -12,7 +13,7 @@ const url='/api/conversations/'+chat.id;
 const send=data=>api.post(url+'/messages/stream',{headers,data:{version:chat.version,request_id:crypto.randomUUID(),allow_external_processing:true,...data}});
 assert.equal((await send({content:'合成验收：生成可交互的准备计划界面。'})).status(),200);
 chat=await(await api.get(url)).json();const old=chat.messages.at(-1).id;
-const browser=await engine.launch({headless:true,...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})}),context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871}}),page=await context.newPage();
+const browser=await engine.launch({headless:true,...browserOverride(engine),...(name==='chromium'&&process.platform==='win32'?{channel:'msedge'}:{})}),context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871}}),page=await context.newPage();
 page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(String(e)));
 let pending,phase='setup';
 const selections=[];

@@ -147,3 +147,30 @@ def test_ambient_pytest_filter_cannot_omit_cases_from_an_assigned_file(tmp_path,
     monkeypatch.setenv('PYTEST_ADDOPTS','-k test_keep')
     result=run_shard(0,[str(file)],tmp_path,30)
     assert result['exit_code']==1 and result['tests']==2 and result['failures']==1
+
+
+@pytest.mark.parametrize('report,counts', [
+    ({'checks':[{'ok':True},{'ok':False}],'errors':[]}, [2,1,0,0]),
+    ({'passed':False,'checks':['completed first step'],'errors':[],'error':'real assertion'}, [1,1,0,0]),
+    ({'passed':False,'checks':[{'passed':False}],'errors':[]}, [1,1,0,0]),
+    ({'passed':False,'checks':['completed first step'],'errors':['uncaught page error']}, [1,0,1,0]),
+    ({'passed':True,'checks':['one','two'],'errors':[]}, [2,0,0,0]),
+])
+def test_browser_summary_preserves_heterogeneous_failure_evidence_once(report,counts):
+    from scripts.write_ci_summary import browser_counts
+    assert browser_counts(report)==counts
+
+
+def test_browser_summary_lists_new_suite_once_and_never_reports_missing_evidence_as_zero_passes(tmp_path,monkeypatch):
+    import scripts.write_ci_summary as summary
+    import sys
+    path=tmp_path/'artifacts/sprint-ui-browser/report.json';path.parent.mkdir(parents=True)
+    path.write_text(json.dumps({'checks':[{'ok':True},{'ok':False}],'errors':[]}),encoding='utf8')
+    monkeypatch.setattr(summary,'ROOT',tmp_path)
+    monkeypatch.setattr(sys,'argv',['summary','--kind','browser'])
+    monkeypatch.delenv('GITHUB_STEP_SUMMARY',raising=False)
+    summary.main()
+    rendered=(tmp_path/'artifacts/ci/summary.md').read_text(encoding='utf8')
+    assert rendered.count('| Sprint workflows and loading performance |')==1
+    assert '| Sprint workflows and loading performance | 2 | 1 | 0 | 0 |' in rendered
+    assert '| Browser stability | report unavailable | - | - | - |' in rendered

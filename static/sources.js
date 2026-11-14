@@ -7,7 +7,7 @@ const platforms={website:'学校 / 学院官网',wechat_public:'微信公众号'
 export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route}){
   let entries=[],query='',editing=null,integrations=null,publisherItems=[],publisherNext=null,page=1,searchController=null,matchedIds=null,subscriptions=[],automation=null;
   const expanded=new Map();let expansionOwner=null;
-  const pendingPresets=new Set();
+  const pendingPresets=new Set();let ruleTrial=null;
   const action=(text,name,id='',cls='')=>`<button type="button" class="button ${cls}" data-source-action="${name}" data-id="${esc(id)}">${text}</button>`;
   const groupIntake=createQQGroupIntake({state,api,esc,showDialog,toast});
   const groupName=(id,name)=>name||('群 '+id.slice(0,10));
@@ -100,17 +100,32 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     showDialog('来源通知自动整理',`<form class="stack" data-workspace-form="notice-automation" data-version="${s.version}"><label class="check"><input name="enabled" type="checkbox" ${s.enabled?'checked':''}><span>自动判断已接收通知的相关性并整理草稿，新通知优先</span></label><label class="check"><input name="allow_external_processing" type="checkbox" ${s.consented_at?'checked':''}><span>我同意将通知原文、附件和相关个人条件发送给当前配置的外部 AI 模型。</span></label>${field('每天最多自动整理多少则','daily_limit',s.daily_limit,'number',`required min="1" max="${s.daily_limit_max}"`)}<p class="small muted">每则可能多次调用模型并产生费用。只形成草稿，待办由你确认。停用会取消未开始的整理；失败不会自动重复调用。</p><p class="small">今天已尝试 ${s.used_today} 则 · 等待 ${s.counts?.queued||0} 则</p><div class="form-footer"><button type="button" class="button" data-action="close-dialog">返回</button><button class="button primary" type="submit">保存</button></div></form><div class="stack">${s.jobs.slice(0,12).map(j=>`<article class="publisher-article"><div><a href="#notice/${esc(j.notice_id)}" data-action="close-dialog">${esc(j.title)}</a><p class="small">${states[j.state]||esc(j.state)}${j.error?' · '+esc(j.error):''}</p></div>${j.state==='failed'&&s.enabled?action('重试','automation-retry',j.id,'small'):''}</article>`).join('')}</div>`);
   }
   function subscriptionFor(id){return subscriptions.find(s=>s.source_id===id)||{state:'manual',enabled:false};}
-  function subscriptionLabel(id){const s=subscriptionFor(id);return ({manual:'手动转入',waiting:'等待同步',active:'自动接收',syncing:'正在同步',paused:'已暂停',error:'检查未完成'})[s.state]||'待连接';}
+  function subscriptionLabel(id){const s=subscriptionFor(id);if(s.enabled&&s.health_state==='partial')return '部分可读 · 待核对';return ({manual:'手动转入',waiting:'等待同步',active:'自动接收',syncing:'正在同步',paused:'已暂停',error:'检查未完成'})[s.state]||'待连接';}
   function syncControls(entry){
     if(entry.data.platform!=='website')return '';
-    const s=subscriptionFor(entry.id);
-    return `<div class="stack">${s.error?`<p class="alert error" role="status">${esc(s.error)}</p>`:''}${s.checked_at?`<p class="small muted">最近检查 ${esc(new Date(s.checked_at*1000).toLocaleString('zh-CN'))} · 新收 ${s.received_count||0} · 更新 ${s.updated_count||0}${s.pending_count?' · 等待读取 '+s.pending_count:''}</p>`:''}<div class="row wrap">${action(s.config?'订阅设置':'开启自动接收','sync-config',entry.id,'small')}${s.enabled?action('立即刷新','sync-refresh',entry.id,'small'):''}</div></div>`;
+    const s=subscriptionFor(entry.id),c=s.coverage;
+    return `<div class="stack">${s.error?`<p class="alert error" role="status">${esc(s.error)}</p>`:''}${s.checked_at?`<p class="small muted">最近尝试 ${esc(new Date(s.checked_at*1000).toLocaleString('zh-CN'))} · 新收 ${s.received_count||0} · 更新 ${s.updated_count||0}${s.pending_count?' · 等待读取 '+s.pending_count:''}</p>`:''}${s.succeeded_at?`<p class="small muted">最近无采集错误检查：${esc(new Date(s.succeeded_at*1000).toLocaleString('zh-CN'))}</p>`:''}${s.config?`<p class="small muted">范围：${esc(s.config.mode==='feed'?(s.allowed_article_origins||[]).join('、'):s.config.url+' · '+s.config.article_path_prefix)}${s.config.mode==='feed'?`<br>真实发布方：${esc(s.source_identity||entry.data.institution||entry.data.name)}<br>Feed 服务：${esc(s.feed_service_url)}`:''}</p>`:''}${c?`<details><summary>最近实读覆盖 · 规则 v${c.rule_version}</summary><p class="small">列表：${c.list?.succeeded?(c.list.empty_confirmed?'已确认空列表':(c.list.entry_count||0)+' 条'): '本轮未读成功'}；正文：${c.articles?.succeeded||0} / ${c.articles?.attempted||0} 已接收；附件：${c.attachments?.received||0} / ${c.attachments?.discovered||0} 已接收，${c.attachments?.review_required||0} 项仍需核对。</p><p class="small muted">列表成功不代表每篇正文和附件均已读到。首次只建立当前栏目基线，不等于全部历史；未采到时可人工转入通知。</p>${(c.errors||[]).map(error=>`<p class="small">${esc(error.stage)}：${esc(error.reason)}</p>`).join('')}${(c.rejected_entries||[]).map(item=>`<p class="small">已拒绝：${esc(item.url)} · ${esc(item.reason)}</p>`).join('')}</details>`:''}<div class="row wrap">${action(s.config?'订阅规则':'开启自动接收','sync-config',entry.id,'small')}${s.config||s.last_trial?action('实读与规则历史','sync-rules',entry.id,'small'):''}${s.enabled?action('立即刷新','sync-refresh',entry.id,'small'):''}${s.config?action(s.enabled?'暂停接收':'恢复现有订阅','sync-toggle',entry.id,'small plain'):''}</div></div>`;
   }
-  function syncDialog(entry){
-    const s=subscriptionFor(entry.id),c=s.config||{url:entry.data.url||'',mode:'html',article_path_prefix:'/info/',interval_minutes:30};
-    const sourceFields=c.preset_id?`<p class="small muted">已适配栏目：${esc(entry.data.name)}。来源地址随栏目保存，无需填写。</p>${['preset_id','url','mode','article_path_prefix'].map(name=>`<input type="hidden" name="${name}" value="${esc(c[name]||'')}">`).join('')}`:`${field('通知列表或 RSS/Atom 地址','url',c.url,'url','required maxlength="2000"')}<label class="field">列表格式<select name="mode"><option value="html" ${c.mode==='html'?'selected':''}>网页通知列表</option><option value="feed" ${c.mode==='feed'?'selected':''}>RSS / Atom</option></select></label>${field('通知正文路径前缀（网页列表必填）','article_path_prefix',c.article_path_prefix||'','text','maxlength="300" placeholder="例如 /info/ 或 /news/"')}`;
-    showDialog('官网自动接收',`<form class="stack" data-workspace-form="source-sync" data-source-id="${esc(entry.id)}" data-version="${s.version||0}"><label class="check"><input name="enabled" type="checkbox" ${s.config?s.enabled?'checked':'':'checked'}><span>持续接收此来源的新通知</span></label>${sourceFields}${field('检查间隔（分钟）','interval_minutes',c.interval_minutes,'number','min="5" max="1440" required')}<p class="small muted">首次读取列表现有通知，之后增量接收并检查原文更新。只读取同域名下的指定范围；关键附件仍需核对。服务运行时生效。</p><div class="form-footer"><button class="button" type="button" data-action="close-dialog">返回</button><button class="button primary" type="submit">保存订阅</button></div></form>`);
+  function syncDialog(entry,candidate=null){
+    const s=subscriptionFor(entry.id),c=candidate||s.config||{url:entry.data.url||'',mode:'html',article_path_prefix:'/info/',interval_minutes:30};
+    const sourceFields=c.preset_id?`<p class="small muted">已适配栏目：${esc(entry.data.name)}。来源地址随栏目保存，无需填写。</p>${['preset_id','url','mode','article_path_prefix'].map(name=>`<input type="hidden" name="${name}" value="${esc(c[name]||'')}">`).join('')}`:`${field('通知列表或 RSS/Atom 地址','url',c.url,'url','required maxlength="2000"')}<label class="field">列表格式<select name="mode"><option value="html" ${c.mode==='html'?'selected':''}>网页通知列表</option><option value="feed" ${c.mode==='feed'?'selected':''}>RSS / Atom</option></select></label>${field('通知正文路径前缀（网页列表必填）','article_path_prefix',c.article_path_prefix||'','text','maxlength="300" placeholder="例如 /info/ 或 /news/"')}<div data-feed-scope ${c.mode==='feed'?'':'hidden'} class="stack">${field('真实发布单位（跨域 Feed 必填）','source_identity',c.source_identity||entry.data.institution||'','text','maxlength="160"')}${area('允许的原文来源（每行一个完整 origin）','allowed_article_origins',(c.allowed_article_origins||[]).join('\n'),3,'placeholder="https://sres.whu.edu.cn"')}<p class="small muted">Feed 服务只是转供方。允许列表须包含登记网站的真实来源；域名、协议和端口精确匹配，不支持通配符。留空仅允许与 Feed 同域的原文。</p></div>`;
+    showDialog('官网订阅规则',`<form class="stack" data-workspace-form="source-sync" data-source-id="${esc(entry.id)}" data-version="${s.version||0}"><label class="check"><input name="enabled" type="checkbox" ${(candidate?candidate.enabled:s.config?s.enabled:true)?'checked':''}><span>规则生效后持续接收新通知</span></label>${sourceFields}${field('检查间隔（分钟）','interval_minutes',c.interval_minutes,'number','min="5" max="1440" required')}<p class="small muted">先实际读取栏目和最多两篇正文，再核对回执、启用规则。试读不会接收通知或触发提醒。暂停可直接在来源卡片操作，已有通知和未完任务保留。</p><p class="form-error" data-source-form-error role="alert" tabindex="-1" hidden></p><div class="form-footer"><button class="button" type="button" data-action="close-dialog">返回</button><button class="button primary" type="submit">试读列表与正文</button></div></form>`);
+    const form=$('[data-workspace-form="source-sync"]');form.elements.mode?.addEventListener('change',()=>{const target=form.querySelector('[data-feed-scope]');if(target)target.hidden=form.elements.mode.value!=='feed';});
   }
+  function trialDialog(entry,payload,result){
+    ruleTrial={entryId:entry.id,owner:state.session?.user?.id,payload,result};
+    showDialog('规则试读回执',`<div class="stack"><h3>${esc(entry.data.name)}</h3><p role="status">${result.can_apply?'列表与正文样本通过；尚未更改订阅。':'本次未通过，原订阅规则保留。'}</p><p class="small">栏目识别 ${result.list?.count||0} 条${result.list?.empty_confirmed?'（确认空列表，仍缺正文样本）':''}；试读正文 ${result.articles?.length||0} 篇。完整栏目和附件覆盖仍以实际接收回执为准。</p>${(result.articles||[]).map(item=>`<article class="integration-card"><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.title||item.url)}</a><p class="small">${item.status==='ok'?'正文可读':'正文需核对'}${item.coverage?.review_required?' · 附件或内容仍需核对':''}</p></article>`).join('')}${(result.errors||[]).map(message=>`<p class="alert error">${esc(message)}</p>`).join('')}${(result.list?.rejected_entries||[]).map(item=>`<p class="small">已拒绝 ${esc(item.url)}：${esc(item.reason)}</p>`).join('')}<div class="form-footer">${action('返回修改','rule-edit',entry.id)}${result.can_apply?action(payload.enabled?'启用这条规则':'保存为暂停规则','rule-apply',entry.id,'primary'):''}</div></div>`);
+  }
+  async function ruleHistory(entry){
+    showDialog('实读与规则历史','<div id="source-rule-history" class="stack"><p role="status">正在读取历史…</p></div>');
+    const view=captureUiContext(state);let result;
+    try{result=await api('/source-catalog/'+entry.id+'/subscription/rules');}
+    catch(error){if(view.sameDialog())$('#source-rule-history').innerHTML=`<p class="alert error" role="alert">${esc(error.message)}</p>${action('重试读取历史','sync-rules',entry.id,'small')}`;return;}
+    if(!view.sameDialog())return;
+    const current=subscriptionFor(entry.id);
+    $('#source-rule-history').innerHTML=`<p class="small muted">回滚会重新试读历史规则的列表与正文，通过后生成新版本。暂停状态保留，个人通知和任务不回退。</p><h3>已保存的版本</h3>${result.versions.length?result.versions.map(item=>`<article class="integration-card stack"><strong>规则 v${item.version}${item.version===current.version?' · 当前':''}</strong><p class="small">${esc(item.config.url)}<br>${esc(item.config.source_identity||entry.data.name)} · ${esc(item.config.mode)} · ${item.config.interval_minutes} 分钟</p>${item.version!==current.version?`<button type="button" class="button small" data-source-action="rule-rollback" data-id="${esc(entry.id)}" data-version="${item.version}">试读并回滚至此版本</button>`:''}</article>`).join(''):'<p>还没有保存的规则版本。</p>'}<h3>最近试读</h3>${result.trials.slice(0,10).map(item=>`<p class="small">${esc(new Date(item.created_at*1000).toLocaleString('zh-CN'))} · ${item.data.can_apply?'样本通过':'未通过'} · ${esc((item.data.errors||[]).join('；'))}</p>`).join('')||'<p>尚未试读。</p>'}`;
+  }
+  function keepSubscription(id,result){subscriptions=subscriptions.filter(s=>s.source_id!==id);subscriptions.push(result);}
   async function publisherDialog(offset=0){
     const result=await api('/integrations/wechat/articles?offset='+offset);publisherItems=result.items;publisherNext=result.next_offset;
     showDialog('挑一篇公众号文章',`<div class="stack"><p class="small muted">导入后进入本人通知收件箱；相同文章的更正关联原通知。</p><div class="publisher-articles">${publisherItems.length?publisherItems.map((item,i)=>`<div class="publisher-article"><strong>${esc(item.title)}</strong>${action('导入','publisher-import',String(i),'small primary')}</div>`).join(''):'<p>这个公众号还没有能导入的文章。</p>'}</div><div class="row wrap">${offset?action('回到最前面','publisher','','small'):''}${publisherNext!==null?action('下一批','publisher-next','','small'):''}</div></div>`);
@@ -147,6 +162,23 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
       else if(action==='preset'&&Object.hasOwn(platforms,b.dataset.id))editor(null,{platform:b.dataset.id});
       else if(action==='edit'&&item)editor(item);
       else if(action==='sync-config'&&item)syncDialog(item);
+      else if(action==='sync-rules'&&item)await ruleHistory(item);
+      else if(action==='sync-toggle'&&item){
+        const current=subscriptionFor(item.id),view=captureUiContext(state,b);
+        const result=await api('/source-catalog/'+item.id+'/subscription',{method:'PUT',json:{...current.config,version:current.version,enabled:!current.enabled}});
+        if(!view.sameUser())return;keepSubscription(item.id,result);if(view.sameRoute())list();toast(result.enabled?'已恢复现有订阅规则':'已暂停接收；已有通知和办理记录保留');
+      }
+      else if(action==='rule-edit'&&item&&ruleTrial?.owner===state.session?.user?.id&&ruleTrial.entryId===item.id)syncDialog(item,ruleTrial.payload);
+      else if(action==='rule-apply'&&item&&ruleTrial?.owner===state.session?.user?.id&&ruleTrial.entryId===item.id){
+        const view=captureUiContext(state,b),saved=ruleTrial;
+        const result=await api('/source-catalog/'+item.id+'/subscription/apply',{method:'POST',json:{version:saved.payload.version,trial_id:saved.result.trial_id,enabled:saved.payload.enabled}});
+        if(!view.sameUser())return;keepSubscription(item.id,result);if(view.sameDialog())$('#dialog').close();if(view.sameRoute())list();ruleTrial=null;toast(result.enabled?'规则已启用；接收结果请查看来源实读覆盖':'规则已保存，保持暂停');
+      }
+      else if(action==='rule-rollback'&&item){
+        const current=subscriptionFor(item.id),view=captureUiContext(state,b);
+        const result=await api('/source-catalog/'+item.id+'/subscription/rollback',{method:'POST',json:{version:current.version,restore_version:Number(b.dataset.version)}});
+        if(!view.sameUser())return;keepSubscription(item.id,result);if(view.sameDialog())await ruleHistory(item);if(view.sameRoute())list();toast('历史规则已重新试读并恢复为新版本');
+      }
       else if(action==='sync-refresh'&&item){const view=captureUiContext(state,b);const result=await api('/source-catalog/'+item.id+'/refresh',{method:'POST'});if(!view.sameUser())return;subscriptions=subscriptions.filter(s=>s.source_id!==item.id);if(result)subscriptions.push(result);if(view.sameRoute())list();toast(result?.error||'检查完成，新通知已进入收件箱',!!result?.error);}
       else if(action==='submit'&&item){state.sourcePreset=item.data;location.hash='new';}
       else if(action==='delete'&&item&&await ask('移除这个来源','只是把这个来源从列表里拿掉，已经保存的通知、对话和待办都还在。','移除')){await api('/source-catalog/'+item.id,{method:'DELETE',json:{version:item.version}});entries=entries.filter(s=>s.id!==item.id);list();toast('来源已移除。');}
@@ -204,8 +236,14 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     }
     if(e.target.dataset.workspaceForm==='source-sync'){
       e.preventDefault();const form=e.target,view=captureUiContext(state,form),finish=beginFormFeedback(form);if(!finish)return;form.inert=true;
-      try{const fd=new FormData(form),payload=Object.fromEntries(fd);payload.enabled=fd.get('enabled')==='on';payload.interval_minutes=Number(payload.interval_minutes);payload.version=Number(form.dataset.version);const result=await api('/source-catalog/'+form.dataset.sourceId+'/subscription',{method:'PUT',json:payload});if(!view.sameUser())return;subscriptions=subscriptions.filter(s=>s.source_id!==form.dataset.sourceId);subscriptions.push(result);if(view.sameDialog())$('#dialog').close();if(view.sameRoute())list();toast(payload.enabled?'订阅已启用，可立即刷新或等待后台接收':'订阅已暂停');}
-      catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;finish();}return;
+      try{
+        const fd=new FormData(form),payload=Object.fromEntries(fd);payload.enabled=fd.get('enabled')==='on';payload.interval_minutes=Number(payload.interval_minutes);payload.version=Number(form.dataset.version);
+        payload.allowed_article_origins=payload.mode==='feed'?String(payload.allowed_article_origins||'').split(/\s+/).filter(Boolean):[];
+        payload.source_identity=payload.mode==='feed'?String(payload.source_identity||'').trim():'';
+        const result=await api('/source-catalog/'+form.dataset.sourceId+'/subscription/preview',{method:'POST',json:payload});
+        if(!view.sameDialog())return;const entry=entries.find(item=>item.id===form.dataset.sourceId);if(entry)trialDialog(entry,payload,result);
+      }
+      catch(error){if(view.sameDialog()){const target=form.querySelector('[data-source-form-error]');target.textContent=error.message;target.hidden=false;target.focus();}}finally{form.inert=false;finish();}return;
     }
     const form=e.target;if(form.dataset.workspaceForm!=='source-catalog')return;e.preventDefault();const submit=form.querySelector('[type=submit]');if(submit.disabled)return;const view=captureUiContext(state,form),finishFeedback=beginFormFeedback(form);if(!finishFeedback)return;form.inert=true;const routeId=state.renderId,selected=editing;
     try{const fd=new FormData(form),payload=Object.fromEntries(fd);payload.followed=payload.platform==='wechat_public'&&fd.get('followed')==='on';if(selected)payload.version=selected.version;await api('/source-catalog'+(selected?'/'+selected.id:''),{method:selected?'PUT':'POST',json:payload});if(!view.sameUser())return;if(view.sameDialog())$('#dialog').close();if(view.sameRoute())await render(routeId);toast('来源存好了，下次提交可以直接选。');}

@@ -8,31 +8,54 @@ from .notice_lifecycle import RETIRED_STATES
 from .qq_group_intake import quiet_assessment, quiet_notices
 
 
-def annotate(conn, uid, records):
+def annotation_inputs(conn, uid, records):
+    """Load one owner's stable routing facts for a revision-bound projection.
+
+    Callers that retain this value must bind it to the database, owner and
+    committed workspace revisions. It is private input, never an API result.
+    Time-dependent policy remains in ``annotate_inputs`` below.
+    """
+    if not records:
+        return {}
+    ids = json.dumps([r['id'] for r in records])
     saved_profile=conn.execute('SELECT profile FROM users WHERE id=?', (uid,)).fetchone()[0]
     profile = profile_hash(saved_profile);pref=preferences(saved_profile)
     quiet = quiet_notices(conn,uid)
-    notices = {r['id']: r for r in conn.execute('SELECT id,title,published_at,version,draft_version,status,draft FROM notices WHERE user_id=?', (uid,))}
-    checks = {r['notice_id']: r for r in conn.execute('SELECT p.* FROM notice_profile_checks p JOIN notices n ON n.id=p.notice_id WHERE n.user_id=?', (uid,))}
-    feedbacks={r['notice_id']:dict(r) for r in conn.execute('SELECT f.* FROM notice_recommendation_feedback f JOIN notices n ON n.id=f.notice_id AND n.user_id=f.user_id WHERE f.user_id=?',(uid,))}
+    notices = {r['id']: dict(r) for r in conn.execute('SELECT id,title,published_at,version,draft_version,status,draft FROM notices WHERE user_id=? AND id IN (SELECT value FROM json_each(?))', (uid,ids))}
+    for notice in notices.values():
+        try:notice['draft']=json.loads(notice['draft'] or '{}')
+        except (ValueError,TypeError):notice['draft']={}
+    checks = {r['notice_id']: r for r in conn.execute('SELECT p.* FROM notice_profile_checks p JOIN notices n ON n.id=p.notice_id WHERE n.user_id=? AND n.id IN (SELECT value FROM json_each(?))', (uid,ids))}
+    feedbacks={r['notice_id']:dict(r) for r in conn.execute('SELECT f.* FROM notice_recommendation_feedback f JOIN notices n ON n.id=f.notice_id AND n.user_id=f.user_id WHERE f.user_id=? AND n.id IN (SELECT value FROM json_each(?))',(uid,ids))}
     automation={}
-    for row in conn.execute('SELECT notice_id,state FROM notice_automation_jobs WHERE user_id=? ORDER BY created_at,rowid',(uid,)):
+    for row in conn.execute('SELECT notice_id,state FROM notice_automation_jobs WHERE user_id=? AND notice_id IN (SELECT value FROM json_each(?)) ORDER BY created_at,rowid',(uid,ids)):
         automation[row['notice_id']]=row['state']
-    reviewed = {r[0] for r in conn.execute("SELECT DISTINCT t.notice_id FROM task_reviews r JOIN tasks t ON t.id=r.task_id WHERE t.user_id=? AND r.state='pending'", (uid,))}
-    changes = {r[0] for r in conn.execute("SELECT DISTINCT notice_id FROM notice_changes WHERE user_id=? AND state='pending'", (uid,))}
+    reviewed = {r[0] for r in conn.execute("SELECT DISTINCT t.notice_id FROM task_reviews r JOIN tasks t ON t.id=r.task_id WHERE t.user_id=? AND r.state='pending' AND t.notice_id IN (SELECT value FROM json_each(?))", (uid,ids))}
+    changes = {r[0] for r in conn.execute("SELECT DISTINCT notice_id FROM notice_changes WHERE user_id=? AND state='pending' AND notice_id IN (SELECT value FROM json_each(?))", (uid,ids))}
     grouped = {}
-    for row in conn.execute('SELECT t.notice_id,t.status,t.data,w.data AS workflow FROM tasks t LEFT JOIN task_workflows w ON w.task_id=t.id WHERE t.user_id=?', (uid,)):
+    for row in conn.execute('SELECT t.notice_id,t.status,t.data,w.data AS workflow FROM tasks t LEFT JOIN task_workflows w ON w.task_id=t.id WHERE t.user_id=? AND t.notice_id IN (SELECT value FROM json_each(?))', (uid,ids)):
         data = json.loads(row['data']);workflow = json.loads(row['workflow'] or '{}')
         if data.get('scope') != 'personal' or row['status'] == 'cancelled' or workflow.get('participation') == 'declined':
             continue
         grouped.setdefault(row['notice_id'], []).append((row['status'], workflow))
+    return {'profile':profile,'preferences':pref,'quiet':quiet,'notices':notices,
+            'checks':checks,'feedbacks':feedbacks,'automation':automation,
+            'reviewed':reviewed,'changes':changes,'grouped':grouped}
+
+
+def annotate_inputs(records, inputs, *, now=None):
+    """Apply the same inbox policy to stable facts at the requested instant."""
+    if not records:return records
+    profile=inputs['profile'];pref=inputs['preferences'];quiet=inputs['quiet']
+    notices=inputs['notices'];checks=inputs['checks'];feedbacks=inputs['feedbacks']
+    automation=inputs['automation'];reviewed=inputs['reviewed'];changes=inputs['changes'];grouped=inputs['grouped']
     for record in records:
         nid=record['id'];notice=notices[nid];check=checks.get(nid)
         current = notice['status'] in {'draft','confirmed'} and notice['draft_version']==notice['version']
         profile_changed = bool(check and check['profile_hash']!=profile)
         record['needs_profile_review']=profile_changed
         record['automation_state']=automation.get(nid,'')
-        decision=assess(dict(notice),current_draft=bool(current and check and check['notice_version']==notice['version'] and not profile_changed),pref=pref)
+        decision=assess(dict(notice),current_draft=bool(current and check and check['notice_version']==notice['version'] and not profile_changed),pref=pref,now=now)
         record['assessment']=decision
         record['tracking']=decision['tracking']
         record['recommended']=decision['recommended']
@@ -60,7 +83,7 @@ def annotate(conn, uid, records):
         elif current and decision['quality'] not in {'passed','unverified'}:intent='verify'
         elif not current or record.get('applicability')!='matches_known':intent='verify'
         else:
-            draft=json.loads(notice['draft'] or '{}')
+            draft=notice['draft'] or {}
             intent='decide' if any(t.get('scope','personal')=='personal' for t in draft.get('tasks',[])) else 'read'
         if nid in quiet:
             decision=quiet_assessment(decision)
@@ -79,3 +102,7 @@ def annotate(conn, uid, records):
             record['assessment']=decision;record['recommended']=decision['recommended']
             if feedback['mode']=='include' and record['intent'] in {'closed','irrelevant'}:record['intent']='decide'
     return records
+
+
+def annotate(conn, uid, records):
+    return annotate_inputs(records, annotation_inputs(conn, uid, records))

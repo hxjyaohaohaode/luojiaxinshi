@@ -1,3 +1,4 @@
+import {browserOverride} from './browser-runtime.mjs';
 // Isolated browser fixture: real source UI and CSS, no account, model, or external requests.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -43,7 +44,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
+const browser=await chromium.launch({headless:true,...browserOverride(chromium),...(process.platform==='win32'?{channel:'msedge'}:{})});
 const page=await browser.newPage({viewport:{width:320,height:720},reducedMotion:'reduce'}),report={synthetic:true,external_requests:0,model_calls:0,checks:[],errors:[]};
 page.on('pageerror',error=>report.errors.push(error.message));
 await page.route('**/*',async route=>{if(new URL(route.request().url()).origin!==origin){report.external_requests++;await route.abort();}else await route.continue();});

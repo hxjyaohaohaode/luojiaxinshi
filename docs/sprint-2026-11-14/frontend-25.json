@@ -1,0 +1,617 @@
+{
+  "scope": "LJ-085–109 plus API integration dependencies",
+  "browser_gate": "Pending actual CI; this document does not predeclare pass",
+  "requirements": [
+    {
+      "id": "LJ-085",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F07样式分层和组件所有权整理，确认最终断点/字号/间距；学院页与事项页纳入统一层序，删除被覆盖旧策略。",
+      "source_line": 273,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "统一层序与所有权",
+      "files": [
+        "static/styles.css",
+        "static/index.html",
+        "static/task-materials.js"
+      ],
+      "change": "学院、事项、材料 CSS 进入统一 legacy/system 层序；删除独立无层 link 和运行时材料 link，修正 bundle 相对路径。已有各 feature CSS 保持必要规则，未凭静态猜测整片删除。",
+      "verification": "npm run build；现有 visual / source-inbox / pilot suites",
+      "limitations": []
+    },
+    {
+      "id": "LJ-086",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "保持珞珈绿、白底和当前导航习惯；制定手机/桌面密度token，避免每个页面继续各写一套尺寸补丁。",
+      "source_line": 274,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "品牌及密度令牌",
+      "files": [
+        "static/system/tokens.css",
+        "static/system/responsive-density.css"
+      ],
+      "change": "保留珞珈绿/白底与原导航。统一 control-target=44px 和 page/row 密度 token，明确 850px 断点；没有 scale 全页缩小。",
+      "verification": "新 sprint suite 320/390/1280 及原 visual suites",
+      "limitations": []
+    },
+    {
+      "id": "LJ-087",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F08点击面积与视觉大小分离，重点更多菜单/勾选/拖动/聊天按钮；不用统一scale缩小，触达面积不相互覆盖。",
+      "source_line": 275,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "触达面积",
+      "files": [
+        "static/system/workspace-clarity.css",
+        "static/system/chat-conversation.css"
+      ],
+      "change": "任务勾选、更多、拖动、聊天入口用独立 44px 格；删除桌面负 margin 并保留视觉图标大小。",
+      "verification": "sprint: task targets and 320px composer geometry",
+      "limitations": []
+    },
+    {
+      "id": "LJ-088",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机通知页压缩顶部层数：标题与收件动作同行，搜索主行，次要筛选收起并显示生效摘要；首条内容更早出现。",
+      "source_line": 276,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "通知首屏",
+      "files": [
+        "static/library.js",
+        "static/system/workspace-clarity.css"
+      ],
+      "change": "主行搜索和收通知；来源/日期/关系/展示方式在明确 disclosure 内，筛选摘要保持可见，列表范围显示已加载/总匹配。",
+      "verification": "source-inbox / visual / sprint pagination",
+      "limitations": []
+    },
+    {
+      "id": "LJ-089",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "首页/待办每行一个主状态、一个关键日期、一句下一步；多警告收为可展开摘要，重要变更仍明显。",
+      "source_line": 277,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "单行摘要",
+      "files": [
+        "static/task-summary.js",
+        "static/app.js"
+      ],
+      "change": "一项主状态、一项关键时间和下一步；重要变更优先，多警告放更多菜单，未核实时间不冒充有效期限。",
+      "verification": "tests/task-summary.test.mjs",
+      "limitations": []
+    },
+    {
+      "id": "LJ-090",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机待办分组与列表策略统一；长标题自适应，拖动有菜单/键盘替代，点击正文与完成/更多区域不打架。",
+      "source_line": 278,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "手机待办",
+      "files": [
+        "static/task-views.js",
+        "static/system/workspace-clarity.css"
+      ],
+      "change": "保留分组、长标题换行；拖动入口明确提供点按/Enter 位置选择；当前加载范围写明，避免把 50 项当全部。",
+      "verification": "verify_task_board.mjs；sprint task geometry",
+      "limitations": []
+    },
+    {
+      "id": "LJ-091",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "S",
+      "requirement": "F09完成动效只响应服务端成功；失败回滚、打开办理、阻塞/补件、撤销/取消均不播放完成庆祝。",
+      "source_line": 279,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "确认后完成动效",
+      "files": [
+        "static/choreography.js",
+        "static/app.js"
+      ],
+      "change": "移除全局点击捕获庆祝；只有同账号/同路由的服务端 done 回执后庆祝。失败回滚、打开办理、撤回均不庆祝。",
+      "verification": "sprint failed PUT + no confetti + real persisted completion",
+      "limitations": []
+    },
+    {
+      "id": "LJ-092",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "通知详情按标题→本人关联→关键时间→下一步→原文证据组织；正文/原文/附件/更正关系可直接定位，重要内容不藏hover。",
+      "source_line": 280,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "通知详情层级",
+      "files": [
+        "static/app.js",
+        "static/system/content-priority.css"
+      ],
+      "change": "保留原 noticeFocus 证据顺序；公开阶段/公示/结果入口接真实生命周期编辑器，原文证据和版本关系可达。",
+      "verification": "verify_notice_flow / notice_matters；sprint lifecycle entry",
+      "limitations": []
+    },
+    {
+      "id": "LJ-093",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机办理面板保留固定标题/滚动内容/底部保存，压缩重复说明；错误自动定位，软键盘不遮保存，关闭可恢复草稿。",
+      "source_line": 281,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "办理面板",
+      "files": [
+        "static/workflow.js",
+        "static/system/workspace-clarity.css"
+      ],
+      "change": "保留固定标题/滚动正文/保存区与服务器草稿机制；新增正式活动/办理窗口编辑；未勾选时间补丁的 required 输入禁用，避免隐藏字段阻止保存。",
+      "verification": "verify_draft_continuity / notice_flow；official-time API tests",
+      "limitations": []
+    },
+    {
+      "id": "LJ-094",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "收件表单文本/链接/附件批量回执一致；进度、失败、取消、补传明确，重试不丢已成功材料。",
+      "source_line": 282,
+      "implementation_status": "existing_logic_retained_regression_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "收件回执",
+      "files": [
+        "static/app.js",
+        "static/notice-intake.js"
+      ],
+      "change": "保留现有附件/文本/链接 intake 队列及失败重试、成功材料保留机制；没有用 CSS 把回执隐藏成加载装饰。",
+      "verification": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归",
+      "limitations": []
+    },
+    {
+      "id": "LJ-095",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机聊天输入优先保留文字与发送；附件/表情/录音按频率组织；输入法、语音取消、附件恢复和短视口测试。",
+      "source_line": 283,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "聊天输入",
+      "files": [
+        "static/chat.js",
+        "static/system/chat-conversation.css"
+      ],
+      "change": "文字与发送独立占位，表情和语音进入更多菜单；录音中控制仍移动到原录音面板可停止/取消。输入法与草稿恢复逻辑保留。",
+      "verification": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu",
+      "limitations": []
+    },
+    {
+      "id": "LJ-096",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "聊天回复工具栏不出现孤立图标行；复制/再生成/版本/分享有清晰层级，次要动作收入菜单但键盘可达。",
+      "source_line": 284,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "回复工具层级",
+      "files": [
+        "static/genui/chat-presenter.js",
+        "static/system/chat-conversation.css"
+      ],
+      "change": "复制/引用等常用动作保留，朗读/版本/重生成/分支/分享进入有标签 disclosure；Escape 返回 summary 焦点。",
+      "verification": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单",
+      "limitations": []
+    },
+    {
+      "id": "LJ-097",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "AI流式正文、引用和生成界面保留滚动锚点；用户上滑时不吸回底部，停止/重试/断流状态与真实任务一致。",
+      "source_line": 285,
+      "implementation_status": "existing_logic_retained_regression_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "流式阅读锚点",
+      "files": [
+        "static/chat-viewport.js",
+        "static/chat.js"
+      ],
+      "change": "保留已存在的用户上滑/流式读写/停止/断线恢复语义；本轮没有换掉对话运行时。懒加载不改变真实 stream API。",
+      "verification": "verify_chat_layout / chat_recovery / reference_interactions / openui suites",
+      "limitations": []
+    },
+    {
+      "id": "LJ-098",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机记忆页默认只留搜索、当前范围和必要筛选；高级筛选折叠，开始选择后再显示批量工具，返回保留条件。",
+      "source_line": 286,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "记忆默认密度",
+      "files": [
+        "static/memory-tree.js",
+        "static/system/workspace-clarity.css"
+      ],
+      "change": "高级筛选改为原生 details，搜索与当前范围保持主位；批量选择工具与原返回条件机制保留。",
+      "verification": "verify_reference_interactions / memory continuity suites",
+      "limitations": []
+    },
+    {
+      "id": "LJ-099",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "来源卡收起后仍显示手动/自动/暂停/失败及最近成功；手机压缩不能隐藏决定收件可靠性的事实。",
+      "source_line": 287,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "来源可靠性可见",
+      "files": [
+        "static/sources.js"
+      ],
+      "change": "来源代理新增规则试读、应用、回滚、跨域 Feed 发布者；卡片收起仍展示真实读取状态与最近成功。该文件由来源审计代理负责验证。",
+      "verification": "source-presets / source-inbox suites；来源代理后端回归",
+      "limitations": []
+    },
+    {
+      "id": "LJ-100",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "日历手机优先清楚日程列表/日/周切换，月视图拥挤有收纳；滚动、拖动、长按与官方时间修改边界明确。",
+      "source_line": 288,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "手机日历",
+      "files": [
+        "static/calendar.js"
+      ],
+      "change": "保留手机默认 agenda 与明确日/周视图；安排新增显式 reminder_minutes，默认不提醒课程；无虚构锁屏送达保证。正式活动时段编辑走原变更确认。",
+      "verification": "arrangement_recovery / notice_flow；新 reminder API tests",
+      "limitations": []
+    },
+    {
+      "id": "LJ-101",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "学院发布/成员/审计窄屏使用字段明确的行或分步表单；不能把桌面大表格简单整体缩小。",
+      "source_line": 289,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "学院窄屏",
+      "files": [
+        "static/campus.js",
+        "static/system/workspace-clarity.css",
+        "static/campus-roster.js"
+      ],
+      "change": "480px 表单单列，导航仍可横向滚动且触达 44px；批量成员前后对照、持久草稿、附件、真实受众复核、投递版本、撤回/恢复/回滚、历史参考补发均接真实 API。",
+      "verification": "sprint persisted draft；pilot workspace / campus API tests",
+      "limitations": []
+    },
+    {
+      "id": "LJ-102",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "空、加载、旧内容刷新、无结果、失败、无权限、离线、已删除分别展示；每种有具体下一步和内容新鲜度。",
+      "source_line": 290,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "异步与空状态",
+      "files": [
+        "static/paged-list.js",
+        "static/library.js",
+        "static/app.js"
+      ],
+      "change": "分页区分加载、保留旧范围刷新、无匹配与失败；失败有重试，409 list_changed 保留筛选重新读。角色和删除结果依后端处理，不把读取失败当空列表。",
+      "verification": "tests/paged-list.test.mjs；原 owner/route/isolation tests",
+      "limitations": []
+    },
+    {
+      "id": "LJ-103",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "Toast与底部导航/软键盘安全区互不遮挡；普通提示短，冲突/失败有常驻入口及核对动作，不能只要求“刷新”。",
+      "source_line": 291,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "Toast 安全区",
+      "files": [
+        "static/experience-system.js",
+        "static/experience-system.css"
+      ],
+      "change": "测量实际底部导航/聊天输入和 visualViewport，错误常驻；成功提示暂停于 hover/focus/hidden；dialog 上层可操作，异步 Undo 按真实结果反馈。",
+      "verification": "sprint persistent failure/mobile nav；需真实软键盘设备补验证",
+      "limitations": []
+    },
+    {
+      "id": "LJ-104",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "搜索/筛选/排序/多选作用范围明确；清空一条件不清空全部，旧搜索响应不能覆盖新结果，返回恢复位置和焦点。",
+      "source_line": 292,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "全量筛选与返回",
+      "files": [
+        "static/paged-list.js",
+        "static/library.js",
+        "static/app.js"
+      ],
+      "change": "所有筛选在服务器完整集合执行；50 项分页/总匹配/加载范围明确；请求带 epoch/账号/路由守卫；返回恢复滚动及可定位焦点。重入尚未完成路由会重发新读，不永远停加载。",
+      "verification": "tests/paged-list.test.mjs (5)；sprint >50 and stale query",
+      "limitations": []
+    },
+    {
+      "id": "LJ-105",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "长中文、URL、混排、附件名、姓名和学院名可读；关键日期/状态不继续缩到11px，省略内容可展开。",
+      "source_line": 293,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "长文本可读",
+      "files": [
+        "static/system/workspace-clarity.css",
+        "static/system/chat-conversation.css"
+      ],
+      "change": "最终覆盖层关键中文字号提高到 12px，任务标题/日期不压到 11px；回复工具有文字、文件和公告正文保留展开。",
+      "verification": "visual/layout suites；320px 断点新增检查",
+      "limitations": []
+    },
+    {
+      "id": "LJ-106",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "键盘、读屏、焦点返回、对话框语义、颜色对比、200%字号/缩放、中文输入法全链路验证；不只有布局不溢出。",
+      "source_line": 294,
+      "implementation_status": "partial_runtime_verification",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "辅助功能",
+      "files": [
+        "static/system/workspace-clarity.css",
+        "static/genui/chat-presenter.js"
+      ],
+      "change": "新增菜单 keyboard/Escape/焦点回归，Native dialog/details/fieldset 和错误 live region；保留已有读屏名字及键盘移动。",
+      "verification": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过",
+      "limitations": [
+        "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
+      ]
+    },
+    {
+      "id": "LJ-107",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "统一动画生命周期：减少动画、个人关闭、后台标签、离屏、卸载均停止清理；多动效不抢输入和滚动。",
+      "source_line": 295,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "动效生命周期",
+      "files": [
+        "static/choreography.js",
+        "static/experience-system.js"
+      ],
+      "change": "完成动画集中跟踪与取消；后台、reduced-motion、个人关闭、路由切换、账号切换清理；离屏不启动庆祝。保留现有 observer/输入响应。",
+      "verification": "已有 motion tests；sprint failed mutation；CI runtime pending",
+      "limitations": []
+    },
+    {
+      "id": "LJ-108",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "保持同一动作在列表/详情/搜索/跨端中的状态和文案；乐观更新失败保留上下文，实际成功后才显示成功。",
+      "source_line": 296,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "统一动作状态",
+      "files": [
+        "static/app.js",
+        "static/campus.js",
+        "static/collaboration.js"
+      ],
+      "change": "任务提交后重读当前分页投影；草稿/发布/重试/渠道供应商接受均用实际回执语义；拒收、转交、个人跟进与最小留存回执分别标明。",
+      "verification": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests",
+      "limitations": []
+    },
+    {
+      "id": "LJ-109",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "严格执行209参考采用记录：序号→源码变体→依赖→交互机制→品牌适配→真实API→各状态验证→许可。35优先候选不等于全部安装。",
+      "source_line": 297,
+      "implementation_status": "code_reviewed_browser_gate_pending",
+      "evidence": [
+        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+        "Node syntax: 157 JS/mjs checked before final additions",
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "area": "209 采用账本",
+      "files": [
+        "docs/sprint-2026-11-14/components-209.json",
+        "docs/sprint-2026-11-14/reference-source-review.json"
+      ],
+      "change": "209 逐项保留原编号/URL/依赖描述/适用场景/不采用理由；本轮实际打开并检查源码与交互的只有 114/115/133，采纳原生交互原则，不复制源码，不新增运行时库。",
+      "verification": "源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操",
+      "limitations": []
+    }
+  ],
+  "local_test_result": {
+    "command": "npm test",
+    "passed": 270,
+    "failed": 0,
+    "log": "/tmp/luojia-ui-tests-final-freeze.log"
+  }
+}

@@ -48,6 +48,8 @@ def reconcile(conn, uid, now):
     if pref:
         from .proactive_policy import delivered_refs,receipt_payload
         seen=delivered_refs(conn,'mail_outbox',uid)
+        from .notification_events import channel_events
+        wanted=channel_events(wanted,seen,pref['consented_at'])
         for key,event in list(wanted.items()):
             if key.startswith('received:'):
                 notices=[n for n in event['received_items'] if n['created_at']>=pref['consented_at'] and n.get('ref') not in seen]
@@ -80,7 +82,9 @@ def tick(db, settings, provider=None, now=None):
         # Never blindly replay an already submitted notification on restart.
         conn.execute("UPDATE mail_outbox SET state='uncertain',finished_at=?,error='发送中断，送达状态待核对' WHERE state='sending' AND lease_until<?",(moment,moment))
         conn.execute("DELETE FROM mail_outbox WHERE state NOT IN ('pending','sending') AND finished_at<?",(moment-30*86400,))
-        for row in conn.execute('SELECT user_id FROM mail_preferences WHERE enabled=1').fetchall():reconcile(conn,row['user_id'],moment)
+        users=[row['user_id'] for row in conn.execute('SELECT user_id FROM mail_preferences WHERE enabled=1')]
+    from .notification_coordination import coordinate
+    for uid in users:coordinate(db,uid,'email',moment,reconcile)
     for _ in range(12):
         with db.connect(write=True) as conn:
             row=conn.execute("SELECT * FROM mail_outbox WHERE state='pending' AND due_at<=? ORDER BY due_at,rowid LIMIT 1",(moment,)).fetchone()
