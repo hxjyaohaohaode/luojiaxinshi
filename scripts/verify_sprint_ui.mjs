@@ -107,6 +107,10 @@ for(const engine of engines){
     if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-action=filter][data-filter=all]').click();
     await check('a clock-only signal preserves all 54 loaded tasks, focused node and scroll without reloading unchanged full records',async()=>{
       await searchTasks(prefix);await settledTaskSearch(prefix,54);
+      // Editing deliberately defers background sync. Establish this fixture
+      // from an actual non-editing control, without activating a new view.
+      const idleControl=page.locator('[data-task-view=list]');await idleControl.focus();
+      assert.equal(await idleControl.evaluate(element=>document.activeElement===element),true);
       // Match the application's revision protocol. The compatibility response
       // intentionally omits domains unless this request header is present.
       const baselineResponse=await context.request.get(origin+'/api/proactive/revision',{headers:{'X-Workspace-Revision':'1'}});
@@ -114,51 +118,97 @@ for(const engine of engines){
       assert.ok(typeof baseline.revision==='string'&&baseline.revision.length>0,'The real workspace response must carry its revision');
       assert.ok(baseline.domains&&typeof baseline.domains==='object','The workspace protocol response must carry domains');
       assert.equal(typeof baseline.domains.clock,'number','The real baseline must carry its server minute clock');
-      let tick=0;const paths=[];
+      let tick=0,phase='stable';
+      const evidence={engine,controlled_clock_signal:true,real_entity_endpoint:'/api/workspace/projection',status:'establishing baseline',warm:{request_paths:[]},measured:{request_paths:[]}};
+      report.review_regressions.clock_ranges.push(evidence);await saveReport();
       const handler=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...baseline,revision:baseline.revision+':clock-fixture:'+tick,domains:{...baseline.domains,clock:baseline.domains.clock+tick}})});
-      const observer=request=>{const url=new URL(request.url());if(url.origin===origin&&request.method()==='GET')paths.push(url.pathname+url.search);};
+      const observer=request=>{const url=new URL(request.url());if(url.origin===origin&&request.method()==='GET'&&evidence[phase]?.request_paths)evidence[phase].request_paths.push(url.pathname+url.search);};
       const probe=()=>Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);
+      const projectionResponse=()=>page.waitForResponse(response=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/workspace/projection'&&url.searchParams.get('include')==='tasks';});
+      const projectionReceipt=async response=>{const url=new URL(response.url()),body=await response.json();return {request_path:url.pathname+url.search,request_revision:url.searchParams.get('revision'),request_clock_only:url.searchParams.get('clock_only'),response_status:response.status(),response_revision:body.revision,response_clock_only:body.clock_only,response_clock:body.clock,response_counts:body.counts};};
       await page.route('**/api/proactive/revision',handler);
+      page.on('request',observer);
       let node;
       try{
-        // A revision response precedes its awaited UI refresh. The sync
-        // controller serializes probes, so the second real response proves
-        // that the initial stable refresh finished before measurement begins.
+        // The calendar display save can leave an older projection even after
+        // the task page has refreshed. Complete the stable probes, then let
+        // one real clock refresh establish the application's own baseline.
         await probe();await probe();
+        phase='warm';tick++;const [warmResponse]=await Promise.all([projectionResponse(),probe()]);
+        Object.assign(evidence.warm,await projectionReceipt(warmResponse));await saveReport();
+        assert.equal(evidence.warm.response_status,200);
+        assert.ok(typeof evidence.warm.response_revision==='string'&&evidence.warm.response_revision.length>0);
+        await probe();
+        evidence.warm.full_page_reads=evidence.warm.request_paths.filter(url=>url.startsWith('/api/tasks/page')).length;
+        phase='range';await saveReport();
         if(await page.locator('[data-action=task-more]').count())await page.locator('[data-action=task-more]').click();
         await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项'&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false');
         const ids=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId)),target=ids.at(-1),button=page.locator('[data-task-id="'+target+'"] .task-primary');
         await button.scrollIntoViewIfNeeded();await button.focus();node=await button.elementHandle();
         const before=await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY}));
+        Object.assign(evidence,{status:'measuring warm clock',loaded:ids.length,before_ids:ids,before});await saveReport();
         await page.evaluate(()=>{window.__clockListMutations=0;window.__clockListObserver=new MutationObserver(()=>window.__clockListMutations++);window.__clockListObserver.observe(document.querySelector('#task-results'),{childList:true,subtree:true,attributes:true});});
-        page.on('request',observer);tick++;
-        const projection=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/workspace/projection');await probe();assert.equal((await projection).status(),200);
+        phase='measured';tick++;
+        const [projection]=await Promise.all([projectionResponse(),probe()]);Object.assign(evidence.measured,await projectionReceipt(projection));await saveReport();
+        assert.equal(evidence.measured.response_status,200);
+        assert.equal(evidence.measured.request_clock_only,'1');
+        assert.equal(evidence.measured.request_revision,evidence.warm.response_revision,'The application must use its established projection revision');
+        assert.equal(evidence.measured.response_revision,evidence.warm.response_revision,'No stable mutation belongs in the unchanged-clock measurement');
+        assert.equal(evidence.measured.response_clock_only,true,'The measured response must be the real sparse clock projection');
         // The next serialized probe also waits out the tick's final DOM work;
         // checking immediately at response time could miss a late redraw.
         await probe();
-        assert.deepEqual(await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId)),ids);
-        assert.equal(await node.evaluate(element=>element.isConnected&&document.activeElement===element),true);
-        assert.equal(await page.evaluate(()=>window.__clockListMutations),0,'Unchanged lightweight flags must not redraw list rows');
-        const after=await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY}));assert.ok(Math.abs(after.content-before.content)<2&&Math.abs(after.window-before.window)<2,JSON.stringify({before,after}));
-        assert.equal(paths.some(url=>url.startsWith('/api/tasks/page')),false,'A stable all filter must not reread its full loaded task records');
-        const readCount=paths.filter(url=>url.startsWith('/api/workspace/projection')).length;await probe();await page.waitForTimeout(250);assert.equal(paths.filter(url=>url.startsWith('/api/workspace/projection')).length,readCount,'An unchanged clock revision is not another refresh');
-        report.review_regressions.clock_ranges.push({engine,loaded:ids.length,controlled_clock_signal:true,real_entity_endpoint:'/api/workspace/projection',full_page_reads:paths.filter(url=>url.startsWith('/api/tasks/page')).length,dom_mutations:await page.evaluate(()=>window.__clockListMutations),focused_node_preserved:true,before,after});
+        const paths=evidence.measured.request_paths,afterIds=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));
+        Object.assign(evidence,{after_ids:afterIds,focused_node_preserved:await node.evaluate(element=>element.isConnected&&document.activeElement===element),dom_mutations:await page.evaluate(()=>window.__clockListMutations),after:await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY})),full_page_reads:paths.filter(url=>url.startsWith('/api/tasks/page')).length});await saveReport();
+        assert.deepEqual(afterIds,ids);
+        assert.equal(evidence.focused_node_preserved,true);
+        assert.equal(evidence.dom_mutations,0,'Unchanged lightweight flags must not redraw list rows');
+        const after=evidence.after;assert.ok(Math.abs(after.content-before.content)<2&&Math.abs(after.window-before.window)<2,JSON.stringify({before,after}));
+        assert.equal(evidence.full_page_reads,0,'A stable all filter must not reread its full loaded task records');
+        const readCount=paths.filter(url=>url.startsWith('/api/workspace/projection')).length;await probe();await page.waitForTimeout(250);
+        evidence.unchanged_clock={projection_reads_before:readCount,projection_reads_after:paths.filter(url=>url.startsWith('/api/workspace/projection')).length};await saveReport();
+        assert.equal(evidence.unchanged_clock.projection_reads_after,readCount,'An unchanged clock revision is not another refresh');
+        evidence.status='passed';await saveReport();
       }finally{page.off('request',observer);await page.unroute('**/api/proactive/revision',handler);await page.evaluate(()=>window.__clockListObserver?.disconnect());await node?.dispose();}
     });
     await check('a card loaded from the second board page remains on page one after an actual upward move',async()=>{
-      const boardResponse=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');});
-      await page.locator('[data-task-view=board]').click();const initial=await(await boardResponse).json();assert.equal(initial.items.length,50);await page.locator('[data-action=task-more]').click();
-      await page.waitForFunction(()=>document.querySelectorAll('#task-results [data-task-id]').length===54);
+      const boardPage=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board';};
+      const boardFirst=request=>boardPage(request)&&!new URL(request.url()).searchParams.has('cursor');
+      const [firstResponse]=await Promise.all([page.waitForResponse(response=>boardFirst(response.request())),page.locator('[data-task-view=board]').click()]);
+      assert.equal(firstResponse.status(),200,await firstResponse.text());const initial=await firstResponse.json();assert.equal(initial.items.length,50);
+      const initialIds=initial.items.map(item=>item.id);
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=board]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},initialIds);
+      // Saving the view preference can invalidate the old cursor. Record and
+      // verify the real recovery chain instead of requiring its first read to
+      // be 200, or treating retained rows during a busy refresh as complete.
+      const rangeReads=[],rangeReceipts=[];
+      const observeRange=response=>{if(!boardPage(response.request()))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};rangeReceipts.push(receipt);rangeReads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(item=>item.id),total:body.total,detail:body.detail}),error=>{receipt.parse_error=error.message;}));};
+      page.on('response',observeRange);
+      try{await Promise.all([page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelectorAll('#task-results [data-task-id]').length===54),page.locator('[data-action=task-more]').click()]);}
+      finally{page.off('response',observeRange);await Promise.all(rangeReads);}
+      for(const receipt of rangeReceipts){assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));if(receipt.status===409)assert.equal(receipt.detail?.code,'list_changed',JSON.stringify(receipt));else{assert.equal(receipt.status,200,JSON.stringify(receipt));assert.ok(Array.isArray(receipt.ids),JSON.stringify(receipt));}}
+      const rangeIds=[...new Set(initialIds.concat(...rangeReceipts.filter(receipt=>receipt.status===200).map(receipt=>receipt.ids)))];
       const ordered=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.equal(ordered.length,54);const moved=ordered[50];assert.equal(initial.items.some(item=>item.id===moved),false);
+      assert.deepEqual([...ordered].sort(),rangeIds.sort(),'All 54 board rows must come from the actual completed page responses');
       await page.locator('[data-task-id="'+moved+'"] [data-task-drag-handle]').click();
-      const moveResponse=page.waitForResponse(response=>response.url()===origin+'/api/tasks/'+moved+'/move'&&response.request().method()==='POST');
-      const refreshed=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');});
-      await page.locator('.task-move-menu').getByRole('button',{name:'上移一位',exact:true}).click();assert.equal((await moveResponse).status(),200);const result=await(await refreshed).json();assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
-      await page.waitForFunction(id=>document.querySelectorAll('#task-results [data-task-id]').length===50&&!!document.querySelector('[data-task-id="'+id+'"]'),moved);
+      const isMove=response=>response.url()===origin+'/api/tasks/'+moved+'/move'&&response.request().method()==='POST';
+      let moveAccepted=false;const afterMoveRequests=new Set();
+      const observeMove=response=>{if(isMove(response))moveAccepted=response.status()===200;};
+      const observeRefresh=request=>{if(moveAccepted&&boardFirst(request))afterMoveRequests.add(request);};
+      page.on('response',observeMove);page.on('request',observeRefresh);
+      let result;
+      try{
+        const [,refreshed]=await Promise.all([page.waitForResponse(isMove).then(async response=>{assert.equal(response.status(),200,await response.text());return response;}),page.waitForResponse(response=>afterMoveRequests.has(response.request())),page.locator('.task-move-menu').getByRole('button',{name:'上移一位',exact:true}).click()]);
+        assert.equal(refreshed.status(),200,await refreshed.text());result=await refreshed.json();
+      }finally{page.off('response',observeMove);page.off('request',observeRefresh);}
+      assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},result.items.map(item=>item.id));
       const ids=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.deepEqual(ids,[...ordered.slice(0,49),moved]);
-      report.review_regressions.board_ranges.push({engine,initial_page:50,loaded:54,moved_id:moved,from_index:50,to_index:49,after_first_page:ids});
+      report.review_regressions.board_ranges.push({engine,initial_page:50,loaded:54,moved_id:moved,from_index:50,to_index:49,after_first_page:ids,range_receipts:rangeReceipts,refresh_request_after_move_response:true});
       await page.screenshot({path:path.join(out,engine+'-desktop-board-page-move.png')});
-      const listResponse=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort');});await page.locator('[data-task-view=list]').click();assert.equal((await listResponse).status(),200);
+      const [listResponse]=await Promise.all([page.waitForResponse(response=>{const url=new URL(response.url());return response.request().method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort')&&!url.searchParams.has('cursor');}),page.locator('[data-task-view=list]').click()]);
+      assert.equal(listResponse.status(),200,await listResponse.text());const list=await listResponse.json();
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=list]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},list.items.map(item=>item.id));
     });
     await page.locator('#task-search').fill(prefix);
     await check('task list reports a bounded first page and loads the remaining real records',async()=>{
