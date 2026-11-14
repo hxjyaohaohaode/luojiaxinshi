@@ -1,9 +1,10 @@
 """Private server-side publication drafts, separate from delivered notices."""
 import json
 import time
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .db import dumps
 from .documents import MAX_CHARS, total_chars
@@ -33,10 +34,19 @@ class Draft(PublicationPolicy):
     grade: str = Field(default='', max_length=40)
     class_name: str = Field(default='', max_length=80)
     keep_attachments: bool = True
+    pending_attachment_names: list[Annotated[str,Field(min_length=1,max_length=255)]] = Field(default_factory=list,max_length=3)
+
+    @field_validator('pending_attachment_names')
+    @classmethod
+    def meaningful_attachment_names(cls, names):
+        if any(not name.strip() for name in names):
+            raise ValueError('待重新选择的附件名称不能为空白')
+        return names
 
 
 def view(conn, row):
-    return {'id':row['id'], **json.loads(row['data']), 'version':row['version'],
+    data=json.loads(row['data'])
+    return {'id':row['id'], **data, 'pending_attachment_names':data.get('pending_attachment_names',[]), 'version':row['version'],
             'updated_at':row['updated_at'], 'state':'draft',
             'attachments':[dict(f) for f in conn.execute('''SELECT name,kind,sha256,status,warning,
                 length(content) AS size FROM campus_draft_files WHERE user_id=? AND draft_id=? ORDER BY position''',
@@ -92,6 +102,10 @@ def install(app, db, user):
             from .campus_assets import check_publication_storage
             check_publication_storage(conn,uid,sum(len(file['content']) for file in files),replace_draft=draft_id)
             data=payload.model_dump(exclude={'version','keep_attachments'})
+            # Omission by an older client is not an explicit decision to drop
+            # missing originals. Only a supplied empty list resolves the gate.
+            if previous and 'pending_attachment_names' not in payload.model_fields_set:
+                data['pending_attachment_names']=json.loads(previous['data']).get('pending_attachment_names',[])
             version,now=payload.version+1,int(time.time())
             conn.execute('''INSERT INTO campus_drafts VALUES(?,?,?,?,?,?) ON CONFLICT(user_id,id)
                 DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=excluded.updated_at''',

@@ -7776,5 +7776,1373 @@
     "interpretation": "两轮本地完整后端与独立运行时数据属于05498ae及其真实d55指纹。之后仅修正两个浏览器测试夹具；产品、依赖、后端与Node测试、本地运行时脚本均逐路径确认未变。保留旧报告的候选与指纹，不将其伪写为新提交实跑；新提交另由完整GitHub CI重新验证。"
   },
   "record_type": "pre_merge_candidate_frozen_validation",
-  "candidate_engineering_gate_semantics": "全局候选 CI 门禁通过只适用于本轮实际实现、实际用例和记录的引擎范围；不推断每条自然语言要求的真实外部条件已满足，也不把条件 P2 改为已实现。"
+  "candidate_engineering_gate_semantics": "全局候选 CI 门禁通过只适用于本轮实际实现、实际用例和记录的引擎范围；不推断每条自然语言要求的真实外部条件已满足，也不把条件 P2 改为已实现。",
+  "historical_record_scope": {
+    "round": "first_sprint",
+    "status": "historical_frozen_record",
+    "candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "ci_run_id": 43567666000,
+    "interpretation": "除 latest_followup 外，原有 validated_code、current_*、gates/final_gates、性能、测试和失败数据均保留首轮各自候选及运行身份。字段名中的 current 只相对于首轮记录，不表示当前最新补修状态。原始 128 条要求与外部/P2 条件保持原样。"
+  },
+  "latest_followup": {
+    "record_type": "pre_merge_candidate_engineering_and_visual_verification_at_freeze",
+    "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+    "machine_document": "docs/audits/sprint-review-followup.json",
+    "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+    "branch_head": "70226e910b7fe2ecdfd49b0a34dcd62ba00484bc",
+    "candidate_tree": "894b7ef5b4c77da666177649e853afb0811f1359",
+    "linux_implementation_sha256": "4e4d3e2ca56b7ccbc8e9bd9a197b07e539ea8d8d987d47656b7486504b991634",
+    "updated_at": "2026-11-14T12:18:27.857754+00:00",
+    "candidate_validation_frozen_at": "2026-11-14T12:18:27.857754+00:00",
+    "ci": {
+      "run_id": 43592108675,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43592108675",
+      "status": "completed",
+      "conclusion": "success",
+      "actual_checkout_sha": "e3adde8146fec6fbb9f4f63057fabb97a6a8d975",
+      "actual_tree_sha": "894b7ef5b4c77da666177649e853afb0811f1359",
+      "successful_required_jobs": 9,
+      "required_jobs": 9,
+      "gate_state": "candidate_engineering_and_visual_verification_passed",
+      "verification_record": {
+        "path": "docs/audits/sprint-review-ci-63-success.json",
+        "sha256": "16d7dab07a897b9f0dc51849df6a550b5719164978a4126bd240fc56b07fe6fe",
+        "bytes": 7580373
+      }
+    },
+    "actual_collected_scopes": {
+      "units": {
+        "linux": {
+          "backend_files": 139,
+          "backend_junit": {
+            "tests": 1875,
+            "unique": 1875,
+            "passed": 1873,
+            "skipped_cases": [
+              {
+                "class": "tests.test_local_runtime_ownership",
+                "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+                "reason": "Windows process ownership guard"
+              },
+              {
+                "class": "tests.test_local_runtime_ownership",
+                "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+                "reason": "Windows socket and launcher guard"
+              }
+            ],
+            "sha256": "256192cbfd72bd854d2f4214bd6a67cda9851a57a67099fb111dd4a0b00b4338"
+          },
+          "node_junit": {
+            "tests": 358,
+            "unique": 358,
+            "passed": 358,
+            "skipped_cases": [],
+            "sha256": "519808757b55a440ebad984b1f4d704cacb58aafffc14009c62d8512f0233b0b"
+          },
+          "implementation_sha256": "4e4d3e2ca56b7ccbc8e9bd9a197b07e539ea8d8d987d47656b7486504b991634",
+          "implementation_unchanged": true,
+          "actual_checkout_sha": "e3adde8146fec6fbb9f4f63057fabb97a6a8d975",
+          "verification_path": "artifacts/ci-readonly/run-43592108675-linux-verification.json",
+          "verification_sha256": "9d9de8f8b2393b53c88b1e0c404b1d623a8fff615d0921ef8a3420c16780acc8"
+        },
+        "windows": {
+          "backend_files": 139,
+          "backend_junit": {
+            "tests": 1875,
+            "unique": 1875,
+            "passed": 1874,
+            "skipped_cases": [
+              {
+                "class": "tests.test_browser_fixture_ports",
+                "name": "test_port_probe_allows_the_previous_fixture_time_wait_socket",
+                "reason": "POSIX TIME_WAIT bind semantics"
+              }
+            ],
+            "sha256": "e3f506e6ef77d21a6bf2309326187e0da285761e2f78a46aee044714b00114d4"
+          },
+          "node_junit": {
+            "tests": 358,
+            "unique": 358,
+            "passed": 358,
+            "skipped_cases": [],
+            "sha256": "968f5deccaa684deb65e435ac09f77f27775a1ecf78a1c53d0046abd8e019b87"
+          },
+          "implementation_sha256": "a4b45e196d5309ddc7a33ff8cabaa937db49b6e4db93b818c9d6671a6ce31d93",
+          "implementation_unchanged": true,
+          "actual_checkout_sha": "e3adde8146fec6fbb9f4f63057fabb97a6a8d975",
+          "verification_path": "artifacts/ci-readonly/run-43592108675-windows-verification.json",
+          "verification_sha256": "f65b42da54ebec308e8ee02786d615c1d0a29af36b7abb2f3051432cff51884b"
+        }
+      },
+      "browser": {
+        "report_slots": 33,
+        "recorded_checks": 1056,
+        "passed_checks": 1056,
+        "explicit_failures": 0,
+        "sprint_checks": 78,
+        "board_formal_checks": 28,
+        "board_observations_not_extra_cases": 18,
+        "original_zip_json_members_bound": 34
+      },
+      "continuity": {
+        "checks": 990,
+        "passed": 990,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ]
+      },
+      "visual": {
+        "status": "passed",
+        "scope": "Actual CI63 screenshots plus recorded same-document authentication, natural mobile drawer geometry, settled-entry board motion, and Composer three recording snapshots; no physical-device acceptance claim."
+      },
+      "frontend_build": {
+        "js": "/static/dist/app-EXBTH7EL.js",
+        "css": "/static/dist/styles-BHHEBXRE.css",
+        "files": 25,
+        "hashed_metrics_entries": 24,
+        "source_files": 194
+      },
+      "scope": "Counts are unique within each platform/suite; repeated platform and regression executions are not added into larger independent case totals. Agent/Composer are Chromium-only."
+    },
+    "prior_local_evidence_applicability": {
+      "original_path": "luojiaxinshi/artifacts/sprint-review-followup/frontend-runtime-applicability-70226e9.json",
+      "sha256": "b6f5e246106fcc8691a9c834fce94b1c5781c30e21cf40f4455fdf7848aa159b",
+      "baseline_commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+      "baseline_implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+      "candidate_commit": "70226e910b7fe2ecdfd49b0a34dcd62ba00484bc",
+      "candidate_implementation_sha256": "4e4d3e2ca56b7ccbc8e9bd9a197b07e539ea8d8d987d47656b7486504b991634",
+      "exact_changed_paths": [
+        {
+          "path": ".github/workflows/checks.yml",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "7cd7cd1604f90342d8175129b9d5f27758d5ed9a"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "5ff369fe57478b2888f7343498634a084db84d87"
+          }
+        },
+        {
+          "path": "scripts/verify_sprint_ui.mjs",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "2d81a8a7fe319a2875302a66c0fe65e08cb81053"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "544cfd0948f9c9cee1ed84ebc7d1d8f853a426df"
+          }
+        },
+        {
+          "path": "scripts/verify_task_board.mjs",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "b3b1ee9fa4d1926b8e1343bcf6d8a38202fd47a2"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "0042cac65c0559e66de47bfce76164cb98719fe2"
+          }
+        },
+        {
+          "path": "static/app.js",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "ae23d78f4a98c1ebabfb0ff6915cfef8190973e1"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "157660d2ed150d1b4c7ae3ae43dd5d3188e89e24"
+          }
+        },
+        {
+          "path": "static/auth.js",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "5bcac542afa07969d39560b9a84afd1034190a48"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "8cf8d70edb1474794c169273ad7eb2696f2b8e5b"
+          }
+        },
+        {
+          "path": "static/dist/app-A52BRFJG.js",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "c24c7c64dbe7f976fc5fd68a4ca8a8202e7ae221"
+          },
+          "after": null
+        },
+        {
+          "path": "static/dist/app-EXBTH7EL.js",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "blob_sha": "2b81c79ed43bd0846fc34464a102fd87b21138af"
+          }
+        },
+        {
+          "path": "static/dist/index.html",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "297dd567b87c5ad440a621f0310c0f537d51c8e8"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "8daa5c393975bc02d72fb842e6f027d10d490b8e"
+          }
+        },
+        {
+          "path": "static/dist/manifest.json",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "ba822ddb6a14c7a5d2b6995da2c8c18f104a1dbd"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "b6908e010d6b95f3d19b2f22cde11f0d7d048797"
+          }
+        },
+        {
+          "path": "static/dist/styles-BHHEBXRE.css",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "blob_sha": "70f126167e41d76aad4cfdf3d227b4ba7e85c63c"
+          }
+        },
+        {
+          "path": "static/dist/styles-BKR4PFDD.css",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "3d2173237da46de85db427b8d4c12c59413f2856"
+          },
+          "after": null
+        },
+        {
+          "path": "static/legal.js",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "0436081798620cee865e415f5b67ac2f213a8573"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "f6e636a1468b65804802384a9d8815ba52f9f64c"
+          }
+        },
+        {
+          "path": "static/paged-list.js",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "70f3f68e104c9745b0a99cc22c6739bd9158e6e9"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "9b26ba608de3611f1c161ee9381ae6ac62d851ce"
+          }
+        },
+        {
+          "path": "static/system/chat-refinements.css",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "139ae6647ec010f2d6d39e7c4b61dfe9b34a54bb"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "935a8ceb56eedbd5da5f0c182773cbd28aceb73b"
+          }
+        },
+        {
+          "path": "tests/auth-toast-lifecycle.test.mjs",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "blob_sha": "6ccb1219165deef7733d4ee5f533cfcaf97c7643"
+          }
+        },
+        {
+          "path": "tests/composer-browser.mjs",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "b2ca69f818300fa7f71a5bbede96f1f12d1526de"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "be704b59f3d223ea70b726c3ffe9c84aa06be620"
+          }
+        },
+        {
+          "path": "tests/list-cache-revision.test.mjs",
+          "before": {
+            "mode": "100644",
+            "blob_sha": "592c2227cb4d31a8882487f8df0e333521a086a6"
+          },
+          "after": {
+            "mode": "100644",
+            "blob_sha": "5051d46ec517c6c87bd5f3eb400144a24f3e523f"
+          }
+        },
+        {
+          "path": "tests/paged-list-mutation.test.mjs",
+          "before": null,
+          "after": {
+            "mode": "100644",
+            "blob_sha": "c106f681e3325dda1b376adb0fafe896dab3e568"
+          }
+        }
+      ],
+      "unchanged_paths_count": 859,
+      "unchanged_path_blob_manifest_sha256": "8d0669641c2e51a415e502660728754f02590f284d1872954ef2048186089382",
+      "entire_backend_schema_dependencies_runtime_capacity_identical": true,
+      "workflow_byte_identical": false,
+      "workflow_execution_and_gates_identical": true,
+      "workflow_artifact_collection_delta": {
+        "path": ".github/workflows/checks.yml",
+        "before_sha256": "f6ff587bf7093543af6eb7e270d24743417eaa8816600d912234814b3019df6a",
+        "after_sha256": "fad34de09456bb9f977d0b08d86d987c87fd96a406f7decf8c615514374d38f5",
+        "exact_added_lines": [
+          "            artifacts/composer-browser/failure.json",
+          "            artifacts/composer-browser/geometry.json"
+        ],
+        "all_other_bytes_identical": true,
+        "commands_gates_timeouts_permissions_engines_and_retention_unchanged": true
+      },
+      "new_runtime_execution_claimed": false,
+      "scope": "The recorded9e86 independent backend/runtime/capacity observations remain relevant because those executable inputs are byte-identical. Frontend code/tests/build require their own current CI. When explicitly recorded, workflow changes only add two Composer diagnostic artifact paths; workflow bytes are then different while all execution commands, gates and deadlines remain exact. This comparison does not claim new runtime measurements or browser performance."
+    },
+    "latest_independent_local_runtime": [
+      {
+        "original_path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-5.json",
+        "sha256": "79c22cfafe89f8a976662e29bcf24ce44a1606de553487ed06922c8d2d07282b",
+        "verified_at": "2026-11-14T09:35:04.541903+00:00",
+        "actual_commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+        "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+        "concurrent_users": 5,
+        "http_requests": 766,
+        "ordinary_crud_latency_ms": {
+          "samples": 625,
+          "p50": 105.0,
+          "p95": 196.4,
+          "max": 376.9
+        },
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 776,
+            "samples": 776,
+            "p50_ms": 30.308,
+            "p95_ms": 85.079,
+            "max_ms": 158.142
+          },
+          "hold": {
+            "total_observations": 776,
+            "samples": 776,
+            "p50_ms": 12.729,
+            "p95_ms": 40.579,
+            "max_ms": 93.314
+          }
+        },
+        "engineering_targets": {
+          "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+          "ordinary_crud_p95": {
+            "limit_ms_exclusive": 1000,
+            "passed": true
+          },
+          "write_total_wait_p95": {
+            "limit_ms_exclusive": 100,
+            "passed": true
+          },
+          "write_acquisitions": {
+            "allowed_failures": 0,
+            "passed": true
+          }
+        },
+        "scope": "Prior independent synthetic local execution with its original identity; not re-executed under CI63 and not a real campus pilot approval."
+      },
+      {
+        "original_path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-10.json",
+        "sha256": "a16a0c8bf166d19e8b06e84a748c7cbe12c84b547929a3244793e4aee5821c32",
+        "verified_at": "2026-11-14T09:35:58.291722+00:00",
+        "actual_commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+        "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+        "concurrent_users": 10,
+        "http_requests": 1531,
+        "ordinary_crud_latency_ms": {
+          "samples": 1250,
+          "p50": 256.6,
+          "p95": 471.2,
+          "max": 783.4
+        },
+        "database_locks_before_restart": {
+          "observed": true,
+          "sample_limit": 4096,
+          "failed_acquisitions": 0,
+          "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+          "wait": {
+            "total_observations": 1590,
+            "samples": 1590,
+            "p50_ms": 77.73,
+            "p95_ms": 172.555,
+            "max_ms": 281.405
+          },
+          "hold": {
+            "total_observations": 1590,
+            "samples": 1590,
+            "p50_ms": 8.714,
+            "p95_ms": 86.192,
+            "max_ms": 184.086
+          }
+        },
+        "engineering_targets": {
+          "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+          "ordinary_crud_p95": {
+            "limit_ms_exclusive": 1000,
+            "passed": true
+          },
+          "write_total_wait_p95": {
+            "limit_ms_exclusive": 100,
+            "passed": false
+          },
+          "write_acquisitions": {
+            "allowed_failures": 0,
+            "passed": true
+          }
+        },
+        "scope": "Prior independent synthetic local execution with its original identity; not re-executed under CI63 and not a real campus pilot approval."
+      }
+    ],
+    "remaining_conditions": {
+      "requirements": 128,
+      "P1": 118,
+      "conditional_P0": 2,
+      "conditional_P2": 8,
+      "requirements_with_external_acceptance_conditions": 51,
+      "requirement_array_historical_snapshot_preserved": true,
+      "requirements_canonical_sha256": "1bf97ea08381df3d92cc9724ec90cdcd67cf8b0398a6739d4ff37b221a3234ff",
+      "five_user_scope": "85.079 ms is one synthetic independent observation under the unchanged 100 ms limit, not stable pilot approval.",
+      "ten_user_write_wait_gate": "172.555 ms did not pass the unchanged exclusive 100 ms target.",
+      "external": [
+        "real provider/source authorizations",
+        "physical device and accessibility acceptance",
+        "independent human labels and real model evaluation",
+        "at least five days of real campus practice and institutional confirmation",
+        "owner choice of root LICENSE",
+        "actual pilot scope, support and budget approval"
+      ]
+    },
+    "main_delivery": {
+      "recorded_here": false,
+      "state": "not_embedded",
+      "verification_source": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "actions": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions",
+      "scope": "Frozen before merging; the actual final main commit and its own push CI are verified in PR metadata and the final delivery response."
+    },
+    "interpretation": "CI63 passed its exact frozen candidate engineering and visual gates. This overlay does not rewrite the original128 requirements,51 external conditions,8 P2 objects,first-round historical gates or any failed run. It does not claim every natural-language requirement or external acceptance condition is complete."
+  },
+  "latest_followup_history": [
+    {
+      "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+      "machine_document": "docs/audits/sprint-review-followup.json",
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "branch_head": "7319d9eac80cbfe2cef9ab62c43bdcd5da2edb32",
+      "candidate_tree": "28946c6345781a82f6d1cbddabccbd1ef3526e12",
+      "ci": {
+        "run_id": 43573296055,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43573296055",
+        "status": "completed",
+        "conclusion": "failure",
+        "actual_checkout_sha": "edacb62c7d6d937ba3da155e2dfcda704398f3ef",
+        "checkout_verification": "confirmed_from_current_run_Ubuntu_and_all_Windows_job_logs",
+        "gate_state": "failed",
+        "known_failed_stages": [
+          {
+            "job_id": 132382067118,
+            "job": "browser",
+            "step_number": 10,
+            "step": "Run the browser suites against synthetic data",
+            "conclusion": "failure"
+          }
+        ],
+        "windows": {
+          "conclusion": "success",
+          "backend_tests": 1853,
+          "backend_passed": 1852,
+          "backend_skipped": 1,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "manifest_files": 138,
+          "node_tests": 302,
+          "node_passed": 302,
+          "evidence": "artifacts/ci-readonly/run-43573296055-windows-verification.json",
+          "evidence_sha256": "124c6aab1ab11e64b2c177aaaf2601300847b425c6ffc0dab6081847224b1080"
+        }
+      },
+      "updated_at": "2026-11-14T08:16:41.089513+00:00",
+      "interpretation": "本入口指向 PR #4 合并后的审查补修。run55 已结束并失败，browser 主套件步骤失败；Windows 原始 1853 用例和 Node 302 通过按各自范围独立保留，不能宣称整轮通过或据此合并。后续修复须另有候选及验证，最终 main 合并与自身 CI 须另核对。"
+    },
+    {
+      "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+      "machine_document": "docs/audits/sprint-review-followup.json",
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "branch_head": "c4b13a270df0bc988fd955a70a46acd3e64639f8",
+      "candidate_tree": "a1d35c233b7ee912b482868ea7c47658458aab63",
+      "ci": {
+        "run_id": 43575513212,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43575513212",
+        "status": "completed",
+        "conclusion": "failure",
+        "actual_checkout_sha": "b320eb60ad2296d182013c8d250c507e567ddec4",
+        "checkout_verification": "confirmed_from_current_run_all_Windows_partition_and_aggregate_job_logs",
+        "gate_state": "failed",
+        "known_failed_stages": [
+          {
+            "job_id": 132388751115,
+            "job": "browser",
+            "step_number": 10,
+            "step": "Run the browser suites against synthetic data",
+            "conclusion": "failure",
+            "suite": "sprint-ui-browser",
+            "recorded": 18,
+            "passed": 15,
+            "failed": 3,
+            "unexecuted": 57,
+            "failed_assertion": "A stable all filter must not reread its full loaded task records",
+            "interpretation": "The measured clock update read task pages. The script had not proven a current applied lightweight projection baseline; fixes still require a new real run."
+          }
+        ],
+        "visual_review": {
+          "recorded": 168,
+          "passed": 168,
+          "failed": 0,
+          "errors": 0
+        },
+        "windows": {
+          "conclusion": "success",
+          "backend_tests": 1853,
+          "backend_passed": 1852,
+          "backend_skipped": 1,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "manifest_files": 138,
+          "node_tests": 302,
+          "node_passed": 302,
+          "actual_checkout_sha": "b320eb60ad2296d182013c8d250c507e567ddec4",
+          "implementation_sha256": "07b8d5b935d85ead40de0e92e7da86e33db0447c7f1e6f9fc77018c1a747ccc7",
+          "implementation_unchanged": true,
+          "evidence": "artifacts/ci-readonly/run-43575513212-windows-verification.json",
+          "evidence_sha256": "647ef6247212c11dfb3cdc9de6f851bed970d1593f6dc85036995d3e71db09d8"
+        }
+      },
+      "updated_at": "2026-11-14T08:53:20.140003+00:00",
+      "interpretation": "本入口指向 PR #4 合并后的审查补修。run56 已结束并失败：Visual 168 项通过，Sprint 的 clock 零完整页读取断言在三引擎失败，后续 57 项未执行。Windows 原始 1853 用例与 Node 302 通过只在各自范围成立，不能覆盖浏览器失败或据此合并。run55 的完整失败入口保存在 latest_followup_history，后续修复须有新候选及验证；最终 main 合并与自身 CI 另核。"
+    },
+    {
+      "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+      "machine_document": "docs/audits/sprint-review-followup.json",
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "branch_head": "19d9162fc9395f9c140ca13545f5975e9d74ea81",
+      "candidate_tree": "5a5a6882c21dfb1141761bfe2897480febb66336",
+      "ci": {
+        "run_id": 43578124182,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43578124182",
+        "status": "completed",
+        "conclusion": "failure",
+        "actual_checkout_sha": "568111d44b83baecf2f0a5683914294604713fd3",
+        "checkout_verification": "confirmed_from_current_run_all_Windows_partition_and_aggregate_job_logs_and_browser_audit",
+        "gate_state": "failed",
+        "browser": {
+          "report_slots": 33,
+          "statuses": {
+            "incomplete": 1,
+            "passed": 31,
+            "failed": 1
+          },
+          "recorded_checks": 1012,
+          "passed_checks": 1010,
+          "failed_checks": 2,
+          "unrecorded_fatal_assertions": 1,
+          "fully_unexecuted_checks": 40,
+          "interrupted_unrecorded_checks": 1,
+          "unrecorded_breakdown": {
+            "sprint_fully_unexecuted": 36,
+            "chat_webkit_interrupted_current_check": 1,
+            "chat_webkit_subsequent_unexecuted": 4
+          },
+          "expected_checks": 1053,
+          "expected_checks_not_recorded": 41,
+          "previous_passed_checks_not_recorded": 35,
+          "failed_or_incomplete_suites": [
+            {
+              "suite": "Sprint workflows and loading performance",
+              "path": "sprint-ui-browser/report.json",
+              "status": "incomplete",
+              "recorded": 39,
+              "passed_checks": 37,
+              "failed_checks": 2,
+              "failures": [
+                {
+                  "engine": "chromium",
+                  "name": "a card loaded from the second board page remains on page one after an actual upward move",
+                  "ok": false,
+                  "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:187:35\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:174:5"
+                },
+                {
+                  "engine": "firefox",
+                  "name": "a card loaded from the second board page remains on page one after an actual upward move",
+                  "ok": false,
+                  "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:187:35\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:174:5"
+                }
+              ],
+              "unrecorded_fatal_error": null,
+              "expected_checks": 75,
+              "expected_checks_not_recorded": 36,
+              "top_status": "incomplete",
+              "top_complete": false,
+              "errors": [],
+              "engines": [
+                "chromium",
+                "firefox",
+                "webkit"
+              ],
+              "by_engine": {
+                "chromium": 7,
+                "firefox": 7,
+                "webkit": 25
+              }
+            },
+            {
+              "suite": "Chat interactions WebKit",
+              "path": "chat-interactions/webkit/report.json",
+              "status": "failed",
+              "recorded": 3,
+              "passed_checks": 3,
+              "failed_checks": 0,
+              "failures": [],
+              "unrecorded_fatal_error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(!stream.next.includes('水墨渐显'))\n",
+              "expected_checks": 8,
+              "expected_checks_not_recorded": 5,
+              "top_status": null,
+              "top_complete": null,
+              "errors": [],
+              "engines": [
+                "webkit"
+              ],
+              "by_engine": {
+                "webkit": 3
+              }
+            }
+          ],
+          "sprint_execution_failure": {
+            "status": "incomplete",
+            "complete": false,
+            "expected_checks": 75,
+            "recorded_checks": 39,
+            "passed_checks": 37,
+            "failed_checks": 2,
+            "expected_checks_not_recorded": 36,
+            "exact_failure": "Chromium and Firefox: page.waitForFunction timeout after 15000 ms at verify_sprint_ui.mjs:187 while requiring 54 board rows and aria-busy=false.",
+            "cause_limit": "The raw failed range receipts were not saved per engine and recent_requests retains only the final WebKit tail. CI57 proves the 54-row wait failure, not its exact request timing. The lost more intent and temporary paint-gate defects were independently reproduced later with real controllers."
+          },
+          "source_evidence": {
+            "path": "ci-evidence/43578124182/browser-report-audit.json",
+            "path_base": "shared_workspace",
+            "sha256": "05079684067715f0c4e50b1cd89ac7c0fbb34a380d3f9e241009f3c43f78a004"
+          },
+          "artifact_sha256": "3ca6e2f04e5f097a9a10f4939d04bb35a114aab58635ec6c5c268d8db4ce65e4",
+          "artifact_size_bytes": 21454123,
+          "scope_note": "CI57 is failed: Sprint records two board-range timeout failures and stops those two engines; WebKit chat records three completed checks, then a fatal streaming assertion before the next check is appended. That fatal assertion is counted separately from explicit checks, never as a pass. The unrecorded count includes its interrupted check. Agent and Composer scopes are Chromium only. No new isolated-worktree fix is part of this run."
+        },
+        "windows": {
+          "conclusion": "success",
+          "backend_tests": 1853,
+          "backend_passed": 1852,
+          "backend_skipped": 1,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "manifest_files": 138,
+          "node_tests": 302,
+          "node_passed": 302,
+          "actual_checkout_sha": "568111d44b83baecf2f0a5683914294604713fd3",
+          "implementation_sha256": "27cec02647cee8276b6854b521b1ba214b107f1570b6440b7054ccef6c141ec1",
+          "implementation_unchanged": true,
+          "evidence": "artifacts/ci-readonly/run-43578124182-windows-verification.json",
+          "evidence_sha256": "6cc225a00af68b4cedaf6a4b3ea026b26f879313dc0b43720e68d526447f8cb9"
+        },
+        "official_workflow_evidence": {
+          "path": "artifacts/ci-readonly/run-43578124182-windows-workflow-final.json",
+          "sha256": "6e60c059d40ab64006a9a03952f773c954f51b7b023d4b07e48f93cf6b02f43d"
+        }
+      },
+      "next_validation": {
+        "status": "awaiting_integrated_candidate_and_new_ci",
+        "candidate_head": null,
+        "ci_run_id": null,
+        "scope": [
+          "mail quota reservation and claim in one write transaction with live-clock revalidation",
+          "paged-list own revision and stable-domain invalidation, active pending-request generation/view guards, and explicit load-more intent",
+          "chat streaming fixture observes real settled glyph lifecycle before append assertions"
+        ],
+        "expected_collection_only": {
+          "backend_files": 139,
+          "backend_tests": 1875,
+          "node_tests": 329,
+          "is_executed_result": false
+        },
+        "local_directed_results_are_not_ci": true,
+        "note": "定向 49/49、全 Node 329/329 及 mail 28/28、109/109 属于各自本地修复证据，互有包含关系，不能累计为唯一全量数，也不属于 run57。新整合候选仍须实际收集用例并完成全量 CI。"
+      },
+      "updated_at": "2026-11-14T09:34:28.391161+00:00",
+      "interpretation": "run57 已完成并失败：33 个浏览器报告槽中 31 通过、1 不完整、1 失败；实际记录 1012 项（1010 通过、2 false），另有 WebKit 聊天 1 个未写入 checks 的 fatal 断言。41 项没有完整记录，精确分为 40 未执行和 1 部分中止，不得记为通过。Sprint 39 项为 37 通过、2 失败，后续 36 项未执行；聊天 WebKit 完成 3 项后在第 4 项中止，后 4 项未执行。Windows 后端 1853/Node302 的通过只属于该旧候选。随后独立修复待整合新验证，run55/56 原入口完整保留；最终 main 合并及自身 CI 另核。"
+    },
+    {
+      "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+      "machine_document": "docs/audits/sprint-review-followup.json",
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "branch_head": "9e86a1e9b798071e870a0e35d73b46610d435988",
+      "candidate_tree": "849605264ce3af3bffd15896f7a530b3685438af",
+      "ci": {
+        "run_id": 43581184272,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43581184272",
+        "status": "completed",
+        "conclusion": "failure",
+        "actual_checkout_sha": "a39babb0406615384323b3ae346ca722a8253f3d",
+        "checkout_verification": "confirmed_from_all_current_Windows_partition_and_aggregate_job_logs_and_current_browser_audit",
+        "gate_state": "failed",
+        "official_workflow_evidence": {
+          "path": "artifacts/ci-readonly/run-43581184272-windows-final-workflow.json",
+          "path_base": "repository",
+          "sha256": "9f4bb17cb1fc39837e4bc3450806691a392ec349c9b1960f74eaf19bbad9839a"
+        },
+        "browser": {
+          "report_slots": 33,
+          "statuses": {
+            "incomplete": 1,
+            "passed": 32
+          },
+          "recorded_checks": 1001,
+          "passed_checks": 998,
+          "failed_checks": 3,
+          "unrecorded_fatal_assertions": 0,
+          "fully_unexecuted_checks": 55,
+          "interrupted_unrecorded_checks": 0,
+          "unrecorded_breakdown": {
+            "sprint_fully_unexecuted": 55
+          },
+          "expected_checks": 1056,
+          "expected_checks_not_recorded": 55,
+          "previous_passed_checks_not_recorded": 43,
+          "artifact_sha256": "2c7e14368ec109594673bfd3c7fe3ad01d28cf9542a2f0c3b80e45b026f0c9cc",
+          "artifact_size_bytes": 21824453,
+          "failed_or_incomplete_suites": [
+            {
+              "suite": "Sprint workflows and loading performance",
+              "path": "sprint-ui-browser/report.json",
+              "status": "incomplete",
+              "recorded": 23,
+              "passed_checks": 20,
+              "failed_checks": 3,
+              "failures": [
+                {
+                  "engine": "chromium",
+                  "name": "a card loaded from the second board page remains on page one after an actual upward move",
+                  "ok": false,
+                  "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:211:18\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:174:5"
+                },
+                {
+                  "engine": "firefox",
+                  "name": "task list reports a bounded first page and loads the remaining real records",
+                  "ok": false,
+                  "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:225:72\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:222:5"
+                },
+                {
+                  "engine": "webkit",
+                  "name": "task list reports a bounded first page and loads the remaining real records",
+                  "ok": false,
+                  "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:225:72\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:222:5"
+                }
+              ],
+              "unrecorded_fatal_error": null,
+              "expected_checks": 78,
+              "expected_checks_not_recorded": 55,
+              "top_status": "incomplete",
+              "top_complete": false,
+              "errors": [],
+              "engines": [
+                "chromium",
+                "firefox",
+                "webkit"
+              ],
+              "by_engine": {
+                "chromium": 7,
+                "firefox": 8,
+                "webkit": 8
+              }
+            }
+          ],
+          "source_evidence": {
+            "path": "ci-evidence/43581184272/browser-report-audit.json",
+            "path_base": "shared_workspace",
+            "sha256": "a659fe1987f3ba444f5bf9af87b611e3885104aa5b137042058facc58e1ec8e2"
+          },
+          "scope_note": "33 reports: 32 passed and Sprint incomplete. All three recorded failures belong to Sprint, whose 78 expected checks stopped after 23 recorded (20 pass, 3 false); 55 were not executed. Chat streaming now passed in its recorded engines. Agent and Composer remain Chromium-only. No isolated later repair is part of this run.",
+          "failure_interpretation": {
+            "chromium": "The actual post-move first-page response had 50 items and moved item at index49. Final DOM preserved all54 in the exact intended adjacent-swap order; the next exact-DOM50 wait was incompatible with allowed range preservation.",
+            "firefox_webkit": "Both failed the subsequent explicit load-more wait from50 to54. Raw requests are consistent with a later stable refresh superseding the in-flight append, but do not include controller generations. The product defect was independently reproduced against frozen9e86 in four isolated controller cases; exact CI internal timing remains an inference.",
+            "original_timeouts_unchanged_ms": 15000
+          },
+          "early_and_final_reports": {
+            "all33_files_byte_identical": true,
+            "comparison_evidence": {
+              "path": "ci-evidence/43581184272/early-final-byte-comparison.json",
+              "path_base": "shared_workspace",
+              "sha256": "eb82efd7bef397441488db34949eacfeb50a8a56fbcc796659f0c30675281ca8"
+            }
+          }
+        },
+        "windows": {
+          "conclusion": "success",
+          "backend_tests": 1875,
+          "backend_unique": 1875,
+          "backend_passed": 1874,
+          "backend_skipped": 1,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "skip_details": [
+            {
+              "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+              "message": "POSIX TIME_WAIT bind semantics",
+              "text": "D:\\a\\luojiaxinshi\\luojiaxinshi\\tests\\test_browser_fixture_ports.py:30: POSIX TIME_WAIT bind semantics"
+            }
+          ],
+          "manifest_files": 139,
+          "node_tests": 329,
+          "node_unique": 329,
+          "node_passed": 329,
+          "actual_checkout_sha": "a39babb0406615384323b3ae346ca722a8253f3d",
+          "implementation_sha256": "ab22396851c28f3b9ea4755dfd3f1ed6b80a15eab0f6ef910add5b6054ef0d21",
+          "implementation_unchanged": true,
+          "archive_sha256_verified": true,
+          "evidence": {
+            "path": "artifacts/ci-readonly/run-43581184272-windows-verification.json",
+            "path_base": "repository",
+            "sha256": "fa414e645b07d5f69cdcf063d863279c7406841776465be86abbb9c4f3c47517"
+          },
+          "old1853_backend_and302_node_ids_retained": true,
+          "added_unique_backend_cases": 22,
+          "added_unique_node_cases": 27,
+          "all_four_partition_raw_case_union_equals_aggregate": true
+        },
+        "ubuntu": {
+          "conclusion": "success",
+          "backend_tests": 1875,
+          "backend_unique": 1875,
+          "backend_passed": 1873,
+          "backend_skipped": 2,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "skip_details": [
+            {
+              "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+              "message": "Windows process ownership guard",
+              "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:13: Windows process ownership guard"
+            },
+            {
+              "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+              "message": "Windows socket and launcher guard",
+              "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:46: Windows socket and launcher guard"
+            }
+          ],
+          "manifest_files": 139,
+          "node_tests": 329,
+          "node_unique": 329,
+          "node_passed": 329,
+          "actual_checkout_sha": "a39babb0406615384323b3ae346ca722a8253f3d",
+          "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+          "implementation_unchanged": true,
+          "archive_sha256_verified": true,
+          "evidence": {
+            "path": "artifacts/ci-readonly/run-43581184272-linux-verification.json",
+            "path_base": "repository",
+            "sha256": "592012afeae1b27b0dac9b74523145115de5aa982884d01ba1b24249c8bb6ea3"
+          }
+        },
+        "runtime": {
+          "evidence": {
+            "path": "artifacts/ci-readonly/run-43581184272-runtime-verification.json",
+            "path_base": "repository",
+            "sha256": "f89f867c2596050371da22add5570bf3eb369bd809ce94f354cf7228173d9afa"
+          },
+          "platforms": {
+            "ubuntu": {
+              "functional_result": "passed",
+              "synthetic_test": true,
+              "concurrent_users": 5,
+              "http_requests": 766,
+              "ordinary_crud_samples": 625,
+              "ordinary_crud_p95_ms": 94.4,
+              "write_total_wait_samples": 741,
+              "write_total_wait_p95_ms": 38.658,
+              "write_acquisition_failures": 0,
+              "engineering_targets": {
+                "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+                "ordinary_crud_p95": {
+                  "limit_ms_exclusive": 1000,
+                  "passed": true
+                },
+                "write_total_wait_p95": {
+                  "limit_ms_exclusive": 100,
+                  "passed": true
+                },
+                "write_acquisitions": {
+                  "allowed_failures": 0,
+                  "passed": true
+                }
+              },
+              "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+              "implementation_unchanged": true,
+              "recovery_observations": {
+                "backup_seconds": 0.025,
+                "restart_verified_seconds": 0.906,
+                "restore_file_seconds": 0.033,
+                "restore_verified_seconds": 1.082,
+                "confirmed_tasks_lost_in_fixture": 0,
+                "task_identity_and_business_content_equal": true,
+                "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+                "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+              },
+              "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+            },
+            "windows": {
+              "functional_result": "passed",
+              "synthetic_test": true,
+              "concurrent_users": 5,
+              "http_requests": 766,
+              "ordinary_crud_samples": 625,
+              "ordinary_crud_p95_ms": 279.0,
+              "write_total_wait_samples": 808,
+              "write_total_wait_p95_ms": 111.719,
+              "write_acquisition_failures": 0,
+              "engineering_targets": {
+                "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+                "ordinary_crud_p95": {
+                  "limit_ms_exclusive": 1000,
+                  "passed": true
+                },
+                "write_total_wait_p95": {
+                  "limit_ms_exclusive": 100,
+                  "passed": false
+                },
+                "write_acquisitions": {
+                  "allowed_failures": 0,
+                  "passed": true
+                }
+              },
+              "implementation_sha256": "ab22396851c28f3b9ea4755dfd3f1ed6b80a15eab0f6ef910add5b6054ef0d21",
+              "implementation_unchanged": true,
+              "recovery_observations": {
+                "backup_seconds": 0.046,
+                "restart_verified_seconds": 1.987,
+                "restore_file_seconds": 0.071,
+                "restore_verified_seconds": 2.71,
+                "confirmed_tasks_lost_in_fixture": 0,
+                "task_identity_and_business_content_equal": true,
+                "process_stop_method": "owned process tree taskkill /T /F",
+                "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+              },
+              "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+            }
+          },
+          "interpretation": "Shared-runner single observations, separate from local runs and real campus acceptance. Windows write-wait P95=111.719ms failed the unchanged <100ms engineering proposal despite functional runtime success; Ubuntu38.658ms does not erase it."
+        },
+        "complete_failure_archive": {
+          "path": "docs/audits/sprint-review-ci-58-failure.json",
+          "sha256": "b40da05f5e27a117ca1443afd057cad9b9b10f714b6b39a476dbd77ee0c8d9d5",
+          "size_bytes": 389541
+        }
+      },
+      "expected_collection_only": {
+        "backend_files": 139,
+        "backend_tests": 1875,
+        "node_tests": 329,
+        "is_executed_result": false
+      },
+      "integrated_fix_scope": [
+        "mail quota reservation and claim in one write transaction with live-clock revalidation",
+        "paged-list own revision and stable-domain invalidation, active pending-request generation/view guards, and explicit load-more intent",
+        "chat streaming fixture observes real settled glyph lifecycle before append assertions"
+      ],
+      "updated_at": "2026-11-14T10:04:26.497833+00:00",
+      "interpretation": "run58 completed/failure: browser1001 recorded=998passed+3false, all3in Sprint,55checks unexecuted. BothOS actually collected139files/1875backend/329Node and passed within their declared platform skips. One new local whole-tree round also passed1872+3skip; current local5-user writewait85.079ms is only a single passing observation,10-user172.555ms and sharedWindows111.719ms fail the unchanged100ms target. Subsequent range-intent repair remains outside this run. Original128 requirements,51external conditions,8P2 and all previous failures remain unchanged; main merge and own Actions require separate verification.",
+      "actual_collected_scopes": {
+        "local": {
+          "backend_files": 139,
+          "backend_tests": 1875,
+          "backend_unique": 1875,
+          "backend_passed": 1872,
+          "backend_skipped": 3,
+          "backend_failures": 0,
+          "backend_errors": 0,
+          "skip_details": [
+            {
+              "id": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+              "reason": "Windows process ownership guard"
+            },
+            {
+              "id": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+              "reason": "Windows socket and launcher guard"
+            },
+            {
+              "id": "tests.test_legacy_office::test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+              "reason": "Optional pinned Tika/JRE not installed in this environment"
+            }
+          ],
+          "node_unique": 329,
+          "node_passed": 329,
+          "new_whole_tree_rounds": 1,
+          "old1853_backend_case_ids_preserved": true,
+          "old302_node_case_ids_preserved": true,
+          "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+          "commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+          "evidence": {
+            "path": "artifacts/sprint-review-integrated-58/local-verification.json",
+            "path_base": "repository",
+            "sha256": "be9a036cb1268947aefa6757cfa5722bf8afd7538cb1c70d0f29dc72cc6e863d"
+          }
+        },
+        "note": "Original expected collection is preserved above as the pre-run expectation. These values are actual per-run unique identities, not a sum across repeated rounds or operating systems."
+      },
+      "latest_local_runtime": {
+        "observations": [
+          {
+            "functional_result": "passed",
+            "synthetic_test": true,
+            "concurrent_users": 5,
+            "http_requests": 766,
+            "ordinary_crud_samples": 625,
+            "ordinary_crud_p95_ms": 196.4,
+            "write_total_wait_samples": 776,
+            "write_total_wait_p95_ms": 85.079,
+            "write_acquisition_failures": 0,
+            "engineering_targets": {
+              "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+              "ordinary_crud_p95": {
+                "limit_ms_exclusive": 1000,
+                "passed": true
+              },
+              "write_total_wait_p95": {
+                "limit_ms_exclusive": 100,
+                "passed": true
+              },
+              "write_acquisitions": {
+                "allowed_failures": 0,
+                "passed": true
+              }
+            },
+            "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+            "implementation_unchanged": true,
+            "recovery_observations": {
+              "backup_seconds": 0.072,
+              "restart_verified_seconds": 1.988,
+              "restore_file_seconds": 0.127,
+              "restore_verified_seconds": 2.636,
+              "confirmed_tasks_lost_in_fixture": 0,
+              "task_identity_and_business_content_equal": true,
+              "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+              "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+            },
+            "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+            "raw_evidence": {
+              "path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-5.json",
+              "path_base": "shared_workspace",
+              "sha256": "79c22cfafe89f8a976662e29bcf24ce44a1606de553487ed06922c8d2d07282b"
+            }
+          },
+          {
+            "functional_result": "passed",
+            "synthetic_test": true,
+            "concurrent_users": 10,
+            "http_requests": 1531,
+            "ordinary_crud_samples": 1250,
+            "ordinary_crud_p95_ms": 471.2,
+            "write_total_wait_samples": 1590,
+            "write_total_wait_p95_ms": 172.555,
+            "write_acquisition_failures": 0,
+            "engineering_targets": {
+              "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+              "ordinary_crud_p95": {
+                "limit_ms_exclusive": 1000,
+                "passed": true
+              },
+              "write_total_wait_p95": {
+                "limit_ms_exclusive": 100,
+                "passed": false
+              },
+              "write_acquisitions": {
+                "allowed_failures": 0,
+                "passed": true
+              }
+            },
+            "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+            "implementation_unchanged": true,
+            "recovery_observations": {
+              "backup_seconds": 0.045,
+              "restart_verified_seconds": 1.542,
+              "restore_file_seconds": 0.074,
+              "restore_verified_seconds": 2.671,
+              "confirmed_tasks_lost_in_fixture": 0,
+              "task_identity_and_business_content_equal": true,
+              "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+              "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+            },
+            "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+            "raw_evidence": {
+              "path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-10.json",
+              "path_base": "shared_workspace",
+              "sha256": "a16a0c8bf166d19e8b06e84a748c7cbe12c84b547929a3244793e4aee5821c32"
+            }
+          }
+        ],
+        "interpretation": "The current local5-user run observed85.079ms and passed <100ms once; current10-user172.555ms failed. Historical101.063/165.573 and additional178.194 baseline remain history, not overwritten. One passing5-user observation does not establish stable capacity or school acceptance."
+      },
+      "latest_local_capacity": {
+        "evidence": {
+          "path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/capacity.json",
+          "path_base": "shared_workspace",
+          "sha256": "1b8381727afe57ab3a4493e799457591ea5015890f919d897d07b257c8b46c84"
+        },
+        "notices": 10000,
+        "interactive_pages": {
+          "collected_page": {
+            "cold_ms": 41.74,
+            "warm_p50_ms": 35.89,
+            "warm_p95_ms": 49.85,
+            "samples_ms": [
+              41.74,
+              32.93,
+              37.08,
+              49.85,
+              33.06,
+              35.89
+            ],
+            "max_payload_bytes": 106666,
+            "total": 10000
+          },
+          "semantic_current_page": {
+            "cold_ms": 398.98,
+            "warm_p50_ms": 37.2,
+            "warm_p95_ms": 47.85,
+            "samples_ms": [
+              398.98,
+              47.85,
+              35.36,
+              37.2,
+              33.28,
+              38.61
+            ],
+            "max_payload_bytes": 106693,
+            "total": 10000
+          },
+          "indexed_body_search": {
+            "cold_ms": 74.73,
+            "warm_p50_ms": 66.09,
+            "warm_p95_ms": 71.67,
+            "samples_ms": [
+              74.73,
+              68.45,
+              65.87,
+              66.09,
+              71.67,
+              61.31
+            ],
+            "max_payload_bytes": 3070,
+            "total": 1
+          },
+          "short_chinese_search": {
+            "cold_ms": 117.33,
+            "warm_p50_ms": 109.2,
+            "warm_p95_ms": 112.19,
+            "samples_ms": [
+              117.33,
+              109.2,
+              98.57,
+              112.19,
+              96.48,
+              109.89
+            ],
+            "max_payload_bytes": 111955,
+            "total": 9999
+          }
+        },
+        "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+        "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+      },
+      "next_validation": {
+        "status": "awaiting_integrated_followup_candidate_and_new_complete_ci",
+        "candidate_head": null,
+        "ci_run_id": null,
+        "scope": [
+          "retain a scope-bound explicit next-page target and its original promise when a newer stable refresh supersedes an already in-flight append",
+          "make board move and undo explicitly preserve the loaded range",
+          "keep real first-page50, moved index49 and later54 checks while verifying the preserved54 order and rebuilding the50-row starting state via real query changes"
+        ],
+        "isolated_results_are_not_ci": true,
+        "browser_expected_checks": 1056,
+        "sprint_expected_checks": 78,
+        "note": "Isolated controller and Node green results are directed evidence only; the repaired product and browser assertions require a new integrated run. No failed old report is replaced."
+      }
+    },
+    {
+      "document": "docs/audits/SPRINT_REVIEW_FOLLOWUP_2026-11-14.md",
+      "machine_document": "docs/audits/sprint-review-followup.json",
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "branch_head": "6701b6534331b9dddd64bdd67a38ac2e524681a9",
+      "candidate_tree": "2cc780721a3a53acbe5440718b2862e87d809152",
+      "expected_linux_implementation_sha256": "e4d5d6adaa2f86c0eb0de6c8c8d856e16d3584dad0336242d68f1f855eb83157",
+      "ci": {
+        "run_id": 43583884442,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43583884442",
+        "status": "in_progress",
+        "conclusion": null,
+        "actual_checkout_sha": null,
+        "checkout_verification": "pending_actual_current_job_logs",
+        "gate_state": "pending",
+        "official_workflow_evidence": {
+          "path": "artifacts/ci-readonly/run-43583884442-windows-workflow-initial.json",
+          "sha256": "73ed2cf03b4c5dc14207addd0ff6f43f3477e4a7d59264b8f3fd3a74304ed47a"
+        }
+      },
+      "expected_collection_only": {
+        "backend_files": 139,
+        "backend_tests": 1875,
+        "node_tests": 341,
+        "previous_node_unique": 329,
+        "expected_new_node_unique": 12,
+        "browser_checks": 1056,
+        "sprint_checks": 78,
+        "is_executed_result": false
+      },
+      "expected_frontend_build_only": {
+        "js": "/static/dist/app-SMVSHCNZ.js",
+        "files": 25,
+        "source_files": 194,
+        "is_current_ci_result": false
+      },
+      "integrated_fix_scope": [
+        "retain the original scope-bound explicit next-page target and promise through later stable refreshes,409 recovery and obsolete response cleanup",
+        "preserve all loaded board rows explicitly after move and undo",
+        "assert the complete54-card move order, then use real distinct query changes to verify the50-card first page and later54-card expansion"
+      ],
+      "prior_local_evidence_applicability": {
+        "evidence": {
+          "path": "artifacts/sprint-review-followup/frontend-runtime-applicability-6701.json",
+          "sha256": "271f584acd0dd2e11d49147527d686a76aa01d8796b2eec151f24fbb45c9d6c5"
+        },
+        "baseline_commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+        "baseline_implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+        "candidate_commit": "6701b6534331b9dddd64bdd67a38ac2e524681a9",
+        "candidate_implementation_sha256": "e4d5d6adaa2f86c0eb0de6c8c8d856e16d3584dad0336242d68f1f855eb83157",
+        "changed_paths": [
+          "scripts/verify_sprint_ui.mjs",
+          "static/app.js",
+          "static/dist/app-A52BRFJG.js",
+          "static/dist/app-SMVSHCNZ.js",
+          "static/dist/index.html",
+          "static/dist/manifest.json",
+          "static/paged-list.js",
+          "tests/list-cache-revision.test.mjs"
+        ],
+        "unchanged_paths_count": 866,
+        "entire_backend_schema_dependencies_runtime_capacity_and_workflow_identical": true,
+        "actual_prior_runtime": [
+          {
+            "original_path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-5.json",
+            "sha256": "79c22cfafe89f8a976662e29bcf24ce44a1606de553487ed06922c8d2d07282b",
+            "users": 5,
+            "wait_p95_ms": 85.079
+          },
+          {
+            "original_path": "luojiaxinshi-delivery/artifacts/sprint-review-integrated-58/runtime-10.json",
+            "sha256": "a16a0c8bf166d19e8b06e84a748c7cbe12c84b547929a3244793e4aee5821c32",
+            "users": 10,
+            "wait_p95_ms": 172.555
+          }
+        ],
+        "new_runtime_execution_claimed": false,
+        "scope": "The recorded9e86 independent backend/runtime/capacity observations remain relevant because all those executable inputs are byte-identical. The whole-tree fingerprint changed for frontend code/tests/build, which are separately executed locally and in the new full CI. This does not claim new runtime measurements or browser performance."
+      },
+      "updated_at": "2026-11-14T10:10:38.703440+00:00",
+      "interpretation": "run59 is a new full candidate CI and is currently in progress;139files/1875backend/341Node are expectations pending this run raw collection. Complete run58 failure remains unmodified in history, including1001recorded/3false/55unexecuted and Windows111.719ms write-wait target failure. Prior local85.079/172.555ms measurements keep actual9e86/81f identities; byte-identical backend/runtime applicability is documented, not a new measurement or a browser pass. All128 requirements,51external conditions and8P2 remain unchanged."
+    },
+    {
+      "record_type": "completed_followup_evidence",
+      "ci": {
+        "run_id": 43583884442,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43583884442",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      "gate_state": "failure",
+      "original_evidence": {
+        "path": "docs/audits/sprint-review-ci-59-failure.json",
+        "sha256": "3e430d95a31ab325296d7e06918591e7ce928848fc040649f70c059351ff67a4",
+        "bytes": 488154
+      },
+      "interpretation": "The original complete record remains immutable; successful scoped jobs do not erase its failed or unresolved delivery gate."
+    },
+    {
+      "record_type": "completed_followup_evidence",
+      "ci": {
+        "run_id": 43585083774,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43585083774",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      "gate_state": "failure",
+      "original_evidence": {
+        "path": "docs/audits/sprint-review-ci-60-failure.json",
+        "sha256": "36a58b56537cd28f7c1ce6b45b79b6b2f82d094ddef93a7fdb287be3080675be",
+        "bytes": 494678
+      },
+      "interpretation": "The original complete record remains immutable; successful scoped jobs do not erase its failed or unresolved delivery gate."
+    },
+    {
+      "record_type": "completed_followup_evidence",
+      "ci": {
+        "run_id": 43586065580,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43586065580",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      "gate_state": "success_with_visual_gate_unresolved",
+      "original_evidence": {
+        "path": "docs/audits/sprint-review-ci-61-functional-success.json",
+        "sha256": "debf9a381dafd778cfd58f7274c4e7bf1936b162015ba0f2b83e5956189f3079",
+        "bytes": 686977
+      },
+      "interpretation": "The original complete record remains immutable; successful scoped jobs do not erase its failed or unresolved delivery gate."
+    },
+    {
+      "record_type": "completed_followup_evidence",
+      "ci": {
+        "run_id": 43589199738,
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43589199738",
+        "status": "completed",
+        "conclusion": "failure"
+      },
+      "gate_state": "failure",
+      "original_evidence": {
+        "path": "docs/audits/sprint-review-ci-62-failure.json",
+        "sha256": "15681e7ddb49c2b9d522bd93f33669522264cc6a66d1649c3db1073c055ac391",
+        "bytes": 1469374
+      },
+      "interpretation": "The original complete record remains immutable; successful scoped jobs do not erase its failed or unresolved delivery gate."
+    }
+  ]
 }

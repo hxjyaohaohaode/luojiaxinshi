@@ -544,7 +544,7 @@ def create_app(settings=None):
         return {'url':settings.origin+'/#invite='+raw,'expires_in_days':7}
 
     def check_cache_key(conn,key,uid,check_version=True):
-        if key in {'new-notice','intake-batch','chat-new','arrangement-new'}:
+        if key in {'new-notice','intake-batch','chat-new','arrangement-new','campus-publication'}:
             return None
         if re.fullmatch(r'chat:[a-f0-9]{32}',key):
             if not conn.execute('SELECT 1 FROM conversations WHERE id=? AND user_id=?',(key[5:],uid)).fetchone():
@@ -1048,12 +1048,12 @@ def create_app(settings=None):
                               lambda:list_tasks(conn,current['id']))
 
     @app.get('/api/tasks/page')
-    def paged_tasks(limit:int=50,cursor:str='',q:str='',status:str='',notice_id:str='',lane:str='',scope:str='',day:str='',ids:str='',current=Depends(user)):
+    def paged_tasks(limit:int=50,cursor:str='',q:str='',status:str='',notice_id:str='',lane:str='',scope:str='',day:str='',ids:str='',sort:str='',current=Depends(user)):
         from .listing import task_page
         if not 1<=limit<=100 or len(cursor)>4096 or len(notice_id)>100:
             raise HTTPException(422,'分页大小须为 1–100，游标或事项标识过长')
         with db.connect() as conn:
-            return task_page(conn,current['id'],serialize_task,limit=limit,cursor=cursor,q=q,status=status,notice_id=notice_id,lane=lane,scope=scope,day=day,ids=ids)
+            return task_page(conn,current['id'],serialize_task,limit=limit,cursor=cursor,q=q,status=status,notice_id=notice_id,lane=lane,scope=scope,day=day,ids=ids,sort=sort)
 
     from .workspace_projection import install as install_workspace_projection
     install_workspace_projection(app,db,user,list_tasks)
@@ -1153,9 +1153,11 @@ def create_app(settings=None):
             matters=export_groups(conn,current['id'])
             from .notice_tracking import export_tracking
             phase_tracking=export_tracking(conn,current['id'])
+            from .campus_submissions import export_cancellations
             account_records={'contacts':verification.contacts(conn,current['id']),
                 'consents':[dict(r) for r in conn.execute('SELECT version,accepted_at FROM account_consents WHERE user_id=?',(current['id'],))],
-                'mail_deliveries':[dict(r) for r in conn.execute('SELECT state,created_at,finished_at,error FROM mail_outbox WHERE user_id=? ORDER BY created_at',(current['id'],))]}
+                'mail_deliveries':[dict(r) for r in conn.execute('SELECT state,created_at,finished_at,error FROM mail_outbox WHERE user_id=? ORDER BY created_at',(current['id'],))],
+                'campus_submission_cancellations':export_cancellations(conn,current['id'])}
         result={'format_version':1,'exported_at':datetime.now(CST).isoformat(),'profile':json.loads(current['profile']),
                 'notices':records,'history':history,'conversations':chats,'source_catalog':catalog,'arrangements':arrangements,'memory_projects':memory_projects,'memories':memories,'memory_archive':memory_archive,'note':'含记忆来源与历史、原文提取文本、对话、待办和个人安排；二进制原件请从各通知或对话下载。日历副本需自行清理。'}
         result['task_material_archive']=material_archive
@@ -1163,6 +1165,7 @@ def create_app(settings=None):
         result['notice_phase_tracking']=phase_tracking
         result['account_records']=account_records
         result['note']+=' 联系方式与邮件投递记录仅作本人数据导出；导入不会恢复身份验证或提醒授权。'
+        result['note']+=' 已放弃的学院发布请求仅作本人历史导出；个人数据导入不会恢复请求状态或发布授权。'
         result['note']+=' 本人办理材料及固定提交版本的目录与记录已附带；二进制文件请在对应待办下载。完整恢复请使用数据库备份。'
         return Response(dumps(result),media_type='application/json',headers={'Content-Disposition':'attachment; filename="campus-data.json"'})
 

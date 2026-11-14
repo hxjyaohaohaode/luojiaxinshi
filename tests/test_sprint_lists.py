@@ -1,6 +1,7 @@
 """Real HTTP pagination/index isolation, mutation and semantic-filter regressions."""
 import json
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -112,3 +113,65 @@ def test_page_limits_cannot_turn_into_full_reads(env,limit):
     c=account(env)
     assert c.get('/api/notices/page',params={'limit':limit}).status_code==422
     assert c.get('/api/tasks/page',params={'limit':limit}).status_code==422
+
+
+def listing_clock(monkeypatch):
+    from app import listing
+    clock={'now':int(time.time())}
+    # Isolate the cursor clock from authentication/session/process clocks.
+    monkeypatch.setattr(listing,'time',SimpleNamespace(time=lambda:clock['now']))
+    return clock
+
+
+@pytest.mark.parametrize('sort',['','board'])
+def test_stable_task_filter_cursor_survives_minute_without_losing_revision_guard(env,monkeypatch,sort):
+    from tests.test_task_board import seed as board_seed,move
+    c=account(env);records=board_seed(c);clock=listing_clock(monkeypatch)
+    params={'status':'pending','sort':sort,'limit':1}
+    first=c.get('/api/tasks/page',params=params)
+    assert first.status_code==200 and first.json()['total']==3
+    cursor=first.json()['next_cursor'];clock['now']+=61
+    second=c.get('/api/tasks/page',params={**params,'cursor':cursor})
+    assert second.status_code==200,second.text
+    assert second.json()['items'][0]['id']==records[1]['id']
+    fresh=c.get('/api/tasks/page',params=params).json()['next_cursor']
+    changed=move(c,records[-1],before_id=records[0]['id'])
+    assert changed.status_code==200,changed.text
+    stale=c.get('/api/tasks/page',params={**params,'cursor':fresh})
+    assert stale.status_code==409 and stale.json()['detail']['code']=='list_changed'
+
+
+@pytest.mark.parametrize('sort',['collected','published','updated'])
+def test_stable_notice_filter_cursor_survives_minute(env,monkeypatch,sort):
+    c=account(env);_,ids=seed(env,c,3);clock=listing_clock(monkeypatch)
+    params={'intent':'all','relevance':'unknown','sort':sort,'limit':1}
+    first=c.get('/api/notices/page',params=params)
+    assert first.status_code==200 and first.json()['total']==3
+    seen=[first.json()['items'][0]['id']];cursor=first.json()['next_cursor']
+    clock['now']+=61
+    while cursor:
+        response=c.get('/api/notices/page',params={**params,'cursor':cursor})
+        assert response.status_code==200,response.text
+        page=response.json();seen.extend(item['id'] for item in page['items']);cursor=page['next_cursor']
+    assert len(seen)==len(set(seen))==3 and set(seen)==set(ids)
+
+
+@pytest.mark.parametrize('kind',['tasks','notices'])
+def test_time_sensitive_page_cursor_still_requires_refresh_after_minute(env,monkeypatch,kind):
+    c=account(env)
+    if kind=='tasks':
+        from tests.test_task_board import seed as board_seed,move
+        records=board_seed(c)
+        for row in records:
+            current=c.get('/api/tasks/'+row['id']+'/workflow').json()['task']
+            assert move(c,current,'followup').status_code==200
+        params={'status':'followup','sort':'board','limit':1}
+    else:
+        seed(env,c,3);params={'sort':'priority','limit':1}
+    clock=listing_clock(monkeypatch)
+    first=c.get('/api/'+kind+'/page',params=params)
+    assert first.status_code==200 and first.json()['total']==3
+    cursor=first.json()['next_cursor'];assert cursor
+    clock['now']+=61
+    stale=c.get('/api/'+kind+'/page',params={**params,'cursor':cursor})
+    assert stale.status_code==409 and stale.json()['detail']['code']=='list_changed'

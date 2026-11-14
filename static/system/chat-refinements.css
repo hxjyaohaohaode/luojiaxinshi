@@ -83,7 +83,10 @@ html[data-ui-motion=off] #chat-thread.reading-reflow .message-content { animatio
 @media(max-width:600px) { #chat-thread .work-summary-toggle { min-height:44px; } }
 
 @media(min-width:1001px) {
-  #chat-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,0fr); transition:grid-template-columns 240ms cubic-bezier(.22,.8,.24,1) 40ms; }
+  /* A closed side panel still has padding, a border and a translated edge.
+     Clip this layout boundary without letting focus scroll the whole workspace;
+     the reader and material list retain their own scrolling containers. */
+  #chat-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,0fr); overflow:clip; transition:grid-template-columns 240ms cubic-bezier(.22,.8,.24,1) 40ms; }
   #chat-workspace:is(.show-materials,.show-evidence) { grid-template-columns:minmax(0,1fr) minmax(0,.39fr); }
   #chat-workspace > .chat-main { grid-column:1; grid-row:1; }
   #chat-workspace > :is(.chat-materials,.reply-sources-panel) { grid-column:2; grid-row:1; min-width:0; }

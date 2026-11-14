@@ -6,11 +6,50 @@ import {createRequire} from 'node:module';
 import {browserExecutable} from './browser-runtime.mjs';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-browser');
-const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=20;
+const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=26;
 const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',network_fixture:{service_workers:'block',reason:'Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs.'},status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],mobile_controls:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
+report.review_regressions={clock_ranges:[],board_ranges:[],list_ranges:[],publication_retries:[],publication_cancellations:[],list_cache_routes:[]};
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
+function authenticationView(){
+  const toast=document.querySelector('#toast'),copy=toast?.querySelector('.toast-copy'),style=toast?getComputedStyle(toast):null,form=document.querySelector('#auth-form');
+  return {route:location.hash,document_marker:window.__sprintAuthDocument||null,form:{present:!!form,mode:form?.dataset.authMode||null,visible:!!form&&form.getBoundingClientRect().width>0&&getComputedStyle(form).visibility==='visible'},account_label:document.querySelector('.account-name')?.textContent||null,toast:{text:copy?.textContent||'',class_name:toast?.className||'',role:toast?.getAttribute('role')||null,visibility:style?.visibility||null,opacity:style?.opacity||null,visible:!!toast&&toast.classList.contains('visible')&&style?.visibility==='visible'&&Number(style?.opacity)>0,has_lifetime:!!toast?.querySelector('.toast-lifetime')}};
+}
+// Observe the real resize result without closing, scrolling or focusing the UI.
+// The same probe supplies failure evidence and the existing-deadline wait.
+function mobileListLayout({expectedIds,wait=false}){
+  const one=selector=>document.querySelector(selector),rect=node=>{if(!node)return null;const r=node.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
+  const describe=node=>node?{tag:node.tagName,id:node.id||null,class_name:typeof node.className==='string'?node.className:null,action:node.getAttribute('data-action'),task_id:node.getAttribute('data-task-id'),workflow_task:node.getAttribute('data-workflow-task')}:null;
+  const shell=one('.shell'),drawer=one('.sidebar'),workspace=one('.workspace'),content=one('#content'),results=one('#task-results'),row=one('#task-results [data-task-id]'),control=row?.querySelector('[data-workflow-task]');
+  const drawerStyle=drawer?getComputedStyle(drawer):null,controlStyle=control?getComputedStyle(control):null;
+  const bounds={drawer:rect(drawer),workspace:rect(workspace),content:rect(content),results:rect(results),task:rect(row),control:rect(control)};
+  const point=bounds.control?{x:(bounds.control.left+bounds.control.right)/2,y:(bounds.control.top+bounds.control.bottom)/2}:null,hit=point?document.elementFromPoint(point.x,point.y):null;
+  const ids=[...(results?.querySelectorAll('[data-task-id]')||[])].map(node=>node.dataset.taskId);
+  const horizontal=r=>!!r&&r.width>0&&r.left>=-1&&r.right<=innerWidth+1;
+  const ancestry=[];for(let node=control;node;node=node.parentElement){const style=getComputedStyle(node);ancestry.push({element:describe(node),visibility:style.visibility,display:style.display,opacity:Number(style.opacity),pointer_events:style.pointerEvents});}
+  const drawerMotion=(drawer?.getAnimations?.()||[]).filter(animation=>animation.pending||animation.playState==='running').map(animation=>({play_state:animation.playState,pending:animation.pending,transition:animation.transitionProperty||null}));
+  const checks={
+    mobile:matchMedia('(max-width:850px)').matches,
+    menu_closed:!!shell&&!shell.classList.contains('menu-open'),
+    drawer_hidden:drawerStyle?.visibility==='hidden'&&!!bounds.drawer&&bounds.drawer.right<=1,
+    drawer_settled:drawerMotion.length===0,
+    route_ready:content?.dataset.page==='tasks'&&!content.inert&&!content.closest('[inert]')&&results?.getAttribute('aria-busy')==='false',
+    same_tasks:JSON.stringify([...ids].sort())===JSON.stringify([...expectedIds].sort())&&ids.length>0,
+    horizontal_bounds:['workspace','content','results','task','control'].every(key=>horizontal(bounds[key])),
+    control_visible:!!bounds.control&&bounds.control.height>0&&bounds.control.top>=0&&bounds.control.bottom<=innerHeight&&controlStyle?.visibility==='visible'&&controlStyle?.display!=='none'&&ancestry.every(item=>item.visibility==='visible'&&item.display!=='none')&&ancestry.reduce((value,item)=>value*item.opacity,1)>=.99,
+    control_enabled:!!control&&!control.disabled&&control.getAttribute('aria-disabled')!=='true'&&!control.closest('[inert]'),
+    control_receives_pointer:!!control&&!!hit&&(hit===control||control.contains(hit))
+  };
+  const visual=window.visualViewport,snapshot={at_ms:performance.now(),route:location.hash,document_hidden:document.hidden,viewport:{width:innerWidth,height:innerHeight,visual:visual?{width:visual.width,height:visual.height,offset_left:visual.offsetLeft,offset_top:visual.offsetTop,scale:visual.scale}:null},menu:{shell_class:shell?.className||null,visibility:drawerStyle?.visibility||null,transform:drawerStyle?.transform||null,motion:drawerMotion},bounds,task_ids:ids,control_ancestry:ancestry,active_element:describe(document.activeElement),pointer:{point,hit:describe(hit)},scroll:Object.fromEntries([['html',document.documentElement],['body',document.body],['shell',shell],['workspace',workspace],['content',content],['results',results]].map(([name,node])=>[name,node?{left:node.scrollLeft,top:node.scrollTop,width:node.scrollWidth,height:node.scrollHeight,client_width:node.clientWidth,client_height:node.clientHeight}:null])),checks,ready:Object.values(checks).every(Boolean)};
+  if(!wait)return snapshot;
+  const key=JSON.stringify({checks,bounds,ids,viewport:snapshot.viewport,scroll:snapshot.scroll}),previous=window.__sprintMobileListLayout;
+  const stableFrames=snapshot.ready?(previous?.key===key?previous.stable_frames+1:1):0;
+  snapshot.stable_frames=stableFrames;
+  const samples=previous?.samples||[];if(previous?.key!==key)samples.push(snapshot);if(samples.length>20)samples.splice(1,samples.length-20);
+  window.__sprintMobileListLayout={key,stable_frames:stableFrames,last:snapshot,samples};
+  return snapshot.ready&&stableFrames>=2?snapshot:false;
+}
 await saveReport();
 for(const engine of engines){
   const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
@@ -33,8 +72,20 @@ for(const engine of engines){
   };
   const watchCelebration=()=>page.evaluate(()=>{window.__sprintConfetti=0;new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1&&node.matches('.confetti-bit'))window.__sprintConfetti++;}).observe(document.body,{childList:true});});
   const taskResponse=(query,response)=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===query&&response.request().method()==='GET';};
-  const searchTasks=async query=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
+  const searchTasks=async(query,extraMatch=()=>true)=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response)&&extraMatch(response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
   const settledTaskSearch=async(query,total)=>{await page.waitForFunction(({query,total})=>document.querySelector('#task-search')?.value===query&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 '+Math.min(total,50)+' / '+total+' 项',{query,total});};
+  const publicationPayload=request=>{
+    const data=request.postData()?.match(/name="data"\r?\n\r?\n([\s\S]*?)\r?\n--/);assert.ok(data,'The actual multipart publication request carries its data part');return JSON.parse(data[1]);
+  };
+  const readyPublication=()=>page.waitForFunction(()=>{const form=document.querySelector('[data-workspace-form="campus-publish"]');return form&&!form.inert&&form.getAttribute('aria-busy')!=='true';});
+  const fillPublication=async(title,{attachment=false}={})=>{
+    const form=page.locator('[data-workspace-form=campus-publish]');await form.waitFor();
+    await form.locator('[name=audience]').selectOption('class');await form.locator('[name=grade]').fill('2026级');await form.locator('[name=class_name]').fill('试点一班');
+    await form.locator('[name=title]').fill(title);await form.locator('[name=body]').fill('合成发布恢复验收；只有隔离夹具内的已核实范围，无外部接收者。');
+    if(attachment)await form.locator('[name=files]').setInputFiles({name:'恢复原件.txt',mimeType:'text/plain',buffer:Buffer.from('用于验证发布后未决结果及新草稿缺件提示的合成原件。')});
+    return form;
+  };
+  const confirmPublication=async form=>{await form.locator('[type=submit]').click();await page.locator('#dialog [data-action=accept-dialog]').click();};
   const measureLoad=async(label,operation,selector)=>{
     await operation();const input=page.locator(selector);await input.waitFor({state:'visible'});await page.waitForFunction(selector=>{const node=document.querySelector(selector);return node&&!node.disabled&&!node.readOnly&&!node.closest('[inert]');},selector);await input.focus();assert.equal(await input.isEditable(),true);
     const metrics=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0],resources=performance.getEntriesByType('resource'),files=resources.filter(item=>/\/static\//.test(item.name));return {can_input_at_ms:performance.now(),dom_content_loaded_ms:nav?.domContentLoadedEventEnd||null,load_event_ms:nav?.loadEventEnd||null,request_count:resources.length,static_request_count:files.length,css_request_count:files.filter(item=>/\.css(?:$|\?)/.test(item.name)).length,transfer_size:resources.reduce((sum,item)=>sum+item.transferSize,0),encoded_body_size:resources.reduce((sum,item)=>sum+item.encodedBodySize,0),longtask_supported:window.__sprintLongTaskSupported,longtasks:window.__sprintLongTaskSupported?window.__sprintLongTasks:null,parse_duration_ms:null,parse_duration_note:'No portable browser API separates JavaScript parsing from execution; unmeasured.',cache_note:'Zero transferSize is allowed on warm loads and is not treated as a network failure.',resources:files.map(item=>({url:item.name.replace(location.origin,''),initiator:item.initiatorType,duration:item.duration,transferSize:item.transferSize,encodedBodySize:item.encodedBodySize}))};});
@@ -92,12 +143,150 @@ for(const engine of engines){
     });
     await nav('tasks');
     if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-action=filter][data-filter=all]').click();
+    await check('a clock-only signal preserves all 54 loaded tasks, focused node and scroll without reloading unchanged full records',async()=>{
+      await searchTasks(prefix);await settledTaskSearch(prefix,54);
+      // Editing deliberately defers background sync. Establish this fixture
+      // from an actual non-editing control, without activating a new view.
+      const idleControl=page.locator('[data-task-view=list]');await idleControl.focus();
+      assert.equal(await idleControl.evaluate(element=>document.activeElement===element),true);
+      // Match the application's revision protocol. The compatibility response
+      // intentionally omits domains unless this request header is present.
+      const baselineResponse=await context.request.get(origin+'/api/proactive/revision',{headers:{'X-Workspace-Revision':'1'}});
+      assert.equal(baselineResponse.status(),200,await baselineResponse.text());const baseline=await baselineResponse.json();
+      assert.ok(typeof baseline.revision==='string'&&baseline.revision.length>0,'The real workspace response must carry its revision');
+      assert.ok(baseline.domains&&typeof baseline.domains==='object','The workspace protocol response must carry domains');
+      assert.equal(typeof baseline.domains.clock,'number','The real baseline must carry its server minute clock');
+      let tick=0,phase='stable';
+      const evidence={engine,controlled_clock_signal:true,real_entity_endpoint:'/api/workspace/projection',status:'establishing baseline',warm:{request_paths:[]},measured:{request_paths:[]}};
+      report.review_regressions.clock_ranges.push(evidence);await saveReport();
+      const handler=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...baseline,revision:baseline.revision+':clock-fixture:'+tick,domains:{...baseline.domains,clock:baseline.domains.clock+tick}})});
+      const observer=request=>{const url=new URL(request.url());if(url.origin===origin&&request.method()==='GET'&&evidence[phase]?.request_paths)evidence[phase].request_paths.push(url.pathname+url.search);};
+      const probe=()=>Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);
+      const projectionResponse=()=>page.waitForResponse(response=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/workspace/projection'&&url.searchParams.get('include')==='tasks';});
+      const projectionReceipt=async response=>{const url=new URL(response.url()),body=await response.json();return {request_path:url.pathname+url.search,request_revision:url.searchParams.get('revision'),request_clock_only:url.searchParams.get('clock_only'),response_status:response.status(),response_revision:body.revision,response_clock_only:body.clock_only,response_clock:body.clock,response_counts:body.counts};};
+      await page.route('**/api/proactive/revision',handler);
+      page.on('request',observer);
+      let node;
+      try{
+        // The calendar display save can leave an older projection even after
+        // the task page has refreshed. Complete the stable probes, then let
+        // one real clock refresh establish the application's own baseline.
+        await probe();await probe();
+        phase='warm';tick++;const [warmResponse]=await Promise.all([projectionResponse(),probe()]);
+        Object.assign(evidence.warm,await projectionReceipt(warmResponse));await saveReport();
+        assert.equal(evidence.warm.response_status,200);
+        assert.ok(typeof evidence.warm.response_revision==='string'&&evidence.warm.response_revision.length>0);
+        await probe();
+        evidence.warm.full_page_reads=evidence.warm.request_paths.filter(url=>url.startsWith('/api/tasks/page')).length;
+        phase='range';await saveReport();
+        if(await page.locator('[data-action=task-more]').count())await page.locator('[data-action=task-more]').click();
+        await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项'&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false');
+        const ids=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId)),target=ids.at(-1),button=page.locator('[data-task-id="'+target+'"] .task-primary');
+        await button.scrollIntoViewIfNeeded();await button.focus();node=await button.elementHandle();
+        const before=await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY}));
+        Object.assign(evidence,{status:'measuring warm clock',loaded:ids.length,before_ids:ids,before});await saveReport();
+        await page.evaluate(()=>{window.__clockListMutations=0;window.__clockListObserver=new MutationObserver(()=>window.__clockListMutations++);window.__clockListObserver.observe(document.querySelector('#task-results'),{childList:true,subtree:true,attributes:true});});
+        phase='measured';tick++;
+        const [projection]=await Promise.all([projectionResponse(),probe()]);Object.assign(evidence.measured,await projectionReceipt(projection));await saveReport();
+        assert.equal(evidence.measured.response_status,200);
+        assert.equal(evidence.measured.request_clock_only,'1');
+        assert.equal(evidence.measured.request_revision,evidence.warm.response_revision,'The application must use its established projection revision');
+        assert.equal(evidence.measured.response_revision,evidence.warm.response_revision,'No stable mutation belongs in the unchanged-clock measurement');
+        assert.equal(evidence.measured.response_clock_only,true,'The measured response must be the real sparse clock projection');
+        // The next serialized probe also waits out the tick's final DOM work;
+        // checking immediately at response time could miss a late redraw.
+        await probe();
+        const paths=evidence.measured.request_paths,afterIds=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));
+        Object.assign(evidence,{after_ids:afterIds,focused_node_preserved:await node.evaluate(element=>element.isConnected&&document.activeElement===element),dom_mutations:await page.evaluate(()=>window.__clockListMutations),after:await page.evaluate(()=>({content:document.querySelector('#content').scrollTop,window:scrollY})),full_page_reads:paths.filter(url=>url.startsWith('/api/tasks/page')).length});await saveReport();
+        assert.deepEqual(afterIds,ids);
+        assert.equal(evidence.focused_node_preserved,true);
+        assert.equal(evidence.dom_mutations,0,'Unchanged lightweight flags must not redraw list rows');
+        const after=evidence.after;assert.ok(Math.abs(after.content-before.content)<2&&Math.abs(after.window-before.window)<2,JSON.stringify({before,after}));
+        assert.equal(evidence.full_page_reads,0,'A stable all filter must not reread its full loaded task records');
+        const readCount=paths.filter(url=>url.startsWith('/api/workspace/projection')).length;await probe();await page.waitForTimeout(250);
+        evidence.unchanged_clock={projection_reads_before:readCount,projection_reads_after:paths.filter(url=>url.startsWith('/api/workspace/projection')).length};await saveReport();
+        assert.equal(evidence.unchanged_clock.projection_reads_after,readCount,'An unchanged clock revision is not another refresh');
+        evidence.status='passed';await saveReport();
+      }finally{page.off('request',observer);await page.unroute('**/api/proactive/revision',handler);await page.evaluate(()=>window.__clockListObserver?.disconnect());await node?.dispose();}
+    });
+    await check('a card loaded from the second board page remains on page one after an actual upward move',async()=>{
+      const boardPage=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board';};
+      const boardFirst=request=>boardPage(request)&&!new URL(request.url()).searchParams.has('cursor');
+      const evidence={engine,status:'running',range_receipts:[],request_paths:[]};report.review_regressions.board_ranges.push(evidence);await saveReport();
+      const boardState=()=>page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent,route:location.hash}));
+      const observeRequest=request=>{if(boardPage(request))evidence.request_paths.push({path:new URL(request.url()).pathname+new URL(request.url()).search,at:new Date().toISOString()});};
+      page.on('request',observeRequest);
+      try{
+      const [firstResponse]=await Promise.all([page.waitForResponse(response=>boardFirst(response.request())),page.locator('[data-task-view=board]').click()]);
+      assert.equal(firstResponse.status(),200,await firstResponse.text());const initial=await firstResponse.json();assert.equal(initial.items.length,50);
+      const initialIds=initial.items.map(item=>item.id);
+      Object.assign(evidence,{initial_page:initial.items.length,initial_ids:initialIds,initial_response_status:firstResponse.status()});await saveReport();
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=board]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},initialIds);
+      // Saving the view preference can invalidate the old cursor. Record and
+      // verify the real recovery chain instead of requiring its first read to
+      // be 200, or treating retained rows during a busy refresh as complete.
+      const rangeReads=[],rangeReceipts=evidence.range_receipts;
+      const observeRange=response=>{if(!boardPage(response.request()))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};rangeReceipts.push(receipt);rangeReads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(item=>item.id),total:body.total,detail:body.detail}),error=>{receipt.parse_error=error.message;}));};
+      page.on('response',observeRange);
+      try{evidence.more_requested_at=new Date().toISOString();await Promise.all([page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelectorAll('#task-results [data-task-id]').length===54),page.locator('[data-action=task-more]').click()]);}
+      finally{page.off('response',observeRange);await Promise.all(rangeReads);evidence.range_dom=await boardState();await saveReport();}
+      for(const receipt of rangeReceipts){assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));if(receipt.status===409)assert.equal(receipt.detail?.code,'list_changed',JSON.stringify(receipt));else{assert.equal(receipt.status,200,JSON.stringify(receipt));assert.ok(Array.isArray(receipt.ids),JSON.stringify(receipt));}}
+      const rangeIds=[...new Set(initialIds.concat(...rangeReceipts.filter(receipt=>receipt.status===200).map(receipt=>receipt.ids)))];
+      const ordered=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.equal(ordered.length,54);const moved=ordered[50];assert.equal(initial.items.some(item=>item.id===moved),false);
+      assert.deepEqual([...ordered].sort(),rangeIds.sort(),'All 54 board rows must come from the actual completed page responses');
+      await page.locator('[data-task-id="'+moved+'"] [data-task-drag-handle]').click();
+      const isMove=response=>response.url()===origin+'/api/tasks/'+moved+'/move'&&response.request().method()==='POST';
+      let moveAccepted=false;const afterMoveRequests=new Set();
+      const observeMove=response=>{if(isMove(response))moveAccepted=response.status()===200;};
+      const observeRefresh=request=>{if(moveAccepted&&boardFirst(request))afterMoveRequests.add(request);};
+      page.on('response',observeMove);page.on('request',observeRefresh);
+      let result;
+      try{
+        const [,refreshed]=await Promise.all([page.waitForResponse(isMove).then(async response=>{assert.equal(response.status(),200,await response.text());return response;}),page.waitForResponse(response=>afterMoveRequests.has(response.request())),page.locator('.task-move-menu').getByRole('button',{name:'上移一位',exact:true}).click()]);
+        assert.equal(refreshed.status(),200,await refreshed.text());result=await refreshed.json();
+      }finally{page.off('response',observeMove);page.off('request',observeRefresh);}
+      assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
+      const expectedAfterMove=[...ordered.slice(0,49),moved,ordered[49],...ordered.slice(51)];
+      Object.assign(evidence,{loaded:ordered.length,moved_id:moved,from_index:50,to_index:49,expected_after_move_ids:expectedAfterMove,move_first_response_ids:result.items.map(item=>item.id),refresh_request_after_move_response:true});await saveReport();
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},expectedAfterMove);
+      const retained=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));
+      assert.deepEqual(retained,expectedAfterMove,'Moving a card must retain the entire already loaded range in the exact new order');
+      evidence.after_move_full_ids=retained;await saveReport();
+      // A retained range is not a fresh first page. Establish that separate
+      // condition through two actual search changes, then keep the original
+      // first-page membership, exact order and subsequent-more assertions.
+      const isBoardFirstResponse=response=>{const url=new URL(response.url());return url.searchParams.get('sort')==='board'&&!url.searchParams.has('cursor');};
+      const narrowed=await searchTasks(needle,isBoardFirstResponse);assert.equal(narrowed.total,1);await settledTaskSearch(needle,1);
+      const firstAgain=await searchTasks(prefix,isBoardFirstResponse);assert.equal(firstAgain.items.length,50);assert.equal(firstAgain.items[49].id,moved);await settledTaskSearch(prefix,54);
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},firstAgain.items.map(item=>item.id));
+      const ids=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.deepEqual(ids,[...ordered.slice(0,49),moved]);
+      Object.assign(evidence,{after_first_page:ids,first_page_query_transition:[prefix,needle,prefix]});await saveReport();
+      await page.screenshot({path:path.join(out,engine+'-desktop-board-page-move.png')});
+      const [listResponse]=await Promise.all([page.waitForResponse(response=>{const url=new URL(response.url());return response.request().method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort')&&!url.searchParams.has('cursor');}),page.locator('[data-task-view=list]').click()]);
+      assert.equal(listResponse.status(),200,await listResponse.text());const list=await listResponse.json();
+      await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=list]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},list.items.map(item=>item.id));
+      evidence.status='passed';
+      }finally{page.off('request',observeRequest);evidence.final_dom=await boardState().catch(error=>({error:error.message}));if(evidence.status!=='passed')evidence.status='incomplete';await saveReport();}
+    });
     await page.locator('#task-search').fill(prefix);
     await check('task list reports a bounded first page and loads the remaining real records',async()=>{
-      await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
-      assert.equal(await page.locator('#task-results .task-row').count(),50);
-      await page.locator('[data-action=task-more]').click();await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项');
-      assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
+      const evidence={engine,status:'running',requests:[],receipts:[]},reads=[];report.review_regressions.list_ranges.push(evidence);await saveReport();
+      const isPage=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort');};
+      const observeRequest=request=>{if(isPage(request))evidence.requests.push({path:new URL(request.url()).pathname+new URL(request.url()).search,at:new Date().toISOString()});};
+      const observeResponse=response=>{if(!isPage(response.request()))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};evidence.receipts.push(receipt);reads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(item=>item.id),total:body.total,detail:body.detail}),error=>{receipt.parse_error=error.message;}));};
+      page.on('request',observeRequest);page.on('response',observeResponse);
+      try{
+        await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
+        assert.equal(await page.locator('#task-results .task-row').count(),50);
+        evidence.before_ids=await page.locator('#task-results .task-row').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));await saveReport();
+        await page.locator('[data-action=task-more]').click();await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项');
+        assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
+        evidence.status='passed';
+      }finally{
+        page.off('request',observeRequest);page.off('response',observeResponse);await Promise.all(reads);
+        evidence.final_dom=await page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results .task-row')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent}));
+        if(evidence.status!=='passed')evidence.status='incomplete';await saveReport();
+      }
     });
     await check('full collection search finds a record beyond the initial page',async()=>{
       assert.equal((await searchTasks(needle)).total,1);await settledTaskSearch(needle,1);
@@ -201,6 +390,165 @@ for(const engine of engines){
       assert.ok(control.height>=43.9&&control.y>=0&&control.y+control.height<=navigation.y-1,JSON.stringify({control,navigation}));
     });
     await page.screenshot({path:path.join(out,engine+'-mobile-draft.png')});
+    await check('a committed publication with a lost response retries the identical confirmed payload without saving its deleted draft',async()=>{
+      const title='丢响应直接恢复 '+engine,form=await fillPublication(title),attempts=[],writes=[];let committed=null;
+      const observe=request=>{if(request.method()==='PUT'&&new URL(request.url()).pathname.startsWith('/api/campus/drafts/'))writes.push(new URL(request.url()).pathname);};
+      const handler=async route=>{const payload=publicationPayload(route.request());attempts.push(payload);const response=await route.fetch();assert.equal(response.status(),200,await response.text());if(!committed){committed=await response.json();await route.abort('failed');}else await route.fulfill({response});};
+      page.on('request',observe);await page.route(origin+'/api/campus/publications',handler);
+      try{
+        await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();assert.ok(committed?.id);
+        const original=(await api('/edit-cache/campus-publication')).payload.payload;assert.deepEqual(original,attempts[0]);assert.equal((await context.request.get(origin+'/api/campus/drafts/'+original.draft_id)).status(),404);
+        const saved=writes.length;
+        const replayResponse=page.waitForResponse(response=>response.url()===origin+'/api/campus/publications'&&response.request().method()==='POST');
+        await form.locator('[type=submit]').click();const replayed=await replayResponse;
+        assert.equal(replayed.status(),200,await replayed.text());assert.equal((await replayed.json()).id,committed.id);
+        // Successful recovery performs this navigation itself. Changing the
+        // hash here would cancel a not-yet-sent retry through its route guard.
+        await page.waitForFunction(()=>location.hash==='#campus/records'&&document.querySelector('#content')?.dataset.page==='campus/records'&&!document.querySelector('#content')?.inert);
+        assert.equal(attempts.length,2);assert.deepEqual(attempts[1],original);assert.equal(writes.length,saved);
+        const records=await api('/campus/publications?page_size=100&q='+encodeURIComponent(title));assert.equal(records.items.length,1);assert.equal(records.items[0].id,committed.id);assert.equal((await api('/edit-cache/campus-publication')).payload,null);
+        report.review_regressions.publication_retries.push({engine,scenario:'same form retry',publication_id:committed.id,request_id:original.request_id,attempts:2,additional_draft_writes:0,stored_publications:records.items.length});
+      }finally{await page.unroute(origin+'/api/campus/publications',handler);page.off('request',observe);}
+    });
+    await check('an uncertain publication survives reload and its recovery preserves new draft input and unresolved attachment names',async()=>{
+      await nav('campus/publish');const title='刷新恢复原发布 '+engine,form=await fillPublication(title,{attachment:true}),attempts=[],writes=[];let committed=null;
+      const observe=request=>{if(request.method()==='PUT'&&new URL(request.url()).pathname.startsWith('/api/campus/drafts/'))writes.push(new URL(request.url()).pathname);};
+      const handler=async route=>{attempts.push(publicationPayload(route.request()));const response=await route.fetch();assert.equal(response.status(),200,await response.text());if(!committed){committed=await response.json();await route.abort('failed');}else await route.fulfill({response});};
+      page.on('request',observe);await page.route(origin+'/api/campus/publications',handler);
+      try{
+        await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();const original=(await api('/edit-cache/campus-publication')).payload.payload;
+        await page.reload();await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();assert.equal(await form.locator('[name=title]').inputValue(),title);
+        const newTitle='后来编辑暂不发布 '+engine,newBody='保留这份新输入；恢复上次确认的发布不得把它一起发送。';await form.locator('[name=title]').fill(newTitle);await form.locator('[name=body]').fill(newBody);
+        const newDraft=await form.getAttribute('data-draft-id');assert.notEqual(newDraft,original.draft_id);await form.locator('[data-campus-action=save-draft]').click();
+        // A preceding autosave can show this status too. Wait for the actual
+        // manual save handler to finish its serialized write before reading.
+        await form.locator('[data-campus-action=save-draft]:enabled').waitFor();await page.waitForFunction(()=>document.querySelector('[data-campus-draft-status]')?.textContent.startsWith('正文已保存'));
+        const saved=await api('/campus/drafts/'+newDraft);assert.equal(saved.body,newBody);assert.deepEqual(saved.pending_attachment_names,['恢复原件.txt']);
+        await page.reload();await page.locator('.campus-drafts>summary').click();await page.locator('[data-campus-action=open-draft][data-id="'+newDraft+'"]').click();await page.waitForFunction(title=>document.querySelector('[data-workspace-form=campus-publish] [name=title]')?.value===title,newTitle);
+        assert.equal(await form.getAttribute('data-missing-files'),'1');assert.match(await page.locator('#campus-missing-files').innerText(),/恢复原件/);
+        await page.screenshot({path:path.join(out,engine+'-mobile-publication-recovery.png')});
+        const oldWrites=writes.filter(path=>path.endsWith('/'+original.draft_id)).length;
+        await page.locator('[data-campus-action=recover-publication]').click();await page.locator('[data-campus-publication-recovery]').waitFor({state:'detached'});await readyPublication();assert.equal(attempts.length,2);assert.deepEqual(attempts[1],original);
+        assert.equal(await form.locator('[name=title]').inputValue(),newTitle);assert.equal(await form.locator('[name=body]').inputValue(),newBody);assert.equal(writes.filter(path=>path.endsWith('/'+original.draft_id)).length,oldWrites);
+        await form.locator('[type=submit]').click();await page.locator('#toast').filter({hasText:'请重新选择附件'}).waitFor();assert.equal(attempts.length,2,'A new draft with unresolved attachments must not publish');
+        await form.locator('[data-campus-action=clear-files]').click();await form.locator('[data-campus-action=save-draft]').click();await form.locator('[data-campus-action=save-draft]:enabled').waitFor();await page.waitForFunction(()=>document.querySelector('[data-campus-draft-status]')?.textContent.startsWith('已保存第'));assert.deepEqual((await api('/campus/drafts/'+newDraft)).pending_attachment_names,[]);
+        const records=await api('/campus/publications?page_size=100&q='+encodeURIComponent(title));assert.equal(records.items.length,1);assert.equal(records.items[0].id,committed.id);assert.equal((await api('/campus/publications?q='+encodeURIComponent(newTitle))).items.length,0);
+        report.review_regressions.publication_retries.push({engine,scenario:'reload with new draft',publication_id:committed.id,request_id:original.request_id,new_draft_id:newDraft,new_input_preserved:true,missing_attachments_persisted:true,attempts:2,stored_publications:records.items.length});
+      }finally{await page.unroute(origin+'/api/campus/publications',handler);page.off('request',observe);}
+    });
+    await check('stopping an uncommitted publication preserves its draft and rejects a later replay of the stopped request',async()=>{
+      const title='停止尚未发布 '+engine,form=await fillPublication(title);let original;
+      const handler=async route=>{original=publicationPayload(route.request());await route.abort('failed');};await page.route(origin+'/api/campus/publications',handler);
+      try{await confirmPublication(form);await page.locator('[data-campus-publication-recovery]').waitFor();await readyPublication();}finally{await page.unroute(origin+'/api/campus/publications',handler);}
+      assert.ok(original?.request_id);await page.locator('[data-campus-action=cancel-publication]').click();await page.locator('#dialog [data-action=accept-dialog]').click();await page.locator('[data-campus-publication-recovery]').waitFor({state:'detached'});
+      const newDraft=await form.getAttribute('data-draft-id');assert.notEqual(newDraft,original.draft_id);assert.equal(await form.locator('[name=title]').inputValue(),title);assert.equal((await api('/edit-cache/campus-publication')).payload,null);
+      const session=await api('/session'),late=await context.request.post(origin+'/api/campus/publications',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{data:JSON.stringify(original)}});assert.equal(late.status(),409);assert.equal((await late.json()).detail.code,'publication_cancelled');assert.equal((await api('/campus/publications?q='+encodeURIComponent(title))).items.length,0);
+      report.review_regressions.publication_cancellations.push({engine,request_id:original.request_id,replacement_draft_id:newDraft,late_status:409,late_code:'publication_cancelled',published_count:0});
+    });
+    await check('returning from home or settings reconciles cached pending tasks after independent inserts, deletions and status changes',async()=>{
+      const evidence={engine,status:'running',stages:[]};report.review_regressions.list_cache_routes.push(evidence);await saveReport();
+      await nav('campus/records');
+      const previousSession=await api('/session'),auth=evidence.authentication={status:'expiring previous session',previous_owner:{id:previousSession.user.id,username:previousSession.user.username},requested_route:'#campus'};
+      auth.document_marker=await page.evaluate(()=>window.__sprintAuthDocument=crypto.randomUUID());await saveReport();
+      try{
+        const [expired]=await Promise.all([
+          page.waitForResponse(response=>{const request=response.request(),url=new URL(response.url());return url.origin===origin&&url.pathname.startsWith('/api/')&&request.method()==='GET'&&response.status()===401&&request.headers()['x-workspace-owner']===previousSession.user.id;}),
+          (async()=>{await context.clearCookies();await page.evaluate(()=>{location.hash='#campus';});})()
+        ]);
+        auth.expired_response={path:new URL(expired.url()).pathname+new URL(expired.url()).search,status:expired.status(),method:expired.request().method(),requested_owner:expired.request().headers()['x-workspace-owner'],detail:(await expired.json()).detail};await saveReport();
+        await page.locator('#auth-form[data-auth-mode=login]').waitFor();
+        await page.waitForFunction(()=>{const toast=document.querySelector('#toast');return toast?.classList.contains('visible')&&getComputedStyle(toast).visibility==='visible'&&Number(getComputedStyle(toast).opacity)>0&&/请先登录|登录已过期/.test(toast.textContent);});
+        auth.before_login=await page.evaluate(authenticationView);await saveReport();
+        assert.equal(auth.before_login.document_marker,auth.document_marker);assert.equal(auth.before_login.form.visible,true);assert.equal(auth.before_login.toast.visible,true);assert.equal(auth.before_login.toast.role,'alert');assert.equal(auth.before_login.toast.has_lifetime,false);
+        // Keep this document and its real persistent error alive. Navigating
+        // with page.goto here would erase the very toast the test must check.
+        await page.locator('#auth-form [name=username]').fill('sprint-'+engine);await page.locator('#auth-form [name=password]').fill('PilotFixtureOnly2026!');
+        const [loggedIn]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/auth/login'&&response.request().method()==='POST'),page.locator('#auth-form [type=submit]').click()]);
+        auth.login_response={path:new URL(loggedIn.url()).pathname,status:loggedIn.status(),method:loggedIn.request().method()};await saveReport();assert.equal(loggedIn.status(),200,await loggedIn.text());
+        await page.waitForFunction(({marker,message})=>{const content=document.querySelector('#content');return window.__sprintAuthDocument===marker&&!!content&&!content.inert&&!document.querySelector('#auth-form')&&!document.querySelector('#toast .toast-copy')?.textContent.includes(message);},{marker:auth.document_marker,message:auth.before_login.toast.text});
+        const accepted=await api('/session');auth.accepted_owner={id:accepted.user.id,username:accepted.user.username};auth.after_login=await page.evaluate(authenticationView);await saveReport();
+        assert.equal(accepted.user.username,'sprint-'+engine);assert.equal(auth.after_login.document_marker,auth.document_marker);assert.equal(auth.after_login.form.present,false);assert.equal(auth.after_login.toast.text.includes(auth.before_login.toast.text),false);auth.status='passed';
+      }catch(error){auth.status='failed';auth.error=error.message;throw error;}
+      finally{auth.final=await page.evaluate(authenticationView).catch(error=>({error:error.message}));await saveReport();}
+      await page.setViewportSize({width:1280,height:850});
+      for(const away of ['dashboard','settings']){
+      const query='跨路由缓存 '+engine+' '+away;
+      const creationReceipts=[];evidence.creations??=[];evidence.creations.push({away,query,receipts:creationReceipts});
+      const createTask=async label=>{
+        const session=await api('/session'),response=await context.request.post(origin+'/api/notices',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{title:query+' '+label,body:'合成个人事项，用于验证离开清单后的真实新增与变化。无外部提交。\n独立事项：'+query+' '+label,materials_complete:'true'}});
+        assert.equal(response.status(),200,await response.text());let notice=await response.json();notice=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});
+        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:[{title:query+' '+label,scope:'personal',materials:[],submission:'',details:'跨页面缓存验收的合成事项。'}],plans:{0:{execution_mode:'task'}}});assert.equal(result.task_ids.length,1);
+        const created={label,notice:notice.id,task:result.task_ids[0],create_status:response.status()};creationReceipts.push(created);await saveReport();
+        assert.equal(new Set(creationReceipts.map(item=>item.notice)).size,creationReceipts.length,'Independent mutation scenarios require distinct real notices');
+        assert.equal(new Set(creationReceipts.map(item=>item.task)).size,creationReceipts.length,'Each independent notice must create its own task');
+        return created;
+      };
+      const fixed=await createTask('保留'),removed=await createTask('待删除');let inserted;
+      const probe=async()=>{const [response]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);assert.equal(response.status(),200,await response.text());const value=await response.json();return {status:response.status(),revision:value.revision,domains:value.domains};};
+      const projectionRequest=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/workspace/projection'&&(url.searchParams.get('include')||'').split(',').includes('tasks');};
+      await nav('tasks');if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('pending');else await page.locator('[data-action=filter][data-filter=pending]').click();
+      if(await page.locator('[data-task-view=list]').getAttribute('aria-pressed')!=='true')await page.locator('[data-task-view=list]').click();
+      await searchTasks(query);await settledTaskSearch(query,2);
+      for(const change of ['insert','delete','status']){
+        const stage={away,query,change,status:'running',home_projection_receipts:[],return_page_receipts:[],sync_probes:[]};evidence.stages.push(stage);await saveReport();
+        await nav(away);
+        const idle=page.locator(away==='dashboard'?'.personal-home .home-heading a[href="#new"]':'[data-settings-category=personal]');await idle.focus();assert.equal(await idle.evaluate(node=>document.activeElement===node),true);
+        const projectionReads=[],observeProjection=response=>{
+          if(!projectionRequest(response.request()))return;
+          const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};stage.home_projection_receipts.push(receipt);
+          projectionReads.push(response.json().then(body=>Object.assign(receipt,{revision:body.revision,clock_only:body.clock_only,matching_pending_ids:body.tasks?.filter(task=>task.data?.title?.startsWith(query)&&task.status==='pending'&&!task.action_excluded).map(task=>task.id)}),error=>{receipt.parse_error=error.message;}));
+        };
+        page.on('response',observeProjection);
+        try{
+          if(change==='insert')inserted=await createTask('后台新增');
+          else if(change==='delete'){const notice=await api('/notices/'+removed.notice);await api('/notices/'+removed.notice,'DELETE',{version:notice.version});}
+          else{const task=(await api('/tasks/'+inserted.task+'/workflow')).task;await api('/tasks/'+task.id,'PUT',{version:task.version,data:task.data,status:'cancelled',reason:'本人取消合成个人事项，验证待办筛选及时更新'});}
+          const expected=await api('/tasks/page?status=pending&limit=50&q='+encodeURIComponent(query)),home=await api('/tasks/page?status=pending&scope=personal&limit=1');
+          stage.expected_ids=expected.items.map(task=>task.id);stage.expected_total=expected.total;stage.expected_home_pending=home.total;
+          assert.deepEqual([...stage.expected_ids].sort(),(change==='insert'?[fixed.task,removed.task,inserted.task]:change==='delete'?[fixed.task,inserted.task]:[fixed.task]).sort());
+          // This read observes only the server's committed domain values; it
+          // cannot warm or mutate the application's projection cache.
+          const signalResponse=await context.request.get(origin+'/api/proactive/revision',{headers:{'X-Workspace-Revision':'1'}});assert.equal(signalResponse.status(),200,await signalResponse.text());stage.expected_domains=(await signalResponse.json()).domains;
+          stage.sync_probes.push(await probe());
+          if(away==='dashboard')await page.waitForFunction(total=>document.querySelector('.home-counts [data-overview-filter=pending] b')?.textContent===String(total),home.total);
+          // Subsequent real probes serialize after the stable update even on
+          // settings, where no task projection is needed. Keep their observed
+          // domains so an unconsumed signal cannot hide a stale route cache.
+          stage.sync_probes.push(await probe(),await probe());
+          for(const receipt of stage.sync_probes.slice(-2))for(const domain of ['tasks','notices','account'])assert.equal(receipt.domains?.[domain],stage.expected_domains[domain],JSON.stringify({domain,receipt,expected:stage.expected_domains}));
+        }finally{page.off('response',observeProjection);await Promise.all(projectionReads);await saveReport();}
+        for(const receipt of stage.home_projection_receipts){assert.equal(receipt.status,200,JSON.stringify(receipt));assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));}
+        if(away==='dashboard'){
+          const full=stage.home_projection_receipts.filter(receipt=>receipt.clock_only===false).at(-1);assert.ok(full,'The real home route must consume a full changed task projection');
+          assert.deepEqual([...full.matching_pending_ids].sort(),[...stage.expected_ids].sort());stage.home_revision=full.revision;
+        }else assert.equal(stage.home_projection_receipts.length,0,'Settings must consume the stable signal without fetching a task projection');
+        const pageReads=[],observePage=response=>{
+          if(!taskResponse(query,response))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};stage.return_page_receipts.push(receipt);
+          pageReads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(task=>task.id),total:body.total}),error=>{receipt.parse_error=error.message;}));
+        };
+        page.on('response',observePage);
+        try{await nav('tasks');await settledTaskSearch(query,stage.expected_total);}
+        finally{page.off('response',observePage);await Promise.all(pageReads);stage.actual_ids=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));stage.actual_count=await page.locator('#task-count').innerText();await saveReport();}
+        assert.ok(stage.return_page_receipts.length>0,'An authoritative stable change must revalidate this collection on route return');
+        for(const receipt of stage.return_page_receipts){assert.equal(receipt.status,200,JSON.stringify(receipt));assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));}
+        assert.equal(await page.locator('#task-search').inputValue(),query);assert.deepEqual([...stage.actual_ids].sort(),[...stage.expected_ids].sort());
+        assert.equal(await page.locator('[data-action=filter][data-filter=pending]').getAttribute('aria-selected'),'true');stage.status='passed';await saveReport();
+      }
+      }
+      const expectedIds=evidence.stages.at(-1).expected_ids;
+      const mobile=evidence.mobile_layout={status:'resizing',expected_ids:expectedIds,before_resize:await page.evaluate(mobileListLayout,{expectedIds})};await saveReport();
+      try{
+        await page.setViewportSize({width:390,height:844});mobile.after_resize=await page.evaluate(mobileListLayout,{expectedIds});await saveReport();
+        // Resizing from a visible desktop sidebar starts the mobile drawer's
+        // real transition. A photo taken immediately is not settled evidence.
+        // Retain the original 15-second page deadline and fail if the UI does
+        // not close naturally or the unchanged task cannot receive a pointer.
+        const settled=await page.waitForFunction(mobileListLayout,{expectedIds,wait:true});mobile.settled=await settled.jsonValue();await settled.dispose();
+        assert.ok(mobile.settled.ready,JSON.stringify(mobile.settled));assert.deepEqual([...mobile.settled.task_ids].sort(),[...expectedIds].sort());
+        await page.screenshot({path:path.join(out,engine+'-mobile-list-cache.png')});mobile.after_capture=await page.evaluate(mobileListLayout,{expectedIds});assert.ok(mobile.after_capture.ready,JSON.stringify(mobile.after_capture));mobile.status='passed';evidence.status='passed';
+      }catch(error){mobile.status='failed';mobile.error=error.message;throw error;}
+      finally{mobile.observation=await page.evaluate(()=>{const probe=window.__sprintMobileListLayout;return probe?{last:probe.last,samples:probe.samples}:null;}).catch(error=>({error:error.message}));mobile.final=await page.evaluate(mobileListLayout,{expectedIds}).catch(error=>({error:error.message}));await saveReport();}
+    });
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
   }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await saveReport();await browser.close();}
 }

@@ -10,7 +10,8 @@ export function createWorkspaceProjection({api,owner,context=()=>null}){
     if(selected.some(kind=>!['notices','tasks'].includes(kind)))throw Error('不支持的工作台数据类型');
     const current=()=>identity===account&&owner()===account&&context()===view&&request===token;
     const versions=selected.map(kind=>cache[kind]?.revision),base=versions[0];
-    const canMerge=clockOnly&&base&&versions.every(revision=>revision===base);
+    const baselineKnown=!!base&&versions.every(revision=>revision===base);
+    const canMerge=clockOnly&&baselineKnown;
     const params=new URLSearchParams({include:selected.join(',')});
     if(canMerge){params.set('clock_only','1');params.set('revision',base);}
     let result=await api('/workspace/projection?'+params);
@@ -19,14 +20,17 @@ export function createWorkspaceProjection({api,owner,context=()=>null}){
       if(!Array.isArray(result[kind])||!cache[kind])return true;
       const ids=new Set(cache[kind].items.map(item=>item.id));return result[kind].some(item=>!ids.has(item.id));
     });
+    let replacedSparse=false;
     if(result.clock_only&&(!canMerge||result.revision!==base||invalidSparse())){
+      replacedSparse=true;
       // A server restart or changed entity set requires a complete lightweight
       // snapshot. Sparse fields are never mistaken for complete task data.
       result=await api('/workspace/projection?'+new URLSearchParams({include:selected.join(',')}));
       if(!current())return null;
       if(result.clock_only)throw Error('工作台数据范围已变化，请重新读取。');
     }
-    const complete={...result};
+    const complete={...result,previous_revision:baselineKnown?base:null,baseline_known:baselineKnown,
+      stable_changed:replacedSparse||baselineKnown&&result.revision!==base};
     for(const kind of selected){
       if(!Array.isArray(result[kind]))throw Error('工作台数据暂未完整返回，请重试。');
       const patches=new Map(result[kind].map(item=>[item.id,item]));
@@ -35,5 +39,5 @@ export function createWorkspaceProjection({api,owner,context=()=>null}){
     }
     return complete;
   }
-  return {load,clear:reset};
+  return {load,clear:reset,revision:kind=>identity===owner()?cache[kind]?.revision??null:null};
 }

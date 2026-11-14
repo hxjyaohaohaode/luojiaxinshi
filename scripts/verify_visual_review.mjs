@@ -20,6 +20,18 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
  const resize=async(width,height=871)=>{await page.setViewportSize({width,height});await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<2,{width,height});await settle();};
  const nav=async route=>{await page.goto(origin+'/#'+route,{waitUntil:'domcontentloaded'});await page.waitForFunction(route=>{const content=document.querySelector('#content'),rendered=content?.dataset.page;return content&&!content.inert&&rendered===location.hash.slice(1)&&(rendered===route||route==='chat'&&rendered?.startsWith('chat/'));},route);await settle();};
  const capture=async name=>{if(engine==='chromium')await page.screenshot({path:path.join(out,name+'.png')});};
+ const taskResponse=(query,view,response)=>{
+  const url=new URL(response.url());return response.request().method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&(url.searchParams.get('q')||'')===query&&url.searchParams.get('status')==='all'&&!url.searchParams.has('cursor')&&(view==='board'?url.searchParams.get('sort')==='board':!url.searchParams.has('sort'));
+ };
+ const taskResultsReady=async(query,view,response)=>{
+  assert.equal(response.status(),200,await response.text());const data=await response.json();
+  assert.ok(Array.isArray(data.items)&&data.items.length>0,'The real filtered task page must contain records');
+  const ids=data.items.map(item=>item.id).sort();
+  await page.waitForFunction(({query,view,ids})=>{
+   const results=document.querySelector('#task-results');
+   return document.querySelector('#task-search')?.value===query&&document.querySelector('#task-status-select')?.value==='all'&&document.querySelector('[data-task-view="'+view+'"]')?.getAttribute('aria-pressed')==='true'&&results?.getAttribute('aria-busy')==='false'&&JSON.stringify([...results.querySelectorAll('.task-row')].map(row=>row.dataset.taskId).sort())===JSON.stringify(ids);
+  },{query,view,ids});
+ };
  const check=async(name,fn)=>{try{await fn();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.message});console.log('FAIL',engine,name,error.message);await page.screenshot({path:path.join(out,engine+'-'+report.checks.length+'-failure.png')}).catch(()=>{});}};
  try{
   await page.goto(origin+'/#login',{waitUntil:'domcontentloaded'});await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
@@ -51,7 +63,16 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     report.measurements.push({engine,page:'tasks',width,firstTaskTop:b.task.top});if([1413,390].includes(width))await capture('tasks-'+width);
    });
    await check('search, status and view switching preserve user input at '+width,async()=>{
-    await page.locator('#task-search').fill('申请');if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.locator('[data-task-view=list]').click();assert.equal(await page.locator('#task-search').inputValue(),'申请');assert.ok(await page.locator('#task-results .task-row').count()>0);await page.locator('#task-search').fill('');await page.locator('[data-task-view=board]').click();
+    // Begin from a settled board so switching to the list changes the server
+    // sort key even if the previous route restored a cached task projection.
+    await page.locator('[data-task-view=board]').click();await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false');
+    const [filtered]=await Promise.all([page.waitForResponse(response=>taskResponse('申请','list',response)),(async()=>{
+     await page.locator('#task-search').fill('申请');if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.locator('[data-task-view=list]').click();
+    })()]);
+    await taskResultsReady('申请','list',filtered);
+    assert.equal(await page.locator('#task-search').inputValue(),'申请');assert.ok(await page.locator('#task-results .task-row').count()>0);
+    const [restored]=await Promise.all([page.waitForResponse(response=>taskResponse('','board',response)),(async()=>{await page.locator('#task-search').fill('');await page.locator('[data-task-view=board]').click();})()]);
+    await taskResultsReady('','board',restored);
    });
   }
   await check('a pending memory index refreshes automatically without acknowledging unread entries',async()=>{

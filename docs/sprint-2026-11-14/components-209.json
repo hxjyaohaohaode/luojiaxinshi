@@ -5716,5 +5716,1712 @@
       "method": "Normal scroll and trial click; incomplete draft was not submitted."
     },
     "documented_at": "2026-11-14T07:06:01.742800+00:00"
-  }
+  },
+  "review_followup": {
+    "documented_at": "2026-11-14T09:35:51.946206+00:00",
+    "historical_fields_scope": "All pre-existing fields and arrays are frozen Run52-and-earlier history. This appended review_followup is the later scoped record; names such as current_build in the historical data do not identify the new candidate.",
+    "ci57": {
+      "run_id": 43578124182,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43578124182",
+      "head_sha": "19d9162fc9395f9c140ca13545f5975e9d74ea81",
+      "checkout_sha": "568111d44b83baecf2f0a5683914294604713fd3",
+      "implementation_sha256": "173f5093d7b97a8676dbf6d62c29c5fa3faee9819206a15b9046d70e269ecf78",
+      "status": "completed_failure",
+      "report_slots": 33,
+      "statuses": {
+        "incomplete": 1,
+        "passed": 31,
+        "failed": 1
+      },
+      "recorded_checks": 1012,
+      "passed_checks": 1010,
+      "explicit_failed_checks": 2,
+      "separate_unrecorded_fatal_assertions": 1,
+      "expected_checks": 1053,
+      "expected_checks_without_complete_record": 41,
+      "unrecorded_breakdown": {
+        "sprint_fully_unexecuted": 36,
+        "chat_webkit_interrupted_current_check": 1,
+        "chat_webkit_subsequent_unexecuted": 4
+      },
+      "failure_detail": [
+        {
+          "suite": "Sprint",
+          "engines": [
+            "chromium",
+            "firefox"
+          ],
+          "assertion": "page.waitForFunction timeout 15000 ms at verify_sprint_ui.mjs:187; expected 54 board rows and aria-busy=false.",
+          "timing_boundary": "Per-engine failed range receipts were not saved in this run. The exact network/guard timing is not established by its raw report."
+        },
+        {
+          "suite": "Chat interactions",
+          "engines": [
+            "webkit"
+          ],
+          "assertion": "assert.ok(!stream.next.includes('水墨渐显'))",
+          "recording_boundary": "Three completed checks precede the interrupted fourth compound check; four later checks were not executed."
+        }
+      ],
+      "independently_passed_scope": {
+        "sprint_webkit": 25,
+        "clock_warm_range_checks": 3,
+        "visual": 168,
+        "pilot": 33,
+        "pilot_cold_imports": 6,
+        "agent": 13,
+        "composer": 9,
+        "agent_composer_engine": "chromium",
+        "agent_composer_media": "Synthetic provider and simulated microphone; not physical-device delivery or recording."
+      },
+      "continuity": {
+        "passed": 990,
+        "failed": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "artifact_sha256": "e5f9adfe25ddb76259e421f4d48cc3821efa11de52ca591c8ab99bf860e372f0"
+      },
+      "browser_artifact": {
+        "id": 14108125775,
+        "bytes": 21454123,
+        "sha256": "3ca6e2f04e5f097a9a10f4939d04bb35a114aab58635ec6c5c268d8db4ce65e4",
+        "verified_against_official_metadata": true
+      },
+      "audit_record": "ci-evidence/43578124182/browser-report-audit.json",
+      "audit_sha256": "05079684067715f0c4e50b1cd89ac7c0fbb34a380d3f9e241009f3c43f78a004",
+      "screenshots_actually_reviewed": [
+        {
+          "path": "browser/sprint-ui-browser/chromium-failure-7.png",
+          "observed": "The actual failure screenshot visibly retains the board at 50 / 54, with the load-more button present. It does not identify which request or guard lost the intent."
+        },
+        {
+          "path": "browser/sprint-ui-browser/webkit-mobile-publication-recovery.png",
+          "observed": "The real 390 px page shows the uncertain-publication recovery panel and all three recovery actions with readable text, above the fixed navigation. New input is lower in the form; the screenshot alone does not prove the API replay assertions."
+        }
+      ]
+    },
+    "isolated_list_fix": {
+      "commit": "34e55ab3f7d5e907b759fe14b69658c675612410",
+      "base_commit": "19d9162fc9395f9c140ca13545f5975e9d74ea81",
+      "local_implementation_sha256": "cc66565aeacdb8ec13ce66f795c5b9b634c26338f44fbd8aa4c89e0f640dacdc",
+      "fingerprint_scope": "Raw files in this isolated local worktree only; root integration and the next CI candidate have their own fingerprints.",
+      "node": {
+        "tests": 329,
+        "passed": 329,
+        "failed": 0,
+        "original_tests_retained": 302
+      },
+      "focused_node": {
+        "tests": 49,
+        "passed": 49,
+        "failed": 0,
+        "new_tests": 27,
+        "original_related_tests": 22
+      },
+      "new_node_tests": 27,
+      "http_bundle": {
+        "tests": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "build": {
+        "node": "v24.22.1",
+        "entries": {
+          "js": "/static/dist/app-A52BRFJG.js",
+          "css": "/static/dist/styles-BKR4PFDD.css"
+        },
+        "files": 25,
+        "source_files": 194,
+        "build_check": true,
+        "manifest_sha256": "6d909031883c115f559c3e4e2d85668473be7c348f5ade40102948c16a1e8d16"
+      },
+      "evidence_record": "artifacts/list-cache-revision/verification.json",
+      "evidence_sha256": "5b380d602ba90481f48917b4cc49095ba01737a92ee013effb76e945be2b58fc",
+      "changes": [
+        "Each paged collection retains its own projection revision captured before I/O; shared home cache advancement does not certify an older list.",
+        "Authenticated stable notices/tasks/account changes invalidate both cached collections even on settings/sources, without clearing the loaded range.",
+        "Pending requests can be reused only for the same owner, view, invalidation generation and projection revision; old responses cannot certify a newer refresh.",
+        "A same-scope explicit load-more intent survives a background refresh or temporary paint gate. Repeated clicks coalesce; real failures and scope changes cancel it."
+      ],
+      "browser_execution": "Not executed locally; the next official candidate is required."
+    },
+    "candidate": {
+      "run_id": 43581184272,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43581184272",
+      "head_sha": "9e86a1e9b798071e870a0e35d73b46610d435988",
+      "tree": "849605264ce3af3bffd15896f7a530b3685438af",
+      "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+      "checkout_sha": null,
+      "status": "in_progress_pending_original_reports",
+      "browser_job": 132406044094,
+      "continuity_job": 132406044095,
+      "expected_checks": {
+        "browser": 1056,
+        "sprint": 78,
+        "sprint_per_engine": 26,
+        "continuity": 990
+      },
+      "expected_counts_are_not_results": true,
+      "original25_sprint_names_and_order_retained": true,
+      "deadline_seconds": 360,
+      "new_browser_scope": [
+        "dashboard insert/delete/status after the real home projection advances",
+        "settings insert/delete/status after real stable probes with zero task projection reads",
+        "same filter and exact task IDs/total on return"
+      ],
+      "browser_execution": "No local browser execution."
+    },
+    "remaining_scope": [
+      "Physical Chinese soft keyboard, real microphone permissions, screen-reader operation and 200% zoom are not newly validated by these local controller tests.",
+      "209 upstream references are not all installed or individually operated; the frozen 35/79/95 decisions and actual upstream review scope remain unchanged."
+    ]
+  },
+  "latest_review_followup": {
+    "candidate_acceptance_frozen_at_utc": "2026-11-14T12:18:27.857754+00:00",
+    "status": "candidate_engineering_and_reviewed_visual_gates_passed",
+    "historical_record_scope": "本对象是 CI63 候选的定时快照。原始顶层字段、完整 25/209 数组及以前 latest 全文保持历史身份；后续状态只在本对象及明确日期的记录中表达。",
+    "candidate": {
+      "head_sha": "70226e910b7fe2ecdfd49b0a34dcd62ba00484bc",
+      "tree_sha": "894b7ef5b4c77da666177649e853afb0811f1359",
+      "actual_pr_checkout_sha": "e3adde8146fec6fbb9f4f63057fabb97a6a8d975",
+      "implementation_sha256": "4e4d3e2ca56b7ccbc8e9bd9a197b07e539ea8d8d987d47656b7486504b991634",
+      "run_id": 43592108675,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43592108675",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "required_jobs": 9,
+      "successful_jobs": 9
+    },
+    "public_original_evidence": {
+      "path": "docs/audits/sprint-review-ci-63-success.json",
+      "sha256": "16d7dab07a897b9f0dc51849df6a550b5719164978a4126bd240fc56b07fe6fe",
+      "root_verified_at": "2026-11-14T12:18:27.857754+00:00"
+    },
+    "delivery_record": {
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5",
+      "actions": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions",
+      "scope": "本候选快照与随后 main 交付记录分别保留，不把 PR merge checkout 冒充 main push。"
+    },
+    "actual_counts": {
+      "backend_by_os": {
+        "linux": {
+          "file_count": 139,
+          "tests": 1875,
+          "passed": 1873,
+          "skipped": 2,
+          "failures": 0,
+          "errors": 0
+        },
+        "windows": {
+          "file_count": 139,
+          "tests": 1875,
+          "passed": 1874,
+          "skipped": 1,
+          "failures": 0,
+          "errors": 0
+        }
+      },
+      "node_by_os": {
+        "linux": {
+          "recorded": 358,
+          "passed": 358
+        },
+        "windows": {
+          "recorded": 358,
+          "passed": 358
+        }
+      },
+      "browser": {
+        "report_slots": 33,
+        "passed_report_slots": 33,
+        "recorded": 1056,
+        "passed": 1056,
+        "failed": 0,
+        "unrecorded": 0,
+        "previous_passed_identities_missing": 0,
+        "sprint": 78
+      },
+      "continuity": {
+        "recorded": 990,
+        "passed": 990,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ]
+      }
+    },
+    "browser_inventory": [
+      {
+        "suite": "Sprint workflows and loading performance",
+        "path": "sprint-ui-browser/report.json",
+        "status": "passed",
+        "recorded": 78,
+        "passed_checks": 78,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 26,
+          "firefox": 26,
+          "webkit": 26
+        }
+      },
+      {
+        "suite": "Browser stability",
+        "path": "frontend-v9-browser/report.json",
+        "status": "passed",
+        "recorded": 123,
+        "passed_checks": 123,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 41,
+          "firefox": 41,
+          "webkit": 41
+        }
+      },
+      {
+        "suite": "Browser regression",
+        "path": "frontend-v8-browser/report.json",
+        "status": "passed",
+        "recorded": 201,
+        "passed_checks": 201,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 67,
+          "firefox": 67,
+          "webkit": 67
+        }
+      },
+      {
+        "suite": "Reference interactions",
+        "path": "reference-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 48,
+        "passed_checks": 48,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 16,
+          "firefox": 16,
+          "webkit": 16
+        }
+      },
+      {
+        "suite": "Workspace interactions",
+        "path": "workspace-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 120,
+        "passed_checks": 120,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 40,
+          "firefox": 40,
+          "webkit": 40
+        }
+      },
+      {
+        "suite": "Visual layout bounds",
+        "path": "visual-review-browser/report.json",
+        "status": "passed",
+        "recorded": 168,
+        "passed_checks": 168,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 56,
+          "firefox": 56,
+          "webkit": 56
+        }
+      },
+      {
+        "suite": "Notice intake and flexible workflows",
+        "path": "notice-flow-browser/report.json",
+        "status": "passed",
+        "recorded": 45,
+        "passed_checks": 45,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 15,
+          "firefox": 15,
+          "webkit": 15
+        }
+      },
+      {
+        "suite": "Task board drag and recovery",
+        "path": "task-board-browser/report.json",
+        "status": "passed",
+        "recorded": 28,
+        "passed_checks": 28,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 10,
+          "firefox": 9,
+          "webkit": 9
+        }
+      },
+      {
+        "suite": "Natural notice intake",
+        "path": "natural-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "Personal materials and submissions",
+        "path": "task-materials-browser/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Source subscriptions and personal inbox",
+        "path": "source-inbox-browser/report.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Persistent push and device ownership",
+        "path": "push-browser/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 8
+        }
+      },
+      {
+        "suite": "Notice matter grouping and campus capacities",
+        "path": "notice-matters-browser/report.json",
+        "status": "passed",
+        "recorded": 21,
+        "passed_checks": 21,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 7,
+          "firefox": 7,
+          "webkit": 7
+        }
+      },
+      {
+        "suite": "School source chooser and pending saves",
+        "path": "source-presets-browser/report.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Independent devices and campus collaboration",
+        "path": "pilot-workspace-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "QQ group intake, rules and attachments",
+        "path": "qq-group-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 12,
+        "passed_checks": 12,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 4,
+          "firefox": 4,
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Agent approvals and cancellation",
+        "path": "agent-chat-browser/results.json",
+        "status": "passed",
+        "recorded": 13,
+        "passed_checks": 13,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 13
+        }
+      },
+      {
+        "suite": "Agent authored UI and persistence",
+        "path": "agent-adaptive-browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent private media and resize",
+        "path": "reference-fusion/browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent incremental rendering",
+        "path": "agent-quality-browser/performance.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Composer attachments and dictation",
+        "path": "composer-browser/results.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "OpenUI streaming Chromium",
+        "path": "openui-browser/chromium/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming Firefox",
+        "path": "openui-browser/firefox/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming WebKit",
+        "path": "openui-browser/webkit/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 10
+        }
+      },
+      {
+        "suite": "Compact chat Chromium",
+        "path": "chat-layout/chromium/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 4
+        }
+      },
+      {
+        "suite": "Compact chat Firefox",
+        "path": "chat-layout/firefox/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 4
+        }
+      },
+      {
+        "suite": "Compact chat WebKit",
+        "path": "chat-layout/webkit/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Chat interactions Chromium",
+        "path": "chat-interactions/chromium/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Chat interactions Firefox",
+        "path": "chat-interactions/firefox/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 8
+        }
+      },
+      {
+        "suite": "Chat interactions WebKit",
+        "path": "chat-interactions/webkit/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 8
+        }
+      },
+      {
+        "suite": "Chat recovery Chromium",
+        "path": "chat-recovery/chromium/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 3
+        }
+      },
+      {
+        "suite": "Chat recovery Firefox",
+        "path": "chat-recovery/firefox/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 3
+        }
+      },
+      {
+        "suite": "Chat recovery WebKit",
+        "path": "chat-recovery/webkit/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 3
+        }
+      }
+    ],
+    "runner_contract": {
+      "main_unique_scripts": 16,
+      "main_all_exit_zero": true,
+      "agent_scripts": 5,
+      "agent_all_exit_zero": true,
+      "early_final_files_byte_identical": 33,
+      "old_passed_case_identities_preserved": true
+    },
+    "build": {
+      "entries": {
+        "js": "/static/dist/app-EXBTH7EL.js",
+        "css": "/static/dist/styles-BHHEBXRE.css"
+      },
+      "files_including_manifest": 25,
+      "hashed_outputs": 24,
+      "source_files": 194,
+      "manifest_sha256": "671eeaaf44f9c85a18464ee90c32364306daceda0f3ab342b82dc85dc2efd21c",
+      "ci_build_check": {
+        "linux": "passed",
+        "windows": "passed"
+      },
+      "measured_ci_output_metrics": {
+        "static/dist/chunks/operations-CWOQ6DW4.js": {
+          "bytes": 11088,
+          "gzip": 4540,
+          "brotli": 3591
+        },
+        "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": {
+          "bytes": 13129,
+          "gzip": 5349,
+          "brotli": 4318
+        },
+        "static/dist/chunks/insights-J6NHPJTV.js": {
+          "bytes": 8924,
+          "gzip": 3469,
+          "brotli": 2918
+        },
+        "static/dist/chunks/calendar-45THDV6Z.js": {
+          "bytes": 43913,
+          "gzip": 15664,
+          "brotli": 13372
+        },
+        "static/dist/app-EXBTH7EL.js": {
+          "bytes": 435643,
+          "gzip": 148999,
+          "brotli": 116635
+        },
+        "static/dist/chunks/chunk-VHWCVQYR.js": {
+          "bytes": 15828,
+          "gzip": 5811,
+          "brotli": 4735
+        },
+        "static/dist/chunks/memory-CMBMXAQ5.js": {
+          "bytes": 89005,
+          "gzip": 30170,
+          "brotli": 24955
+        },
+        "static/dist/chunks/collaboration-CMBOZBVL.js": {
+          "bytes": 16484,
+          "gzip": 6400,
+          "brotli": 5307
+        },
+        "static/dist/chunks/charts-UCDSXHVD.js": {
+          "bytes": 6016,
+          "gzip": 2968,
+          "brotli": 2630
+        },
+        "static/dist/chunks/chat-3FTYZ52U.js": {
+          "bytes": 188379,
+          "gzip": 64664,
+          "brotli": 54324
+        },
+        "static/dist/chunks/chunk-ZE6GBC5S.js": {
+          "bytes": 31845,
+          "gzip": 13470,
+          "brotli": 11528
+        },
+        "static/dist/chunks/chunk-HHFMEND4.js": {
+          "bytes": 3677,
+          "gzip": 1609,
+          "brotli": 1483
+        },
+        "static/dist/chunks/chunk-URIZXBGG.js": {
+          "bytes": 6306,
+          "gzip": 2501,
+          "brotli": 2288
+        },
+        "static/dist/chunks/chunk-52VEMMR4.js": {
+          "bytes": 38252,
+          "gzip": 7656,
+          "brotli": 6518
+        },
+        "static/dist/chunks/sources-AO7MVCU5.js": {
+          "bytes": 43018,
+          "gzip": 14947,
+          "brotli": 12606
+        },
+        "static/dist/chunks/chunk-KRBNAJD2.js": {
+          "bytes": 10968,
+          "gzip": 4029,
+          "brotli": 3386
+        },
+        "static/dist/chunks/chunk-43FC37BF.js": {
+          "bytes": 129909,
+          "gzip": 37373,
+          "brotli": 26365
+        },
+        "static/dist/chunks/chunk-OFOGQT63.js": {
+          "bytes": 7269,
+          "gzip": 2809,
+          "brotli": 2408
+        },
+        "static/dist/chunks/chunk-5XLQ4GUR.js": {
+          "bytes": 9941,
+          "gzip": 3899,
+          "brotli": 3377
+        },
+        "static/dist/chunks/campus-I3DPT7PW.js": {
+          "bytes": 59855,
+          "gzip": 19239,
+          "brotli": 16460
+        },
+        "static/dist/chunks/chunk-O5S2CXFI.js": {
+          "bytes": 3727,
+          "gzip": 1639,
+          "brotli": 1376
+        },
+        "static/dist/chunks/chunk-HWBRJJQM.js": {
+          "bytes": 1319,
+          "gzip": 715,
+          "brotli": 583
+        },
+        "static/dist/styles-BHHEBXRE.css": {
+          "bytes": 600224,
+          "gzip": 114998,
+          "brotli": 89590
+        },
+        "static/dist/index.html": {
+          "bytes": 1525,
+          "gzip": 775,
+          "brotli": 514
+        }
+      },
+      "metrics_scope": "尺寸与压缩数据读取本轮原始 build:check；本次文档更新没有重新构建或压缩。"
+    },
+    "regression_evidence": {
+      "clock": {
+        "engines": 3,
+        "loaded_ids_preserved": 54,
+        "full_page_reads": 0,
+        "dom_mutations": 0,
+        "focus_and_scroll_preserved": true,
+        "actual_sparse_response_and_revision_matched": true,
+        "unchanged_signal_extra_projection_reads": 0
+      },
+      "board_page_move": {
+        "engines": 3,
+        "range_before_and_after": 54,
+        "real_index_transition": [
+          50,
+          49
+        ],
+        "fresh_first_page": 50,
+        "complete_new_id_order_checked": true,
+        "next_page_final_range": 54
+      },
+      "cross_route_cache": {
+        "engines": 3,
+        "total_stages": 18,
+        "away_routes": [
+          "dashboard",
+          "settings"
+        ],
+        "changes_per_route": [
+          "insert",
+          "delete",
+          "status"
+        ],
+        "actual_expected_counts": [
+          3,
+          2,
+          1
+        ],
+        "independent_notice_and_task_receipts_per_engine": 6,
+        "settings_projection_reads": 0,
+        "same_document_expired_session_and_login_checked": true,
+        "stale_login_toast_cleared_after_acceptance": true
+      },
+      "publication": {
+        "retries": 6,
+        "scenarios": [
+          "same form retry",
+          "reload recovery with independent new draft"
+        ],
+        "attempts_each": 2,
+        "publications_each": 1,
+        "unresolved_attachment_names_preserved": true,
+        "cancelled_submissions": 3,
+        "late_post_status": 409,
+        "late_error_code": "publication_cancelled"
+      },
+      "query_races": {
+        "engines": 3,
+        "real_handler_entered_and_response_captured": true,
+        "late_fulfill_attempt_recorded": true,
+        "scope": "保留实际 abort/late-fulfill 结果，不把尝试送回旧响应写成必然抵达页面。"
+      },
+      "pilot_cold_imports": {
+        "formal_checks": 33,
+        "held_module_scenarios": 6,
+        "options_before_and_after_release": 0
+      },
+      "board_motion": {
+        "formal_checks": 28,
+        "actual_observations": 18,
+        "engines": 3,
+        "initial_route_animation_finished_before_measurement": true,
+        "release_and_real_post_ack_zero_unexpected_animations": true,
+        "cancel_or_outside_move_requests": 0,
+        "proof_sha256": "252ab71226d3314cc793e706f87d7b13dd48cc450cf1553fcddcf6121406e681",
+        "scope": "原 28 个身份及 0 动画断言保留；18 行观测不增加正式检查数。不得倒推 CI62 唯一触发时序。"
+      },
+      "composer": {
+        "formal_checks": 9,
+        "engine": "chromium",
+        "geometry_phases": 13,
+        "recording_geometry_samples": 3,
+        "workspace_overflow": "clip",
+        "workspace_scroll_left": 0,
+        "manual_input_and_transcript_preserved": true,
+        "retry_and_cleanup_recorded": true,
+        "scope": "模拟麦克风、合成转写及真实浏览器 DOM/网络/几何；不等同实体权限或真实服务。"
+      },
+      "agent": {
+        "formal_checks": 13,
+        "engine": "chromium",
+        "cold_memory_lifecycle_checks": 3
+      }
+    },
+    "performance": {
+      "observations": [
+        {
+          "engine": "chromium",
+          "label": "cold-login",
+          "can_input_at_ms": 244.39999999999418,
+          "dom_content_loaded_ms": 116.39999999999418,
+          "load_event_ms": 118.5,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1836737,
+          "encoded_body_size": 1831937,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 79.39999999999418,
+          "dom_content_loaded_ms": 22.09999999999127,
+          "load_event_ms": 24.09999999999127,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 1831937,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 250.1999999999971,
+          "dom_content_loaded_ms": 22.5,
+          "load_event_ms": 24.19999999999709,
+          "request_count": 28,
+          "static_request_count": 18,
+          "css_request_count": 1,
+          "transfer_size": 78818,
+          "encoded_body_size": 3104100,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "firefox",
+          "label": "cold-login",
+          "can_input_at_ms": 418,
+          "dom_content_loaded_ms": 284,
+          "load_event_ms": 284,
+          "request_count": 17,
+          "static_request_count": 15,
+          "css_request_count": 1,
+          "transfer_size": 1863342,
+          "encoded_body_size": 1858242,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 143,
+          "dom_content_loaded_ms": 70,
+          "load_event_ms": 73,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 366998,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 298,
+          "dom_content_loaded_ms": 55,
+          "load_event_ms": 58,
+          "request_count": 26,
+          "static_request_count": 16,
+          "css_request_count": 1,
+          "transfer_size": 77545,
+          "encoded_body_size": 512245,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "webkit",
+          "label": "cold-login",
+          "can_input_at_ms": 264,
+          "dom_content_loaded_ms": 129,
+          "load_event_ms": 131,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1836027,
+          "encoded_body_size": 1831227,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 73,
+          "dom_content_loaded_ms": 32,
+          "load_event_ms": 33,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1814,
+          "encoded_body_size": 914,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 288,
+          "dom_content_loaded_ms": 50,
+          "load_event_ms": 51,
+          "request_count": 29,
+          "static_request_count": 19,
+          "css_request_count": 1,
+          "transfer_size": 78503,
+          "encoded_body_size": 75203,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure."
+        }
+      ],
+      "network_fixture": {
+        "service_workers": "block",
+        "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+      },
+      "scope": "三引擎各冷登录、同上下文热登录和热聊天，共 9 条实际记录；CSS 请求每次 1 个。未设没有依据的延时成功阈值，未测精确解析耗时；不同 Worker 策略的旧轮不直接作速度对比。"
+    },
+    "visual_review": {
+      "status": "passed_for_actually_reviewed_views",
+      "reviewed_images": 18,
+      "proof_sha256": "81a108381cd8e5c5aca422126f85d13f5c711ed67e2ac0399ebb85529657e822",
+      "images": [
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/chromium-mobile-list-cache.png",
+          "artifact_member": "sprint-ui-browser/chromium-mobile-list-cache.png",
+          "sha256": "b2e070f4859f11e10be8e516fd6212161fc3c2f194b2743c10114482abd970f4",
+          "bytes": 36844,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: the drawer is closed and no stale authentication alert remains. The one retained synthetic task, completion control, more menu and next-step action are visible within the screen; bottom navigation is unobscured. WebKit has selected search text, which does not cover the task.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/chromium-desktop-board-page-move.png",
+          "artifact_member": "sprint-ui-browser/chromium-desktop-board-page-move.png",
+          "sha256": "0a167800d824ca7d5d6f4dab4d4a8c55bec0cc025ac121044c4038475e40441f",
+          "bytes": 94707,
+          "dimensions": [
+            1280,
+            850
+          ],
+          "actual_visual_observation": "Actually viewed at 1280×850 after the real query reset to the first page: the board shows 50 of 54 loaded tasks, three lane headings, intact card boundaries and a saved-position toast with Undo. No horizontal cropping or sidebar overlap is visible. Exact moved-card index and full 54-item ordering are established by the raw ID/response evidence, not this top-of-list image alone.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/task-board-browser/chromium-390.png",
+          "artifact_member": "task-board-browser/chromium-390.png",
+          "sha256": "e5f68d8752453d0c19595ebaa3404b48b10600d8d4f545a3bf6dec71ef4c1b1b",
+          "bytes": 67794,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: board lanes stack vertically; Chinese titles wrap, and completion, drag handle and more actions remain inside the card. The temporary saved-position toast sits above the bottom navigation and overlaps part of the lowest card; its Undo and close actions remain visible. This image is not used to claim every lower card is simultaneously unobscured.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/chromium-mobile-draft.png",
+          "artifact_member": "sprint-ui-browser/chromium-mobile-draft.png",
+          "sha256": "bc04a6a1ba5b89da59a1118479189c9ea139609fa8f37d6d715b5ed5f8b67f51",
+          "bytes": 57213,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed after normal page scrolling at 390×844: saved attachment, keep-attachment checkbox, save-draft control and the full publish-review button are visible above bottom navigation. The recorded raw control bounds independently show a 44 px button with more than 80 px clearance; no page-wide horizontal crop is visible.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/chromium-mobile-chat.png",
+          "artifact_member": "sprint-ui-browser/chromium-mobile-chat.png",
+          "sha256": "d5f251aa5cc85b324ff0e2b7edd082049f1acbd13e9277dcfdffb7bd95ecb71a",
+          "bytes": 50030,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: assistant text, code block and copy action, response toolbar, message input, send button and bottom navigation fit the screen. The notification-preference toast is above the input and does not cover its send control. This viewport image does not establish physical mobile keyboard or screen-reader behavior.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/firefox-mobile-list-cache.png",
+          "artifact_member": "sprint-ui-browser/firefox-mobile-list-cache.png",
+          "sha256": "49ca433893324bfe15d6d05dda6cc8eb12515cdc751cec07469922cdd697f510",
+          "bytes": 37531,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: the drawer is closed and no stale authentication alert remains. The one retained synthetic task, completion control, more menu and next-step action are visible within the screen; bottom navigation is unobscured. WebKit has selected search text, which does not cover the task.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/firefox-desktop-board-page-move.png",
+          "artifact_member": "sprint-ui-browser/firefox-desktop-board-page-move.png",
+          "sha256": "92110bd33feeecdd5c39fd3448204f481f588c00dc2ac135fcb714d957b35ca7",
+          "bytes": 112710,
+          "dimensions": [
+            1280,
+            850
+          ],
+          "actual_visual_observation": "Actually viewed at 1280×850 after the real query reset to the first page: the board shows 50 of 54 loaded tasks, three lane headings, intact card boundaries and a saved-position toast with Undo. No horizontal cropping or sidebar overlap is visible. Exact moved-card index and full 54-item ordering are established by the raw ID/response evidence, not this top-of-list image alone.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/task-board-browser/firefox-390.png",
+          "artifact_member": "task-board-browser/firefox-390.png",
+          "sha256": "eb8f158727d5f434ba09c2218391ea85e48f09d31daae7926805d08f7d3d4115",
+          "bytes": 72275,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: board lanes stack vertically; Chinese titles wrap, and completion, drag handle and more actions remain inside the card. The temporary saved-position toast sits above the bottom navigation and overlaps part of the lowest card; its Undo and close actions remain visible. This image is not used to claim every lower card is simultaneously unobscured.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/firefox-mobile-draft.png",
+          "artifact_member": "sprint-ui-browser/firefox-mobile-draft.png",
+          "sha256": "ec5dbd11b6c6e6d6f21ba2f861c139f44c8be5408c335de4969ac33e9eda10b8",
+          "bytes": 57372,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed after normal page scrolling at 390×844: saved attachment, keep-attachment checkbox, save-draft control and the full publish-review button are visible above bottom navigation. The recorded raw control bounds independently show a 44 px button with more than 80 px clearance; no page-wide horizontal crop is visible.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/firefox-mobile-chat.png",
+          "artifact_member": "sprint-ui-browser/firefox-mobile-chat.png",
+          "sha256": "12fc93c864fb46cbda62387780fd240ccc79731132707f12236a8f853462c101",
+          "bytes": 57030,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: assistant text, code block and copy action, response toolbar, message input, send button and bottom navigation fit the screen. The notification-preference toast is above the input and does not cover its send control. This viewport image does not establish physical mobile keyboard or screen-reader behavior.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/webkit-mobile-list-cache.png",
+          "artifact_member": "sprint-ui-browser/webkit-mobile-list-cache.png",
+          "sha256": "a293b6355ee6c9c90c9c8e15dc7c0a5e8d369a2a8329757f7d555816ee573032",
+          "bytes": 41079,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: the drawer is closed and no stale authentication alert remains. The one retained synthetic task, completion control, more menu and next-step action are visible within the screen; bottom navigation is unobscured. WebKit has selected search text, which does not cover the task.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/webkit-desktop-board-page-move.png",
+          "artifact_member": "sprint-ui-browser/webkit-desktop-board-page-move.png",
+          "sha256": "b58aec137c04f9feb14c2340b445255c056dd7101b25c508ab25ed82fe20a68d",
+          "bytes": 109643,
+          "dimensions": [
+            1280,
+            850
+          ],
+          "actual_visual_observation": "Actually viewed at 1280×850 after the real query reset to the first page: the board shows 50 of 54 loaded tasks, three lane headings, intact card boundaries and a saved-position toast with Undo. No horizontal cropping or sidebar overlap is visible. Exact moved-card index and full 54-item ordering are established by the raw ID/response evidence, not this top-of-list image alone.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/task-board-browser/webkit-390.png",
+          "artifact_member": "task-board-browser/webkit-390.png",
+          "sha256": "c7c7e3740a781f0c0aa70e50ad61943200bc3dc36c9451a3bcee9f1fba317036",
+          "bytes": 74833,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: board lanes stack vertically; Chinese titles wrap, and completion, drag handle and more actions remain inside the card. The temporary saved-position toast sits above the bottom navigation and overlaps part of the lowest card; its Undo and close actions remain visible. This image is not used to claim every lower card is simultaneously unobscured.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/webkit-mobile-draft.png",
+          "artifact_member": "sprint-ui-browser/webkit-mobile-draft.png",
+          "sha256": "45ca5598523a7fad369a3e6669aa068f0ba40e2472e329ed8e0c57e1e4c3e544",
+          "bytes": 66117,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed after normal page scrolling at 390×844: saved attachment, keep-attachment checkbox, save-draft control and the full publish-review button are visible above bottom navigation. The recorded raw control bounds independently show a 44 px button with more than 80 px clearance; no page-wide horizontal crop is visible.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/sprint-ui-browser/webkit-mobile-chat.png",
+          "artifact_member": "sprint-ui-browser/webkit-mobile-chat.png",
+          "sha256": "cf81b71595c2816ef360c1a38206f3ee5d0e5585387e1429aa42d18e3233fca9",
+          "bytes": 57564,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed at 390×844: assistant text, code block and copy action, response toolbar, message input, send button and bottom navigation fit the screen. The notification-preference toast is above the input and does not cover its send control. This viewport image does not establish physical mobile keyboard or screen-reader behavior.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/task-board-browser/chromium-touch.png",
+          "artifact_member": "task-board-browser/chromium-touch.png",
+          "sha256": "2a728d3b15ec5114179ff8f22b1ac0e8ba8c1fba253ea29d16c3a7c80be5f36a",
+          "bytes": 56782,
+          "dimensions": [
+            390,
+            844
+          ],
+          "actual_visual_observation": "Actually viewed after the Chromium touch sequence: the three synthetic cards occupy the declared action/followup lanes, the completed lane remains visible, and the reverted-state toast is above bottom navigation. This is simulated Chromium touch evidence, not a physical-device test.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/composer-browser/recording.png",
+          "artifact_member": "composer-browser/recording.png",
+          "sha256": "8b01fc71cfe5bf7f3d8a9b22a36aa1f1ed16ae1dbcfd6d6c3e5f51c8fa8a113f",
+          "bytes": 87990,
+          "dimensions": [
+            1100,
+            850
+          ],
+          "actual_visual_observation": "Actually viewed at 1100×850: the sidebar ends at the workspace boundary; all six synthetic attachment tiles, reply beginning, left reply controls, composer plus button, manually preserved text, transcribed text, send button, recording timer, listening label and stop control are visible. The previous 51 px horizontal crop is absent. Actual geometry.json reports structural scrollLeft=0 and workspace overflow:clip in the three recorded screenshot phases.",
+          "original_zip_member_byte_identical": true
+        },
+        {
+          "path": "ci-evidence/43592108675/browser/composer-browser/keyboard.png",
+          "artifact_member": "composer-browser/keyboard.png",
+          "sha256": "80bf7c7aeeb6f7f743d906477975ab5edc1f933c5ceba33fadf286303a74ab35",
+          "bytes": 35542,
+          "dimensions": [
+            390,
+            420
+          ],
+          "actual_visual_observation": "Actually viewed at the short mobile viewport: reply text, response actions, message field and send control remain visible above bottom navigation. This is a viewport-height simulation and is not an observation of an operating-system keyboard or real microphone permission dialog.",
+          "original_zip_member_byte_identical": true
+        }
+      ],
+      "unresolved_findings": [],
+      "scope": "Only these 18 current-run original images were visually inspected. Automated functional checks and raw geometry support separate claims. This does not certify every possible UI, physical keyboard/microphone behavior, real provider delivery, or the unique trigger sequence of prior CI failures. Previous failure evidence is preserved."
+    },
+    "history_sidecars_preserved": [
+      {
+        "path": "docs/audits/sprint-review-ci-55-failure.json",
+        "sha256": "b23c3d5b9e5aaf135d42367f2df3706fbab12ca1fda3df20fbfe32bb03548c8c"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-56-failure.json",
+        "sha256": "c99670710cac080bbfdf26ad2945bf33d886f68b6e648eeced63a37ada8ed8f0"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-57-failure.json",
+        "sha256": "14083b8b9a0a5710441bdc2e2a69491894bd84411462c2002cb3d23002758aec"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-58-failure.json",
+        "sha256": "b40da05f5e27a117ca1443afd057cad9b9b10f714b6b39a476dbd77ee0c8d9d5"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-59-failure.json",
+        "sha256": "3e430d95a31ab325296d7e06918591e7ce928848fc040649f70c059351ff67a4"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-60-failure.json",
+        "sha256": "36a58b56537cd28f7c1ce6b45b79b6b2f82d094ddef93a7fdb287be3080675be"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-61-functional-success.json",
+        "sha256": "debf9a381dafd778cfd58f7274c4e7bf1936b162015ba0f2b83e5956189f3079"
+      },
+      {
+        "path": "docs/audits/sprint-review-ci-62-failure.json",
+        "sha256": "15681e7ddb49c2b9d522bd93f33669522264cc6a66d1649c3db1073c055ac391"
+      }
+    ],
+    "limits": [
+      "这是候选在给定 UTC 时刻的工程验收快照。main 的实际合并 SHA 与 main push 检查由 PR #5 和对应 Actions 交付记录标识，本文不预写未来 main 结果。",
+      "主 UI 和连续性按报告覆盖 Chromium、Firefox、WebKit；Agent、Composer、材料、来源收件、来源预设和 Push 独立套件仅 Chromium。看板原生触摸路径也仅 Chromium。",
+      "Composer 使用模拟麦克风和合成转写；实际设备权限、真实麦克风、中文软键盘、读屏与 200% 缩放没有因本轮通过而被补记为实测。",
+      "本次人工查看 18 张实际截图，范围逐图记录；临时 Toast 可能覆盖下方卡片的一部分，不能概括为每个控件在所有时刻都无遮挡。",
+      "冷/热记录使用明确的 serviceWorkers:block 网络夹具，PWA/Push 由独立套件验证；精确 JavaScript 解析耗时未测，零传输缓存记录不当作失败。",
+      "工程自动回归不替代真实校园累计试用、真实外部服务与设备投递验收，也不证明十人写入等待已经达到既定准入门槛。"
+    ],
+    "reference_application_scope": {
+      "counts": {
+        "条件候选": 79,
+        "暂不采用": 95,
+        "优先候选": 35
+      },
+      "upstream_demo_and_source_reviews": 3,
+      "reviewed_numbers": [
+        114,
+        115,
+        133
+      ],
+      "unoperated_upstream_references": 206,
+      "original_application_runtime_evidence_preserved": true,
+      "adoption_arrays_unchanged": true,
+      "policy": "35 项优先候选不等于 35 项已引入，更不等于安装全部 209 项。只吸收已核交互机制，未复制上游实现；许可与未实操边界保留。",
+      "current_application_tests": "本轮 48 项 reference interactions 及相关 Sprint/看板/聊天用例证明本地实际适配，不证明未操作的上游组件。"
+    }
+  },
+  "latest_review_followup_history": [
+    {
+      "archived_at_utc": "2026-11-14T12:18:27.857754+00:00",
+      "superseded_by_run_id": 43592108675,
+      "record": {
+        "documented_at": "2026-11-14T10:11:43.231162+00:00",
+        "historical_record_scope": "All previously existing top-level values remain unchanged. review_followup and review_followup_evidence_overlay are preserved in full as the earlier CI57/Run58-start snapshot. This latest_review_followup records later actual results and the current pending candidate.",
+        "archived_overlay_fields": [
+          "review_followup",
+          "review_followup_evidence_overlay (frontend-25 only)"
+        ],
+        "ci58": {
+          "run_id": 43581184272,
+          "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43581184272",
+          "head_sha": "9e86a1e9b798071e870a0e35d73b46610d435988",
+          "checkout_sha": "a39babb0406615384323b3ae346ca722a8253f3d",
+          "implementation_sha256": "81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31",
+          "status": "completed_failure",
+          "report_slots": 33,
+          "statuses": {
+            "incomplete": 1,
+            "passed": 32
+          },
+          "recorded_checks": 1001,
+          "passed_checks": 998,
+          "explicit_failed_checks": 3,
+          "separate_unrecorded_fatal_assertions": 0,
+          "expected_checks": 1056,
+          "fully_unexecuted_checks": 55,
+          "sprint": {
+            "recorded": 23,
+            "passed": 20,
+            "failed": 3,
+            "expected": 78,
+            "fully_unexecuted": 55,
+            "by_engine": {
+              "chromium": {
+                "passed": 6,
+                "failed": 1
+              },
+              "firefox": {
+                "passed": 7,
+                "failed": 1
+              },
+              "webkit": {
+                "passed": 7,
+                "failed": 1
+              }
+            }
+          },
+          "failure_detail": [
+            {
+              "engine": "chromium",
+              "name": "a card loaded from the second board page remains on page one after an actual upward move",
+              "ok": false,
+              "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:211:18\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:174:5"
+            },
+            {
+              "engine": "firefox",
+              "name": "task list reports a bounded first page and loads the remaining real records",
+              "ok": false,
+              "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:225:72\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:222:5"
+            },
+            {
+              "engine": "webkit",
+              "name": "task list reports a bounded first page and loads the remaining real records",
+              "ok": false,
+              "error": "page.waitForFunction: Timeout 15000ms exceeded.\n    at /__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:225:72\n    at async check (/__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:31:9)\n    at async file:///__w/luojiaxinshi/luojiaxinshi/scripts/verify_sprint_ui.mjs:222:5"
+            }
+          ],
+          "cause_limit": "The raw Chromium IDs demonstrate a 54-row retained range with the correct moved index 49; its exact-50 wait fails. Firefox and WebKit fail waiting for 54 after the list more click. Their raw CI receipts do not by themselves prove the precise overlap responsible; a more-first, stable-refresh-second race is independently reproduced against the frozen controller.",
+          "board_observations": [
+            {
+              "engine": "chromium",
+              "status": "incomplete",
+              "actual_range": 54,
+              "actual_busy": false,
+              "actual_moved_index": 49,
+              "complete_reordered_range_matches": true,
+              "note": "Actual raw IDs prove all 54 rows were retained in the exact one-place-up order. The failed assertion required exactly the first 50 at line 211; the entire composite check remains failed."
+            },
+            {
+              "engine": "firefox",
+              "status": "passed",
+              "loaded": 54,
+              "after_first_page": 50,
+              "actual_moved_index": 49,
+              "final_list_range": 50,
+              "note": "Final DOM is the list after switching out of the board, not an additional board-order sample."
+            },
+            {
+              "engine": "webkit",
+              "status": "passed",
+              "loaded": 54,
+              "after_first_page": 50,
+              "actual_moved_index": 49,
+              "final_list_range": 50,
+              "note": "Final DOM is the list after switching out of the board, not an additional board-order sample."
+            }
+          ],
+          "independently_passed_scope": {
+            "clock_warm_ranges": 3,
+            "clock_loaded_rows": 54,
+            "clock_full_page_reads": 0,
+            "clock_dom_mutations": 0,
+            "visual": 168,
+            "existing_task_board": 28,
+            "pilot": 33,
+            "pilot_cold_imports": 6,
+            "agent": 13,
+            "composer": 9,
+            "agent_composer_engine": "chromium",
+            "agent_composer_media": "Synthetic provider and simulated microphone; no physical-device delivery or recording claim.",
+            "chat_interactions": {
+              "chromium": 9,
+              "firefox": 8,
+              "webkit": 8
+            }
+          },
+          "not_executed_in_sprint": [
+            "publication retries",
+            "publication cancellation",
+            "cross-route cache mutation case",
+            "obsolete-query race",
+            "mobile publication bounds"
+          ],
+          "continuity": {
+            "passed": 990,
+            "failed": 0,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "artifact_sha256": "10eda62714c998cd4e22ce737e1101b3cb76fe2a0594764c7392f528b9bb4e3a"
+          },
+          "browser_artifact": {
+            "id": 14109426060,
+            "bytes": 21824453,
+            "sha256": "2c7e14368ec109594673bfd3c7fe3ad01d28cf9542a2f0c3b80e45b026f0c9cc",
+            "official_digest_and_size_verified": true
+          },
+          "early_final_comparison": {
+            "files": 33,
+            "all_byte_identical": true
+          },
+          "audit_record": "ci-evidence/43581184272/browser-report-audit.json",
+          "audit_sha256": "a659fe1987f3ba444f5bf9af87b611e3885104aa5b137042058facc58e1ec8e2",
+          "screenshots_actually_reviewed": [
+            {
+              "path": "browser/sprint-ui-browser/chromium-failure-7.png",
+              "observed": "Board rows remain visible after the move and the saved-position toast is present. Exact 54-row order is proven by raw IDs, not this cropped viewport."
+            },
+            {
+              "path": "browser/sprint-ui-browser/webkit-failure-23.png",
+              "observed": "Actual list rows remain visible with a reading indicator. The image does not establish the exact overlap of page and background refresh."
+            }
+          ],
+          "performance_scope": {
+            "recorded_measurements": 6,
+            "service_workers": "block",
+            "javascript_parse_duration": "unmeasured",
+            "physical_keyboard_or_microphone": "not measured"
+          }
+        },
+        "isolated_more_refresh_fix": {
+          "commit": "d28d93d2631e7720525013090db547e430a72b62",
+          "base_commit": "9e86a1e9b798071e870a0e35d73b46610d435988",
+          "local_implementation_sha256": "e4d5d6adaa2f86c0eb0de6c8c8d856e16d3584dad0336242d68f1f855eb83157",
+          "scope": "Final local source and test bytes; the remote integrated candidate and its CI are identified separately.",
+          "red": {
+            "complete_new_cases": {
+              "tests": 12,
+              "pass": 6,
+              "fail": 6,
+              "cancelled": 0,
+              "skipped": 0
+            },
+            "initial_seven": {
+              "tests": 7,
+              "pass": 3,
+              "fail": 4,
+              "cancelled": 0,
+              "skipped": 0
+            },
+            "interrupted_prototype": "before-complete-initial-interrupted.tap is retained as interrupted test-fixture evidence, not counted as a completed pass or red case."
+          },
+          "green": {
+            "focused": {
+              "tests": 58,
+              "pass": 58,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0
+            },
+            "node": {
+              "tests": 341,
+              "pass": 341,
+              "fail": 0,
+              "cancelled": 0,
+              "skipped": 0
+            },
+            "original_329_case_names_preserved": true,
+            "added_unique_cases": 12,
+            "http_bundle": {
+              "tests": 2,
+              "passed": 2,
+              "errors": 0,
+              "failures": 0
+            }
+          },
+          "build": {
+            "entry": {
+              "js": "/static/dist/app-SMVSHCNZ.js",
+              "css": "/static/dist/styles-BKR4PFDD.css"
+            },
+            "output_files_including_manifest": 25,
+            "hashed_outputs": 24,
+            "sources": 194,
+            "manifest_sha256": "473e32acc71bf96ad4c3b2ac9476ee726defe5818c9c2a32d21a8d02c58ab493",
+            "build_check_exit_code": 0,
+            "genui_catalog_check_exit_code": 0,
+            "node_runtime": "v24.22.1"
+          },
+          "changes": [
+            "Keep the explicit next-page target and its original promise through a newer same-scope refresh; merge repeated clicks and reject late old completion.",
+            "Retain scope cancellation and real-error handling; temporary background paint gates do not discard explicit more.",
+            "Board move and undo explicitly preserve the full loaded range.",
+            "Sprint verifies all 54 reordered IDs before re-establishing the first 50 through real distinct search queries; original 26 check names/order and limits remain."
+          ],
+          "evidence_record": "artifacts/list-more-refresh/verification.json",
+          "evidence_sha256": "d6831415dd474fdf7e92f9f1bd176a04520badc660baca4c023a30d27c42f741",
+          "browser_execution": "No local browser run. CI58 remains failed; this fix requires the next real CI."
+        },
+        "candidate": {
+          "run_id": 43583884442,
+          "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43583884442",
+          "head_sha": "6701b6534331b9dddd64bdd67a38ac2e524681a9",
+          "tree": "2cc780721a3a53acbe5440718b2862e87d809152",
+          "implementation_sha256": "e4d5d6adaa2f86c0eb0de6c8c8d856e16d3584dad0336242d68f1f855eb83157",
+          "checkout_sha": null,
+          "status": "in_progress_pending_original_reports",
+          "browser_job": 132414160759,
+          "continuity_job": 132414160729,
+          "expected_checks": {
+            "node": 341,
+            "browser": 1056,
+            "sprint": 78,
+            "sprint_per_engine": 26,
+            "continuity": 990
+          },
+          "expected_counts_are_not_results": true,
+          "all_26_sprint_names_and_order_retained": true,
+          "deadline_seconds": 360,
+          "default_ui_timeout_ms": 15000,
+          "required_new_evidence": [
+            "all 54 moved board IDs in exact order before an actual different-query first-page reset",
+            "actual first-page response and DOM 50 with moved card at index 49",
+            "list more completes 54 while preserving real request receipts",
+            "six independent mutations across dashboard/settings routes per engine",
+            "the previously unexecuted publication/query-race/mobile cases"
+          ]
+        },
+        "remaining_scope": [
+          "Physical Chinese soft keyboard, real microphone permissions, screen-reader operation and 200% zoom remain outside these controller tests and CI viewport evidence.",
+          "209 references, their adoption decisions, and the limited actual upstream source/demo review scope are unchanged."
+        ]
+      }
+    }
+  ]
 }

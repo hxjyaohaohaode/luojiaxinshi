@@ -2,6 +2,8 @@ import {createWorkspaceProjection} from './workspace-projection.js';
 import {createGettingStarted} from './getting-started.js';
 import {taskRowSummary} from './task-summary.js';
 import {createPagedList} from './paged-list.js';
+import {preserveListViewport} from './list-viewport.js';
+import {createListClock,invalidateChangedLists} from './list-clock.js';
 import {installDataSync} from './data-sync.js';
 import {bindProfileForm,saveProfileForm,applyProfileForm,patchProfile,profileUndoValues} from './profile-editor.js';
 import {createDialogNavigation,installFormHistory} from './dialog-navigation.js';
@@ -126,7 +128,7 @@ function clearSession({returnTo=false,keepInvite=false}={}){
   state.renderId++;
   projections.clear();
   toast.clear();cancelChoreography();taskCollection.clear();libraryUI.clear();state.listScroll={};state.listFocus={};
-  push.stop();reminders.stop();drafts.clear();dialogNavigation.clear();
+  push.stop();reminders.stop();drafts.clear();campusUI.clearSession();dialogNavigation.clear();
   chatUI.clearSession();memoryUI.clearPrivate();
   Object.assign(state,{session:null,notices:[],tasks:[],arrangements:[],notice:null,workContext:null});workspaceProjection.clear();
   state.taskView='list';state.workOwner=null;applyDisplayPreferences();
@@ -809,7 +811,7 @@ document.addEventListener('click',async event=>{
 const chatUI=lazyUI(()=>import('./chat.js').then(({createChatUI})=>createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI,loadTasks:()=>workspaceProjection.load(['tasks']).then(value=>value?.tasks||[])})),['render','preview','refreshWorkspace'],{persist:undefined,clearSession:undefined});
 const sourcesUI=lazyUI(()=>import('./sources.js').then(({createSourcesUI})=>createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route})),['render','refresh']);
 const campusImports=createCampusImports({state,api,esc,showDialog,toast,route});
-const campusUI=lazyUI(()=>import('./campus.js').then(({createCampusUI})=>createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount})),['render']);
+const campusUI=lazyUI(()=>import('./campus.js').then(({createCampusUI})=>createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount})),['render'],{clearSession:undefined});
 $('#dialog').addEventListener('close',()=>{
   const target=dialogReturnTarget,closingFocus=document.activeElement;
   // Safari may return native-dialog focus to the previously focused input,
@@ -822,14 +824,16 @@ $('#dialog').addEventListener('close',()=>{
   });
 });
 document.addEventListener('invalid',event=>{const group=event.target.closest('[data-profile-group]');if(group?.hidden)document.querySelector(`[data-action="profile-section"][data-section="${group.dataset.profileGroup}"]`)?.click();},true);
-const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData});
-const taskCollection=createPagedList({api,path:'/tasks/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:value=>{
-  if(!location.hash.startsWith('#tasks'))return;state.tasks=value.items;if($('#task-results'))taskList(false);
+const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData,projectionRevision:()=>workspaceProjection.revision('notices')});
+const taskListClock=createListClock('tasks');
+const taskCollection=createPagedList({api,path:'/tasks/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,revision:()=>workspaceProjection.revision('tasks'),onChange:(value,options)=>{
+  if(!location.hash.startsWith('#tasks'))return;state.tasks=value.items;
+  if($('#task-results')){if(options.preserveViewport)preserveListViewport(()=>taskList(false));else taskList(false);}
 }});
-function taskFilters(){const selected=state.insightSelection?.kind==='tasks'?state.insightSelection:null;return {q:state.query.trim(),status:state.filter,day:state.dateFilter,...(selected?{ids:selected.ids.join(',')||'no-matching-record'}:{})};}
-async function loadTaskList(force=false){
+function taskFilters(){const selected=state.insightSelection?.kind==='tasks'?state.insightSelection:null;return {q:state.query.trim(),status:state.filter,day:state.dateFilter,...(state.taskView==='board'?{sort:'board'}:{}),...(selected?{ids:selected.ids.join(',')||'no-matching-record'}:{})};}
+async function loadTaskList(force=false,options={}){
   const owner=state.session?.user?.id,render=state.renderId;
-  const value=await taskCollection.load(taskFilters(),{force});
+  const value=await taskCollection.load(taskFilters(),{force,...options});
   // Requests already paint through onChange. A cache hit still restores the
   // task projection after another route, but must not replace freshly focused
   // rows a second time in this promise's continuation.
@@ -859,7 +863,7 @@ const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id
   try{
     const result=await requestBoardMove(id,{task_version:old.version,workflow_version:old.workflow.version,...placement});
     if(state.session?.user?.id!==owner)return;
-    if(location.hash.startsWith('#tasks'))await loadTaskList(true);else state.tasks=result.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
+    if(location.hash.startsWith('#tasks'))await loadTaskList(true,{preserveRange:true});else state.tasks=result.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();
     if(location.hash==='#tasks')taskList();
     toast(placement.lane==='closed'&&old.status==='pending'?'已标记完成':'位置已保存',false,{duration:15000,action:{label:'撤销',run:async()=>{
       if(state.session?.user?.id!==owner)return;
@@ -869,7 +873,7 @@ const taskBoardDrag=createTaskBoardDrag({blocked:()=>boardSaving,onMove:async(id
         const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks')taskList();throw Error(boardMoveError(error,refreshed));
       }
       if(state.session?.user?.id!==owner)return;
-      if(location.hash.startsWith('#tasks'))await loadTaskList(true);else state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(result.undo.lane);}
+      if(location.hash.startsWith('#tasks'))await loadTaskList(true,{preserveRange:true});else state.tasks=restored.tasks;document.dispatchEvent(new CustomEvent('campus:data-updated'));reminders.refresh();if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(result.undo.lane);}
     }}});
   }catch(error){
     if(state.session?.user?.id===owner){const refreshed=await refreshData().then(()=>true,()=>false);if(location.hash==='#tasks'){taskList();taskBoardDrag.afterRender(taskLane(findTask(id)||old));}toast(boardMoveError(error,refreshed),true);}throw error;
@@ -1024,21 +1028,30 @@ async function refreshWorkspace(domains,revision){
   }
   if(changed('tasks','notices')&&$('#workflow-form'))await workflowUI.refreshOpen(revision,canUpdate);
   if(!canApply())return false;
+  invalidateChangedLists(domains,[taskCollection,libraryUI]);
   const home=page==='dashboard'&&context==='personal';
   const stableChanged=changed('notices','tasks','account');
+  const clockOnly=!stableChanged&&changed('clock'),listRefresh={preserveRange:true,canApply};
   const needsNotices=(home||page==='notices')&&changed('notices','account','clock');
   const needsTasks=(home||['tasks','calendar','chat'].includes(page))&&changed('tasks','notices','account','clock');
   const needsCalendar=(home||['calendar','chat'].includes(page))&&changed('calendar');
   const detail=page==='notice'&&state.notice&&changed('notices','tasks','account','clock')?state.notice.id:null;
   const detailClock=!!detail&&!stableChanged&&changed('clock');
-  const projected=[...new Set([...(needsNotices&&page!=='notices'||detailClock?['notices']:[]),...(needsTasks&&page!=='tasks'||detailClock?['tasks']:[])])];
+  const projected=[...new Set([...(needsNotices&&(page!=='notices'||clockOnly)||detailClock?['notices']:[]),...(needsTasks&&(page!=='tasks'||clockOnly)||detailClock?['tasks']:[])])];
   let [notices,tasks,arrangements,latest,snapshot]=await Promise.all([
-    needsNotices&&page==='notices'?libraryUI.reload().then(value=>value?.items):null,
-    needsTasks&&page==='tasks'?loadTaskList(true).then(value=>value?.items):null,
+    needsNotices&&page==='notices'&&!clockOnly?libraryUI.reload(listRefresh).then(value=>value?.items):null,
+    needsTasks&&page==='tasks'&&!clockOnly?loadTaskList(true,listRefresh).then(value=>value?.items):null,
     needsCalendar?api('/arrangements'):null,
     detail&&!detailClock?api('/notices/'+encodeURIComponent(detail)).catch(error=>{if(error.status===404)return false;throw error;}):null,
     projected.length?workspaceProjection.load(projected,{clockOnly:!stableChanged&&changed('clock')}):null,
   ]);
+  if(!canApply())return false;
+  if(clockOnly&&page==='notices'&&needsNotices){
+    const value=await libraryUI.refreshClock(snapshot,canApply);if(!value)return false;notices=value.items;
+  }
+  if(clockOnly&&page==='tasks'&&needsTasks){
+    const value=await taskListClock.refresh(taskCollection,snapshot,{owner:session.user.id,canApply,reload:options=>loadTaskList(true,options)});if(!value)return false;tasks=value.items;
+  }
   if(!canApply())return false;
   if(needsNotices&&page!=='notices'&&snapshot)notices=snapshot.notices;
   if(needsTasks&&page!=='tasks'&&snapshot)tasks=snapshot.tasks;
@@ -1062,9 +1075,10 @@ async function refreshWorkspace(domains,revision){
     document.dispatchEvent(new CustomEvent('campus:data-updated'));
   }
   if(changed('notices','tasks','calendar','reminders','collaboration','account','clock'))reminders.refresh();
-  if(page==='notices'&&notices)libraryUI.render();
-  else if(home&&(notices||tasks||arrangements||changed('account','clock'))){overviewUI.render();gettingStarted.mount();}
-  else if(page==='tasks'&&(tasks||changed('account')))taskList();
+  // The list controllers already painted their completed request once.
+  // Re-rendering here would undo their preserved scroll and keyboard target.
+  if(home&&(notices||tasks||arrangements||changed('account','clock'))){overviewUI.render();gettingStarted.mount();}
+  else if(page==='tasks'&&!tasks&&changed('account'))taskList();
   else if(page==='calendar'&&(tasks||arrangements||changed('account')))calendarUI.applyRecords(arrangements);
   else if(page==='chat'&&(tasks||arrangements||changed('chat','account'))){
     if(await chatUI.refreshWorkspace({tasks,arrangements,reload:changed('chat'),canApply})===false)return false;

@@ -28,14 +28,28 @@ def verify_password(password, stored):
 DUMMY_PASSWORD = hash_password(secrets.token_urlsafe(24))
 
 
+def rate_limit_connection(conn, key, maximum, seconds, *, check_only=False, now=None):
+    """Use the caller's transaction; a reservation returns its actual window.
+
+    Mutating callers must own a write transaction. The returned key/window is
+    only meaningful before that transaction ends, never a later refund token.
+    """
+    now = int(time.time() if now is None else now)
+    if not check_only and not conn.in_transaction:
+        raise RuntimeError('A rate-limit reservation requires a write transaction')
+    if not check_only:conn.execute("DELETE FROM limits WHERE reset_at < ?", (now,))
+    row = conn.execute("SELECT * FROM limits WHERE key=? AND reset_at>=?", (key,now)).fetchone()
+    if row and row['count'] >= maximum:
+        raise HTTPException(429, "操作过于频繁，请稍后再试", headers={"Retry-After": str(max(1, row['reset_at']-now))})
+    if not check_only:
+        conn.execute("INSERT INTO limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1", (key, now+seconds))
+        return key, row['reset_at'] if row else now+seconds
+
+
 def rate_limit(db, key, maximum, seconds, *, check_only=False):
     now = int(time.time())
     with db.connect(write=not check_only) as conn:
-        if not check_only:conn.execute("DELETE FROM limits WHERE reset_at < ?", (now,))
-        row = conn.execute("SELECT * FROM limits WHERE key=? AND reset_at>=?", (key,now)).fetchone()
-        if row and row['count'] >= maximum:
-            raise HTTPException(429, "操作过于频繁，请稍后再试", headers={"Retry-After": str(max(1, row['reset_at']-now))})
-        if not check_only:conn.execute("INSERT INTO limits VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=count+1", (key, now+seconds))
+        rate_limit_connection(conn,key,maximum,seconds,check_only=check_only,now=now)
 
 
 def new_invite(db, role='user'):
