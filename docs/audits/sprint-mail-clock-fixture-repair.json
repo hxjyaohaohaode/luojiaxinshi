@@ -1,0 +1,653 @@
+{
+  "record_type": "independent_controlled_fixture_repair_not_unique_old_ci_reconstruction",
+  "frozen_at": "2026-11-14T12:53:08.156298+00:00",
+  "baseline_main": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+  "repair_commit": "dafc462aae68dbff7b8f824fcb1ab4b79a791077",
+  "owner_verification": {
+    "schema_version": 1,
+    "verified_at": "2026-11-14T12:49:43.289334+00:00",
+    "status": "single_test_fixture_fix_frozen_after_deterministic_red_green_and_one_file_regression",
+    "repository_worktree": "/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock",
+    "branch": "codex/mail-fixture-clock-2026-11-14",
+    "base_main_commit": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+    "commit": "dafc462aae68dbff7b8f824fcb1ab4b79a791077",
+    "changed_paths": [
+      "tests/test_mail_delivery.py"
+    ],
+    "worktree_clean": true,
+    "production_source_changed": false,
+    "original_timeout_or_threshold_changed": false,
+    "new_business_test_cases_added": 0,
+    "original_formal_test_count_unchanged": 1875,
+    "finding": {
+      "actual_old_ci_run_id": 43594799745,
+      "actual_old_ci_event_scope": "documentation-only PR CI64, distinct from main push CI65",
+      "actual_old_checkout_from_job_log": [
+        "29950948ac3c3a2d015cec34b8a9e4d736e35b7a"
+      ],
+      "original_failure_test_identity": "tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+      "original_failure_record": {
+        "case": {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+          "time": "13.234"
+        },
+        "message": "assert False\n +  where False = any(<generator object test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send.<locals>.<genexpr> at 0x000001FD864679F0>)",
+        "text": "env = (<fastapi.applications.FastAPI object at 0x000001FD8532C0B0>, Settings(data_dir=WindowsPath('C:/Users/runneradmin/AppD...zation_code='', otp_sms_daily_limit=100, otp_mail_daily_limit=200, notification_mail_daily_limit=200, push_contact=''))\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001FD8945A390>\n\n    def test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send(env,monkeypatch):\n        c=account(env);app,cfg=enable(env,c);uid=c.get('/api/session').json()['user']['id'];now=int(time.time())+1\n        monkeypatch.setattr(mail,'candidates',lambda *args:{})\n        with app.state.db.connect(write=True) as conn:\n            conn.execute('INSERT INTO mail_outbox(id,user_id,event_key,payload,destination,due_at,created_at) VALUES(?,?,?,?,?,?,?)',\n                         (ident(),uid,'done-task',dumps({'user_id':uid}),'alice@example.invalid',now,now))\n        provider=CapturedMessages();mail.tick(app.state.db,cfg,provider,now);assert not provider.mail\n        assert c.post('/api/notifications/email/test').status_code==200\n        def ambiguous(*args):raise TimeoutError('synthetic timeout')\n        provider.send_mail=ambiguous;mail.tick(app.state.db,cfg,provider,now)\n>       assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])\nE       assert False\nE        +  where False = any(<generator object test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send.<locals>.<genexpr> at 0x000001FD864679F0>)\n\ntests\\test_mail_delivery.py:38: AssertionError",
+        "xml_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43594799745/windows1-failure/shard-1.xml",
+        "xml_sha256": "9c2edab7390fa533f2dce653ea19fa47218bf07f9da0708471b6b779056c04ec",
+        "job_log_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43594799745/windows1-failure.log",
+        "job_log_sha256": "26bbcc55312e851c501f86da2047f75671b2a90a9faa04ac026ab61b7563309c"
+      },
+      "source_chain": "The case captures now=int(time.time())+1, performs a DB write and one tick, then POST /api/notifications/email/test records a new due_at from its own current clock; a second tick with the old explicit now correctly refuses a newly queued job whose due_at is later.",
+      "old_ci_unique_timing_cause_proven": false,
+      "old_ci_evidence_limit": "The old assertion reports no uncertain row but does not record pending row due_at or provider call count; total call time10.64s alone cannot uniquely establish where time passed.",
+      "production_rule_preserved": "No early sending: due_at must be <= final current dispatch time; owner/contact/consent/quiet/expiry/atomic quota claim and uncertain no-replay gates are unchanged."
+    },
+    "deterministic_red_green": {
+      "harness_sha256": "aebf3a45c9d44f37fa644394590f0695e438f52c9cb0cd82626cfae2b3810716",
+      "same_harness_used_before_after": true,
+      "actual_repository_test_function_invoked": true,
+      "only_mail_module_time_reference_replaced": true,
+      "global_time_and_test_module_time_unchanged": true,
+      "database_http_and_dispatch_implementation_real": true,
+      "provider_calls_observed_by_profile_without_replacing_behavior": true,
+      "sleep_used": false,
+      "before_exit_code": 1,
+      "after_exit_code": 0,
+      "before": {
+        "observed_at": "2026-11-14T12:47:03.775983+00:00",
+        "repository": "/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock",
+        "git_head": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+        "test_file_sha256": "dce021b3cfe222712dbf67ce8b5d9e2b9d47297f8ce1169c0889e83f47e5231c",
+        "test_identity": "tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+        "invoked_actual_repository_test_function": true,
+        "mail_module_time_reference_only_clock_replacement": true,
+        "global_time_or_test_module_time_replaced": false,
+        "provider_calls_observed_without_replacing_provider_behavior": [],
+        "clock_calls": [
+          {
+            "returned": 1794660423,
+            "anchor_done_task_due_at": null
+          },
+          {
+            "returned": 1794660426,
+            "anchor_done_task_due_at": 1794660424
+          }
+        ],
+        "original_fixed_tick_at": 1794660424,
+        "first_real_http_test_job_due_at": 1794660426,
+        "first_real_http_job_due_after_old_fixed_tick": true,
+        "mail_outbox": [
+          {
+            "id": "8f4348352e414a309e19536d4ccf67d9",
+            "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+            "event_key": "done-task",
+            "state": "cancelled",
+            "due_at": 1794660424,
+            "created_at": 1794660424,
+            "finished_at": 1794660424,
+            "error": ""
+          },
+          {
+            "id": "6659245210c84f25a0335cf25106a359",
+            "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+            "event_key": "test:7910e524ec87426da84e703d3bb3e8af",
+            "state": "pending",
+            "due_at": 1794660426,
+            "created_at": 1794660426,
+            "finished_at": null,
+            "error": ""
+          }
+        ],
+        "mail_budget_rows": [],
+        "mail_preferences": [
+          {
+            "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+            "enabled": 1,
+            "destination": "alice@example.invalid",
+            "contact_verified_at": 1794660423,
+            "consented_at": 1794660423
+          }
+        ],
+        "actual_case_result": "failed",
+        "failure": {
+          "type": "AssertionError",
+          "message": "",
+          "traceback": "Traceback (most recent call last):\n  File \"/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/run_controlled_case.py\", line 64, in <module>\n    case(environment, monkeypatch)\n  File \"/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock/tests/test_mail_delivery.py\", line 38, in test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send\n    assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+        },
+        "scope": "真实原仓库test函数、HTTP路由、SQLite事务和tick；仅mail模块time引用按已存done-task时刻+2控制入队。不用sleep、不改生产源码或发送资格，不声称唯一重建CI64原有时序。"
+      },
+      "after": {
+        "observed_at": "2026-11-14T12:47:55.902796+00:00",
+        "repository": "/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock",
+        "git_head": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+        "test_file_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+        "test_identity": "tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+        "invoked_actual_repository_test_function": true,
+        "mail_module_time_reference_only_clock_replacement": true,
+        "global_time_or_test_module_time_replaced": false,
+        "provider_calls_observed_without_replacing_provider_behavior": [
+          {
+            "kind": "ambiguous_send_mail",
+            "function": "ambiguous"
+          }
+        ],
+        "clock_calls": [
+          {
+            "returned": 1794660475,
+            "anchor_done_task_due_at": null
+          },
+          {
+            "returned": 1794660478,
+            "anchor_done_task_due_at": 1794660476
+          },
+          {
+            "returned": 1794660478,
+            "anchor_done_task_due_at": 1794660476
+          }
+        ],
+        "original_fixed_tick_at": 1794660476,
+        "first_real_http_test_job_due_at": 1794660478,
+        "first_real_http_job_due_after_old_fixed_tick": true,
+        "mail_outbox": [
+          {
+            "id": "6c17a499cb89465188dad6290111fba9",
+            "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+            "event_key": "done-task",
+            "state": "cancelled",
+            "due_at": 1794660476,
+            "created_at": 1794660476,
+            "finished_at": 1794660476,
+            "error": ""
+          },
+          {
+            "id": "70839399753e42a1bc6c5b6c9266e26e",
+            "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+            "event_key": "test:5163594648a04bc6a1eb95b3dbcc97ec",
+            "state": "uncertain",
+            "due_at": 1794660478,
+            "created_at": 1794660478,
+            "finished_at": 1794660478,
+            "error": "邮件提交未确认，请检查收件箱和垃圾邮件；系统不会重复提交这条邮件"
+          },
+          {
+            "id": "214da582fd8e43df9758af1765387f6c",
+            "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+            "event_key": "test:5c6683d736fe448ab2568eb5b3993f54",
+            "state": "cancelled",
+            "due_at": 1794660478,
+            "created_at": 1794660478,
+            "finished_at": 1794660658,
+            "error": ""
+          }
+        ],
+        "mail_budget_rows": [
+          {
+            "key": "mail-reminder-budget",
+            "count": 1,
+            "reset_at": 1794746878
+          }
+        ],
+        "mail_preferences": [
+          {
+            "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+            "enabled": 1,
+            "destination": "alice@example.invalid",
+            "contact_verified_at": 1794660475,
+            "consented_at": 1794660475
+          }
+        ],
+        "actual_case_result": "passed",
+        "failure": null,
+        "scope": "真实原仓库test函数、HTTP路由、SQLite事务和tick；仅mail模块time引用按已存done-task时刻+2控制入队。不用sleep、不改生产源码或发送资格，不声称唯一重建CI64原有时序。"
+      },
+      "interpretation": "Exactly constructed due_at=old fixed time+2 gives pending/0 provider calls and the unchanged uncertain assertion red; after fixture anchoring, one ambiguous submission produces uncertain, later tick does not replay, changed-contact new job is cancelled. This is a deterministic mechanism demonstration, not a reconstruction of CI64 unknown timing."
+    },
+    "file_regression": {
+      "command": "CAMPUS_AUTO_LOAD_ENV=0 /workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/bin/python -m pytest tests/test_mail_delivery.py -vv --junitxml=/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.xml",
+      "executions": 1,
+      "exit_code": 0,
+      "tests": 7,
+      "passed": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "pytest_reported_seconds": 4.82,
+      "junit_suite_attributes": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "7",
+          "time": "4.816",
+          "timestamp": "2026-11-14T07:48:04.476710-05:00",
+          "hostname": "bff794b8bba0"
+        }
+      ],
+      "identities": [
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_email_consent_verified_destination_and_real_candidate_lifecycle",
+          "time": "0.871"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+          "time": "0.895"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_email_requires_delivery_consent_and_config",
+          "time": "0.450"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_official_sdk_adapters_send_only_expected_fields",
+          "time": "0.871"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code",
+          "time": "0.322"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back",
+          "time": "0.275"
+        },
+        {
+          "classname": "tests.test_mail_delivery",
+          "name": "test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender",
+          "time": "0.276"
+        }
+      ]
+    },
+    "static_contract": {
+      "original_assertions_preserved_verbatim_with_multiplicity": [
+        "assert not provider.mail",
+        "assert c.post('/api/notifications/email/test').status_code==200",
+        "assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])",
+        "assert not provider.mail",
+        "assert c.post('/api/notifications/email/test').status_code==200",
+        "assert not provider.mail",
+        "assert not c.get('/api/notifications/email').json()['enabled']"
+      ],
+      "original_assertion_count": 7,
+      "new_assertion_count": 14,
+      "all_other_module_ast_unchanged": true,
+      "original_test_names_unchanged": [
+        "test_email_consent_verified_destination_and_real_candidate_lifecycle",
+        "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+        "test_email_requires_delivery_consent_and_config",
+        "test_official_sdk_adapters_send_only_expected_fields",
+        "test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code",
+        "test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back",
+        "test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender"
+      ],
+      "original_time_offsets_120_and_180_preserved": true,
+      "sleep_added": false,
+      "changed_owned_file": "tests/test_mail_delivery.py",
+      "file_regression": {
+        "tests": 7,
+        "passed": 7,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "identities": [
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_email_consent_verified_destination_and_real_candidate_lifecycle",
+            "time": "0.871"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+            "time": "0.895"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_email_requires_delivery_consent_and_config",
+            "time": "0.450"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_official_sdk_adapters_send_only_expected_fields",
+            "time": "0.871"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code",
+            "time": "0.322"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back",
+            "time": "0.275"
+          },
+          {
+            "classname": "tests.test_mail_delivery",
+            "name": "test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender",
+            "time": "0.276"
+          }
+        ]
+      },
+      "source_before_sha256": "dce021b3cfe222712dbf67ce8b5d9e2b9d47297f8ce1169c0889e83f47e5231c",
+      "source_after_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+      "full_diff": "diff --git a/tests/test_mail_delivery.py b/tests/test_mail_delivery.py\nindex 1ff9c5e..58fcc4d 100644\n--- a/tests/test_mail_delivery.py\n+++ b/tests/test_mail_delivery.py\n@@ -28,18 +28,46 @@ def test_email_consent_verified_destination_and_real_candidate_lifecycle(env,mon\n def test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send(env,monkeypatch):\n     c=account(env);app,cfg=enable(env,c);uid=c.get('/api/session').json()['user']['id'];now=int(time.time())+1\n     monkeypatch.setattr(mail,'candidates',lambda *args:{})\n+\n+    def outbox():\n+        with app.state.db.connect() as conn:\n+            return {row['id']:dict(row) for row in conn.execute(\n+                'SELECT id,event_key,state,due_at FROM mail_outbox WHERE user_id=?',(uid,))}\n+\n+    def newly_queued(before):\n+        after=outbox();created=[row for jid,row in after.items() if jid not in before]\n+        assert len(created)==1,{'before':before,'after':after}\n+        job=created[0]\n+        assert job['event_key'].startswith('test:') and job['state']=='pending',job\n+        return job\n+\n     with app.state.db.connect(write=True) as conn:\n         conn.execute('INSERT INTO mail_outbox(id,user_id,event_key,payload,destination,due_at,created_at) VALUES(?,?,?,?,?,?,?)',\n                      (ident(),uid,'done-task',dumps({'user_id':uid}),'alice@example.invalid',now,now))\n     provider=CapturedMessages();mail.tick(app.state.db,cfg,provider,now);assert not provider.mail\n+    before=outbox()\n     assert c.post('/api/notifications/email/test').status_code==200\n-    def ambiguous(*args):raise TimeoutError('synthetic timeout')\n+    ambiguous_job=newly_queued(before)\n+    # The HTTP producer reads its own clock. A fixed time captured before that\n+    # request may precede this job's due_at on a slower run; it must not send yet.\n+    now=max(now,ambiguous_job['due_at'])\n+    attempts=[]\n+    def ambiguous(*args):\n+        attempts.append(args[0])\n+        raise TimeoutError('synthetic timeout')\n     provider.send_mail=ambiguous;mail.tick(app.state.db,cfg,provider,now)\n     assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])\n+    assert attempts==['alice@example.invalid'],attempts\n+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()\n     provider=CapturedMessages();mail.tick(app.state.db,cfg,provider,now+120);assert not provider.mail\n+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()\n+    before=outbox()\n     assert c.post('/api/notifications/email/test').status_code==200\n+    contact_job=newly_queued(before);now=max(now,contact_job['due_at'])\n     with app.state.db.connect(write=True) as conn:conn.execute(\"UPDATE verified_contacts SET value='changed@example.invalid' WHERE user_id=? AND channel='email'\",(uid,))\n     mail.tick(app.state.db,cfg,provider,now+180);assert not provider.mail\n+    assert outbox()[contact_job['id']]['state']=='cancelled',outbox()\n+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()\n     assert not c.get('/api/notifications/email').json()['enabled']\n \n \n"
+    },
+    "git_diff_check_exit_code": 0,
+    "independent_read_only_review": {
+      "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/ci-readonly/mail-fixture-clock-independent-review.json",
+      "sha256": "14a8c234c33175eed8773875ac8f7f10db7bc7ae46c5a1430a9ae4e9ccb8e2ed",
+      "record": {
+        "scope": "Read-only independent review; no new test execution. Controlled reproduction proves the fixture timing condition, not the unique historical CI64 timeline.",
+        "base_main": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+        "file": "tests/test_mail_delivery.py",
+        "before_sha256": "dce021b3cfe222712dbf67ce8b5d9e2b9d47297f8ce1169c0889e83f47e5231c",
+        "after_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+        "seven_original_case_identities": [
+          "test_email_consent_verified_destination_and_real_candidate_lifecycle",
+          "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+          "test_email_requires_delivery_consent_and_config",
+          "test_official_sdk_adapters_send_only_expected_fields",
+          "test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code",
+          "test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back",
+          "test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender"
+        ],
+        "original_assertion_expressions": 7,
+        "all_original_assertion_expressions_preserved_with_multiplicity": true,
+        "added_assertion_expressions": 7,
+        "controlled_runner_sha256": "aebf3a45c9d44f37fa644394590f0695e438f52c9cb0cd82626cfae2b3810716",
+        "controlled_red_sha256": "57a0821f938196c617c6b1d0e2757e57bbb7626a54ff18a98e7feae80f501b78",
+        "controlled_green_sha256": "6cfd4f25974114ba169afbaaf488f0a98a6fc1c861b136e93fea9bfc3f00af66",
+        "checked_contracts": [
+          "Only mail module time reference is replaced; global/test module clock, actual API, SQLite transactions and provider behavior remain real.",
+          "Original job IDs and owner-scoped persisted due_at establish a due test job before invoking the ambiguous provider.",
+          "Original future exclusion, all old assertions and +120/+180 intervals remain; no production due-time policy is changed.",
+          "Unique actual new pending test job, exactly one provider attempt, stable uncertain job, no replay and cancellation of the second real job after contact change are asserted."
+        ],
+        "verification_errors": []
+      }
+    },
+    "artifacts": {
+      "run_controlled_case.py": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/run_controlled_case.py",
+        "sha256": "aebf3a45c9d44f37fa644394590f0695e438f52c9cb0cd82626cfae2b3810716",
+        "bytes": 5353
+      },
+      "before.log": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/before.log",
+        "sha256": "05432f57dd3c5305e41cbc4051132a521e322ed7c3c4a93e2ae3a035f927c018",
+        "bytes": 1211
+      },
+      "before/record.json": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/before/record.json",
+        "sha256": "57a0821f938196c617c6b1d0e2757e57bbb7626a54ff18a98e7feae80f501b78",
+        "bytes": 2799
+      },
+      "after.log": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/after.log",
+        "sha256": "6987e904b26657c1e9d7ee2ca9e9904842c5ef8834927e8597b10693f4ca6b1e",
+        "bytes": 703
+      },
+      "after/record.json": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/after/record.json",
+        "sha256": "6cfd4f25974114ba169afbaaf488f0a98a6fc1c861b136e93fea9bfc3f00af66",
+        "bytes": 2815
+      },
+      "file-regression.log": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.log",
+        "sha256": "44ac325ab1831f67dd9b8b65f9f929a85bbfbaaf1c75aafe8dfd50d212584376",
+        "bytes": 1857
+      },
+      "file-regression.xml": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.xml",
+        "sha256": "0a8a94677922a2efccc2b886522b48bf09b087c486d93a5ae1fbe986154b4243",
+        "bytes": 1179
+      },
+      "static-contract.json": {
+        "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/static-contract.json",
+        "sha256": "69829f326cdb0ed22971c38601ea23d96db377a1ac19d844d65788e705051d3a",
+        "bytes": 5972
+      }
+    },
+    "scope_limits": [
+      "Only this actual test fixture changed; main65 results belong to old f5f and are not silently relabeled as the fixture commit.",
+      "This local file regression is not a full suite or Windows rerun. Root will decide subsequent integration and exact new CI.",
+      "No new independent local load, runtime thresholds, performance documents or production source changes."
+    ],
+    "prepared_for_root_cherry_pick": true,
+    "push_performed": false
+  },
+  "owner_verification_sha256": "fa772166779e8f848890c0972ae343eb0879e7b4483bbccd67746ef4e3ff0c93",
+  "independent_review": {
+    "scope": "Read-only independent review; no new test execution. Controlled reproduction proves the fixture timing condition, not the unique historical CI64 timeline.",
+    "base_main": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+    "file": "tests/test_mail_delivery.py",
+    "before_sha256": "dce021b3cfe222712dbf67ce8b5d9e2b9d47297f8ce1169c0889e83f47e5231c",
+    "after_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+    "seven_original_case_identities": [
+      "test_email_consent_verified_destination_and_real_candidate_lifecycle",
+      "test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+      "test_email_requires_delivery_consent_and_config",
+      "test_official_sdk_adapters_send_only_expected_fields",
+      "test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code",
+      "test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back",
+      "test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender"
+    ],
+    "original_assertion_expressions": 7,
+    "all_original_assertion_expressions_preserved_with_multiplicity": true,
+    "added_assertion_expressions": 7,
+    "controlled_runner_sha256": "aebf3a45c9d44f37fa644394590f0695e438f52c9cb0cd82626cfae2b3810716",
+    "controlled_red_sha256": "57a0821f938196c617c6b1d0e2757e57bbb7626a54ff18a98e7feae80f501b78",
+    "controlled_green_sha256": "6cfd4f25974114ba169afbaaf488f0a98a6fc1c861b136e93fea9bfc3f00af66",
+    "checked_contracts": [
+      "Only mail module time reference is replaced; global/test module clock, actual API, SQLite transactions and provider behavior remain real.",
+      "Original job IDs and owner-scoped persisted due_at establish a due test job before invoking the ambiguous provider.",
+      "Original future exclusion, all old assertions and +120/+180 intervals remain; no production due-time policy is changed.",
+      "Unique actual new pending test job, exactly one provider attempt, stable uncertain job, no replay and cancellation of the second real job after contact change are asserted."
+    ],
+    "verification_errors": []
+  },
+  "integration_identity": {
+    "observed_at": "2026-11-14T12:50:00.270268+00:00",
+    "baseline_main": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+    "test_repair_commit": "dafc462aae68dbff7b8f824fcb1ab4b79a791077",
+    "tree": "a731fe19ed1991ed974b5c3c919eadda80f3e1cd",
+    "changed_paths": [
+      "tests/test_mail_delivery.py"
+    ],
+    "unchanged_paths_with_same_blob_and_mode": 883,
+    "implementation_sha256": "5f06785eb58102f9d5528d310a843e4dc5a1b376ee60b4c282df81a5d457117d",
+    "product_workflow_dependencies_and_build_blobs_unchanged": true,
+    "original_formal_backend_case_count_unchanged": 1875,
+    "original_backend_file_count_unchanged": 139,
+    "original_node_case_count_unchanged": 358,
+    "source_file_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+    "owner_proof_sha256": "fa772166779e8f848890c0972ae343eb0879e7b4483bbccd67746ef4e3ff0c93",
+    "scope": "Actual committed single-test-file integration identity, with original controlled red/green and seven existing cases; no repeated runtime or load execution."
+  },
+  "controlled_red": {
+    "observed_at": "2026-11-14T12:47:03.775983+00:00",
+    "repository": "/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock",
+    "git_head": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+    "test_file_sha256": "dce021b3cfe222712dbf67ce8b5d9e2b9d47297f8ce1169c0889e83f47e5231c",
+    "test_identity": "tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+    "invoked_actual_repository_test_function": true,
+    "mail_module_time_reference_only_clock_replacement": true,
+    "global_time_or_test_module_time_replaced": false,
+    "provider_calls_observed_without_replacing_provider_behavior": [],
+    "clock_calls": [
+      {
+        "returned": 1794660423,
+        "anchor_done_task_due_at": null
+      },
+      {
+        "returned": 1794660426,
+        "anchor_done_task_due_at": 1794660424
+      }
+    ],
+    "original_fixed_tick_at": 1794660424,
+    "first_real_http_test_job_due_at": 1794660426,
+    "first_real_http_job_due_after_old_fixed_tick": true,
+    "mail_outbox": [
+      {
+        "id": "8f4348352e414a309e19536d4ccf67d9",
+        "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+        "event_key": "done-task",
+        "state": "cancelled",
+        "due_at": 1794660424,
+        "created_at": 1794660424,
+        "finished_at": 1794660424,
+        "error": ""
+      },
+      {
+        "id": "6659245210c84f25a0335cf25106a359",
+        "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+        "event_key": "test:7910e524ec87426da84e703d3bb3e8af",
+        "state": "pending",
+        "due_at": 1794660426,
+        "created_at": 1794660426,
+        "finished_at": null,
+        "error": ""
+      }
+    ],
+    "mail_budget_rows": [],
+    "mail_preferences": [
+      {
+        "user_id": "12b5b5530ca5435a9cff6b682e3150c6",
+        "enabled": 1,
+        "destination": "alice@example.invalid",
+        "contact_verified_at": 1794660423,
+        "consented_at": 1794660423
+      }
+    ],
+    "actual_case_result": "failed",
+    "failure": {
+      "type": "AssertionError",
+      "message": "",
+      "traceback": "Traceback (most recent call last):\n  File \"/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/run_controlled_case.py\", line 64, in <module>\n    case(environment, monkeypatch)\n  File \"/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock/tests/test_mail_delivery.py\", line 38, in test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send\n    assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    "scope": "真实原仓库test函数、HTTP路由、SQLite事务和tick；仅mail模块time引用按已存done-task时刻+2控制入队。不用sleep、不改生产源码或发送资格，不声称唯一重建CI64原有时序。"
+  },
+  "controlled_green": {
+    "observed_at": "2026-11-14T12:47:55.902796+00:00",
+    "repository": "/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock",
+    "git_head": "f5f159407adcd578cb20adb3b4fe8f63e7455e77",
+    "test_file_sha256": "1b2d6bf9ee015f26dcdf0879f96d0652603a057360ca02a56ce8569d77b2cc3f",
+    "test_identity": "tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send",
+    "invoked_actual_repository_test_function": true,
+    "mail_module_time_reference_only_clock_replacement": true,
+    "global_time_or_test_module_time_replaced": false,
+    "provider_calls_observed_without_replacing_provider_behavior": [
+      {
+        "kind": "ambiguous_send_mail",
+        "function": "ambiguous"
+      }
+    ],
+    "clock_calls": [
+      {
+        "returned": 1794660475,
+        "anchor_done_task_due_at": null
+      },
+      {
+        "returned": 1794660478,
+        "anchor_done_task_due_at": 1794660476
+      },
+      {
+        "returned": 1794660478,
+        "anchor_done_task_due_at": 1794660476
+      }
+    ],
+    "original_fixed_tick_at": 1794660476,
+    "first_real_http_test_job_due_at": 1794660478,
+    "first_real_http_job_due_after_old_fixed_tick": true,
+    "mail_outbox": [
+      {
+        "id": "6c17a499cb89465188dad6290111fba9",
+        "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+        "event_key": "done-task",
+        "state": "cancelled",
+        "due_at": 1794660476,
+        "created_at": 1794660476,
+        "finished_at": 1794660476,
+        "error": ""
+      },
+      {
+        "id": "70839399753e42a1bc6c5b6c9266e26e",
+        "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+        "event_key": "test:5163594648a04bc6a1eb95b3dbcc97ec",
+        "state": "uncertain",
+        "due_at": 1794660478,
+        "created_at": 1794660478,
+        "finished_at": 1794660478,
+        "error": "邮件提交未确认，请检查收件箱和垃圾邮件；系统不会重复提交这条邮件"
+      },
+      {
+        "id": "214da582fd8e43df9758af1765387f6c",
+        "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+        "event_key": "test:5c6683d736fe448ab2568eb5b3993f54",
+        "state": "cancelled",
+        "due_at": 1794660478,
+        "created_at": 1794660478,
+        "finished_at": 1794660658,
+        "error": ""
+      }
+    ],
+    "mail_budget_rows": [
+      {
+        "key": "mail-reminder-budget",
+        "count": 1,
+        "reset_at": 1794746878
+      }
+    ],
+    "mail_preferences": [
+      {
+        "user_id": "c5a40b12c05640f3b1d4dd920a20d542",
+        "enabled": 1,
+        "destination": "alice@example.invalid",
+        "contact_verified_at": 1794660475,
+        "consented_at": 1794660475
+      }
+    ],
+    "actual_case_result": "passed",
+    "failure": null,
+    "scope": "真实原仓库test函数、HTTP路由、SQLite事务和tick；仅mail模块time引用按已存done-task时刻+2控制入队。不用sleep、不改生产源码或发送资格，不声称唯一重建CI64原有时序。"
+  },
+  "original_evidence": [
+    {
+      "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/run_controlled_case.py",
+      "bytes": 5353,
+      "sha256": "aebf3a45c9d44f37fa644394590f0695e438f52c9cb0cd82626cfae2b3810716",
+      "text": "\"\"\"Invoke the actual mail test with one module-local controlled clock.\n\nThis demonstrates a fixture precondition deterministically. It does not replay\nthe unknown wall-clock timeline of CI64 and does not alter production code.\n\"\"\"\nimport argparse\nfrom datetime import datetime, timezone\nimport hashlib\nimport json\nfrom pathlib import Path\nimport subprocess\nimport sys\nimport tempfile\nimport time as real_time\nimport traceback\nfrom types import SimpleNamespace\n\nparser = argparse.ArgumentParser()\nparser.add_argument('--repository', type=Path, required=True)\nparser.add_argument('--output', type=Path, required=True)\nargs = parser.parse_args()\nrepo, out = args.repository.resolve(), args.output.resolve()\nout.mkdir(parents=True, exist_ok=False)\nsys.path.insert(0, str(repo))\nsys.path.insert(0, str(repo / 'tests'))\nimport pytest\nimport test_workflow\nimport test_mail_delivery\nfrom app import mail_delivery as mail\nfrom verification_helpers import CapturedMessages\n\ncase = test_mail_delivery.test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send\ntest_path = repo / 'tests/test_mail_delivery.py'\nprovider_calls = []\nclock_calls = []\nfailure = None\nold_profiler = sys.getprofile()\n\ndef observe_calls(frame, event, arg):\n    if event == 'call':\n        if frame.f_code == CapturedMessages.send_mail.__code__:\n            provider_calls.append({'kind': 'captured_send_mail', 'function': frame.f_code.co_name})\n        elif frame.f_code.co_name == 'ambiguous' and Path(frame.f_code.co_filename).resolve() == test_path:\n            provider_calls.append({'kind': 'ambiguous_send_mail', 'function': frame.f_code.co_name})\n\nwith tempfile.TemporaryDirectory(prefix='actual-http-case-', dir=out) as temp:\n    environment = test_workflow.env.__wrapped__(Path(temp))\n    app, cfg = environment\n\n    def controlled_mail_time():\n        # The actual old test stores its fixed tick time in this first row.\n        # Read it without changing it, then let real /email/test enqueue two\n        # seconds later. The test module's own time reference is not patched.\n        with app.state.db.connect() as conn:\n            anchor = conn.execute(\"SELECT due_at FROM mail_outbox WHERE event_key='done-task'\").fetchone()\n        value = anchor['due_at'] + 2 if anchor else int(real_time.time())\n        clock_calls.append({'returned': value, 'anchor_done_task_due_at': anchor['due_at'] if anchor else None})\n        return value\n\n    with pytest.MonkeyPatch.context() as monkeypatch:\n        monkeypatch.setattr(mail, 'time', SimpleNamespace(time=controlled_mail_time))\n        sys.setprofile(observe_calls)\n        try:\n            case(environment, monkeypatch)\n        except BaseException as exc:\n            failure = {'type': type(exc).__name__, 'message': str(exc), 'traceback': traceback.format_exc()}\n            traceback.print_exc()\n        finally:\n            sys.setprofile(old_profiler)\n        with app.state.db.connect() as conn:\n            rows = [dict(r) for r in conn.execute('SELECT id,user_id,event_key,state,due_at,created_at,finished_at,error FROM mail_outbox ORDER BY rowid')]\n            limits = [dict(r) for r in conn.execute(\"SELECT key,count,reset_at FROM limits WHERE key='mail-reminder-budget'\")]\n            prefs = [dict(r) for r in conn.execute('SELECT * FROM mail_preferences')]\n    anchor = next(r for r in rows if r['event_key'] == 'done-task')\n    test_jobs = [r for r in rows if r['event_key'].startswith('test:')]\n    assert test_jobs and test_jobs[0]['due_at'] == anchor['due_at'] + 2\n    record = {\n        'observed_at': datetime.now(timezone.utc).isoformat(),\n        'repository': str(repo),\n        'git_head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo).decode().strip(),\n        'test_file_sha256': hashlib.sha256(test_path.read_bytes()).hexdigest(),\n        'test_identity': 'tests.test_mail_delivery::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send',\n        'invoked_actual_repository_test_function': True,\n        'mail_module_time_reference_only_clock_replacement': True,\n        'global_time_or_test_module_time_replaced': False,\n        'provider_calls_observed_without_replacing_provider_behavior': provider_calls,\n        'clock_calls': clock_calls,\n        'original_fixed_tick_at': anchor['due_at'],\n        'first_real_http_test_job_due_at': test_jobs[0]['due_at'],\n        'first_real_http_job_due_after_old_fixed_tick': test_jobs[0]['due_at'] > anchor['due_at'],\n        'mail_outbox': rows, 'mail_budget_rows': limits, 'mail_preferences': prefs,\n        'actual_case_result': 'failed' if failure else 'passed', 'failure': failure,\n        'scope': '真实原仓库test函数、HTTP路由、SQLite事务和tick；仅mail模块time引用按已存done-task时刻+2控制入队。不用sleep、不改生产源码或发送资格，不声称唯一重建CI64原有时序。',\n    }\n    path = out / 'record.json'\n    path.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\\n')\n    print(json.dumps({'record': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(), 'actual_result': record['actual_case_result'], 'provider_calls': provider_calls, 'old_tick': anchor['due_at'], 'real_post_due': test_jobs[0]['due_at'], 'job_states': [(r['event_key'].split(':')[0], r['state']) for r in rows]}, ensure_ascii=False))\nsys.exit(1 if failure else 0)\n"
+    },
+    {
+      "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/before.log",
+      "bytes": 1211,
+      "sha256": "05432f57dd3c5305e41cbc4051132a521e322ed7c3c4a93e2ae3a035f927c018",
+      "text": "/workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nTraceback (most recent call last):\n  File \"/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/run_controlled_case.py\", line 64, in <module>\n    case(environment, monkeypatch)\n  File \"/workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock/tests/test_mail_delivery.py\", line 38, in test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send\n    assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n{\"record\": \"/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/before/record.json\", \"sha256\": \"57a0821f938196c617c6b1d0e2757e57bbb7626a54ff18a98e7feae80f501b78\", \"actual_result\": \"failed\", \"provider_calls\": [], \"old_tick\": 1794660424, \"real_post_due\": 1794660426, \"job_states\": [[\"done-task\", \"cancelled\"], [\"test\", \"pending\"]]}\n"
+    },
+    {
+      "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/after.log",
+      "bytes": 703,
+      "sha256": "6987e904b26657c1e9d7ee2ca9e9904842c5ef8834927e8597b10693f4ca6b1e",
+      "text": "/workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\n{\"record\": \"/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/after/record.json\", \"sha256\": \"6cfd4f25974114ba169afbaaf488f0a98a6fc1c861b136e93fea9bfc3f00af66\", \"actual_result\": \"passed\", \"provider_calls\": [{\"kind\": \"ambiguous_send_mail\", \"function\": \"ambiguous\"}], \"old_tick\": 1794660476, \"real_post_due\": 1794660478, \"job_states\": [[\"done-task\", \"cancelled\"], [\"test\", \"uncertain\"], [\"test\", \"cancelled\"]]}\n"
+    },
+    {
+      "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.xml",
+      "bytes": 1179,
+      "sha256": "0a8a94677922a2efccc2b886522b48bf09b087c486d93a5ae1fbe986154b4243",
+      "text": "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites name=\"pytest tests\"><testsuite name=\"pytest\" errors=\"0\" failures=\"0\" skipped=\"0\" tests=\"7\" time=\"4.816\" timestamp=\"2026-11-14T07:48:04.476710-05:00\" hostname=\"bff794b8bba0\"><testcase classname=\"tests.test_mail_delivery\" name=\"test_email_consent_verified_destination_and_real_candidate_lifecycle\" time=\"0.871\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send\" time=\"0.895\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_email_requires_delivery_consent_and_config\" time=\"0.450\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_official_sdk_adapters_send_only_expected_fields\" time=\"0.871\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code\" time=\"0.322\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back\" time=\"0.275\" /><testcase classname=\"tests.test_mail_delivery\" name=\"test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender\" time=\"0.276\" /></testsuite></testsuites>"
+    },
+    {
+      "path": "/workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.log",
+      "bytes": 1857,
+      "sha256": "44ac325ab1831f67dd9b8b65f9f929a85bbfbaaf1c75aafe8dfd50d212584376",
+      "text": "============================= test session starts ==============================\nplatform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0 -- /workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/bin/python\ncachedir: .pytest_cache\nrootdir: /workspace/scratch/0a6433f08acc/luojiaxinshi-mail-fixture-clock\nconfigfile: pytest.ini\nplugins: platformdirs-4.14.5, anyio-4.15.1\ncollecting ... collected 7 items\n\ntests/test_mail_delivery.py::test_email_consent_verified_destination_and_real_candidate_lifecycle PASSED [ 14%]\ntests/test_mail_delivery.py::test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send PASSED [ 28%]\ntests/test_mail_delivery.py::test_email_requires_delivery_consent_and_config PASSED [ 42%]\ntests/test_mail_delivery.py::test_official_sdk_adapters_send_only_expected_fields PASSED [ 57%]\ntests/test_mail_delivery.py::test_qq_mail_uses_verified_tls_fixed_endpoint_and_authorization_code PASSED [ 71%]\ntests/test_mail_delivery.py::test_qq_mail_failure_is_sanitized_and_never_retried_or_falls_back PASSED [ 85%]\ntests/test_mail_delivery.py::test_mail_provider_configuration_rejects_unknown_provider_and_unsafe_sender PASSED [100%]\n\n=============================== warnings summary ===============================\n../luojiaxinshi/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1\n  /workspace/scratch/0a6433f08acc/luojiaxinshi/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n- generated xml file: /workspace/scratch/0a6433f08acc/mail-fixture-clock-evidence/file-regression.xml -\n========================= 7 passed, 1 warning in 4.82s =========================\n"
+    }
+  ],
+  "formal_case_count_unchanged": 1875,
+  "scope": "One same-function controlled red and green execution and one seven-case file execution. Production code, queue eligibility, original business assertions, 120/180-second simulation offsets, workflow, dependencies, bundles and performance thresholds are unchanged. The seven formal case identities are unchanged; added assertions are not added cases. Later PR/main CI must verify the actual new commit separately."
+}

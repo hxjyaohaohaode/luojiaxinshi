@@ -28,18 +28,46 @@ def test_email_consent_verified_destination_and_real_candidate_lifecycle(env,mon
 def test_cancel_done_changed_contacts_and_do_not_replay_ambiguous_send(env,monkeypatch):
     c=account(env);app,cfg=enable(env,c);uid=c.get('/api/session').json()['user']['id'];now=int(time.time())+1
     monkeypatch.setattr(mail,'candidates',lambda *args:{})
+
+    def outbox():
+        with app.state.db.connect() as conn:
+            return {row['id']:dict(row) for row in conn.execute(
+                'SELECT id,event_key,state,due_at FROM mail_outbox WHERE user_id=?',(uid,))}
+
+    def newly_queued(before):
+        after=outbox();created=[row for jid,row in after.items() if jid not in before]
+        assert len(created)==1,{'before':before,'after':after}
+        job=created[0]
+        assert job['event_key'].startswith('test:') and job['state']=='pending',job
+        return job
+
     with app.state.db.connect(write=True) as conn:
         conn.execute('INSERT INTO mail_outbox(id,user_id,event_key,payload,destination,due_at,created_at) VALUES(?,?,?,?,?,?,?)',
                      (ident(),uid,'done-task',dumps({'user_id':uid}),'alice@example.invalid',now,now))
     provider=CapturedMessages();mail.tick(app.state.db,cfg,provider,now);assert not provider.mail
+    before=outbox()
     assert c.post('/api/notifications/email/test').status_code==200
-    def ambiguous(*args):raise TimeoutError('synthetic timeout')
+    ambiguous_job=newly_queued(before)
+    # The HTTP producer reads its own clock. A fixed time captured before that
+    # request may precede this job's due_at on a slower run; it must not send yet.
+    now=max(now,ambiguous_job['due_at'])
+    attempts=[]
+    def ambiguous(*args):
+        attempts.append(args[0])
+        raise TimeoutError('synthetic timeout')
     provider.send_mail=ambiguous;mail.tick(app.state.db,cfg,provider,now)
     assert any(row['state']=='uncertain' for row in c.get('/api/notifications/email').json()['recent'])
+    assert attempts==['alice@example.invalid'],attempts
+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()
     provider=CapturedMessages();mail.tick(app.state.db,cfg,provider,now+120);assert not provider.mail
+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()
+    before=outbox()
     assert c.post('/api/notifications/email/test').status_code==200
+    contact_job=newly_queued(before);now=max(now,contact_job['due_at'])
     with app.state.db.connect(write=True) as conn:conn.execute("UPDATE verified_contacts SET value='changed@example.invalid' WHERE user_id=? AND channel='email'",(uid,))
     mail.tick(app.state.db,cfg,provider,now+180);assert not provider.mail
+    assert outbox()[contact_job['id']]['state']=='cancelled',outbox()
+    assert outbox()[ambiguous_job['id']]['state']=='uncertain',outbox()
     assert not c.get('/api/notifications/email').json()['enabled']
 
 
