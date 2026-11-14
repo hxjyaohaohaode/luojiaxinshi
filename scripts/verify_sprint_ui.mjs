@@ -107,8 +107,15 @@ for(const engine of engines){
     if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-action=filter][data-filter=all]').click();
     await check('a clock-only signal preserves all 54 loaded tasks, focused node and scroll without reloading unchanged full records',async()=>{
       await searchTasks(prefix);await settledTaskSearch(prefix,54);
-      const baseline=await api('/proactive/revision');let tick=0;const paths=[];
-      const handler=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...baseline,revision:baseline.revision+':clock-fixture:'+tick,domains:{...baseline.domains,clock:tick?String(baseline.domains.clock)+':fixture:'+tick:baseline.domains.clock}})});
+      // Match the application's revision protocol. The compatibility response
+      // intentionally omits domains unless this request header is present.
+      const baselineResponse=await context.request.get(origin+'/api/proactive/revision',{headers:{'X-Workspace-Revision':'1'}});
+      assert.equal(baselineResponse.status(),200,await baselineResponse.text());const baseline=await baselineResponse.json();
+      assert.ok(typeof baseline.revision==='string'&&baseline.revision.length>0,'The real workspace response must carry its revision');
+      assert.ok(baseline.domains&&typeof baseline.domains==='object','The workspace protocol response must carry domains');
+      assert.equal(typeof baseline.domains.clock,'number','The real baseline must carry its server minute clock');
+      let tick=0;const paths=[];
+      const handler=route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...baseline,revision:baseline.revision+':clock-fixture:'+tick,domains:{...baseline.domains,clock:baseline.domains.clock+tick}})});
       const observer=request=>{const url=new URL(request.url());if(url.origin===origin&&request.method()==='GET')paths.push(url.pathname+url.search);};
       const probe=()=>Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);
       await page.route('**/api/proactive/revision',handler);

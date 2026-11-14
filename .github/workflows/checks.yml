@@ -237,6 +237,7 @@ jobs:
           name: synthetic-browser-reports
           path: |
             artifacts/sprint-ui-browser/*
+            artifacts/ci-browser/results.json
             artifacts/ci-browser/verify_sprint_ui.mjs.log
             artifacts/frontend-v9-browser/report.json
             artifacts/frontend-v9-browser/*.png
@@ -263,6 +264,8 @@ jobs:
             artifacts/ci-browser/verify_natural_intake.mjs.log
             artifacts/ci-browser/verify_task_materials.mjs.log
             artifacts/ci-browser/verify_source_inbox.mjs.log
+            artifacts/ci-browser/verify_source_presets_ui.mjs.log
+            artifacts/ci-browser/verify_pilot_workspace.mjs.log
             artifacts/ci-browser/verify_notice_matters.mjs.log
             artifacts/ci-browser/verify_qq_group_intake_ui.mjs.log
             artifacts/ci-browser/verify_push_browser.mjs.log
