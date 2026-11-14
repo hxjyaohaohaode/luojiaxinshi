@@ -80,7 +80,8 @@ try{
     window.__speechToastObserver=new MutationObserver(()=>{const toast=document.querySelector('#toast');if(toast?.matches('.visible.error'))window.__speechErrors.push(toast.textContent);});
     window.__speechToastObserver.observe(document.querySelector('#toast'),{subtree:true,childList:true,attributes:true});
   });
-  await page.locator('#chat-composer .composer-voice').click();
+  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
+  await page.locator('#composer-menu .composer-voice').click();
   await page.waitForFunction(()=>document.querySelector('#chat-input').value.includes('合成转写'),{},{timeout:18000});
   assert.equal(await page.locator('#dialog').evaluate(node=>node.open),false,'Recording starts from its button without an extra application confirmation');
   assert.equal(await page.locator('.dictation-panel').count(),1);
@@ -93,7 +94,8 @@ try{
   await page.screenshot({path:out+'/recording.png',animations:'disabled'});
   await page.getByRole('button',{name:'结束录音',exact:true}).last().click();
   await page.locator('.dictation-panel').waitFor({state:'hidden',timeout:12000});
-  assert.equal(await page.locator('.composer-entry .composer-voice').count(),1);
+  assert.equal(await page.locator('#composer-menu .composer-voice').count(),1);
+  assert.equal(await page.locator('#chat-composer .composer-voice').count(),1);
   const speechErrors=await page.evaluate(()=>{window.__speechToastObserver.disconnect();return window.__speechErrors;});
   assert.ok(speechCalls.length>=2&&speechCalls.every(x=>x.header==='RIFF'&&x.size>100));assert.deepEqual(speechErrors,[]);
   checks.push('真实 AudioWorklet 采集模拟麦克风：录音未结束即出现多段转写，保留手工输入，结束后释放录音界面（转写服务为合成夹具）');
@@ -101,7 +103,8 @@ try{
   await page.unroute('**/api/speech/transcribe',transcribe);
   let attempts=0;
   await page.route('**/api/speech/transcribe',route=>++attempts===1?route.fulfill({status:503,json:{detail:'合成转写故障'}}):route.fulfill({json:{text:'重试后恢复的转写'}}));
-  await page.locator('#chat-composer .composer-voice').click();
+  await page.getByRole('button',{name:'添加附件与更多选项',exact:true}).click();
+  await page.locator('#composer-menu .composer-voice').click();
   await page.getByRole('button',{name:'重试转写（Esc 取消剩余录音）',exact:true}).waitFor({timeout:18000});
   assert.equal(await page.locator('.dictation-panel button').count(),1);
   assert.equal(await page.locator('#chat-input').inputValue(),'重试前已经写好的内容');

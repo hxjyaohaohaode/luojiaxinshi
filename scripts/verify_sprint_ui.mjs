@@ -6,17 +6,32 @@ import {createRequire} from 'node:module';
 import {browserExecutable} from './browser-runtime.mjs';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-browser');
-const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',checks:[],errors:[],performance:[]};
+const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=20;
+const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
-for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',')){
+async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
+async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
+await saveReport();
+for(const engine of engines){
   const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
   const context=await browser.newContext({viewport:{width:1280,height:850}}),page=await context.newPage();
   await page.addInitScript(()=>{window.__sprintLongTasks=[];window.__sprintLongTaskSupported=typeof PerformanceObserver==='function'&&PerformanceObserver.supportedEntryTypes.includes('longtask');if(window.__sprintLongTaskSupported)new PerformanceObserver(list=>window.__sprintLongTasks.push(...list.getEntries().map(entry=>({startTime:entry.startTime,duration:entry.duration})))).observe({type:'longtask',buffered:true});});
   page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
+  const recordRequest=(kind,request,extra={})=>{const url=new URL(request.url());if(url.origin!==origin)return;report.recent_requests.push({engine,kind,method:request.method(),path:url.pathname+url.search,...extra});report.recent_requests=report.recent_requests.slice(-40);};
+  page.on('request',request=>recordRequest('request',request));page.on('response',response=>recordRequest('response',response.request(),{status:response.status()}));page.on('requestfailed',request=>recordRequest('requestfailed',request,{error:request.failure()?.errorText||'unknown'}));
   const api=async(route,method='GET',data)=>{const session=await context.request.get(origin+'/api/session').then(r=>r.json());const response=await context.request.fetch(origin+'/api'+route,{method,headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf,...(data?{'Content-Type':'application/json'}:{})},...(data?{data}:{})});assert.equal(response.status(),200,await response.text());return response.json();};
   const nav=async hash=>{await page.evaluate(hash=>{location.hash='#'+hash;},hash);await page.waitForFunction(hash=>document.querySelector('#content')?.dataset.page===hash&&!document.querySelector('#content')?.inert,hash);};
   const login=async(username,password)=>{await page.goto(origin+'/#login');await page.locator('[name=username]').fill(username);await page.locator('[name=password]').fill(password);await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();};
-  const check=async(name,run)=>{try{await run();report.checks.push({engine,name,ok:true});}catch(error){report.checks.push({engine,name,ok:false,error:error.stack});await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png')}).catch(()=>{});throw error;}};
+  const check=async(name,run)=>{
+    report.active={engine,name,started_at:new Date().toISOString()};console.log(engine+' START '+name);await saveReport();
+    try{await run();report.checks.push({engine,name,ok:true});console.log(engine+' PASS '+name);}
+    catch(error){report.checks.push({engine,name,ok:false,error:error.stack});console.error(engine+' FAIL '+name+'\n'+error.stack);await saveReport();await page.screenshot({path:path.join(out,engine+'-failure-'+report.checks.length+'.png'),timeout:5000}).catch(()=>{});throw error;}
+    finally{report.active=null;await saveReport();}
+  };
+  const watchCelebration=()=>page.evaluate(()=>{window.__sprintConfetti=0;new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1&&node.matches('.confetti-bit'))window.__sprintConfetti++;}).observe(document.body,{childList:true});});
+  const taskResponse=(query,response)=>{const url=new URL(response.url());return url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===query&&response.request().method()==='GET';};
+  const searchTasks=async query=>{const [response]=await Promise.all([page.waitForResponse(response=>taskResponse(query,response),{timeout:10000}),page.locator('#task-search').fill(query)]);assert.equal(response.status(),200);return response.json();};
+  const settledTaskSearch=async(query,total)=>{await page.waitForFunction(({query,total})=>document.querySelector('#task-search')?.value===query&&document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 '+Math.min(total,50)+' / '+total+' 项',{query,total});};
   const measureLoad=async(label,operation,selector)=>{
     await operation();const input=page.locator(selector);await input.waitFor({state:'visible'});await page.waitForFunction(selector=>{const node=document.querySelector(selector);return node&&!node.disabled&&!node.readOnly&&!node.closest('[inert]');},selector);await input.focus();assert.equal(await input.isEditable(),true);
     const metrics=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0],resources=performance.getEntriesByType('resource'),files=resources.filter(item=>/\/static\//.test(item.name));return {can_input_at_ms:performance.now(),dom_content_loaded_ms:nav?.domContentLoadedEventEnd||null,load_event_ms:nav?.loadEventEnd||null,request_count:resources.length,static_request_count:files.length,css_request_count:files.filter(item=>/\.css(?:$|\?)/.test(item.name)).length,transfer_size:resources.reduce((sum,item)=>sum+item.transferSize,0),encoded_body_size:resources.reduce((sum,item)=>sum+item.encodedBodySize,0),longtask_supported:window.__sprintLongTaskSupported,longtasks:window.__sprintLongTaskSupported?window.__sprintLongTasks:null,parse_duration_ms:null,parse_duration_note:'No portable browser API separates JavaScript parsing from execution; unmeasured.',cache_note:'Zero transferSize is allowed on warm loads and is not treated as a network failure.',resources:files.map(item=>({url:item.name.replace(location.origin,''),initiator:item.initiatorType,duration:item.duration,transferSize:item.transferSize,encodedBodySize:item.encodedBodySize}))};});
@@ -82,18 +97,32 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
     });
     await check('full collection search finds a record beyond the initial page',async()=>{
-      await page.locator('#task-search').fill(needle);await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 1 / 1 项');
+      assert.equal((await searchTasks(needle)).total,1);await settledTaskSearch(needle,1);
       assert.match(await page.locator('#task-results').innerText(),new RegExp(needle));
     });
     await check('an obsolete query response cannot overwrite the latest server filter',async()=>{
-      let release;const gate=new Promise(resolve=>release=resolve);let observed;const began=new Promise(resolve=>observed=resolve);
-      const handler=async route=>{const q=new URL(route.request().url()).searchParams.get('q');if(q!==prefix){await route.continue();return;}const response=await route.fetch();observed();await gate;await route.fulfill({response}).catch(()=>{});};
+      let release,observed,rejected,finished;const gate=new Promise(resolve=>release=resolve),began=new Promise((resolve,reject)=>{observed=resolve;rejected=reject;}),completed=new Promise(resolve=>finished=resolve);
+      const race={engine,old_query:prefix,new_query:needle,old_response_captured:false,old_browser_response_observed:false,old_request_failure:null,late_fulfill_attempted:false,late_fulfill_result:null};report.query_races.push(race);
+      const failed=request=>{const url=new URL(request.url());if(url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix)race.old_request_failure=request.failure()?.errorText||'unknown';};
+      const responded=response=>{if(taskResponse(prefix,response))race.old_browser_response_observed=true;};page.on('requestfailed',failed);page.on('response',responded);
+      const handler=async route=>{
+        if(new URL(route.request().url()).searchParams.get('q')!==prefix){await route.continue();return;}
+        try{const response=await route.fetch({timeout:10000});assert.equal(response.status(),200);race.old_response_captured=true;observed();await gate;race.late_fulfill_attempted=true;try{await route.fulfill({response});race.late_fulfill_result='fulfill_call_completed';}catch(error){race.late_fulfill_result='fulfill_call_rejected';race.late_fulfill_error=error.message;}}
+        catch(error){race.fetch_error=error.message;rejected(error);await route.abort().catch(()=>{});}
+        finally{finished();}
+      };
       await page.route('**/api/tasks/page?**',handler);
-      try{await page.locator('#task-search').fill(prefix);await began;await page.locator('#task-search').fill(needle);await page.waitForFunction(()=>document.querySelector('#task-count')?.textContent==='已加载 1 / 1 项');release();await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));assert.equal(await page.locator('#task-search').inputValue(),needle);assert.equal(await page.locator('#task-results .task-row').count(),1);}finally{release();await page.unroute('**/api/tasks/page?**',handler);}
+      try{
+        await Promise.all([within(began,10000,'The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.'),page.locator('#task-search').fill(prefix)]);
+        assert.equal((await searchTasks(needle)).total,1);await settledTaskSearch(needle,1);
+        release();await within(completed,10000,'The held older query did not finish its late fulfill attempt.');await page.waitForTimeout(800);
+        race.outcome=race.old_request_failure?'old_request_aborted_late_fulfill_attempted':race.old_browser_response_observed?'old_response_observed_after_new_query':'late_fulfill_attempt_without_observed_browser_response';
+        assert.equal(await page.locator('#task-search').inputValue(),needle);assert.equal(await page.locator('#task-results .task-row').count(),1);assert.match(await page.locator('#task-results').innerText(),new RegExp(needle));assert.equal(await page.locator('#task-results').getAttribute('aria-busy'),'false');
+      }finally{release();await page.unroute('**/api/tasks/page?**',handler);page.off('requestfailed',failed);page.off('response',responded);}
     });
     await check('failed completion rolls back and persistent error stays above the mobile navigation',async()=>{
       await page.setViewportSize({width:390,height:844});
-      await page.evaluate(()=>{window.__sprintConfetti=0;new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1&&node.matches('.confetti-bit'))window.__sprintConfetti++;}).observe(document.body,{childList:true});});
+      await watchCelebration();
       const tid=tasks.at(-1),url=origin+'/api/tasks/'+tid,handler=route=>route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({detail:'合成失败：服务端尚未保存'})});
       await page.route(url,handler);
       try{await page.locator('[data-action=toggle-task][data-id="'+tid+'"]').click();await page.locator('#toast').filter({hasText:'合成失败'}).waitFor();await page.waitForFunction(tid=>document.querySelector('[data-action=toggle-task][data-id="'+tid+'"]')?.getAttribute('aria-pressed')==='false',tid);assert.equal(await page.evaluate(()=>window.__sprintConfetti),0);await page.waitForTimeout(6100);assert.equal(await page.locator('#toast').isVisible(),true);const toast=await page.locator('#toast').boundingBox(),navBox=await page.locator('.mobile-bottom-nav').boundingBox();assert.ok(toast.y+toast.height<=navBox.y-1,JSON.stringify({toast,navBox}));}finally{await page.unroute(url,handler);}
@@ -111,10 +140,14 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       await api('/tasks/'+tid,'PUT',{version:completed.version,data:completed.data,status:'pending',reason:'合成验收：恢复本人记录以核对办理入口'});
       const current=(await api('/tasks/'+tid+'/workflow')).task;
       await api('/tasks/'+tid+'/workflow','PUT',{version:current.workflow.version,task_version:current.version,data:{...current.workflow.data,execution_mode:'submission',stage:'preparing'}});
-      await nav('dashboard');await nav('tasks');await page.locator('#task-search').fill(needle);
-      await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 1 / 1 项');
+      // These preceding writes use a second API client. Reload as a user would
+      // before testing one click on the newly committed submission workflow.
+      await page.reload();await page.locator('#task-search').waitFor();
+      if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-action=filter][data-filter=all]').click();
+      const fresh=await searchTasks(needle);assert.equal(fresh.total,1);assert.equal(fresh.items[0].status,'pending');assert.equal(fresh.items[0].workflow.data.execution_mode,'submission');assert.equal(fresh.items[0].workflow.data.stage,'preparing');await settledTaskSearch(needle,1);
+      const control=page.locator('[data-action=toggle-task][data-id="'+tid+'"]');assert.equal(await control.getAttribute('aria-pressed'),'false');assert.match(await control.getAttribute('aria-label'),/办理/);await watchCelebration();
       const before=await page.evaluate(()=>window.__sprintConfetti);
-      await page.locator('[data-action=toggle-task][data-id="'+tid+'"]').click();await page.locator('#workflow-form').waitFor();
+      await control.click();await page.locator('#workflow-form').waitFor();
       assert.equal((await api('/tasks/'+tid+'/workflow')).task.status,'pending');assert.equal(await page.evaluate(()=>window.__sprintConfetti),before);
       await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});
     });
@@ -154,6 +187,6 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
     });
     await page.screenshot({path:path.join(out,engine+'-mobile-draft.png')});
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
-  }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await browser.close();}
+  }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await saveReport();await browser.close();}
 }
-await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(report.errors.length||report.checks.some(check=>!check.ok))process.exitCode=1;
+report.complete=report.checks.length===report.expected_checks;report.passed=report.complete&&!report.errors.length&&report.checks.every(check=>check.ok);report.status=report.passed?'passed':report.complete?'failed':'incomplete';await saveReport();console.log(JSON.stringify(report,null,2));if(!report.passed)process.exitCode=1;

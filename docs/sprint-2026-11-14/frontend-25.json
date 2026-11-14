@@ -1,6 +1,6 @@
 {
   "scope": "LJ-085–109 plus API integration dependencies",
-  "browser_gate": "Pending actual CI; this document does not predeclare pass",
+  "browser_gate": "Run 43562060192 completed: 30 report slots passed, pilot failed, sprint/composer failed without reports. Continuity 990/990 passed. Targeted cold-entry and test repairs require the next CI; no full frontend acceptance is predeclared.",
   "requirements": [
     {
       "id": "LJ-085",
@@ -15,7 +15,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "统一层序与所有权",
       "files": [
@@ -25,7 +25,10 @@
       ],
       "change": "学院、事项、材料 CSS 进入统一 legacy/system 层序；删除独立无层 link 和运行时材料 link，修正 bundle 相对路径。已有各 feature CSS 保持必要规则，未凭静态猜测整片删除。",
       "verification": "npm run build；现有 visual / source-inbox / pilot suites",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50: 7 Linux/Windows Node22 build gates passed for app-XK3PQMAE.js; visual-layout suite 168 checks passed. Later cold-entry repairs produce a new build requiring revalidation."
+      ]
     },
     {
       "id": "LJ-086",
@@ -40,7 +43,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "品牌及密度令牌",
       "files": [
@@ -49,7 +52,10 @@
       ],
       "change": "保留珞珈绿/白底与原导航。统一 control-target=44px 和 page/row 密度 token，明确 850px 断点；没有 scale 全页缩小。",
       "verification": "新 sprint suite 320/390/1280 及原 visual suites",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 visual-layout bounds: 168 checks passed, 56 per engine; actual 320px chat, 390x420 chat and desktop task-board screenshots reviewed."
+      ]
     },
     {
       "id": "LJ-087",
@@ -64,7 +70,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "触达面积",
       "files": [
@@ -73,7 +79,10 @@
       ],
       "change": "任务勾选、更多、拖动、聊天入口用独立 44px 格；删除桌面负 margin 并保留视觉图标大小。",
       "verification": "sprint: task targets and 320px composer geometry",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 task-board: 28 checks passed including 320/390 touch targets; actual browser result retained. Sprint-specific control-overlap check has no completed report."
+      ]
     },
     {
       "id": "LJ-088",
@@ -88,7 +97,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "通知首屏",
       "files": [
@@ -112,7 +121,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "单行摘要",
       "files": [
@@ -136,7 +145,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "手机待办",
       "files": [
@@ -145,7 +154,10 @@
       ],
       "change": "保留分组、长标题换行；拖动入口明确提供点按/Enter 位置选择；当前加载范围写明，避免把 50 项当全部。",
       "verification": "verify_task_board.mjs；sprint task geometry",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 task-board: 28/28 passed (Chromium10/Firefox9/WebKit9), including real drag/undo, native Chromium touch, keyboard movement and new row/focus stability."
+      ]
     },
     {
       "id": "LJ-091",
@@ -160,7 +172,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "确认后完成动效",
       "files": [
@@ -184,7 +196,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "通知详情层级",
       "files": [
@@ -193,7 +205,10 @@
       ],
       "change": "保留原 noticeFocus 证据顺序；公开阶段/公示/结果入口接真实生命周期编辑器，原文证据和版本关系可达。",
       "verification": "verify_notice_flow / notice_matters；sprint lifecycle entry",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 notice-flow45 and notice-matters21 checks passed. New sprint lifecycle entry remains unverified because its report is absent."
+      ]
     },
     {
       "id": "LJ-093",
@@ -208,7 +223,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "办理面板",
       "files": [
@@ -217,7 +232,10 @@
       ],
       "change": "保留固定标题/滚动正文/保存区与服务器草稿机制；新增正式活动/办理窗口编辑；未勾选时间补丁的 required 输入禁用，避免隐藏字段阻止保存。",
       "verification": "verify_draft_continuity / notice_flow；official-time API tests",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 ui-continuity: supplementary-material save preserves a newly opened handling form; 12 checks across the three engines. Other mobile handling-panel and real soft-keyboard claims remain pending."
+      ]
     },
     {
       "id": "LJ-094",
@@ -232,7 +250,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "收件回执",
       "files": [
@@ -241,7 +259,11 @@
       ],
       "change": "保留现有附件/文本/链接 intake 队列及失败重试、成功材料保留机制；没有用 CSS 把回执隐藏成加载装饰。",
       "verification": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 draft-continuity: notice business/cleanup races and explicit duplicate-notice retry passed (54+54+12 checks across three engines). Natural-intake and QQ main suites remain pending.",
+        "Run50 natural-intake33 (11 per engine) and QQ intake12 passed; original successful check names retained."
+      ]
     },
     {
       "id": "LJ-095",
@@ -256,7 +278,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "聊天输入",
       "files": [
@@ -265,7 +287,11 @@
       ],
       "change": "文字与发送独立占位，表情和语音进入更多菜单；录音中控制仍移动到原录音面板可停止/取消。输入法与草稿恢复逻辑保留。",
       "verification": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 ui-continuity: late speech configuration does not take over the editing dialog (6 checks across three engines). New composer, dictation and physical input-method evidence remain separate.",
+        "Run50 chat-layout12 and chat-interactions25 passed; composer dictation stopped at the hidden-menu click, so its later audio assertions remain pending."
+      ]
     },
     {
       "id": "LJ-096",
@@ -280,7 +306,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "回复工具层级",
       "files": [
@@ -289,7 +315,10 @@
       ],
       "change": "复制/引用等常用动作保留，朗读/版本/重生成/分支/分享进入有标签 disclosure；Escape 返回 summary 焦点。",
       "verification": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 chat-interactions9/8/8 and chat-recovery3/3/3 passed after opening the real reply menu before every action."
+      ]
     },
     {
       "id": "LJ-097",
@@ -304,7 +333,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "流式阅读锚点",
       "files": [
@@ -313,7 +342,10 @@
       ],
       "change": "保留已存在的用户上滑/流式读写/停止/断线恢复语义；本轮没有换掉对话运行时。懒加载不改变真实 stream API。",
       "verification": "verify_chat_layout / chat_recovery / reference_interactions / openui suites",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 OpenUI30, reference-interactions48, chat-layout12, chat-interactions25 and chat-recovery9 passed, with prior successful check names retained."
+      ]
     },
     {
       "id": "LJ-098",
@@ -328,7 +360,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "记忆默认密度",
       "files": [
@@ -337,7 +369,10 @@
       ],
       "change": "高级筛选改为原生 details，搜索与当前范围保持主位；批量选择工具与原返回条件机制保留。",
       "verification": "verify_reference_interactions / memory continuity suites",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 reference-interactions48 and frontend-stability123 passed; no physical screen-reader claim is added."
+      ]
     },
     {
       "id": "LJ-099",
@@ -352,7 +387,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "来源可靠性可见",
       "files": [
@@ -360,7 +395,11 @@
       ],
       "change": "来源代理新增规则试读、应用、回滚、跨域 Feed 发布者；卡片收起仍展示真实读取状态与最近成功。该文件由来源审计代理负责验证。",
       "verification": "source-presets / source-inbox suites；来源代理后端回归",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 ui-continuity: a source save preserves another source draft (18 checks across three engines). Source trial/apply/preset main suites remain pending.",
+        "Run50 source-inbox5 and source-presets7 checks passed, including trial/apply and actual preset fixture contracts."
+      ]
     },
     {
       "id": "LJ-100",
@@ -375,7 +414,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "手机日历",
       "files": [
@@ -383,7 +422,10 @@
       ],
       "change": "保留手机默认 agenda 与明确日/周视图；安排新增显式 reminder_minutes，默认不提醒课程；无虚构锁屏送达保证。正式活动时段编辑走原变更确认。",
       "verification": "arrangement_recovery / notice_flow；新 reminder API tests",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 arrangement-recovery: 612 checks passed, 204 per engine; draft-continuity arrangement business/cleanup races add 84 checks. Actual 320px and 1440px recovery screenshots inspected; not a claim for all calendar views."
+      ]
     },
     {
       "id": "LJ-101",
@@ -398,7 +440,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "学院窄屏",
       "files": [
@@ -423,7 +465,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "异步与空状态",
       "files": [
@@ -433,7 +475,10 @@
       ],
       "change": "分页区分加载、保留旧范围刷新、无匹配与失败；失败有重试，409 list_changed 保留筛选重新读。角色和删除结果依后端处理，不把读取失败当空列表。",
       "verification": "tests/paged-list.test.mjs；原 owner/route/isolation tests",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 continuity verified unavailable save status, failed save retry, late-response isolation and draft preservation. Full empty/offline/permission/deleted-page matrix remains broader than these checks."
+      ]
     },
     {
       "id": "LJ-103",
@@ -448,7 +493,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "Toast 安全区",
       "files": [
@@ -457,7 +502,10 @@
       ],
       "change": "测量实际底部导航/聊天输入和 visualViewport，错误常驻；成功提示暂停于 hover/focus/hidden；dialog 上层可操作，异步 Undo 按真实结果反馈。",
       "verification": "sprint persistent failure/mobile nav；需真实软键盘设备补验证",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 profile-conflict-390.png was actually opened: conflict context, entered value, review and save controls are visible. Main-suite persistent toast/mobile-navigation geometry remains pending."
+      ]
     },
     {
       "id": "LJ-104",
@@ -472,7 +520,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "全量筛选与返回",
       "files": [
@@ -482,7 +530,11 @@
       ],
       "change": "所有筛选在服务器完整集合执行；50 项分页/总匹配/加载范围明确；请求带 epoch/账号/路由守卫；返回恢复滚动及可定位焦点。重入尚未完成路由会重发新读，不永远停加载。",
       "verification": "tests/paged-list.test.mjs (5)；sprint >50 and stale query",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 ui-continuity: old memory-page responses do not change the current route (12 checks). New paged search and task-node stability assertions await the main-suite report.",
+        "Run50 workspace120, natural-intake33 and task-board28 passed; node identity, focus and home-to-task filter restoration passed in all three engines. Sprint report remains absent."
+      ]
     },
     {
       "id": "LJ-105",
@@ -497,7 +549,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "长文本可读",
       "files": [
@@ -521,7 +573,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "辅助功能",
       "files": [
@@ -532,6 +584,9 @@
       "verification": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过",
       "limitations": [
         "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
+      ],
+      "observed_browser_evidence": [
+        "Run50 ui-continuity: delayed dialog focus does not steal focus after title input starts (6 checks). Physical screen reader, 200% zoom and Chinese soft keyboard remain unverified."
       ]
     },
     {
@@ -547,7 +602,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "动效生命周期",
       "files": [
@@ -571,7 +626,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "统一动作状态",
       "files": [
@@ -581,7 +636,11 @@
       ],
       "change": "任务提交后重读当前分页投影；草稿/发布/重试/渠道供应商接受均用实际回执语义；拒收、转交、个人跟进与最小留存回执分别标明。",
       "verification": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests",
-      "limitations": []
+      "limitations": [],
+      "observed_browser_evidence": [
+        "Run50 continuity: same-field conflict preserves user input and supports review/retry (30 checks); failed save restores the button and preserves other profile data on retry (30 checks). Cross-device task/campus main suites remain pending.",
+        "Run50 pilot reached24 checks with21 passing and3 collaboration cold-entry failures. That real product failure is being repaired; the overall pilot suite is not accepted."
+      ]
     },
     {
       "id": "LJ-109",
@@ -596,7 +655,7 @@
       "evidence": [
         "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
         "Node syntax: 157 JS/mjs checked before final additions",
-        "scripts/verify_sprint_ui.mjs"
+        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
       ],
       "area": "209 采用账本",
       "files": [
@@ -610,8 +669,135 @@
   ],
   "local_test_result": {
     "command": "npm test",
-    "passed": 270,
+    "passed": 275,
     "failed": 0,
-    "log": "/tmp/luojia-ui-tests-final-freeze.log"
-  }
+    "skipped": 0,
+    "performed_at": "2026-11-14T06:13:24.916375+00:00",
+    "log": "ci-evidence/43562060192/frontend-final-node-tests.log",
+    "reexecuted_for_current_frozen_sources": true
+  },
+  "local_test_result_history": [
+    {
+      "command": "npm test",
+      "passed": 270,
+      "failed": 0,
+      "log": "/tmp/luojia-ui-tests-final-freeze.log"
+    },
+    {
+      "command": "npm test",
+      "passed": 275,
+      "failed": 0,
+      "skipped": 0,
+      "performed_at": "2026-11-14T05:26:48.742469+00:00",
+      "log": "ci-evidence/43558958724/frontend-fix-node-tests.log",
+      "reexecuted_for_documentation": false
+    }
+  ],
+  "current_build": {
+    "entries": {
+      "js": "/static/dist/app-DFTX33VB.js",
+      "css": "/static/dist/styles-BKR4PFDD.css"
+    },
+    "files": 24,
+    "source_files": 191,
+    "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "record": "frontend-build-verification.json",
+    "browser_status": "pending_next_candidate_ci"
+  },
+  "browser_observations": {
+    "run_id": 43562060192,
+    "attempt": 1,
+    "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+    "observed_at": "2026-11-14T05:50:35.607535+00:00",
+    "main_suite_status": "completed_failure",
+    "first_run_record": "../audits/sprint-ci-first-round.json",
+    "continuity": {
+      "job": 132347708859,
+      "conclusion": "success",
+      "checks": 990,
+      "passed": 990,
+      "failures": 0,
+      "errors": 0,
+      "engines": {
+        "chromium": {
+          "arrangement_recovery": 204,
+          "draft_continuity": 68,
+          "ui_continuity": 58,
+          "total": 330,
+          "failed_checks": 0,
+          "page_errors": 0
+        },
+        "firefox": {
+          "arrangement_recovery": 204,
+          "draft_continuity": 68,
+          "ui_continuity": 58,
+          "total": 330,
+          "failed_checks": 0,
+          "page_errors": 0
+        },
+        "webkit": {
+          "arrangement_recovery": 204,
+          "draft_continuity": 68,
+          "ui_continuity": 58,
+          "total": 330,
+          "failed_checks": 0,
+          "page_errors": 0
+        }
+      },
+      "reports": [
+        {
+          "path": "continuity-browser/arrangement-recovery/report.json",
+          "checks": 612,
+          "passed": 612
+        },
+        {
+          "path": "continuity-browser/draft-continuity/report.json",
+          "checks": 204,
+          "passed": 204
+        },
+        {
+          "path": "continuity-browser/ui-continuity/report.json",
+          "checks": 174,
+          "passed": 174
+        }
+      ],
+      "artifact": {
+        "id": 14100383444,
+        "name": "continuity-browser-reports",
+        "bytes": 703372,
+        "sha256": "ded0a0e322ed67502cc5e3493ddd53fac0c762c29ee5bffa29b454fecf274cdf",
+        "download_sha256_verified": true
+      },
+      "verification": "Counted every checks[].passed value and errors[] in the downloaded original reports; all 990 passed values are true.",
+      "visually_reviewed": [
+        {
+          "path": "continuity-browser/arrangement-recovery/recovery-320.png",
+          "observation": "320px recovery dialog shows the saved result and four separate readable actions without obvious horizontal overflow or occlusion."
+        },
+        {
+          "path": "continuity-browser/arrangement-recovery/recovery-1440.png",
+          "observation": "1440px recovery dialog is centered, with readable saved result and all four actions visible."
+        },
+        {
+          "path": "continuity-browser/ui-continuity/profile-conflict-390.png",
+          "observation": "390px conflict dialog preserves the entered college value, displays the conflicting value and keeps the review and save actions visible."
+        }
+      ],
+      "visual_limit": "These three screenshots were actually opened; this does not establish physical keyboard, screen-reader, 200% zoom or unseen main-suite rendering behavior."
+    },
+    "limit": "The listed scripts describe planned gates; source existence and overall continuity totals do not establish every requirement. Requirement-specific partial observations are listed separately.",
+    "last_job_observation": "2026-11-14T05:57:52.167Z",
+    "second_run_record": "../audits/sprint-ci-second-round.json",
+    "recorded_checks": {
+      "total": 957,
+      "passed": 954,
+      "failed": 3
+    },
+    "missing_reports": [
+      "sprint-ui-browser/report.json",
+      "composer-browser/results.json"
+    ]
+  },
+  "documented_at": "2026-11-14T06:13:24.916375+00:00"
 }

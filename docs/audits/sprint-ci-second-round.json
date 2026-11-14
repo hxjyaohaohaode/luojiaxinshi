@@ -1,0 +1,560 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-14T06:01:29.887952+00:00",
+  "run_id": 43562060192,
+  "run_number": 50,
+  "attempt": 1,
+  "event": "pull_request",
+  "conclusion": "failure",
+  "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+  "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+  "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
+  "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+  "implementation_by_platform": {
+    "ubuntu": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+    "windows": "1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9",
+    "interpretation": "Both operating systems checked out the same Git merge commit. Each fingerprint stayed unchanged during its own run; cross-platform byte equality is not claimed."
+  },
+  "backend": {
+    "ubuntu": {
+      "files": 134,
+      "tests": 1792,
+      "passed": 1790,
+      "skipped": 2,
+      "failures": 0,
+      "errors": 0,
+      "node_passed": 275,
+      "skips": [
+        "Windows process ownership",
+        "Windows socket/launcher"
+      ]
+    },
+    "windows": {
+      "files": 134,
+      "tests": 1792,
+      "passed": 1791,
+      "skipped": 1,
+      "failures": 0,
+      "errors": 0,
+      "node_passed": 275,
+      "partition_tests": [
+        447,
+        480,
+        389,
+        476
+      ],
+      "aggregation_errors": [],
+      "skips": [
+        "POSIX TIME_WAIT bind semantics"
+      ]
+    }
+  },
+  "dependency_audits": {
+    "both_platforms": {
+      "npm": "npm audit including dev/build: zero known vulnerabilities",
+      "python": "pip_audit -r requirements.lock --strict: No known vulnerabilities found"
+    }
+  },
+  "continuity": {
+    "engines": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "checks_per_engine": 330,
+    "total_checks": 990,
+    "failures": 0,
+    "errors": 0,
+    "status": "passed"
+  },
+  "container": {
+    "status": "passed",
+    "scope": [
+      "Docker build",
+      "read-only filesystem",
+      "UID 10001",
+      "cap-drop ALL / no-new-privileges",
+      "health",
+      "database check",
+      "GenUI resources",
+      "pinned legacy Office parsing",
+      "root page"
+    ]
+  },
+  "browser_reports": [
+    {
+      "label": "Sprint workflows and loading performance",
+      "artifact_path": "artifacts/sprint-ui-browser/report.json",
+      "status": "report_unavailable",
+      "counted_as_passed": false
+    },
+    {
+      "label": "Browser stability",
+      "artifact_path": "artifacts/frontend-v9-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 123,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "8c95719700e04ed5ee8352e23874bba865f6d1d84940968cab84ee3049477497"
+    },
+    {
+      "label": "Browser regression",
+      "artifact_path": "artifacts/frontend-v8-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 201,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "0b29034a1d122d156922562a10414a9e63264c58a3d42d1b902021a978feac14"
+    },
+    {
+      "label": "Reference interactions",
+      "artifact_path": "artifacts/reference-interactions-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "5b5e27449732db81134511417d4ec9603ed3edaf4c8b19c55a1b11543ab67f8f"
+    },
+    {
+      "label": "Workspace interactions",
+      "artifact_path": "artifacts/workspace-interactions-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 120,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "d97d3dec48a908e42685d92a7ed1a7eaf18d1ba4f02d1c29265e88009cb4014a"
+    },
+    {
+      "label": "Visual layout bounds",
+      "artifact_path": "artifacts/visual-review-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 168,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "8dc573b60be9bb063201fd85541dd4d8dff076ebb75b0b5a63f664d1ba2ae3ec"
+    },
+    {
+      "label": "Notice intake and flexible workflows",
+      "artifact_path": "artifacts/notice-flow-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 45,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "9b66c12f3236e3f8dd0039ec84e64026d4bbc9b39a1398208b0b9a6970d3c192"
+    },
+    {
+      "label": "Task board drag and recovery",
+      "artifact_path": "artifacts/task-board-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "af6e953c77b7f840318b889265af18877969d0838a2f85eaacce374521af8b4b"
+    },
+    {
+      "label": "Natural notice intake",
+      "artifact_path": "artifacts/natural-intake-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 33,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "267c86f4ddc39b391129c3a64b926c8932a77ad09083d1213e1aa8afbc352bd5"
+    },
+    {
+      "label": "Personal materials and submissions",
+      "artifact_path": "artifacts/task-materials-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "96c4d5b0a6617b79a9167d796f9648f162a07832e6e8866cf92a6f61fbadfdf8"
+    },
+    {
+      "label": "Source subscriptions and personal inbox",
+      "artifact_path": "artifacts/source-inbox-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "3560890af5e27c4624fa0e07f4fbe7b0520edd0fb0c00b90394fc651cd429efe"
+    },
+    {
+      "label": "Persistent push and device ownership",
+      "artifact_path": "artifacts/push-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "0378bf9303872db827faef8712be55d136ecc6e9b0500ab75bdeccb62328ef00"
+    },
+    {
+      "label": "Notice matter grouping and campus capacities",
+      "artifact_path": "artifacts/notice-matters-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "6efca39aedb5f0851573017624180aad133b011316a67f2bffb954e750d2183f"
+    },
+    {
+      "label": "School source chooser and pending saves",
+      "artifact_path": "artifacts/source-presets-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "d6410957bd3383dea10efbf77dc217f55d043932ace1bdeb64bfa5e4fa419984"
+    },
+    {
+      "label": "Independent devices and campus collaboration",
+      "artifact_path": "artifacts/pilot-workspace-browser/report.json",
+      "status": "failed",
+      "counts": {
+        "checks": 24,
+        "failures": 3,
+        "errors": 3,
+        "skipped": 0
+      },
+      "sha256": "aba57edbb73f131c504772958f8e889e76aa1e8295cad5f6f0b4fa017b1a261c",
+      "failed_checks": [
+        {
+          "engine": "chromium",
+          "name": "scoped collaboration is received, returned, supplemented and resolved across devices",
+          "ok": false,
+          "error": "page.waitForFunction: Timeout 12000ms exceeded."
+        },
+        {
+          "engine": "firefox",
+          "name": "scoped collaboration is received, returned, supplemented and resolved across devices",
+          "ok": false,
+          "error": "page.waitForFunction: Timeout 12000ms exceeded."
+        },
+        {
+          "engine": "webkit",
+          "name": "scoped collaboration is received, returned, supplemented and resolved across devices",
+          "ok": false,
+          "error": "page.waitForFunction: Timeout 12000ms exceeded."
+        }
+      ]
+    },
+    {
+      "label": "QQ group intake, rules and attachments",
+      "artifact_path": "artifacts/qq-group-intake-browser/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "b9ec592b65003063bafa2b57bc505036eeb09a714c26a148d5c6c9ee51dea476"
+    },
+    {
+      "label": "Agent approvals and cancellation",
+      "artifact_path": "artifacts/agent-chat-browser/results.json",
+      "status": "passed",
+      "counts": {
+        "checks": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "1ac788f661e18f32e91c8a1d66c0e6dca30fd2644645afe2501f882e6ec7e38c"
+    },
+    {
+      "label": "Agent authored UI and persistence",
+      "artifact_path": "artifacts/agent-adaptive-browser/results.json",
+      "status": "passed",
+      "counts": {
+        "checks": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "8fe7f3ed4fff31bea6779b8f271c0c8fffd9b484b03632052e9a2e37f934e20e"
+    },
+    {
+      "label": "Agent private media and resize",
+      "artifact_path": "artifacts/reference-fusion/browser/results.json",
+      "status": "passed",
+      "counts": {
+        "checks": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "2ded6a3f530095e1a0e847900a303cb404da091b75c935ed62546d8d5f51c0c2"
+    },
+    {
+      "label": "Agent incremental rendering",
+      "artifact_path": "artifacts/agent-quality-browser/performance.json",
+      "status": "passed",
+      "counts": {
+        "checks": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "3012041c0358aa398601db469b3d4fefb1e633bb4459e79dbcdef314ce5a775f"
+    },
+    {
+      "label": "Composer attachments and dictation",
+      "artifact_path": "artifacts/composer-browser/results.json",
+      "status": "report_unavailable",
+      "counted_as_passed": false
+    },
+    {
+      "label": "OpenUI streaming Chromium",
+      "artifact_path": "artifacts/openui-browser/chromium/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "019f9a6e64e91b3ab9521c8d2c12023d6605cf402d8d6e1eb7f47af4d21b9daa"
+    },
+    {
+      "label": "OpenUI streaming Firefox",
+      "artifact_path": "artifacts/openui-browser/firefox/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "08ce88a02c22eebb0bda2103ab2e67b5c02ddb79edea5cc7d00eed5ace50c5b1"
+    },
+    {
+      "label": "OpenUI streaming WebKit",
+      "artifact_path": "artifacts/openui-browser/webkit/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "fcf6c73b9f9a61355378511a06cb477e9707c42f371e015675ccf75b3e73ddfe"
+    },
+    {
+      "label": "Compact chat Chromium",
+      "artifact_path": "artifacts/chat-layout/chromium/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "2e9648a3ef450ea4c1b04b3427f455f49c02f033a71b60b96ec5c5a42a54f233"
+    },
+    {
+      "label": "Compact chat Firefox",
+      "artifact_path": "artifacts/chat-layout/firefox/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "e9bc508f0e3acc33b7c753f55bd7c2cee2174b3eda9439881559215bb3120aeb"
+    },
+    {
+      "label": "Compact chat WebKit",
+      "artifact_path": "artifacts/chat-layout/webkit/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "bae340e2cc426efa23715ed9312e455fbe0211239dc1f686446a39ae798526f5"
+    },
+    {
+      "label": "Chat interactions Chromium",
+      "artifact_path": "artifacts/chat-interactions/chromium/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "477c77e3b873ab2bf9c1ba26d895097fb1b5b9fcdc1281df77e129897ab2141a"
+    },
+    {
+      "label": "Chat interactions Firefox",
+      "artifact_path": "artifacts/chat-interactions/firefox/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "a5900974d3fb80b03b3f7372e46f0e3a2b3282a49c9f51744cc4e49767b69d00"
+    },
+    {
+      "label": "Chat interactions WebKit",
+      "artifact_path": "artifacts/chat-interactions/webkit/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "21f2ed124ea03efe9ec0ad30d691af08a26e8c7cfee639449537c9dda2d02fda"
+    },
+    {
+      "label": "Chat recovery Chromium",
+      "artifact_path": "artifacts/chat-recovery/chromium/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "1d709be20d46bb0b3b9fb00aa23d8e7996e259572a3eeb325fa6b1d4c1404615"
+    },
+    {
+      "label": "Chat recovery Firefox",
+      "artifact_path": "artifacts/chat-recovery/firefox/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "227804e40caf81b6453e073bee57242fdd4c10cccab3b557083a6fb0ca27d286"
+    },
+    {
+      "label": "Chat recovery WebKit",
+      "artifact_path": "artifacts/chat-recovery/webkit/report.json",
+      "status": "passed",
+      "counts": {
+        "checks": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "sha256": "8e63173dab097196b69cd79b6fd9f7d964c09277c8300d0f83158b2632852cec"
+    }
+  ],
+  "browser_report_slots": {
+    "expected": 33,
+    "passed_reports": 30,
+    "failed_reports": 1,
+    "missing_reports_for_failed_scripts": 2,
+    "interpretation": "Missing sprint/composer reports are not zero-check successes. Pilot errors repeat its three failed check records and must not be added as six distinct failed scenarios.",
+    "recorded_checks": 957,
+    "recorded_passed_checks": 954,
+    "recorded_failed_checks": 3
+  },
+  "failed_scripts": [
+    {
+      "script": "scripts/verify_sprint_ui.mjs",
+      "exit_code": 124,
+      "observed": "The suite exceeded its unchanged 360-second runner deadline. No sprint report or screenshot was produced. The published log contains no precise check location.",
+      "diagnosis_status": "A unique unbounded await began was found by source inspection; its connection to the observed hang is an inference, not a recorded failing stack.",
+      "repair_status": "syntax_checked_awaiting_actual_browser_run",
+      "repair": "Bound the observable request capture and route fetch, require real current-query responses and settled UI, release the old request with explicit abort/fulfill observations, write progress and incomplete reports atomically, and reload after fixture API changes before testing a single submission click. The 360-second runner deadline and 20 named checks per engine remain."
+    },
+    {
+      "script": "scripts/verify_pilot_workspace.mjs",
+      "exit_code": 1,
+      "observed": "All three engines timed out after 12000 ms in scoped collaboration is received, returned, supplemented and resolved across devices. Each engine completed seven prior checks.",
+      "repair_status": "syntax_checked_awaiting_actual_browser_run",
+      "diagnosis": "Confirmed application cold-entry regression: the mobile task workflow creates data-collaboration-start before lazy collaboration.render has initialized its delegated listener. The options URL matches the fixture. The independent counselor context cannot initialize the student context.",
+      "repair": "Expose start through the lazy controller; own its single delegation in the application entry; capture owner/route/dialog/button context before import and reuse it before and after the real options read. Retain the original cold collaboration flow and add per-engine close/navigation during actual delayed module loading."
+    },
+    {
+      "script": "tests/composer-browser.mjs",
+      "exit_code": 1,
+      "observed": "Line 83:56 tried to click .composer-voice while the More menu was hidden; Playwright reported element is not visible until its 30000 ms timeout.",
+      "repair": "Open the real composer menu before each recording and check that cleanup returns the unique control to its original menu. All audio, consent, retry and manual-input assertions remain.",
+      "repair_status": "syntax_checked_awaiting_actual_browser_run"
+    }
+  ],
+  "verification_artifacts": [
+    {
+      "id": 14101013306,
+      "name": "synthetic-browser-reports",
+      "size_in_bytes": 21736325,
+      "digest": "sha256:3f7cb6afb5c80248652ea1376f54410ec4d64e6803c809ee6dd30777ca4f598c"
+    },
+    {
+      "id": 14100383444,
+      "name": "continuity-browser-reports",
+      "size_in_bytes": 703372,
+      "digest": "sha256:ded0a0e322ed67502cc5e3493ddd53fac0c762c29ee5bffa29b454fecf274cdf"
+    }
+  ],
+  "runtime_details": "The separate frozen runtime values remain in sprint-validation.json and sprint-write-wait-evidence.json; passing functional tests does not erase the 10-person wait target failure.",
+  "limits": [
+    "No main merge occurred on the basis of this failed run.",
+    "No test deletion, forced click, increased suite deadline or reduced assertion is used to mark this run passed.",
+    "The passed reports above apply to the exact run 50 checkout, not automatically to later test or product changes."
+  ],
+  "related_source_review_finding": {
+    "area": "chat memory receipt trace",
+    "evidence": "The chat presenter creates data-memory-life=trace before lazy memory lifecycle has registered its listener. Source inspection confirms the cross-module cold-entry chain. This was not a recorded failing case in run 50.",
+    "status": "source_fix_and_browser_regression_added_awaiting_new_ci",
+    "verification": "A real cold-entry browser regression is required before claiming the repair passes.",
+    "repair": "The application owns the single memory trace entry and passes its original view through lazy memory UI/studio/lifecycle. The lifecycle checks that view before and after the original owner-scoped GET. New independent chat documents cover first use, a newly opened dialog, navigation away, and absence of duplicate delegation.",
+    "fixture_precondition": "An isolated real TestClient using the existing offline agent fixture produced an accepted persisted memory receipt, HTTP 200 trace, one item, and operations identical to the assistant grounding. This is not a browser pass or a live model evaluation."
+  },
+  "unchanged_test_requirements": [
+    "sprint runner deadline remains 360 seconds",
+    "sprint named checks remain 20 per engine",
+    "pilot original scoped collaboration and offline flows remain; two cold exit checks added per engine",
+    "composer actual AudioWorklet / RIFF / retry / manual input assertions retained",
+    "memory trace uses real persisted receipts and the real HTTP endpoint; no mocked trace response"
+  ]
+}

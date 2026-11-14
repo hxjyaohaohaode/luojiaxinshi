@@ -1,0 +1,1011 @@
+{
+  "schema_version": 1,
+  "title": "珞珈信使 1.24.0 冻结源码、完整回归与实际性能证据",
+  "generated_at": "2026-11-14T06:06:48.901146+00:00",
+  "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+  "validated_code": {
+    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+    "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
+    "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+    "fingerprint_scope": "audit_full_suite.fingerprint: application, static sources/build, tests, scripts, schemas, deployment, workflow and locked dependencies. Documentation-only commits are outside this code fingerprint.",
+    "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
+    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192"
+  },
+  "source_attachments": [
+    {
+      "name": "珞珈信使_冲刺前全量审查与优化清单.md",
+      "sha256": "01f8056c1e854265370341e06429e378d9ec335237a8dec15e4449a7e2fa9bd1",
+      "lines": 1466
+    },
+    {
+      "name": "前端组件交互参考_209项依赖与交互描述_强化提示词版.md",
+      "sha256": "98c07567e531526f136504526353ed221c37d25f853334c3997e8ad40988fee0",
+      "lines": 690
+    }
+  ],
+  "coverage": {
+    "requirements": 128,
+    "p1": 118,
+    "conditional_p0": 2,
+    "conditional_p2": 8,
+    "conditional_p2_ids": [
+      "LJ-007",
+      "LJ-008",
+      "LJ-021",
+      "LJ-022",
+      "LJ-056",
+      "LJ-064",
+      "LJ-065",
+      "LJ-110"
+    ],
+    "component_references": 209,
+    "priority_candidates": 35,
+    "conditional_candidates": 79,
+    "not_adopted": 95,
+    "interpretation": "逐项证据覆盖，不是128项真实外部验收全部完成；209项为采用判断，不是安装209个依赖。"
+  },
+  "baseline_backend": {
+    "scope": "full",
+    "selected_shards": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "elapsed_seconds": 352.74,
+    "file_count": 116,
+    "shards": [
+      {
+        "shard": 1,
+        "exit_code": 0,
+        "files": 29,
+        "timed_out": false,
+        "tests": 521,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "shard": 2,
+        "exit_code": 0,
+        "files": 29,
+        "timed_out": false,
+        "tests": 359,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      {
+        "shard": 3,
+        "exit_code": 0,
+        "files": 29,
+        "timed_out": false,
+        "tests": 347,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      },
+      {
+        "shard": 4,
+        "exit_code": 0,
+        "files": 29,
+        "timed_out": false,
+        "tests": 414,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "implementation_sha256": "ddf4f35a9d736cdfb6555a573b7362c4948874a94782287dee51c2a841e8bdbb",
+    "implementation_unchanged": true,
+    "tests": 1641,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3,
+    "passed": 1638,
+    "selected_complete": true,
+    "complete": true
+  },
+  "failed_first_local_backend": {
+    "scope": "full",
+    "selected_shards": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "elapsed_seconds": 401.24,
+    "file_count": 133,
+    "shards": [
+      {
+        "shard": 1,
+        "exit_code": 0,
+        "files": 34,
+        "timed_out": false,
+        "tests": 447,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "shard": 2,
+        "exit_code": 0,
+        "files": 33,
+        "timed_out": false,
+        "tests": 468,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "shard": 3,
+        "exit_code": 0,
+        "files": 33,
+        "timed_out": false,
+        "tests": 389,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      {
+        "shard": 4,
+        "exit_code": 1,
+        "files": 33,
+        "timed_out": false,
+        "tests": 475,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 2
+      }
+    ],
+    "implementation_sha256": "66397f54a15043e70612728a28713016f4835c66be68ccfa0ecf77d04aed8eef",
+    "implementation_unchanged": true,
+    "tests": 1779,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 3,
+    "passed": 1775,
+    "selected_complete": true,
+    "complete": true
+  },
+  "fixed_frozen_backend_rounds": [
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 336.29,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 1789,
+      "selected_complete": true,
+      "complete": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "junit_sha256": "609cf9663688b0b18bc428ee5953614ab86693edb85c51e0fd7032f0d76c39ca",
+      "status": "passed",
+      "artifact": "artifacts/sprint-final/backend-round2"
+    },
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 382.24,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 1789,
+      "selected_complete": true,
+      "complete": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "junit_sha256": "acef1a77faabefe3c83a5505319dd763a84d5a2aeac13184064d133a897b97e0",
+      "status": "passed",
+      "artifact": "artifacts/sprint-final/backend-round3"
+    }
+  ],
+  "frontend_local": {
+    "performed_at": "2026-11-14T05:26:48.742469+00:00",
+    "node": "v24.22.1",
+    "platform": "linux",
+    "commands": [
+      {
+        "command": "npm run build",
+        "exit_code": 0
+      },
+      {
+        "command": "npm run build:check",
+        "exit_code": 0
+      },
+      {
+        "command": "npm test",
+        "exit_code": 0,
+        "tests": 275,
+        "passed": 275,
+        "log": "ci-evidence/43558958724/frontend-fix-node-tests.log"
+      },
+      {
+        "command": ".venv/bin/python -m pytest -q tests/test_frontend_bundle.py tests/test_audit_reports.py",
+        "exit_code": 0,
+        "tests": 23,
+        "passed": 23,
+        "log": "ci-evidence/43558958724/frontend-fix-bundle-tests.log"
+      },
+      {
+        "command": "git diff --check",
+        "exit_code": 0
+      }
+    ],
+    "build": {
+      "checked": true,
+      "entries": {
+        "js": "/static/dist/app-XK3PQMAE.js",
+        "css": "/static/dist/styles-BKR4PFDD.css"
+      },
+      "files": 24,
+      "source_files": 191,
+      "metrics_source": "Already observed npm run build:check output after the task-list repaint fix; no compression or build was rerun during the documentation update.",
+      "source_app_sha256": "69dd774e90e8aef2fc9314425cc4a9977157c4c16f73fd833a6e17b1d7d8f7d1"
+    },
+    "manifest_sha256": "685de420214464e0aa7059559dbb378d950918ec8ad49c743cdeb4c18ce45087",
+    "document": "docs/sprint-2026-11-14/frontend-build-verification.json"
+  },
+  "dependency_audits": {
+    "npm": {
+      "command": "npm audit --json",
+      "scope": "all locked dependencies including dev/build toolchain",
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "log_sha256": "790483b97778bc428609a6a5b2a4296b5aab848a754b1e23338b9039e6ee9be0"
+    },
+    "python": {
+      "command": ".venv/bin/python -m pip_audit -r requirements.lock --strict",
+      "result": "No known vulnerabilities found",
+      "log_sha256": "15950a68a7ed99c59779717acefdceb3f69cfd31bde67d2c954f2a3cea4d7955",
+      "fixed_dependency": {
+        "name": "opentelemetry-api",
+        "from": "1.45.1",
+        "to": "1.45.2",
+        "primary_advisory": "https://github.com/open-telemetry/opentelemetry-python/security/advisories/GHSA-mf5v-w3w3-f6cg"
+      }
+    },
+    "limits": "已知漏洞审计的当次结果，不代表证明不存在任何未知漏洞。"
+  },
+  "independent_runtime": {
+    "five_users": {
+      "verified_at": "2026-11-14T05:28:49.729979+00:00",
+      "result": "passed",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "synthetic_test": true,
+      "live_model_calls": 0,
+      "concurrent_users": 5,
+      "notices_saved": 100,
+      "tasks_saved": 200,
+      "http_requests": 766,
+      "response_status_counts": {
+        "200": 651,
+        "401": 5,
+        "404": 10,
+        "409": 100
+      },
+      "operations": [
+        {
+          "method": "GET",
+          "route": "/api/admin/readiness",
+          "status": 200,
+          "samples": 1,
+          "p50_ms": 13.5,
+          "p95_ms": 13.5,
+          "max_ms": 13.5
+        },
+        {
+          "method": "GET",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 14.9,
+          "p95_ms": 19.9,
+          "max_ms": 19.9
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 54.8,
+          "p95_ms": 58.4,
+          "max_ms": 58.4
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices/{id}",
+          "status": 404,
+          "samples": 5,
+          "p50_ms": 13.9,
+          "p95_ms": 14.7,
+          "max_ms": 14.7
+        },
+        {
+          "method": "GET",
+          "route": "/api/session",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 15.9,
+          "p95_ms": 236.6,
+          "max_ms": 236.6
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 200,
+          "samples": 110,
+          "p50_ms": 80.0,
+          "p95_ms": 156.8,
+          "max_ms": 250.1
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 401,
+          "samples": 5,
+          "p50_ms": 8.0,
+          "p95_ms": 11.5,
+          "max_ms": 11.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/auth/login",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 121.2,
+          "p95_ms": 474.9,
+          "max_ms": 474.9
+        },
+        {
+          "method": "POST",
+          "route": "/api/calendar/export",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 71.1,
+          "p95_ms": 123.4,
+          "max_ms": 123.4
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 89.0,
+          "p95_ms": 152.1,
+          "max_ms": 430.1
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/confirm",
+          "status": 200,
+          "samples": 105,
+          "p50_ms": 131.0,
+          "p95_ms": 198.1,
+          "max_ms": 623.6
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/manual",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 137.9,
+          "p95_ms": 266.5,
+          "max_ms": 525.4
+        },
+        {
+          "method": "PUT",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 126.6,
+          "p95_ms": 218.5,
+          "max_ms": 338.7
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 130.6,
+          "p95_ms": 252.5,
+          "max_ms": 522.2
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 404,
+          "samples": 5,
+          "p50_ms": 13.5,
+          "p95_ms": 17.5,
+          "max_ms": 17.5
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 409,
+          "samples": 100,
+          "p50_ms": 124.6,
+          "p95_ms": 202.2,
+          "max_ms": 295.9
+        }
+      ],
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 776,
+          "samples": 776,
+          "p50_ms": 32.309,
+          "p95_ms": 88.957,
+          "max_ms": 266.867
+        },
+        "hold": {
+          "total_observations": 776,
+          "samples": 776,
+          "p50_ms": 12.87,
+          "p95_ms": 44.331,
+          "max_ms": 280.472
+        }
+      },
+      "percentile_method": "nearest_rank",
+      "ordinary_crud_latency_ms": {
+        "samples": 625,
+        "p50": 115.2,
+        "p95": 219.1,
+        "max": 623.6
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.038,
+        "restart_verified_seconds": 1.798,
+        "restore_file_seconds": 0.053,
+        "restore_verified_seconds": 2.371,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "workload_seconds": 18.9,
+      "request_latency_ms": {
+        "median": 114.2,
+        "p95": 224.7,
+        "max": 623.6
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true,
+      "elapsed_seconds": 25.44,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+      "implementation_unchanged": true
+    },
+    "ten_users": {
+      "verified_at": "2026-11-14T05:30:13.987626+00:00",
+      "result": "passed",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "synthetic_test": true,
+      "live_model_calls": 0,
+      "concurrent_users": 10,
+      "notices_saved": 200,
+      "tasks_saved": 400,
+      "http_requests": 1531,
+      "response_status_counts": {
+        "200": 1301,
+        "401": 10,
+        "404": 20,
+        "409": 200
+      },
+      "operations": [
+        {
+          "method": "GET",
+          "route": "/api/admin/readiness",
+          "status": 200,
+          "samples": 1,
+          "p50_ms": 14.3,
+          "p95_ms": 14.3,
+          "max_ms": 14.3
+        },
+        {
+          "method": "GET",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 13.9,
+          "p95_ms": 47.0,
+          "max_ms": 47.0
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 67.3,
+          "p95_ms": 94.9,
+          "max_ms": 94.9
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices/{id}",
+          "status": 404,
+          "samples": 10,
+          "p50_ms": 12.7,
+          "p95_ms": 15.0,
+          "max_ms": 15.0
+        },
+        {
+          "method": "GET",
+          "route": "/api/session",
+          "status": 200,
+          "samples": 20,
+          "p50_ms": 17.6,
+          "p95_ms": 468.3,
+          "max_ms": 524.0
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 200,
+          "samples": 220,
+          "p50_ms": 208.0,
+          "p95_ms": 344.4,
+          "max_ms": 622.6
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 401,
+          "samples": 10,
+          "p50_ms": 6.8,
+          "p95_ms": 13.5,
+          "max_ms": 13.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/auth/login",
+          "status": 200,
+          "samples": 20,
+          "p50_ms": 79.6,
+          "p95_ms": 964.3,
+          "max_ms": 964.7
+        },
+        {
+          "method": "POST",
+          "route": "/api/calendar/export",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 187.4,
+          "p95_ms": 255.8,
+          "max_ms": 255.8
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 168.3,
+          "p95_ms": 269.9,
+          "max_ms": 447.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/confirm",
+          "status": 200,
+          "samples": 210,
+          "p50_ms": 319.9,
+          "p95_ms": 529.9,
+          "max_ms": 638.9
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/manual",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 331.7,
+          "p95_ms": 509.3,
+          "max_ms": 638.5
+        },
+        {
+          "method": "PUT",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 302.4,
+          "p95_ms": 471.3,
+          "max_ms": 579.4
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 305.2,
+          "p95_ms": 507.4,
+          "max_ms": 623.9
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 404,
+          "samples": 10,
+          "p50_ms": 13.2,
+          "p95_ms": 14.5,
+          "max_ms": 14.5
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 409,
+          "samples": 200,
+          "p50_ms": 302.7,
+          "p95_ms": 492.9,
+          "max_ms": 632.2
+        }
+      ],
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 1588,
+          "samples": 1588,
+          "p50_ms": 79.095,
+          "p95_ms": 178.891,
+          "max_ms": 382.656
+        },
+        "hold": {
+          "total_observations": 1588,
+          "samples": 1588,
+          "p50_ms": 9.132,
+          "p95_ms": 82.005,
+          "max_ms": 279.103
+        }
+      },
+      "percentile_method": "nearest_rank",
+      "ordinary_crud_latency_ms": {
+        "samples": 1250,
+        "p50": 265.9,
+        "p95": 481.6,
+        "max": 638.9
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.047,
+        "restart_verified_seconds": 2.005,
+        "restore_file_seconds": 0.067,
+        "restore_verified_seconds": 2.959,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "workload_seconds": 42.28,
+      "request_latency_ms": {
+        "median": 265.2,
+        "p95": 491.1,
+        "max": 964.7
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true,
+      "elapsed_seconds": 50.1,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+      "implementation_unchanged": true
+    },
+    "five_users_all_observed_ordinary_routes_under_1000ms": true,
+    "ten_users_all_observed_ordinary_routes_under_1000ms": true,
+    "limits": "本地独立运行，无其他本地测试负载；5/10人为并发合成账号，不是真人试点；功能通过与性能门槛分别记录。"
+  },
+  "capacity_10000": {
+    "synthetic": true,
+    "live_model_calls": 0,
+    "external_messages": 0,
+    "notices": 10000,
+    "payload_bytes": 20992851,
+    "timings": {
+      "intake_at_10000_records_ms": 55.41,
+      "list_10000_records_ms": 1024.41,
+      "full_text_search_10000_records_ms": 952.97,
+      "matter_candidates_10000_records_ms": 70.6,
+      "duplicate_replay_at_capacity_ms": 37.85
+    },
+    "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
+    "interactive_pages": {
+      "collected_page": {
+        "cold_ms": 41.31,
+        "warm_p50_ms": 35.8,
+        "warm_p95_ms": 36.9,
+        "samples_ms": [
+          41.31,
+          34.12,
+          36.69,
+          33.53,
+          35.8,
+          36.9
+        ],
+        "max_payload_bytes": 106675,
+        "total": 10000
+      },
+      "semantic_current_page": {
+        "cold_ms": 489.13,
+        "warm_p50_ms": 37.24,
+        "warm_p95_ms": 44.15,
+        "samples_ms": [
+          489.13,
+          37.24,
+          39.47,
+          44.15,
+          34.35,
+          34.18
+        ],
+        "max_payload_bytes": 106699,
+        "total": 10000
+      },
+      "indexed_body_search": {
+        "cold_ms": 71.77,
+        "warm_p50_ms": 74.5,
+        "warm_p95_ms": 83.4,
+        "samples_ms": [
+          71.77,
+          74.5,
+          73.51,
+          83.4,
+          70.36,
+          76.65
+        ],
+        "max_payload_bytes": 3070,
+        "total": 1
+      },
+      "short_chinese_search": {
+        "cold_ms": 100.41,
+        "warm_p50_ms": 112.97,
+        "warm_p95_ms": 131.44,
+        "samples_ms": [
+          100.41,
+          131.44,
+          106.86,
+          126.91,
+          112.97,
+          108.76
+        ],
+        "max_payload_bytes": 111961,
+        "total": 9999
+      }
+    },
+    "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+    "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+  },
+  "diagnostic_history": [
+    "docs/audits/sprint-query-regression.json",
+    "docs/audits/sprint-ci-first-round.json",
+    "docs/audits/sprint-write-wait-evidence.json"
+  ],
+  "remote_ci": {
+    "run_id": 43562060192,
+    "run_number": 50,
+    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+    "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+    "conclusion": "failure",
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+    "evidence": "docs/audits/sprint-ci-second-round.json",
+    "passed_gates": [
+      "ubuntu full suite",
+      "windows full suite and exact partition union",
+      "node and build on both OS",
+      "dependency audits",
+      "continuity 990",
+      "container"
+    ],
+    "failed_scripts": [
+      "scripts/verify_sprint_ui.mjs",
+      "scripts/verify_pilot_workspace.mjs",
+      "tests/composer-browser.mjs"
+    ],
+    "repair_validation": "Later cold-entry and fixture fixes require a new frozen source run; these passed gates are not relabeled as their result."
+  },
+  "gates": {
+    "frozen_local_backend_clean_rounds": 2,
+    "two_complete_clean_local_backend_rounds": true,
+    "node_275_cases_passed": true,
+    "frontend_rebuild_check_passed": true,
+    "five_person_observed_performance_targets": true,
+    "ten_person_observed_performance_targets": false,
+    "remote_ci_conclusion": "failure",
+    "ten_person_expansion_approved": false,
+    "real_campus_acceptance_complete": false
+  },
+  "remaining_external_conditions": [
+    "真实邮件/SMS/Push/QQ/公众号供应商、授权及设备展示验收；配置、provider受理和本人收到仍分层。",
+    "三个现有官网预设的本环境生产reader尝试因公共DNS失败；独立网页读取不替代应用端到端正文/附件成功。",
+    "Android/iOS/桌面前后台、锁屏、关闭、断网恢复、中文软键盘及辅助技术的实体设备矩阵。",
+    "独立人工冻结标准与真实模型质量评测；本轮无付费模型调用，不拿合成用例冒充准确率。",
+    "真实试点人数、负载、费用负责人/预算、学校身份和范围确认，以及累计不少于5天的现场实践或场景验证与单位验收。",
+    "原清单明确条件化的8项P2扩展，依真实需求和平台条件决定。",
+    "10人扩大门槛的总写入等待P95仍失败；保持100ms原标准，未采用未达标的schema预热实验。"
+  ],
+  "delivery_verification": "此文件绑定已验证代码指纹与明确的CI运行。合并到main后的实际提交和完整CI，应核对PR合并记录及main对应运行；不能从合并计划推断成功。"
+}

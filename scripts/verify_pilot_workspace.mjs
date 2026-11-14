@@ -74,6 +74,54 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
     measured(engine,label,elapsed,'visible');
     assert.ok(elapsed<5000,label+' exceeded the five-second local visibility target');
   }
+  async function coldCollaborationExit(mode){
+    // A new document has not initialized collaboration. Delay the real module
+    // request, not its API or response, then leave through the actual UI.
+    const page=await a.newPage();
+    page.setDefaultTimeout(12000);
+    page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
+    const moduleUrl=/(?:^|\/)collaboration(?:-[A-Z0-9]{8})?\.js(?:\?.*)?$/;
+    const optionsPath='/api/collaboration/tasks/'+tid+'/options',optionsRequests=[];
+    let release;
+    const gate=new Promise(resolve=>{release=resolve;});
+    const holdModule=async route=>{await gate;await route.continue();};
+    page.on('request',request=>{if(new URL(request.url()).pathname===optionsPath)optionsRequests.push(request.url());});
+    await page.route(moduleUrl,holdModule);
+    try{
+      await nav(page,'tasks');
+      await page.locator('.task-primary[data-workflow-task="'+tid+'"]').click();
+      const button=page.locator('#workflow-form [data-collaboration-start]');
+      await button.evaluate(node=>{window.pilotColdCollaborationButton=node;});
+      const [request]=await Promise.all([
+        page.waitForRequest(request=>moduleUrl.test(request.url())),button.click(),
+      ]);
+      assert.equal(await button.isDisabled(),true,'The cold entry stays pending until its real import settles');
+      const target=mode==='close'?'tasks':'notice/'+task.notice_id;
+      if(mode==='close')await page.locator('#dialog [data-action=close-dialog]').click();
+      else await page.locator('#workflow-form .workflow-task-head a[href="#'+target+'"]').click();
+      await page.waitForFunction(target=>{
+        const content=document.querySelector('#content');
+        return location.hash==='#'+target&&content?.dataset.page===target&&!content.inert&&!document.querySelector('#dialog')?.open;
+      },target);
+      const received=page.waitForResponse(response=>response.url()===request.url());
+      release();
+      assert.equal((await received).status(),200);
+      // The original DOM node can be detached after navigation. Its pending
+      // state settles only after the application's import/entry handler ends.
+      await page.waitForFunction(()=>window.pilotColdCollaborationButton&&!window.pilotColdCollaborationButton.disabled);
+      assert.equal(optionsRequests.length,0,'A late import must not read recipients for an abandoned dialog');
+      assert.equal(await page.locator('#dialog').evaluate(node=>node.open),false);
+      assert.equal(await page.locator('[data-workspace-form=collaboration]').count(),0);
+      assert.equal(await page.evaluate(()=>location.hash),'#'+target);
+    }catch(error){
+      await page.screenshot({path:path.join(out,engine+'-cold-collaboration-'+mode+'-failure.png')}).catch(()=>{});
+      throw error;
+    }finally{
+      release();
+      await page.unrouteAll({behavior:'wait'});
+      await page.close();
+    }
+  }
   try{
     console.log('Pilot workspace: '+engine);
     await check('SMS signup, distinct device login, and authorized student membership',async()=>{
@@ -221,6 +269,8 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
       assert.equal(await mobile.locator('#workflow-form [name=outcome]').inputValue(),'这段本人编辑要保留');
       await mobile.keyboard.press('Escape');
     });
+    await check('a cold collaboration import respects closing the workflow',()=>coldCollaborationExit('close'));
+    await check('a cold collaboration import respects navigation away from the workflow',()=>coldCollaborationExit('route'));
     await check('scoped collaboration is received, returned, supplemented and resolved across devices',async()=>{
       await nav(counselor,'collaboration');
       await mobile.bringToFront();

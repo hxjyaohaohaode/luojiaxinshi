@@ -781,8 +781,31 @@ const verification=createVerificationUI({state,api,esc,toast});
 const pwa=createPWA({showDialog});
 const accountSecurity=createAccountSecurity({state,esc,field,api,verification,showDialog,toast});
 const authUI=createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,download,route,moveSelection,verification});
-const memoryUI=lazyUI(()=>import('./memory.js').then(({createMemoryUI})=>createMemoryUI({state,api,esc,icon,showDialog,toast,ask})),['render','refresh','context','remember','openRecord'],{clearPrivate:undefined});
-const collaborationUI=lazyUI(()=>import('./collaboration.js').then(({createCollaborationUI})=>createCollaborationUI({state,api,esc,showDialog,toast})),['render'],{saving:false});
+const memoryUI=lazyUI(()=>import('./memory.js').then(({createMemoryUI})=>createMemoryUI({state,api,esc,icon,showDialog,toast,ask})),['render','refresh','context','remember','openRecord','trace'],{clearPrivate:undefined});
+// A completed chat reply may expose memory evidence before the memory route
+// has ever opened. Keep its original view across the first module import.
+document.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-memory-life="trace"]');
+  if(!button||button.disabled)return;
+  const view=captureUiContext(state,button);
+  button.disabled=true;
+  try{await memoryUI.trace(button.dataset.cid,button.dataset.id,view);}
+  catch(error){if(view.sameDialog())toast(error.message,true);}
+  finally{button.disabled=false;}
+});
+const collaborationUI=lazyUI(()=>import('./collaboration.js').then(({createCollaborationUI})=>createCollaborationUI({state,api,esc,showDialog,toast})),['render','start'],{saving:false});
+// A workflow can be the first collaboration entry in this document. Capture
+// its context before loading the module so a late import cannot reopen a
+// closed dialog, replace another dialog, or follow the user to another route.
+document.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-collaboration-start]');
+  if(!button||button.disabled)return;
+  const view=captureUiContext(state,button);
+  button.disabled=true;
+  try{await collaborationUI.start(button.dataset.collaborationStart,view);}
+  catch(error){if(view.sameDialog())toast(error.message,true);}
+  finally{button.disabled=false;}
+});
 const chatUI=lazyUI(()=>import('./chat.js').then(({createChatUI})=>createChatUI({state,api,esc,icon,companion,greeting,toast,showDialog,ask,field,area,drafts,route,memoryUI,loadTasks:()=>workspaceProjection.load(['tasks']).then(value=>value?.tasks||[])})),['render','preview','refreshWorkspace'],{persist:undefined,clearSession:undefined});
 const sourcesUI=lazyUI(()=>import('./sources.js').then(({createSourcesUI})=>createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route})),['render','refresh']);
 const campusImports=createCampusImports({state,api,esc,showDialog,toast,route});

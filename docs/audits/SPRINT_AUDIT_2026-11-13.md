@@ -14,7 +14,7 @@
 |---|---|
 | 实现证据 | 存在且已核对对应源码或明确边界，不等于所有条件已满足。 |
 | 已执行定向验证 | 对应测试文件在记录的定向运行范围内；逐条限制仍有效，不能推断全部断言涵盖每一自然语言要求。 |
-| 待冻结全套 | 最终完整工作树尚待全量后端、Node、构建、浏览器、交叉平台与 GitHub CI 冻结结果。 |
+| 待冻结全套 | 本地双轮、Node、构建及 Ubuntu/Windows 后端已过；当前主浏览器与 Agent 步骤失败，完整错误报告尚待，不能标整体或逐项全绿。 |
 | 真实外部验收 | 需要真实供应商、来源、设备、人员、标注或目标部署条件，当前仍待。 |
 | 条件扩展 | 原清单 P2：需求／平台授权条件未确立；不冒充已经实现。 |
 
@@ -31,34 +31,70 @@
 
 最初资料复核确认：赛事项目目标是有依据的校园通知转办；真实实践至少五天、需求方配合及单位确认属于外部验收。资料中没有证明学校已经开放教务 SSO、全量公众号或微信群 API。昨日失败对话的直接记录不可访问时，不能伪造“已查到昨天全部改动”；仓库基线与本轮实际差异独立核实。
 
-## 3. 已执行记录与最终门禁
+## 3. 已执行记录与尚未完成的门禁
 
-| 记录 | 真实执行范围 | 结果与解释 |
+当前候选代码为 `32c5ce524d553c869816d0264e9cf84b57febe39`，本地／Ubuntu 实现指纹为 `33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1`。完整原始汇总、逐路由数据和限定范围见 [sprint-validation.json](sprint-validation.json)。[当前 CI run 43562060192](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192) 实际测试 PR 合并提交 `c025c9d8a87916c3466d236019c79373ef3bac0a`；**整体门禁为 `failure_detected_pending_full_report`：主浏览器和 Agent 步骤已失败，尾部仍执行、完整错误报告尚待；main 交付仍 pending。** 不能把已知失败写成单纯待运行，也不能由后端通过推出全部通过。
+
+| 当前记录 | 实际范围与结果 | 状态边界 |
+|---|---|---|
+| 修复后本地完整后端第 1 轮（产物 round2） | 134 文件、1,792 项：1,789 passed／3 skipped／0 failure／0 error；336.29 秒 | 同指纹、运行期间未变化 |
+| 修复后本地完整后端第 2 轮（产物 round3） | 同一 134 文件、1,792 项：1,789 passed／3 skipped／0 failure／0 error；382.24 秒 | 与上一轮同指纹；两轮不能相加成不同测试 |
+| 当前前端 Node 与构建 | Node **275／275**；`build`／`build:check` 通过；bundle／audit-report 两文件定向 23／23 | app-XK3PQMAE 构建证据见[前端构建记录](../sprint-2026-11-14/frontend-build-verification.json)，不代替浏览器 |
+| 当前 Ubuntu CI | 134 文件、1,792 个唯一用例：**1,790 passed／2 skipped／0 failure／0 error**；421.83 秒；Node 275／275 | 原 SELECT `<15`、看板基线逆序、实 pinned Tika/JRE 解析均实际通过；全依赖 npm audit、pip-audit、构建及该 job 后续门禁均 success |
+| 当前独立恢复／连续保存 CI | 612＋204＋174＝**990** 个检查，失败与错误均为 0 | 合成数据，Chromium／Firefox／WebKit 各 330；不能替代实体设备 |
+| 当前容器 CI | 容器构建、健康、非 root、数据库与界面资源检查 success | 当前候选镜像的隔离验证 |
+| 当前 Windows CI | 134 文件、1,792 唯一用例：**1,791 passed／1 skipped／0 failure／0 error**；四片 447／480／389／476，完整聚合无错误 | 唯一 skip 为 POSIX TIME_WAIT；原查询、pinned parser、看板和 Windows 专属保护实际通过，Node 275／275、全 npm／pip 审计、构建与该 job 后续门禁 success |
+| 修复后主浏览器 CI | **step 10 主套件、step 11 Agent 已 completed failure**；尾部聊天步骤仍在运行 | 状态 `failure_detected_pending_full_report`；等待官方完整日志/产物归因，不猜具体案例，不宣称全部通过 |
+
+本地两个完整后端轮次的 3 个 skip 精确为：本环境没有可选 pinned Tika/JRE，及 Windows process ownership、Windows socket／launcher 两个专属用例。Ubuntu CI 实际执行了 pinned parser，因此只跳过后两个平台专属用例。Windows 字节指纹单独保存为 `1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9`，每片内部 unchanged；两平台通过实际 checkout commit 绑定，不声称跨 OS 字节指纹相同，也没有未经逐文件验证就指定差异原因。
+
+### 历史失败与定向修复记录
+
+最初基线完整后端为 1,641 项；本轮首次完整尝试实有 **1 项失败**（133 文件、1,779 项：1,775 passed／3 skipped／1 failed）：新阶段元数据令 100 条通知搜索达到 15 SELECT，违反原 `<15` 门槛。原样复现后合并 owner／版本限定批量查询，实测降至 14，原门槛不变；5 文件定向 45 passed／28.82 秒。[查询回归记录](sprint-query-regression.json) 保留前后事实；后来的双轮与 Ubuntu 通过没有抹去首次失败。
+
+首轮远程 CI 还暴露看板实际排序不一致、重复 DOM 绘制，以及验证脚本的旧接口、菜单交互和异步等待问题；逐组原因、原始计数、修复文件与待新 CI 边界见 [sprint-ci-first-round.json](sprint-ci-first-round.json)。源码缺陷与测试 fixture 变化分别记录。
+
+| 较早记录（历史，非最终全套） | 已发生结果 |
 |---|---|
-| 来源／生命周期 | 11 个 Python 文件，包括新增缓存策略；LJ-019 新邻近候选之前 | 109 passed，1 个 TestClient 弃用告警，59.85 秒。先前 86 项与后续 109 项不累加为不同测试。 |
-| 缓存协议专项 | 新策略 23 项＋原来源合同 11 项 | 34 passed；检查 no-store／private／Set-Cookie、Vary、短有效期、逐次条件复验及 304 合并。 |
-| 校园域 | 5 文件 54 项，后续名称更正新增 1 项另跑 | 54 passed／87.48 秒＋1 passed／3.23 秒；两份 Node 文件另 6 passed。不是同一最终冻结轮。 |
-| 前端 Node | 原前端冻结前 npm test | 270／270；应用浏览器和真实设备仍独立，不从单元通过推断。 |
-| 根定向验证 | 正式时段、列表、提醒、就绪等持续集成 | 主执行者曾报告 23 项通过；后续新增模块与精确最终总数仍由最终运行证据补齐。 |
-| 工作区投影最后定向 | 投影 7 项＋校园策略 7 项 | 14 passed，39.79 秒；JUnit 生成于 04:49:49 UTC，随后冻结。 |
-| 全套发现的查询回归修复 | usage_limits、事项归组、阶段、分页、投影 5 文件 | 45 passed，1 warning，28.82 秒；100 条完整记录 SELECT 15→14，原 <15 门槛未改；05:01:09 UTC 再冻结。 |
-| 群内邻近候选 | LJ-019 新增 6 项＋相应旧群收件、事项、来源及年度合同，实际签名合成回调；不代表真实 QQ 平台验收。 | 41 passed，35.28 秒。 |
+| 来源／生命周期 11 文件 | 109 passed，1 TestClient 弃用告警，59.85 秒；含缓存策略，早于 LJ-019 新邻近候选 |
+| 缓存协议专项 | 新策略 23 项＋旧来源合同 11 项＝34 passed；与 109 项有重叠，不累加 |
+| 校园域 | 54 passed／87.48 秒，名称更正新增 1 项另跑 3.23 秒；两份 Node 另 6 passed |
+| 较早前端 Node | **270／270 是历史数量**；当前候选最终数量为上表 275／275 |
+| 工作区投影最后定向 | 14 passed／39.79 秒；随后进入当前完整后端双轮 |
+| 群内邻近候选 | 41 passed／35.28 秒，含新增 6 场景；真实 QQ 平台仍未验收 |
+| 看板排序定向 | board／listing／projection 26／26，JUnit 21.621 秒；故意使 legacy updated 顺序反转，原文与权限断言保留 |
 
-首次完整后端尝试实有 **1 项失败**（133 文件、1,779 项：1,775 passed／3 skipped／1 failed）：新阶段元数据令百条通知搜索超过原查询次数门槛。已原样复现，合并批量查询并保留 owner／版本保护，补 2 个关联通知范围用例后定向通过；[查询回归记录](sprint-query-regression.json) 保留前后事实。修复后的完整后端需要重新运行，不能把第一次失败的整套改写为通过。
+### 当前冻结候选的独立本地性能
 
-**最终冻结状态仍待填写：** 完整后端第一／第二轮、最终 Node、可重建前端产物、三浏览器实际运行、跨平台 CI、GitHub main 新提交 SHA 与运行 URL。主执行者将实际结果写入 `docs/audits/sprint-validation.json` 后更新此表；当前不把计划中的该文件作为已存在的证据链接。
+两档均为真实本地 HTTP 进程、合成账号和文本通知，绑定上述 `33fca6c8…` 实现，运行期间指纹不变。功能断言与工程时延门槛分别报告；样本不代表校园生产容量或院方批准。
 
-### 本地性能实测范围
+| 独立负载档 | 数据与 HTTP 请求 | 非 AI 正常 CRUD P95 | 总写入等待 P95 | 工程门槛结论 |
+|---|---|---|---|---|
+| 5 人（05:28:49 UTC） | 100 则通知、200 任务、**766 请求**；625 个正常 CRUD 样本 | **219.1 ms** | **88.957 ms**；776 个等待样本 | CRUD `<1s`、总等待 `<100ms`、零获取失败均通过本次观察 |
+| 10 人（05:30:13 UTC） | 200 则通知、400 任务、**1,531 请求**；1,250 个正常 CRUD 样本 | **481.6 ms** | **178.891 ms**；1,588 个等待样本 | 功能断言通过，但**总等待未达 `<100ms`，不批准扩大到 10 人** |
 
-已读取本轮真实运行的本地产物（记录时间 2026-11-14T04:25:37.234482+00:00，不推断生产容量）：5 个合成账号、100 则通知、200 个任务、765 个真实本地 HTTP 请求；结果包含 5 个预期 401、10 个预期 404、100 个预期 409，不能把这些安全断言响应误算业务故障。整体中位延迟 66.5 ms，P95 257.3 ms；重启、恢复、会话失效和跨账号拒绝记录通过。详细步骤来自 [verify_local_runtime.py](../../scripts/verify_local_runtime.py)。
+总写入等待包括公平准入排队、连接准备与 SQLite `BEGIN IMMEDIATE`，没有把队列等待藏到指标之外。5 人请求包括 5 个预期 401、10 个预期 404、100 个预期 409；10 人对应 10／20／200，均是鉴权、越权或 stale 保护验证，不是成功业务请求的错误率。普通 CRUD 与登录、这些预期拒绝、AI 耗时分开，百分位统一为 nearest-rank。共享 CI runner 的观察值与这些独立本地样本另存，不能混作同一环境。
 
-10,000 条合成通知原全量响应约 20,992,851 B；新 50 条分页响应上限 105,304 B，热 P50 35.18 ms、热 P95 50.83 ms；当前语义分页冷 488.02 ms、热 P50 33.36 ms；全文索引单命中查询热 P50 76.25 ms、热 P95 115.23 ms。每类为 1 个冷样本＋5 个热样本，P95 使用 nearest-rank，五个热样本下等于最大值。详见 [verify_campus_capacity.py](../../scripts/verify_campus_capacity.py)；本地汇总也完整保存在总账 JSON。**这些值不是根模块后续修订后最终重跑值，不是校园并发上限。**
+备份／重启验证／恢复文件／恢复验证的实际秒数，5 人为 **0.038／1.798／0.053／2.371**，10 人为 **0.047／2.005／0.067／2.959**。逐任务 ID 的 notice_id、status、version、data 与快照相等，合成快照范围丢失 0；恢复旧会话失效、owner 隔离、stale 拒绝与幂等均过。过程在业务写入完成后快照并停止本人进程，主要用 SIGTERM、停机超时才 SIGKILL；这不是断电实验或生产 RPO 承诺。
 
-### 真实外部证据
+### 当前 1 万条容量与检索观察
 
-应用生产 reader 在本环境只读尝试现有三个官网预设，均在列表阶段失败；底层实际错误为公共 DNS 解析失败，没有完成正文／附件实网链路。独立网页渠道可读取部分官网，不能替代应用端到端成功。机器记录为 [sprint-public-source-sample.json](sprint-public-source-sample.json)。本轮没有真实 QQ／公众号联调通过记录、没有向同学老师外发消息、没有付费模型调用，也没有伪造独立人工标准。
+新第 10,000 条可保存；第 10,001 条新记录被明确拒绝，同文幂等重放仍可用。旧全量响应为 20,992,851 B，50 条轻量分页为 106,675 B。各类为 1 个冷样本＋5 个热样本；五个热样本的 nearest-rank P95 就是最大值。
 
-实体 Android／iOS／桌面设备、中文软键盘、读屏与 200% 浏览器缩放、真实供应商、至少五天校园试用和需求方确认仍须实际验收。受限环境无法启动本地浏览器不代表应用界面已通过，最终需明确引用实际 CI 三引擎结果。
+| 查询 | 冷样本 ms | 热 P50 ms | 热 P95 ms | 最大响应体 B |
+|---|---:|---:|---:|---:|
+| 收件时间分页（50 条） | 41.31 | 35.80 | 36.90 | 106,675 |
+| 当前语义分页 | 489.13 | 37.24 | 44.15 | 106,699 |
+| 正文全文索引单命中 | 71.77 | 74.50 | 83.40 | 3,070 |
+| 短中文查询 | 100.41 | 112.97 | 131.44 | 111,961 |
+
+完整实际数据保存在 [sprint-validation.json](sprint-validation.json)，脚本为 [verify_campus_capacity.py](../../scripts/verify_campus_capacity.py)。**历史值单列：** 04:25:37 UTC 的旧测量曾为 765 请求、整体中位 66.5 ms／P95 257.3 ms，旧分页 105,304 B／热 P50 35.18 ms／P95 50.83 ms；这些原始数保存在 JSON 的 `historical_local_metrics`，不再作为当前候选指标。[写入等待过程证据](sprint-write-wait-evidence.json) 保留失败测量及未采用的实验，未通过的 10 人门槛没有被放宽。
+
+### 真实外部证据与保留条件
+
+应用生产 reader 在本环境只读尝试现有三个官网预设，均在列表阶段失败；底层实际错误为公共 DNS 解析失败，没有完成正文／附件实网链路。独立网页渠道可读取部分官网，不能替代应用端到端成功。记录为 [sprint-public-source-sample.json](sprint-public-source-sample.json)。本轮没有真实 QQ／公众号联调通过记录、没有向同学老师外发消息、没有付费模型调用，也没有伪造独立人工标准。
+
+实体 Android／iOS／桌面设备、中文软键盘、读屏与 200% 浏览器缩放、真实供应商、累计不少于 5 天校园实践和需求方确认仍须实际验收。51 项带外部条件、8 项明确条件 P2 保持原分类；本地两轮、CI 合成或源码证据不能替代这些条件。当前 Windows 汇总已通过；应用浏览器/Agent 已有失败门禁、完整报告尚待，不能提前标绿。
 
 ## 4. 128 项逐项总账
 
@@ -221,22 +257,22 @@
 
 | 编号／优先级 | 原始要求（不改写） | 已有实现与本轮深化 | 验证状态／定位 | 明确剩余条件 |
 |---|---|---|---|---|
-| LJ-117／P1 | F10通知/任务游标分页和轻量投影，正文/附件按需；新增/删除/筛选时不漏不重，首屏数据不随总历史线性增长。 | 新增 owner／筛选／修订绑定游标和每页最多 50 项轻量投影；正文与附件保留详情读取；新增、删除或筛选变化使旧游标明确失效。另加完整轻量工作区投影供首页／日历等，避免用首 50 条代替完整账号。 | 实现证据／已执行定向验证／待冻结全套；[listing.py](../../app/listing.py)；[list_filters.py](../../app/list_filters.py)；[test_sprint_lists.py](../../tests/test_sprint_lists.py)；[test_workspace_projection.py](../../tests/test_workspace_projection.py) | 新工作区投影已集成；完整库存、原业务语义及分钟差量的实际执行结果仍以最终冻结记录为准。 |
+| LJ-117／P1 | F10通知/任务游标分页和轻量投影，正文/附件按需；新增/删除/筛选时不漏不重，首屏数据不随总历史线性增长。 | 新增 owner／筛选／修订绑定游标和每页最多 50 项轻量投影；正文与附件保留详情读取；新增、删除或筛选变化使旧游标明确失效。另加完整轻量工作区投影供首页／日历等，避免用首 50 条代替完整账号。 | 实现证据／已执行定向验证／待冻结全套；[listing.py](../../app/listing.py)；[list_filters.py](../../app/list_filters.py)；[test_sprint_lists.py](../../tests/test_sprint_lists.py)；[test_workspace_projection.py](../../tests/test_workspace_projection.py) | 完整库存、原业务语义及分钟差量相关测试已进入同指纹本地双轮和 Ubuntu/Windows 完整后端；当前主浏览器/Agent 门禁已失败，具体案例仍待完整 CI 报告。 |
 | LJ-118／P1 | 全文索引与按字段搜索，保留正文/材料出处和权限过滤；用1万条样本对照结果正确性、P50/P95与响应体。 | FTS5 索引覆盖标题／正文等可读内容、短中文与字面标点回退，owner 过滤与事务内触发更新；记录 1 万条固定合成数据的冷／热查询及响应体。 | 实现证据／已执行定向验证／待冻结全套；[listing.py](../../app/listing.py)；[verify_campus_capacity.py](../../scripts/verify_campus_capacity.py)；[test_sprint_lists.py](../../tests/test_sprint_lists.py) | 五个热样本的 P95 为 nearest-rank 最大值，仅为本机微基准，不代表校园并发生产性能。 |
-| LJ-119／P1 | 看板/提醒共享增量投影，稳定数据与分钟时钟派生拆分；没变化时不重读重绘全列表，跨分钟必要状态仍准确。 | 新增 /api/workspace/projection：按数据库／本人／提交修订缓存完整轻量数据，时间变化仅返回 intent、tracking、推荐及任务时效差量；notice_queue 纯重算与 task_timing 复用原业务公式，草稿仅作为内部稳定依据。 | 实现证据／已执行定向验证／待冻结全套；[workspace_projection.py](../../app/workspace_projection.py)；[notice_queue.py](../../app/notice_queue.py)；[test_workspace_projection.py](../../tests/test_workspace_projection.py)；[workspace-projection.test.mjs](../../tests/workspace-projection.test.mjs) | 投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价待最终定向／全套记录。 |
+| LJ-119／P1 | 看板/提醒共享增量投影，稳定数据与分钟时钟派生拆分；没变化时不重读重绘全列表，跨分钟必要状态仍准确。 | 新增 /api/workspace/projection：按数据库／本人／提交修订缓存完整轻量数据，时间变化仅返回 intent、tracking、推荐及任务时效差量；notice_queue 纯重算与 task_timing 复用原业务公式，草稿仅作为内部稳定依据。 | 实现证据／已执行定向验证／待冻结全套；[workspace_projection.py](../../app/workspace_projection.py)；[notice_queue.py](../../app/notice_queue.py)；[test_workspace_projection.py](../../tests/test_workspace_projection.py)；[workspace-projection.test.mjs](../../tests/workspace-projection.test.mjs) | 投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价已有冻结后端双轮证据；修复后浏览器仍待当前 CI。 |
 | LJ-120／P1 | F11 CSS合并/去重、JS按路由加载、缓存和压缩验证；记录冷/热启动请求数、传输体积、解析、交互与长任务。 | 新增精确 esbuild 构建、原生路由懒加载、CSS 层合并、内容哈希资源及静态压缩；源文件变化或产物缺失回退源入口，build:check 防陈旧包。 | 实现证据／待冻结全套；[build_frontend.mjs](../../scripts/build_frontend.mjs)；[frontend_assets.py](../../app/frontend_assets.py)；[test_frontend_bundle.py](../../tests/test_frontend_bundle.py) | 真实应用冷／热请求、传输与可输入时点由 verify_sprint_ui 三引擎执行后填入；标准 API 不支持精确解析耗时就记 unknown，不编造。 |
-| LJ-121／P1 | 长列表DOM、批量选择、筛选、文件预览内存与滚动优化；虚拟化需保留键盘、读屏、定位，不仅追求帧率。 | 列表页使用有界分页和明确加载范围，批量选择遵循所选记录；没有以盲目虚拟化破坏焦点、读屏或定位；首页／日历使用完整轻量投影，原文按需加载。 | 实现证据／已执行定向验证／待冻结全套；[paged-list.js](../../static/paged-list.js)；[library.js](../../static/library.js)；[paged-list.test.mjs](../../tests/paged-list.test.mjs)；[workspace-projection.test.mjs](../../tests/workspace-projection.test.mjs) | 实体文件预览内存、长时滚动和真实辅助技术待浏览器／设备验收；投影集成实际验证以冻结结果为准。 |
-| LJ-122／P1 | 数据库范围查询/索引/短事务、发布列表SQL分页；以目标活跃用户和峰值测试锁等待，达到阈值后再评估数据库迁移。 | 通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。 | 实现证据／已执行定向验证／待冻结全套／真实外部验收；[listing.py](../../app/listing.py)；[notice_matters.py](../../app/notice_matters.py)；[test_sprint_lists.py](../../tests/test_sprint_lists.py)；[test_campus_sprint.py](../../tests/test_campus_sprint.py) | 学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。 |
+| LJ-121／P1 | 长列表DOM、批量选择、筛选、文件预览内存与滚动优化；虚拟化需保留键盘、读屏、定位，不仅追求帧率。 | 列表页使用有界分页和明确加载范围，批量选择遵循所选记录；没有以盲目虚拟化破坏焦点、读屏或定位；首页／日历使用完整轻量投影，原文按需加载。 | 实现证据／已执行定向验证／待冻结全套；[paged-list.js](../../static/paged-list.js)；[library.js](../../static/library.js)；[paged-list.test.mjs](../../tests/paged-list.test.mjs)；[workspace-projection.test.mjs](../../tests/workspace-projection.test.mjs) | 投影相关用例已通过本地冻结双轮与 Ubuntu 后端；实体文件预览内存、长时滚动和真实辅助技术仍需设备验收，修复后浏览器仍待当前 CI。 |
+| LJ-122／P1 | 数据库范围查询/索引/短事务、发布列表SQL分页；以目标活跃用户和峰值测试锁等待，达到阈值后再评估数据库迁移。 | 通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。 同库进程内写入公平准入保留读并行，等待指标包含排队、连接准备及 SQLite BEGIN；冻结候选独立 5 人总等待 P95 88.957ms，10 人 178.891ms，未放宽 100ms 门槛。 | 实现证据／已执行定向验证／待冻结全套／真实外部验收；[listing.py](../../app/listing.py)；[notice_matters.py](../../app/notice_matters.py)；[test_sprint_lists.py](../../tests/test_sprint_lists.py)；[test_campus_sprint.py](../../tests/test_campus_sprint.py) | 学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。；10 人总写入等待 P95 未达 <100ms，不能据功能通过建议扩大；目标部署容量仍需实际目标负载复验。 |
 | LJ-123／P1 | 队列按事件增量协调、发送前复核、定期兜底；来源/模型/解析/分发各自并发和预算，避免一个慢任务拖死整站。 | 新增每 owner／channel 已提交 revision 协调：未变账户不写事务、不重算，改变立即协调、60 秒兜底；发送前仍无条件复核当前授权／期限。来源域名公平、群附件、模型分析、校园分发分别受并发与预算限制。 | 实现证据／已执行定向验证／待冻结全套；[notification_coordination.py](../../app/notification_coordination.py)；[source_sync.py](../../app/source_sync.py)；[test_notification_coordination.py](../../tests/test_notification_coordination.py)；[test_source_fetch_contracts.py](../../tests/test_source_fetch_contracts.py) | 运行预算与队列长时恢复需结合实际部署负载验证，不把单个合成慢源用例当全站吞吐承诺。 |
-| LJ-124／P1 | 从零部署、升级、数据迁移、备份恢复、回滚、磁盘满、损坏备份、重复进程、停机补偿演练；记录恢复耗时与丢失窗口。 | 保留从零部署、明确 schema 门禁、完整数据库备份和恢复；新增来源、校园、阶段、投影及观测表纳入升级／备份校验，恢复后渠道、复核授权和环境证据不会沿用。 | 实现证据／已执行定向验证／待冻结全套／真实外部验收；[db.py](../../app/db.py)；[backups.py](../../app/backups.py)；[test_workflow.py](../../tests/test_workflow.py)；[test_workflow_migration.py](../../tests/test_workflow_migration.py) | 真实生产磁盘满、部署回滚、远端损坏备份、停机恢复的 RTO／丢失窗口需在目标环境记实；本地演练只证明所测范围。 |
+| LJ-124／P1 | 从零部署、升级、数据迁移、备份恢复、回滚、磁盘满、损坏备份、重复进程、停机补偿演练；记录恢复耗时与丢失窗口。 | 保留从零部署、明确 schema 门禁、完整数据库备份和恢复；新增来源、校园、阶段、投影及观测表纳入升级／备份校验，恢复后渠道、复核授权和环境证据不会沿用。 冻结候选已记录 5/10 人备份、重启验证、恢复文件与恢复验证耗时，并逐任务 ID 比较 notice_id/status/version/data；合成快照范围内丢失为 0。 | 实现证据／已执行定向验证／待冻结全套／真实外部验收；[db.py](../../app/db.py)；[backups.py](../../app/backups.py)；[test_workflow.py](../../tests/test_workflow.py)；[test_workflow_migration.py](../../tests/test_workflow_migration.py) | 真实生产磁盘满、部署回滚、远端损坏备份、停机恢复的 RTO／丢失窗口需在目标环境记实；本地演练只证明所测范围。；演练是在业务写入完成后快照并停止本人进程，不是断电模拟或生产 RPO；真实目标环境的磁盘、回滚与停机窗口仍需另验。 |
 | LJ-125／P1 | 管理就绪与观测面板：配置存在、连接成功、真实端到端分别记录；请求ID贯穿收件/判断/任务/投递，日志脱敏。 | 就绪面板将配置存在、已记录连接成功、管理员端到端证据分开；服务端随机 request_id 关联本人通知审计与后续步骤，权限内追踪不返回私密凭据。根前端同步修正“已配置即已接通”的旧顶栏文案。 | 实现证据／待冻结全套／真实外部验收；[observability.py](../../app/observability.py)；[operations.js](../../static/operations.js)；[test_sprint_observability.py](../../tests/test_sprint_observability.py) | 后台历史事件可能没有 HTTP request_id，按本人通知／事务记录关联，不伪造统一旧链路 ID。；管理员手工填入的验收仍是其声明，系统不能认证真实外部设备和独立验收真实性。 |
 | LJ-126／P1 | F13 README、运行文档、能力表、测试口径统一；锁定版本、第三方采用登记和许可证，说明当前仓库自身许可选择。 | README／TESTING／第三方登记与构建门禁更新；新增 esbuild 仅为开发构建依赖且精确锁为 0.28.2。冻结前 pip-audit 实际检出 opentelemetry-api 1.45.1 的已知漏洞，核对官方公告后精确升级至 1.45.2；其他 Python 锁定版本保持。209 组件采用不等于批量引库。 | 实现证据／待冻结全套；[README.md](../../README.md)；[TESTING.md](../../TESTING.md)；[test_frontend_bundle.py](../../tests/test_frontend_bundle.py) | 仓库当前未发现根 LICENSE。项目自身许可证属于所有者授权决定，本轮不得擅选；现状态须在交付说明中直说，不能称许可证已齐全。 |
 | LJ-127／P1 | 实际角色三轮、真实手机、真实供应商、校园样本独立验收；CI合成结果、源码结论、真机结果各自记录，不互相替代。 | 正常链、异常恢复与权限／并发多轮工程回归分别记录；脚本、源码、模拟供应商、真实公开读取、实际应用浏览器和实体设备层级分开。 | 实现证据／待冻结全套／真实外部验收；[audit_full_suite.py](../../scripts/audit_full_suite.py)；[run_browser_checks.py](../../scripts/run_browser_checks.py) | 实际角色三轮、真实供应商、真实手机、独立人工校园样本、累计不少于 5 天现场实践或场景验证与单位确认没有本轮完成证据。 |
-| LJ-128／P1 | 制定试点容量与发布门槛：人数/日收件/高峰/设备/数据期限/支持渠道/成功率/时延/费用预算；小范围分批扩大并保留回退。 | 新增可审阅工程发布门槛：首批最多 5 人，10 人并发隔离样本全部达标后才建议扩大至 10；每日每人 20 收件为工程负载档；正常非 AI CRUD P95<1秒、写锁等待 P95<100ms 且零超时，权限／幂等／stale 断言全过。预算未知不自动批量，保留原隐私及回退契约；这些均非院方批准或实测结果。 | 实现证据／待冻结全套／真实外部验收；[PILOT_RELEASE_GATES.md](../PILOT_RELEASE_GATES.md)；[pilot_preflight.py](../../scripts/pilot_preflight.py)；[test_local_runtime_ownership.py](../../tests/test_local_runtime_ownership.py)；[test_model_capacity.py](../../tests/test_model_capacity.py) | 实际试点人数／日收件／峰值／设备／留存期／费用预算和可接受成功率、时延需真实院方范围；本轮样本不能代替该容量承诺。 |
+| LJ-128／P1 | 制定试点容量与发布门槛：人数/日收件/高峰/设备/数据期限/支持渠道/成功率/时延/费用预算；小范围分批扩大并保留回退。 | 新增可审阅工程发布门槛：首批最多 5 人，10 人隔离样本全部达标后才建议扩大；每日每人 20 收件为工程负载档。非 AI CRUD P95<1秒、总写入等待 P95<100ms 且零失败，权限／幂等／stale 断言全过；预算未知不自动批量，保留隐私与回退契约。冻结候选独立 5 人实测两项 P95 为219.1ms／88.957ms；10 人为481.6ms／178.891ms，总等待未达标，因此不批准扩大。这些工程建议和样本不代表院方批准。 | 实现证据／待冻结全套／真实外部验收；[PILOT_RELEASE_GATES.md](../PILOT_RELEASE_GATES.md)；[pilot_preflight.py](../../scripts/pilot_preflight.py)；[test_local_runtime_ownership.py](../../tests/test_local_runtime_ownership.py)；[test_model_capacity.py](../../tests/test_model_capacity.py) | 实际试点人数／日收件／峰值／设备／留存期／费用预算和可接受成功率、时延需真实院方范围；本轮样本不能代替该容量承诺。；10 人扩大门槛仍未通过；保持 <100ms 原标准。真实试点人数、负载、设备、渠道、费用负责人及预算仍待需求方确认。 |
 
 ## 5. 依赖、许可与未决扩展
 
-新增构建开发依赖 esbuild **0.28.2** 为精确锁定；Playwright 保持 **1.62.1**，没有为 209 项展示参考批量安装组件依赖。冻结前 `pip-audit` 实际发现 `opentelemetry-api==1.45.1` 涉及 CVE-2026-126360／GHSA-mf5v-w3w3-f6cg；核对 [OpenTelemetry 官方公告](https://github.com/open-telemetry/opentelemetry-python/security/advisories/GHSA-mf5v-w3w3-f6cg) 后升级为 **1.45.2**。公告描述特定不受信 trace-context 输入造成 CPU 消耗／拒绝服务；这不证明本应用曾被利用。与基线逐行核验，其他 Python 锁定版本、`requirements-dev.txt` 及 JavaScript 运行时依赖保持。[package.json](../../package.json)、[package-lock.json](../../package-lock.json)、[requirements.lock](../../requirements.lock) 与 [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md) 提供可核查依据。主执行者已报告安装后的 `pip check` 通过和 npm 全依赖审计 0 漏洞，修复后 `pip-audit` 与最终构建结果待冻结记录。
+新增构建开发依赖 esbuild **0.28.2** 为精确锁定；Playwright 保持 **1.62.1**，没有为 209 项展示参考批量安装组件依赖。冻结前 `pip-audit` 实际发现 `opentelemetry-api==1.45.1` 涉及 CVE-2026-126360／GHSA-mf5v-w3w3-f6cg；核对 [OpenTelemetry 官方公告](https://github.com/open-telemetry/opentelemetry-python/security/advisories/GHSA-mf5v-w3w3-f6cg) 后升级为 **1.45.2**。公告描述特定不受信 trace-context 输入造成 CPU 消耗／拒绝服务；这不证明本应用曾被利用。与基线逐行核验，其他 Python 锁定版本、`requirements-dev.txt` 及 JavaScript 运行时依赖保持。[package.json](../../package.json)、[package-lock.json](../../package-lock.json)、[requirements.lock](../../requirements.lock) 与 [THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md) 提供可核查依据。当前独立本地和 Ubuntu CI 已实际完成 npm 全依赖（含 dev／build）审计，结果 0 已知漏洞；修复后 `requirements.lock` 的 `pip-audit --strict` 无已知漏洞，最终构建与重建检查已过。命令、日志哈希和范围见 [sprint-validation.json](sprint-validation.json)；Windows 汇总中的同范围审计也已通过；当前浏览器/Agent 失败仍须单独处理，已知漏洞审计不证明不存在未知漏洞。
 
 参考组件源码实际核查的上游当前许可为 MIT + Commons Clause；本轮未复制这三项 React 源码或添加其依赖。**仓库自身根 LICENSE 当前缺失，不能替所有者擅自选择许可。** LJ-126 的运行文档和第三方登记可以完成，但项目自身许可决定不能伪称已完成。
 
@@ -246,7 +282,7 @@ P2 的班委／协作者最小角色、独立审核员／多学院、入站邮�
 
 - 128 个 ID 连续且唯一，原始要求、来源行号、优先级／性质／成本全部保留；原附件 SHA-256 保留。
 - 40 项来源／AI、16 项校园主责、25 项前端以及根主责／账号／条件项合并，没有省略 8 项 P2。
-- JSON 中引用的 201 个仓库文件已逐一检查存在；不将计划路径当成完成证据。
-- 状态标签是证据维度，可同时出现；它们不构成完整通过率。最终源冻结后须再次验证账本引用和新增测试范围。
+- JSON 的逐项实现／测试／证据及本次总证据共 209 个仓库文件已逐一检查存在；不将 pending 计划路径当成完成证据。
+- 状态标签是证据维度，可同时出现；它们不构成完整通过率。当前保留全部 128 项待最终 CI 门禁、51 项外部验收标签和 8 项条件扩展，后续按真实产物更新。
 
 后续更新须保留真实失败与修复记录、明确样本范围及时间，追加最终 main SHA 和 CI URL；不可删除外部条件来制造“100% 实地满足”。

@@ -83,8 +83,9 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
       catch(error){if(view.sameUser())toast(error.message,true);}finally{form.inert=false;}
     });
   }
-  async function trace(cid,aid){
-    const view=captureUiContext(state),result=await api('/conversations/'+cid+'/messages/'+aid+'/memory-trace');if(!view.sameDialog())return;
+  async function trace(cid,aid,view=captureUiContext(state)){
+    if(!view.sameDialog())return false;
+    const result=await api('/conversations/'+cid+'/messages/'+aid+'/memory-trace');if(!view.sameDialog())return false;
     showDialog('这次回答用了哪些记忆','<div class="stack"><p class="small muted">'+esc(result.note)+'</p>'+result.items.map(item=>'<article class="memory-session-entry"><p class="memory-content">'+esc(item.content)+'</p><p class="small muted">'+(item.can_feedback===false?'这是当时的第 '+item.memory_version+' 版；之后改过了，没法给新版本打分':item.outcome==='used'?'AI 说用上了':'给过 AI，但没说用上')+'</p><div class="memory-studio-actions">'+(item.can_feedback===false?'':[['helpful','有帮助'],['irrelevant','这次不适用'],['outdated','内容已过时']].map(([outcome,label])=>btn(label,'feedback',item.memory_id,'data-cid="'+esc(cid)+'" data-aid="'+esc(aid)+'" data-outcome="'+outcome+'" data-version="'+item.memory_version+'" aria-pressed="'+(item.feedback===outcome)+'"')).join(''))+'</div></article>').join('')+(result.items.length?'':'<p>这次没有能反馈的长期记忆，删掉的也不会再显示。</p>')+'</div>');
   }
   async function audit(){
@@ -95,7 +96,7 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
     showDialog('记忆整理记录','<div class="stack"><p class="small muted">给过 AI、AI 用上了、你的反馈，会分开记。这里只记做了什么和为什么，不保留已遗忘的内容。</p><div class="memory-studio-actions">'+btn('现在检查一遍保留期和长期记忆','maintain')+'</div>'+jobs+result.events.map(e=>'<p><strong>'+esc(labels[e.event]||e.event)+'</strong> · '+esc(stamps(e.created_at))+'<br>'+esc(e.reason)+'</p>').join('')+(result.events.length?'':'<p>还没有记录，用一阵子就会有了。</p>')+'</div>');
   }
   document.addEventListener('click',async event=>{
-    const target=event.target.closest('[data-memory-life]');if(!target||target.disabled)return;
+    const target=event.target.closest('[data-memory-life]');if(!target||target.disabled||target.dataset.memoryLife==='trace')return;
     const action=target.dataset.memoryLife,id=target.dataset.id,view=captureUiContext(state,target);target.disabled=true;
     try{
       if(action==='sessions')await sessions();
@@ -104,7 +105,6 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
       else if(action==='promote')await promotion(id);
       else if(action==='edit-session')await editSession(id);
       else if(action==='audit')await audit();
-      else if(action==='trace')await trace(target.dataset.cid,id);
       else if(action==='feedback'){
         await api('/memory/items/'+id+'/feedback',{method:'POST',json:{version:Number(target.dataset.version),message_id:target.dataset.aid,outcome:target.dataset.outcome}});
         if(view.sameDialog())await trace(target.dataset.cid,target.dataset.aid);
@@ -124,5 +124,5 @@ export function createLifecycleUI({state,api,esc,showDialog,toast,ask,refresh}){
       }
     }catch(error){if(view.sameUser())toast(error.message,true);}finally{target.disabled=false;}
   });
-  return {panel,controls};
+  return {panel,controls,trace};
 }

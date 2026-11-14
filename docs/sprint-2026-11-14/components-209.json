@@ -4477,5 +4477,76 @@
       "decision": "优先候选按目标审核，不等同于本轮必须安装或复制。保留本项目已有原生交互，采纳条件：借鉴清晰空白与返回入口；不同错误的标题、原因和后续动作必须分别设计。",
       "source_review_status": "本轮未逐个运行该上游组件。已有历史融合记录不自动计为本轮验证通过。"
     }
-  ]
+  ],
+  "application_runtime_evidence": {
+    "latest_completed_run": {
+      "id": 43562060192,
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+      "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "overall_browser_result": "failure",
+      "record": "docs/audits/sprint-ci-second-round.json",
+      "reports": {
+        "slots": 33,
+        "passed": 30,
+        "failed_report": 1,
+        "missing_reports_with_failed_runner": 2,
+        "recorded_checks": 957,
+        "passed_checks": 954,
+        "failed_checks": 3
+      },
+      "continuity": {
+        "passed": 990,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "per_engine": 330
+      }
+    },
+    "scope": "下列证据来自本产品在该提交上的真实 CI；每条 reference.local_runtime_status 仍说明本机执行限制。209 项采用决定、上游源码审查与本产品运行证据分别记录，不能用本产品测试替代未打开的上游组件。",
+    "observed_adapted_patterns": [
+      {
+        "reference_number": 114,
+        "verified": [
+          "chat-layout 三引擎每引擎4项，共12项：输入行高、短视口、触控入口及附件分行。",
+          "chat-interactions 三引擎9/8/8项通过，含真实菜单后的回复操作与阅读锚点。"
+        ],
+        "remaining": [
+          "composer 语音检查在未展开输入菜单的点击处失败，后续语音断言未完成。",
+          "sprint 360秒超时且无报告，新增输入菜单键盘与手机校园草稿场景不可记为通过。"
+        ]
+      },
+      {
+        "reference_number": 115,
+        "verified": [
+          "task-board 28项通过，含真实保存、失败恢复、完成后撤销、手机拖动撤销与减弱动画键盘移动。",
+          "实际打开 task-board-browser/webkit-320.png：撤销提示位于底部导航上方，文字与关闭/撤销入口可见。"
+        ],
+        "remaining": [
+          "新 sprint 中失败提示常驻、底部安全区场景没有本轮完成报告；不补造该结果。",
+          "未采纳上游 Swipe 手势，未把本地撤销验证写成上游手势已验证。"
+        ]
+      },
+      {
+        "reference_number": 133,
+        "verified": [
+          "task-board 三引擎的真实完成与撤销检查通过，未替换正式依据。"
+        ],
+        "remaining": [
+          "新 sprint 的失败不庆祝、submission 打开办理不庆祝场景没有本轮完成报告；修复后待下一 CI。"
+        ]
+      }
+    ],
+    "upstream_review_scope": {
+      "actually_opened_and_source_reviewed": [
+        114,
+        115,
+        133
+      ],
+      "not_individually_opened": 206,
+      "decisions_unchanged": true
+    },
+    "next_candidate_runtime": "pending_after_targeted_repairs"
+  }
 }

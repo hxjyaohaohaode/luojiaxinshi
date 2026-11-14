@@ -10,7 +10,9 @@
 
 ## 逐项映射
 
-| 编号 | 修改或保留内容 | 验证与剩余边界 |
+下表中的脚本名表示对应验收门禁，不表示该脚本已经完整执行或该条需求已经全部通过。实际运行结果按后文的 CI 轮次、提交与报告分别记录；当前主浏览器复验仍在进行。
+
+| 编号 | 修改或保留内容 | 对应门禁与剩余边界 |
 |---|---|---|
 | LJ-085 | 学院、事项、材料 CSS 进入统一 legacy/system 层序；删除独立无层 link 和运行时材料 link，修正 bundle 相对路径。已有各 feature CSS 保持必要规则，未凭静态猜测整片删除。 | npm run build；现有 visual / source-inbox / pilot suites |
 | LJ-086 | 保留珞珈绿/白底与原导航。统一 control-target=44px 和 page/row 密度 token，明确 850px 断点；没有 scale 全页缩小。 | 新 sprint suite 320/390/1280 及原 visual suites |
@@ -97,7 +99,7 @@ Spring Check 实际经历点击、Space、375px、disabled 检查。Swipe Toast 
 
 ### 当前构建和已执行的本地检查
 
-当前冻结入口为 `/static/dist/app-XK3PQMAE.js`，CSS 为 `/static/dist/styles-BKR4PFDD.css`，共 **24 个构建产物、191 个静态源文件**。`frontend-build-verification.json` 顶层记录当前构建，并在 `history` 中完整保留旧 `/static/dist/app-JL3KAYN2.js` 的构建和验证记录。
+首轮修复后的候选入口为 `/static/dist/app-XK3PQMAE.js`，CSS 为 `/static/dist/styles-BKR4PFDD.css`，共 **24 个构建产物、191 个静态源文件**。该候选的构建和验证记录已保存在 `frontend-build-verification.json` 的 `history`，更早的 `/static/dist/app-JL3KAYN2.js` 记录也保留；顶层记录本文最后一节的最新冻结构建。
 
 | 已实际执行的命令或检查 | 结果 |
 |---|---|
@@ -106,17 +108,17 @@ Spring Check 实际经历点击、Space、375px、disabled 检查。Swipe Toast 
 | `npm test` | 275 项通过，0 失败、0 跳过。 |
 | `tests/test_frontend_bundle.py` 与 `tests/test_audit_reports.py` | 23 项通过。 |
 | 修改文件的 Node 语法检查与 `git diff --check` | 通过。 |
-| 修复后的浏览器检查 | 等待下一轮 GitHub CI，本机未运行浏览器。 |
+| 修复后的浏览器检查 | run 43562060192 正在运行；独立 continuity 已通过，主 browser 报告尚未发布。本机未运行浏览器。 |
 
 已完成构建时记录的 JS 入口大小为 431,421 字节，gzip 147,313 字节、Brotli 115,118 字节；CSS 为 600,210 字节，gzip 114,991 字节、Brotli 89,582 字节。这些数值来自此前实际 `build:check` 输出，本次文档更新只读取既有记录与 manifest，没有在独立性能实验期间重新构建或计算压缩。
 
-首轮 Node 22.23.4 的 Linux 和 Windows 构建一致性门禁均通过，但它们验证的是旧候选产物。**新入口 `app-XK3PQMAE.js` 的跨平台 CI 和实际浏览器复验仍待下一轮完成。**
+首轮 Node 22.23.4 的 Linux 和 Windows 构建一致性门禁均通过，它们验证的是旧候选产物。新一轮 run 43562060192 已在 Linux 主浏览器、continuity、单元作业和四个 Windows 分片中通过相同构建门禁，验证的是当前 `app-XK3PQMAE.js`。完成的 continuity 作业日志实际记录 Node `v22.23.4`。构建跨平台一致性与浏览器交互验收分别记录；主 browser 作业仍未结束。
 
 ### 实际截图与载入测量
 
 已逐张查看官方 artifact 中的以下截图：首轮 sprint 桌面失败图、聊天交互桌面失败图、320px 手机聊天界面、390×420 键盘高度下的聊天布局；另查看独立 continuity artifact 的 320px 恢复弹窗、390px 资料冲突弹窗和 1440px 桌面恢复弹窗。可见的输入、按钮、文字与导航没有明显横向溢出或操作遮挡；桌面聊天失败图明确显示“更多”尚未展开。这个目视结论仅覆盖这些图，不能替代被中断场景的测试。
 
-主要图片在 artifact 内的路径为 `sprint-ui-browser/chromium-failure-5.png`、`chat-interactions/chromium/failure.png`、`visual-review-browser/chat-mobile-320.png`、`chat-layout/chromium/keyboard.png`。新增 sprint 套件尚未生成手机校园草稿截图。
+主要图片在首轮 artifact 内的路径为 `sprint-ui-browser/chromium-failure-5.png`、`chat-interactions/chromium/failure.png`、`visual-review-browser/chat-mobile-320.png`、`chat-layout/chromium/keyboard.png`。首轮新增 sprint 套件未执行到手机校园草稿场景，也没有相应截图。
 
 首轮 sprint 真实记录了 6 条冷/同一上下文热登录测量：
 
@@ -127,3 +129,50 @@ Spring Check 实际经历点击、Space、375px、disabled 检查。Swipe Toast 
 | WebKit | 324ms | 173ms | 两次均为 1 |
 
 这是 GitHub CI 环回合成夹具的测量，不能作为线上公网或实体手机 SLA。总资源请求为 15—16 个，静态资源请求为 13—14 个；WebKit 的热载入仍有约 1.83MB 传输量，不能把所有引擎的热缓存都写成零字节。精确 JavaScript 解析耗时保持 `null`；只有 Chromium 暴露长任务观测支持，Firefox/WebKit 的不支持状态不能解释为没有长任务。新增任务与校园场景中断后的载入数据没有补造。
+
+## 第二轮 CI：完整结果与修复边界
+
+本轮主 browser 已于 05:57 UTC 完成，结果为 **failure**。33 个报告槽中，30 个完整通过，pilot 报告失败，sprint 与 composer 在失败退出前未生成报告。已生成报告共有 957 条检查：954 通过、pilot 的 3 条失败；pilot 的 `errors` 重复记录这 3 条，不再另算 3 次。缺失报告没有可核验的检查数量，不能计为零失败通过。以下 05:50、05:54 的状态保留为运行过程证据。
+
+[GitHub Actions 43562060192](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192) 对应候选提交 `32c5ce524d553c869816d0264e9cf84b57febe39`。截至 2026-11-14 05:50 UTC，主 browser 作业 `132347708809` 仍在执行。新 sprint 预期 60 条检查、任务看板预期 28 条检查，这些是验收数量要求，当前不能写成实际通过数量。
+
+05:54 UTC 的后续官方步骤记录显示：16 个主套件步骤和 Agent 步骤均已失败，作业继续执行聊天等后续阶段。运行中的正式 job-log 下载仍返回 `404 BlobNotFound`，所以此时只有步骤级失败证据，不能推定具体场景或根因。完整日志和 artifact 发布后将补齐逐项结果；以下 continuity 的成功不能抵消这两个失败步骤。
+
+独立 `Async save and recovery` 作业 `132347708859` 已完成并成功。下载官方 artifact `continuity-browser-reports`（ID `14100383444`，703,372 字节）后，SHA-256 校验为 `ded0a0e322ed67502cc5e3493ddd53fac0c762c29ee5bffa29b454fecf274cdf`，产物记录的提交与本轮候选相同。下面的数量直接从原始报告逐条统计 `checks[].passed`，全部为 `true`，三个报告的 `errors` 数组均为空。
+
+| 本轮原始报告 | Chromium | Firefox | WebKit | 总通过 | 失败 / 页面错误 |
+|---|---:|---:|---:|---:|---:|
+| `continuity-browser/arrangement-recovery/report.json` | 204 | 204 | 204 | 612 | 0 / 0 |
+| `continuity-browser/draft-continuity/report.json` | 68 | 68 | 68 | 204 | 0 / 0 |
+| `continuity-browser/ui-continuity/report.json` | 58 | 58 | 58 | 174 | 0 / 0 |
+| 合计 | 330 | 330 | 330 | 990 | 0 / 0 |
+
+这些真实检查覆盖了安排保存后清理失败、已保存结果被编辑或删除、成功回执丢失、恢复查询不可用、迟到结果隔离；通知与安排草稿在业务写入或清理等待期间继续编辑；资料冲突保留输入、失败重试、晚响应不覆盖新页面或弹窗。它们不能替代主 browser 中的分页、来源试读、任务拖动、回复版本和校园草稿检查。`frontend-25.json` 已按实际场景增加部分证据，没有把这 990 条整体映射成 25 项需求全部验收。
+
+本轮已实际打开三张截图：`continuity-browser/arrangement-recovery/recovery-320.png`、`continuity-browser/arrangement-recovery/recovery-1440.png`、`continuity-browser/ui-continuity/profile-conflict-390.png`。320px 安排恢复弹窗的四个动作和已保存结果可读；1440px 弹窗居中且操作完整可见；390px 冲突弹窗保留本人填写，明确展示冲突值和核对、保存入口。上述图片没有明显横向溢出或遮挡。该目视范围不包含尚未下载的新 sprint 手机草稿/聊天截图，也不等同于真实软键盘、读屏或 200% 缩放验收。
+
+本轮开始前的 Node 本地结果为 **275 / 275**，构建相关 Python 检查 **23 / 23**，该轮入口、24 个产物和 191 个源文件与其跨平台构建门禁一致。上述运行中检查点只整理既有日志与下载报告，没有在等待阶段修改产品源码。
+
+### 主 browser 的实际通过项与失败项
+
+本轮官方主浏览器 artifact 为 `synthetic-browser-reports`，ID `14101013306`，21,736,325 字节，下载后校验 SHA-256 为 `3f7cb6afb5c80248652ea1376f54410ec4d64e6803c809ee6dd30777ca4f598c`。产物与运行均绑定候选 `32c5ce5`。
+
+任务看板 **28 / 28** 通过（Chromium 10、Firefox 9、WebKit 9），包括每个引擎新增的“同一行节点、手柄及焦点保持 350ms，首页返回恢复筛选”回归。前端稳定性 123、工作区 120、通知办理 45、自然收件 33、来源收件 5、来源预设 7 均通过。回复交互三个引擎为 9 / 8 / 8，回复刷新恢复为 3 / 3 / 3；其他完整通过项见第二轮总账。对所有可比较的报告逐条核对，首轮已经通过的检查名称都仍然存在。
+
+| 实际失败 | 实证与边界 | 修复范围 |
+|---|---|---|
+| sprint | 唯一原始日志是 `Browser suite exceeded the 360-second deadline.`；无报告、无截图、没有可用的请求尾部，精确停点未知。静态审查发现唯一无界的 `await began`，这是待验证推断，不是日志确认的停点。 | 仅脚本：旧查询等待与抓取设显式截止，每项开始/通过/失败即时写报告，记录最近请求；仍保留原 360 秒总截止。旧查询被取消时记录 abort 与迟到 fulfill 尝试，不声称强迫旧响应送达。外部 API 写入的办理 guard 先真实 reload 并核对已提交状态，再点击一次验证不完成、不庆祝；该 guard 缓存前提不是本轮已观测失败。 |
+| pilot 三引擎协作场景 | 三次均在 `scoped collaboration is received, returned, supplemented and resolved across devices` 等待 12 秒超时。首次从待办办理面板进入协作时，懒加载模块尚未注册按钮监听，真实页面没有发出 options 请求。 | 修复产品冷入口：入口由已加载的 app 委托，按需导入后使用捕获的账号/视图守卫；保留首次进入、关闭表单和切换路由的真实回归，不通过预热协作页规避。 |
+| composer | `tests/composer-browser.mjs:83:56` 点击 `#chat-composer .composer-voice` 超时，日志明确 `element is not visible`，截图显示“更多”未展开。其余四个 Agent 套件 29 条通过。 | 仅测试先打开真实输入菜单再点麦克风，并按当前 DOM 验证结束后唯一控件回到菜单；真实采集、RIFF、分段、手工输入、503 重试等断言全部保留。 |
+
+本轮另实际查看 `task-board-browser/webkit-320.png`、`task-board-browser/chromium-desktop.png`、`chat-layout/chromium/keyboard.png` 和 `visual-review-browser/chat-mobile-320.png`。320px 待办标题换行、撤销提示位于导航上方；桌面三栏与加载范围可读；390×420 聊天的输入、发送和导航保持可见；320px 聊天没有横向溢出。**新 sprint 手机草稿与聊天截图没有生成，不能以其他页面截图代替。**
+
+修复后的候选需重新运行 CI。协作冷入口修复后的 `app-DZKWHU4J.js` 曾通过一次本地 build/check、275 项 Node 与 23 项构建/审计检查；该值只是中间构建。随后横向审查又发现聊天回复的记忆来源入口需要同类冷启动桥接，最终产物须在该修复冻结后统一重建，不能把中间构建当最终验收。
+
+## 第二轮修复后的最终本地冻结
+
+协作与记忆冷入口、相关关闭/换页守卫，以及 sprint/composer 验收脚本均冻结后，2026-11-14 06:13 UTC 已重新执行 `npm run build`、`npm run build:check`、完整 `npm test` 和构建/审计 Python 定向检查。结果为 **build/check 成功、Node 275 / 275 通过、Python 23 / 23 通过**；没有运行本地浏览器。源码/测试与生成产物的实现指纹按仓库 `scripts.audit_full_suite.fingerprint()` 得到 `d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12`。
+
+最新入口为 `/static/dist/app-DFTX33VB.js`，SHA-256 `b42c391fe6ee581cd9225b323563434b1148ba4b15ee496308448e2fcba65baf`；CSS 仍为 `/static/dist/styles-BKR4PFDD.css`，共 24 个产物、191 个静态源文件。JS 入口 431,979 字节，gzip 147,436 字节、Brotli 115,247 字节。`frontend-build-verification.json` 顶层与 `frontend-25.json` 已记录此次实际门禁，保留旧候选和中间构建历史。
+
+**新候选的浏览器与 Node22 跨平台复验仍为 pending。** run50 的 30 个通过报告及 990 条连续性结果仅证明 `32c5ce5` 的相应行为，不能提前当作新候选通过；run50 的失败保存在 `browser.second_ci` 与第二轮总账中。下一轮仍需完整执行三引擎、冷入口回归和新 sprint 后续场景，才能形成最终运行结论。

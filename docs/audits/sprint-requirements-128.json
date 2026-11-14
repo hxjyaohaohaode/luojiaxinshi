@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "title": "珞珈信使冲刺 128 项证据总账",
-  "reviewed_at": "2026-11-14T05:02:17.337114+00:00",
+  "reviewed_at": "2026-11-14T05:55:45.283723+00:00",
   "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
   "source_attachments": [
     {
@@ -19,7 +19,7 @@
   "status_semantics": {
     "实现证据": "存在且已核对对应源码或明确边界，不等于所有条件已满足。",
     "已执行定向验证": "对应测试文件在记录的定向运行范围内；逐条限制仍有效，不能推断全部断言涵盖每一自然语言要求。",
-    "待冻结全套": "最终完整工作树尚待全量后端、Node、构建、浏览器、交叉平台与 GitHub CI 冻结结果。",
+    "待冻结全套": "本地同指纹后端双轮、Node、构建及 Ubuntu/Windows 后端已通过；当前 CI 主浏览器与 Agent 步骤已报告失败，完整错误产物尚待，不能标整体或逐项全绿。",
     "真实外部验收": "需要真实供应商、来源、设备、人员、标注或目标部署条件，当前仍待。",
     "条件扩展": "原清单 P2：需求／平台授权条件未确立；不冒充已经实现。"
   },
@@ -98,7 +98,8 @@
         "tests/*.test.mjs"
       ],
       "document": "docs/sprint-2026-11-14/frontend-25.json",
-      "limits": "前端原冻结前 npm test；不自动证明真实浏览器几何、读屏、软键盘或后续新增模块。"
+      "limits": "历史：前端较早冻结前的 270 项执行，不是最终数量；当前修复代码的 Node 全套为 275 项，另列记录。",
+      "historical": true
     },
     {
       "id": "root-targeted",
@@ -106,7 +107,8 @@
       "result": "reported_passed_scope_pending",
       "passed": 23,
       "scope_files": [],
-      "limits": "根执行者报告的定向结果，精确文件与后续新增用例由主执行记录核实后更新，未归为单项完整通过。"
+      "limits": "历史主执行者定向报告，不作为最终完整计数；当前精确双轮、Node、构建及运行证据见 sprint-validation.json。",
+      "historical": true
     },
     {
       "id": "qq-context-domain-41",
@@ -189,32 +191,381 @@
       ],
       "document": "docs/audits/sprint-sources-evidence.md",
       "limits": "此轮含原来源／投影定向范围，不能与其他轮次简单累加；不是整个分支重新冻结后的完整后端／CI 通过证明。"
+    },
+    {
+      "id": "frozen-backend-round2",
+      "kind": "complete_frozen_backend",
+      "result": "passed",
+      "scope": "134 Python test files; full inventory, four isolated shards",
+      "tests": 1792,
+      "passed": 1789,
+      "skipped": 3,
+      "failed": 0,
+      "errors": 0,
+      "seconds": 336.29,
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "artifact": "artifacts/sprint-final/backend-round2",
+      "junit_sha256": "609cf9663688b0b18bc428ee5953614ab86693edb85c51e0fd7032f0d76c39ca",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。"
+    },
+    {
+      "id": "frozen-backend-round3",
+      "kind": "complete_frozen_backend",
+      "result": "passed",
+      "scope": "134 Python test files; full inventory, four isolated shards",
+      "tests": 1792,
+      "passed": 1789,
+      "skipped": 3,
+      "failed": 0,
+      "errors": 0,
+      "seconds": 382.24,
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "artifact": "artifacts/sprint-final/backend-round3",
+      "junit_sha256": "acef1a77faabefe3c83a5505319dd763a84d5a2aeac13184064d133a897b97e0",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。"
+    },
+    {
+      "id": "frontend-node-275",
+      "kind": "node_unit",
+      "result": "passed",
+      "tests": 275,
+      "passed": 275,
+      "failed": 0,
+      "skipped": 0,
+      "scope_files": [
+        "tests/*.test.mjs"
+      ],
+      "document": "docs/sprint-2026-11-14/frontend-build-verification.json",
+      "limits": "修复后实际 Node 单元全套；不能代替真实浏览器或设备交互。"
+    },
+    {
+      "id": "frontend-bundle-audit-23",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "tests": 23,
+      "passed": 23,
+      "failed": 0,
+      "scope_files": [
+        "tests/test_frontend_bundle.py",
+        "tests/test_audit_reports.py"
+      ],
+      "document": "docs/sprint-2026-11-14/frontend-build-verification.json",
+      "limits": "两文件定向，不与完整后端重复计数。"
+    },
+    {
+      "id": "ci50-ubuntu-backend",
+      "kind": "complete_remote_backend",
+      "result": "passed",
+      "os": "ubuntu-latest",
+      "tests": 1792,
+      "passed": 1790,
+      "skipped": 2,
+      "failed": 0,
+      "errors": 0,
+      "seconds": 421.83,
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "tested_commit": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+      "branch_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "skipped_cases": [
+        {
+          "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "artifact": "artifacts/ci-readonly/run-43562060192-linux-verification.json",
+      "limits": "pinned Tika/JRE 解析与原查询门槛回归均实际通过；两跳过是 Windows 专属测试；不能代替 Windows 和浏览器。"
+    },
+    {
+      "id": "runtime-final-5-users",
+      "kind": "real_local_http_synthetic_data",
+      "result": "functional_passed",
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "concurrent_users": 5,
+      "requests": 766,
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。"
+    },
+    {
+      "id": "runtime-final-10-users",
+      "kind": "real_local_http_synthetic_data",
+      "result": "functional_passed",
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "concurrent_users": 10,
+      "requests": 1531,
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。"
+    },
+    {
+      "id": "ci50-windows-backend",
+      "kind": "complete_remote_backend",
+      "result": "passed",
+      "os": "windows-latest",
+      "tests": 1792,
+      "passed": 1791,
+      "skipped": 1,
+      "failed": 0,
+      "errors": 0,
+      "seconds": 951.61,
+      "implementation_sha256": "1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9",
+      "implementation_unchanged": true,
+      "tested_commit": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+      "branch_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "skipped_cases": [
+        {
+          "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+          "reason": "POSIX TIME_WAIT bind semantics"
+        }
+      ],
+      "artifact": "artifacts/ci-readonly/run-43562060192-windows-verification.json",
+      "limits": "四片同内部指纹，完整唯一清单和聚合校验通过；唯一跳过POSIX TIME_WAIT语义；不代替主浏览器与真实外部验收。"
     }
   ],
   "observed_local_metrics": {
     "runtime_http": {
-      "verified_at": "2026-11-14T04:25:37.234482+00:00",
+      "verified_at": "2026-11-14T05:28:49.729979+00:00",
       "result": "passed",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
       "synthetic_test": true,
       "live_model_calls": 0,
       "concurrent_users": 5,
       "notices_saved": 100,
       "tasks_saved": 200,
-      "http_requests": 765,
+      "http_requests": 766,
       "response_status_counts": {
-        "200": 650,
+        "200": 651,
         "401": 5,
         "404": 10,
         "409": 100
       },
-      "request_latency_ms": {
-        "median": 66.5,
-        "p95": 257.3,
-        "max": 1406.1
+      "ordinary_crud_latency_ms": {
+        "samples": 625,
+        "p50": 115.2,
+        "p95": 219.1,
+        "max": 623.6
       },
-      "elapsed_seconds": 22.67,
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 776,
+          "samples": 776,
+          "p50_ms": 32.309,
+          "p95_ms": 88.957,
+          "max_ms": 266.867
+        },
+        "hold": {
+          "total_observations": 776,
+          "samples": 776,
+          "p50_ms": 12.87,
+          "p95_ms": 44.331,
+          "max_ms": 280.472
+        }
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": true
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.038,
+        "restart_verified_seconds": 1.798,
+        "restore_file_seconds": 0.053,
+        "restore_verified_seconds": 2.371,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "request_latency_ms": {
+        "median": 114.2,
+        "p95": 224.7,
+        "max": 623.6
+      },
+      "elapsed_seconds": 25.44,
       "restart_preserved_tasks": true,
       "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+    },
+    "runtime_http_ten_users": {
+      "verified_at": "2026-11-14T05:30:13.987626+00:00",
+      "result": "passed",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_unchanged": true,
+      "synthetic_test": true,
+      "live_model_calls": 0,
+      "concurrent_users": 10,
+      "notices_saved": 200,
+      "tasks_saved": 400,
+      "http_requests": 1531,
+      "response_status_counts": {
+        "200": 1301,
+        "401": 10,
+        "404": 20,
+        "409": 200
+      },
+      "ordinary_crud_latency_ms": {
+        "samples": 1250,
+        "p50": 265.9,
+        "p95": 481.6,
+        "max": 638.9
+      },
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 1588,
+          "samples": 1588,
+          "p50_ms": 79.095,
+          "p95_ms": 178.891,
+          "max_ms": 382.656
+        },
+        "hold": {
+          "total_observations": 1588,
+          "samples": 1588,
+          "p50_ms": 9.132,
+          "p95_ms": 82.005,
+          "max_ms": 279.103
+        }
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.047,
+        "restart_verified_seconds": 2.005,
+        "restore_file_seconds": 0.067,
+        "restore_verified_seconds": 2.959,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "request_latency_ms": {
+        "median": 265.2,
+        "p95": 491.1,
+        "max": 964.7
+      },
+      "elapsed_seconds": 50.1,
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true,
       "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
     },
     "capacity": {
@@ -224,91 +575,210 @@
       "notices": 10000,
       "payload_bytes": 20992851,
       "timings": {
-        "intake_at_10000_records_ms": 37.95,
-        "list_10000_records_ms": 1079.29,
-        "full_text_search_10000_records_ms": 1545.04,
-        "matter_candidates_10000_records_ms": 81.0,
-        "duplicate_replay_at_capacity_ms": 29.89
+        "intake_at_10000_records_ms": 55.41,
+        "list_10000_records_ms": 1024.41,
+        "full_text_search_10000_records_ms": 952.97,
+        "matter_candidates_10000_records_ms": 70.6,
+        "duplicate_replay_at_capacity_ms": 37.85
       },
+      "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
       "interactive_pages": {
         "collected_page": {
-          "cold_ms": 39.05,
-          "warm_p50_ms": 35.18,
-          "warm_p95_ms": 50.83,
+          "cold_ms": 41.31,
+          "warm_p50_ms": 35.8,
+          "warm_p95_ms": 36.9,
           "samples_ms": [
-            39.05,
-            31.83,
-            37.09,
-            50.83,
-            32.46,
-            35.18
+            41.31,
+            34.12,
+            36.69,
+            33.53,
+            35.8,
+            36.9
           ],
-          "max_payload_bytes": 105304,
+          "max_payload_bytes": 106675,
           "total": 10000
         },
         "semantic_current_page": {
-          "cold_ms": 488.02,
-          "warm_p50_ms": 33.36,
-          "warm_p95_ms": 38.83,
+          "cold_ms": 489.13,
+          "warm_p50_ms": 37.24,
+          "warm_p95_ms": 44.15,
           "samples_ms": [
-            488.02,
-            32.24,
-            36.46,
-            33.12,
-            38.83,
-            33.36
+            489.13,
+            37.24,
+            39.47,
+            44.15,
+            34.35,
+            34.18
           ],
-          "max_payload_bytes": 105367,
+          "max_payload_bytes": 106699,
           "total": 10000
         },
         "indexed_body_search": {
-          "cold_ms": 64.74,
-          "warm_p50_ms": 76.25,
-          "warm_p95_ms": 115.23,
+          "cold_ms": 71.77,
+          "warm_p50_ms": 74.5,
+          "warm_p95_ms": 83.4,
           "samples_ms": [
-            64.74,
-            113.01,
-            60.72,
-            115.23,
-            64.31,
-            76.25
+            71.77,
+            74.5,
+            73.51,
+            83.4,
+            70.36,
+            76.65
           ],
-          "max_payload_bytes": 3043,
+          "max_payload_bytes": 3070,
           "total": 1
         },
         "short_chinese_search": {
-          "cold_ms": 104.92,
-          "warm_p50_ms": 99.65,
-          "warm_p95_ms": 107.18,
+          "cold_ms": 100.41,
+          "warm_p50_ms": 112.97,
+          "warm_p95_ms": 131.44,
           "samples_ms": [
-            104.92,
-            99.65,
-            88.33,
-            103.32,
-            107.18,
-            93.76
+            100.41,
+            131.44,
+            106.86,
+            126.91,
+            112.97,
+            108.76
           ],
-          "max_payload_bytes": 110597,
+          "max_payload_bytes": 111961,
           "total": 9999
         }
       },
       "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
       "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
     },
-    "record_scope": "本地现存产物，生成时已读取；尚非全部后续改动冻结后的最终数字。最终精简证据由根执行者写入 sprint-validation.json。"
+    "document": "docs/audits/sprint-validation.json",
+    "record_scope": "当前候选实现指纹 33fca6c8… 的最终独立本地 5/10 人观察值；CI 共享 runner 的性能另列，不作为相同环境或校园容量承诺。10 人扩大门槛未通过。"
   },
   "final_gates": {
-    "frozen_backend_round1": "pending",
-    "frozen_backend_round2": "pending",
-    "frozen_node": "pending",
-    "frontend_build_reproducibility": "pending",
-    "application_browsers": "pending",
+    "frozen_backend_round1": {
+      "result": "passed",
+      "meaning": "修复后第一轮完整干净执行，原首次失败保留在 regressions",
+      "run": "frozen-backend-round2"
+    },
+    "frozen_backend_round2": {
+      "result": "passed",
+      "meaning": "同一实现指纹第二轮完整干净执行",
+      "run": "frozen-backend-round3"
+    },
+    "frozen_node": {
+      "result": "passed",
+      "tests": 275,
+      "run": "frontend-node-275"
+    },
+    "frontend_build_reproducibility": "passed",
+    "application_browsers": "failure_detected_pending_full_report",
     "github_main_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
-    "github_ci_run_url": null,
+    "github_ci_run_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
     "github_main_delivery": "pending",
     "actual_devices_and_providers": "not_completed",
     "independent_human_benchmark": "not_completed",
-    "five_day_campus_pilot": "not_completed"
+    "five_day_campus_pilot": "not_completed",
+    "github_ci_conclusion": "failure_detected_pending_full_report",
+    "five_person_observed_engineering_targets": true,
+    "ten_person_observed_engineering_targets": false,
+    "ten_person_expansion_approved": false,
+    "partial_remote_ci": {
+      "run_id": 43562060192,
+      "branch_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+      "ubuntu": {
+        "conclusion": "success",
+        "tests": 1792,
+        "passed": 1790,
+        "skipped": 2,
+        "node_passed": 275,
+        "npm_audit_scope": "all including dev/build",
+        "known_node_vulnerabilities": 0,
+        "pip_audit": "No known vulnerabilities found"
+      },
+      "continuity": {
+        "conclusion": "success",
+        "checks": 990,
+        "failed_checks": 0,
+        "errors": 0,
+        "counts": [
+          612,
+          204,
+          174
+        ]
+      },
+      "container": {
+        "conclusion": "success",
+        "evidence": "artifacts/ci-readonly/run-43562060192-container.log"
+      },
+      "windows": {
+        "conclusion": "success",
+        "partition_jobs": [
+          "success",
+          "success",
+          "success",
+          "success"
+        ],
+        "observed_partition_tests": [
+          447,
+          480,
+          389,
+          476
+        ],
+        "observed_partition_failures": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "observed_partition_skips": [
+          0,
+          0,
+          1,
+          0
+        ],
+        "aggregate_job_id": 132351936093,
+        "tests": 1792,
+        "unique_tests": 1792,
+        "passed": 1791,
+        "skipped": 1,
+        "failed": 0,
+        "errors": 0,
+        "node_passed": 275,
+        "aggregate_seconds": 0.2,
+        "elapsed_seconds": 951.61,
+        "aggregation_errors": [],
+        "skipped_cases": [
+          {
+            "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+            "reason": "POSIX TIME_WAIT bind semantics"
+          }
+        ],
+        "npm_audit_scope": "all including dev/build",
+        "known_node_vulnerabilities": 0,
+        "pip_audit": "No known vulnerabilities found",
+        "evidence": "artifacts/ci-readonly/run-43562060192-windows-verification.json"
+      },
+      "browser": {
+        "conclusion": "failure_detected_pending_full_report",
+        "job_status": "in_progress",
+        "official_job_conclusion": null,
+        "known_failed_steps": [
+          {
+            "number": 10,
+            "name": "Run the browser suites against synthetic data"
+          },
+          {
+            "number": 11,
+            "name": "Verify embedded Agent approvals, UI, media and incremental rendering"
+          }
+        ],
+        "case_attribution": "pending_full_artifact",
+        "evidence": "artifacts/ci-readonly/run-43562060192-browser-failure-pending.json"
+      },
+      "fingerprints": {
+        "ubuntu": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+        "windows_partitions": "1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9",
+        "interpretation": "分操作系统保存字节指纹及内部 unchanged；两边 checkout 绑定同一实际 commit。不声称跨 OS 字节指纹相同，未逐文件确定差异原因。"
+      },
+      "status": "failure_detected_pending_full_report"
+    }
   },
   "repository_license": {
     "root_license_file": null,
@@ -332,11 +802,39 @@
     ],
     "other_python_pins": "unchanged_vs_baseline_verified",
     "javascript_runtime_dependencies": "unchanged_vs_baseline_verified",
-    "audit_state": "npm 全依赖 0 漏洞由主执行者报告；pip check 已过，修复后 pip-audit 最终结果待主执行证据。"
+    "audit_state": "本地、Ubuntu及Windows的 npm 全依赖审计均0已知漏洞，requirements.lock 的 pip-audit strict 均无已知漏洞；最终 build/build:check 已过。当前 CI 主浏览器/Agent 步骤失败且完整报告尚待，不能据依赖通过推出整体通过。",
+    "current_audits": {
+      "npm": {
+        "command": "npm audit --json",
+        "scope": "all locked dependencies including dev/build toolchain",
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        },
+        "log_sha256": "790483b97778bc428609a6a5b2a4296b5aab848a754b1e23338b9039e6ee9be0"
+      },
+      "python": {
+        "command": ".venv/bin/python -m pip_audit -r requirements.lock --strict",
+        "result": "No known vulnerabilities found",
+        "log_sha256": "15950a68a7ed99c59779717acefdceb3f69cfd31bde67d2c954f2a3cea4d7955",
+        "fixed_dependency": {
+          "name": "opentelemetry-api",
+          "from": "1.45.1",
+          "to": "1.45.2",
+          "primary_advisory": "https://github.com/open-telemetry/opentelemetry-python/security/advisories/GHSA-mf5v-w3w3-f6cg"
+        }
+      },
+      "limits": "已知漏洞审计的当次结果，不代表证明不存在任何未知漏洞。"
+    }
   },
   "reference_validation": {
-    "checked_files": 201,
-    "missing_files": []
+    "checked_files": 209,
+    "missing_files": [],
+    "scope": "128 条 implementation.files、verification.test_files、evidence_documents，以及本次总证据与前端构建记录；不把 pending 计划产物当已存在引用。"
   },
   "requirements": [
     {
@@ -361,7 +859,8 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "frontend-node-270"
+          "frontend-node-270",
+          "frontend-node-275"
         ],
         "test_files": [
           "tests/getting-started.test.mjs",
@@ -5114,7 +5613,10 @@
         "executed_runs": [
           "frontend-node-270",
           "workspace-projection-targeted-14",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "frontend-node-275"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
@@ -5127,11 +5629,12 @@
       },
       "external_acceptance": [],
       "remaining": [
-        "新工作区投影已集成；完整库存、原业务语义及分钟差量的实际执行结果仍以最终冻结记录为准。"
+        "完整库存、原业务语义及分钟差量相关测试已进入同指纹本地双轮和 Ubuntu/Windows 完整后端；当前主浏览器/Agent 门禁已失败，具体案例仍待完整 CI 报告。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
-        "docs/audits/sprint-query-regression.json"
+        "docs/audits/sprint-query-regression.json",
+        "docs/audits/sprint-validation.json"
       ],
       "status_labels": [
         "实现证据",
@@ -5205,7 +5708,10 @@
         "executed_runs": [
           "frontend-node-270",
           "workspace-projection-targeted-14",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "frontend-node-275"
         ],
         "test_files": [
           "tests/test_workspace_projection.py",
@@ -5219,11 +5725,12 @@
       },
       "external_acceptance": [],
       "remaining": [
-        "投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价待最终定向／全套记录。"
+        "投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价已有冻结后端双轮证据；修复后浏览器仍待当前 CI。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
-        "docs/audits/sprint-query-regression.json"
+        "docs/audits/sprint-query-regression.json",
+        "docs/audits/sprint-validation.json"
       ],
       "status_labels": [
         "实现证据",
@@ -5297,7 +5804,10 @@
         "executed_runs": [
           "frontend-node-270",
           "workspace-projection-targeted-14",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "frontend-node-275"
         ],
         "test_files": [
           "tests/paged-list.test.mjs",
@@ -5310,11 +5820,12 @@
       },
       "external_acceptance": [],
       "remaining": [
-        "实体文件预览内存、长时滚动和真实辅助技术待浏览器／设备验收；投影集成实际验证以冻结结果为准。"
+        "投影相关用例已通过本地冻结双轮与 Ubuntu 后端；实体文件预览内存、长时滚动和真实辅助技术仍需设备验收，修复后浏览器仍待当前 CI。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
-        "docs/audits/sprint-query-regression.json"
+        "docs/audits/sprint-query-regression.json",
+        "docs/audits/sprint-validation.json"
       ],
       "status_labels": [
         "实现证据",
@@ -5333,25 +5844,33 @@
       "source_line": 320,
       "implementation": {
         "state": "implemented_or_strengthened",
-        "summary": "通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。",
+        "summary": "通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。 同库进程内写入公平准入保留读并行，等待指标包含排队、连接准备及 SQLite BEGIN；冻结候选独立 5 人总等待 P95 88.957ms，10 人 178.891ms，未放宽 100ms 门槛。",
         "files": [
           "app/listing.py",
           "app/notice_matters.py",
           "app/campus.py",
           "app/collaboration.py",
           "scripts/verify_local_runtime.py",
-          "scripts/verify_campus_capacity.py"
+          "scripts/verify_campus_capacity.py",
+          "app/write_coordination.py",
+          "app/runtime_metrics.py"
         ]
       },
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "runtime-final-5-users",
+          "runtime-final-10-users"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
           "tests/test_campus_sprint.py",
-          "tests/test_local_runtime_ownership.py"
+          "tests/test_local_runtime_ownership.py",
+          "tests/test_write_coordination.py",
+          "tests/test_runtime_metrics.py"
         ],
         "freeze_suite": "pending",
         "browser": "not_assessed"
@@ -5359,9 +5878,13 @@
       "external_acceptance": [
         "学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。"
       ],
-      "remaining": [],
+      "remaining": [
+        "10 人总写入等待 P95 未达 <100ms，不能据功能通过建议扩大；目标部署容量仍需实际目标负载复验。"
+      ],
       "evidence_documents": [
-        "docs/audits/sprint-query-regression.json"
+        "docs/audits/sprint-query-regression.json",
+        "docs/audits/sprint-validation.json",
+        "docs/audits/sprint-write-wait-evidence.json"
       ],
       "status_labels": [
         "实现证据",
@@ -5432,7 +5955,7 @@
       "source_line": 322,
       "implementation": {
         "state": "implemented_or_strengthened",
-        "summary": "保留从零部署、明确 schema 门禁、完整数据库备份和恢复；新增来源、校园、阶段、投影及观测表纳入升级／备份校验，恢复后渠道、复核授权和环境证据不会沿用。",
+        "summary": "保留从零部署、明确 schema 门禁、完整数据库备份和恢复；新增来源、校园、阶段、投影及观测表纳入升级／备份校验，恢复后渠道、复核授权和环境证据不会沿用。 冻结候选已记录 5/10 人备份、重启验证、恢复文件与恢复验证耗时，并逐任务 ID 比较 notice_id/status/version/data；合成快照范围内丢失为 0。",
         "files": [
           "app/db.py",
           "app/backups.py",
@@ -5447,7 +5970,11 @@
         "executed_runs": [
           "source-domain-109",
           "campus-domain-54-plus-rename",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "runtime-final-5-users",
+          "runtime-final-10-users"
         ],
         "test_files": [
           "tests/test_workflow.py",
@@ -5463,9 +5990,12 @@
       "external_acceptance": [
         "真实生产磁盘满、部署回滚、远端损坏备份、停机恢复的 RTO／丢失窗口需在目标环境记实；本地演练只证明所测范围。"
       ],
-      "remaining": [],
+      "remaining": [
+        "演练是在业务写入完成后快照并停止本人进程，不是断电模拟或生产 RPO；真实目标环境的磁盘、回滚与停机窗口仍需另验。"
+      ],
       "evidence_documents": [
-        "docs/audits/sprint-query-regression.json"
+        "docs/audits/sprint-query-regression.json",
+        "docs/audits/sprint-validation.json"
       ],
       "status_labels": [
         "实现证据",
@@ -5610,7 +6140,7 @@
       "source_line": 326,
       "implementation": {
         "state": "implemented_with_pilot_definition_pending",
-        "summary": "新增可审阅工程发布门槛：首批最多 5 人，10 人并发隔离样本全部达标后才建议扩大至 10；每日每人 20 收件为工程负载档；正常非 AI CRUD P95<1秒、写锁等待 P95<100ms 且零超时，权限／幂等／stale 断言全过。预算未知不自动批量，保留原隐私及回退契约；这些均非院方批准或实测结果。",
+        "summary": "新增可审阅工程发布门槛：首批最多 5 人，10 人隔离样本全部达标后才建议扩大；每日每人 20 收件为工程负载档。非 AI CRUD P95<1秒、总写入等待 P95<100ms 且零失败，权限／幂等／stale 断言全过；预算未知不自动批量，保留隐私与回退契约。冻结候选独立 5 人实测两项 P95 为219.1ms／88.957ms；10 人为481.6ms／178.891ms，总等待未达标，因此不批准扩大。这些工程建议和样本不代表院方批准。",
         "files": [
           "docs/PILOT_RELEASE_GATES.md",
           "scripts/pilot_preflight.py",
@@ -5622,7 +6152,12 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "frozen-backend-round2",
+          "frozen-backend-round3",
+          "runtime-final-5-users",
+          "runtime-final-10-users"
+        ],
         "test_files": [
           "tests/test_local_runtime_ownership.py",
           "tests/test_model_capacity.py"
@@ -5633,8 +6168,13 @@
       "external_acceptance": [
         "实际试点人数／日收件／峰值／设备／留存期／费用预算和可接受成功率、时延需真实院方范围；本轮样本不能代替该容量承诺。"
       ],
-      "remaining": [],
-      "evidence_documents": [],
+      "remaining": [
+        "10 人扩大门槛仍未通过；保持 <100ms 原标准。真实试点人数、负载、设备、渠道、费用负责人及预算仍待需求方确认。"
+      ],
+      "evidence_documents": [
+        "docs/audits/sprint-validation.json",
+        "docs/audits/sprint-write-wait-evidence.json"
+      ],
       "status_labels": [
         "实现证据",
         "待冻结全套",
@@ -5652,8 +6192,142 @@
       "reported_failed": 1,
       "test": "tests/test_usage_limits.py::test_search_query_count_does_not_grow_per_notice",
       "fix_evidence": "docs/audits/sprint-query-regression.json",
-      "full_rerun_after_fix": "pending"
+      "full_rerun_after_fix": {
+        "local_rounds": [
+          "frozen-backend-round2",
+          "frozen-backend-round3"
+        ],
+        "ubuntu_ci": "ci50-ubuntu-backend",
+        "overall_remote_ci": "failure_detected_pending_full_report",
+        "windows_ci": "ci50-windows-backend"
+      }
     }
   ],
-  "source_domain_refrozen_at": "2026-11-14T05:01:09Z"
+  "source_domain_refrozen_at": "2026-11-14T05:01:09Z",
+  "validated_code": {
+    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+    "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
+    "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+    "fingerprint_scope": "audit_full_suite.fingerprint: application, static sources/build, tests, scripts, schemas, deployment, workflow and locked dependencies. Documentation-only commits are outside this code fingerprint.",
+    "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
+    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192"
+  },
+  "current_evidence_document": "docs/audits/sprint-validation.json",
+  "historical_local_metrics": [
+    {
+      "label": "更早代码/测量阶段的历史本地数据，不是最终候选值",
+      "replaced_at": "2026-11-14T05:53:11.169792+00:00",
+      "data": {
+        "runtime_http": {
+          "verified_at": "2026-11-14T04:25:37.234482+00:00",
+          "result": "passed",
+          "synthetic_test": true,
+          "live_model_calls": 0,
+          "concurrent_users": 5,
+          "notices_saved": 100,
+          "tasks_saved": 200,
+          "http_requests": 765,
+          "response_status_counts": {
+            "200": 650,
+            "401": 5,
+            "404": 10,
+            "409": 100
+          },
+          "request_latency_ms": {
+            "median": 66.5,
+            "p95": 257.3,
+            "max": 1406.1
+          },
+          "elapsed_seconds": 22.67,
+          "restart_preserved_tasks": true,
+          "restore_preserved_tasks_and_edit_caches": true,
+          "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+        },
+        "capacity": {
+          "synthetic": true,
+          "live_model_calls": 0,
+          "external_messages": 0,
+          "notices": 10000,
+          "payload_bytes": 20992851,
+          "timings": {
+            "intake_at_10000_records_ms": 37.95,
+            "list_10000_records_ms": 1079.29,
+            "full_text_search_10000_records_ms": 1545.04,
+            "matter_candidates_10000_records_ms": 81.0,
+            "duplicate_replay_at_capacity_ms": 29.89
+          },
+          "interactive_pages": {
+            "collected_page": {
+              "cold_ms": 39.05,
+              "warm_p50_ms": 35.18,
+              "warm_p95_ms": 50.83,
+              "samples_ms": [
+                39.05,
+                31.83,
+                37.09,
+                50.83,
+                32.46,
+                35.18
+              ],
+              "max_payload_bytes": 105304,
+              "total": 10000
+            },
+            "semantic_current_page": {
+              "cold_ms": 488.02,
+              "warm_p50_ms": 33.36,
+              "warm_p95_ms": 38.83,
+              "samples_ms": [
+                488.02,
+                32.24,
+                36.46,
+                33.12,
+                38.83,
+                33.36
+              ],
+              "max_payload_bytes": 105367,
+              "total": 10000
+            },
+            "indexed_body_search": {
+              "cold_ms": 64.74,
+              "warm_p50_ms": 76.25,
+              "warm_p95_ms": 115.23,
+              "samples_ms": [
+                64.74,
+                113.01,
+                60.72,
+                115.23,
+                64.31,
+                76.25
+              ],
+              "max_payload_bytes": 3043,
+              "total": 1
+            },
+            "short_chinese_search": {
+              "cold_ms": 104.92,
+              "warm_p50_ms": 99.65,
+              "warm_p95_ms": 107.18,
+              "samples_ms": [
+                104.92,
+                99.65,
+                88.33,
+                103.32,
+                107.18,
+                93.76
+              ],
+              "max_payload_bytes": 110597,
+              "total": 9999
+            }
+          },
+          "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+          "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+        },
+        "record_scope": "本地现存产物，生成时已读取；尚非全部后续改动冻结后的最终数字。最终精简证据由根执行者写入 sprint-validation.json。"
+      }
+    }
+  ],
+  "diagnostic_history": [
+    "docs/audits/sprint-query-regression.json",
+    "docs/audits/sprint-ci-first-round.json",
+    "docs/audits/sprint-write-wait-evidence.json"
+  ]
 }

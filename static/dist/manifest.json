@@ -2,7 +2,7 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-XK3PQMAE.js",
+    "js": "/static/dist/app-DFTX33VB.js",
     "css": "/static/dist/styles-BKR4PFDD.css"
   },
   "sources": {
@@ -12,7 +12,7 @@
     "static/action-plans.js": "9400d8d512896acd4cb4a93708ece08f3fcb3d0fd56ae60e3c0faade29a97c7b",
     "static/action-review.js": "383c8cbe06797e65e5c91c7f9ffe22ed2605701122f143d535f78be54df2b668",
     "static/app.css": "7b0905dee1ae4836ac134cb3f7fbfd96b723d1e222eb081a1039e650f409b5f9",
-    "static/app.js": "69dd774e90e8aef2fc9314425cc4a9977157c4c16f73fd833a6e17b1d7d8f7d1",
+    "static/app.js": "7e0c493e8b06b2c70ccf76b9600f50d9c09bc0df54876c9647f52882e921393f",
     "static/attachments.js": "70a1389601c6624a6fea2f4fb89d30df32795e7c0d0f37e2eb7ad0089982193c",
     "static/audio-wav.js": "43dd5c6b7ef0e3ec2f528c612423b5c051ada778beca4ceb657ae9375327fe87",
     "static/auth-feedback.js": "ca2e6944f263504f3974a8b25c0dd2db95a35f4125e949ae69c7f7a0d36cddf8",
@@ -38,7 +38,7 @@
     "static/choreography.js": "1247ba5e56476a136a52b62cd51d9413ec77a460b5dd57a81dfce72f8c2cf067",
     "static/chrome.js": "39ddc8a05c0fdbb30b59528b2198ccdd5d869c10014870da559d969e99f2751a",
     "static/collaboration-followup.js": "53d019679e7b1ae9fa0097186055e425f07203184ee863294c1d6cce92f9f3ad",
-    "static/collaboration.js": "34821dfd43122156ee58174ecf46dd24059503d7db72fe41238ae10760ef1c03",
+    "static/collaboration.js": "70d75c720e1874d2dd3dd0e61905b161ec28e49cc6ffb2f033ae84447573d00e",
     "static/command-search.js": "7c5109794136d3707a88b01beadf19301f323ad04d1a1b57ec55df148a3ad239",
     "static/companion.css": "d760d6bc731c8c651b8acd3292392c4a2e39dbca1f565f0eb6bdce723c2f3af6",
     "static/companion.js": "1ce20b5f35f76fe1a85a25fbfd11b134a59c419eb63a23094d5842e1786374ed",
@@ -102,13 +102,13 @@
     "static/memory-drafts.js": "39b3def2c2cc0b095febc6c5039d1818478183f29be8494c47b6e332317e6a2b",
     "static/memory-icons.js": "e9008dd0c950e22146ef0893f2e54997260b62d2431f5c1fed4ce8ba4cc3f3c5",
     "static/memory-intents.js": "03a83e4751a3281b0d39aff7f9907abb2cb9b17965982f4fb37ea3c748a75d2d",
-    "static/memory-lifecycle.js": "a4af5de60e358315f09a23e3403a67b448b1e45203875ab57b54dbb15ca5a407",
+    "static/memory-lifecycle.js": "4511930bc8e867a158a3bf88ab5b78ad0a65882f595f45afb11c917c8ae300f1",
     "static/memory-list-text.js": "c5c0726702d8919683441b77b1c5b065439c69367da301fa5dedb3a82d4196f9",
-    "static/memory-studio.js": "81b67cef3858d9c51341dd9bc8e0308da5a3d87d5f1e18ce3f1c1e9fd065b6b4",
+    "static/memory-studio.js": "4129599127348ee8ed3ba890c5c8f5f588b5e0905cc3349958e1f027ea08c88f",
     "static/memory-tree.css": "a1ffa88363ecf301a3c45a21f20879f4d0b462dbbe3c4956b1ebe6560931bd03",
     "static/memory-tree.js": "e9aceb019ae54fd96a55c78e1b2c142e41ef8706a07897620b55160b4cccb768",
     "static/memory.css": "3b387fe4a18960545c601a9f94a845c4112bec5ac73e46ba158be16dac6e5aba",
-    "static/memory.js": "0aedffd6ee178588c5c02f251c39575f3d09b72710f09f2a68b4dea6ade7a4d7",
+    "static/memory.js": "1bbe06415e826157fdc06328e17413bf078ac5e71da587ecf126231d38052638",
     "static/motion-assets.js": "f6a9ed13a86dc70bec9dc42e8f7ed199f50ff135b550c85330b15f0d19dbd61b",
     "static/motion-source.css": "066264ed1d2559f9a019ae38a18403cb1fe2bbc8c2abf42499357e6e0ecab1af",
     "static/motion.css": "d8033fd490e60bb8ed3ca3c8ca08e3e11931ea4ac0af4d15d19ab39fc05bd4c7",
@@ -208,10 +208,10 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-J6NHPJTV.js": "919aba698b3a91e040f7fa6e56375307f945e8f2b37588302d028091f3400b74",
     "static/dist/chunks/calendar-45THDV6Z.js": "1c14e107172daef2a851d17630bb8ed5933339bd1df24890bf96e32c0b18a69a",
-    "static/dist/app-XK3PQMAE.js": "ac333bb54fbed0be7a0bc4201804ac6272664a75cd1ef4b4b723cccaf0264cad",
+    "static/dist/app-DFTX33VB.js": "b42c391fe6ee581cd9225b323563434b1148ba4b15ee496308448e2fcba65baf",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
-    "static/dist/chunks/memory-BFXNPUUY.js": "221e4647f5a0a1ce0b9ce8bb4ecce41b08eb1a9110d4b281b12e0b6b2431301d",
-    "static/dist/chunks/collaboration-AR26JSE5.js": "d3ea4e405e4c96fb8c942ee2387f5f31682b1e620d2bff40d860b051eb1bb8fc",
+    "static/dist/chunks/memory-CMBMXAQ5.js": "881679d5707d5570684593af545e8c1e054c563875a26910aa2401c693ca8fdb",
+    "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
     "static/dist/chunks/charts-UCDSXHVD.js": "7bc57cb9f2014948a27e25cbd22dc1b6c623bad04b14b6dde77a929d8e954cae",
     "static/dist/chunks/chat-3FTYZ52U.js": "cc21e842d88c07e57d14f008c7b54aaad4a890df529a4a07b227e31335b9d2fa",
     "static/dist/chunks/chunk-ZE6GBC5S.js": "f0028629bd3839828835777146bbde3c05ad04acd647e0ec68c4a3d2da30dc9e",
@@ -226,6 +226,6 @@
     "static/dist/chunks/campus-JHXVYY32.js": "354e12eeaa0cad27f5d5bb615583eb08470ebfc9c3b8be987638460b62c8deee",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
     "static/dist/styles-BKR4PFDD.css": "e58a1099af4a0652db3fb2fe5164815c763ec3daaafebef3078514040b6eafa3",
-    "static/dist/index.html": "64ed1262769458eb72423d162eb7a12901f98d2ad1177c28b81615df34e054e1"
+    "static/dist/index.html": "18e063dfb72d620742a5b85ed8cd677ab0465fd3ff1553bfc5216c876d24bd53"
   }
 }

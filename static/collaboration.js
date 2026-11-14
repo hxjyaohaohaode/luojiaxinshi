@@ -91,8 +91,8 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
       (result.has_more?'<button class="button small" data-collaboration-page="1">下一页</button>':'')+'</div></section>';
     return true;
   }
-  async function start(tid){
-    const view=captureUiContext(state);
+  async function start(tid,view=captureUiContext(state)){
+    if(!view.sameDialog())return;
     const item=await api('/collaboration/tasks/'+encodeURIComponent(tid)+'/options');
     if(!view.sameDialog())return;
     if(!item.recipients.length){
@@ -122,13 +122,12 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
     }catch(error){if(view.sameDialog())toast(error.message,true);}finally{form.inert=false;finish();}
   });
   document.addEventListener('click',async event=>{
-    const button=event.target.closest('[data-collaboration-start],[data-collaboration-side],[data-collaboration-page],[data-collaboration-rebase],[data-collaboration-transfer],[data-collaboration-followup]');
+    const button=event.target.closest('[data-collaboration-side],[data-collaboration-page],[data-collaboration-rebase],[data-collaboration-transfer],[data-collaboration-followup]');
     if(!button||button.disabled)return;
     button.disabled=true;
     try{
       if(button.hasAttribute('data-collaboration-followup')&&record)await followupUI.open(record.id);
       else if(button.hasAttribute('data-collaboration-transfer')&&record)await transfer(record);
-      else if(button.dataset.collaborationStart)await start(button.dataset.collaborationStart);
       else if(button.hasAttribute('data-collaboration-rebase')&&record){
         const root=$('[data-collaboration-action]');
         const form=root.querySelector('form'),selection=new FormData(form);
@@ -182,5 +181,5 @@ export function createCollaborationUI({state,api,esc,showDialog,toast}){
     const files=input.form.querySelector('[data-collaboration-files]');
     if(files){files.hidden=input.value!=='resubmit';files.disabled=files.hidden;}
   });
-  return {render,saving:()=>saving};
+  return {render,start,saving:()=>saving};
 }
