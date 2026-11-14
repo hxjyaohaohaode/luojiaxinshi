@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "title": "珞珈信使冲刺 128 项证据总账",
-  "reviewed_at": "2026-11-14T05:55:45.283723+00:00",
+  "title": "珞珈信使合并前候选的冻结验证记录",
+  "reviewed_at": "2026-11-14T07:07:14.975562+00:00",
   "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
   "source_attachments": [
     {
@@ -19,7 +19,6 @@
   "status_semantics": {
     "实现证据": "存在且已核对对应源码或明确边界，不等于所有条件已满足。",
     "已执行定向验证": "对应测试文件在记录的定向运行范围内；逐条限制仍有效，不能推断全部断言涵盖每一自然语言要求。",
-    "待冻结全套": "本地同指纹后端双轮、Node、构建及 Ubuntu/Windows 后端已通过；当前 CI 主浏览器与 Agent 步骤已报告失败，完整错误产物尚待，不能标整体或逐项全绿。",
     "真实外部验收": "需要真实供应商、来源、设备、人员、标注或目标部署条件，当前仍待。",
     "条件扩展": "原清单 P2：需求／平台授权条件未确立；不冒充已经实现。"
   },
@@ -33,7 +32,6 @@
     "status_labels": {
       "实现证据": 120,
       "已执行定向验证": 63,
-      "待冻结全套": 128,
       "真实外部验收": 51,
       "条件扩展": 8
     }
@@ -224,8 +222,9 @@
       ],
       "artifact": "artifacts/sprint-final/backend-round2",
       "junit_sha256": "609cf9663688b0b18bc428ee5953614ab86693edb85c51e0fd7032f0d76c39ca",
-      "document": "docs/audits/sprint-validation.json",
-      "limits": "同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。"
+      "document": "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+      "limits": "历史候选运行，不伪写为当前提交新结果。同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。",
+      "historical": true
     },
     {
       "id": "frozen-backend-round3",
@@ -259,8 +258,9 @@
       ],
       "artifact": "artifacts/sprint-final/backend-round3",
       "junit_sha256": "acef1a77faabefe3c83a5505319dd763a84d5a2aeac13184064d133a897b97e0",
-      "document": "docs/audits/sprint-validation.json",
-      "limits": "同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。"
+      "document": "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+      "limits": "历史候选运行，不伪写为当前提交新结果。同一清单第二次执行不能相加成不同测试；本机缺 pinned Tika/JRE 和两项 Windows 专属场景明确跳过。",
+      "historical": true
     },
     {
       "id": "frontend-node-275",
@@ -316,7 +316,8 @@
         }
       ],
       "artifact": "artifacts/ci-readonly/run-43562060192-linux-verification.json",
-      "limits": "pinned Tika/JRE 解析与原查询门槛回归均实际通过；两跳过是 Windows 专属测试；不能代替 Windows 和浏览器。"
+      "limits": "历史候选运行，不伪写为当前提交新结果。pinned Tika/JRE 解析与原查询门槛回归均实际通过；两跳过是 Windows 专属测试；不能代替 Windows 和浏览器。",
+      "historical": true
     },
     {
       "id": "runtime-final-5-users",
@@ -341,8 +342,9 @@
       "requests": 766,
       "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
       "implementation_unchanged": true,
-      "document": "docs/audits/sprint-validation.json",
-      "limits": "工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。"
+      "document": "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+      "limits": "历史候选运行，不伪写为当前提交新结果。工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。",
+      "historical": true
     },
     {
       "id": "runtime-final-10-users",
@@ -367,8 +369,9 @@
       "requests": 1531,
       "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
       "implementation_unchanged": true,
-      "document": "docs/audits/sprint-validation.json",
-      "limits": "工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。"
+      "document": "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+      "limits": "历史候选运行，不伪写为当前提交新结果。工程性能门槛单列；10 人总写入等待 P95 未达到 <100ms，不据功能通过授权扩容。",
+      "historical": true
     },
     {
       "id": "ci50-windows-backend",
@@ -392,19 +395,628 @@
         }
       ],
       "artifact": "artifacts/ci-readonly/run-43562060192-windows-verification.json",
-      "limits": "四片同内部指纹，完整唯一清单和聚合校验通过；唯一跳过POSIX TIME_WAIT语义；不代替主浏览器与真实外部验收。"
+      "limits": "历史候选运行，不伪写为当前提交新结果。四片同内部指纹，完整唯一清单和聚合校验通过；唯一跳过POSIX TIME_WAIT语义；不代替主浏览器与真实外部验收。",
+      "historical": true
+    },
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 391.47,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 1789,
+      "selected_complete": true,
+      "complete": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "junit_sha256": "c5798027049cd2ea26cab258bc6b17f8506052eb995cebf6e3ae94cd0854833c",
+      "status": "passed",
+      "artifact": "artifacts/sprint-final/backend-round4",
+      "id": "frozen-backend-round4",
+      "kind": "complete_frozen_backend",
+      "result": "passed",
+      "candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "真实执行属于 05498ae/d55；到当前仅两份浏览器夹具改变，产品及后端验证未变。不同轮次不累计为不同测试。"
+    },
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 404.83,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "passed": 1789,
+      "selected_complete": true,
+      "complete": true,
+      "skipped_cases": [
+        {
+          "class": "tests.test_legacy_office",
+          "name": "test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+          "reason": "Optional pinned Tika/JRE not installed in this environment"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "reason": "Windows process ownership guard"
+        },
+        {
+          "class": "tests.test_local_runtime_ownership",
+          "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "reason": "Windows socket and launcher guard"
+        }
+      ],
+      "junit_sha256": "be06b8527e53f647d3dbe0c808ae2ea97ffb6a4798f31856b2546ddc9885604d",
+      "status": "passed",
+      "artifact": "artifacts/sprint-final/backend-round5",
+      "id": "frozen-backend-round5",
+      "kind": "complete_frozen_backend",
+      "result": "passed",
+      "candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "真实执行属于 05498ae/d55；到当前仅两份浏览器夹具改变，产品及后端验证未变。不同轮次不累计为不同测试。"
+    },
+    {
+      "id": "runtime-v3-5-users",
+      "kind": "real_local_http_synthetic_data",
+      "result": "functional_passed",
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "concurrent_users": 5,
+      "requests": 766,
+      "verified_at": "2026-11-14T06:16:29.313540+00:00",
+      "candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "最新独立本地 v3 功能通过，但 5/10 人总等待均未达原 <100ms；不批准 5 人试点或 10 人扩大。"
+    },
+    {
+      "id": "runtime-v3-10-users",
+      "kind": "real_local_http_synthetic_data",
+      "result": "functional_passed",
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "concurrent_users": 10,
+      "requests": 1531,
+      "verified_at": "2026-11-14T06:17:38.850075+00:00",
+      "candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "最新独立本地 v3 功能通过，但 5/10 人总等待均未达原 <100ms；不批准 5 人试点或 10 人扩大。"
+    },
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 425.64,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "passed": 1790,
+      "selected_complete": true,
+      "complete": true,
+      "id": "ci51-linux-backend",
+      "kind": "complete_remote_backend",
+      "historical": true,
+      "result": "passed",
+      "os": "ubuntu-latest",
+      "run_id": 43565458564,
+      "branch_head": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "tested_commit": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "skipped_cases": [
+        {
+          "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "message": "Windows process ownership guard",
+          "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:13: Windows process ownership guard"
+        },
+        {
+          "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "message": "Windows socket and launcher guard",
+          "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:46: Windows socket and launcher guard"
+        }
+      ],
+      "node_passed": 275,
+      "artifact": "artifacts/ci-readonly/run-43565458564-linux-verification.json",
+      "document": "docs/audits/sprint-ci-third-round.json",
+      "limits": "上一候选 run51 后端实际通过，该轮浏览器仍失败；run52 另取本轮证据。"
+    },
+    {
+      "scope": "full",
+      "elapsed_seconds": 873.31,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "implementation_sha256": "879a24ddf158cd45a30d57e87a1313cf313820c783c4ef03a3544d3b93208d55",
+      "implementation_unchanged": true,
+      "aggregation_errors": [],
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "selected_complete": true,
+      "complete": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 1791,
+      "aggregation_seconds": 0.28,
+      "id": "ci51-windows-backend",
+      "kind": "complete_remote_backend",
+      "historical": true,
+      "result": "passed",
+      "os": "windows-latest",
+      "run_id": 43565458564,
+      "branch_head": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "tested_commit": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "skipped_cases": [
+        {
+          "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+          "message": "POSIX TIME_WAIT bind semantics",
+          "text": "D:\\a\\luojiaxinshi\\luojiaxinshi\\tests\\test_browser_fixture_ports.py:30: POSIX TIME_WAIT bind semantics"
+        }
+      ],
+      "node_passed": 275,
+      "artifact": "artifacts/ci-readonly/run-43565458564-windows-verification.json",
+      "document": "docs/audits/sprint-ci-third-round.json",
+      "limits": "上一候选 run51 后端实际通过，该轮浏览器仍失败；run52 另取本轮证据。"
+    },
+    {
+      "scope": "full",
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "elapsed_seconds": 475.06,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      ],
+      "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+      "implementation_unchanged": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2,
+      "passed": 1790,
+      "selected_complete": true,
+      "complete": true,
+      "id": "ci52-linux-backend",
+      "kind": "complete_remote_backend",
+      "result": "passed",
+      "os": "ubuntu-latest",
+      "run_id": 43567666000,
+      "branch_head": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "tested_commit": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "skipped_cases": [
+        {
+          "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+          "message": "Windows process ownership guard",
+          "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:13: Windows process ownership guard"
+        },
+        {
+          "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+          "message": "Windows socket and launcher guard",
+          "text": "/home/runner/work/luojiaxinshi/luojiaxinshi/tests/test_local_runtime_ownership.py:46: Windows socket and launcher guard"
+        }
+      ],
+      "node_passed": 275,
+      "artifact": "artifacts/ci-readonly/run-43567666000-linux-verification.json",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "仅本轮实际平台和完整JUnit范围；已跳过的场景、真实外部验收与条件P2不自动通过。"
+    },
+    {
+      "scope": "full",
+      "elapsed_seconds": 989.59,
+      "file_count": 134,
+      "shards": [
+        {
+          "shard": 1,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 447,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 2,
+          "exit_code": 0,
+          "files": 34,
+          "timed_out": false,
+          "tests": 480,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "shard": 3,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 389,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        {
+          "shard": 4,
+          "exit_code": 0,
+          "files": 33,
+          "timed_out": false,
+          "tests": 476,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ],
+      "implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+      "implementation_unchanged": true,
+      "aggregation_errors": [],
+      "selected_shards": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "selected_complete": true,
+      "complete": true,
+      "tests": 1792,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "passed": 1791,
+      "aggregation_seconds": 0.11,
+      "id": "ci52-windows-backend",
+      "kind": "complete_remote_backend",
+      "result": "passed",
+      "os": "windows-latest",
+      "run_id": 43567666000,
+      "branch_head": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "tested_commit": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "skipped_cases": [
+        {
+          "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+          "message": "POSIX TIME_WAIT bind semantics",
+          "text": "D:\\a\\luojiaxinshi\\luojiaxinshi\\tests\\test_browser_fixture_ports.py:30: POSIX TIME_WAIT bind semantics"
+        }
+      ],
+      "node_passed": 275,
+      "artifact": "artifacts/ci-readonly/run-43567666000-windows-verification.json",
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "仅本轮实际平台和完整JUnit范围；已跳过的场景、真实外部验收与条件P2不自动通过。"
+    },
+    {
+      "id": "ci52-node-275",
+      "kind": "node_unit",
+      "result": "passed",
+      "tests_per_platform": 275,
+      "passed_per_platform": 275,
+      "platforms": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "run_id": 43567666000,
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "同275用例在两OS分别运行，不累计为550个不同测试。"
+    },
+    {
+      "id": "ci52-application-browsers",
+      "kind": "real_browser_synthetic_application",
+      "result": "passed",
+      "report_slots": 33,
+      "checks": 1038,
+      "passed": 1038,
+      "failed": 0,
+      "run_id": 43567666000,
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "以原始各套件引擎范围为准；Agent和Composer仅Chromium，不能宣称所有套件都在三引擎运行。设备、真实供应商和人员验收另列。"
+    },
+    {
+      "id": "ci52-continuity",
+      "kind": "real_browser_synthetic_application",
+      "result": "passed",
+      "checks": 990,
+      "passed": 990,
+      "failed": 0,
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "checks_per_engine": 330,
+      "run_id": 43567666000,
+      "document": "docs/audits/sprint-validation.json",
+      "limits": "独立恢复/保存套件；不与主浏览器或后端计数混为不同产品功能数。"
     }
   ],
   "observed_local_metrics": {
     "runtime_http": {
-      "verified_at": "2026-11-14T05:28:49.729979+00:00",
+      "verified_at": "2026-11-14T06:16:29.313540+00:00",
       "result": "passed",
       "environment": {
         "python": "3.12.14",
         "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
       },
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
-      "implementation_unchanged": true,
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
       "synthetic_test": true,
       "live_model_calls": 0,
       "concurrent_users": 5,
@@ -417,117 +1029,178 @@
         "404": 10,
         "409": 100
       },
+      "operations": [
+        {
+          "method": "GET",
+          "route": "/api/admin/readiness",
+          "status": 200,
+          "samples": 1,
+          "p50_ms": 15.4,
+          "p95_ms": 15.4,
+          "max_ms": 15.4
+        },
+        {
+          "method": "GET",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 13.5,
+          "p95_ms": 18.2,
+          "max_ms": 18.2
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 53.6,
+          "p95_ms": 107.6,
+          "max_ms": 107.6
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices/{id}",
+          "status": 404,
+          "samples": 5,
+          "p50_ms": 13.0,
+          "p95_ms": 14.3,
+          "max_ms": 14.3
+        },
+        {
+          "method": "GET",
+          "route": "/api/session",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 16.3,
+          "p95_ms": 284.2,
+          "max_ms": 284.2
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 200,
+          "samples": 110,
+          "p50_ms": 79.8,
+          "p95_ms": 257.8,
+          "max_ms": 383.5
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 401,
+          "samples": 5,
+          "p50_ms": 8.0,
+          "p95_ms": 30.5,
+          "max_ms": 30.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/auth/login",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 107.1,
+          "p95_ms": 1343.7,
+          "max_ms": 1343.7
+        },
+        {
+          "method": "POST",
+          "route": "/api/calendar/export",
+          "status": 200,
+          "samples": 5,
+          "p50_ms": 70.3,
+          "p95_ms": 128.5,
+          "max_ms": 128.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 108.5,
+          "p95_ms": 198.6,
+          "max_ms": 226.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/confirm",
+          "status": 200,
+          "samples": 105,
+          "p50_ms": 144.0,
+          "p95_ms": 267.8,
+          "max_ms": 302.7
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/manual",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 153.9,
+          "p95_ms": 302.6,
+          "max_ms": 431.0
+        },
+        {
+          "method": "PUT",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 138.2,
+          "p95_ms": 291.5,
+          "max_ms": 376.4
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 200,
+          "samples": 100,
+          "p50_ms": 138.2,
+          "p95_ms": 307.3,
+          "max_ms": 382.3
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 404,
+          "samples": 5,
+          "p50_ms": 14.3,
+          "p95_ms": 14.6,
+          "max_ms": 14.6
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 409,
+          "samples": 100,
+          "p50_ms": 126.8,
+          "p95_ms": 278.9,
+          "max_ms": 499.6
+        }
+      ],
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 778,
+          "samples": 778,
+          "p50_ms": 37.126,
+          "p95_ms": 114.149,
+          "max_ms": 556.198
+        },
+        "hold": {
+          "total_observations": 778,
+          "samples": 778,
+          "p50_ms": 14.51,
+          "p95_ms": 54.483,
+          "max_ms": 126.385
+        }
+      },
+      "percentile_method": "nearest_rank",
       "ordinary_crud_latency_ms": {
         "samples": 625,
-        "p50": 115.2,
-        "p95": 219.1,
-        "max": 623.6
-      },
-      "database_locks_before_restart": {
-        "observed": true,
-        "sample_limit": 4096,
-        "failed_acquisitions": 0,
-        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
-        "wait": {
-          "total_observations": 776,
-          "samples": 776,
-          "p50_ms": 32.309,
-          "p95_ms": 88.957,
-          "max_ms": 266.867
-        },
-        "hold": {
-          "total_observations": 776,
-          "samples": 776,
-          "p50_ms": 12.87,
-          "p95_ms": 44.331,
-          "max_ms": 280.472
-        }
-      },
-      "engineering_targets": {
-        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
-        "ordinary_crud_p95": {
-          "limit_ms_exclusive": 1000,
-          "passed": true
-        },
-        "write_total_wait_p95": {
-          "limit_ms_exclusive": 100,
-          "passed": true
-        },
-        "write_acquisitions": {
-          "allowed_failures": 0,
-          "passed": true
-        }
-      },
-      "recovery_observations": {
-        "backup_seconds": 0.038,
-        "restart_verified_seconds": 1.798,
-        "restore_file_seconds": 0.053,
-        "restore_verified_seconds": 2.371,
-        "confirmed_tasks_lost_in_fixture": 0,
-        "task_identity_and_business_content_equal": true,
-        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
-        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
-      },
-      "request_latency_ms": {
-        "median": 114.2,
-        "p95": 224.7,
-        "max": 623.6
-      },
-      "elapsed_seconds": 25.44,
-      "restart_preserved_tasks": true,
-      "restore_preserved_tasks_and_edit_caches": true,
-      "restored_old_sessions_rejected": true,
-      "cross_account_access_rejected": true,
-      "stale_updates_rejected": true,
-      "idempotent_replays_passed": true,
-      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
-    },
-    "runtime_http_ten_users": {
-      "verified_at": "2026-11-14T05:30:13.987626+00:00",
-      "result": "passed",
-      "environment": {
-        "python": "3.12.14",
-        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
-      },
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
-      "implementation_unchanged": true,
-      "synthetic_test": true,
-      "live_model_calls": 0,
-      "concurrent_users": 10,
-      "notices_saved": 200,
-      "tasks_saved": 400,
-      "http_requests": 1531,
-      "response_status_counts": {
-        "200": 1301,
-        "401": 10,
-        "404": 20,
-        "409": 200
-      },
-      "ordinary_crud_latency_ms": {
-        "samples": 1250,
-        "p50": 265.9,
-        "p95": 481.6,
-        "max": 638.9
-      },
-      "database_locks_before_restart": {
-        "observed": true,
-        "sample_limit": 4096,
-        "failed_acquisitions": 0,
-        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
-        "wait": {
-          "total_observations": 1588,
-          "samples": 1588,
-          "p50_ms": 79.095,
-          "p95_ms": 178.891,
-          "max_ms": 382.656
-        },
-        "hold": {
-          "total_observations": 1588,
-          "samples": 1588,
-          "p50_ms": 9.132,
-          "p95_ms": 82.005,
-          "max_ms": 279.103
-        }
+        "p50": 128.7,
+        "p95": 282.6,
+        "max": 431.0
       },
       "engineering_targets": {
         "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
@@ -545,28 +1218,264 @@
         }
       },
       "recovery_observations": {
-        "backup_seconds": 0.047,
-        "restart_verified_seconds": 2.005,
-        "restore_file_seconds": 0.067,
-        "restore_verified_seconds": 2.959,
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.001,
+        "restore_file_seconds": 0.098,
+        "restore_verified_seconds": 2.512,
         "confirmed_tasks_lost_in_fixture": 0,
         "task_identity_and_business_content_equal": true,
         "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
         "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
       },
+      "workload_seconds": 22.29,
       "request_latency_ms": {
-        "median": 265.2,
-        "p95": 491.1,
-        "max": 964.7
+        "median": 126.2,
+        "p95": 289.6,
+        "max": 1343.7
       },
-      "elapsed_seconds": 50.1,
       "restart_preserved_tasks": true,
       "restore_preserved_tasks_and_edit_caches": true,
       "restored_old_sessions_rejected": true,
       "cross_account_access_rejected": true,
       "stale_updates_rejected": true,
       "idempotent_replays_passed": true,
-      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+      "elapsed_seconds": 29.68,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+      "implementation_unchanged": true
+    },
+    "runtime_http_ten_users": {
+      "verified_at": "2026-11-14T06:17:38.850075+00:00",
+      "result": "passed",
+      "environment": {
+        "python": "3.12.14",
+        "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+      },
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "synthetic_test": true,
+      "live_model_calls": 0,
+      "concurrent_users": 10,
+      "notices_saved": 200,
+      "tasks_saved": 400,
+      "http_requests": 1531,
+      "response_status_counts": {
+        "200": 1301,
+        "401": 10,
+        "404": 20,
+        "409": 200
+      },
+      "operations": [
+        {
+          "method": "GET",
+          "route": "/api/admin/readiness",
+          "status": 200,
+          "samples": 1,
+          "p50_ms": 17.4,
+          "p95_ms": 17.4,
+          "max_ms": 17.4
+        },
+        {
+          "method": "GET",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 12.5,
+          "p95_ms": 14.5,
+          "max_ms": 14.5
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 63.1,
+          "p95_ms": 487.4,
+          "max_ms": 487.4
+        },
+        {
+          "method": "GET",
+          "route": "/api/notices/{id}",
+          "status": 404,
+          "samples": 10,
+          "p50_ms": 13.1,
+          "p95_ms": 18.3,
+          "max_ms": 18.3
+        },
+        {
+          "method": "GET",
+          "route": "/api/session",
+          "status": 200,
+          "samples": 20,
+          "p50_ms": 21.8,
+          "p95_ms": 551.1,
+          "max_ms": 558.0
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 200,
+          "samples": 220,
+          "p50_ms": 222.1,
+          "p95_ms": 693.5,
+          "max_ms": 1869.1
+        },
+        {
+          "method": "GET",
+          "route": "/api/tasks",
+          "status": 401,
+          "samples": 10,
+          "p50_ms": 6.5,
+          "p95_ms": 8.8,
+          "max_ms": 8.8
+        },
+        {
+          "method": "POST",
+          "route": "/api/auth/login",
+          "status": 200,
+          "samples": 20,
+          "p50_ms": 282.8,
+          "p95_ms": 1010.3,
+          "max_ms": 1014.5
+        },
+        {
+          "method": "POST",
+          "route": "/api/calendar/export",
+          "status": 200,
+          "samples": 10,
+          "p50_ms": 154.3,
+          "p95_ms": 331.8,
+          "max_ms": 331.8
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 229.7,
+          "p95_ms": 457.5,
+          "max_ms": 1023.7
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/confirm",
+          "status": 200,
+          "samples": 210,
+          "p50_ms": 373.9,
+          "p95_ms": 754.5,
+          "max_ms": 1723.7
+        },
+        {
+          "method": "POST",
+          "route": "/api/notices/{id}/manual",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 415.7,
+          "p95_ms": 855.3,
+          "max_ms": 1903.5
+        },
+        {
+          "method": "PUT",
+          "route": "/api/edit-cache/new-notice",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 371.3,
+          "p95_ms": 709.7,
+          "max_ms": 1672.8
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 200,
+          "samples": 200,
+          "p50_ms": 376.6,
+          "p95_ms": 796.1,
+          "max_ms": 1652.5
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 404,
+          "samples": 10,
+          "p50_ms": 12.9,
+          "p95_ms": 17.9,
+          "max_ms": 17.9
+        },
+        {
+          "method": "PUT",
+          "route": "/api/tasks/{id}",
+          "status": 409,
+          "samples": 200,
+          "p50_ms": 361.1,
+          "p95_ms": 721.3,
+          "max_ms": 1670.2
+        }
+      ],
+      "database_locks_before_restart": {
+        "observed": true,
+        "sample_limit": 4096,
+        "failed_acquisitions": 0,
+        "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+        "wait": {
+          "total_observations": 1629,
+          "samples": 1629,
+          "p50_ms": 94.066,
+          "p95_ms": 272.906,
+          "max_ms": 755.516
+        },
+        "hold": {
+          "total_observations": 1629,
+          "samples": 1629,
+          "p50_ms": 11.493,
+          "p95_ms": 92.466,
+          "max_ms": 1103.639
+        }
+      },
+      "percentile_method": "nearest_rank",
+      "ordinary_crud_latency_ms": {
+        "samples": 1250,
+        "p50": 327.0,
+        "p95": 743.1,
+        "max": 1903.5
+      },
+      "engineering_targets": {
+        "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+        "ordinary_crud_p95": {
+          "limit_ms_exclusive": 1000,
+          "passed": true
+        },
+        "write_total_wait_p95": {
+          "limit_ms_exclusive": 100,
+          "passed": false
+        },
+        "write_acquisitions": {
+          "allowed_failures": 0,
+          "passed": true
+        }
+      },
+      "recovery_observations": {
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.027,
+        "restore_file_seconds": 0.089,
+        "restore_verified_seconds": 3.275,
+        "confirmed_tasks_lost_in_fixture": 0,
+        "task_identity_and_business_content_equal": true,
+        "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+        "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+      },
+      "workload_seconds": 56.05,
+      "request_latency_ms": {
+        "median": 325.9,
+        "p95": 749.0,
+        "max": 1903.5
+      },
+      "restart_preserved_tasks": true,
+      "restore_preserved_tasks_and_edit_caches": true,
+      "restored_old_sessions_rejected": true,
+      "cross_account_access_rejected": true,
+      "stale_updates_rejected": true,
+      "idempotent_replays_passed": true,
+      "elapsed_seconds": 64.83,
+      "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+      "implementation_unchanged": true
     },
     "capacity": {
       "synthetic": true,
@@ -575,72 +1484,72 @@
       "notices": 10000,
       "payload_bytes": 20992851,
       "timings": {
-        "intake_at_10000_records_ms": 55.41,
-        "list_10000_records_ms": 1024.41,
-        "full_text_search_10000_records_ms": 952.97,
-        "matter_candidates_10000_records_ms": 70.6,
-        "duplicate_replay_at_capacity_ms": 37.85
+        "intake_at_10000_records_ms": 53.93,
+        "list_10000_records_ms": 1141.12,
+        "full_text_search_10000_records_ms": 1005.94,
+        "matter_candidates_10000_records_ms": 76.41,
+        "duplicate_replay_at_capacity_ms": 29.8
       },
       "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
       "interactive_pages": {
         "collected_page": {
-          "cold_ms": 41.31,
-          "warm_p50_ms": 35.8,
-          "warm_p95_ms": 36.9,
+          "cold_ms": 41.02,
+          "warm_p50_ms": 33.53,
+          "warm_p95_ms": 34.23,
           "samples_ms": [
-            41.31,
-            34.12,
-            36.69,
+            41.02,
             33.53,
-            35.8,
-            36.9
+            33.08,
+            32.88,
+            34.23,
+            33.68
           ],
-          "max_payload_bytes": 106675,
+          "max_payload_bytes": 106672,
           "total": 10000
         },
         "semantic_current_page": {
-          "cold_ms": 489.13,
-          "warm_p50_ms": 37.24,
-          "warm_p95_ms": 44.15,
+          "cold_ms": 481.08,
+          "warm_p50_ms": 46.33,
+          "warm_p95_ms": 79.05,
           "samples_ms": [
-            489.13,
-            37.24,
-            39.47,
-            44.15,
-            34.35,
-            34.18
+            481.08,
+            37.72,
+            52.42,
+            79.05,
+            32.73,
+            46.33
           ],
-          "max_payload_bytes": 106699,
+          "max_payload_bytes": 106705,
           "total": 10000
         },
         "indexed_body_search": {
-          "cold_ms": 71.77,
-          "warm_p50_ms": 74.5,
-          "warm_p95_ms": 83.4,
+          "cold_ms": 101.99,
+          "warm_p50_ms": 70.82,
+          "warm_p95_ms": 156.68,
           "samples_ms": [
-            71.77,
-            74.5,
-            73.51,
-            83.4,
-            70.36,
-            76.65
+            101.99,
+            156.68,
+            66.41,
+            73.45,
+            70.82,
+            68.71
           ],
           "max_payload_bytes": 3070,
           "total": 1
         },
         "short_chinese_search": {
-          "cold_ms": 100.41,
-          "warm_p50_ms": 112.97,
-          "warm_p95_ms": 131.44,
+          "cold_ms": 115.23,
+          "warm_p50_ms": 104.16,
+          "warm_p95_ms": 109.32,
           "samples_ms": [
-            100.41,
-            131.44,
-            106.86,
-            126.91,
-            112.97,
-            108.76
+            115.23,
+            101.45,
+            109.32,
+            104.16,
+            108.27,
+            100.74
           ],
-          "max_payload_bytes": 111961,
+          "max_payload_bytes": 111959,
           "total": 9999
         }
       },
@@ -648,136 +1557,99 @@
       "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
     },
     "document": "docs/audits/sprint-validation.json",
-    "record_scope": "当前候选实现指纹 33fca6c8… 的最终独立本地 5/10 人观察值；CI 共享 runner 的性能另列，不作为相同环境或校园容量承诺。10 人扩大门槛未通过。"
+    "record_scope": "最新独立本地 v3 与容量实际绑定 05498ae/d55；当前 6b15 仅两份浏览器夹具改变，适用范围见 local_evidence_applicability。5/10 人总等待均未达 100ms；共享 CI 单轮不替代本地或目标部署验收。"
   },
   "final_gates": {
     "frozen_backend_round1": {
       "result": "passed",
-      "meaning": "修复后第一轮完整干净执行，原首次失败保留在 regressions",
-      "run": "frozen-backend-round2"
+      "run": "frozen-backend-round4",
+      "actual_candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "actual_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12"
     },
     "frozen_backend_round2": {
       "result": "passed",
-      "meaning": "同一实现指纹第二轮完整干净执行",
-      "run": "frozen-backend-round3"
+      "run": "frozen-backend-round5",
+      "actual_candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "actual_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12"
     },
     "frozen_node": {
       "result": "passed",
-      "tests": 275,
-      "run": "frontend-node-275"
+      "tests_per_platform": 275,
+      "platforms": [
+        "ubuntu-latest",
+        "windows-latest"
+      ],
+      "run": "ci52-node-275",
+      "interpretation": "相同275用例分别执行，不写成550个不同用例。"
     },
     "frontend_build_reproducibility": "passed",
-    "application_browsers": "failure_detected_pending_full_report",
-    "github_main_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
-    "github_ci_run_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
-    "github_main_delivery": "pending",
+    "application_browsers": "passed_in_recorded_engine_scope",
+    "github_main_sha": "not_embedded",
+    "github_ci_run_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+    "github_main_delivery": "not_embedded",
     "actual_devices_and_providers": "not_completed",
     "independent_human_benchmark": "not_completed",
     "five_day_campus_pilot": "not_completed",
-    "github_ci_conclusion": "failure_detected_pending_full_report",
-    "five_person_observed_engineering_targets": true,
+    "github_ci_conclusion": "success",
+    "five_person_observed_engineering_targets": false,
     "ten_person_observed_engineering_targets": false,
     "ten_person_expansion_approved": false,
-    "partial_remote_ci": {
-      "run_id": 43562060192,
-      "branch_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
-      "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
-      "ubuntu": {
-        "conclusion": "success",
-        "tests": 1792,
-        "passed": 1790,
-        "skipped": 2,
-        "node_passed": 275,
-        "npm_audit_scope": "all including dev/build",
-        "known_node_vulnerabilities": 0,
-        "pip_audit": "No known vulnerabilities found"
+    "five_person_trial_approved": false,
+    "last_completed_remote_ci": {
+      "run_id": 43567666000,
+      "branch_head": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "tested_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "status": "completed",
+      "conclusion": "success",
+      "required_jobs": 9,
+      "successful_jobs": 9,
+      "browser_report_slots": 33,
+      "browser_passed_slots": 33,
+      "recorded_browser_checks": 1038,
+      "passed_browser_checks": 1038,
+      "failed_browser_checks": 0,
+      "continuity_checks": 990,
+      "continuity_passed": 990,
+      "document": "docs/audits/sprint-validation.json",
+      "scope": "按平台、套件与轮次分别计数；不把重复执行相加成不同用例，不替代外部和条件 P2 验收。"
+    },
+    "previous_failed_remote_ci": {
+      "run_id": 43565458564,
+      "conclusion": "failure",
+      "browser_report_slots": 33,
+      "browser_passed_slots": 31,
+      "browser_failed_slots": 2,
+      "recorded_browser_checks": 1005,
+      "passed_browser_checks": 1000,
+      "failed_browser_checks": 5,
+      "not_executed_expected_checks": {
+        "sprint": 24,
+        "pilot": 9
       },
-      "continuity": {
-        "conclusion": "success",
-        "checks": 990,
-        "failed_checks": 0,
-        "errors": 0,
-        "counts": [
-          612,
-          204,
-          174
-        ]
-      },
-      "container": {
-        "conclusion": "success",
-        "evidence": "artifacts/ci-readonly/run-43562060192-container.log"
-      },
-      "windows": {
-        "conclusion": "success",
-        "partition_jobs": [
-          "success",
-          "success",
-          "success",
-          "success"
-        ],
-        "observed_partition_tests": [
-          447,
-          480,
-          389,
-          476
-        ],
-        "observed_partition_failures": [
-          0,
-          0,
-          0,
-          0
-        ],
-        "observed_partition_skips": [
-          0,
-          0,
-          1,
-          0
-        ],
-        "aggregate_job_id": 132351936093,
-        "tests": 1792,
-        "unique_tests": 1792,
-        "passed": 1791,
-        "skipped": 1,
-        "failed": 0,
-        "errors": 0,
-        "node_passed": 275,
-        "aggregate_seconds": 0.2,
-        "elapsed_seconds": 951.61,
-        "aggregation_errors": [],
-        "skipped_cases": [
-          {
-            "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
-            "reason": "POSIX TIME_WAIT bind semantics"
-          }
-        ],
-        "npm_audit_scope": "all including dev/build",
-        "known_node_vulnerabilities": 0,
-        "pip_audit": "No known vulnerabilities found",
-        "evidence": "artifacts/ci-readonly/run-43562060192-windows-verification.json"
-      },
-      "browser": {
-        "conclusion": "failure_detected_pending_full_report",
-        "job_status": "in_progress",
-        "official_job_conclusion": null,
-        "known_failed_steps": [
-          {
-            "number": 10,
-            "name": "Run the browser suites against synthetic data"
-          },
-          {
-            "number": 11,
-            "name": "Verify embedded Agent approvals, UI, media and incremental rendering"
-          }
-        ],
-        "case_attribution": "pending_full_artifact",
-        "evidence": "artifacts/ci-readonly/run-43562060192-browser-failure-pending.json"
-      },
-      "fingerprints": {
-        "ubuntu": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
-        "windows_partitions": "1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9",
-        "interpretation": "分操作系统保存字节指纹及内部 unchanged；两边 checkout 绑定同一实际 commit。不声称跨 OS 字节指纹相同，未逐文件确定差异原因。"
-      },
-      "status": "failure_detected_pending_full_report"
+      "document": "docs/audits/sprint-ci-third-round.json"
+    },
+    "completed_remote_ci": {
+      "run_id": 43567666000,
+      "branch_head": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "tested_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "status": "completed",
+      "conclusion": "success",
+      "required_jobs": 9,
+      "successful_jobs": 9,
+      "browser_report_slots": 33,
+      "browser_passed_slots": 33,
+      "recorded_browser_checks": 1038,
+      "passed_browser_checks": 1038,
+      "failed_browser_checks": 0,
+      "continuity_checks": 990,
+      "continuity_passed": 990,
+      "document": "docs/audits/sprint-validation.json",
+      "scope": "按平台、套件与轮次分别计数；不把重复执行相加成不同用例，不替代外部和条件 P2 验收。"
+    },
+    "main_verification_source": {
+      "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
+      "actions": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions",
+      "interpretation": "本记录冻结合并前候选代码与验证证据；最终 main SHA、合并结果及 main 自身 Actions 由 PR 合并记录和 Actions 核实，不在本文嵌入或预先声称。"
     }
   },
   "repository_license": {
@@ -802,7 +1674,7 @@
     ],
     "other_python_pins": "unchanged_vs_baseline_verified",
     "javascript_runtime_dependencies": "unchanged_vs_baseline_verified",
-    "audit_state": "本地、Ubuntu及Windows的 npm 全依赖审计均0已知漏洞，requirements.lock 的 pip-audit strict 均无已知漏洞；最终 build/build:check 已过。当前 CI 主浏览器/Agent 步骤失败且完整报告尚待，不能据依赖通过推出整体通过。",
+    "audit_state": "本轮 run52 Ubuntu/Windows 的 npm audit 覆盖全部依赖（含 dev/build），均0已知漏洞；pip-audit strict 均无已知漏洞；两平台构建再现检查通过。完整CI通过不等于不存在未知漏洞或外部验收完成。",
     "current_audits": {
       "npm": {
         "command": "npm audit --json",
@@ -832,9 +1704,9 @@
     }
   },
   "reference_validation": {
-    "checked_files": 209,
+    "checked_files": 214,
     "missing_files": [],
-    "scope": "128 条 implementation.files、verification.test_files、evidence_documents，以及本次总证据与前端构建记录；不把 pending 计划产物当已存在引用。"
+    "scope": "128条实现/测试/证据、诊断历史及两份总账引用的实际仓库文件；本轮最终机器核验。"
   },
   "requirements": [
     {
@@ -860,25 +1732,28 @@
         "executed_runs": [
           "campus-domain-54-plus-rename",
           "frontend-node-270",
-          "frontend-node-275"
+          "frontend-node-275",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275",
+          "ci52-application-browsers"
         ],
         "test_files": [
           "tests/getting-started.test.mjs",
           "tests/work-context.test.mjs",
           "tests/test_pilot_workspace.py"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [],
       "remaining": [
-        "新引导单元与实际浏览器完整链以最终冻结记录为准，不把源码存在当作实际 UI 验收。"
+        "首次引导、跳过后找回与按账号持久保存已在 run52 Sprint 三引擎实际通过；结论限合成账号和已执行场景。"
       ],
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -902,14 +1777,17 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275"
         ],
         "test_files": [
           "tests/test_verification.py",
           "tests/test_verification_evidence.py",
           "tests/auth-feedback.test.mjs"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -920,7 +1798,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -945,14 +1822,17 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "frontend-node-270"
+          "frontend-node-270",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275"
         ],
         "test_files": [
           "tests/work-context.test.mjs",
           "tests/test_campus_permissions.py",
           "tests/test_pilot_workspace.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -963,7 +1843,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -987,14 +1866,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_normalization_preview_shows_exact_recipient_change_without_mutating_it`；Node表格解析4例。"
       },
@@ -1010,7 +1891,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -1034,14 +1914,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_roster_preflight_normalizes_years_reports_every_error_and_replays_once`、`test_roster_preflight_rejects_membership_changes_and_cannot_self_escalate`。"
       },
@@ -1054,8 +1936,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -1079,14 +1960,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_permissions.py",
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "既有`test_correction_withdrawal_and_authorization_changes_keep_personal_data`；新增队列撤权、转交、跟进撤权用例。"
       },
@@ -1102,7 +1985,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -1126,7 +2008,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1135,7 +2017,6 @@
       ],
       "evidence_documents": [],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -1160,7 +2041,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1169,7 +2050,6 @@
       ],
       "evidence_documents": [],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -1195,7 +2075,10 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275"
         ],
         "test_files": [
           "tests/test_workflow.py",
@@ -1203,7 +2086,7 @@
           "tests/data-sync.test.mjs",
           "tests/test_push_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1214,7 +2097,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -1239,14 +2121,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "受理人、学生、发布人分别注销3例；协作跟进随case删除，未授权人仍404。"
       },
@@ -1259,8 +2143,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -1283,12 +2166,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_subscriptions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1303,7 +2188,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "深化并合成验证"
@@ -1327,12 +2211,14 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1347,7 +2233,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "深化并合成验证"
@@ -1371,13 +2256,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py",
           "tests/test_source_cache_policy.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1389,8 +2276,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "深化并合成验证"
     },
@@ -1413,13 +2299,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py",
           "tests/test_source_cache_policy.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1434,7 +2322,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "深化并合成验证"
@@ -1458,13 +2345,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py",
           "tests/test_source_presets.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1479,7 +2368,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "新增强制门禁并验证"
@@ -1504,12 +2392,14 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1521,8 +2411,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "修复并验证"
     },
@@ -1546,12 +2435,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_subscriptions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1563,8 +2454,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "既有行为复验并补显示"
     },
@@ -1589,14 +2479,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_qq_group_intake.py",
           "tests/test_source_subscriptions.py",
           "tests/test_group_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1611,7 +2503,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "合成合同保留；真实验收待完成"
@@ -1639,14 +2530,16 @@
         "executed_runs": [
           "source-domain-109",
           "qq-context-domain-41",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_group_context_candidates.py",
           "tests/test_notice_matters.py",
           "tests/test_proactive_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1659,8 +2552,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "新增群内邻近候选并验证"
     },
@@ -1684,12 +2576,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_subscriptions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1704,7 +2598,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有合成合同复验；真实待完成"
@@ -1728,7 +2621,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1739,7 +2632,6 @@
         "docs/audits/sprint-sources-evidence.md"
       ],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ],
       "domain_report_status": "条件尚未建立"
@@ -1764,7 +2656,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1775,7 +2667,6 @@
         "docs/audits/sprint-sources-evidence.md"
       ],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ],
       "domain_report_status": "已知边界保留"
@@ -1799,13 +2690,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_unified_intake.py",
           "tests/test_evidence_acquisition.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1820,7 +2713,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有链路复验"
@@ -1845,12 +2737,14 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_evidence_acquisition.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1865,7 +2759,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "分层合同复验"
@@ -1890,12 +2783,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1908,8 +2803,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "新增并验证"
     },
@@ -1934,13 +2828,15 @@
         "executed_runs": [
           "source-domain-109",
           "qq-context-domain-41",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
           "tests/test_notice_matters.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -1953,8 +2849,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "深化并验证"
     },
@@ -1976,11 +2871,14 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_notice_timing.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -1994,7 +2892,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "已有模型与合同复核"
@@ -2018,12 +2915,14 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2035,8 +2934,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "深化并验证"
     },
@@ -2059,13 +2957,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_source_fetch_contracts.py",
           "tests/test_evidence_acquisition.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2080,7 +2980,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "深化并验证"
@@ -2106,12 +3005,14 @@
         "executed_runs": [
           "source-domain-109",
           "qq-context-domain-41",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_matters.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2127,7 +3028,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有关系复验"
@@ -2152,12 +3052,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_intake_round_isolation.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2169,8 +3071,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "修复并验证"
     },
@@ -2195,13 +3096,15 @@
         "executed_runs": [
           "source-domain-109",
           "qq-context-domain-41",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_unified_intake.py",
           "tests/test_notice_matters.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2214,8 +3117,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "既有去重复验并加轮次保护"
     },
@@ -2238,12 +3140,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_proactive_policy.py",
           "tests/test_action_workflow.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2257,7 +3162,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有工作流与适用判断复核"
@@ -2281,13 +3185,15 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_proactive_policy.py",
           "tests/test_proactive_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2302,7 +3208,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有证据门槛复核"
@@ -2328,14 +3233,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
           "tests/test_notice_timing.py",
           "tests/test_workflow.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2351,7 +3258,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有合同复验＋新窗口复用"
@@ -2375,24 +3281,26 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_official_time.py",
           "tests/test_change_review.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [
-        "定向源文件与测试存在；最终全分支冻结回归结果由主执行记录填入。"
+        "对应测试已纳入冻结后端全量记录；结论限实际测试断言，不将源码存在视作额外真实环境验收。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-sources-evidence.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ],
       "domain_report_status": "主工作流专项负责"
     },
@@ -2415,13 +3323,16 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_change_review.py",
           "tests/test_task_materials.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2435,7 +3346,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有变更／材料合同复核"
@@ -2460,13 +3370,15 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_proactive_tracking.py",
           "tests/test_source_subscriptions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2478,8 +3390,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "失败保护复验"
     },
@@ -2501,12 +3412,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_change_review.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2520,7 +3434,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有取消恢复合同复核"
@@ -2546,13 +3459,15 @@
         "executed_runs": [
           "source-domain-109",
           "qq-context-domain-41",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_matters.py",
           "tests/test_intake_round_isolation.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2568,7 +3483,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有聚合复验＋轮次隔离"
@@ -2593,12 +3507,14 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2614,7 +3530,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "新增并验证"
@@ -2639,13 +3554,15 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2661,7 +3578,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "新增动作关联并集成独立事件"
@@ -2686,14 +3602,16 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_proactive_tracking.py",
           "tests/test_push_delivery.py",
           "tests/test_unified_intake.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2705,8 +3623,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ],
       "domain_report_status": "既有更正保护复验"
     },
@@ -2732,14 +3649,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
           "tests/test_action_workflow.py",
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2755,7 +3674,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "分层深化"
@@ -2780,13 +3698,16 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275"
         ],
         "test_files": [
           "tests/task-summary.test.mjs",
           "tests/test_action_workflow.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2796,8 +3717,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -2820,20 +3740,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_change_review.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -2857,14 +3779,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_workflow.py",
           "tests/test_notice_phase_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -2874,8 +3798,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -2897,20 +3820,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_task_materials.py",
           "tests/test_action_workflow.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -2933,13 +3858,15 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_task_materials.py",
           "tests/test_campus_sprint.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -2950,7 +3877,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -2973,20 +3899,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_task_materials.py",
           "tests/test_action_workflow.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3009,14 +3937,16 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_pilot_workspace.py",
           "tests/test_campus_sprint.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -3024,8 +3954,7 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3048,13 +3977,16 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_workflow.py",
           "tests/test_sprint_official_time.py",
           "tests/test_task_materials.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -3063,8 +3995,7 @@
       ],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3086,20 +4017,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_action_workflow.py",
           "tests/test_schedule.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3121,21 +4054,23 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_schedule.py",
           "tests/test_sprint_official_time.py",
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3157,13 +4092,16 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_workflow.py",
           "tests/test_action_workflow.py",
           "tests/test_schedule.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -3173,7 +4111,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3197,7 +4134,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -3206,7 +4143,6 @@
       ],
       "evidence_documents": [],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -3230,14 +4166,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_server_draft_version_and_files_restore_then_publish_once`、重启保草稿用例。"
       },
@@ -3250,8 +4188,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3274,14 +4211,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_missing_expired_review_rejected_but_committed_retry_is_returned`、`test_review_changes_when_same_identity_is_reauthorized`、既有同人数换人用例、正常重启用例。"
       },
@@ -3294,8 +4233,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3319,14 +4257,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "现有范围预览与文件验证；新增真正写入版本的作者预算用例；63人附件样本。"
       },
@@ -3342,7 +4282,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3366,14 +4305,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "63人×约1.03MiB合成PNG超过旧50MiB门槛：1份原件、63个引用，重建DB连接续完；旧版下载与跨账号404；队列撤权及失败重试。"
       },
@@ -3389,7 +4330,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3414,14 +4354,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_publication_rollback_keeps_all_versions_and_exact_immutable_originals`、政策回滚、`test_official_attachment_rename_keeps_source_citations_bytes_and_name_history`。"
       },
@@ -3434,8 +4376,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3458,14 +4399,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_official_restore_has_new_evidence_and_does_not_reopen_personal_work`：3版历史、原notice_id、个人task版本和data不变、学生403。"
       },
@@ -3481,7 +4424,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3505,14 +4447,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_policies.py",
           "tests/test_campus_sprint.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_expired_backfill_requires_version_audience_and_reference_confirmation`、政策继承／回滚、历史任务外发抑制、既有补发用例。"
       },
@@ -3525,8 +4469,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3548,7 +4491,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "权限模型只有现有四类职责；接口不提供假审核通过状态。"
       },
@@ -3560,7 +4503,6 @@
         "docs/audits/sprint-campus-evidence.md"
       ],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -3584,7 +4526,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "草稿零分发、正常重启只续已有队列。"
       },
@@ -3596,7 +4538,6 @@
         "docs/audits/sprint-campus-evidence.md"
       ],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -3620,14 +4561,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_policies.py",
           "tests/test_campus_sprint.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_publication_channel_metrics_only_count_linked_existing_ledger_evidence`：多设备人数去重、31天外记录排除、无引用不猜、邮箱／设备／私人标题不泄露。"
       },
@@ -3643,7 +4586,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3668,14 +4610,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "原协作完整链；新增拒收、转交、稳定个人跟进、范围撤销和删除用例；北京时间输入转换Node用例。"
       },
@@ -3688,8 +4632,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3712,14 +4655,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
           "tests/test_campus_policies.py",
           "tests/test_campus_permissions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed",
         "domain_specific_record": "`test_campus_audit_cursor_does_not_lose_or_repeat_rows`、原跨账号／跨院／私有材料测试、转交拒绝受理人自行扩大共享。"
       },
@@ -3732,8 +4677,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3755,19 +4699,21 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3792,13 +4738,15 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_sprint_notifications.py",
           "tests/test_campus_sprint.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -3809,7 +4757,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3833,13 +4780,16 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_push_delivery.py",
           "tests/test_mail_delivery.py",
           "tests/test_sprint_observability.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -3849,7 +4799,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -3873,20 +4822,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_notifications.py",
           "tests/test_sprint_observability.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3908,19 +4859,21 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -3944,14 +4897,16 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_change_review.py",
           "tests/test_push_delivery.py",
           "tests/test_campus_sprint.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -3959,8 +4914,7 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -3983,20 +4937,22 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_notifications.py",
           "tests/test_push_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4022,14 +4978,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_sprint_notifications.py",
           "tests/test_push_delivery.py",
           "tests/test_source_subscriptions.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -4037,8 +4995,7 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -4061,21 +5018,23 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_notifications.py",
           "tests/test_push_delivery.py",
           "tests/test_mail_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [],
       "evidence_documents": [],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4100,14 +5059,16 @@
       "verification": {
         "executed_runs": [
           "campus-domain-54-plus-rename",
-          "workspace-projection-targeted-14"
+          "workspace-projection-targeted-14",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_push_delivery.py",
           "tests/test_mail_delivery.py",
           "tests/test_campus_policies.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4118,7 +5079,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4140,12 +5100,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_push_delivery.py",
           "tests/test_mail_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4155,7 +5118,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4177,11 +5139,14 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_push_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4191,7 +5156,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4214,12 +5178,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_push_delivery.py",
           "tests/test_mail_delivery.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4231,7 +5198,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4255,14 +5221,16 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_push_delivery.py",
           "tests/test_proactive_tracking.py",
           "tests/test_change_review.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -4270,8 +5238,7 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -4295,13 +5262,15 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_campus_permissions.py",
           "tests/test_sprint_notifications.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4312,7 +5281,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4335,12 +5303,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_operations_monitor.py",
           "tests/test_sprint_observability.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -4350,7 +5321,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -4373,23 +5343,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "npm run build；现有 visual / source-inbox / pilot suites"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4410,23 +5381,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "新 sprint suite 320/390/1280 及原 visual suites"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4447,23 +5419,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "sprint: task targets and 320px composer geometry"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4484,23 +5457,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "source-inbox / visual / sprint pagination"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4521,23 +5495,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "tests/task-summary.test.mjs"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4558,23 +5533,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_task_board.mjs；sprint task geometry"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4595,23 +5571,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "sprint failed PUT + no confetti + real persisted completion"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4632,23 +5609,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_notice_flow / notice_matters；sprint lifecycle entry"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4669,23 +5647,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_draft_continuity / notice_flow；official-time API tests"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4706,23 +5685,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4743,23 +5723,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4780,23 +5761,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4817,23 +5799,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_chat_layout / chat_recovery / reference_interactions / openui suites"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4854,23 +5837,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "verify_reference_interactions / memory continuity suites"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4890,23 +5874,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "source-presets / source-inbox suites；来源代理后端回归"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4926,23 +5911,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "arrangement_recovery / notice_flow；新 reminder API tests"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -4964,23 +5950,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "sprint persisted draft；pilot workspace / campus API tests"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5002,23 +5989,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "tests/paged-list.test.mjs；原 owner/route/isolation tests"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5039,23 +6027,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "sprint persistent failure/mobile nav；需真实软键盘设备补验证"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5077,23 +6066,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "tests/paged-list.test.mjs (5)；sprint >50 and stale query"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5114,23 +6104,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "visual/layout suites；320px 断点新增检查"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5151,17 +6142,19 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过"
       },
       "external_acceptance": [
         "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
       ],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
@@ -5169,7 +6162,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -5191,23 +6183,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "已有 motion tests；sprint failed mutation；CI runtime pending"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5229,23 +6222,24 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-application-browsers"
+        ],
         "test_files": [],
-        "freeze_suite": "pending",
-        "browser": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope",
         "planned_checks": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests"
       },
       "external_acceptance": [],
       "remaining": [
-        "实际应用三浏览器门禁待冻结执行；不得由 Node 单元通过推定全部交互完成。"
+        "run52 实际应用浏览器门禁已通过；精确引擎范围见33槽原始清单，Agent／Composer仅Chromium，不把所有交互泛化为三引擎或真机验收。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/frontend-25.json",
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5268,7 +6262,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "reference_demos_observed_application_pending",
         "planned_checks": "源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操"
       },
@@ -5281,8 +6275,7 @@
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5305,7 +6298,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -5314,7 +6307,6 @@
       ],
       "evidence_documents": [],
       "status_labels": [
-        "待冻结全套",
         "条件扩展"
       ]
     },
@@ -5337,11 +6329,14 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_mvp_evaluation.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -5355,7 +6350,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5382,14 +6376,16 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notice_semantics.py",
           "tests/test_evidence_acquisition.py",
           "tests/test_notice_phase_tracking.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -5405,7 +6401,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5428,12 +6423,15 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_agent_runtime.py",
           "tests/test_agent_chat.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -5447,7 +6445,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5471,14 +6468,17 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_memory_lifecycle_v3.py",
           "tests/test_memory_reliability_v4.py",
           "tests/test_memory_tree_v6.py",
           "tests/test_memory_usability_v7.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -5492,7 +6492,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5516,7 +6515,10 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_notice_stream.py",
           "tests/test_notice_budget.py",
@@ -5524,7 +6526,7 @@
           "tests/test_execution.py",
           "tests/test_agent_runtime.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -5538,7 +6540,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5563,27 +6564,30 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-application-browsers"
+        ],
         "test_files": [
           "tests/test_genui_state.py",
           "tests/test_genui_core.py",
           "tests/test_agent_chat.py"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [
         "本轮前端专项另行处理集成；这里没有新浏览器实测证据。合成／源码证据不代替真实手机、读屏、完整浏览器隔离与迟到消息验收。"
       ],
       "remaining": [
-        "本轮前端专项另行处理集成；这里没有新浏览器实测证据。合成／源码证据不代替真实手机、读屏、完整浏览器隔离与迟到消息验收。"
+        "run52 OpenUI 三引擎及 Chromium Agent 实际通过；合成结果不替代真机、读屏和目标环境安全验收。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-sources-evidence.md"
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ],
       "domain_report_status": "既有能力只读审查"
@@ -5616,7 +6620,13 @@
           "notice-query-regression-45",
           "frozen-backend-round2",
           "frozen-backend-round3",
-          "frontend-node-275"
+          "frontend-node-275",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275",
+          "ci52-application-browsers"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
@@ -5624,12 +6634,12 @@
           "tests/paged-list.test.mjs",
           "tests/workspace-projection.test.mjs"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [],
       "remaining": [
-        "完整库存、原业务语义及分钟差量相关测试已进入同指纹本地双轮和 Ubuntu/Windows 完整后端；当前主浏览器/Agent 门禁已失败，具体案例仍待完整 CI 报告。"
+        "完整库存、原业务语义与分钟差量通过 05498ae/d55 本地双轮及 run52 两平台后端和实际分页交互；旧失败保留，未覆盖场景不据此推定通过。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
@@ -5638,8 +6648,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -5661,12 +6670,14 @@
       },
       "verification": {
         "executed_runs": [
-          "notice-query-regression-45"
+          "notice-query-regression-45",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_sprint_lists.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -5678,8 +6689,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -5711,7 +6721,13 @@
           "notice-query-regression-45",
           "frozen-backend-round2",
           "frozen-backend-round3",
-          "frontend-node-275"
+          "frontend-node-275",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275",
+          "ci52-application-browsers"
         ],
         "test_files": [
           "tests/test_workspace_projection.py",
@@ -5720,12 +6736,12 @@
           "tests/test_workspace.py",
           "tests/test_insight_data.py"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [],
       "remaining": [
-        "投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价已有冻结后端双轮证据；修复后浏览器仍待当前 CI。"
+        "投影缓存有48 MiB／24 owner／300秒边界，失效或超限重建，不能声称永久不读草稿；已有纯重算等价、隔离和实际交互的冻结证据。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
@@ -5734,8 +6750,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -5760,23 +6775,26 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-application-browsers"
+        ],
         "test_files": [
           "tests/test_frontend_bundle.py"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [],
       "remaining": [
-        "真实应用冷／热请求、传输与可输入时点由 verify_sprint_ui 三引擎执行后填入；标准 API 不支持精确解析耗时就记 unknown，不编造。"
+        "run52 三引擎冷／热数据已记录，Service Worker 隔离模式明示；不能将该模式数据当生产PWA性能。标准API无法精确分离解析耗时，仍记unknown；独立真实worker安装与显式启用测试另列。"
       ],
       "evidence_documents": [
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -5807,7 +6825,13 @@
           "notice-query-regression-45",
           "frozen-backend-round2",
           "frozen-backend-round3",
-          "frontend-node-275"
+          "frontend-node-275",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "ci52-linux-backend",
+          "ci52-windows-backend",
+          "ci52-node-275",
+          "ci52-application-browsers"
         ],
         "test_files": [
           "tests/paged-list.test.mjs",
@@ -5815,12 +6839,12 @@
           "tests/test_sprint_lists.py",
           "tests/test_workspace_projection.py"
         ],
-        "freeze_suite": "pending",
-        "browser": "not_assessed"
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
+        "browser": "passed_within_recorded_suite_and_engine_scope"
       },
       "external_acceptance": [],
       "remaining": [
-        "投影相关用例已通过本地冻结双轮与 Ubuntu 后端；实体文件预览内存、长时滚动和真实辅助技术仍需设备验收，修复后浏览器仍待当前 CI。"
+        "投影与实际分页交互已通过冻结门禁；实体文件预览内存、长期滚动及真实辅助技术仍需设备验收。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-workspace-projection.md",
@@ -5829,8 +6853,7 @@
       ],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -5844,7 +6867,7 @@
       "source_line": 320,
       "implementation": {
         "state": "implemented_or_strengthened",
-        "summary": "通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。 同库进程内写入公平准入保留读并行，等待指标包含排队、连接准备及 SQLite BEGIN；冻结候选独立 5 人总等待 P95 88.957ms，10 人 178.891ms，未放宽 100ms 门槛。",
+        "summary": "通知与任务 SQL 范围分页、FTS 索引、事项投影按页 ID 限定；校园发布／审计 SQL 分页与分发短事务；本轮真实本地 HTTP 压测及 1 万条合成微基准分开记录。 同库进程内写入公平准入保留读并行，等待指标包含排队、连接准备及 SQLite BEGIN；最新独立本地 v3 实际绑定 05498ae/d55：5 人总等待 P95 114.149ms，10 人 272.906ms，两档均未达原 100ms；到当前仅两份浏览器夹具改变。",
         "files": [
           "app/listing.py",
           "app/notice_matters.py",
@@ -5863,7 +6886,13 @@
           "frozen-backend-round2",
           "frozen-backend-round3",
           "runtime-final-5-users",
-          "runtime-final-10-users"
+          "runtime-final-10-users",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "runtime-v3-5-users",
+          "runtime-v3-10-users",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
@@ -5872,14 +6901,14 @@
           "tests/test_write_coordination.py",
           "tests/test_runtime_metrics.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
         "学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。"
       ],
       "remaining": [
-        "10 人总写入等待 P95 未达 <100ms，不能据功能通过建议扩大；目标部署容量仍需实际目标负载复验。"
+        "最新独立本地 v3 的 5/10 人总等待 P95 均未达 <100ms，不据功能通过批准试点或扩大。目标部署须实际负载复验，原门槛不放宽。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-query-regression.json",
@@ -5889,7 +6918,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -5920,7 +6948,9 @@
         "executed_runs": [
           "source-domain-109",
           "campus-domain-54-plus-rename",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_notification_coordination.py",
@@ -5930,7 +6960,7 @@
           "tests/test_group_delivery.py",
           "tests/test_campus_sprint.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -5940,8 +6970,7 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "已执行定向验证",
-        "待冻结全套"
+        "已执行定向验证"
       ]
     },
     {
@@ -5974,7 +7003,13 @@
           "frozen-backend-round2",
           "frozen-backend-round3",
           "runtime-final-5-users",
-          "runtime-final-10-users"
+          "runtime-final-10-users",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "runtime-v3-5-users",
+          "runtime-v3-10-users",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_workflow.py",
@@ -5984,7 +7019,7 @@
           "tests/test_campus_sprint.py",
           "tests/test_sprint_observability.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -6000,7 +7035,6 @@
       "status_labels": [
         "实现证据",
         "已执行定向验证",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -6025,11 +7059,14 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_sprint_observability.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -6041,7 +7078,6 @@
       "evidence_documents": [],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -6069,11 +7105,14 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
         "test_files": [
           "tests/test_frontend_bundle.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
@@ -6084,8 +7123,7 @@
         "docs/sprint-2026-11-14/FRONTEND_AUDIT.md"
       ],
       "status_labels": [
-        "实现证据",
-        "待冻结全套"
+        "实现证据"
       ]
     },
     {
@@ -6111,7 +7149,7 @@
       "verification": {
         "executed_runs": [],
         "test_files": [],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
@@ -6125,7 +7163,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     },
@@ -6140,7 +7177,7 @@
       "source_line": 326,
       "implementation": {
         "state": "implemented_with_pilot_definition_pending",
-        "summary": "新增可审阅工程发布门槛：首批最多 5 人，10 人隔离样本全部达标后才建议扩大；每日每人 20 收件为工程负载档。非 AI CRUD P95<1秒、总写入等待 P95<100ms 且零失败，权限／幂等／stale 断言全过；预算未知不自动批量，保留隐私与回退契约。冻结候选独立 5 人实测两项 P95 为219.1ms／88.957ms；10 人为481.6ms／178.891ms，总等待未达标，因此不批准扩大。这些工程建议和样本不代表院方批准。",
+        "summary": "新增可审阅工程发布门槛：首批最多 5 人，10 人隔离样本全部达标后才建议扩大；每日每人 20 收件为工程负载档。非 AI CRUD P95<1秒、总写入等待 P95<100ms 且零失败，权限／幂等／stale 断言全过；预算未知不自动批量，保留隐私与回退契约。最新 v3 的 5 人两项 P95 为282.6ms／114.149ms；10 人为743.1ms／272.906ms，两档总等待均未达标，当前不批准 5 人试点或 10 人扩大。这些工程建议和样本不代表院方批准。",
         "files": [
           "docs/PILOT_RELEASE_GATES.md",
           "scripts/pilot_preflight.py",
@@ -6156,20 +7193,26 @@
           "frozen-backend-round2",
           "frozen-backend-round3",
           "runtime-final-5-users",
-          "runtime-final-10-users"
+          "runtime-final-10-users",
+          "frozen-backend-round4",
+          "frozen-backend-round5",
+          "runtime-v3-5-users",
+          "runtime-v3-10-users",
+          "ci52-linux-backend",
+          "ci52-windows-backend"
         ],
         "test_files": [
           "tests/test_local_runtime_ownership.py",
           "tests/test_model_capacity.py"
         ],
-        "freeze_suite": "pending",
+        "freeze_suite": "candidate_gates_passed_not_individual_acceptance",
         "browser": "not_assessed"
       },
       "external_acceptance": [
         "实际试点人数／日收件／峰值／设备／留存期／费用预算和可接受成功率、时延需真实院方范围；本轮样本不能代替该容量承诺。"
       ],
       "remaining": [
-        "10 人扩大门槛仍未通过；保持 <100ms 原标准。真实试点人数、负载、设备、渠道、费用负责人及预算仍待需求方确认。"
+        "最新 v3 的 5 人试点与 10 人扩大门槛均未通过，保持 <100ms 原标准；共享 CI 单轮较快值不能替代。真实人数、负载、设备、渠道、费用负责人及预算仍待需求方确认。"
       ],
       "evidence_documents": [
         "docs/audits/sprint-validation.json",
@@ -6177,7 +7220,6 @@
       ],
       "status_labels": [
         "实现证据",
-        "待冻结全套",
         "真实外部验收"
       ]
     }
@@ -6193,24 +7235,38 @@
       "test": "tests/test_usage_limits.py::test_search_query_count_does_not_grow_per_notice",
       "fix_evidence": "docs/audits/sprint-query-regression.json",
       "full_rerun_after_fix": {
-        "local_rounds": [
+        "historical_local_rounds": [
           "frozen-backend-round2",
           "frozen-backend-round3"
         ],
-        "ubuntu_ci": "ci50-ubuntu-backend",
-        "overall_remote_ci": "failure_detected_pending_full_report",
-        "windows_ci": "ci50-windows-backend"
+        "latest_local_rounds": [
+          "frozen-backend-round4",
+          "frozen-backend-round5"
+        ],
+        "last_completed_remote_backend": [
+          "ci51-linux-backend",
+          "ci51-windows-backend"
+        ],
+        "last_completed_remote_ci": "success",
+        "current_remote_ci": "success",
+        "document": "docs/audits/sprint-ci-third-round.json",
+        "latest_remote_backend": [
+          "ci52-linux-backend",
+          "ci52-windows-backend"
+        ],
+        "latest_remote_document": "docs/audits/sprint-validation.json",
+        "previous_completed_remote_ci": "failure"
       }
     }
   ],
   "source_domain_refrozen_at": "2026-11-14T05:01:09Z",
   "validated_code": {
-    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
-    "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
-    "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+    "candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "candidate_tree": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+    "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
     "fingerprint_scope": "audit_full_suite.fingerprint: application, static sources/build, tests, scripts, schemas, deployment, workflow and locked dependencies. Documentation-only commits are outside this code fingerprint.",
     "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
-    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192"
+    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000"
   },
   "current_evidence_document": "docs/audits/sprint-validation.json",
   "historical_local_metrics": [
@@ -6323,11 +7379,402 @@
         },
         "record_scope": "本地现存产物，生成时已读取；尚非全部后续改动冻结后的最终数字。最终精简证据由根执行者写入 sprint-validation.json。"
       }
+    },
+    {
+      "label": "33fca 候选历史测量，已由 05498ae/d55 runtime-v3 代替；5 人曾单轮达标不代表当前达标",
+      "replaced_at": "2026-11-14T06:48:45.382153+00:00",
+      "validated_code": {
+        "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+        "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
+        "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+        "fingerprint_scope": "audit_full_suite.fingerprint: application, static sources/build, tests, scripts, schemas, deployment, workflow and locked dependencies. Documentation-only commits are outside this code fingerprint.",
+        "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
+        "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192"
+      },
+      "data": {
+        "runtime_http": {
+          "verified_at": "2026-11-14T05:28:49.729979+00:00",
+          "result": "passed",
+          "environment": {
+            "python": "3.12.14",
+            "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+          },
+          "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+          "implementation_unchanged": true,
+          "synthetic_test": true,
+          "live_model_calls": 0,
+          "concurrent_users": 5,
+          "notices_saved": 100,
+          "tasks_saved": 200,
+          "http_requests": 766,
+          "response_status_counts": {
+            "200": 651,
+            "401": 5,
+            "404": 10,
+            "409": 100
+          },
+          "ordinary_crud_latency_ms": {
+            "samples": 625,
+            "p50": 115.2,
+            "p95": 219.1,
+            "max": 623.6
+          },
+          "database_locks_before_restart": {
+            "observed": true,
+            "sample_limit": 4096,
+            "failed_acquisitions": 0,
+            "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+            "wait": {
+              "total_observations": 776,
+              "samples": 776,
+              "p50_ms": 32.309,
+              "p95_ms": 88.957,
+              "max_ms": 266.867
+            },
+            "hold": {
+              "total_observations": 776,
+              "samples": 776,
+              "p50_ms": 12.87,
+              "p95_ms": 44.331,
+              "max_ms": 280.472
+            }
+          },
+          "engineering_targets": {
+            "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+            "ordinary_crud_p95": {
+              "limit_ms_exclusive": 1000,
+              "passed": true
+            },
+            "write_total_wait_p95": {
+              "limit_ms_exclusive": 100,
+              "passed": true
+            },
+            "write_acquisitions": {
+              "allowed_failures": 0,
+              "passed": true
+            }
+          },
+          "recovery_observations": {
+            "backup_seconds": 0.038,
+            "restart_verified_seconds": 1.798,
+            "restore_file_seconds": 0.053,
+            "restore_verified_seconds": 2.371,
+            "confirmed_tasks_lost_in_fixture": 0,
+            "task_identity_and_business_content_equal": true,
+            "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+            "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+          },
+          "request_latency_ms": {
+            "median": 114.2,
+            "p95": 224.7,
+            "max": 623.6
+          },
+          "elapsed_seconds": 25.44,
+          "restart_preserved_tasks": true,
+          "restore_preserved_tasks_and_edit_caches": true,
+          "restored_old_sessions_rejected": true,
+          "cross_account_access_rejected": true,
+          "stale_updates_rejected": true,
+          "idempotent_replays_passed": true,
+          "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+        },
+        "runtime_http_ten_users": {
+          "verified_at": "2026-11-14T05:30:13.987626+00:00",
+          "result": "passed",
+          "environment": {
+            "python": "3.12.14",
+            "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+          },
+          "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+          "implementation_unchanged": true,
+          "synthetic_test": true,
+          "live_model_calls": 0,
+          "concurrent_users": 10,
+          "notices_saved": 200,
+          "tasks_saved": 400,
+          "http_requests": 1531,
+          "response_status_counts": {
+            "200": 1301,
+            "401": 10,
+            "404": 20,
+            "409": 200
+          },
+          "ordinary_crud_latency_ms": {
+            "samples": 1250,
+            "p50": 265.9,
+            "p95": 481.6,
+            "max": 638.9
+          },
+          "database_locks_before_restart": {
+            "observed": true,
+            "sample_limit": 4096,
+            "failed_acquisitions": 0,
+            "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+            "wait": {
+              "total_observations": 1588,
+              "samples": 1588,
+              "p50_ms": 79.095,
+              "p95_ms": 178.891,
+              "max_ms": 382.656
+            },
+            "hold": {
+              "total_observations": 1588,
+              "samples": 1588,
+              "p50_ms": 9.132,
+              "p95_ms": 82.005,
+              "max_ms": 279.103
+            }
+          },
+          "engineering_targets": {
+            "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+            "ordinary_crud_p95": {
+              "limit_ms_exclusive": 1000,
+              "passed": true
+            },
+            "write_total_wait_p95": {
+              "limit_ms_exclusive": 100,
+              "passed": false
+            },
+            "write_acquisitions": {
+              "allowed_failures": 0,
+              "passed": true
+            }
+          },
+          "recovery_observations": {
+            "backup_seconds": 0.047,
+            "restart_verified_seconds": 2.005,
+            "restore_file_seconds": 0.067,
+            "restore_verified_seconds": 2.959,
+            "confirmed_tasks_lost_in_fixture": 0,
+            "task_identity_and_business_content_equal": true,
+            "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+            "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+          },
+          "request_latency_ms": {
+            "median": 265.2,
+            "p95": 491.1,
+            "max": 964.7
+          },
+          "elapsed_seconds": 50.1,
+          "restart_preserved_tasks": true,
+          "restore_preserved_tasks_and_edit_caches": true,
+          "restored_old_sessions_rejected": true,
+          "cross_account_access_rejected": true,
+          "stale_updates_rejected": true,
+          "idempotent_replays_passed": true,
+          "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study."
+        },
+        "capacity": {
+          "synthetic": true,
+          "live_model_calls": 0,
+          "external_messages": 0,
+          "notices": 10000,
+          "payload_bytes": 20992851,
+          "timings": {
+            "intake_at_10000_records_ms": 55.41,
+            "list_10000_records_ms": 1024.41,
+            "full_text_search_10000_records_ms": 952.97,
+            "matter_candidates_10000_records_ms": 70.6,
+            "duplicate_replay_at_capacity_ms": 37.85
+          },
+          "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
+          "interactive_pages": {
+            "collected_page": {
+              "cold_ms": 41.31,
+              "warm_p50_ms": 35.8,
+              "warm_p95_ms": 36.9,
+              "samples_ms": [
+                41.31,
+                34.12,
+                36.69,
+                33.53,
+                35.8,
+                36.9
+              ],
+              "max_payload_bytes": 106675,
+              "total": 10000
+            },
+            "semantic_current_page": {
+              "cold_ms": 489.13,
+              "warm_p50_ms": 37.24,
+              "warm_p95_ms": 44.15,
+              "samples_ms": [
+                489.13,
+                37.24,
+                39.47,
+                44.15,
+                34.35,
+                34.18
+              ],
+              "max_payload_bytes": 106699,
+              "total": 10000
+            },
+            "indexed_body_search": {
+              "cold_ms": 71.77,
+              "warm_p50_ms": 74.5,
+              "warm_p95_ms": 83.4,
+              "samples_ms": [
+                71.77,
+                74.5,
+                73.51,
+                83.4,
+                70.36,
+                76.65
+              ],
+              "max_payload_bytes": 3070,
+              "total": 1
+            },
+            "short_chinese_search": {
+              "cold_ms": 100.41,
+              "warm_p50_ms": 112.97,
+              "warm_p95_ms": 131.44,
+              "samples_ms": [
+                100.41,
+                131.44,
+                106.86,
+                126.91,
+                112.97,
+                108.76
+              ],
+              "max_payload_bytes": 111961,
+              "total": 9999
+            }
+          },
+          "percentile_method": "Five warm samples; nearest-rank P95 is their maximum; cold sample is separate.",
+          "scope": "single-process local test; not a multi-user concurrency or campus production capacity claim"
+        },
+        "document": "docs/audits/sprint-validation.json",
+        "record_scope": "当前候选实现指纹 33fca6c8… 的最终独立本地 5/10 人观察值；CI 共享 runner 的性能另列，不作为相同环境或校园容量承诺。10 人扩大门槛未通过。"
+      },
+      "document": "docs/audits/sprint-validation-before-cold-entry-fixes.json"
     }
   ],
   "diagnostic_history": [
     "docs/audits/sprint-query-regression.json",
     "docs/audits/sprint-ci-first-round.json",
-    "docs/audits/sprint-write-wait-evidence.json"
-  ]
+    "docs/audits/sprint-write-wait-evidence.json",
+    "docs/audits/sprint-ci-second-round.json",
+    "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+    "docs/audits/sprint-ci-third-round.json"
+  ],
+  "historical_remote_ci_snapshots": [
+    {
+      "label": "run50 未收齐报告时的历史快照，完整失败另见第二轮文档",
+      "data": {
+        "run_id": 43562060192,
+        "branch_head": "32c5ce524d553c869816d0264e9cf84b57febe39",
+        "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
+        "ubuntu": {
+          "conclusion": "success",
+          "tests": 1792,
+          "passed": 1790,
+          "skipped": 2,
+          "node_passed": 275,
+          "npm_audit_scope": "all including dev/build",
+          "known_node_vulnerabilities": 0,
+          "pip_audit": "No known vulnerabilities found"
+        },
+        "continuity": {
+          "conclusion": "success",
+          "checks": 990,
+          "failed_checks": 0,
+          "errors": 0,
+          "counts": [
+            612,
+            204,
+            174
+          ]
+        },
+        "container": {
+          "conclusion": "success",
+          "evidence": "artifacts/ci-readonly/run-43562060192-container.log"
+        },
+        "windows": {
+          "conclusion": "success",
+          "partition_jobs": [
+            "success",
+            "success",
+            "success",
+            "success"
+          ],
+          "observed_partition_tests": [
+            447,
+            480,
+            389,
+            476
+          ],
+          "observed_partition_failures": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "observed_partition_skips": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "aggregate_job_id": 132351936093,
+          "tests": 1792,
+          "unique_tests": 1792,
+          "passed": 1791,
+          "skipped": 1,
+          "failed": 0,
+          "errors": 0,
+          "node_passed": 275,
+          "aggregate_seconds": 0.2,
+          "elapsed_seconds": 951.61,
+          "aggregation_errors": [],
+          "skipped_cases": [
+            {
+              "test": "tests.test_browser_fixture_ports::test_port_probe_allows_the_previous_fixture_time_wait_socket",
+              "reason": "POSIX TIME_WAIT bind semantics"
+            }
+          ],
+          "npm_audit_scope": "all including dev/build",
+          "known_node_vulnerabilities": 0,
+          "pip_audit": "No known vulnerabilities found",
+          "evidence": "artifacts/ci-readonly/run-43562060192-windows-verification.json"
+        },
+        "browser": {
+          "conclusion": "failure_detected_pending_full_report",
+          "job_status": "in_progress",
+          "official_job_conclusion": null,
+          "known_failed_steps": [
+            {
+              "number": 10,
+              "name": "Run the browser suites against synthetic data"
+            },
+            {
+              "number": 11,
+              "name": "Verify embedded Agent approvals, UI, media and incremental rendering"
+            }
+          ],
+          "case_attribution": "pending_full_artifact",
+          "evidence": "artifacts/ci-readonly/run-43562060192-browser-failure-pending.json"
+        },
+        "fingerprints": {
+          "ubuntu": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+          "windows_partitions": "1493170eb3d303cf1f6dd1bf0481ff84a16ba3960cbfb38db5d7bb0437952bd9",
+          "interpretation": "分操作系统保存字节指纹及内部 unchanged；两边 checkout 绑定同一实际 commit。不声称跨 OS 字节指纹相同，未逐文件确定差异原因。"
+        },
+        "status": "failure_detected_pending_full_report"
+      },
+      "document": "docs/audits/sprint-ci-second-round.json"
+    }
+  ],
+  "local_evidence_applicability": {
+    "local_evidence_candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "local_evidence_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "current_candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "exact_changed_paths_since_local_evidence": [
+      "scripts/verify_pilot_workspace.mjs",
+      "scripts/verify_sprint_ui.mjs"
+    ],
+    "product_sources_static_build_dependencies_backend_tests_node_tests_and_local_verifiers_unchanged": true,
+    "interpretation": "两轮本地完整后端与独立运行时数据属于05498ae及其真实d55指纹。之后仅修正两个浏览器测试夹具；产品、依赖、后端与Node测试、本地运行时脚本均逐路径确认未变。保留旧报告的候选与指纹，不将其伪写为新提交实跑；新提交另由完整GitHub CI重新验证。"
+  },
+  "record_type": "pre_merge_candidate_frozen_validation",
+  "candidate_engineering_gate_semantics": "全局候选 CI 门禁通过只适用于本轮实际实现、实际用例和记录的引擎范围；不推断每条自然语言要求的真实外部条件已满足，也不把条件 P2 改为已实现。"
 }

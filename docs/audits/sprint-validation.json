@@ -1,15 +1,15 @@
 {
   "schema_version": 1,
   "title": "珞珈信使 1.24.0 冻结源码、完整回归与实际性能证据",
-  "generated_at": "2026-11-14T06:06:48.901146+00:00",
+  "generated_at": "2026-11-14T07:08:58.834927+00:00",
   "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
   "validated_code": {
-    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
-    "candidate_tree": "2ab279a351fa8bf89aeb3743d0de5bed944bc48b",
-    "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+    "candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "candidate_tree": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+    "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
     "fingerprint_scope": "audit_full_suite.fingerprint: application, static sources/build, tests, scripts, schemas, deployment, workflow and locked dependencies. Documentation-only commits are outside this code fingerprint.",
     "pull_request": "https://github.com/hxjyaohaohaode/luojiaxinshi/pull/4",
-    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192"
+    "ci_url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000"
   },
   "source_attachments": [
     {
@@ -168,6 +168,17 @@
     "selected_complete": true,
     "complete": true
   },
+  "local_evidence_applicability": {
+    "local_evidence_candidate_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+    "local_evidence_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "current_candidate_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "exact_changed_paths_since_local_evidence": [
+      "scripts/verify_pilot_workspace.mjs",
+      "scripts/verify_sprint_ui.mjs"
+    ],
+    "product_sources_static_build_dependencies_backend_tests_node_tests_and_local_verifiers_unchanged": true,
+    "interpretation": "两轮本地完整后端与独立运行时数据属于05498ae及其真实d55指纹。之后仅修正两个浏览器测试夹具；产品、依赖、后端与Node测试、本地运行时脚本均逐路径确认未变。保留旧报告的候选与指纹，不将其伪写为新提交实跑；新提交另由完整GitHub CI重新验证。"
+  },
   "fixed_frozen_backend_rounds": [
     {
       "scope": "full",
@@ -177,7 +188,7 @@
         3,
         4
       ],
-      "elapsed_seconds": 336.29,
+      "elapsed_seconds": 391.47,
       "file_count": 134,
       "shards": [
         {
@@ -221,7 +232,7 @@
           "skipped": 2
         }
       ],
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
       "implementation_unchanged": true,
       "tests": 1792,
       "failures": 0,
@@ -247,9 +258,9 @@
           "reason": "Windows socket and launcher guard"
         }
       ],
-      "junit_sha256": "609cf9663688b0b18bc428ee5953614ab86693edb85c51e0fd7032f0d76c39ca",
+      "junit_sha256": "c5798027049cd2ea26cab258bc6b17f8506052eb995cebf6e3ae94cd0854833c",
       "status": "passed",
-      "artifact": "artifacts/sprint-final/backend-round2"
+      "artifact": "artifacts/sprint-final/backend-round4"
     },
     {
       "scope": "full",
@@ -259,7 +270,7 @@
         3,
         4
       ],
-      "elapsed_seconds": 382.24,
+      "elapsed_seconds": 404.83,
       "file_count": 134,
       "shards": [
         {
@@ -303,7 +314,7 @@
           "skipped": 2
         }
       ],
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
       "implementation_unchanged": true,
       "tests": 1792,
       "failures": 0,
@@ -329,37 +340,41 @@
           "reason": "Windows socket and launcher guard"
         }
       ],
-      "junit_sha256": "acef1a77faabefe3c83a5505319dd763a84d5a2aeac13184064d133a897b97e0",
+      "junit_sha256": "be06b8527e53f647d3dbe0c808ae2ea97ffb6a4798f31856b2546ddc9885604d",
       "status": "passed",
-      "artifact": "artifacts/sprint-final/backend-round3"
+      "artifact": "artifacts/sprint-final/backend-round5"
     }
   ],
   "frontend_local": {
-    "performed_at": "2026-11-14T05:26:48.742469+00:00",
+    "performed_at": "2026-11-14T06:13:24.916375+00:00",
     "node": "v24.22.1",
     "platform": "linux",
     "commands": [
       {
         "command": "npm run build",
-        "exit_code": 0
+        "exit_code": 0,
+        "log": "ci-evidence/43562060192/frontend-final-build.log"
       },
       {
         "command": "npm run build:check",
-        "exit_code": 0
+        "exit_code": 0,
+        "log": "ci-evidence/43562060192/frontend-final-build-check.log"
       },
       {
         "command": "npm test",
         "exit_code": 0,
         "tests": 275,
         "passed": 275,
-        "log": "ci-evidence/43558958724/frontend-fix-node-tests.log"
+        "failed": 0,
+        "skipped": 0,
+        "log": "ci-evidence/43562060192/frontend-final-node-tests.log"
       },
       {
         "command": ".venv/bin/python -m pytest -q tests/test_frontend_bundle.py tests/test_audit_reports.py",
         "exit_code": 0,
         "tests": 23,
         "passed": 23,
-        "log": "ci-evidence/43558958724/frontend-fix-bundle-tests.log"
+        "log": "ci-evidence/43562060192/frontend-final-bundle-tests.log"
       },
       {
         "command": "git diff --check",
@@ -369,15 +384,16 @@
     "build": {
       "checked": true,
       "entries": {
-        "js": "/static/dist/app-XK3PQMAE.js",
+        "js": "/static/dist/app-DFTX33VB.js",
         "css": "/static/dist/styles-BKR4PFDD.css"
       },
       "files": 24,
       "source_files": 191,
-      "metrics_source": "Already observed npm run build:check output after the task-list repaint fix; no compression or build was rerun during the documentation update.",
-      "source_app_sha256": "69dd774e90e8aef2fc9314425cc4a9977157c4c16f73fd833a6e17b1d7d8f7d1"
+      "source_app_sha256": "7e0c493e8b06b2c70ccf76b9600f50d9c09bc0df54876c9647f52882e921393f",
+      "entry_sha256": "b42c391fe6ee581cd9225b323563434b1148ba4b15ee496308448e2fcba65baf",
+      "metrics_source": "Actual final npm run build:check output after collaboration and memory cold-entry repairs; prior build values remain in history."
     },
-    "manifest_sha256": "685de420214464e0aa7059559dbb378d950918ec8ad49c743cdeb4c18ce45087",
+    "manifest_sha256": "518e0f0b5033b75c84f0a6960212c3194d9a8afa8d13294cd4d33ddf18996b5f",
     "document": "docs/sprint-2026-11-14/frontend-build-verification.json"
   },
   "dependency_audits": {
@@ -409,13 +425,13 @@
   },
   "independent_runtime": {
     "five_users": {
-      "verified_at": "2026-11-14T05:28:49.729979+00:00",
+      "verified_at": "2026-11-14T06:16:29.313540+00:00",
       "result": "passed",
       "environment": {
         "python": "3.12.14",
         "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
       },
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
       "synthetic_test": true,
       "live_model_calls": 0,
       "concurrent_users": 5,
@@ -434,54 +450,54 @@
           "route": "/api/admin/readiness",
           "status": 200,
           "samples": 1,
-          "p50_ms": 13.5,
-          "p95_ms": 13.5,
-          "max_ms": 13.5
+          "p50_ms": 15.4,
+          "p95_ms": 15.4,
+          "max_ms": 15.4
         },
         {
           "method": "GET",
           "route": "/api/edit-cache/new-notice",
           "status": 200,
           "samples": 5,
-          "p50_ms": 14.9,
-          "p95_ms": 19.9,
-          "max_ms": 19.9
+          "p50_ms": 13.5,
+          "p95_ms": 18.2,
+          "max_ms": 18.2
         },
         {
           "method": "GET",
           "route": "/api/notices",
           "status": 200,
           "samples": 5,
-          "p50_ms": 54.8,
-          "p95_ms": 58.4,
-          "max_ms": 58.4
+          "p50_ms": 53.6,
+          "p95_ms": 107.6,
+          "max_ms": 107.6
         },
         {
           "method": "GET",
           "route": "/api/notices/{id}",
           "status": 404,
           "samples": 5,
-          "p50_ms": 13.9,
-          "p95_ms": 14.7,
-          "max_ms": 14.7
+          "p50_ms": 13.0,
+          "p95_ms": 14.3,
+          "max_ms": 14.3
         },
         {
           "method": "GET",
           "route": "/api/session",
           "status": 200,
           "samples": 10,
-          "p50_ms": 15.9,
-          "p95_ms": 236.6,
-          "max_ms": 236.6
+          "p50_ms": 16.3,
+          "p95_ms": 284.2,
+          "max_ms": 284.2
         },
         {
           "method": "GET",
           "route": "/api/tasks",
           "status": 200,
           "samples": 110,
-          "p50_ms": 80.0,
-          "p95_ms": 156.8,
-          "max_ms": 250.1
+          "p50_ms": 79.8,
+          "p95_ms": 257.8,
+          "max_ms": 383.5
         },
         {
           "method": "GET",
@@ -489,89 +505,89 @@
           "status": 401,
           "samples": 5,
           "p50_ms": 8.0,
-          "p95_ms": 11.5,
-          "max_ms": 11.5
+          "p95_ms": 30.5,
+          "max_ms": 30.5
         },
         {
           "method": "POST",
           "route": "/api/auth/login",
           "status": 200,
           "samples": 10,
-          "p50_ms": 121.2,
-          "p95_ms": 474.9,
-          "max_ms": 474.9
+          "p50_ms": 107.1,
+          "p95_ms": 1343.7,
+          "max_ms": 1343.7
         },
         {
           "method": "POST",
           "route": "/api/calendar/export",
           "status": 200,
           "samples": 5,
-          "p50_ms": 71.1,
-          "p95_ms": 123.4,
-          "max_ms": 123.4
+          "p50_ms": 70.3,
+          "p95_ms": 128.5,
+          "max_ms": 128.5
         },
         {
           "method": "POST",
           "route": "/api/notices",
           "status": 200,
           "samples": 100,
-          "p50_ms": 89.0,
-          "p95_ms": 152.1,
-          "max_ms": 430.1
+          "p50_ms": 108.5,
+          "p95_ms": 198.6,
+          "max_ms": 226.5
         },
         {
           "method": "POST",
           "route": "/api/notices/{id}/confirm",
           "status": 200,
           "samples": 105,
-          "p50_ms": 131.0,
-          "p95_ms": 198.1,
-          "max_ms": 623.6
+          "p50_ms": 144.0,
+          "p95_ms": 267.8,
+          "max_ms": 302.7
         },
         {
           "method": "POST",
           "route": "/api/notices/{id}/manual",
           "status": 200,
           "samples": 100,
-          "p50_ms": 137.9,
-          "p95_ms": 266.5,
-          "max_ms": 525.4
+          "p50_ms": 153.9,
+          "p95_ms": 302.6,
+          "max_ms": 431.0
         },
         {
           "method": "PUT",
           "route": "/api/edit-cache/new-notice",
           "status": 200,
           "samples": 100,
-          "p50_ms": 126.6,
-          "p95_ms": 218.5,
-          "max_ms": 338.7
+          "p50_ms": 138.2,
+          "p95_ms": 291.5,
+          "max_ms": 376.4
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 200,
           "samples": 100,
-          "p50_ms": 130.6,
-          "p95_ms": 252.5,
-          "max_ms": 522.2
+          "p50_ms": 138.2,
+          "p95_ms": 307.3,
+          "max_ms": 382.3
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 404,
           "samples": 5,
-          "p50_ms": 13.5,
-          "p95_ms": 17.5,
-          "max_ms": 17.5
+          "p50_ms": 14.3,
+          "p95_ms": 14.6,
+          "max_ms": 14.6
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 409,
           "samples": 100,
-          "p50_ms": 124.6,
-          "p95_ms": 202.2,
-          "max_ms": 295.9
+          "p50_ms": 126.8,
+          "p95_ms": 278.9,
+          "max_ms": 499.6
         }
       ],
       "database_locks_before_restart": {
@@ -580,26 +596,26 @@
         "failed_acquisitions": 0,
         "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
         "wait": {
-          "total_observations": 776,
-          "samples": 776,
-          "p50_ms": 32.309,
-          "p95_ms": 88.957,
-          "max_ms": 266.867
+          "total_observations": 778,
+          "samples": 778,
+          "p50_ms": 37.126,
+          "p95_ms": 114.149,
+          "max_ms": 556.198
         },
         "hold": {
-          "total_observations": 776,
-          "samples": 776,
-          "p50_ms": 12.87,
-          "p95_ms": 44.331,
-          "max_ms": 280.472
+          "total_observations": 778,
+          "samples": 778,
+          "p50_ms": 14.51,
+          "p95_ms": 54.483,
+          "max_ms": 126.385
         }
       },
       "percentile_method": "nearest_rank",
       "ordinary_crud_latency_ms": {
         "samples": 625,
-        "p50": 115.2,
-        "p95": 219.1,
-        "max": 623.6
+        "p50": 128.7,
+        "p95": 282.6,
+        "max": 431.0
       },
       "engineering_targets": {
         "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
@@ -609,7 +625,7 @@
         },
         "write_total_wait_p95": {
           "limit_ms_exclusive": 100,
-          "passed": true
+          "passed": false
         },
         "write_acquisitions": {
           "allowed_failures": 0,
@@ -617,20 +633,20 @@
         }
       },
       "recovery_observations": {
-        "backup_seconds": 0.038,
-        "restart_verified_seconds": 1.798,
-        "restore_file_seconds": 0.053,
-        "restore_verified_seconds": 2.371,
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.001,
+        "restore_file_seconds": 0.098,
+        "restore_verified_seconds": 2.512,
         "confirmed_tasks_lost_in_fixture": 0,
         "task_identity_and_business_content_equal": true,
         "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
         "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
       },
-      "workload_seconds": 18.9,
+      "workload_seconds": 22.29,
       "request_latency_ms": {
-        "median": 114.2,
-        "p95": 224.7,
-        "max": 623.6
+        "median": 126.2,
+        "p95": 289.6,
+        "max": 1343.7
       },
       "restart_preserved_tasks": true,
       "restore_preserved_tasks_and_edit_caches": true,
@@ -638,18 +654,18 @@
       "cross_account_access_rejected": true,
       "stale_updates_rejected": true,
       "idempotent_replays_passed": true,
-      "elapsed_seconds": 25.44,
+      "elapsed_seconds": 29.68,
       "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
       "implementation_unchanged": true
     },
     "ten_users": {
-      "verified_at": "2026-11-14T05:30:13.987626+00:00",
+      "verified_at": "2026-11-14T06:17:38.850075+00:00",
       "result": "passed",
       "environment": {
         "python": "3.12.14",
         "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
       },
-      "implementation_sha256": "33fca6c8def29b55e5437336ac6daa9e893c7c4a28dc1666bcf6d3c35413c3e1",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
       "synthetic_test": true,
       "live_model_calls": 0,
       "concurrent_users": 10,
@@ -668,144 +684,144 @@
           "route": "/api/admin/readiness",
           "status": 200,
           "samples": 1,
-          "p50_ms": 14.3,
-          "p95_ms": 14.3,
-          "max_ms": 14.3
+          "p50_ms": 17.4,
+          "p95_ms": 17.4,
+          "max_ms": 17.4
         },
         {
           "method": "GET",
           "route": "/api/edit-cache/new-notice",
           "status": 200,
           "samples": 10,
-          "p50_ms": 13.9,
-          "p95_ms": 47.0,
-          "max_ms": 47.0
+          "p50_ms": 12.5,
+          "p95_ms": 14.5,
+          "max_ms": 14.5
         },
         {
           "method": "GET",
           "route": "/api/notices",
           "status": 200,
           "samples": 10,
-          "p50_ms": 67.3,
-          "p95_ms": 94.9,
-          "max_ms": 94.9
+          "p50_ms": 63.1,
+          "p95_ms": 487.4,
+          "max_ms": 487.4
         },
         {
           "method": "GET",
           "route": "/api/notices/{id}",
           "status": 404,
           "samples": 10,
-          "p50_ms": 12.7,
-          "p95_ms": 15.0,
-          "max_ms": 15.0
+          "p50_ms": 13.1,
+          "p95_ms": 18.3,
+          "max_ms": 18.3
         },
         {
           "method": "GET",
           "route": "/api/session",
           "status": 200,
           "samples": 20,
-          "p50_ms": 17.6,
-          "p95_ms": 468.3,
-          "max_ms": 524.0
+          "p50_ms": 21.8,
+          "p95_ms": 551.1,
+          "max_ms": 558.0
         },
         {
           "method": "GET",
           "route": "/api/tasks",
           "status": 200,
           "samples": 220,
-          "p50_ms": 208.0,
-          "p95_ms": 344.4,
-          "max_ms": 622.6
+          "p50_ms": 222.1,
+          "p95_ms": 693.5,
+          "max_ms": 1869.1
         },
         {
           "method": "GET",
           "route": "/api/tasks",
           "status": 401,
           "samples": 10,
-          "p50_ms": 6.8,
-          "p95_ms": 13.5,
-          "max_ms": 13.5
+          "p50_ms": 6.5,
+          "p95_ms": 8.8,
+          "max_ms": 8.8
         },
         {
           "method": "POST",
           "route": "/api/auth/login",
           "status": 200,
           "samples": 20,
-          "p50_ms": 79.6,
-          "p95_ms": 964.3,
-          "max_ms": 964.7
+          "p50_ms": 282.8,
+          "p95_ms": 1010.3,
+          "max_ms": 1014.5
         },
         {
           "method": "POST",
           "route": "/api/calendar/export",
           "status": 200,
           "samples": 10,
-          "p50_ms": 187.4,
-          "p95_ms": 255.8,
-          "max_ms": 255.8
+          "p50_ms": 154.3,
+          "p95_ms": 331.8,
+          "max_ms": 331.8
         },
         {
           "method": "POST",
           "route": "/api/notices",
           "status": 200,
           "samples": 200,
-          "p50_ms": 168.3,
-          "p95_ms": 269.9,
-          "max_ms": 447.5
+          "p50_ms": 229.7,
+          "p95_ms": 457.5,
+          "max_ms": 1023.7
         },
         {
           "method": "POST",
           "route": "/api/notices/{id}/confirm",
           "status": 200,
           "samples": 210,
-          "p50_ms": 319.9,
-          "p95_ms": 529.9,
-          "max_ms": 638.9
+          "p50_ms": 373.9,
+          "p95_ms": 754.5,
+          "max_ms": 1723.7
         },
         {
           "method": "POST",
           "route": "/api/notices/{id}/manual",
           "status": 200,
           "samples": 200,
-          "p50_ms": 331.7,
-          "p95_ms": 509.3,
-          "max_ms": 638.5
+          "p50_ms": 415.7,
+          "p95_ms": 855.3,
+          "max_ms": 1903.5
         },
         {
           "method": "PUT",
           "route": "/api/edit-cache/new-notice",
           "status": 200,
           "samples": 200,
-          "p50_ms": 302.4,
-          "p95_ms": 471.3,
-          "max_ms": 579.4
+          "p50_ms": 371.3,
+          "p95_ms": 709.7,
+          "max_ms": 1672.8
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 200,
           "samples": 200,
-          "p50_ms": 305.2,
-          "p95_ms": 507.4,
-          "max_ms": 623.9
+          "p50_ms": 376.6,
+          "p95_ms": 796.1,
+          "max_ms": 1652.5
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 404,
           "samples": 10,
-          "p50_ms": 13.2,
-          "p95_ms": 14.5,
-          "max_ms": 14.5
+          "p50_ms": 12.9,
+          "p95_ms": 17.9,
+          "max_ms": 17.9
         },
         {
           "method": "PUT",
           "route": "/api/tasks/{id}",
           "status": 409,
           "samples": 200,
-          "p50_ms": 302.7,
-          "p95_ms": 492.9,
-          "max_ms": 632.2
+          "p50_ms": 361.1,
+          "p95_ms": 721.3,
+          "max_ms": 1670.2
         }
       ],
       "database_locks_before_restart": {
@@ -814,26 +830,26 @@
         "failed_acquisitions": 0,
         "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
         "wait": {
-          "total_observations": 1588,
-          "samples": 1588,
-          "p50_ms": 79.095,
-          "p95_ms": 178.891,
-          "max_ms": 382.656
+          "total_observations": 1629,
+          "samples": 1629,
+          "p50_ms": 94.066,
+          "p95_ms": 272.906,
+          "max_ms": 755.516
         },
         "hold": {
-          "total_observations": 1588,
-          "samples": 1588,
-          "p50_ms": 9.132,
-          "p95_ms": 82.005,
-          "max_ms": 279.103
+          "total_observations": 1629,
+          "samples": 1629,
+          "p50_ms": 11.493,
+          "p95_ms": 92.466,
+          "max_ms": 1103.639
         }
       },
       "percentile_method": "nearest_rank",
       "ordinary_crud_latency_ms": {
         "samples": 1250,
-        "p50": 265.9,
-        "p95": 481.6,
-        "max": 638.9
+        "p50": 327.0,
+        "p95": 743.1,
+        "max": 1903.5
       },
       "engineering_targets": {
         "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
@@ -851,20 +867,20 @@
         }
       },
       "recovery_observations": {
-        "backup_seconds": 0.047,
-        "restart_verified_seconds": 2.005,
-        "restore_file_seconds": 0.067,
-        "restore_verified_seconds": 2.959,
+        "backup_seconds": 0.041,
+        "restart_verified_seconds": 2.027,
+        "restore_file_seconds": 0.089,
+        "restore_verified_seconds": 3.275,
         "confirmed_tasks_lost_in_fixture": 0,
         "task_identity_and_business_content_equal": true,
         "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
         "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
       },
-      "workload_seconds": 42.28,
+      "workload_seconds": 56.05,
       "request_latency_ms": {
-        "median": 265.2,
-        "p95": 491.1,
-        "max": 964.7
+        "median": 325.9,
+        "p95": 749.0,
+        "max": 1903.5
       },
       "restart_preserved_tasks": true,
       "restore_preserved_tasks_and_edit_caches": true,
@@ -872,7 +888,7 @@
       "cross_account_access_rejected": true,
       "stale_updates_rejected": true,
       "idempotent_replays_passed": true,
-      "elapsed_seconds": 50.1,
+      "elapsed_seconds": 64.83,
       "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
       "implementation_unchanged": true
     },
@@ -887,72 +903,72 @@
     "notices": 10000,
     "payload_bytes": 20992851,
     "timings": {
-      "intake_at_10000_records_ms": 55.41,
-      "list_10000_records_ms": 1024.41,
-      "full_text_search_10000_records_ms": 952.97,
-      "matter_candidates_10000_records_ms": 70.6,
-      "duplicate_replay_at_capacity_ms": 37.85
+      "intake_at_10000_records_ms": 53.93,
+      "list_10000_records_ms": 1141.12,
+      "full_text_search_10000_records_ms": 1005.94,
+      "matter_candidates_10000_records_ms": 76.41,
+      "duplicate_replay_at_capacity_ms": 29.8
     },
     "capacity_boundary": "10000 succeeds; new 10001 rejected; duplicate replay succeeds",
     "interactive_pages": {
       "collected_page": {
-        "cold_ms": 41.31,
-        "warm_p50_ms": 35.8,
-        "warm_p95_ms": 36.9,
+        "cold_ms": 41.02,
+        "warm_p50_ms": 33.53,
+        "warm_p95_ms": 34.23,
         "samples_ms": [
-          41.31,
-          34.12,
-          36.69,
+          41.02,
           33.53,
-          35.8,
-          36.9
+          33.08,
+          32.88,
+          34.23,
+          33.68
         ],
-        "max_payload_bytes": 106675,
+        "max_payload_bytes": 106672,
         "total": 10000
       },
       "semantic_current_page": {
-        "cold_ms": 489.13,
-        "warm_p50_ms": 37.24,
-        "warm_p95_ms": 44.15,
+        "cold_ms": 481.08,
+        "warm_p50_ms": 46.33,
+        "warm_p95_ms": 79.05,
         "samples_ms": [
-          489.13,
-          37.24,
-          39.47,
-          44.15,
-          34.35,
-          34.18
+          481.08,
+          37.72,
+          52.42,
+          79.05,
+          32.73,
+          46.33
         ],
-        "max_payload_bytes": 106699,
+        "max_payload_bytes": 106705,
         "total": 10000
       },
       "indexed_body_search": {
-        "cold_ms": 71.77,
-        "warm_p50_ms": 74.5,
-        "warm_p95_ms": 83.4,
+        "cold_ms": 101.99,
+        "warm_p50_ms": 70.82,
+        "warm_p95_ms": 156.68,
         "samples_ms": [
-          71.77,
-          74.5,
-          73.51,
-          83.4,
-          70.36,
-          76.65
+          101.99,
+          156.68,
+          66.41,
+          73.45,
+          70.82,
+          68.71
         ],
         "max_payload_bytes": 3070,
         "total": 1
       },
       "short_chinese_search": {
-        "cold_ms": 100.41,
-        "warm_p50_ms": 112.97,
-        "warm_p95_ms": 131.44,
+        "cold_ms": 115.23,
+        "warm_p50_ms": 104.16,
+        "warm_p95_ms": 109.32,
         "samples_ms": [
-          100.41,
-          131.44,
-          106.86,
-          126.91,
-          112.97,
-          108.76
+          115.23,
+          101.45,
+          109.32,
+          104.16,
+          108.27,
+          100.74
         ],
-        "max_payload_bytes": 111961,
+        "max_payload_bytes": 111959,
         "total": 9999
       }
     },
@@ -962,39 +978,4192 @@
   "diagnostic_history": [
     "docs/audits/sprint-query-regression.json",
     "docs/audits/sprint-ci-first-round.json",
-    "docs/audits/sprint-write-wait-evidence.json"
+    "docs/audits/sprint-write-wait-evidence.json",
+    "docs/audits/sprint-ci-second-round.json",
+    "docs/audits/sprint-validation-before-cold-entry-fixes.json",
+    "docs/audits/sprint-ci-third-round.json"
   ],
   "remote_ci": {
-    "run_id": 43562060192,
-    "run_number": 50,
-    "candidate_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
-    "tested_merge_sha": "c025c9d8a87916c3466d236019c79373ef3bac0a",
-    "conclusion": "failure",
-    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
-    "evidence": "docs/audits/sprint-ci-second-round.json",
-    "passed_gates": [
-      "ubuntu full suite",
-      "windows full suite and exact partition union",
-      "node and build on both OS",
-      "dependency audits",
-      "continuity 990",
-      "container"
+    "run_id": 43567666000,
+    "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "tested_checkout_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+    "event": "pull_request",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+    "verified_at": "2026-11-14T07:05:27.366670+00:00",
+    "official_jobs": [
+      {
+        "id": 132364928987,
+        "name": "tests (ubuntu-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929119,
+        "name": "container",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929133,
+        "name": "Windows backend (4/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929169,
+        "name": "browser",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929184,
+        "name": "Async save and recovery",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929231,
+        "name": "Windows backend (3/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929270,
+        "name": "Windows backend (1/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132364929280,
+        "name": "Windows backend (2/4)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      },
+      {
+        "id": 132369108059,
+        "name": "tests (windows-latest)",
+        "status": "completed",
+        "conclusion": "success",
+        "failed_steps": []
+      }
     ],
-    "failed_scripts": [
-      "scripts/verify_sprint_ui.mjs",
-      "scripts/verify_pilot_workspace.mjs",
-      "tests/composer-browser.mjs"
+    "all_nine_required_jobs_success": true,
+    "units": {
+      "linux": {
+        "job_id": 132364928987,
+        "artifact": {
+          "id": 14102804791,
+          "name": "unit-reports-ubuntu-latest",
+          "size_in_bytes": 160848,
+          "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102804791",
+          "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102804791/zip",
+          "expired": false,
+          "created_at": "2026-11-14T06:52:32Z",
+          "expires_at": "2026-11-28T06:52:31Z",
+          "updated_at": "2026-11-14T06:52:32Z",
+          "digest": "sha256:66566433c22e52a021be334fc59db1a5688e1939b7447549cb0f76f160341430",
+          "workflow_run": {
+            "id": 43567666000,
+            "repository_id": 1417322145,
+            "head_repository_id": 1417322145,
+            "head_branch": "codex/sprint-2026-11-14",
+            "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc"
+          }
+        },
+        "backend": {
+          "scope": "full",
+          "selected_shards": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "elapsed_seconds": 475.06,
+          "file_count": 134,
+          "shards": [
+            {
+              "shard": 1,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 447,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 2,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 480,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 3,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 389,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 4,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 476,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 2
+            }
+          ],
+          "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+          "implementation_unchanged": true,
+          "tests": 1792,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2,
+          "passed": 1790,
+          "selected_complete": true,
+          "complete": true
+        },
+        "backend_junit": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1790,
+          "skipped_cases": [
+            {
+              "class": "tests.test_local_runtime_ownership",
+              "name": "test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+              "reason": "Windows process ownership guard"
+            },
+            {
+              "class": "tests.test_local_runtime_ownership",
+              "name": "test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+              "reason": "Windows socket and launcher guard"
+            }
+          ],
+          "sha256": "e8dd2c5ff85dd6c88d404506327bc62afc8778f4721bc55a558ecc34a846123c"
+        },
+        "node_junit": {
+          "tests": 275,
+          "unique": 275,
+          "passed": 275,
+          "skipped_cases": [],
+          "sha256": "375123a0ec2576a5af9a86e7ed270cd09de9def5487a550e05e858e06be9b34d"
+        },
+        "frontend_build": {
+          "command": "npm run build:check",
+          "passed": true,
+          "actual_checked_marker": true
+        },
+        "dependency_audits": {
+          "npm": {
+            "command": "npm audit",
+            "scope": "all installed dependencies including dev/build; no --omit flag",
+            "known_vulnerabilities": 0,
+            "passed": true
+          },
+          "python": {
+            "command": "python -m pip_audit -r requirements.lock --strict",
+            "known_vulnerabilities": 0,
+            "passed": true
+          }
+        },
+        "targeted_original_failures_and_parser": [
+          {
+            "test": "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+            "passed": true
+          },
+          {
+            "test": "tests.test_legacy_office::test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+            "passed": true
+          },
+          {
+            "test": "tests.test_task_board::test_first_move_preserves_paged_order_when_legacy_update_order_differs",
+            "passed": true
+          }
+        ],
+        "verification_path": "artifacts/ci-readonly/run-43567666000-linux-verification.json",
+        "verification_sha256": "f9d10e795f6c4945c4255fdfb3da6b233feab504a48fcc3514f368c49751670e"
+      },
+      "windows": {
+        "job_id": 132369108059,
+        "artifact": {
+          "id": 14103437268,
+          "name": "unit-reports-windows-latest",
+          "size_in_bytes": 64182,
+          "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103437268",
+          "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103437268/zip",
+          "expired": false,
+          "created_at": "2026-11-14T07:02:40Z",
+          "expires_at": "2026-11-28T07:02:39Z",
+          "updated_at": "2026-11-14T07:02:40Z",
+          "digest": "sha256:84bbafae60a5bf7d56528a64c9283415eac3bdc7d80baf1df92ad2c303f5fb8b",
+          "workflow_run": {
+            "id": 43567666000,
+            "repository_id": 1417322145,
+            "head_repository_id": 1417322145,
+            "head_branch": "codex/sprint-2026-11-14",
+            "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc"
+          }
+        },
+        "backend": {
+          "scope": "full",
+          "elapsed_seconds": 989.59,
+          "file_count": 134,
+          "shards": [
+            {
+              "shard": 1,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 447,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 2,
+              "exit_code": 0,
+              "files": 34,
+              "timed_out": false,
+              "tests": 480,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "shard": 3,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 389,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 1
+            },
+            {
+              "shard": 4,
+              "exit_code": 0,
+              "files": 33,
+              "timed_out": false,
+              "tests": 476,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ],
+          "implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+          "implementation_unchanged": true,
+          "aggregation_errors": [],
+          "selected_shards": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "selected_complete": true,
+          "complete": true,
+          "tests": 1792,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1,
+          "passed": 1791,
+          "aggregation_seconds": 0.11
+        },
+        "backend_junit": {
+          "tests": 1792,
+          "unique": 1792,
+          "passed": 1791,
+          "skipped_cases": [
+            {
+              "class": "tests.test_browser_fixture_ports",
+              "name": "test_port_probe_allows_the_previous_fixture_time_wait_socket",
+              "reason": "POSIX TIME_WAIT bind semantics"
+            }
+          ],
+          "sha256": "f3dc31ec6dc228d39d806277c1bcab63dd36379ea10be474fa1d136075fe36fa"
+        },
+        "node_junit": {
+          "tests": 275,
+          "unique": 275,
+          "passed": 275,
+          "skipped_cases": [],
+          "sha256": "3a84e49d81cc48325d9bcbfbc9653c5d94e269ab52898849faeebdb7e08fe4f3"
+        },
+        "frontend_build": {
+          "command": "npm run build:check",
+          "passed": true,
+          "actual_checked_marker": true
+        },
+        "dependency_audits": {
+          "npm": {
+            "command": "npm audit",
+            "scope": "all installed dependencies including dev/build; no --omit flag",
+            "known_vulnerabilities": 0,
+            "passed": true
+          },
+          "python": {
+            "command": "python -m pip_audit -r requirements.lock --strict",
+            "known_vulnerabilities": 0,
+            "passed": true
+          }
+        },
+        "targeted_original_failures_and_parser": [
+          {
+            "test": "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+            "passed": true
+          },
+          {
+            "test": "tests.test_legacy_office::test_real_pinned_parser_reads_a_synthetic_rtf_doc_through_notice_worker",
+            "passed": true
+          },
+          {
+            "test": "tests.test_task_board::test_first_move_preserves_paged_order_when_legacy_update_order_differs",
+            "passed": true
+          },
+          {
+            "test": "tests.test_local_runtime_ownership::test_stale_pid_can_start_but_never_authorizes_stop_or_another_workspace",
+            "passed": true
+          },
+          {
+            "test": "tests.test_local_runtime_ownership::test_real_port_probe_rejects_an_unmanaged_listener_and_accepts_the_released_port",
+            "passed": true
+          }
+        ],
+        "verification_path": "artifacts/ci-readonly/run-43567666000-windows-verification.json",
+        "verification_sha256": "03bff6b87963a6f3a89e69b63dbe69f3b14ef7644675414f2b1f63204fb71e94"
+      }
+    },
+    "browser": {
+      "run_id": 43567666000,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "checkout_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+      "artifact_sha256": "fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+      "node_runtime": "v22.23.4",
+      "report_slots": 33,
+      "statuses": {
+        "passed": 33
+      },
+      "recorded_checks": 1038,
+      "passed_checks": 1038,
+      "failed_checks": 0,
+      "previous_passed_checks_not_recorded": 0,
+      "rows": [
+        {
+          "suite": "Sprint workflows and loading performance",
+          "path": "sprint-ui-browser/report.json",
+          "status": "passed",
+          "recorded": 60,
+          "passed_checks": 60,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": "passed",
+          "top_complete": true,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Browser stability",
+          "path": "frontend-v9-browser/report.json",
+          "status": "passed",
+          "recorded": 123,
+          "passed_checks": 123,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Browser regression",
+          "path": "frontend-v8-browser/report.json",
+          "status": "passed",
+          "recorded": 201,
+          "passed_checks": 201,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 67,
+            "firefox": 67,
+            "webkit": 67
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Reference interactions",
+          "path": "reference-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 48,
+          "passed_checks": 48,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Workspace interactions",
+          "path": "workspace-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 120,
+          "passed_checks": 120,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Visual layout bounds",
+          "path": "visual-review-browser/report.json",
+          "status": "passed",
+          "recorded": 168,
+          "passed_checks": 168,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Notice intake and flexible workflows",
+          "path": "notice-flow-browser/report.json",
+          "status": "passed",
+          "recorded": 45,
+          "passed_checks": 45,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Task board drag and recovery",
+          "path": "task-board-browser/report.json",
+          "status": "passed",
+          "recorded": 28,
+          "passed_checks": 28,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Natural notice intake",
+          "path": "natural-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Personal materials and submissions",
+          "path": "task-materials-browser/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Source subscriptions and personal inbox",
+          "path": "source-inbox-browser/report.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Persistent push and device ownership",
+          "path": "push-browser/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 8
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Notice matter grouping and campus capacities",
+          "path": "notice-matters-browser/report.json",
+          "status": "passed",
+          "recorded": 21,
+          "passed_checks": 21,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "School source chooser and pending saves",
+          "path": "source-presets-browser/report.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Independent devices and campus collaboration",
+          "path": "pilot-workspace-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "QQ group intake, rules and attachments",
+          "path": "qq-group-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 12,
+          "passed_checks": 12,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Agent approvals and cancellation",
+          "path": "agent-chat-browser/results.json",
+          "status": "passed",
+          "recorded": 13,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Agent authored UI and persistence",
+          "path": "agent-adaptive-browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Agent private media and resize",
+          "path": "reference-fusion/browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Agent incremental rendering",
+          "path": "agent-quality-browser/performance.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Composer attachments and dictation",
+          "path": "composer-browser/results.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "OpenUI streaming Chromium",
+          "path": "openui-browser/chromium/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "OpenUI streaming Firefox",
+          "path": "openui-browser/firefox/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "OpenUI streaming WebKit",
+          "path": "openui-browser/webkit/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Compact chat Chromium",
+          "path": "chat-layout/chromium/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Compact chat Firefox",
+          "path": "chat-layout/firefox/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Compact chat WebKit",
+          "path": "chat-layout/webkit/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat interactions Chromium",
+          "path": "chat-interactions/chromium/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat interactions Firefox",
+          "path": "chat-interactions/firefox/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat interactions WebKit",
+          "path": "chat-interactions/webkit/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat recovery Chromium",
+          "path": "chat-recovery/chromium/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat recovery Firefox",
+          "path": "chat-recovery/firefox/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          },
+          "previous_passed_checks_not_recorded": []
+        },
+        {
+          "suite": "Chat recovery WebKit",
+          "path": "chat-recovery/webkit/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "failures": [],
+          "top_status": null,
+          "top_complete": null,
+          "errors": [],
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          },
+          "previous_passed_checks_not_recorded": []
+        }
+      ],
+      "note": "Actual original report counts; Agent and Composer are Chromium-only. No missing or unexecuted checks are counted as passes.",
+      "sprint_evidence": {
+        "query_races": [
+          {
+            "engine": "chromium",
+            "old_query": "冲刺分页 chromium",
+            "new_query": "跨页独有 chromium",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "net::ERR_ABORTED",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 chromium",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 chromium",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          },
+          {
+            "engine": "firefox",
+            "old_query": "冲刺分页 firefox",
+            "new_query": "跨页独有 firefox",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": true,
+            "old_request_failure": null,
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 firefox",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 firefox",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_response_observed_after_new_query"
+          },
+          {
+            "engine": "webkit",
+            "old_query": "冲刺分页 webkit",
+            "new_query": "跨页独有 webkit",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "Load request cancelled",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 webkit",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 webkit",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          }
+        ],
+        "mobile_controls": [
+          {
+            "engine": "chromium",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.171875,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "firefox",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 656.5,
+              "width": 85.66666412353516,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "webkit",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.375,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          }
+        ],
+        "network_fixture": {
+          "service_workers": "block",
+          "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+        },
+        "performance": [
+          {
+            "engine": "chromium",
+            "label": "cold-login",
+            "can_input_at_ms": 223.3000000000029,
+            "dom_content_loaded_ms": 118.80000000000291,
+            "load_event_ms": 120.69999999999709,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1833256,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 43.39999999999418,
+                "transferSize": 116851,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 25.90000000000873,
+                "transferSize": 30610,
+                "encodedBodySize": 30310
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 37.80000000000291,
+                "transferSize": 146186,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 19,
+                "transferSize": 6021,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 22.89999999999418,
+                "transferSize": 13585,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 12.60000000000582,
+                "transferSize": 1908,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 22.60000000000582,
+                "transferSize": 7899,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 27.80000000000291,
+                "transferSize": 37955,
+                "encodedBodySize": 37655
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 27.89999999999418,
+                "transferSize": 3112,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 32.39999999999418,
+                "transferSize": 4189,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 34,
+                "transferSize": 1016,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 7.2999999999883585,
+                "transferSize": 1948,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/assets/luojia-messenger-welcome.png",
+                "initiator": "img",
+                "duration": 7.80000000000291,
+                "transferSize": 1461234,
+                "encodedBodySize": 1460934
+              }
+            ]
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 68,
+            "dom_content_loaded_ms": 15.89999999999418,
+            "load_event_ms": 17.89999999999418,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 30310
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 37655
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 1.3999999999941792,
+                "transferSize": 0,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/assets/luojia-messenger-welcome.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 1460934
+              }
+            ]
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 241.40000000000873,
+            "dom_content_loaded_ms": 16.69999999999709,
+            "load_event_ms": 18.30000000000291,
+            "request_count": 27,
+            "static_request_count": 17,
+            "css_request_count": 1,
+            "transfer_size": 78930,
+            "encoded_body_size": 3101031,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 30310
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 37655
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 0.7000000000116415,
+                "transferSize": 0,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 64350
+              },
+              {
+                "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 2495
+              },
+              {
+                "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 3999
+              },
+              {
+                "url": "/static/assets/luojia-messenger-complete.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 1309816
+              },
+              {
+                "url": "/static/assets/luojia-messenger-organize.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 1276761
+              }
+            ]
+          },
+          {
+            "engine": "firefox",
+            "label": "cold-login",
+            "can_input_at_ms": 362,
+            "dom_content_loaded_ms": 244,
+            "load_event_ms": 246,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1859861,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 31,
+                "transferSize": 30610,
+                "encodedBodySize": 30310
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 58,
+                "transferSize": 146186,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 61,
+                "transferSize": 116851,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-180.png",
+                "initiator": "other",
+                "duration": 179,
+                "transferSize": 26605,
+                "encodedBodySize": 26305
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 177,
+                "transferSize": 1948,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 20,
+                "transferSize": 37955,
+                "encodedBodySize": 37655
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 21,
+                "transferSize": 13585,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 21,
+                "transferSize": 1908,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 25,
+                "transferSize": 3112,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 26,
+                "transferSize": 6021,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 27,
+                "transferSize": 7899,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 27,
+                "transferSize": 1016,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 28,
+                "transferSize": 4189,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/assets/luojia-messenger-welcome.png",
+                "initiator": "img",
+                "duration": 10,
+                "transferSize": 1461234,
+                "encodedBodySize": 1460934
+              }
+            ]
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 126,
+            "dom_content_loaded_ms": 57,
+            "load_event_ms": 59,
+            "request_count": 14,
+            "static_request_count": 12,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 363817,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 11,
+                "transferSize": 0,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-180.png",
+                "initiator": "other",
+                "duration": 41,
+                "transferSize": 0,
+                "encodedBodySize": 26305
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 42,
+                "transferSize": 0,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 5,
+                "transferSize": 0,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 6,
+                "transferSize": 0,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 7,
+                "transferSize": 0,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 7,
+                "transferSize": 0,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 0,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 9,
+                "transferSize": 0,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 9,
+                "transferSize": 0,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 0,
+                "encodedBodySize": 37655
+              }
+            ]
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 279,
+            "dom_content_loaded_ms": 40,
+            "load_event_ms": 42,
+            "request_count": 25,
+            "static_request_count": 15,
+            "css_request_count": 1,
+            "transfer_size": 77657,
+            "encoded_body_size": 509176,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 116551
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 10,
+                "transferSize": 0,
+                "encodedBodySize": 145886
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-32.png",
+                "initiator": "other",
+                "duration": 25,
+                "transferSize": 0,
+                "encodedBodySize": 1648
+              },
+              {
+                "url": "/static/assets/campus-notice-icon-v4-180.png",
+                "initiator": "other",
+                "duration": 25,
+                "transferSize": 0,
+                "encodedBodySize": 26305
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 6,
+                "transferSize": 0,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 6,
+                "transferSize": 0,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 7,
+                "transferSize": 0,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 0,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 0,
+                "encodedBodySize": 37655
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 0,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 9,
+                "transferSize": 0,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 9,
+                "transferSize": 0,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 64350
+              },
+              {
+                "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+                "initiator": "script",
+                "duration": 2,
+                "transferSize": 0,
+                "encodedBodySize": 2495
+              },
+              {
+                "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+                "initiator": "script",
+                "duration": 2,
+                "transferSize": 0,
+                "encodedBodySize": 3999
+              }
+            ]
+          },
+          {
+            "engine": "webkit",
+            "label": "cold-login",
+            "can_input_at_ms": 246,
+            "dom_content_loaded_ms": 115,
+            "load_event_ms": 117,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1832546,
+            "encoded_body_size": 1828046,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/manifest.webmanifest",
+                "initiator": "other",
+                "duration": 7,
+                "transferSize": 1072,
+                "encodedBodySize": 772
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 12,
+                "transferSize": 30610,
+                "encodedBodySize": 30310
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 27,
+                "transferSize": 146247,
+                "encodedBodySize": 145947
+              },
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 27,
+                "transferSize": 116935,
+                "encodedBodySize": 116635
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 7,
+                "transferSize": 1908,
+                "encodedBodySize": 1608
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 13585,
+                "encodedBodySize": 13285
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 8,
+                "transferSize": 7899,
+                "encodedBodySize": 7599
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 9,
+                "transferSize": 6021,
+                "encodedBodySize": 5721
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 10,
+                "transferSize": 3112,
+                "encodedBodySize": 2812
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 16,
+                "transferSize": 37976,
+                "encodedBodySize": 37676
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 17,
+                "transferSize": 4189,
+                "encodedBodySize": 3889
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 17,
+                "transferSize": 1016,
+                "encodedBodySize": 716
+              },
+              {
+                "url": "/static/assets/luojia-messenger-welcome.png",
+                "initiator": "img",
+                "duration": 5,
+                "transferSize": 1461234,
+                "encodedBodySize": 1460934
+              }
+            ]
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 87,
+            "dom_content_loaded_ms": 40,
+            "load_event_ms": 41,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1814,
+            "encoded_body_size": 914,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 7,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/manifest.webmanifest",
+                "initiator": "other",
+                "duration": 2,
+                "transferSize": 1072,
+                "encodedBodySize": 772
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/luojia-messenger-welcome.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              }
+            ]
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 259,
+            "dom_content_loaded_ms": 36,
+            "load_event_ms": 37,
+            "request_count": 28,
+            "static_request_count": 18,
+            "css_request_count": 1,
+            "transfer_size": 78615,
+            "encoded_body_size": 75315,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null,
+            "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+            "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+            "resources": [
+              {
+                "url": "/static/dist/styles-BKR4PFDD.css",
+                "initiator": "link",
+                "duration": 6,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/manifest.webmanifest",
+                "initiator": "other",
+                "duration": 2,
+                "transferSize": 1072,
+                "encodedBodySize": 772
+              },
+              {
+                "url": "/static/dist/app-DFTX33VB.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/campus-notice-mark-v4.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-43FC37BF.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+                "initiator": "script",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+                "initiator": "script",
+                "duration": 1,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/luojia-messenger-reading.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/luojia-messenger-complete.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              },
+              {
+                "url": "/static/assets/luojia-messenger-organize.png",
+                "initiator": "img",
+                "duration": 0,
+                "transferSize": 0,
+                "encodedBodySize": 0
+              }
+            ]
+          }
+        ]
+      },
+      "pilot_evidence": {
+        "cold_imports": [
+          {
+            "engine": "chromium",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "chromium",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          }
+        ],
+        "network_fixture": {
+          "desktop_service_workers": "block",
+          "reason": "Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior."
+        }
+      }
+    },
+    "browser_artifact": {
+      "id": 14103570812,
+      "name": "synthetic-browser-reports",
+      "size_in_bytes": 21714160,
+      "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103570812",
+      "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14103570812/zip",
+      "expired": false,
+      "created_at": "2026-11-14T07:01:41Z",
+      "expires_at": "2026-11-28T07:01:39Z",
+      "updated_at": "2026-11-14T07:01:41Z",
+      "digest": "sha256:fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+      "workflow_run": {
+        "id": 43567666000,
+        "repository_id": 1417322145,
+        "head_repository_id": 1417322145,
+        "head_branch": "codex/sprint-2026-11-14",
+        "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc"
+      }
+    },
+    "changed_browser_fixture_evidence": {
+      "sprint_query_races": [
+        {
+          "engine": "chromium",
+          "old_query": "冲刺分页 chromium",
+          "new_query": "跨页独有 chromium",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "net::ERR_ABORTED",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 chromium",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 chromium",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        },
+        {
+          "engine": "firefox",
+          "old_query": "冲刺分页 firefox",
+          "new_query": "跨页独有 firefox",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": true,
+          "old_request_failure": null,
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 firefox",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 firefox",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_response_observed_after_new_query"
+        },
+        {
+          "engine": "webkit",
+          "old_query": "冲刺分页 webkit",
+          "new_query": "跨页独有 webkit",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "Load request cancelled",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 webkit",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 webkit",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        }
+      ],
+      "mobile_publication_controls": [
+        {
+          "engine": "chromium",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.171875,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "firefox",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 656.5,
+            "width": 85.66666412353516,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "webkit",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.375,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        }
+      ],
+      "pilot_cold_imports": [
+        {
+          "engine": "chromium",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "chromium",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        }
+      ],
+      "sprint_performance": [
+        {
+          "engine": "chromium",
+          "label": "cold-login",
+          "can_input_at_ms": 223.3000000000029,
+          "dom_content_loaded_ms": 118.80000000000291,
+          "load_event_ms": 120.69999999999709,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1833256,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 43.39999999999418,
+              "transferSize": 116851,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 25.90000000000873,
+              "transferSize": 30610,
+              "encodedBodySize": 30310
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 37.80000000000291,
+              "transferSize": 146186,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 19,
+              "transferSize": 6021,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 22.89999999999418,
+              "transferSize": 13585,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 12.60000000000582,
+              "transferSize": 1908,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 22.60000000000582,
+              "transferSize": 7899,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 27.80000000000291,
+              "transferSize": 37955,
+              "encodedBodySize": 37655
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 27.89999999999418,
+              "transferSize": 3112,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 32.39999999999418,
+              "transferSize": 4189,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 34,
+              "transferSize": 1016,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 7.2999999999883585,
+              "transferSize": 1948,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/assets/luojia-messenger-welcome.png",
+              "initiator": "img",
+              "duration": 7.80000000000291,
+              "transferSize": 1461234,
+              "encodedBodySize": 1460934
+            }
+          ]
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 68,
+          "dom_content_loaded_ms": 15.89999999999418,
+          "load_event_ms": 17.89999999999418,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 30310
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 37655
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 1.3999999999941792,
+              "transferSize": 0,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/assets/luojia-messenger-welcome.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 1460934
+            }
+          ]
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 241.40000000000873,
+          "dom_content_loaded_ms": 16.69999999999709,
+          "load_event_ms": 18.30000000000291,
+          "request_count": 27,
+          "static_request_count": 17,
+          "css_request_count": 1,
+          "transfer_size": 78930,
+          "encoded_body_size": 3101031,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 30310
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 37655
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 0.7000000000116415,
+              "transferSize": 0,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 64350
+            },
+            {
+              "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 2495
+            },
+            {
+              "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 3999
+            },
+            {
+              "url": "/static/assets/luojia-messenger-complete.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 1309816
+            },
+            {
+              "url": "/static/assets/luojia-messenger-organize.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 1276761
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "label": "cold-login",
+          "can_input_at_ms": 362,
+          "dom_content_loaded_ms": 244,
+          "load_event_ms": 246,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1859861,
+          "encoded_body_size": 1855061,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 31,
+              "transferSize": 30610,
+              "encodedBodySize": 30310
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 58,
+              "transferSize": 146186,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 61,
+              "transferSize": 116851,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-180.png",
+              "initiator": "other",
+              "duration": 179,
+              "transferSize": 26605,
+              "encodedBodySize": 26305
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 177,
+              "transferSize": 1948,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 20,
+              "transferSize": 37955,
+              "encodedBodySize": 37655
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 21,
+              "transferSize": 13585,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 21,
+              "transferSize": 1908,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 25,
+              "transferSize": 3112,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 26,
+              "transferSize": 6021,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 27,
+              "transferSize": 7899,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 27,
+              "transferSize": 1016,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 28,
+              "transferSize": 4189,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/assets/luojia-messenger-welcome.png",
+              "initiator": "img",
+              "duration": 10,
+              "transferSize": 1461234,
+              "encodedBodySize": 1460934
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 126,
+          "dom_content_loaded_ms": 57,
+          "load_event_ms": 59,
+          "request_count": 14,
+          "static_request_count": 12,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 363817,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 11,
+              "transferSize": 0,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-180.png",
+              "initiator": "other",
+              "duration": 41,
+              "transferSize": 0,
+              "encodedBodySize": 26305
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 42,
+              "transferSize": 0,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 5,
+              "transferSize": 0,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 6,
+              "transferSize": 0,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 7,
+              "transferSize": 0,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 7,
+              "transferSize": 0,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 0,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 9,
+              "transferSize": 0,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 9,
+              "transferSize": 0,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 0,
+              "encodedBodySize": 37655
+            }
+          ]
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 279,
+          "dom_content_loaded_ms": 40,
+          "load_event_ms": 42,
+          "request_count": 25,
+          "static_request_count": 15,
+          "css_request_count": 1,
+          "transfer_size": 77657,
+          "encoded_body_size": 509176,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 116551
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 10,
+              "transferSize": 0,
+              "encodedBodySize": 145886
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-32.png",
+              "initiator": "other",
+              "duration": 25,
+              "transferSize": 0,
+              "encodedBodySize": 1648
+            },
+            {
+              "url": "/static/assets/campus-notice-icon-v4-180.png",
+              "initiator": "other",
+              "duration": 25,
+              "transferSize": 0,
+              "encodedBodySize": 26305
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 6,
+              "transferSize": 0,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 6,
+              "transferSize": 0,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 7,
+              "transferSize": 0,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 0,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 0,
+              "encodedBodySize": 37655
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 0,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 9,
+              "transferSize": 0,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 9,
+              "transferSize": 0,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 64350
+            },
+            {
+              "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+              "initiator": "script",
+              "duration": 2,
+              "transferSize": 0,
+              "encodedBodySize": 2495
+            },
+            {
+              "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+              "initiator": "script",
+              "duration": 2,
+              "transferSize": 0,
+              "encodedBodySize": 3999
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "label": "cold-login",
+          "can_input_at_ms": 246,
+          "dom_content_loaded_ms": 115,
+          "load_event_ms": 117,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1832546,
+          "encoded_body_size": 1828046,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/manifest.webmanifest",
+              "initiator": "other",
+              "duration": 7,
+              "transferSize": 1072,
+              "encodedBodySize": 772
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 12,
+              "transferSize": 30610,
+              "encodedBodySize": 30310
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 27,
+              "transferSize": 146247,
+              "encodedBodySize": 145947
+            },
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 27,
+              "transferSize": 116935,
+              "encodedBodySize": 116635
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 7,
+              "transferSize": 1908,
+              "encodedBodySize": 1608
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 13585,
+              "encodedBodySize": 13285
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 8,
+              "transferSize": 7899,
+              "encodedBodySize": 7599
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 9,
+              "transferSize": 6021,
+              "encodedBodySize": 5721
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 10,
+              "transferSize": 3112,
+              "encodedBodySize": 2812
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 16,
+              "transferSize": 37976,
+              "encodedBodySize": 37676
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 17,
+              "transferSize": 4189,
+              "encodedBodySize": 3889
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 17,
+              "transferSize": 1016,
+              "encodedBodySize": 716
+            },
+            {
+              "url": "/static/assets/luojia-messenger-welcome.png",
+              "initiator": "img",
+              "duration": 5,
+              "transferSize": 1461234,
+              "encodedBodySize": 1460934
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 87,
+          "dom_content_loaded_ms": 40,
+          "load_event_ms": 41,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1814,
+          "encoded_body_size": 914,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 7,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/manifest.webmanifest",
+              "initiator": "other",
+              "duration": 2,
+              "transferSize": 1072,
+              "encodedBodySize": 772
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/luojia-messenger-welcome.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            }
+          ]
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 259,
+          "dom_content_loaded_ms": 36,
+          "load_event_ms": 37,
+          "request_count": 28,
+          "static_request_count": 18,
+          "css_request_count": 1,
+          "transfer_size": 78615,
+          "encoded_body_size": 75315,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null,
+          "parse_duration_note": "No portable browser API separates JavaScript parsing from execution; unmeasured.",
+          "cache_note": "Zero transferSize is allowed on warm loads and is not treated as a network failure.",
+          "resources": [
+            {
+              "url": "/static/dist/styles-BKR4PFDD.css",
+              "initiator": "link",
+              "duration": 6,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/manifest.webmanifest",
+              "initiator": "other",
+              "duration": 2,
+              "transferSize": 1072,
+              "encodedBodySize": 772
+            },
+            {
+              "url": "/static/dist/app-DFTX33VB.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/campus-notice-mark-v4.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-VHWCVQYR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-ZE6GBC5S.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HHFMEND4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-52VEMMR4.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-43FC37BF.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-OFOGQT63.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-5XLQ4GUR.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-HWBRJJQM.js",
+              "initiator": "script",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chat-3FTYZ52U.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-URIZXBGG.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/dist/chunks/chunk-KRBNAJD2.js",
+              "initiator": "script",
+              "duration": 1,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/luojia-messenger-reading.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/luojia-messenger-complete.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            },
+            {
+              "url": "/static/assets/luojia-messenger-organize.png",
+              "initiator": "img",
+              "duration": 0,
+              "transferSize": 0,
+              "encodedBodySize": 0
+            }
+          ]
+        }
+      ],
+      "network_fixture": {
+        "service_workers": "block",
+        "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+      },
+      "agent_checks_chromium": 13,
+      "composer_checks_chromium": 9
+    },
+    "continuity": {
+      "run_id": 43567666000,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "artifact": {
+        "id": 14102853777,
+        "name": "continuity-browser-reports",
+        "size_in_bytes": 706100,
+        "url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102853777",
+        "archive_download_url": "https://api.github.com/repos/hxjyaohaohaode/luojiaxinshi/actions/artifacts/14102853777/zip",
+        "expired": false,
+        "created_at": "2026-11-14T06:46:59Z",
+        "expires_at": "2026-11-28T06:46:58Z",
+        "updated_at": "2026-11-14T06:46:59Z",
+        "digest": "sha256:895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
+        "workflow_run": {
+          "id": 43567666000,
+          "repository_id": 1417322145,
+          "head_repository_id": 1417322145,
+          "head_branch": "codex/sprint-2026-11-14",
+          "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc"
+        }
+      },
+      "download_sha256": "895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
+      "rows": [
+        {
+          "path": "continuity-browser/arrangement-recovery/report.json",
+          "checks": 612,
+          "passed": 612,
+          "failed": 0,
+          "errors": [],
+          "engines": {
+            "chromium": 204,
+            "firefox": 204,
+            "webkit": 204
+          }
+        },
+        {
+          "path": "continuity-browser/draft-continuity/report.json",
+          "checks": 204,
+          "passed": 204,
+          "failed": 0,
+          "errors": [],
+          "engines": {
+            "chromium": 68,
+            "firefox": 68,
+            "webkit": 68
+          }
+        },
+        {
+          "path": "continuity-browser/ui-continuity/report.json",
+          "checks": 174,
+          "passed": 174,
+          "failed": 0,
+          "errors": [],
+          "engines": {
+            "chromium": 58,
+            "firefox": 58,
+            "webkit": 58
+          }
+        }
+      ],
+      "checks": 990,
+      "passed": 990,
+      "failed": 0,
+      "checkout_lines": [
+        "2026-11-14T06:43:18.0779850Z HEAD is now at ac3e291 Merge 6b15c7452966e7600cca87acf36a2e11ad034fbc into b362ab2100f835ace66bbc2b92921e865af1e1ce",
+        "2026-11-14T06:43:18.0837580Z [command]/usr/bin/git log -1 --format=%H"
+      ],
+      "note": "Counted original per-check passed flags and errors arrays; three engines each330."
+    },
+    "container_and_runtime": {
+      "schema_version": 1,
+      "verified_at": "2026-11-14T07:05:19.951Z",
+      "run": {
+        "repository": "hxjyaohaohaode/luojiaxinshi",
+        "run_id": 43567666000,
+        "run_number": 52,
+        "run_attempt": 1,
+        "event": "pull_request",
+        "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+        "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+        "base_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+        "tree_sha": "445d4ce97ecd9a8cbc10c88b78fb01c41bca4959",
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000"
+      },
+      "scope": "只读核验本轮container及Ubuntu/Windows unit artifacts内真实运行时报告；不同平台/运行/样本不相加。整轮官方状态单独来自root保存的GitHub元数据，运行时证据不代表学校或真人验收。",
+      "official_workflow": {
+        "source": "artifacts/ci-readonly/run-43567666000-root-official.json",
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": 9,
+        "successful_jobs": 9,
+        "artifacts": 8
+      },
+      "container": {
+        "job_id": 132364929119,
+        "conclusion": "success",
+        "log_path": "artifacts/ci-readonly/run-43567666000-container.log",
+        "log_sha256": "18366a87d4bad992c9abae76f78a946d130cf1b44912b2a3fbf4c3636ae83229",
+        "job_metadata": "artifacts/ci-readonly/run-43567666000-container-job.json",
+        "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+        "uploaded_artifact": null,
+        "verified_checks": [
+          "docker build成功",
+          "只读根文件系统及tmpfs数据目录启动",
+          "UID=10001；cap-drop ALL；no-new-privileges",
+          "健康接口status=ok",
+          "manage.py check: database=ok、schema=4、users=0、AI未配置",
+          "GenUI capability prompt资源存在且长度断言通过",
+          "旧格式DOC解析烟测提取到指定文字",
+          "入口页面包含app节点",
+          "测试容器清理成功"
+        ],
+        "counting_scope": "以上为9组烟测证据，不是JUnit案例计数。"
+      },
+      "platforms": {
+        "ubuntu": {
+          "job_id": 132364928987,
+          "conclusion": "success",
+          "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+          "source_artifact": {
+            "id": 14102804791,
+            "name": "unit-reports-ubuntu-latest",
+            "size_in_bytes": 160848,
+            "github_sha256": "66566433c22e52a021be334fc59db1a5688e1939b7447549cb0f76f160341430",
+            "local_zip": "artifacts/ci-readonly/run-43567666000-linux.zip",
+            "local_zip_sha256": "66566433c22e52a021be334fc59db1a5688e1939b7447549cb0f76f160341430",
+            "digest_matches_github": true
+          },
+          "runtime_json": {
+            "path": "artifacts/ci-readonly/run-43567666000-linux/runtime-acceptance.json",
+            "sha256": "039dbf7521527ada188ae4dd623739f03933f7c8177fa22456d598706ceb9b79"
+          },
+          "job_log": {
+            "path": "artifacts/ci-readonly/run-43567666000-linux.log",
+            "sha256": "071a713bf4711e6e79b15ffc0e4cffb9386d3610cc4fca9cafbeb80f38099d03"
+          },
+          "verification": {
+            "runtime_json_equals_actual_job_log_json": true,
+            "runtime_json_occurrences_in_job_log": 1,
+            "http_sample_totals_reconcile": true,
+            "ordinary_crud_sample_total_reconciles": true,
+            "engineering_target_booleans_match_observations": true
+          },
+          "observation": {
+            "verified_at": "2026-11-14T06:52:29.283784+00:00",
+            "result": "passed",
+            "environment": {
+              "python": "3.12.16",
+              "platform": "Linux-7.0.0-1019-azure-x86_64-with-glibc2.43"
+            },
+            "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+            "synthetic_test": true,
+            "live_model_calls": 0,
+            "concurrent_users": 5,
+            "notices_saved": 100,
+            "tasks_saved": 200,
+            "http_requests": 766,
+            "response_status_counts": {
+              "200": 651,
+              "401": 5,
+              "404": 10,
+              "409": 100
+            },
+            "database_locks_before_restart": {
+              "observed": true,
+              "sample_limit": 4096,
+              "failed_acquisitions": 0,
+              "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+              "wait": {
+                "total_observations": 776,
+                "samples": 776,
+                "p50_ms": 27.389,
+                "p95_ms": 76.713,
+                "max_ms": 111.288
+              },
+              "hold": {
+                "total_observations": 776,
+                "samples": 776,
+                "p50_ms": 10.623,
+                "p95_ms": 40.837,
+                "max_ms": 65.546
+              }
+            },
+            "percentile_method": "nearest_rank",
+            "ordinary_crud_latency_ms": {
+              "samples": 625,
+              "p50": 106.3,
+              "p95": 187.9,
+              "max": 222.4
+            },
+            "engineering_targets": {
+              "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+              "ordinary_crud_p95": {
+                "limit_ms_exclusive": 1000,
+                "passed": true
+              },
+              "write_total_wait_p95": {
+                "limit_ms_exclusive": 100,
+                "passed": true
+              },
+              "write_acquisitions": {
+                "allowed_failures": 0,
+                "passed": true
+              }
+            },
+            "recovery_observations": {
+              "backup_seconds": 0.027,
+              "restart_verified_seconds": 1.569,
+              "restore_file_seconds": 0.043,
+              "restore_verified_seconds": 2.009,
+              "confirmed_tasks_lost_in_fixture": 0,
+              "task_identity_and_business_content_equal": true,
+              "process_stop_method": "owned process SIGTERM; SIGKILL only if stop timeout",
+              "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+            },
+            "workload_seconds": 17.09,
+            "request_latency_ms": {
+              "median": 107,
+              "p95": 188.2,
+              "max": 388.9
+            },
+            "restart_preserved_tasks": true,
+            "restore_preserved_tasks_and_edit_caches": true,
+            "restored_old_sessions_rejected": true,
+            "cross_account_access_rejected": true,
+            "stale_updates_rejected": true,
+            "idempotent_replays_passed": true,
+            "elapsed_seconds": 22.48,
+            "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+            "implementation_unchanged": true
+          },
+          "operation_counts": [
+            {
+              "method": "GET",
+              "route": "/api/admin/readiness",
+              "status": 200,
+              "samples": 1
+            },
+            {
+              "method": "GET",
+              "route": "/api/edit-cache/new-notice",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/notices",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/notices/{id}",
+              "status": 404,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/session",
+              "status": 200,
+              "samples": 10
+            },
+            {
+              "method": "GET",
+              "route": "/api/tasks",
+              "status": 200,
+              "samples": 110
+            },
+            {
+              "method": "GET",
+              "route": "/api/tasks",
+              "status": 401,
+              "samples": 5
+            },
+            {
+              "method": "POST",
+              "route": "/api/auth/login",
+              "status": 200,
+              "samples": 10
+            },
+            {
+              "method": "POST",
+              "route": "/api/calendar/export",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices/{id}/confirm",
+              "status": 200,
+              "samples": 105
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices/{id}/manual",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/edit-cache/new-notice",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 404,
+              "samples": 5
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 409,
+              "samples": 100
+            }
+          ]
+        },
+        "windows": {
+          "job_id": 132369108059,
+          "conclusion": "success",
+          "actual_checkout_merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+          "source_artifact": {
+            "id": 14103437268,
+            "name": "unit-reports-windows-latest",
+            "size_in_bytes": 64182,
+            "github_sha256": "84bbafae60a5bf7d56528a64c9283415eac3bdc7d80baf1df92ad2c303f5fb8b",
+            "local_zip": "artifacts/ci-readonly/run-43567666000-windows.zip",
+            "local_zip_sha256": "84bbafae60a5bf7d56528a64c9283415eac3bdc7d80baf1df92ad2c303f5fb8b",
+            "digest_matches_github": true
+          },
+          "runtime_json": {
+            "path": "artifacts/ci-readonly/run-43567666000-windows/runtime-acceptance.json",
+            "sha256": "3f7532993529177fd11a8a45e232ff29a26a7415e87cdebf4f4f8af3e1689942"
+          },
+          "job_log": {
+            "path": "artifacts/ci-readonly/run-43567666000-windows.log",
+            "sha256": "e8c20776236ef7e84c4222cfe623b0fd8e6f5c9e653c8a0ad208b834febe29a7"
+          },
+          "verification": {
+            "runtime_json_equals_actual_job_log_json": true,
+            "runtime_json_occurrences_in_job_log": 1,
+            "http_sample_totals_reconcile": true,
+            "ordinary_crud_sample_total_reconciles": true,
+            "engineering_target_booleans_match_observations": true
+          },
+          "observation": {
+            "verified_at": "2026-11-14T07:02:23.590093+00:00",
+            "result": "passed",
+            "environment": {
+              "python": "3.12.10",
+              "platform": "Windows-2025Server-10.0.26100-SP0"
+            },
+            "implementation_sha256": "01168269130fa0b0bd0fe577e05b394c292ccd59322a9234adea0100049e8439",
+            "synthetic_test": true,
+            "live_model_calls": 0,
+            "concurrent_users": 5,
+            "notices_saved": 100,
+            "tasks_saved": 200,
+            "http_requests": 766,
+            "response_status_counts": {
+              "200": 651,
+              "401": 5,
+              "404": 10,
+              "409": 100
+            },
+            "database_locks_before_restart": {
+              "observed": true,
+              "sample_limit": 4096,
+              "failed_acquisitions": 0,
+              "scope": "本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺",
+              "wait": {
+                "total_observations": 772,
+                "samples": 772,
+                "p50_ms": 21.315,
+                "p95_ms": 55.371,
+                "max_ms": 106.412
+              },
+              "hold": {
+                "total_observations": 772,
+                "samples": 772,
+                "p50_ms": 7.255,
+                "p95_ms": 35.758,
+                "max_ms": 106.193
+              }
+            },
+            "percentile_method": "nearest_rank",
+            "ordinary_crud_latency_ms": {
+              "samples": 625,
+              "p50": 84.2,
+              "p95": 147,
+              "max": 287.4
+            },
+            "engineering_targets": {
+              "scope": "Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.",
+              "ordinary_crud_p95": {
+                "limit_ms_exclusive": 1000,
+                "passed": true
+              },
+              "write_total_wait_p95": {
+                "limit_ms_exclusive": 100,
+                "passed": true
+              },
+              "write_acquisitions": {
+                "allowed_failures": 0,
+                "passed": true
+              }
+            },
+            "recovery_observations": {
+              "backup_seconds": 0.031,
+              "restart_verified_seconds": 1.427,
+              "restore_file_seconds": 0.053,
+              "restore_verified_seconds": 1.848,
+              "confirmed_tasks_lost_in_fixture": 0,
+              "task_identity_and_business_content_equal": true,
+              "process_stop_method": "owned process tree taskkill /T /F",
+              "snapshot_scope": "All fixture business writes completed before the snapshot; no later business writes. This is not a production RPO or power-failure simulation."
+            },
+            "workload_seconds": 13.28,
+            "request_latency_ms": {
+              "median": 82.5,
+              "p95": 150.3,
+              "max": 287.4
+            },
+            "restart_preserved_tasks": true,
+            "restore_preserved_tasks_and_edit_caches": true,
+            "restored_old_sessions_rejected": true,
+            "cross_account_access_rejected": true,
+            "stale_updates_rejected": true,
+            "idempotent_replays_passed": true,
+            "elapsed_seconds": 18.57,
+            "scope": "Local real HTTP process; synthetic text notices; not a load ceiling, phone acceptance or user study.",
+            "implementation_unchanged": true
+          },
+          "operation_counts": [
+            {
+              "method": "GET",
+              "route": "/api/admin/readiness",
+              "status": 200,
+              "samples": 1
+            },
+            {
+              "method": "GET",
+              "route": "/api/edit-cache/new-notice",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/notices",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/notices/{id}",
+              "status": 404,
+              "samples": 5
+            },
+            {
+              "method": "GET",
+              "route": "/api/session",
+              "status": 200,
+              "samples": 10
+            },
+            {
+              "method": "GET",
+              "route": "/api/tasks",
+              "status": 200,
+              "samples": 110
+            },
+            {
+              "method": "GET",
+              "route": "/api/tasks",
+              "status": 401,
+              "samples": 5
+            },
+            {
+              "method": "POST",
+              "route": "/api/auth/login",
+              "status": 200,
+              "samples": 10
+            },
+            {
+              "method": "POST",
+              "route": "/api/calendar/export",
+              "status": 200,
+              "samples": 5
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices/{id}/confirm",
+              "status": 200,
+              "samples": 105
+            },
+            {
+              "method": "POST",
+              "route": "/api/notices/{id}/manual",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/edit-cache/new-notice",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 200,
+              "samples": 100
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 404,
+              "samples": 5
+            },
+            {
+              "method": "PUT",
+              "route": "/api/tasks/{id}",
+              "status": 409,
+              "samples": 100
+            }
+          ]
+        }
+      },
+      "semantics": {
+        "write_total_wait": "从进程内FIFO准入前起算，包含排队、连接准备和SQLite BEGIN IMMEDIATE等待；三部分共用原15秒预算。没有缩小统计范围。",
+        "hold": "成功BEGIN至提交或回滚完成的事务持有时间。",
+        "metric_snapshot": "业务负载结束后从admin/readiness读取，之后才重启；含后台事务和最终409等事务，与HTTP请求不一一对应，重启后清零。",
+        "ordinary_crud": "仅统计2xx且route以/api/notices、/api/tasks、/api/edit-cache开头的625次请求；其他操作和预期失败另记。",
+        "expected_non_2xx": "每个平台401×5为恢复后旧会话拒绝、404×10为跨账号读取/修改拒绝、409×100为旧版本更新拒绝，均是明确预期断言。",
+        "recovery": "逐人比较完整task ID及notice_id/status/version/data并核编辑缓存；不将仅数量相同作为未丢失。时钟派生标签及导出标记不参与稳定业务内容比较。",
+        "process_stop": "Linux为所属进程SIGTERM、超时才SIGKILL；Windows为所属进程树taskkill /T /F；未模拟断电、业务写入后快照缺口或生产RPO。",
+        "fingerprints": "Ubuntu a8173b44…与Windows 01168269…各自内部unchanged且实际checkout同一Git合并提交；分别保留原始指纹，不推测跨平台差异唯一成因。",
+        "performance": "本摘要共享runner五人单轮76.713/55.371ms观察不覆盖最近独立本地五人114.149ms及十人272.906ms未达100ms门槛；不能据CI单轮宣称五人稳定通过。",
+        "external_services": "合成数据与真实本地HTTP、live_model_calls=0；不声称完成真实模型、通知供应商或学校系统联调。"
+      },
+      "current_local_boundary": {
+        "local_observation_head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+        "local_observation_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+        "five_user_artifact": "artifacts/sprint-final/runtime-5-final-v3.json",
+        "five_user_write_total_wait_p95_ms": 114.149,
+        "five_user_gate_passed": false,
+        "ten_user_artifact": "artifacts/sprint-final/runtime-10-final-v3.json",
+        "ten_user_write_total_wait_p95_ms": 272.906,
+        "ten_user_gate_passed": false,
+        "scope": "最近独立本地结果未重跑；05498ae→6b15c仅两份browser fixture修改，产品及runtime脚本未变。原d55观测身份保留，不冒称以a817重跑。"
+      },
+      "release_scope": {
+        "whole_workflow_status_from_official_metadata": true,
+        "browser_details_in_separate_verification": "artifacts/ci-readonly/run-43567666000-agent-composer-verification.json",
+        "local_test_or_load_rerun_for_this_audit": false,
+        "product_or_test_source_edited_for_this_audit": false
+      }
+    },
+    "limits": [
+      "Each operating system, browser engine, candidate and local/shared-runner observation retains its own identity.",
+      "Agent/Composer, materials, source-inbox, source-presets and push suites are Chromium-only; other engine counts follow each original report.",
+      "The latest independent local five/ten-user wait-target failures remain recorded; successful functional CI does not approve real campus use.",
+      "Real providers, physical devices, independently labeled model evaluation and cumulative five-day campus acceptance are not inferred from synthetic checks."
     ],
-    "repair_validation": "Later cold-entry and fixture fixes require a new frozen source run; these passed gates are not relabeled as their result."
+    "root_verification": {
+      "original_archives_match_official_sha256_and_size": true,
+      "unique_backend_and_node_junit_counts_recomputed": true,
+      "changed_sprint_and_pilot_raw_checks_recomputed": true,
+      "all_final_source_facts_from_current_run": true
+    }
   },
   "gates": {
     "frozen_local_backend_clean_rounds": 2,
     "two_complete_clean_local_backend_rounds": true,
+    "local_round_identity_and_unchanged_product_applicability": "See local_evidence_applicability; the recorded local fingerprints are not relabeled as the newer browser-fixture commit.",
     "node_275_cases_passed": true,
     "frontend_rebuild_check_passed": true,
-    "five_person_observed_performance_targets": true,
+    "five_person_observed_performance_targets": false,
     "ten_person_observed_performance_targets": false,
-    "remote_ci_conclusion": "failure",
+    "remote_ci_conclusion": "success",
+    "five_person_trial_approved": false,
     "ten_person_expansion_approved": false,
     "real_campus_acceptance_complete": false
   },
@@ -1005,7 +5174,7 @@
     "独立人工冻结标准与真实模型质量评测；本轮无付费模型调用，不拿合成用例冒充准确率。",
     "真实试点人数、负载、费用负责人/预算、学校身份和范围确认，以及累计不少于5天的现场实践或场景验证与单位验收。",
     "原清单明确条件化的8项P2扩展，依真实需求和平台条件决定。",
-    "10人扩大门槛的总写入等待P95仍失败；保持100ms原标准，未采用未达标的schema预热实验。"
+    "本次5人和10人总写入等待P95均未达100ms原标准；原5人通过记录保留为历史，不能宣称稳定达标，也未采用未达标的schema预热实验。"
   ],
   "delivery_verification": "此文件绑定已验证代码指纹与明确的CI运行。合并到main后的实际提交和完整CI，应核对PR合并记录及main对应运行；不能从合并计划推断成功。"
 }

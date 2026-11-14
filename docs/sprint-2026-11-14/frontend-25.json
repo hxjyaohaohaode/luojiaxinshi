@@ -1,6 +1,6 @@
 {
   "scope": "LJ-085–109 plus API integration dependencies",
-  "browser_gate": "Run 43562060192 completed: 30 report slots passed, pilot failed, sprint/composer failed without reports. Continuity 990/990 passed. Targeted cold-entry and test repairs require the next CI; no full frontend acceptance is predeclared.",
+  "browser_gate": "Run 52 completed successfully across all 9 jobs: 33/33 browser report slots, 1,038/1,038 browser checks, and 990/990 continuity checks. Each requirement records its relevant suites and actual engines. Physical-device and manual boundaries remain explicit; no later main-branch run is predeclared.",
   "requirements": [
     {
       "id": "LJ-085",
@@ -11,11 +11,11 @@
       "cost": "M",
       "requirement": "F07样式分层和组件所有权整理，确认最终断点/字号/间距；学院页与事项页纳入统一层序，删除被覆盖旧策略。",
       "source_line": 273,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "同一DFTX构建在7个Linux/Windows Node22门禁通过；visual168、source-inbox5和pilot33相关布局/入口回归完成。"
       ],
       "area": "统一层序与所有权",
       "files": [
@@ -24,11 +24,70 @@
         "static/task-materials.js"
       ],
       "change": "学院、事项、材料 CSS 进入统一 legacy/system 层序；删除独立无层 link 和运行时材料 link，修正 bundle 相对路径。已有各 feature CSS 保持必要规则，未凭静态猜测整片删除。",
-      "verification": "npm run build；现有 visual / source-inbox / pilot suites",
+      "verification": "Run 52 已执行：同一DFTX构建在7个Linux/Windows Node22门禁通过；visual168、source-inbox5和pilot33相关布局/入口回归完成。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50: 7 Linux/Windows Node22 build gates passed for app-XK3PQMAE.js; visual-layout suite 168 checks passed. Later cold-entry repairs produce a new build requiring revalidation."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "同一DFTX构建在7个Linux/Windows Node22门禁通过；visual168、source-inbox5和pilot33相关布局/入口回归完成。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "npm run build；现有 visual / source-inbox / pilot suites",
+          "observed_browser_evidence": [
+            "Run50: 7 Linux/Windows Node22 build gates passed for app-XK3PQMAE.js; visual-layout suite 168 checks passed. Later cold-entry repairs produce a new build requiring revalidation."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "visual-review-browser/report.json",
+          "checks": 168,
+          "passed": 168,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "path": "source-inbox-browser/report.json",
+          "checks": 5,
+          "passed": 5,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "path": "pilot-workspace-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-086",
@@ -39,11 +98,11 @@
       "cost": "S",
       "requirement": "保持珞珈绿、白底和当前导航习惯；制定手机/桌面密度token，避免每个页面继续各写一套尺寸补丁。",
       "source_line": 274,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "visual168及sprint三引擎布局检查完成；实际查看390px草稿、聊天与1440px看板，保留原品牌与导航。"
       ],
       "area": "品牌及密度令牌",
       "files": [
@@ -51,11 +110,59 @@
         "static/system/responsive-density.css"
       ],
       "change": "保留珞珈绿/白底与原导航。统一 control-target=44px 和 page/row 密度 token，明确 850px 断点；没有 scale 全页缩小。",
-      "verification": "新 sprint suite 320/390/1280 及原 visual suites",
+      "verification": "Run 52 已执行：visual168及sprint三引擎布局检查完成；实际查看390px草稿、聊天与1440px看板，保留原品牌与导航。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 visual-layout bounds: 168 checks passed, 56 per engine; actual 320px chat, 390x420 chat and desktop task-board screenshots reviewed."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "visual168及sprint三引擎布局检查完成；实际查看390px草稿、聊天与1440px看板，保留原品牌与导航。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "新 sprint suite 320/390/1280 及原 visual suites",
+          "observed_browser_evidence": [
+            "Run50 visual-layout bounds: 168 checks passed, 56 per engine; actual 320px chat, 390x420 chat and desktop task-board screenshots reviewed."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "visual-review-browser/report.json",
+          "checks": 168,
+          "passed": 168,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-087",
@@ -66,11 +173,11 @@
       "cost": "M",
       "requirement": "F08点击面积与视觉大小分离，重点更多菜单/勾选/拖动/聊天按钮；不用统一scale缩小，触达面积不相互覆盖。",
       "source_line": 275,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint三引擎任务44px独立目标和320px输入菜单检查完成；看板手机手柄至少43.9px及操作回归通过。"
       ],
       "area": "触达面积",
       "files": [
@@ -78,11 +185,59 @@
         "static/system/chat-conversation.css"
       ],
       "change": "任务勾选、更多、拖动、聊天入口用独立 44px 格；删除桌面负 margin 并保留视觉图标大小。",
-      "verification": "sprint: task targets and 320px composer geometry",
+      "verification": "Run 52 已执行：sprint三引擎任务44px独立目标和320px输入菜单检查完成；看板手机手柄至少43.9px及操作回归通过。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 task-board: 28 checks passed including 320/390 touch targets; actual browser result retained. Sprint-specific control-overlap check has no completed report."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint三引擎任务44px独立目标和320px输入菜单检查完成；看板手机手柄至少43.9px及操作回归通过。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "sprint: task targets and 320px composer geometry",
+          "observed_browser_evidence": [
+            "Run50 task-board: 28 checks passed including 320/390 touch targets; actual browser result retained. Sprint-specific control-overlap check has no completed report."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-088",
@@ -93,11 +248,11 @@
       "cost": "M",
       "requirement": "手机通知页压缩顶部层数：标题与收件动作同行，搜索主行，次要筛选收起并显示生效摘要；首条内容更早出现。",
       "source_line": 276,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "真实54条任务的50条首屏/继续加载/跨页检索完成；来源入口与布局回归通过，已加载范围和完整匹配范围区分。"
       ],
       "area": "通知首屏",
       "files": [
@@ -105,8 +260,67 @@
         "static/system/workspace-clarity.css"
       ],
       "change": "主行搜索和收通知；来源/日期/关系/展示方式在明确 disclosure 内，筛选摘要保持可见，列表范围显示已加载/总匹配。",
-      "verification": "source-inbox / visual / sprint pagination",
-      "limitations": []
+      "verification": "Run 52 已执行：真实54条任务的50条首屏/继续加载/跨页检索完成；来源入口与布局回归通过，已加载范围和完整匹配范围区分。",
+      "limitations": [],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "source-inbox / visual / sprint pagination"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "真实54条任务的50条首屏/继续加载/跨页检索完成；来源入口与布局回归通过，已加载范围和完整匹配范围区分。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "source-inbox-browser/report.json",
+          "checks": 5,
+          "passed": 5,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "path": "visual-review-browser/report.json",
+          "checks": 168,
+          "passed": 168,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-089",
@@ -117,11 +331,11 @@
       "cost": "M",
       "requirement": "首页/待办每行一个主状态、一个关键日期、一句下一步；多警告收为可展开摘要，重要变更仍明显。",
       "source_line": 277,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_logic_tests_passed_and_ui_regressions_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "任务看板与工作区操作回归完成；单一主状态、优先时间与下一步的组合逻辑证据仍来自已执行Node套件内task-summary单测，不以UI总数替代该语义。"
       ],
       "area": "单行摘要",
       "files": [
@@ -129,8 +343,56 @@
         "static/app.js"
       ],
       "change": "一项主状态、一项关键时间和下一步；重要变更优先，多警告放更多菜单，未核实时间不冒充有效期限。",
-      "verification": "tests/task-summary.test.mjs",
-      "limitations": []
+      "verification": "Run 52 已执行：任务看板与工作区操作回归完成；单一主状态、优先时间与下一步的组合逻辑证据仍来自已执行Node套件内task-summary单测，不以UI总数替代该语义。",
+      "limitations": [],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "tests/task-summary.test.mjs"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "任务看板与工作区操作回归完成；单一主状态、优先时间与下一步的组合逻辑证据仍来自已执行Node套件内task-summary单测，不以UI总数替代该语义。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "path": "workspace-interactions-browser/report.json",
+          "checks": 120,
+          "passed": 120,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-090",
@@ -141,11 +403,11 @@
       "cost": "M",
       "requirement": "手机待办分组与列表策略统一；长标题自适应，拖动有菜单/键盘替代，点击正文与完成/更多区域不打架。",
       "source_line": 278,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "看板28项全部通过，含真实拖动/撤销/失败恢复、键盘移动、触控目标，以及各引擎同节点/焦点稳定和首页返回恢复筛选。"
       ],
       "area": "手机待办",
       "files": [
@@ -153,11 +415,59 @@
         "static/system/workspace-clarity.css"
       ],
       "change": "保留分组、长标题换行；拖动入口明确提供点按/Enter 位置选择；当前加载范围写明，避免把 50 项当全部。",
-      "verification": "verify_task_board.mjs；sprint task geometry",
+      "verification": "Run 52 已执行：看板28项全部通过，含真实拖动/撤销/失败恢复、键盘移动、触控目标，以及各引擎同节点/焦点稳定和首页返回恢复筛选。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 task-board: 28/28 passed (Chromium10/Firefox9/WebKit9), including real drag/undo, native Chromium touch, keyboard movement and new row/focus stability."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "看板28项全部通过，含真实拖动/撤销/失败恢复、键盘移动、触控目标，以及各引擎同节点/焦点稳定和首页返回恢复筛选。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_task_board.mjs；sprint task geometry",
+          "observed_browser_evidence": [
+            "Run50 task-board: 28/28 passed (Chromium10/Firefox9/WebKit9), including real drag/undo, native Chromium touch, keyboard movement and new row/focus stability."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-091",
@@ -168,11 +478,11 @@
       "cost": "S",
       "requirement": "F09完成动效只响应服务端成功；失败回滚、打开办理、阻塞/补件、撤销/取消均不播放完成庆祝。",
       "source_line": 279,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint各引擎实际失败PUT不庆祝、成功done后完成、submission仅开办理不庆祝均通过；看板完成/撤销回归通过。"
       ],
       "area": "确认后完成动效",
       "files": [
@@ -180,8 +490,56 @@
         "static/app.js"
       ],
       "change": "移除全局点击捕获庆祝；只有同账号/同路由的服务端 done 回执后庆祝。失败回滚、打开办理、撤回均不庆祝。",
-      "verification": "sprint failed PUT + no confetti + real persisted completion",
-      "limitations": []
+      "verification": "Run 52 已执行：sprint各引擎实际失败PUT不庆祝、成功done后完成、submission仅开办理不庆祝均通过；看板完成/撤销回归通过。",
+      "limitations": [],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "sprint failed PUT + no confetti + real persisted completion"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint各引擎实际失败PUT不庆祝、成功done后完成、submission仅开办理不庆祝均通过；看板完成/撤销回归通过。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-092",
@@ -192,11 +550,11 @@
       "cost": "M",
       "requirement": "通知详情按标题→本人关联→关键时间→下一步→原文证据组织；正文/原文/附件/更正关系可直接定位，重要内容不藏hover。",
       "source_line": 280,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "notice-flow45、notice-matters21及sprint各引擎从原件进入生命周期并显示阶段/证据控件的检查通过。"
       ],
       "area": "通知详情层级",
       "files": [
@@ -204,11 +562,74 @@
         "static/system/content-priority.css"
       ],
       "change": "保留原 noticeFocus 证据顺序；公开阶段/公示/结果入口接真实生命周期编辑器，原文证据和版本关系可达。",
-      "verification": "verify_notice_flow / notice_matters；sprint lifecycle entry",
+      "verification": "Run 52 已执行：notice-flow45、notice-matters21及sprint各引擎从原件进入生命周期并显示阶段/证据控件的检查通过。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 notice-flow45 and notice-matters21 checks passed. New sprint lifecycle entry remains unverified because its report is absent."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "notice-flow45、notice-matters21及sprint各引擎从原件进入生命周期并显示阶段/证据控件的检查通过。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_notice_flow / notice_matters；sprint lifecycle entry",
+          "observed_browser_evidence": [
+            "Run50 notice-flow45 and notice-matters21 checks passed. New sprint lifecycle entry remains unverified because its report is absent."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "notice-flow-browser/report.json",
+          "checks": 45,
+          "passed": 45,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "path": "notice-matters-browser/report.json",
+          "checks": 21,
+          "passed": 21,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          }
+        },
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-093",
@@ -219,11 +640,11 @@
       "cost": "M",
       "requirement": "手机办理面板保留固定标题/滚动内容/底部保存，压缩重复说明；错误自动定位，软键盘不遮保存，关闭可恢复草稿。",
       "source_line": 281,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "notice-flow与pilot办理面板回归通过；独立continuity的安排/草稿/资料迟到与冲突检查通过，未将其扩展为实体软键盘验收。"
       ],
       "area": "办理面板",
       "files": [
@@ -231,11 +652,61 @@
         "static/system/workspace-clarity.css"
       ],
       "change": "保留固定标题/滚动正文/保存区与服务器草稿机制；新增正式活动/办理窗口编辑；未勾选时间补丁的 required 输入禁用，避免隐藏字段阻止保存。",
-      "verification": "verify_draft_continuity / notice_flow；official-time API tests",
-      "limitations": [],
+      "verification": "Run 52 已执行：notice-flow与pilot办理面板回归通过；独立continuity的安排/草稿/资料迟到与冲突检查通过，未将其扩展为实体软键盘验收。",
+      "limitations": [
+        "实体中文软键盘与移动设备系统级输入行为未在本环境实测。"
+      ],
       "observed_browser_evidence": [
-        "Run50 ui-continuity: supplementary-material save preserves a newly opened handling form; 12 checks across the three engines. Other mobile handling-panel and real soft-keyboard claims remain pending."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "notice-flow与pilot办理面板回归通过；独立continuity的安排/草稿/资料迟到与冲突检查通过，未将其扩展为实体软键盘验收。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_draft_continuity / notice_flow；official-time API tests",
+          "observed_browser_evidence": [
+            "Run50 ui-continuity: supplementary-material save preserves a newly opened handling form; 12 checks across the three engines. Other mobile handling-panel and real soft-keyboard claims remain pending."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "notice-flow-browser/report.json",
+          "checks": 45,
+          "passed": 45,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "path": "pilot-workspace-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-094",
@@ -246,11 +717,11 @@
       "cost": "M",
       "requirement": "收件表单文本/链接/附件批量回执一致；进度、失败、取消、补传明确，重试不丢已成功材料。",
       "source_line": 282,
-      "implementation_status": "existing_logic_retained_regression_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "保留的natural-intake33与QQ12完整通过；独立draft-continuity204检查覆盖保存/清理期间继续输入及显式重试。"
       ],
       "area": "收件回执",
       "files": [
@@ -258,12 +729,60 @@
         "static/notice-intake.js"
       ],
       "change": "保留现有附件/文本/链接 intake 队列及失败重试、成功材料保留机制；没有用 CSS 把回执隐藏成加载装饰。",
-      "verification": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归",
+      "verification": "Run 52 已执行：保留的natural-intake33与QQ12完整通过；独立draft-continuity204检查覆盖保存/清理期间继续输入及显式重试。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 draft-continuity: notice business/cleanup races and explicit duplicate-notice retry passed (54+54+12 checks across three engines). Natural-intake and QQ main suites remain pending.",
-        "Run50 natural-intake33 (11 per engine) and QQ intake12 passed; original successful check names retained."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "保留的natural-intake33与QQ12完整通过；独立draft-continuity204检查覆盖保存/清理期间继续输入及显式重试。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "existing_logic_retained_regression_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "现有 verify_natural_intake / qq_group_intake / draft_continuity 门禁；本轮主要为回归",
+          "observed_browser_evidence": [
+            "Run50 draft-continuity: notice business/cleanup races and explicit duplicate-notice retry passed (54+54+12 checks across three engines). Natural-intake and QQ main suites remain pending.",
+            "Run50 natural-intake33 (11 per engine) and QQ intake12 passed; original successful check names retained."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "natural-intake-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "path": "qq-group-intake-browser/report.json",
+          "checks": 12,
+          "passed": 12,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-095",
@@ -274,11 +793,11 @@
       "cost": "M",
       "requirement": "手机聊天输入优先保留文字与发送；附件/表情/录音按频率组织；输入法、语音取消、附件恢复和短视口测试。",
       "source_line": 283,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint三引擎320px输入主位与菜单键盘退出通过；chat-layout12通过；Composer9在Chromium完成真实录音/分段/RIFF/手工输入/503重试。"
       ],
       "area": "聊天输入",
       "files": [
@@ -286,12 +805,91 @@
         "static/system/chat-conversation.css"
       ],
       "change": "文字与发送独立占位，表情和语音进入更多菜单；录音中控制仍移动到原录音面板可停止/取消。输入法与草稿恢复逻辑保留。",
-      "verification": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu",
-      "limitations": [],
+      "verification": "Run 52 已执行：sprint三引擎320px输入主位与菜单键盘退出通过；chat-layout12通过；Composer9在Chromium完成真实录音/分段/RIFF/手工输入/503重试。",
+      "limitations": [
+        "Composer录音链仅Chromium；实体麦克风、中文输入法与系统权限UI未由模拟录音证明。"
+      ],
       "observed_browser_evidence": [
-        "Run50 ui-continuity: late speech configuration does not take over the editing dialog (6 checks across three engines). New composer, dictation and physical input-method evidence remain separate.",
-        "Run50 chat-layout12 and chat-interactions25 passed; composer dictation stopped at the hidden-menu click, so its later audio assertions remain pending."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint三引擎320px输入主位与菜单键盘退出通过；chat-layout12通过；Composer9在Chromium完成真实录音/分段/RIFF/手工输入/503重试。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_chat_layout / draft_continuity；sprint 320px keyboard menu",
+          "observed_browser_evidence": [
+            "Run50 ui-continuity: late speech configuration does not take over the editing dialog (6 checks across three engines). New composer, dictation and physical input-method evidence remain separate.",
+            "Run50 chat-layout12 and chat-interactions25 passed; composer dictation stopped at the hidden-menu click, so its later audio assertions remain pending."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "composer-browser/results.json",
+          "checks": 9,
+          "passed": 9,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "path": "chat-layout/chromium/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "path": "chat-layout/firefox/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "path": "chat-layout/webkit/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-096",
@@ -302,11 +900,11 @@
       "cost": "M",
       "requirement": "聊天回复工具栏不出现孤立图标行；复制/再生成/版本/分享有清晰层级，次要动作收入菜单但键盘可达。",
       "source_line": 284,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint三引擎回复辅助动作披露与键盘退出通过；聊天交互9/8/8、刷新恢复3/3/3完成，原版本/朗读/锚点断言保留。"
       ],
       "area": "回复工具层级",
       "files": [
@@ -314,11 +912,110 @@
         "static/system/chat-conversation.css"
       ],
       "change": "复制/引用等常用动作保留，朗读/版本/重生成/分支/分享进入有标签 disclosure；Escape 返回 summary 焦点。",
-      "verification": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单",
+      "verification": "Run 52 已执行：sprint三引擎回复辅助动作披露与键盘退出通过；聊天交互9/8/8、刷新恢复3/3/3完成，原版本/朗读/锚点断言保留。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 chat-interactions9/8/8 and chat-recovery3/3/3 passed after opening the real reply menu before every action."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint三引擎回复辅助动作披露与键盘退出通过；聊天交互9/8/8、刷新恢复3/3/3完成，原版本/朗读/锚点断言保留。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "sprint secondary reply action；更新旧 review/stability 脚本操作新菜单",
+          "observed_browser_evidence": [
+            "Run50 chat-interactions9/8/8 and chat-recovery3/3/3 passed after opening the real reply menu before every action."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "chat-interactions/chromium/report.json",
+          "checks": 9,
+          "passed": 9,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "path": "chat-interactions/firefox/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "path": "chat-interactions/webkit/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "path": "chat-recovery/chromium/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "path": "chat-recovery/firefox/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "path": "chat-recovery/webkit/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-097",
@@ -329,11 +1026,11 @@
       "cost": "M",
       "requirement": "AI流式正文、引用和生成界面保留滚动锚点；用户上滑时不吸回底部，停止/重试/断流状态与真实任务一致。",
       "source_line": 285,
-      "implementation_status": "existing_logic_retained_regression_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "原流式、阅读、回复恢复回归全部通过：reference48、OpenUI30、layout12、interactions25、recovery9；不扩大为未采样网络/设备行为。"
       ],
       "area": "流式阅读锚点",
       "files": [
@@ -341,11 +1038,176 @@
         "static/chat.js"
       ],
       "change": "保留已存在的用户上滑/流式读写/停止/断线恢复语义；本轮没有换掉对话运行时。懒加载不改变真实 stream API。",
-      "verification": "verify_chat_layout / chat_recovery / reference_interactions / openui suites",
+      "verification": "Run 52 已执行：原流式、阅读、回复恢复回归全部通过：reference48、OpenUI30、layout12、interactions25、recovery9；不扩大为未采样网络/设备行为。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 OpenUI30, reference-interactions48, chat-layout12, chat-interactions25 and chat-recovery9 passed, with prior successful check names retained."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "原流式、阅读、回复恢复回归全部通过：reference48、OpenUI30、layout12、interactions25、recovery9；不扩大为未采样网络/设备行为。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "existing_logic_retained_regression_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_chat_layout / chat_recovery / reference_interactions / openui suites",
+          "observed_browser_evidence": [
+            "Run50 OpenUI30, reference-interactions48, chat-layout12, chat-interactions25 and chat-recovery9 passed, with prior successful check names retained."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "reference-interactions-browser/report.json",
+          "checks": 48,
+          "passed": 48,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "path": "chat-layout/chromium/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "path": "chat-layout/firefox/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "path": "chat-layout/webkit/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "path": "chat-interactions/chromium/report.json",
+          "checks": 9,
+          "passed": 9,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "path": "chat-interactions/firefox/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "path": "chat-interactions/webkit/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "path": "chat-recovery/chromium/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "path": "chat-recovery/firefox/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "path": "chat-recovery/webkit/report.json",
+          "checks": 3,
+          "passed": 3,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        },
+        {
+          "path": "openui-browser/chromium/report.json",
+          "checks": 10,
+          "passed": 10,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          }
+        },
+        {
+          "path": "openui-browser/firefox/report.json",
+          "checks": 10,
+          "passed": 10,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          }
+        },
+        {
+          "path": "openui-browser/webkit/report.json",
+          "checks": 10,
+          "passed": 10,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-098",
@@ -356,11 +1218,11 @@
       "cost": "M",
       "requirement": "手机记忆页默认只留搜索、当前范围和必要筛选；高级筛选折叠，开始选择后再显示批量工具，返回保留条件。",
       "source_line": 286,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "reference48、frontend-v9稳定性123通过；新增memory首次trace及晚到不夺取新dialog/route由Agent13在Chromium实际通过。"
       ],
       "area": "记忆默认密度",
       "files": [
@@ -368,11 +1230,70 @@
         "static/system/workspace-clarity.css"
       ],
       "change": "高级筛选改为原生 details，搜索与当前范围保持主位；批量选择工具与原返回条件机制保留。",
-      "verification": "verify_reference_interactions / memory continuity suites",
+      "verification": "Run 52 已执行：reference48、frontend-v9稳定性123通过；新增memory首次trace及晚到不夺取新dialog/route由Agent13在Chromium实际通过。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 reference-interactions48 and frontend-stability123 passed; no physical screen-reader claim is added."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "reference48、frontend-v9稳定性123通过；新增memory首次trace及晚到不夺取新dialog/route由Agent13在Chromium实际通过。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "verify_reference_interactions / memory continuity suites",
+          "observed_browser_evidence": [
+            "Run50 reference-interactions48 and frontend-stability123 passed; no physical screen-reader claim is added."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "reference-interactions-browser/report.json",
+          "checks": 48,
+          "passed": 48,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "path": "frontend-v9-browser/report.json",
+          "checks": 123,
+          "passed": 123,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          }
+        },
+        {
+          "path": "agent-chat-browser/results.json",
+          "checks": 13,
+          "passed": 13,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-099",
@@ -383,23 +1304,65 @@
       "cost": "S",
       "requirement": "来源卡收起后仍显示手动/自动/暂停/失败及最近成功；手机压缩不能隐藏决定收件可靠性的事实。",
       "source_line": 287,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "source-inbox5和source-presets7在Chromium通过，含试读/应用与实际预设合同；来源草稿迟到隔离由三引擎continuity覆盖。"
       ],
       "area": "来源可靠性可见",
       "files": [
         "static/sources.js"
       ],
       "change": "来源代理新增规则试读、应用、回滚、跨域 Feed 发布者；卡片收起仍展示真实读取状态与最近成功。该文件由来源审计代理负责验证。",
-      "verification": "source-presets / source-inbox suites；来源代理后端回归",
-      "limitations": [],
+      "verification": "Run 52 已执行：source-inbox5和source-presets7在Chromium通过，含试读/应用与实际预设合同；来源草稿迟到隔离由三引擎continuity覆盖。",
+      "limitations": [
+        "来源主UI套件仅Chromium；真实外部来源可用性另依来源检查回执。"
+      ],
       "observed_browser_evidence": [
-        "Run50 ui-continuity: a source save preserves another source draft (18 checks across three engines). Source trial/apply/preset main suites remain pending.",
-        "Run50 source-inbox5 and source-presets7 checks passed, including trial/apply and actual preset fixture contracts."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "source-inbox5和source-presets7在Chromium通过，含试读/应用与实际预设合同；来源草稿迟到隔离由三引擎continuity覆盖。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "source-presets / source-inbox suites；来源代理后端回归",
+          "observed_browser_evidence": [
+            "Run50 ui-continuity: a source save preserves another source draft (18 checks across three engines). Source trial/apply/preset main suites remain pending.",
+            "Run50 source-inbox5 and source-presets7 checks passed, including trial/apply and actual preset fixture contracts."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "source-inbox-browser/report.json",
+          "checks": 5,
+          "passed": 5,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "path": "source-presets-browser/report.json",
+          "checks": 7,
+          "passed": 7,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-100",
@@ -410,22 +1373,87 @@
       "cost": "M",
       "requirement": "日历手机优先清楚日程列表/日/周切换，月视图拥挤有收纳；滚动、拖动、长按与官方时间修改边界明确。",
       "source_line": 288,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "日历/工作区回归与sprint完整轻量任务投影、备注检索/按需详情通过；arrangement-recovery612及草稿连续性通过，不冒充锁屏实机送达。"
       ],
       "area": "手机日历",
       "files": [
         "static/calendar.js"
       ],
       "change": "保留手机默认 agenda 与明确日/周视图；安排新增显式 reminder_minutes，默认不提醒课程；无虚构锁屏送达保证。正式活动时段编辑走原变更确认。",
-      "verification": "arrangement_recovery / notice_flow；新 reminder API tests",
-      "limitations": [],
+      "verification": "Run 52 已执行：日历/工作区回归与sprint完整轻量任务投影、备注检索/按需详情通过；arrangement-recovery612及草稿连续性通过，不冒充锁屏实机送达。",
+      "limitations": [
+        "日历回归不证明实体手机锁屏后的Push/邮件实际呈现。"
+      ],
       "observed_browser_evidence": [
-        "Run50 arrangement-recovery: 612 checks passed, 204 per engine; draft-continuity arrangement business/cleanup races add 84 checks. Actual 320px and 1440px recovery screenshots inspected; not a claim for all calendar views."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "日历/工作区回归与sprint完整轻量任务投影、备注检索/按需详情通过；arrangement-recovery612及草稿连续性通过，不冒充锁屏实机送达。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "arrangement_recovery / notice_flow；新 reminder API tests",
+          "observed_browser_evidence": [
+            "Run50 arrangement-recovery: 612 checks passed, 204 per engine; draft-continuity arrangement business/cleanup races add 84 checks. Actual 320px and 1440px recovery screenshots inspected; not a claim for all calendar views."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "notice-flow-browser/report.json",
+          "checks": 45,
+          "passed": 45,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "path": "workspace-interactions-browser/report.json",
+          "checks": 120,
+          "passed": 120,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        },
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-101",
@@ -436,11 +1464,11 @@
       "cost": "M",
       "requirement": "学院发布/成员/审计窄屏使用字段明确的行或分步表单；不能把桌面大表格简单整体缩小。",
       "source_line": 289,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint各引擎不完整校园草稿与原附件重载恢复通过；正常滚动后发布按钮44px且完整高于底栏约85px；pilot33跨设备协作与6个冷入口离开检查完整通过。"
       ],
       "area": "学院窄屏",
       "files": [
@@ -449,8 +1477,56 @@
         "static/campus-roster.js"
       ],
       "change": "480px 表单单列，导航仍可横向滚动且触达 44px；批量成员前后对照、持久草稿、附件、真实受众复核、投递版本、撤回/恢复/回滚、历史参考补发均接真实 API。",
-      "verification": "sprint persisted draft；pilot workspace / campus API tests",
-      "limitations": []
+      "verification": "Run 52 已执行：sprint各引擎不完整校园草稿与原附件重载恢复通过；正常滚动后发布按钮44px且完整高于底栏约85px；pilot33跨设备协作与6个冷入口离开检查完整通过。",
+      "limitations": [],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "sprint persisted draft；pilot workspace / campus API tests"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint各引擎不完整校园草稿与原附件重载恢复通过；正常滚动后发布按钮44px且完整高于底栏约85px；pilot33跨设备协作与6个冷入口离开检查完整通过。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "pilot-workspace-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-102",
@@ -461,11 +1537,11 @@
       "cost": "M",
       "requirement": "空、加载、旧内容刷新、无结果、失败、无权限、离线、已删除分别展示；每种有具体下一步和内容新鲜度。",
       "source_line": 290,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "真实分页/继续加载/旧查询隔离、失败回滚、断线后同步、保存失败重试等相关场景完成；所有空/离线/权限/删除状态组合仍不由这些数量穷举证明。"
       ],
       "area": "异步与空状态",
       "files": [
@@ -474,11 +1550,76 @@
         "static/app.js"
       ],
       "change": "分页区分加载、保留旧范围刷新、无匹配与失败；失败有重试，409 list_changed 保留筛选重新读。角色和删除结果依后端处理，不把读取失败当空列表。",
-      "verification": "tests/paged-list.test.mjs；原 owner/route/isolation tests",
-      "limitations": [],
+      "verification": "Run 52 已执行：真实分页/继续加载/旧查询隔离、失败回滚、断线后同步、保存失败重试等相关场景完成；所有空/离线/权限/删除状态组合仍不由这些数量穷举证明。",
+      "limitations": [
+        "未逐一穷举全部空/离线/权限/删除状态的笛卡尔组合。"
+      ],
       "observed_browser_evidence": [
-        "Run50 continuity verified unavailable save status, failed save retry, late-response isolation and draft preservation. Full empty/offline/permission/deleted-page matrix remains broader than these checks."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "真实分页/继续加载/旧查询隔离、失败回滚、断线后同步、保存失败重试等相关场景完成；所有空/离线/权限/删除状态组合仍不由这些数量穷举证明。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "tests/paged-list.test.mjs；原 owner/route/isolation tests",
+          "observed_browser_evidence": [
+            "Run50 continuity verified unavailable save status, failed save retry, late-response isolation and draft preservation. Full empty/offline/permission/deleted-page matrix remains broader than these checks."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "natural-intake-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "path": "pilot-workspace-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-103",
@@ -489,11 +1630,11 @@
       "cost": "M",
       "requirement": "Toast与底部导航/软键盘安全区互不遮挡；普通提示短，冲突/失败有常驻入口及核对动作，不能只要求“刷新”。",
       "source_line": 291,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint三引擎失败提示常驻6100ms、完整位于手机导航上方和失败不庆祝通过；layout12短视口输入可见；实体软键盘另保留验收边界。"
       ],
       "area": "Toast 安全区",
       "files": [
@@ -501,11 +1642,79 @@
         "static/experience-system.css"
       ],
       "change": "测量实际底部导航/聊天输入和 visualViewport，错误常驻；成功提示暂停于 hover/focus/hidden；dialog 上层可操作，异步 Undo 按真实结果反馈。",
-      "verification": "sprint persistent failure/mobile nav；需真实软键盘设备补验证",
-      "limitations": [],
+      "verification": "Run 52 已执行：sprint三引擎失败提示常驻6100ms、完整位于手机导航上方和失败不庆祝通过；layout12短视口输入可见；实体软键盘另保留验收边界。",
+      "limitations": [
+        "实体软键盘弹起后的系统安全区与真实设备遮挡仍需实机验证。"
+      ],
       "observed_browser_evidence": [
-        "Run50 profile-conflict-390.png was actually opened: conflict context, entered value, review and save controls are visible. Main-suite persistent toast/mobile-navigation geometry remains pending."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint三引擎失败提示常驻6100ms、完整位于手机导航上方和失败不庆祝通过；layout12短视口输入可见；实体软键盘另保留验收边界。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "sprint persistent failure/mobile nav；需真实软键盘设备补验证",
+          "observed_browser_evidence": [
+            "Run50 profile-conflict-390.png was actually opened: conflict context, entered value, review and save controls are visible. Main-suite persistent toast/mobile-navigation geometry remains pending."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "chat-layout/chromium/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "path": "chat-layout/firefox/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "path": "chat-layout/webkit/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-104",
@@ -516,11 +1725,11 @@
       "cost": "M",
       "requirement": "搜索/筛选/排序/多选作用范围明确；清空一条件不清空全部，旧搜索响应不能覆盖新结果，返回恢复位置和焦点。",
       "source_line": 292,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "三引擎54条完整库存、50条边界、跨页检索、实际旧请求捕获和800ms新筛选稳定通过；同节点/焦点及首页返回筛选回归通过。Chromium/WebKit旧请求取消，Firefox实际观察迟到响应。"
       ],
       "area": "全量筛选与返回",
       "files": [
@@ -529,12 +1738,75 @@
         "static/app.js"
       ],
       "change": "所有筛选在服务器完整集合执行；50 项分页/总匹配/加载范围明确；请求带 epoch/账号/路由守卫；返回恢复滚动及可定位焦点。重入尚未完成路由会重发新读，不永远停加载。",
-      "verification": "tests/paged-list.test.mjs (5)；sprint >50 and stale query",
+      "verification": "Run 52 已执行：三引擎54条完整库存、50条边界、跨页检索、实际旧请求捕获和800ms新筛选稳定通过；同节点/焦点及首页返回筛选回归通过。Chromium/WebKit旧请求取消，Firefox实际观察迟到响应。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 ui-continuity: old memory-page responses do not change the current route (12 checks). New paged search and task-node stability assertions await the main-suite report.",
-        "Run50 workspace120, natural-intake33 and task-board28 passed; node identity, focus and home-to-task filter restoration passed in all three engines. Sprint report remains absent."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "三引擎54条完整库存、50条边界、跨页检索、实际旧请求捕获和800ms新筛选稳定通过；同节点/焦点及首页返回筛选回归通过。Chromium/WebKit旧请求取消，Firefox实际观察迟到响应。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "tests/paged-list.test.mjs (5)；sprint >50 and stale query",
+          "observed_browser_evidence": [
+            "Run50 ui-continuity: old memory-page responses do not change the current route (12 checks). New paged search and task-node stability assertions await the main-suite report.",
+            "Run50 workspace120, natural-intake33 and task-board28 passed; node identity, focus and home-to-task filter restoration passed in all three engines. Sprint report remains absent."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "path": "workspace-interactions-browser/report.json",
+          "checks": 120,
+          "passed": 120,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-105",
@@ -545,11 +1817,11 @@
       "cost": "S",
       "requirement": "长中文、URL、混排、附件名、姓名和学院名可读；关键日期/状态不继续缩到11px，省略内容可展开。",
       "source_line": 293,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "visual168与sprint三引擎320px输入/44px控件检查通过；实际手机中文与桌面卡片截图可读、无明显横向溢出；不替代真实缩放/读屏验收。"
       ],
       "area": "长文本可读",
       "files": [
@@ -557,8 +1829,91 @@
         "static/system/chat-conversation.css"
       ],
       "change": "最终覆盖层关键中文字号提高到 12px，任务标题/日期不压到 11px；回复工具有文字、文件和公告正文保留展开。",
-      "verification": "visual/layout suites；320px 断点新增检查",
-      "limitations": []
+      "verification": "Run 52 已执行：visual168与sprint三引擎320px输入/44px控件检查通过；实际手机中文与桌面卡片截图可读、无明显横向溢出；不替代真实缩放/读屏验收。",
+      "limitations": [
+        "读屏与200%真实浏览器缩放未在本环境执行。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "visual/layout suites；320px 断点新增检查"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "visual168与sprint三引擎320px输入/44px控件检查通过；实际手机中文与桌面卡片截图可读、无明显横向溢出；不替代真实缩放/读屏验收。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "visual-review-browser/report.json",
+          "checks": 168,
+          "passed": 168,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "chat-layout/chromium/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "path": "chat-layout/firefox/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "path": "chat-layout/webkit/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-106",
@@ -569,11 +1924,11 @@
       "cost": "M",
       "requirement": "键盘、读屏、焦点返回、对话框语义、颜色对比、200%字号/缩放、中文输入法全链路验证；不只有布局不溢出。",
       "source_line": 294,
-      "implementation_status": "partial_runtime_verification",
+      "implementation_status": "partial_runtime_verification_manual_boundaries_remain",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "真实键盘菜单/Escape/焦点、减弱动画键盘移动及dialog迟到焦点守卫相关自动回归通过；实体读屏、200%浏览器缩放、中文软键盘未在本环境执行。"
       ],
       "area": "辅助功能",
       "files": [
@@ -581,13 +1936,76 @@
         "static/genui/chat-presenter.js"
       ],
       "change": "新增菜单 keyboard/Escape/焦点回归，Native dialog/details/fieldset 和错误 live region；保留已有读屏名字及键盘移动。",
-      "verification": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过",
+      "verification": "Run 52 已执行：真实键盘菜单/Escape/焦点、减弱动画键盘移动及dialog迟到焦点守卫相关自动回归通过；实体读屏、200%浏览器缩放、中文软键盘未在本环境执行。",
       "limitations": [
         "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
       ],
       "observed_browser_evidence": [
-        "Run50 ui-continuity: delayed dialog focus does not steal focus after title input starts (6 checks). Physical screen reader, 200% zoom and Chinese soft keyboard remain unverified."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "真实键盘菜单/Escape/焦点、减弱动画键盘移动及dialog迟到焦点守卫相关自动回归通过；实体读屏、200%浏览器缩放、中文软键盘未在本环境执行。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "partial_runtime_verification",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过",
+          "observed_browser_evidence": [
+            "Run50 ui-continuity: delayed dialog focus does not steal focus after title input starts (6 checks). Physical screen reader, 200% zoom and Chinese soft keyboard remain unverified."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "path": "reference-interactions-browser/report.json",
+          "checks": 48,
+          "passed": 48,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-107",
@@ -598,11 +2016,11 @@
       "cost": "M",
       "requirement": "统一动画生命周期：减少动画、个人关闭、后台标签、离屏、卸载均停止清理；多动效不抢输入和滚动。",
       "source_line": 295,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "sprint失败/办理入口不庆祝与成功回执后完成反馈通过；看板减弱动画键盘回归通过；后台/路由/账号动画清理由已执行motion相关Node测试补充，不宣称所有实体设备组合实测。"
       ],
       "area": "动效生命周期",
       "files": [
@@ -610,8 +2028,56 @@
         "static/experience-system.js"
       ],
       "change": "完成动画集中跟踪与取消；后台、reduced-motion、个人关闭、路由切换、账号切换清理；离屏不启动庆祝。保留现有 observer/输入响应。",
-      "verification": "已有 motion tests；sprint failed mutation；CI runtime pending",
-      "limitations": []
+      "verification": "Run 52 已执行：sprint失败/办理入口不庆祝与成功回执后完成反馈通过；看板减弱动画键盘回归通过；后台/路由/账号动画清理由已执行motion相关Node测试补充，不宣称所有实体设备组合实测。",
+      "limitations": [],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "已有 motion tests；sprint failed mutation；CI runtime pending"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "sprint失败/办理入口不庆祝与成功回执后完成反馈通过；看板减弱动画键盘回归通过；后台/路由/账号动画清理由已执行motion相关Node测试补充，不宣称所有实体设备组合实测。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-108",
@@ -622,11 +2088,11 @@
       "cost": "M",
       "requirement": "保持同一动作在列表/详情/搜索/跨端中的状态和文案；乐观更新失败保留上下文，实际成功后才显示成功。",
       "source_line": 296,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "implemented_scoped_browser_checks_passed",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "pilot33实际跨设备写后读、协作接收/补充/解决、冷入口离开守卫完整通过；sprint真实任务完成回执/失败回滚和source-inbox回归通过；通知服务商接收与终端阅读仍分开。"
       ],
       "area": "统一动作状态",
       "files": [
@@ -635,12 +2101,71 @@
         "static/collaboration.js"
       ],
       "change": "任务提交后重读当前分页投影；草稿/发布/重试/渠道供应商接受均用实际回执语义；拒收、转交、个人跟进与最小留存回执分别标明。",
-      "verification": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests",
+      "verification": "Run 52 已执行：pilot33实际跨设备写后读、协作接收/补充/解决、冷入口离开守卫完整通过；sprint真实任务完成回执/失败回滚和source-inbox回归通过；通知服务商接收与终端阅读仍分开。",
       "limitations": [],
       "observed_browser_evidence": [
-        "Run50 continuity: same-field conflict preserves user input and supports review/retry (30 checks); failed save restores the button and preserves other profile data on retry (30 checks). Cross-device task/campus main suites remain pending.",
-        "Run50 pilot reached24 checks with21 passing and3 collaboration cold-entry failures. That real product failure is being repaired; the overall pilot suite is not accepted."
-      ]
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "pilot33实际跨设备写后读、协作接收/补充/解决、冷入口离开守卫完整通过；sprint真实任务完成回执/失败回滚和source-inbox回归通过；通知服务商接收与终端阅读仍分开。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests",
+          "observed_browser_evidence": [
+            "Run50 continuity: same-field conflict preserves user input and supports review/retry (30 checks); failed save restores the button and preserves other profile data on retry (30 checks). Cross-device task/campus main suites remain pending.",
+            "Run50 pilot reached24 checks with21 passing and3 collaboration cold-entry failures. That real product failure is being repaired; the overall pilot suite is not accepted."
+          ]
+        }
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "pilot-workspace-browser/report.json",
+          "checks": 33,
+          "passed": 33,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "path": "source-inbox-browser/report.json",
+          "checks": 5,
+          "passed": 5,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     },
     {
       "id": "LJ-109",
@@ -651,11 +2176,11 @@
       "cost": "M",
       "requirement": "严格执行209参考采用记录：序号→源码变体→依赖→交互机制→品牌适配→真实API→各状态验证→许可。35优先候选不等于全部安装。",
       "source_line": 297,
-      "implementation_status": "code_reviewed_browser_gate_pending",
+      "implementation_status": "reference_decisions_documented_partial_upstream_review",
       "evidence": [
-        "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
-        "Node syntax: 157 JS/mjs checked before final additions",
-        "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+        "Run 52 head 6b15c7452966e7600cca87acf36a2e11ad034fbc；33个实际报告槽完整通过；本条仅引用下列相关suite。",
+        "原产品构建DFTX保持；此前实际Node275/275与构建/审计23/23证据保留原执行时间，未在文档更新时重跑。",
+        "209逐项采用决定保持35优先/79条件/95不采用；仅114/115/133实际打开上游demo并看源码。本产品对应输入、提示、完成反馈已获本轮相关CI证据，不把其余206项写成上游实操。"
       ],
       "area": "209 采用账本",
       "files": [
@@ -663,8 +2188,135 @@
         "docs/sprint-2026-11-14/reference-source-review.json"
       ],
       "change": "209 逐项保留原编号/URL/依赖描述/适用场景/不采用理由；本轮实际打开并检查源码与交互的只有 114/115/133，采纳原生交互原则，不复制源码，不新增运行时库。",
-      "verification": "源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操",
-      "limitations": []
+      "verification": "Run 52 已执行：209逐项采用决定保持35优先/79条件/95不采用；仅114/115/133实际打开上游demo并看源码。本产品对应输入、提示、完成反馈已获本轮相关CI证据，不把其余206项写成上游实操。",
+      "limitations": [
+        "其余206项上游组件没有逐个打开demo/源码；不安装209项依赖。"
+      ],
+      "verification_history": [
+        {
+          "implementation_status": "code_reviewed_browser_gate_pending",
+          "evidence": [
+            "npm test: 275/275 passed at final frontend freeze; actual browser CI remains separate",
+            "Node syntax: 157 JS/mjs checked before final additions",
+            "Planned browser gate only: scripts/verify_sprint_ui.mjs; no pass is inferred from source existence"
+          ],
+          "verification": "源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操"
+        }
+      ],
+      "observed_browser_evidence": [
+        "Run 52 https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+        "209逐项采用决定保持35优先/79条件/95不采用；仅114/115/133实际打开上游demo并看源码。本产品对应输入、提示、完成反馈已获本轮相关CI证据，不把其余206项写成上游实操。"
+      ],
+      "browser_suite_evidence": [
+        {
+          "path": "sprint-ui-browser/report.json",
+          "checks": 60,
+          "passed": 60,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "path": "task-board-browser/report.json",
+          "checks": 28,
+          "passed": 28,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "path": "composer-browser/results.json",
+          "checks": 9,
+          "passed": 9,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "path": "chat-layout/chromium/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "path": "chat-layout/firefox/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "path": "chat-layout/webkit/report.json",
+          "checks": 4,
+          "passed": 4,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "path": "chat-interactions/chromium/report.json",
+          "checks": 9,
+          "passed": 9,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "path": "chat-interactions/firefox/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "path": "chat-interactions/webkit/report.json",
+          "checks": 8,
+          "passed": 8,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        }
+      ],
+      "verification_scope": "这些为本条相关的实际自动回归与所述截图范围，不把suite总数直接解释为所有设备/状态组合全验收。"
     }
   ],
   "local_test_result": {
@@ -674,7 +2326,9 @@
     "skipped": 0,
     "performed_at": "2026-11-14T06:13:24.916375+00:00",
     "log": "ci-evidence/43562060192/frontend-final-node-tests.log",
-    "reexecuted_for_current_frozen_sources": true
+    "reexecuted_for_current_frozen_sources": false,
+    "tested_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "note": "The recorded 275 checks were actually executed at the stored time. This documentation update did not rerun tests; run52 browser-fixture edits do not change product assets."
   },
   "local_test_result_history": [
     {
@@ -700,104 +2354,2714 @@
     },
     "files": 24,
     "source_files": 191,
-    "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
     "record": "frontend-build-verification.json",
-    "browser_status": "pending_next_candidate_ci"
+    "browser_status": "run52_scoped_browser_and_continuity_passed",
+    "product_build_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+    "unchanged_product_assets": true
   },
   "browser_observations": {
-    "run_id": 43562060192,
+    "run_id": 43567666000,
+    "run_number": 52,
     "attempt": 1,
-    "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
-    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
-    "observed_at": "2026-11-14T05:50:35.607535+00:00",
-    "main_suite_status": "completed_failure",
-    "first_run_record": "../audits/sprint-ci-first-round.json",
+    "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+    "observed_at": "2026-11-14T07:04:46.551375+00:00",
+    "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+    "state": "browser_and_continuity_completed_success",
+    "overall_workflow": "completed_success",
+    "browser_job": 132364929169,
+    "browser_status": "completed",
+    "browser_conclusion": "success",
+    "artifact": {
+      "id": 14103570812,
+      "name": "synthetic-browser-reports",
+      "bytes": 21714160,
+      "sha256": "fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+      "download_sha256_verified": true
+    },
+    "report_slots": {
+      "total": 33,
+      "complete_passed": 33,
+      "failed_reports": 0,
+      "missing_reports": 0
+    },
+    "recorded_checks": {
+      "total": 1038,
+      "passed": 1038,
+      "failed": 0
+    },
+    "unexecuted_expected_checks": 0,
+    "previous_passed_check_names_missing": 0,
+    "suite_results": [
+      {
+        "suite": "Sprint workflows and loading performance",
+        "path": "sprint-ui-browser/report.json",
+        "status": "passed",
+        "recorded": 60,
+        "passed_checks": 60,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 20,
+          "firefox": 20,
+          "webkit": 20
+        }
+      },
+      {
+        "suite": "Browser stability",
+        "path": "frontend-v9-browser/report.json",
+        "status": "passed",
+        "recorded": 123,
+        "passed_checks": 123,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 41,
+          "firefox": 41,
+          "webkit": 41
+        }
+      },
+      {
+        "suite": "Browser regression",
+        "path": "frontend-v8-browser/report.json",
+        "status": "passed",
+        "recorded": 201,
+        "passed_checks": 201,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 67,
+          "firefox": 67,
+          "webkit": 67
+        }
+      },
+      {
+        "suite": "Reference interactions",
+        "path": "reference-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 48,
+        "passed_checks": 48,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 16,
+          "firefox": 16,
+          "webkit": 16
+        }
+      },
+      {
+        "suite": "Workspace interactions",
+        "path": "workspace-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 120,
+        "passed_checks": 120,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 40,
+          "firefox": 40,
+          "webkit": 40
+        }
+      },
+      {
+        "suite": "Visual layout bounds",
+        "path": "visual-review-browser/report.json",
+        "status": "passed",
+        "recorded": 168,
+        "passed_checks": 168,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 56,
+          "firefox": 56,
+          "webkit": 56
+        }
+      },
+      {
+        "suite": "Notice intake and flexible workflows",
+        "path": "notice-flow-browser/report.json",
+        "status": "passed",
+        "recorded": 45,
+        "passed_checks": 45,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 15,
+          "firefox": 15,
+          "webkit": 15
+        }
+      },
+      {
+        "suite": "Task board drag and recovery",
+        "path": "task-board-browser/report.json",
+        "status": "passed",
+        "recorded": 28,
+        "passed_checks": 28,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 10,
+          "firefox": 9,
+          "webkit": 9
+        }
+      },
+      {
+        "suite": "Natural notice intake",
+        "path": "natural-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "Personal materials and submissions",
+        "path": "task-materials-browser/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Source subscriptions and personal inbox",
+        "path": "source-inbox-browser/report.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Persistent push and device ownership",
+        "path": "push-browser/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 8
+        }
+      },
+      {
+        "suite": "Notice matter grouping and campus capacities",
+        "path": "notice-matters-browser/report.json",
+        "status": "passed",
+        "recorded": 21,
+        "passed_checks": 21,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 7,
+          "firefox": 7,
+          "webkit": 7
+        }
+      },
+      {
+        "suite": "School source chooser and pending saves",
+        "path": "source-presets-browser/report.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Independent devices and campus collaboration",
+        "path": "pilot-workspace-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "QQ group intake, rules and attachments",
+        "path": "qq-group-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 12,
+        "passed_checks": 12,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 4,
+          "firefox": 4,
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Agent approvals and cancellation",
+        "path": "agent-chat-browser/results.json",
+        "status": "passed",
+        "recorded": 13,
+        "passed_checks": 13,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 13
+        }
+      },
+      {
+        "suite": "Agent authored UI and persistence",
+        "path": "agent-adaptive-browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent private media and resize",
+        "path": "reference-fusion/browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent incremental rendering",
+        "path": "agent-quality-browser/performance.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Composer attachments and dictation",
+        "path": "composer-browser/results.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "OpenUI streaming Chromium",
+        "path": "openui-browser/chromium/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming Firefox",
+        "path": "openui-browser/firefox/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming WebKit",
+        "path": "openui-browser/webkit/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 10
+        }
+      },
+      {
+        "suite": "Compact chat Chromium",
+        "path": "chat-layout/chromium/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 4
+        }
+      },
+      {
+        "suite": "Compact chat Firefox",
+        "path": "chat-layout/firefox/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 4
+        }
+      },
+      {
+        "suite": "Compact chat WebKit",
+        "path": "chat-layout/webkit/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Chat interactions Chromium",
+        "path": "chat-interactions/chromium/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Chat interactions Firefox",
+        "path": "chat-interactions/firefox/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 8
+        }
+      },
+      {
+        "suite": "Chat interactions WebKit",
+        "path": "chat-interactions/webkit/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 8
+        }
+      },
+      {
+        "suite": "Chat recovery Chromium",
+        "path": "chat-recovery/chromium/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 3
+        }
+      },
+      {
+        "suite": "Chat recovery Firefox",
+        "path": "chat-recovery/firefox/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 3
+        }
+      },
+      {
+        "suite": "Chat recovery WebKit",
+        "path": "chat-recovery/webkit/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 3
+        }
+      }
+    ],
+    "engine_scope_note": "Agent suites (13/7/7/5 checks), Composer (9), materials (9), source inbox (5), push (8), and source presets (7) use Chromium only. Other engine scopes are recorded per suite; there is no blanket claim that all features ran in all three engines.",
+    "sprint": {
+      "checks": 60,
+      "passed": 60,
+      "engines": {
+        "chromium": 20,
+        "firefox": 20,
+        "webkit": 20
+      },
+      "query_races": [
+        {
+          "engine": "chromium",
+          "old_query": "冲刺分页 chromium",
+          "new_query": "跨页独有 chromium",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "net::ERR_ABORTED",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 chromium",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 chromium",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        },
+        {
+          "engine": "firefox",
+          "old_query": "冲刺分页 firefox",
+          "new_query": "跨页独有 firefox",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": true,
+          "old_request_failure": null,
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 firefox",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 firefox",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_response_observed_after_new_query"
+        },
+        {
+          "engine": "webkit",
+          "old_query": "冲刺分页 webkit",
+          "new_query": "跨页独有 webkit",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "Load request cancelled",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 webkit",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 webkit",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        }
+      ],
+      "mobile_controls": [
+        {
+          "engine": "chromium",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.171875,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "firefox",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 656.5,
+            "width": 85.66666412353516,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "webkit",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.375,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        }
+      ],
+      "network_fixture": {
+        "service_workers": "block",
+        "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+      },
+      "interpretation": "All three real route handlers entered and captured the old response. Firefox observed the late browser response; Chromium and WebKit aborted the old request and recorded a late fulfill attempt. All engines retained the new server filter through the unchanged 800 ms stability window. Aborted responses are not described as delivered."
+    },
+    "pilot": {
+      "checks": 33,
+      "passed": 33,
+      "engines": {
+        "chromium": 11,
+        "firefox": 11,
+        "webkit": 11
+      },
+      "cold_imports": [
+        {
+          "engine": "chromium",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "chromium",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        }
+      ],
+      "network_fixture": {
+        "desktop_service_workers": "block",
+        "reason": "Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior."
+      }
+    },
     "continuity": {
-      "job": 132347708859,
+      "job": 132364929184,
       "conclusion": "success",
       "checks": 990,
       "passed": 990,
-      "failures": 0,
+      "failed": 0,
       "errors": 0,
       "engines": {
-        "chromium": {
-          "arrangement_recovery": 204,
-          "draft_continuity": 68,
-          "ui_continuity": 58,
-          "total": 330,
-          "failed_checks": 0,
-          "page_errors": 0
-        },
-        "firefox": {
-          "arrangement_recovery": 204,
-          "draft_continuity": 68,
-          "ui_continuity": 58,
-          "total": 330,
-          "failed_checks": 0,
-          "page_errors": 0
-        },
-        "webkit": {
-          "arrangement_recovery": 204,
-          "draft_continuity": 68,
-          "ui_continuity": 58,
-          "total": 330,
-          "failed_checks": 0,
-          "page_errors": 0
-        }
+        "chromium": 330,
+        "firefox": 330,
+        "webkit": 330
       },
-      "reports": [
-        {
-          "path": "continuity-browser/arrangement-recovery/report.json",
-          "checks": 612,
-          "passed": 612
-        },
-        {
-          "path": "continuity-browser/draft-continuity/report.json",
-          "checks": 204,
-          "passed": 204
-        },
-        {
-          "path": "continuity-browser/ui-continuity/report.json",
-          "checks": 174,
-          "passed": 174
-        }
-      ],
+      "reports": {
+        "arrangement_recovery": 612,
+        "draft_continuity": 204,
+        "ui_continuity": 174
+      },
       "artifact": {
-        "id": 14100383444,
+        "id": 14102853777,
         "name": "continuity-browser-reports",
-        "bytes": 703372,
-        "sha256": "ded0a0e322ed67502cc5e3493ddd53fac0c762c29ee5bffa29b454fecf274cdf",
+        "bytes": 706100,
+        "sha256": "895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
         "download_sha256_verified": true
       },
-      "verification": "Counted every checks[].passed value and errors[] in the downloaded original reports; all 990 passed values are true.",
-      "visually_reviewed": [
+      "audit": "ci-evidence/43567666000/continuity-report-audit.json"
+    },
+    "audit": "ci-evidence/43567666000/browser-report-audit.json",
+    "job_log": "ci-evidence/43567666000/browser-job.log",
+    "product_rebuilt": false,
+    "product_assets_unchanged_from_run51": true,
+    "visually_reviewed": [
+      {
+        "path": "sprint-ui-browser/chromium-mobile-draft.png",
+        "observation": "390px draft and saved attachment remain visible; normal scroll exposes the complete publication button above the fixed navigation, with no obvious horizontal overflow."
+      },
+      {
+        "path": "sprint-ui-browser/webkit-mobile-chat.png",
+        "observation": "390px input, send control, code block and reply disclosure remain visible; toast is above the composer."
+      },
+      {
+        "path": "task-board-browser/chromium-desktop.png",
+        "observation": "1440px three-lane board, cards, loaded-range explanation and undo toast remain visible without obvious horizontal overflow."
+      }
+    ],
+    "performance": {
+      "source": "sprint-ui-browser/report.json",
+      "network_fixture": "serviceWorkers:block for controlled request delay/failure tests; differs from run51 default-allow fixture. Independent Chromium push/PWA suite retains actual worker behavior.",
+      "measurements": [
         {
-          "path": "continuity-browser/arrangement-recovery/recovery-320.png",
-          "observation": "320px recovery dialog shows the saved result and four separate readable actions without obvious horizontal overflow or occlusion."
+          "engine": "chromium",
+          "label": "cold-login",
+          "can_input_at_ms": 223.3000000000029,
+          "dom_content_loaded_ms": 118.80000000000291,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1833256,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
         },
         {
-          "path": "continuity-browser/arrangement-recovery/recovery-1440.png",
-          "observation": "1440px recovery dialog is centered, with readable saved result and all four actions visible."
+          "engine": "chromium",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 68,
+          "dom_content_loaded_ms": 15.89999999999418,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
         },
         {
-          "path": "continuity-browser/ui-continuity/profile-conflict-390.png",
-          "observation": "390px conflict dialog preserves the entered college value, displays the conflicting value and keeps the review and save actions visible."
+          "engine": "chromium",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 241.40000000000873,
+          "dom_content_loaded_ms": 16.69999999999709,
+          "request_count": 27,
+          "static_request_count": 17,
+          "css_request_count": 1,
+          "transfer_size": 78930,
+          "encoded_body_size": 3101031,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "cold-login",
+          "can_input_at_ms": 362,
+          "dom_content_loaded_ms": 244,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1859861,
+          "encoded_body_size": 1855061,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 126,
+          "dom_content_loaded_ms": 57,
+          "request_count": 14,
+          "static_request_count": 12,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 363817,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 279,
+          "dom_content_loaded_ms": 40,
+          "request_count": 25,
+          "static_request_count": 15,
+          "css_request_count": 1,
+          "transfer_size": 77657,
+          "encoded_body_size": 509176,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "cold-login",
+          "can_input_at_ms": 246,
+          "dom_content_loaded_ms": 115,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1832546,
+          "encoded_body_size": 1828046,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 87,
+          "dom_content_loaded_ms": 40,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1814,
+          "encoded_body_size": 914,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 259,
+          "dom_content_loaded_ms": 36,
+          "request_count": 28,
+          "static_request_count": 18,
+          "css_request_count": 1,
+          "transfer_size": 78615,
+          "encoded_body_size": 75315,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
         }
       ],
-      "visual_limit": "These three screenshots were actually opened; this does not establish physical keyboard, screen-reader, 200% zoom or unseen main-suite rendering behavior."
+      "limits": "CI loopback measurements, not public-network/physical-phone SLA. Different worker policy prevents unconditional speed comparison with run51. Exact JavaScript parsing duration remains unmeasured; unsupported Long Task data remain unknown."
     },
-    "limit": "The listed scripts describe planned gates; source existence and overall continuity totals do not establish every requirement. Requirement-specific partial observations are listed separately.",
-    "last_job_observation": "2026-11-14T05:57:52.167Z",
-    "second_run_record": "../audits/sprint-ci-second-round.json",
-    "recorded_checks": {
-      "total": 957,
-      "passed": 954,
-      "failed": 3
-    },
-    "missing_reports": [
-      "sprint-ui-browser/report.json",
-      "composer-browser/results.json"
-    ]
+    "workflow_status": "completed",
+    "workflow_conclusion": "success",
+    "successful_jobs": 9,
+    "official_workflow_record": "artifacts/ci-readonly/run-43567666000-root-official.json",
+    "scope": "This evidence is tied to candidate head 6b15c745 and PR merge ac3e291. It does not predeclare a later main-branch run."
   },
-  "documented_at": "2026-11-14T06:13:24.916375+00:00"
+  "documented_at": "2026-11-14T07:06:01.742800+00:00",
+  "browser_observation_history": [
+    {
+      "run_id": 43562060192,
+      "attempt": 1,
+      "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+      "observed_at": "2026-11-14T05:50:35.607535+00:00",
+      "main_suite_status": "completed_failure",
+      "first_run_record": "../audits/sprint-ci-first-round.json",
+      "continuity": {
+        "job": 132347708859,
+        "conclusion": "success",
+        "checks": 990,
+        "passed": 990,
+        "failures": 0,
+        "errors": 0,
+        "engines": {
+          "chromium": {
+            "arrangement_recovery": 204,
+            "draft_continuity": 68,
+            "ui_continuity": 58,
+            "total": 330,
+            "failed_checks": 0,
+            "page_errors": 0
+          },
+          "firefox": {
+            "arrangement_recovery": 204,
+            "draft_continuity": 68,
+            "ui_continuity": 58,
+            "total": 330,
+            "failed_checks": 0,
+            "page_errors": 0
+          },
+          "webkit": {
+            "arrangement_recovery": 204,
+            "draft_continuity": 68,
+            "ui_continuity": 58,
+            "total": 330,
+            "failed_checks": 0,
+            "page_errors": 0
+          }
+        },
+        "reports": [
+          {
+            "path": "continuity-browser/arrangement-recovery/report.json",
+            "checks": 612,
+            "passed": 612
+          },
+          {
+            "path": "continuity-browser/draft-continuity/report.json",
+            "checks": 204,
+            "passed": 204
+          },
+          {
+            "path": "continuity-browser/ui-continuity/report.json",
+            "checks": 174,
+            "passed": 174
+          }
+        ],
+        "artifact": {
+          "id": 14100383444,
+          "name": "continuity-browser-reports",
+          "bytes": 703372,
+          "sha256": "ded0a0e322ed67502cc5e3493ddd53fac0c762c29ee5bffa29b454fecf274cdf",
+          "download_sha256_verified": true
+        },
+        "verification": "Counted every checks[].passed value and errors[] in the downloaded original reports; all 990 passed values are true.",
+        "visually_reviewed": [
+          {
+            "path": "continuity-browser/arrangement-recovery/recovery-320.png",
+            "observation": "320px recovery dialog shows the saved result and four separate readable actions without obvious horizontal overflow or occlusion."
+          },
+          {
+            "path": "continuity-browser/arrangement-recovery/recovery-1440.png",
+            "observation": "1440px recovery dialog is centered, with readable saved result and all four actions visible."
+          },
+          {
+            "path": "continuity-browser/ui-continuity/profile-conflict-390.png",
+            "observation": "390px conflict dialog preserves the entered college value, displays the conflicting value and keeps the review and save actions visible."
+          }
+        ],
+        "visual_limit": "These three screenshots were actually opened; this does not establish physical keyboard, screen-reader, 200% zoom or unseen main-suite rendering behavior."
+      },
+      "limit": "The listed scripts describe planned gates; source existence and overall continuity totals do not establish every requirement. Requirement-specific partial observations are listed separately.",
+      "last_job_observation": "2026-11-14T05:57:52.167Z",
+      "second_run_record": "../audits/sprint-ci-second-round.json",
+      "recorded_checks": {
+        "total": 957,
+        "passed": 954,
+        "failed": 3
+      },
+      "missing_reports": [
+        "sprint-ui-browser/report.json",
+        "composer-browser/results.json"
+      ]
+    },
+    {
+      "run_id": 43565458564,
+      "run_number": 51,
+      "attempt": 1,
+      "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564",
+      "observed_at": "2026-11-14T06:45:56.385359+00:00",
+      "browser_job": 132358199991,
+      "browser_status": "completed",
+      "browser_conclusion": "failure",
+      "artifact": {
+        "id": 14103186594,
+        "name": "synthetic-browser-reports",
+        "bytes": 22206238,
+        "sha256": "989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec",
+        "download_sha256_verified": true
+      },
+      "report_slots": {
+        "total": 33,
+        "complete_passed": 31,
+        "failed_reports": 2,
+        "missing_reports": 0
+      },
+      "recorded_checks": {
+        "total": 1005,
+        "passed": 1000,
+        "failed": 5,
+        "note": "The repeated pilot errors are not counted again. Unexecuted checks are listed separately and are not passes."
+      },
+      "unexecuted_expected_checks": {
+        "sprint": 24,
+        "pilot": 9,
+        "total": 33
+      },
+      "failed_suites": [
+        {
+          "script": "scripts/verify_sprint_ui.mjs",
+          "report_status": "incomplete",
+          "recorded_checks": 36,
+          "passed": 34,
+          "failed": 2,
+          "per_engine": {
+            "chromium": {
+              "recorded": 8,
+              "passed": 7,
+              "failed": 1
+            },
+            "firefox": {
+              "recorded": 20,
+              "passed": 20,
+              "failed": 0
+            },
+            "webkit": {
+              "recorded": 8,
+              "passed": 7,
+              "failed": 1
+            }
+          },
+          "check": "an obsolete query response cannot overwrite the latest server filter",
+          "observed": "The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.",
+          "boundary": "WebKit records the prefix query request and HTTP 200, while the delay handler did not capture it. The artifact does not prove API caching or an obsolete response overwriting a newer query."
+        },
+        {
+          "script": "scripts/verify_pilot_workspace.mjs",
+          "recorded_checks": 24,
+          "passed": 21,
+          "failed": 3,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "check": "a cold collaboration import respects closing the workflow",
+          "observed": "strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements",
+          "confirmed_cause": "The selector matches both the header Close button and the footer Back button. The later collaboration scenarios were not reached."
+        }
+      ],
+      "suite_results": [
+        {
+          "suite": "Sprint workflows and loading performance",
+          "path": "sprint-ui-browser/report.json",
+          "status": "failed",
+          "recorded": 36,
+          "passed_checks": 34,
+          "failed_checks": 2,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 8,
+            "firefox": 20,
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Browser stability",
+          "path": "frontend-v9-browser/report.json",
+          "status": "passed",
+          "recorded": 123,
+          "passed_checks": 123,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          }
+        },
+        {
+          "suite": "Browser regression",
+          "path": "frontend-v8-browser/report.json",
+          "status": "passed",
+          "recorded": 201,
+          "passed_checks": 201,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 67,
+            "firefox": 67,
+            "webkit": 67
+          }
+        },
+        {
+          "suite": "Reference interactions",
+          "path": "reference-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 48,
+          "passed_checks": 48,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "suite": "Workspace interactions",
+          "path": "workspace-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 120,
+          "passed_checks": 120,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        },
+        {
+          "suite": "Visual layout bounds",
+          "path": "visual-review-browser/report.json",
+          "status": "passed",
+          "recorded": 168,
+          "passed_checks": 168,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "suite": "Notice intake and flexible workflows",
+          "path": "notice-flow-browser/report.json",
+          "status": "passed",
+          "recorded": 45,
+          "passed_checks": 45,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "suite": "Task board drag and recovery",
+          "path": "task-board-browser/report.json",
+          "status": "passed",
+          "recorded": 28,
+          "passed_checks": 28,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "suite": "Natural notice intake",
+          "path": "natural-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "Personal materials and submissions",
+          "path": "task-materials-browser/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Source subscriptions and personal inbox",
+          "path": "source-inbox-browser/report.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Persistent push and device ownership",
+          "path": "push-browser/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 8
+          }
+        },
+        {
+          "suite": "Notice matter grouping and campus capacities",
+          "path": "notice-matters-browser/report.json",
+          "status": "passed",
+          "recorded": 21,
+          "passed_checks": 21,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          }
+        },
+        {
+          "suite": "School source chooser and pending saves",
+          "path": "source-presets-browser/report.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Independent devices and campus collaboration",
+          "path": "pilot-workspace-browser/report.json",
+          "status": "failed",
+          "recorded": 24,
+          "passed_checks": 21,
+          "failed_checks": 3,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 8,
+            "firefox": 8,
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "QQ group intake, rules and attachments",
+          "path": "qq-group-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 12,
+          "passed_checks": 12,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Agent approvals and cancellation",
+          "path": "agent-chat-browser/results.json",
+          "status": "passed",
+          "recorded": 13,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          }
+        },
+        {
+          "suite": "Agent authored UI and persistence",
+          "path": "agent-adaptive-browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent private media and resize",
+          "path": "reference-fusion/browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent incremental rendering",
+          "path": "agent-quality-browser/performance.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Composer attachments and dictation",
+          "path": "composer-browser/results.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "OpenUI streaming Chromium",
+          "path": "openui-browser/chromium/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming Firefox",
+          "path": "openui-browser/firefox/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming WebKit",
+          "path": "openui-browser/webkit/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          }
+        },
+        {
+          "suite": "Compact chat Chromium",
+          "path": "chat-layout/chromium/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "suite": "Compact chat Firefox",
+          "path": "chat-layout/firefox/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "suite": "Compact chat WebKit",
+          "path": "chat-layout/webkit/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Chat interactions Chromium",
+          "path": "chat-interactions/chromium/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Chat interactions Firefox",
+          "path": "chat-interactions/firefox/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "suite": "Chat interactions WebKit",
+          "path": "chat-interactions/webkit/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Chat recovery Chromium",
+          "path": "chat-recovery/chromium/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "suite": "Chat recovery Firefox",
+          "path": "chat-recovery/firefox/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "suite": "Chat recovery WebKit",
+          "path": "chat-recovery/webkit/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        }
+      ],
+      "engine_scope_note": "Main multi-engine suites use their per-check engine/browser fields. Agent 13/7/7/5 and Composer 9 are Chromium-only, as are materials/source-inbox/push/source-presets. A three-engine job does not imply three-engine coverage for each suite.",
+      "previous_passed_check_names_missing": 0,
+      "continuity": {
+        "job": 132358200091,
+        "conclusion": "success",
+        "checks": 990,
+        "passed": 990,
+        "failed": 0,
+        "errors": 0,
+        "engines": {
+          "chromium": 330,
+          "firefox": 330,
+          "webkit": 330
+        },
+        "reports": {
+          "arrangement_recovery": 612,
+          "draft_continuity": 204,
+          "ui_continuity": 174
+        },
+        "artifact": {
+          "id": 14101379678,
+          "name": "continuity-browser-reports",
+          "bytes": 705888,
+          "sha256": "18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a",
+          "download_sha256_verified": true
+        },
+        "audit": "ci-evidence/43565458564/continuity-report-audit.json"
+      },
+      "audit": "ci-evidence/43565458564/browser-report-audit.json",
+      "job_log": "ci-evidence/43565458564/browser-job.log",
+      "visually_reviewed": [
+        {
+          "path": "sprint-ui-browser/firefox-mobile-chat.png",
+          "observation": "390px composer and code block are visible without horizontal overflow; the toast remains above the composer."
+        },
+        {
+          "path": "sprint-ui-browser/firefox-mobile-draft.png",
+          "observation": "The draft and saved attachment are restored. At this mid-scroll screenshot the publication button is partially behind the fixed bottom navigation; reachability after scrolling is not established by this screenshot."
+        },
+        {
+          "path": "task-board-browser/chromium-desktop.png",
+          "observation": "Three lanes, cards, loaded range and undo toast remain visible without obvious horizontal overflow."
+        },
+        {
+          "path": "sprint-ui-browser/webkit-failure-36.png",
+          "observation": "The old search is rendered with 50/54 matching rows; the screenshot does not establish that the test had held its response."
+        }
+      ],
+      "performance": {
+        "source": "sprint-ui-browser/report.json",
+        "network_fixture": "Default service-worker policy (allow); controller state was not recorded in run51. Run52 explicitly blocks workers for controlled network faults and must be labeled as a different fixture.",
+        "measurements": [
+          {
+            "engine": "chromium",
+            "label": "cold-login",
+            "can_input_at_ms": 351.40000000000873,
+            "dom_content_loaded_ms": 169.8000000000029,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1833256,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [
+              {
+                "startTime": 202.90000000000873,
+                "duration": 62
+              }
+            ],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 153.6999999999971,
+            "dom_content_loaded_ms": 74.5,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "cold-login",
+            "can_input_at_ms": 606,
+            "dom_content_loaded_ms": 386,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1859861,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 393,
+            "dom_content_loaded_ms": 296,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 454,
+            "dom_content_loaded_ms": 75,
+            "request_count": 29,
+            "static_request_count": 18,
+            "css_request_count": 1,
+            "transfer_size": 78178,
+            "encoded_body_size": 3126284,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "cold-login",
+            "can_input_at_ms": 423,
+            "dom_content_loaded_ms": 196,
+            "request_count": 16,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1837620,
+            "encoded_body_size": 1832820,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 225,
+            "dom_content_loaded_ms": 121,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1832546,
+            "encoded_body_size": 1828046,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          }
+        ],
+        "limits": "Loopback CI observations, not a public-network or physical-device SLA. JavaScript parsing duration was not measured. Unsupported Long Task APIs remain unknown. PWA/push behavior is verified in its separate Chromium suite."
+      }
+    }
+  ],
+  "current_ci": {
+    "run_id": 43567666000,
+    "run_number": 52,
+    "attempt": 1,
+    "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+    "merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+    "observed_at": "2026-11-14T07:04:46.551375+00:00",
+    "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+    "state": "browser_and_continuity_completed_success",
+    "overall_workflow": "completed_success",
+    "browser_job": 132364929169,
+    "browser_status": "completed",
+    "browser_conclusion": "success",
+    "artifact": {
+      "id": 14103570812,
+      "name": "synthetic-browser-reports",
+      "bytes": 21714160,
+      "sha256": "fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+      "download_sha256_verified": true
+    },
+    "report_slots": {
+      "total": 33,
+      "complete_passed": 33,
+      "failed_reports": 0,
+      "missing_reports": 0
+    },
+    "recorded_checks": {
+      "total": 1038,
+      "passed": 1038,
+      "failed": 0
+    },
+    "unexecuted_expected_checks": 0,
+    "previous_passed_check_names_missing": 0,
+    "suite_results": [
+      {
+        "suite": "Sprint workflows and loading performance",
+        "path": "sprint-ui-browser/report.json",
+        "status": "passed",
+        "recorded": 60,
+        "passed_checks": 60,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 20,
+          "firefox": 20,
+          "webkit": 20
+        }
+      },
+      {
+        "suite": "Browser stability",
+        "path": "frontend-v9-browser/report.json",
+        "status": "passed",
+        "recorded": 123,
+        "passed_checks": 123,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 41,
+          "firefox": 41,
+          "webkit": 41
+        }
+      },
+      {
+        "suite": "Browser regression",
+        "path": "frontend-v8-browser/report.json",
+        "status": "passed",
+        "recorded": 201,
+        "passed_checks": 201,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 67,
+          "firefox": 67,
+          "webkit": 67
+        }
+      },
+      {
+        "suite": "Reference interactions",
+        "path": "reference-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 48,
+        "passed_checks": 48,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 16,
+          "firefox": 16,
+          "webkit": 16
+        }
+      },
+      {
+        "suite": "Workspace interactions",
+        "path": "workspace-interactions-browser/report.json",
+        "status": "passed",
+        "recorded": 120,
+        "passed_checks": 120,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 40,
+          "firefox": 40,
+          "webkit": 40
+        }
+      },
+      {
+        "suite": "Visual layout bounds",
+        "path": "visual-review-browser/report.json",
+        "status": "passed",
+        "recorded": 168,
+        "passed_checks": 168,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 56,
+          "firefox": 56,
+          "webkit": 56
+        }
+      },
+      {
+        "suite": "Notice intake and flexible workflows",
+        "path": "notice-flow-browser/report.json",
+        "status": "passed",
+        "recorded": 45,
+        "passed_checks": 45,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 15,
+          "firefox": 15,
+          "webkit": 15
+        }
+      },
+      {
+        "suite": "Task board drag and recovery",
+        "path": "task-board-browser/report.json",
+        "status": "passed",
+        "recorded": 28,
+        "passed_checks": 28,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 10,
+          "firefox": 9,
+          "webkit": 9
+        }
+      },
+      {
+        "suite": "Natural notice intake",
+        "path": "natural-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "Personal materials and submissions",
+        "path": "task-materials-browser/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Source subscriptions and personal inbox",
+        "path": "source-inbox-browser/report.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Persistent push and device ownership",
+        "path": "push-browser/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 8
+        }
+      },
+      {
+        "suite": "Notice matter grouping and campus capacities",
+        "path": "notice-matters-browser/report.json",
+        "status": "passed",
+        "recorded": 21,
+        "passed_checks": 21,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 7,
+          "firefox": 7,
+          "webkit": 7
+        }
+      },
+      {
+        "suite": "School source chooser and pending saves",
+        "path": "source-presets-browser/report.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Independent devices and campus collaboration",
+        "path": "pilot-workspace-browser/report.json",
+        "status": "passed",
+        "recorded": 33,
+        "passed_checks": 33,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        }
+      },
+      {
+        "suite": "QQ group intake, rules and attachments",
+        "path": "qq-group-intake-browser/report.json",
+        "status": "passed",
+        "recorded": 12,
+        "passed_checks": 12,
+        "failed_checks": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "by_engine": {
+          "chromium": 4,
+          "firefox": 4,
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Agent approvals and cancellation",
+        "path": "agent-chat-browser/results.json",
+        "status": "passed",
+        "recorded": 13,
+        "passed_checks": 13,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 13
+        }
+      },
+      {
+        "suite": "Agent authored UI and persistence",
+        "path": "agent-adaptive-browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent private media and resize",
+        "path": "reference-fusion/browser/results.json",
+        "status": "passed",
+        "recorded": 7,
+        "passed_checks": 7,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 7
+        }
+      },
+      {
+        "suite": "Agent incremental rendering",
+        "path": "agent-quality-browser/performance.json",
+        "status": "passed",
+        "recorded": 5,
+        "passed_checks": 5,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 5
+        }
+      },
+      {
+        "suite": "Composer attachments and dictation",
+        "path": "composer-browser/results.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "OpenUI streaming Chromium",
+        "path": "openui-browser/chromium/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming Firefox",
+        "path": "openui-browser/firefox/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 10
+        }
+      },
+      {
+        "suite": "OpenUI streaming WebKit",
+        "path": "openui-browser/webkit/report.json",
+        "status": "passed",
+        "recorded": 10,
+        "passed_checks": 10,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 10
+        }
+      },
+      {
+        "suite": "Compact chat Chromium",
+        "path": "chat-layout/chromium/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 4
+        }
+      },
+      {
+        "suite": "Compact chat Firefox",
+        "path": "chat-layout/firefox/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 4
+        }
+      },
+      {
+        "suite": "Compact chat WebKit",
+        "path": "chat-layout/webkit/report.json",
+        "status": "passed",
+        "recorded": 4,
+        "passed_checks": 4,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 4
+        }
+      },
+      {
+        "suite": "Chat interactions Chromium",
+        "path": "chat-interactions/chromium/report.json",
+        "status": "passed",
+        "recorded": 9,
+        "passed_checks": 9,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 9
+        }
+      },
+      {
+        "suite": "Chat interactions Firefox",
+        "path": "chat-interactions/firefox/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 8
+        }
+      },
+      {
+        "suite": "Chat interactions WebKit",
+        "path": "chat-interactions/webkit/report.json",
+        "status": "passed",
+        "recorded": 8,
+        "passed_checks": 8,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 8
+        }
+      },
+      {
+        "suite": "Chat recovery Chromium",
+        "path": "chat-recovery/chromium/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "chromium"
+        ],
+        "by_engine": {
+          "chromium": 3
+        }
+      },
+      {
+        "suite": "Chat recovery Firefox",
+        "path": "chat-recovery/firefox/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "firefox"
+        ],
+        "by_engine": {
+          "firefox": 3
+        }
+      },
+      {
+        "suite": "Chat recovery WebKit",
+        "path": "chat-recovery/webkit/report.json",
+        "status": "passed",
+        "recorded": 3,
+        "passed_checks": 3,
+        "failed_checks": 0,
+        "engines": [
+          "webkit"
+        ],
+        "by_engine": {
+          "webkit": 3
+        }
+      }
+    ],
+    "engine_scope_note": "Agent suites (13/7/7/5 checks), Composer (9), materials (9), source inbox (5), push (8), and source presets (7) use Chromium only. Other engine scopes are recorded per suite; there is no blanket claim that all features ran in all three engines.",
+    "sprint": {
+      "checks": 60,
+      "passed": 60,
+      "engines": {
+        "chromium": 20,
+        "firefox": 20,
+        "webkit": 20
+      },
+      "query_races": [
+        {
+          "engine": "chromium",
+          "old_query": "冲刺分页 chromium",
+          "new_query": "跨页独有 chromium",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "net::ERR_ABORTED",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 chromium",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 chromium",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        },
+        {
+          "engine": "firefox",
+          "old_query": "冲刺分页 firefox",
+          "new_query": "跨页独有 firefox",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": true,
+          "old_request_failure": null,
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 firefox",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 firefox",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_response_observed_after_new_query"
+        },
+        {
+          "engine": "webkit",
+          "old_query": "冲刺分页 webkit",
+          "new_query": "跨页独有 webkit",
+          "service_worker_controller": null,
+          "old_handler_entered": true,
+          "old_response_captured": true,
+          "old_browser_response_observed": false,
+          "old_request_failure": "Load request cancelled",
+          "late_fulfill_attempted": true,
+          "late_fulfill_result": "fulfill_call_completed",
+          "requests": [
+            {
+              "query": "冲刺分页 webkit",
+              "method": "GET"
+            },
+            {
+              "query": "跨页独有 webkit",
+              "method": "GET"
+            }
+          ],
+          "outcome": "old_request_aborted_late_fulfill_attempted"
+        }
+      ],
+      "mobile_controls": [
+        {
+          "engine": "chromium",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.171875,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "firefox",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 656.5,
+            "width": 85.66666412353516,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        },
+        {
+          "engine": "webkit",
+          "name": "publication control after normal document scroll",
+          "control": {
+            "x": 14,
+            "y": 657.375,
+            "width": 85.65625,
+            "height": 44
+          },
+          "navigation": {
+            "x": 0,
+            "y": 786,
+            "width": 390,
+            "height": 58
+          }
+        }
+      ],
+      "network_fixture": {
+        "service_workers": "block",
+        "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+      },
+      "interpretation": "All three real route handlers entered and captured the old response. Firefox observed the late browser response; Chromium and WebKit aborted the old request and recorded a late fulfill attempt. All engines retained the new server filter through the unchanged 800 ms stability window. Aborted responses are not described as delivered."
+    },
+    "pilot": {
+      "checks": 33,
+      "passed": 33,
+      "engines": {
+        "chromium": 11,
+        "firefox": 11,
+        "webkit": 11
+      },
+      "cold_imports": [
+        {
+          "engine": "chromium",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "chromium",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "firefox",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "close",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        },
+        {
+          "engine": "webkit",
+          "mode": "route",
+          "module_held": true,
+          "options_before_release": 0,
+          "options_after_release": 0,
+          "service_worker_controller": null
+        }
+      ],
+      "network_fixture": {
+        "desktop_service_workers": "block",
+        "reason": "Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior."
+      }
+    },
+    "continuity": {
+      "job": 132364929184,
+      "conclusion": "success",
+      "checks": 990,
+      "passed": 990,
+      "failed": 0,
+      "errors": 0,
+      "engines": {
+        "chromium": 330,
+        "firefox": 330,
+        "webkit": 330
+      },
+      "reports": {
+        "arrangement_recovery": 612,
+        "draft_continuity": 204,
+        "ui_continuity": 174
+      },
+      "artifact": {
+        "id": 14102853777,
+        "name": "continuity-browser-reports",
+        "bytes": 706100,
+        "sha256": "895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
+        "download_sha256_verified": true
+      },
+      "audit": "ci-evidence/43567666000/continuity-report-audit.json"
+    },
+    "audit": "ci-evidence/43567666000/browser-report-audit.json",
+    "job_log": "ci-evidence/43567666000/browser-job.log",
+    "product_rebuilt": false,
+    "product_assets_unchanged_from_run51": true,
+    "visually_reviewed": [
+      {
+        "path": "sprint-ui-browser/chromium-mobile-draft.png",
+        "observation": "390px draft and saved attachment remain visible; normal scroll exposes the complete publication button above the fixed navigation, with no obvious horizontal overflow."
+      },
+      {
+        "path": "sprint-ui-browser/webkit-mobile-chat.png",
+        "observation": "390px input, send control, code block and reply disclosure remain visible; toast is above the composer."
+      },
+      {
+        "path": "task-board-browser/chromium-desktop.png",
+        "observation": "1440px three-lane board, cards, loaded-range explanation and undo toast remain visible without obvious horizontal overflow."
+      }
+    ],
+    "performance": {
+      "source": "sprint-ui-browser/report.json",
+      "network_fixture": "serviceWorkers:block for controlled request delay/failure tests; differs from run51 default-allow fixture. Independent Chromium push/PWA suite retains actual worker behavior.",
+      "measurements": [
+        {
+          "engine": "chromium",
+          "label": "cold-login",
+          "can_input_at_ms": 223.3000000000029,
+          "dom_content_loaded_ms": 118.80000000000291,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1833256,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 68,
+          "dom_content_loaded_ms": 15.89999999999418,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 1828756,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "chromium",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 241.40000000000873,
+          "dom_content_loaded_ms": 16.69999999999709,
+          "request_count": 27,
+          "static_request_count": 17,
+          "css_request_count": 1,
+          "transfer_size": 78930,
+          "encoded_body_size": 3101031,
+          "longtask_supported": true,
+          "longtasks": [],
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "cold-login",
+          "can_input_at_ms": 362,
+          "dom_content_loaded_ms": 244,
+          "request_count": 16,
+          "static_request_count": 14,
+          "css_request_count": 1,
+          "transfer_size": 1859861,
+          "encoded_body_size": 1855061,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 126,
+          "dom_content_loaded_ms": 57,
+          "request_count": 14,
+          "static_request_count": 12,
+          "css_request_count": 1,
+          "transfer_size": 742,
+          "encoded_body_size": 363817,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "firefox",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 279,
+          "dom_content_loaded_ms": 40,
+          "request_count": 25,
+          "static_request_count": 15,
+          "css_request_count": 1,
+          "transfer_size": 77657,
+          "encoded_body_size": 509176,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "cold-login",
+          "can_input_at_ms": 246,
+          "dom_content_loaded_ms": 115,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1832546,
+          "encoded_body_size": 1828046,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-login-same-context",
+          "can_input_at_ms": 87,
+          "dom_content_loaded_ms": 40,
+          "request_count": 15,
+          "static_request_count": 13,
+          "css_request_count": 1,
+          "transfer_size": 1814,
+          "encoded_body_size": 914,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        },
+        {
+          "engine": "webkit",
+          "label": "warm-chat-same-context",
+          "can_input_at_ms": 259,
+          "dom_content_loaded_ms": 36,
+          "request_count": 28,
+          "static_request_count": 18,
+          "css_request_count": 1,
+          "transfer_size": 78615,
+          "encoded_body_size": 75315,
+          "longtask_supported": false,
+          "longtasks": null,
+          "parse_duration_ms": null
+        }
+      ],
+      "limits": "CI loopback measurements, not public-network/physical-phone SLA. Different worker policy prevents unconditional speed comparison with run51. Exact JavaScript parsing duration remains unmeasured; unsupported Long Task data remain unknown."
+    },
+    "workflow_status": "completed",
+    "workflow_conclusion": "success",
+    "successful_jobs": 9,
+    "official_workflow_record": "artifacts/ci-readonly/run-43567666000-root-official.json",
+    "scope": "This evidence is tied to candidate head 6b15c745 and PR merge ac3e291. It does not predeclare a later main-branch run."
+  },
+  "requirement_observation_scope": "Per-requirement observations remain bound to their recorded run. New global suite totals do not automatically accept all 25 requirements."
 }

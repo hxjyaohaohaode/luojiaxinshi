@@ -1,5 +1,5 @@
 {
-  "scope": "Final local frontend gates after run50 cold-entry and browser-script repairs; new candidate browser/Node22 verification awaits the next GitHub CI run",
+  "scope": "Candidate Run 52 completed successfully across all 9 jobs. The unchanged app-DFTX33VB product build passed 1,038 browser checks, 990 continuity checks, and seven Node 22 build gates. A later main-branch run is not predeclared.",
   "performed_at": "2026-11-14T06:13:24.916375+00:00",
   "node": "v24.22.1",
   "platform": "linux",
@@ -165,7 +165,7 @@
     "metrics_source": "Actual final npm run build:check output after collaboration and memory cold-entry repairs; prior build values remain in history."
   },
   "browser": {
-    "state": "new_candidate_pending_ci",
+    "state": "candidate_run52_completed_success",
     "local_execution": "not_executed",
     "reason": "Local browser launch is blocked by environment permissions; real Chromium/Firefox/WebKit validation uses GitHub CI. No privilege bypass.",
     "suite": "scripts/verify_sprint_ui.mjs",
@@ -380,56 +380,2649 @@
       ]
     },
     "current_ci": {
-      "state": "pending_next_candidate_ci",
-      "run_id": null,
-      "head_sha": null,
+      "run_id": 43567666000,
+      "run_number": 52,
+      "attempt": 1,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+      "observed_at": "2026-11-14T07:04:46.551375+00:00",
+      "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+      "state": "browser_and_continuity_completed_success",
+      "overall_workflow": "completed_success",
+      "browser_job": 132364929169,
+      "browser_status": "completed",
+      "browser_conclusion": "success",
+      "artifact": {
+        "id": 14103570812,
+        "name": "synthetic-browser-reports",
+        "bytes": 21714160,
+        "sha256": "fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+        "download_sha256_verified": true
+      },
+      "report_slots": {
+        "total": 33,
+        "complete_passed": 33,
+        "failed_reports": 0,
+        "missing_reports": 0
+      },
+      "recorded_checks": {
+        "total": 1038,
+        "passed": 1038,
+        "failed": 0
+      },
+      "unexecuted_expected_checks": 0,
+      "previous_passed_check_names_missing": 0,
+      "suite_results": [
+        {
+          "suite": "Sprint workflows and loading performance",
+          "path": "sprint-ui-browser/report.json",
+          "status": "passed",
+          "recorded": 60,
+          "passed_checks": 60,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "suite": "Browser stability",
+          "path": "frontend-v9-browser/report.json",
+          "status": "passed",
+          "recorded": 123,
+          "passed_checks": 123,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          }
+        },
+        {
+          "suite": "Browser regression",
+          "path": "frontend-v8-browser/report.json",
+          "status": "passed",
+          "recorded": 201,
+          "passed_checks": 201,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 67,
+            "firefox": 67,
+            "webkit": 67
+          }
+        },
+        {
+          "suite": "Reference interactions",
+          "path": "reference-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 48,
+          "passed_checks": 48,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "suite": "Workspace interactions",
+          "path": "workspace-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 120,
+          "passed_checks": 120,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        },
+        {
+          "suite": "Visual layout bounds",
+          "path": "visual-review-browser/report.json",
+          "status": "passed",
+          "recorded": 168,
+          "passed_checks": 168,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "suite": "Notice intake and flexible workflows",
+          "path": "notice-flow-browser/report.json",
+          "status": "passed",
+          "recorded": 45,
+          "passed_checks": 45,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "suite": "Task board drag and recovery",
+          "path": "task-board-browser/report.json",
+          "status": "passed",
+          "recorded": 28,
+          "passed_checks": 28,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "suite": "Natural notice intake",
+          "path": "natural-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "Personal materials and submissions",
+          "path": "task-materials-browser/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Source subscriptions and personal inbox",
+          "path": "source-inbox-browser/report.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Persistent push and device ownership",
+          "path": "push-browser/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 8
+          }
+        },
+        {
+          "suite": "Notice matter grouping and campus capacities",
+          "path": "notice-matters-browser/report.json",
+          "status": "passed",
+          "recorded": 21,
+          "passed_checks": 21,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          }
+        },
+        {
+          "suite": "School source chooser and pending saves",
+          "path": "source-presets-browser/report.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Independent devices and campus collaboration",
+          "path": "pilot-workspace-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "QQ group intake, rules and attachments",
+          "path": "qq-group-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 12,
+          "passed_checks": 12,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Agent approvals and cancellation",
+          "path": "agent-chat-browser/results.json",
+          "status": "passed",
+          "recorded": 13,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          }
+        },
+        {
+          "suite": "Agent authored UI and persistence",
+          "path": "agent-adaptive-browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent private media and resize",
+          "path": "reference-fusion/browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent incremental rendering",
+          "path": "agent-quality-browser/performance.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Composer attachments and dictation",
+          "path": "composer-browser/results.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "OpenUI streaming Chromium",
+          "path": "openui-browser/chromium/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming Firefox",
+          "path": "openui-browser/firefox/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming WebKit",
+          "path": "openui-browser/webkit/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          }
+        },
+        {
+          "suite": "Compact chat Chromium",
+          "path": "chat-layout/chromium/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "suite": "Compact chat Firefox",
+          "path": "chat-layout/firefox/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "suite": "Compact chat WebKit",
+          "path": "chat-layout/webkit/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Chat interactions Chromium",
+          "path": "chat-interactions/chromium/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Chat interactions Firefox",
+          "path": "chat-interactions/firefox/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "suite": "Chat interactions WebKit",
+          "path": "chat-interactions/webkit/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Chat recovery Chromium",
+          "path": "chat-recovery/chromium/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "suite": "Chat recovery Firefox",
+          "path": "chat-recovery/firefox/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "suite": "Chat recovery WebKit",
+          "path": "chat-recovery/webkit/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        }
+      ],
+      "engine_scope_note": "Agent suites (13/7/7/5 checks), Composer (9), materials (9), source inbox (5), push (8), and source presets (7) use Chromium only. Other engine scopes are recorded per suite; there is no blanket claim that all features ran in all three engines.",
+      "sprint": {
+        "checks": 60,
+        "passed": 60,
+        "engines": {
+          "chromium": 20,
+          "firefox": 20,
+          "webkit": 20
+        },
+        "query_races": [
+          {
+            "engine": "chromium",
+            "old_query": "冲刺分页 chromium",
+            "new_query": "跨页独有 chromium",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "net::ERR_ABORTED",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 chromium",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 chromium",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          },
+          {
+            "engine": "firefox",
+            "old_query": "冲刺分页 firefox",
+            "new_query": "跨页独有 firefox",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": true,
+            "old_request_failure": null,
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 firefox",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 firefox",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_response_observed_after_new_query"
+          },
+          {
+            "engine": "webkit",
+            "old_query": "冲刺分页 webkit",
+            "new_query": "跨页独有 webkit",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "Load request cancelled",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 webkit",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 webkit",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          }
+        ],
+        "mobile_controls": [
+          {
+            "engine": "chromium",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.171875,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "firefox",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 656.5,
+              "width": 85.66666412353516,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "webkit",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.375,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          }
+        ],
+        "network_fixture": {
+          "service_workers": "block",
+          "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+        },
+        "interpretation": "All three real route handlers entered and captured the old response. Firefox observed the late browser response; Chromium and WebKit aborted the old request and recorded a late fulfill attempt. All engines retained the new server filter through the unchanged 800 ms stability window. Aborted responses are not described as delivered."
+      },
+      "pilot": {
+        "checks": 33,
+        "passed": 33,
+        "engines": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        },
+        "cold_imports": [
+          {
+            "engine": "chromium",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "chromium",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          }
+        ],
+        "network_fixture": {
+          "desktop_service_workers": "block",
+          "reason": "Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior."
+        }
+      },
+      "continuity": {
+        "job": 132364929184,
+        "conclusion": "success",
+        "checks": 990,
+        "passed": 990,
+        "failed": 0,
+        "errors": 0,
+        "engines": {
+          "chromium": 330,
+          "firefox": 330,
+          "webkit": 330
+        },
+        "reports": {
+          "arrangement_recovery": 612,
+          "draft_continuity": 204,
+          "ui_continuity": 174
+        },
+        "artifact": {
+          "id": 14102853777,
+          "name": "continuity-browser-reports",
+          "bytes": 706100,
+          "sha256": "895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
+          "download_sha256_verified": true
+        },
+        "audit": "ci-evidence/43567666000/continuity-report-audit.json"
+      },
+      "audit": "ci-evidence/43567666000/browser-report-audit.json",
+      "job_log": "ci-evidence/43567666000/browser-job.log",
+      "product_rebuilt": false,
+      "product_assets_unchanged_from_run51": true,
+      "visually_reviewed": [
+        {
+          "path": "sprint-ui-browser/chromium-mobile-draft.png",
+          "observation": "390px draft and saved attachment remain visible; normal scroll exposes the complete publication button above the fixed navigation, with no obvious horizontal overflow."
+        },
+        {
+          "path": "sprint-ui-browser/webkit-mobile-chat.png",
+          "observation": "390px input, send control, code block and reply disclosure remain visible; toast is above the composer."
+        },
+        {
+          "path": "task-board-browser/chromium-desktop.png",
+          "observation": "1440px three-lane board, cards, loaded-range explanation and undo toast remain visible without obvious horizontal overflow."
+        }
+      ],
+      "performance": {
+        "source": "sprint-ui-browser/report.json",
+        "network_fixture": "serviceWorkers:block for controlled request delay/failure tests; differs from run51 default-allow fixture. Independent Chromium push/PWA suite retains actual worker behavior.",
+        "measurements": [
+          {
+            "engine": "chromium",
+            "label": "cold-login",
+            "can_input_at_ms": 223.3000000000029,
+            "dom_content_loaded_ms": 118.80000000000291,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1833256,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 68,
+            "dom_content_loaded_ms": 15.89999999999418,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 241.40000000000873,
+            "dom_content_loaded_ms": 16.69999999999709,
+            "request_count": 27,
+            "static_request_count": 17,
+            "css_request_count": 1,
+            "transfer_size": 78930,
+            "encoded_body_size": 3101031,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "cold-login",
+            "can_input_at_ms": 362,
+            "dom_content_loaded_ms": 244,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1859861,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 126,
+            "dom_content_loaded_ms": 57,
+            "request_count": 14,
+            "static_request_count": 12,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 363817,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 279,
+            "dom_content_loaded_ms": 40,
+            "request_count": 25,
+            "static_request_count": 15,
+            "css_request_count": 1,
+            "transfer_size": 77657,
+            "encoded_body_size": 509176,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "cold-login",
+            "can_input_at_ms": 246,
+            "dom_content_loaded_ms": 115,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1832546,
+            "encoded_body_size": 1828046,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 87,
+            "dom_content_loaded_ms": 40,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1814,
+            "encoded_body_size": 914,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 259,
+            "dom_content_loaded_ms": 36,
+            "request_count": 28,
+            "static_request_count": 18,
+            "css_request_count": 1,
+            "transfer_size": 78615,
+            "encoded_body_size": 75315,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          }
+        ],
+        "limits": "CI loopback measurements, not public-network/physical-phone SLA. Different worker policy prevents unconditional speed comparison with run51. Exact JavaScript parsing duration remains unmeasured; unsupported Long Task data remain unknown."
+      },
       "build_entries": {
         "js": "/static/dist/app-DFTX33VB.js",
         "css": "/static/dist/styles-BKR4PFDD.css"
       },
-      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
-      "sprint_expected_checks": 60,
-      "task_board_expected_checks": 28,
-      "expected_counts_are_not_results": true
+      "workflow_status": "completed",
+      "workflow_conclusion": "success",
+      "successful_jobs": 9,
+      "official_workflow_record": "artifacts/ci-readonly/run-43567666000-root-official.json",
+      "scope": "This evidence is tied to candidate head 6b15c745 and PR merge ac3e291. It does not predeclare a later main-branch run."
+    },
+    "third_ci": {
+      "run_id": 43565458564,
+      "run_number": 51,
+      "attempt": 1,
+      "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+      "merge_sha": "0c17c2dc33c874c21d655f64302a81d4a9a49866",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564",
+      "observed_at": "2026-11-14T06:45:56.385359+00:00",
+      "browser_job": 132358199991,
+      "browser_status": "completed",
+      "browser_conclusion": "failure",
+      "artifact": {
+        "id": 14103186594,
+        "name": "synthetic-browser-reports",
+        "bytes": 22206238,
+        "sha256": "989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec",
+        "download_sha256_verified": true
+      },
+      "report_slots": {
+        "total": 33,
+        "complete_passed": 31,
+        "failed_reports": 2,
+        "missing_reports": 0
+      },
+      "recorded_checks": {
+        "total": 1005,
+        "passed": 1000,
+        "failed": 5,
+        "note": "The repeated pilot errors are not counted again. Unexecuted checks are listed separately and are not passes."
+      },
+      "unexecuted_expected_checks": {
+        "sprint": 24,
+        "pilot": 9,
+        "total": 33
+      },
+      "failed_suites": [
+        {
+          "script": "scripts/verify_sprint_ui.mjs",
+          "report_status": "incomplete",
+          "recorded_checks": 36,
+          "passed": 34,
+          "failed": 2,
+          "per_engine": {
+            "chromium": {
+              "recorded": 8,
+              "passed": 7,
+              "failed": 1
+            },
+            "firefox": {
+              "recorded": 20,
+              "passed": 20,
+              "failed": 0
+            },
+            "webkit": {
+              "recorded": 8,
+              "passed": 7,
+              "failed": 1
+            }
+          },
+          "check": "an obsolete query response cannot overwrite the latest server filter",
+          "observed": "The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.",
+          "boundary": "WebKit records the prefix query request and HTTP 200, while the delay handler did not capture it. The artifact does not prove API caching or an obsolete response overwriting a newer query."
+        },
+        {
+          "script": "scripts/verify_pilot_workspace.mjs",
+          "recorded_checks": 24,
+          "passed": 21,
+          "failed": 3,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "check": "a cold collaboration import respects closing the workflow",
+          "observed": "strict mode violation: locator('#dialog [data-action=close-dialog]') resolved to 2 elements",
+          "confirmed_cause": "The selector matches both the header Close button and the footer Back button. The later collaboration scenarios were not reached."
+        }
+      ],
+      "suite_results": [
+        {
+          "suite": "Sprint workflows and loading performance",
+          "path": "sprint-ui-browser/report.json",
+          "status": "failed",
+          "recorded": 36,
+          "passed_checks": 34,
+          "failed_checks": 2,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 8,
+            "firefox": 20,
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Browser stability",
+          "path": "frontend-v9-browser/report.json",
+          "status": "passed",
+          "recorded": 123,
+          "passed_checks": 123,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          }
+        },
+        {
+          "suite": "Browser regression",
+          "path": "frontend-v8-browser/report.json",
+          "status": "passed",
+          "recorded": 201,
+          "passed_checks": 201,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 67,
+            "firefox": 67,
+            "webkit": 67
+          }
+        },
+        {
+          "suite": "Reference interactions",
+          "path": "reference-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 48,
+          "passed_checks": 48,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "suite": "Workspace interactions",
+          "path": "workspace-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 120,
+          "passed_checks": 120,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        },
+        {
+          "suite": "Visual layout bounds",
+          "path": "visual-review-browser/report.json",
+          "status": "passed",
+          "recorded": 168,
+          "passed_checks": 168,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "suite": "Notice intake and flexible workflows",
+          "path": "notice-flow-browser/report.json",
+          "status": "passed",
+          "recorded": 45,
+          "passed_checks": 45,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "suite": "Task board drag and recovery",
+          "path": "task-board-browser/report.json",
+          "status": "passed",
+          "recorded": 28,
+          "passed_checks": 28,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "suite": "Natural notice intake",
+          "path": "natural-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "Personal materials and submissions",
+          "path": "task-materials-browser/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Source subscriptions and personal inbox",
+          "path": "source-inbox-browser/report.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Persistent push and device ownership",
+          "path": "push-browser/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 8
+          }
+        },
+        {
+          "suite": "Notice matter grouping and campus capacities",
+          "path": "notice-matters-browser/report.json",
+          "status": "passed",
+          "recorded": 21,
+          "passed_checks": 21,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          }
+        },
+        {
+          "suite": "School source chooser and pending saves",
+          "path": "source-presets-browser/report.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Independent devices and campus collaboration",
+          "path": "pilot-workspace-browser/report.json",
+          "status": "failed",
+          "recorded": 24,
+          "passed_checks": 21,
+          "failed_checks": 3,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 8,
+            "firefox": 8,
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "QQ group intake, rules and attachments",
+          "path": "qq-group-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 12,
+          "passed_checks": 12,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Agent approvals and cancellation",
+          "path": "agent-chat-browser/results.json",
+          "status": "passed",
+          "recorded": 13,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          }
+        },
+        {
+          "suite": "Agent authored UI and persistence",
+          "path": "agent-adaptive-browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent private media and resize",
+          "path": "reference-fusion/browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent incremental rendering",
+          "path": "agent-quality-browser/performance.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Composer attachments and dictation",
+          "path": "composer-browser/results.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "OpenUI streaming Chromium",
+          "path": "openui-browser/chromium/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming Firefox",
+          "path": "openui-browser/firefox/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming WebKit",
+          "path": "openui-browser/webkit/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          }
+        },
+        {
+          "suite": "Compact chat Chromium",
+          "path": "chat-layout/chromium/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "suite": "Compact chat Firefox",
+          "path": "chat-layout/firefox/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "suite": "Compact chat WebKit",
+          "path": "chat-layout/webkit/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Chat interactions Chromium",
+          "path": "chat-interactions/chromium/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Chat interactions Firefox",
+          "path": "chat-interactions/firefox/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "suite": "Chat interactions WebKit",
+          "path": "chat-interactions/webkit/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Chat recovery Chromium",
+          "path": "chat-recovery/chromium/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "suite": "Chat recovery Firefox",
+          "path": "chat-recovery/firefox/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "suite": "Chat recovery WebKit",
+          "path": "chat-recovery/webkit/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        }
+      ],
+      "engine_scope_note": "Main multi-engine suites use their per-check engine/browser fields. Agent 13/7/7/5 and Composer 9 are Chromium-only, as are materials/source-inbox/push/source-presets. A three-engine job does not imply three-engine coverage for each suite.",
+      "previous_passed_check_names_missing": 0,
+      "continuity": {
+        "job": 132358200091,
+        "conclusion": "success",
+        "checks": 990,
+        "passed": 990,
+        "failed": 0,
+        "errors": 0,
+        "engines": {
+          "chromium": 330,
+          "firefox": 330,
+          "webkit": 330
+        },
+        "reports": {
+          "arrangement_recovery": 612,
+          "draft_continuity": 204,
+          "ui_continuity": 174
+        },
+        "artifact": {
+          "id": 14101379678,
+          "name": "continuity-browser-reports",
+          "bytes": 705888,
+          "sha256": "18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a",
+          "download_sha256_verified": true
+        },
+        "audit": "ci-evidence/43565458564/continuity-report-audit.json"
+      },
+      "audit": "ci-evidence/43565458564/browser-report-audit.json",
+      "job_log": "ci-evidence/43565458564/browser-job.log",
+      "visually_reviewed": [
+        {
+          "path": "sprint-ui-browser/firefox-mobile-chat.png",
+          "observation": "390px composer and code block are visible without horizontal overflow; the toast remains above the composer."
+        },
+        {
+          "path": "sprint-ui-browser/firefox-mobile-draft.png",
+          "observation": "The draft and saved attachment are restored. At this mid-scroll screenshot the publication button is partially behind the fixed bottom navigation; reachability after scrolling is not established by this screenshot."
+        },
+        {
+          "path": "task-board-browser/chromium-desktop.png",
+          "observation": "Three lanes, cards, loaded range and undo toast remain visible without obvious horizontal overflow."
+        },
+        {
+          "path": "sprint-ui-browser/webkit-failure-36.png",
+          "observation": "The old search is rendered with 50/54 matching rows; the screenshot does not establish that the test had held its response."
+        }
+      ],
+      "performance": {
+        "source": "sprint-ui-browser/report.json",
+        "network_fixture": "Default service-worker policy (allow); controller state was not recorded in run51. Run52 explicitly blocks workers for controlled network faults and must be labeled as a different fixture.",
+        "measurements": [
+          {
+            "engine": "chromium",
+            "label": "cold-login",
+            "can_input_at_ms": 351.40000000000873,
+            "dom_content_loaded_ms": 169.8000000000029,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1833256,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [
+              {
+                "startTime": 202.90000000000873,
+                "duration": 62
+              }
+            ],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 153.6999999999971,
+            "dom_content_loaded_ms": 74.5,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "cold-login",
+            "can_input_at_ms": 606,
+            "dom_content_loaded_ms": 386,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1859861,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 393,
+            "dom_content_loaded_ms": 296,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 454,
+            "dom_content_loaded_ms": 75,
+            "request_count": 29,
+            "static_request_count": 18,
+            "css_request_count": 1,
+            "transfer_size": 78178,
+            "encoded_body_size": 3126284,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "cold-login",
+            "can_input_at_ms": 423,
+            "dom_content_loaded_ms": 196,
+            "request_count": 16,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1837620,
+            "encoded_body_size": 1832820,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 225,
+            "dom_content_loaded_ms": 121,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1832546,
+            "encoded_body_size": 1828046,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          }
+        ],
+        "limits": "Loopback CI observations, not a public-network or physical-device SLA. JavaScript parsing duration was not measured. Unsupported Long Task APIs remain unknown. PWA/push behavior is verified in its separate Chromium suite."
+      }
+    },
+    "fourth_ci": {
+      "run_id": 43567666000,
+      "run_number": 52,
+      "attempt": 1,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "merge_sha": "ac3e291285b55c0dc28e4acd5f2673ddf29dca22",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
+      "observed_at": "2026-11-14T07:04:46.551375+00:00",
+      "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
+      "state": "browser_and_continuity_completed_success",
+      "overall_workflow": "completed_success",
+      "browser_job": 132364929169,
+      "browser_status": "completed",
+      "browser_conclusion": "success",
+      "artifact": {
+        "id": 14103570812,
+        "name": "synthetic-browser-reports",
+        "bytes": 21714160,
+        "sha256": "fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1",
+        "download_sha256_verified": true
+      },
+      "report_slots": {
+        "total": 33,
+        "complete_passed": 33,
+        "failed_reports": 0,
+        "missing_reports": 0
+      },
+      "recorded_checks": {
+        "total": 1038,
+        "passed": 1038,
+        "failed": 0
+      },
+      "unexecuted_expected_checks": 0,
+      "previous_passed_check_names_missing": 0,
+      "suite_results": [
+        {
+          "suite": "Sprint workflows and loading performance",
+          "path": "sprint-ui-browser/report.json",
+          "status": "passed",
+          "recorded": 60,
+          "passed_checks": 60,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 20,
+            "firefox": 20,
+            "webkit": 20
+          }
+        },
+        {
+          "suite": "Browser stability",
+          "path": "frontend-v9-browser/report.json",
+          "status": "passed",
+          "recorded": 123,
+          "passed_checks": 123,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 41,
+            "firefox": 41,
+            "webkit": 41
+          }
+        },
+        {
+          "suite": "Browser regression",
+          "path": "frontend-v8-browser/report.json",
+          "status": "passed",
+          "recorded": 201,
+          "passed_checks": 201,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 67,
+            "firefox": 67,
+            "webkit": 67
+          }
+        },
+        {
+          "suite": "Reference interactions",
+          "path": "reference-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 48,
+          "passed_checks": 48,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 16,
+            "firefox": 16,
+            "webkit": 16
+          }
+        },
+        {
+          "suite": "Workspace interactions",
+          "path": "workspace-interactions-browser/report.json",
+          "status": "passed",
+          "recorded": 120,
+          "passed_checks": 120,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 40,
+            "firefox": 40,
+            "webkit": 40
+          }
+        },
+        {
+          "suite": "Visual layout bounds",
+          "path": "visual-review-browser/report.json",
+          "status": "passed",
+          "recorded": 168,
+          "passed_checks": 168,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 56,
+            "firefox": 56,
+            "webkit": 56
+          }
+        },
+        {
+          "suite": "Notice intake and flexible workflows",
+          "path": "notice-flow-browser/report.json",
+          "status": "passed",
+          "recorded": 45,
+          "passed_checks": 45,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 15,
+            "firefox": 15,
+            "webkit": 15
+          }
+        },
+        {
+          "suite": "Task board drag and recovery",
+          "path": "task-board-browser/report.json",
+          "status": "passed",
+          "recorded": 28,
+          "passed_checks": 28,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 10,
+            "firefox": 9,
+            "webkit": 9
+          }
+        },
+        {
+          "suite": "Natural notice intake",
+          "path": "natural-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "Personal materials and submissions",
+          "path": "task-materials-browser/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Source subscriptions and personal inbox",
+          "path": "source-inbox-browser/report.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Persistent push and device ownership",
+          "path": "push-browser/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 8
+          }
+        },
+        {
+          "suite": "Notice matter grouping and campus capacities",
+          "path": "notice-matters-browser/report.json",
+          "status": "passed",
+          "recorded": 21,
+          "passed_checks": 21,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 7,
+            "firefox": 7,
+            "webkit": 7
+          }
+        },
+        {
+          "suite": "School source chooser and pending saves",
+          "path": "source-presets-browser/report.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Independent devices and campus collaboration",
+          "path": "pilot-workspace-browser/report.json",
+          "status": "passed",
+          "recorded": 33,
+          "passed_checks": 33,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 11,
+            "firefox": 11,
+            "webkit": 11
+          }
+        },
+        {
+          "suite": "QQ group intake, rules and attachments",
+          "path": "qq-group-intake-browser/report.json",
+          "status": "passed",
+          "recorded": 12,
+          "passed_checks": 12,
+          "failed_checks": 0,
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "by_engine": {
+            "chromium": 4,
+            "firefox": 4,
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Agent approvals and cancellation",
+          "path": "agent-chat-browser/results.json",
+          "status": "passed",
+          "recorded": 13,
+          "passed_checks": 13,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 13
+          }
+        },
+        {
+          "suite": "Agent authored UI and persistence",
+          "path": "agent-adaptive-browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent private media and resize",
+          "path": "reference-fusion/browser/results.json",
+          "status": "passed",
+          "recorded": 7,
+          "passed_checks": 7,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 7
+          }
+        },
+        {
+          "suite": "Agent incremental rendering",
+          "path": "agent-quality-browser/performance.json",
+          "status": "passed",
+          "recorded": 5,
+          "passed_checks": 5,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 5
+          }
+        },
+        {
+          "suite": "Composer attachments and dictation",
+          "path": "composer-browser/results.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "OpenUI streaming Chromium",
+          "path": "openui-browser/chromium/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming Firefox",
+          "path": "openui-browser/firefox/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 10
+          }
+        },
+        {
+          "suite": "OpenUI streaming WebKit",
+          "path": "openui-browser/webkit/report.json",
+          "status": "passed",
+          "recorded": 10,
+          "passed_checks": 10,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 10
+          }
+        },
+        {
+          "suite": "Compact chat Chromium",
+          "path": "chat-layout/chromium/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 4
+          }
+        },
+        {
+          "suite": "Compact chat Firefox",
+          "path": "chat-layout/firefox/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 4
+          }
+        },
+        {
+          "suite": "Compact chat WebKit",
+          "path": "chat-layout/webkit/report.json",
+          "status": "passed",
+          "recorded": 4,
+          "passed_checks": 4,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 4
+          }
+        },
+        {
+          "suite": "Chat interactions Chromium",
+          "path": "chat-interactions/chromium/report.json",
+          "status": "passed",
+          "recorded": 9,
+          "passed_checks": 9,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 9
+          }
+        },
+        {
+          "suite": "Chat interactions Firefox",
+          "path": "chat-interactions/firefox/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 8
+          }
+        },
+        {
+          "suite": "Chat interactions WebKit",
+          "path": "chat-interactions/webkit/report.json",
+          "status": "passed",
+          "recorded": 8,
+          "passed_checks": 8,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 8
+          }
+        },
+        {
+          "suite": "Chat recovery Chromium",
+          "path": "chat-recovery/chromium/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "chromium"
+          ],
+          "by_engine": {
+            "chromium": 3
+          }
+        },
+        {
+          "suite": "Chat recovery Firefox",
+          "path": "chat-recovery/firefox/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "firefox"
+          ],
+          "by_engine": {
+            "firefox": 3
+          }
+        },
+        {
+          "suite": "Chat recovery WebKit",
+          "path": "chat-recovery/webkit/report.json",
+          "status": "passed",
+          "recorded": 3,
+          "passed_checks": 3,
+          "failed_checks": 0,
+          "engines": [
+            "webkit"
+          ],
+          "by_engine": {
+            "webkit": 3
+          }
+        }
+      ],
+      "engine_scope_note": "Agent suites (13/7/7/5 checks), Composer (9), materials (9), source inbox (5), push (8), and source presets (7) use Chromium only. Other engine scopes are recorded per suite; there is no blanket claim that all features ran in all three engines.",
+      "sprint": {
+        "checks": 60,
+        "passed": 60,
+        "engines": {
+          "chromium": 20,
+          "firefox": 20,
+          "webkit": 20
+        },
+        "query_races": [
+          {
+            "engine": "chromium",
+            "old_query": "冲刺分页 chromium",
+            "new_query": "跨页独有 chromium",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "net::ERR_ABORTED",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 chromium",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 chromium",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          },
+          {
+            "engine": "firefox",
+            "old_query": "冲刺分页 firefox",
+            "new_query": "跨页独有 firefox",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": true,
+            "old_request_failure": null,
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 firefox",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 firefox",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_response_observed_after_new_query"
+          },
+          {
+            "engine": "webkit",
+            "old_query": "冲刺分页 webkit",
+            "new_query": "跨页独有 webkit",
+            "service_worker_controller": null,
+            "old_handler_entered": true,
+            "old_response_captured": true,
+            "old_browser_response_observed": false,
+            "old_request_failure": "Load request cancelled",
+            "late_fulfill_attempted": true,
+            "late_fulfill_result": "fulfill_call_completed",
+            "requests": [
+              {
+                "query": "冲刺分页 webkit",
+                "method": "GET"
+              },
+              {
+                "query": "跨页独有 webkit",
+                "method": "GET"
+              }
+            ],
+            "outcome": "old_request_aborted_late_fulfill_attempted"
+          }
+        ],
+        "mobile_controls": [
+          {
+            "engine": "chromium",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.171875,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "firefox",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 656.5,
+              "width": 85.66666412353516,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          },
+          {
+            "engine": "webkit",
+            "name": "publication control after normal document scroll",
+            "control": {
+              "x": 14,
+              "y": 657.375,
+              "width": 85.65625,
+              "height": 44
+            },
+            "navigation": {
+              "x": 0,
+              "y": 786,
+              "width": 390,
+              "height": 58
+            }
+          }
+        ],
+        "network_fixture": {
+          "service_workers": "block",
+          "reason": "Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs."
+        },
+        "interpretation": "All three real route handlers entered and captured the old response. Firefox observed the late browser response; Chromium and WebKit aborted the old request and recorded a late fulfill attempt. All engines retained the new server filter through the unchanged 800 ms stability window. Aborted responses are not described as delivered."
+      },
+      "pilot": {
+        "checks": 33,
+        "passed": 33,
+        "engines": {
+          "chromium": 11,
+          "firefox": 11,
+          "webkit": 11
+        },
+        "cold_imports": [
+          {
+            "engine": "chromium",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "chromium",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "firefox",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "close",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          },
+          {
+            "engine": "webkit",
+            "mode": "route",
+            "module_held": true,
+            "options_before_release": 0,
+            "options_after_release": 0,
+            "service_worker_controller": null
+          }
+        ],
+        "network_fixture": {
+          "desktop_service_workers": "block",
+          "reason": "Desktop cold-entry checks hold the real module through Playwright routing; mobile/counselor contexts retain their defaults and the push suite verifies PWA behavior."
+        }
+      },
+      "continuity": {
+        "job": 132364929184,
+        "conclusion": "success",
+        "checks": 990,
+        "passed": 990,
+        "failed": 0,
+        "errors": 0,
+        "engines": {
+          "chromium": 330,
+          "firefox": 330,
+          "webkit": 330
+        },
+        "reports": {
+          "arrangement_recovery": 612,
+          "draft_continuity": 204,
+          "ui_continuity": 174
+        },
+        "artifact": {
+          "id": 14102853777,
+          "name": "continuity-browser-reports",
+          "bytes": 706100,
+          "sha256": "895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c",
+          "download_sha256_verified": true
+        },
+        "audit": "ci-evidence/43567666000/continuity-report-audit.json"
+      },
+      "audit": "ci-evidence/43567666000/browser-report-audit.json",
+      "job_log": "ci-evidence/43567666000/browser-job.log",
+      "product_rebuilt": false,
+      "product_assets_unchanged_from_run51": true,
+      "visually_reviewed": [
+        {
+          "path": "sprint-ui-browser/chromium-mobile-draft.png",
+          "observation": "390px draft and saved attachment remain visible; normal scroll exposes the complete publication button above the fixed navigation, with no obvious horizontal overflow."
+        },
+        {
+          "path": "sprint-ui-browser/webkit-mobile-chat.png",
+          "observation": "390px input, send control, code block and reply disclosure remain visible; toast is above the composer."
+        },
+        {
+          "path": "task-board-browser/chromium-desktop.png",
+          "observation": "1440px three-lane board, cards, loaded-range explanation and undo toast remain visible without obvious horizontal overflow."
+        }
+      ],
+      "performance": {
+        "source": "sprint-ui-browser/report.json",
+        "network_fixture": "serviceWorkers:block for controlled request delay/failure tests; differs from run51 default-allow fixture. Independent Chromium push/PWA suite retains actual worker behavior.",
+        "measurements": [
+          {
+            "engine": "chromium",
+            "label": "cold-login",
+            "can_input_at_ms": 223.3000000000029,
+            "dom_content_loaded_ms": 118.80000000000291,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1833256,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 68,
+            "dom_content_loaded_ms": 15.89999999999418,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 1828756,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "chromium",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 241.40000000000873,
+            "dom_content_loaded_ms": 16.69999999999709,
+            "request_count": 27,
+            "static_request_count": 17,
+            "css_request_count": 1,
+            "transfer_size": 78930,
+            "encoded_body_size": 3101031,
+            "longtask_supported": true,
+            "longtasks": [],
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "cold-login",
+            "can_input_at_ms": 362,
+            "dom_content_loaded_ms": 244,
+            "request_count": 16,
+            "static_request_count": 14,
+            "css_request_count": 1,
+            "transfer_size": 1859861,
+            "encoded_body_size": 1855061,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 126,
+            "dom_content_loaded_ms": 57,
+            "request_count": 14,
+            "static_request_count": 12,
+            "css_request_count": 1,
+            "transfer_size": 742,
+            "encoded_body_size": 363817,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "firefox",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 279,
+            "dom_content_loaded_ms": 40,
+            "request_count": 25,
+            "static_request_count": 15,
+            "css_request_count": 1,
+            "transfer_size": 77657,
+            "encoded_body_size": 509176,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "cold-login",
+            "can_input_at_ms": 246,
+            "dom_content_loaded_ms": 115,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1832546,
+            "encoded_body_size": 1828046,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-login-same-context",
+            "can_input_at_ms": 87,
+            "dom_content_loaded_ms": 40,
+            "request_count": 15,
+            "static_request_count": 13,
+            "css_request_count": 1,
+            "transfer_size": 1814,
+            "encoded_body_size": 914,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          },
+          {
+            "engine": "webkit",
+            "label": "warm-chat-same-context",
+            "can_input_at_ms": 259,
+            "dom_content_loaded_ms": 36,
+            "request_count": 28,
+            "static_request_count": 18,
+            "css_request_count": 1,
+            "transfer_size": 78615,
+            "encoded_body_size": 75315,
+            "longtask_supported": false,
+            "longtasks": null,
+            "parse_duration_ms": null
+          }
+        ],
+        "limits": "CI loopback measurements, not public-network/physical-phone SLA. Different worker policy prevents unconditional speed comparison with run51. Exact JavaScript parsing duration remains unmeasured; unsupported Long Task data remain unknown."
+      },
+      "workflow_status": "completed",
+      "workflow_conclusion": "success",
+      "successful_jobs": 9,
+      "official_workflow_record": "artifacts/ci-readonly/run-43567666000-root-official.json",
+      "scope": "This evidence is tied to candidate head 6b15c745 and PR merge ac3e291. It does not predeclare a later main-branch run."
     }
   },
   "node22": {
-    "state": "last_completed_ci_build_checks_passed_current_build_pending_ci",
+    "state": "current_product_build_verified_in_run52",
     "local_execution": "not_executed",
-    "first_ci_run_id": 43558958724,
     "version_observed": "v22.23.4",
-    "first_ci_platforms": [
-      "Linux browser job",
-      "Linux continuity job",
-      "Linux unit job",
-      "Windows backend partitions 1-4"
-    ],
-    "gate": "Run43562060192 verified app-XK3PQMAE.js on seven Linux/Windows Node22 gates. The new app-DFTX33VB.js output passed local Node24 build/check and awaits the next Node22 CI.",
+    "gate": "Require reproducible frontend bundles and route chunks",
     "last_verified_build_entries": {
-      "js": "/static/dist/app-XK3PQMAE.js",
+      "js": "/static/dist/app-DFTX33VB.js",
       "css": "/static/dist/styles-BKR4PFDD.css"
     },
     "last_completed_ci": {
-      "run_id": 43562060192,
-      "attempt": 1,
-      "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
-      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
-      "observed_at": "2026-11-14T05:50:35.607535+00:00",
-      "build_gate": "Require reproducible frontend bundles and route chunks",
+      "run_id": 43567666000,
+      "head_sha": "6b15c7452966e7600cca87acf36a2e11ad034fbc",
+      "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000",
       "success_jobs": [
-        132347708805,
-        132347708809,
-        132347708859,
-        132347708845,
-        132347708978,
-        132347708799,
-        132347708679
+        132364928987,
+        132364929133,
+        132364929169,
+        132364929184,
+        132364929231,
+        132364929270,
+        132364929280
       ],
-      "version_evidence": "Completed continuity job log: 2026-11-14T05:33:28.9757328Z node: v22.23.4"
-    }
+      "platforms": [
+        "Linux unit",
+        "Linux browser",
+        "Linux continuity",
+        "Windows backend partitions 1–4"
+      ],
+      "version_evidence": "Official browser job log: 2026-11-14T06:43:13.6326925Z node: v22.23.4"
+    },
+    "product_assets_unchanged_from_run51": true
   },
-  "time_basis": "Final local gate completion was recorded at verified_at; browser results remain tied to their exact prior candidate SHA and are not reused as a pass for the new candidate.",
-  "documented_at": "2026-11-14T06:13:24.916375+00:00",
+  "time_basis": "Local command results retain their actual execution time and tested implementation fingerprint. Each CI result is tied to its own candidate and checked-out merge commit; historical failures remain separate from later successful runs.",
+  "documented_at": "2026-11-14T07:06:01.742800+00:00",
   "history": [
     {
       "round": "pre_first_ci",
@@ -901,6 +3494,50 @@
       "bundle_audit_passed": 23,
       "not_final_candidate": true,
       "logs": "ci-evidence/43562060192/frontend-fix-*.log"
+    },
+    {
+      "round": "candidate_05498ae_product_build_and_run51",
+      "performed_at": "2026-11-14T06:13:24.916375+00:00",
+      "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+      "commands": [
+        {
+          "command": "npm run build",
+          "exit_code": 0,
+          "log": "ci-evidence/43562060192/frontend-final-build.log"
+        },
+        {
+          "command": "npm run build:check",
+          "exit_code": 0,
+          "log": "ci-evidence/43562060192/frontend-final-build-check.log"
+        },
+        {
+          "command": "npm test",
+          "exit_code": 0,
+          "tests": 275,
+          "passed": 275,
+          "failed": 0,
+          "skipped": 0,
+          "log": "ci-evidence/43562060192/frontend-final-node-tests.log"
+        },
+        {
+          "command": ".venv/bin/python -m pytest -q tests/test_frontend_bundle.py tests/test_audit_reports.py",
+          "exit_code": 0,
+          "tests": 23,
+          "passed": 23,
+          "log": "ci-evidence/43562060192/frontend-final-bundle-tests.log"
+        },
+        {
+          "command": "git diff --check",
+          "exit_code": 0
+        }
+      ],
+      "build_entries": {
+        "js": "/static/dist/app-DFTX33VB.js",
+        "css": "/static/dist/styles-BKR4PFDD.css"
+      },
+      "entry_sha256": "b42c391fe6ee581cd9225b323563434b1148ba4b15ee496308448e2fcba65baf",
+      "ci_run_id": 43565458564,
+      "browser_evidence": "browser.third_ci"
     }
   ],
   "repairs_after_first_ci": [
@@ -911,7 +3548,10 @@
       ],
       "reason": "loadTaskList painted again after taskCollection.onChange, including a cache-hit microtask that replaced freshly focused rows.",
       "change": "Remove the duplicate continuation paint; retain account/render guards and cached item restoration for route return.",
-      "browser_revalidation": "run50_task_board_28_passed_including_three_engine_node_focus_regression"
+      "browser_revalidation": "Run 52 task board: 28/28 passed, including node and focus regression in each of the three engines.",
+      "browser_revalidation_history": [
+        "run50_task_board_28_passed_including_three_engine_node_focus_regression"
+      ]
     },
     {
       "kind": "browser_test",
@@ -920,7 +3560,10 @@
       ],
       "reason": "Source dictate active state differed from the bundled click-handler state; the first CI observed two dictation panels.",
       "change": "Use the real microphone button and public speech endpoint fixtures; preserve WAV, segmented transcript, manual input, single control, stop and retry assertions.",
-      "browser_revalidation": "run50_stopped_before_dictation_due_to_hidden_menu_control; targeted_test_fix_pending_next_ci"
+      "browser_revalidation": "Run 52 Composer: 9/9 Chromium checks passed, including the complete recording and retry chain.",
+      "browser_revalidation_history": [
+        "run50_stopped_before_dictation_due_to_hidden_menu_control; targeted_test_fix_pending_next_ci"
+      ]
     },
     {
       "kind": "browser_test",
@@ -932,7 +3575,10 @@
       ],
       "reason": "Secondary reply actions are inside the native more-actions disclosure; old direct clicks targeted hidden controls.",
       "change": "Open the actual disclosure before every action; keep audio reuse, reading anchor and reply persistence assertions. Check small SVG and 44px button separately.",
-      "browser_revalidation": "run50_frontend_stability_123_chat_interactions_25_and_chat_recovery_9_passed"
+      "browser_revalidation": "Run 52 frontend stability: 123/123; chat interactions: 25/25; chat recovery: 9/9. Actual engine scopes are recorded in browser.fourth_ci.",
+      "browser_revalidation_history": [
+        "run50_frontend_stability_123_chat_interactions_25_and_chat_recovery_9_passed"
+      ]
     },
     {
       "kind": "browser_test",
@@ -944,7 +3590,10 @@
       ],
       "reason": "Fixtures, count text and request assertions still used the previous unpaged interfaces.",
       "change": "Use real page contracts and settled UI counts, verify selected record IDs, release an older fetched response only after the newer response, and preserve cross-device synchronization assertions.",
-      "browser_revalidation": "run50_workspace_120_natural_intake_33_passed; pilot_pagination_refresh_checks_passed_but_later_collaboration_case_failed"
+      "browser_revalidation": "Run 52 workspace: 120/120; natural intake: 33/33; Pilot: 33/33, including the original cross-device collaboration chain.",
+      "browser_revalidation_history": [
+        "run50_workspace_120_natural_intake_33_passed; pilot_pagination_refresh_checks_passed_but_later_collaboration_case_failed"
+      ]
     },
     {
       "kind": "browser_test",
@@ -954,10 +3603,13 @@
       ],
       "reason": "Need observable regression coverage for duplicate task DOM replacement and the new minimum touch target.",
       "change": "Record actual nodes after a view click and verify connection, identity and focus over 350ms; verify home-to-task cache restoration; require at least 43.9px touch dimensions. Existing drag, ordering and undo assertions remain.",
-      "browser_revalidation": "run50_task_board_28_passed_including_three_engine_node_focus_regression"
+      "browser_revalidation": "Run 52 task board: 28/28 passed, including the three-engine row/focus checks and 44 px mobile targets.",
+      "browser_revalidation_history": [
+        "run50_task_board_28_passed_including_three_engine_node_focus_regression"
+      ]
     }
   ],
-  "implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+  "implementation_sha256": "a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70",
   "repairs_after_second_ci": [
     {
       "kind": "browser_test",
@@ -966,7 +3618,10 @@
       ],
       "observed": "run50 360-second timeout, no report or screenshot; exact stop point unknown",
       "change": "Bound the old-query gate/fetch, capture real new responses, preserve 800ms post-release UI assertions, record abort/late-fulfill attempts, and write atomic progress/failure reports. Reload after external API fixture writes before the one-click submission guard; reinstall the celebration observer after reload.",
-      "browser_revalidation": "pending_next_ci"
+      "browser_revalidation": "Run 52 Sprint: 60/60 passed, 20 per engine, with bounded real request interception and the preserved 800 ms stability check.",
+      "browser_revalidation_history": [
+        "pending_next_ci"
+      ]
     },
     {
       "kind": "product",
@@ -976,7 +3631,10 @@
       ],
       "observed": "run50 three-engine pilot cold collaboration entry did not request options before timing out",
       "change": "Delegate the first start action from the loaded app, lazily import the feature, and preserve the original owner/view context. Added real cold close/navigation regressions.",
-      "browser_revalidation": "pending_next_ci"
+      "browser_revalidation": "Run 52 Pilot: 33/33 passed; all 6 actual cold imports were held, and no recipient lookup occurred after closing or leaving.",
+      "browser_revalidation_history": [
+        "pending_next_ci"
+      ]
     },
     {
       "kind": "browser_test",
@@ -985,7 +3643,10 @@
       ],
       "observed": "run50 hidden microphone click timed out",
       "change": "Open the real input menu before each microphone click and assert the unique control returns to that menu; all real WAV/transcription/stop/retry assertions retained.",
-      "browser_revalidation": "pending_next_ci"
+      "browser_revalidation": "Run 52 Composer: 9/9 Chromium checks passed through real recording, WAV/RIFF, manual input, stop and retry assertions.",
+      "browser_revalidation_history": [
+        "pending_next_ci"
+      ]
     },
     {
       "kind": "product",
@@ -998,7 +3659,87 @@
       ],
       "observed": "Static cross-route audit found the analogous first memory-trace entry had no initialized listener; this was not an observed run50 failed case.",
       "change": "Add the lazy public-entry bridge with captured view/account guards and cold/late-dialog/route browser regression using the existing real API fixture.",
-      "browser_revalidation": "pending_next_ci"
+      "browser_revalidation": "Run 52 Agent: 13/13 Chromium checks passed, including the 3 memory cold-entry and late-dialog/route checks.",
+      "browser_revalidation_history": [
+        "pending_next_ci"
+      ]
     }
-  ]
+  ],
+  "local_commands_implementation_sha256": "d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12",
+  "node22_history": [
+    {
+      "state": "last_completed_ci_build_checks_passed_current_build_pending_ci",
+      "local_execution": "not_executed",
+      "first_ci_run_id": 43558958724,
+      "version_observed": "v22.23.4",
+      "first_ci_platforms": [
+        "Linux browser job",
+        "Linux continuity job",
+        "Linux unit job",
+        "Windows backend partitions 1-4"
+      ],
+      "gate": "Run43562060192 verified app-XK3PQMAE.js on seven Linux/Windows Node22 gates. The new app-DFTX33VB.js output passed local Node24 build/check and awaits the next Node22 CI.",
+      "last_verified_build_entries": {
+        "js": "/static/dist/app-XK3PQMAE.js",
+        "css": "/static/dist/styles-BKR4PFDD.css"
+      },
+      "last_completed_ci": {
+        "run_id": 43562060192,
+        "attempt": 1,
+        "head_sha": "32c5ce524d553c869816d0264e9cf84b57febe39",
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43562060192",
+        "observed_at": "2026-11-14T05:50:35.607535+00:00",
+        "build_gate": "Require reproducible frontend bundles and route chunks",
+        "success_jobs": [
+          132347708805,
+          132347708809,
+          132347708859,
+          132347708845,
+          132347708978,
+          132347708799,
+          132347708679
+        ],
+        "version_evidence": "Completed continuity job log: 2026-11-14T05:33:28.9757328Z node: v22.23.4"
+      }
+    },
+    {
+      "state": "current_product_build_verified_in_completed_run51",
+      "local_execution": "not_executed",
+      "version_observed": "v22.23.4",
+      "gate": "Require reproducible frontend bundles and route chunks",
+      "last_verified_build_entries": {
+        "js": "/static/dist/app-DFTX33VB.js",
+        "css": "/static/dist/styles-BKR4PFDD.css"
+      },
+      "last_completed_ci": {
+        "run_id": 43565458564,
+        "head_sha": "05498ae154403c239ee4efddca0041fd530ce6c3",
+        "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564",
+        "success_jobs": [
+          132358199815,
+          132358199991,
+          132358200091,
+          132358199919,
+          132358199942,
+          132358199972,
+          132358200166
+        ],
+        "platforms": [
+          "Linux unit",
+          "Linux browser",
+          "Linux continuity",
+          "Windows backend partitions 1-4"
+        ],
+        "version_evidence": "Official browser job log 2026-11-14T06:16:10.5660051Z node: v22.23.4"
+      },
+      "current_candidate": "Run52 browser result pending; the two fixture changes do not modify product assets and require no product rebuild."
+    }
+  ],
+  "repairs_after_third_ci": {
+    "scope": "Browser fixtures only; product source and assets unchanged",
+    "sprint": "Explicitly block service workers for controlled network delays/failures, record controller and handler capture, and verify publication control accessibility after normal scrolling without submitting the incomplete draft.",
+    "pilot": "Use the exact accessible Close button and a bounded signal from the actual module route handler; retain cleanup, late-entry and original collaboration assertions.",
+    "verification": "Run 52 original reports: Sprint 60/60 and Pilot 33/33 passed across Chromium, Firefox and WebKit. All 3 query handlers captured their old response, all 6 cold imports were held, and all 3 publication-button bounds checks passed. No local browser was run.",
+    "no_claims": "Does not assert that run51 cached authenticated APIs or that aborted Chromium/WebKit old responses were delivered."
+  }
 }

@@ -2,6 +2,8 @@
 
 本轮依据用户两份附件逐条映射 128 项业务清单和 209 项参考。原始提取的编号、原文、优先级、附件 SHA-256 保存在 `requirements-extracted.json`；209 项完整决定保存在 `components-209.json`。这里报告前端主责 LJ-085—109 的修改、保留内容与实际验证范围。
 
+**最新候选结果：run52 已完成，官方 9 个作业全部成功。** 原始浏览器 33 份报告全部通过，共 1038/1038 项检查；独立连续性为 990/990，均已下载并校验官方 SHA-256。产品入口仍是 `app-DFTX33VB.js`，同一产物再次通过 7 个 Node22 Linux/Windows 构建一致性门禁。前端 25 项验证元数据已按真实相关套件逐条更新；实体软键盘、读屏、200% 缩放及未逐个实操的上游组件边界继续保留。这是候选 `6b15c745` 的工程证据，不预写后续 main 分支运行结果。前三轮失败历史完整保留。
+
 ## 方向与架构
 
 保留 FastAPI、原生 ES 模块、珞珈绿/白底和现有导航。新 API 直接接原工作区：提醒、草稿、来源、校园发布、生命周期和协作都基于本人权限与版本。没有为展示而新增另一套状态，没有安装 209 项依赖。列表中已加载 50 项不能代表全部账号；首页、日历、导出和分析不复用首 50 项冒充完整集合。
@@ -10,7 +12,7 @@
 
 ## 逐项映射
 
-下表中的脚本名表示对应验收门禁，不表示该脚本已经完整执行或该条需求已经全部通过。实际运行结果按后文的 CI 轮次、提交与报告分别记录；当前主浏览器复验仍在进行。
+下表中的脚本名表示对应验收门禁，脚本存在本身不是通过证据。实际运行结果按后文的 CI 轮次、提交与报告分别记录；最新候选 run52 的相关门禁已完成，每条需求的具体范围与保留边界见 `frontend-25.json`，不把套件总数直接解释为所有设备和状态组合全验收。
 
 | 编号 | 修改或保留内容 | 对应门禁与剩余边界 |
 |---|---|---|
@@ -35,8 +37,8 @@
 | LJ-103 | 测量实际底部导航/聊天输入和 visualViewport，错误常驻；成功提示暂停于 hover/focus/hidden；dialog 上层可操作，异步 Undo 按真实结果反馈。 | sprint persistent failure/mobile nav；需真实软键盘设备补验证 |
 | LJ-104 | 所有筛选在服务器完整集合执行；50 项分页/总匹配/加载范围明确；请求带 epoch/账号/路由守卫；返回恢复滚动及可定位焦点。重入尚未完成路由会重发新读，不永远停加载。 | tests/paged-list.test.mjs (5)；sprint >50 and stale query |
 | LJ-105 | 最终覆盖层关键中文字号提高到 12px，任务标题/日期不压到 11px；回复工具有文字、文件和公告正文保留展开。 | visual/layout suites；320px 断点新增检查 |
-| LJ-106 | 新增菜单 keyboard/Escape/焦点回归，Native dialog/details/fieldset 和错误 live region；保留已有读屏名字及键盘移动。 | 新增/原键盘与焦点自动检查待 CI；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过 |
-| LJ-107 | 完成动画集中跟踪与取消；后台、reduced-motion、个人关闭、路由切换、账号切换清理；离屏不启动庆祝。保留现有 observer/输入响应。 | 已有 motion tests；sprint failed mutation；CI runtime pending |
+| LJ-106 | 新增菜单 keyboard/Escape/焦点回归，Native dialog/details/fieldset 和错误 live region；保留已有读屏名字及键盘移动。 | run52 相关键盘与焦点自动回归通过；真实读屏、200% 浏览器缩放、实体中文软键盘未在此受限环境完成，不声称全链路通过 |
+| LJ-107 | 完成动画集中跟踪与取消；后台、reduced-motion、个人关闭、路由切换、账号切换清理；离屏不启动庆祝。保留现有 observer/输入响应。 | 已有 motion tests 与 run52 sprint 失败/办理不庆祝、成功回执反馈，以及看板减弱动画键盘回归通过；实体设备组合未穷举 |
 | LJ-108 | 任务提交后重读当前分页投影；草稿/发布/重试/渠道供应商接受均用实际回执语义；拒收、转交、个人跟进与最小留存回执分别标明。 | 任务/协作/校园 API regressions + pilot workspace；新增 source/task range tests |
 | LJ-109 | 209 逐项保留原编号/URL/依赖描述/适用场景/不采用理由；本轮实际打开并检查源码与交互的只有 114/115/133，采纳原生交互原则，不复制源码，不新增运行时库。 | 源码文件 blob SHA、实际 demo 操作及未观察到的部分分别记录；其余 206 不冒充实操 |
 
@@ -108,11 +110,11 @@ Spring Check 实际经历点击、Space、375px、disabled 检查。Swipe Toast 
 | `npm test` | 275 项通过，0 失败、0 跳过。 |
 | `tests/test_frontend_bundle.py` 与 `tests/test_audit_reports.py` | 23 项通过。 |
 | 修改文件的 Node 语法检查与 `git diff --check` | 通过。 |
-| 修复后的浏览器检查 | run 43562060192 正在运行；独立 continuity 已通过，主 browser 报告尚未发布。本机未运行浏览器。 |
+| 修复后的浏览器检查 | 该历史候选 run50 最终失败，完整结果见第二轮记录；最新 run52 已真实通过，精确范围见末节。本机未运行浏览器。 |
 
 已完成构建时记录的 JS 入口大小为 431,421 字节，gzip 147,313 字节、Brotli 115,118 字节；CSS 为 600,210 字节，gzip 114,991 字节、Brotli 89,582 字节。这些数值来自此前实际 `build:check` 输出，本次文档更新只读取既有记录与 manifest，没有在独立性能实验期间重新构建或计算压缩。
 
-首轮 Node 22.23.4 的 Linux 和 Windows 构建一致性门禁均通过，它们验证的是旧候选产物。新一轮 run 43562060192 已在 Linux 主浏览器、continuity、单元作业和四个 Windows 分片中通过相同构建门禁，验证的是当前 `app-XK3PQMAE.js`。完成的 continuity 作业日志实际记录 Node `v22.23.4`。构建跨平台一致性与浏览器交互验收分别记录；主 browser 作业仍未结束。
+首轮 Node 22.23.4 的 Linux 和 Windows 构建一致性门禁均通过，它们验证的是旧候选产物。run 43562060192 在 Linux 主浏览器、continuity、单元作业和四个 Windows 分片中通过相同构建门禁，验证的是当轮 `app-XK3PQMAE.js`。完成的 continuity 作业日志实际记录 Node `v22.23.4`。构建跨平台一致性与浏览器交互验收分别记录；该轮主 browser 最终失败。最新 `app-DFTX33VB.js` 的 Node22 一致性已经第三轮验证，见末节。
 
 ### 实际截图与载入测量
 
@@ -175,4 +177,88 @@ Spring Check 实际经历点击、Space、375px、disabled 检查。Swipe Toast 
 
 最新入口为 `/static/dist/app-DFTX33VB.js`，SHA-256 `b42c391fe6ee581cd9225b323563434b1148ba4b15ee496308448e2fcba65baf`；CSS 仍为 `/static/dist/styles-BKR4PFDD.css`，共 24 个产物、191 个静态源文件。JS 入口 431,979 字节，gzip 147,436 字节、Brotli 115,247 字节。`frontend-build-verification.json` 顶层与 `frontend-25.json` 已记录此次实际门禁，保留旧候选和中间构建历史。
 
-**新候选的浏览器与 Node22 跨平台复验仍为 pending。** run50 的 30 个通过报告及 990 条连续性结果仅证明 `32c5ce5` 的相应行为，不能提前当作新候选通过；run50 的失败保存在 `browser.second_ci` 与第二轮总账中。下一轮仍需完整执行三引擎、冷入口回归和新 sprint 后续场景，才能形成最终运行结论。
+上述本地冻结对应候选 `05498ae`，其第三轮真实 CI 结果已经产生：Node22 跨平台构建通过，主浏览器仍失败，精确结果见下节。run50 的失败继续保存在 `browser.second_ci` 与第二轮总账中，未用后续通过结果覆盖。
+
+## 第三轮 CI：run51 的真实结果
+
+[GitHub Actions 43565458564](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43565458564) 对应候选 `05498ae154403c239ee4efddca0041fd530ce6c3`。官方 browser 日志实际检出 PR 合并提交 `0c17c2dc33c874c21d655f64302a81d4a9a49866`，记录 Node `v22.23.4`。**整体 browser 结论为 failure**：33 份报告全部存在，31 份完整通过，sprint 和 pilot 两份失败。已记录 1005 项检查中 1000 通过、5 失败；sprint 另外 24 项、pilot 另外 9 项没有执行，不能计为通过。pilot 的 `errors` 是其 3 条失败检查的重复记录，不另加失败次数。
+
+官方主产物 ID `14103186594`，22,206,238 字节，下载后 SHA-256 为 `989047ce72c33e33734974b4ac513b13623402bf77f89faefb6f96a9cf89faec`。独立连续性产物 ID `14101379678`，705,888 字节，SHA-256 为 `18400b11f9f55616bc7382b379c682ec3afdce6fec5663b942195d2ffe003f0a`。原始报告分别保存在 `ci-evidence/43565458564/browser/` 和 `continuity/`，逐项审计为同目录的 `browser-report-audit.json`、`continuity-report-audit.json`。
+
+| 套件与范围 | 实际结果 | 引擎边界 |
+|---|---:|---|
+| Browser stability / regression / reference interactions | 123 / 201 / 48 通过 | 三引擎，分别每引擎 41 / 67 / 16 |
+| Workspace / visual layout / notice flow / natural intake | 120 / 168 / 45 / 33 通过 | 三引擎，分别每引擎 40 / 56 / 15 / 11 |
+| Task board，含同节点与焦点保持回归 | 28 通过 | Chromium 10、Firefox 9、WebKit 9 |
+| Notice matters / QQ intake | 21 / 12 通过 | 三引擎，分别每引擎 7 / 4 |
+| Materials / source inbox / push / source presets | 9 / 5 / 8 / 7 通过 | Chromium |
+| Agent approvals，含新增 memory 冷入口 | 13 通过 | Chromium |
+| 其他三组 Agent / Composer 完整录音链 | 7 / 7 / 5 / 9 通过 | Chromium；不能扩大为三引擎 |
+| OpenUI / compact chat / chat recovery | 30 / 12 / 9 通过 | 三引擎，分别每引擎 10 / 4 / 3 |
+| Chat interactions | 25 通过 | Chromium 9、Firefox 8、WebKit 8 |
+| Sprint | 36 项记录：34 通过、2 失败 | Chromium 7/8、Firefox 20/20、WebKit 7/8；后续 24 项未执行 |
+| Pilot | 24 项记录：21 通过、3 失败 | 每引擎 7/8；后续 9 项未执行 |
+| 独立 continuity | 990 通过，0 错误 | 三引擎各 330；安排恢复 612、草稿连续性 204、界面连续性 174 |
+
+按引擎与检查名称逐条对比，run50 已记录通过的检查在本轮没有缺失。Agent 13 和 Composer 9 另由校园代理独立检查原始报告与日志：新增 memory 首次入口和迟到守卫、实际录音分段与 RIFF 上传、手工输入保留、停止清理和 503 后真实重试均执行到结束。其证据范围仍是 Chromium。
+
+### 两个失败的精确边界
+
+1. Sprint 在 Chromium、WebKit 的第 8 项旧查询测试失败，原始错误为 `The older task query was not captured within 10 seconds; recent_requests records the observed UI requests.`。Firefox 完整 20 项通过。WebKit 请求尾部确有旧查询的请求与 HTTP 200，但暂停处理器没有捕获，测试没有建立迟到响应的前提。不能把它写成旧响应覆盖新结果，也不能认定认证 API 被缓存。报告正确标记为 `incomplete`。
+2. Pilot 三引擎均在新增冷入口关闭检查失败：`#dialog [data-action=close-dialog]` 同时匹配顶栏“关闭”和页尾“返回”，触发 strict-mode 错误。后续关闭守卫和原协作业务链尚未验完。审查还发现原 `waitForRequest` 仅证明请求发生，没有证明模块路由处理器真正暂停了请求。
+
+下一候选仅修夹具：网络拦截场景明确阻止 Service Worker 并记录控制器状态；Sprint 记录旧查询处理器是否进入、是否取得真实响应以及实际迟到处理结果；Pilot 使用唯一的可访问名称“关闭”，等待实际处理器发出的有界暂停信号，保留释放、清理、零收件人请求、不重开和不回退断言。没有更改产品来迁就这些测试。
+
+### 本轮实际截图与性能测量
+
+已实际打开 `sprint-ui-browser/firefox-mobile-chat.png`、`firefox-mobile-draft.png`、`task-board-browser/chromium-desktop.png` 及 `sprint-ui-browser/webkit-failure-36.png`。390px 聊天输入框、代码块与提示条可见，桌面看板三列和撤销入口没有明显横向溢出。手机草稿原文和已保存附件真实恢复，但截图处于中间滚动位置，“核对并发布”按钮部分落在固定底栏之后：这张图不能证明按钮不可达，也不能证明按钮完整无遮挡。这个 run51 的未定边界保留为历史；随后在既有草稿检查内增加正常滚动、`trial` 可点击性和完整边界框检查，run52 已实际通过，详见第四轮数据。
+
+| 引擎 | 冷登录可输入时点 | 同上下文热登录可输入时点 | 两次 CSS 请求数 |
+|---|---:|---:|---:|
+| Chromium | 351.4ms | 153.7ms | 1 / 1 |
+| Firefox | 606ms | 393ms | 1 / 1 |
+| WebKit | 423ms | 225ms | 1 / 1 |
+
+Firefox 另完成热聊天载入测量：可输入时点 454ms、29 个资源请求、18 个静态请求、1 个 CSS 请求、传输 78,178 字节。其他两引擎中断后的热聊天测量没有生成。run51 使用默认允许 Service Worker 的上下文，但没有记录控制器状态；run52 的网络故障夹具明确阻止 Worker，因此后续测量必须标注这个差异，不能作无条件性能提升比较。精确 JavaScript 解析耗时仍为未测；Firefox/WebKit 的 Long Task API 不支持保持未知，PWA 与推送行为由独立 Chromium 套件检查。环回 CI 结果不代表公网或实体手机 SLA。
+
+## 第四轮 CI：run52 候选全部门禁通过
+
+[GitHub Actions 43567666000](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43567666000) 对应 `6b15c7452966e7600cca87acf36a2e11ad034fbc`，实现指纹 `a8173b44887b2a4e7aaea494777598105ca12ccafc28c29db17557d500b12f70`。官方状态为 **completed / success，9/9 作业成功**，原始工作流元数据保存在 `artifacts/ci-readonly/run-43567666000-root-official.json`。browser 日志实际检出 PR 合并提交 `ac3e291285b55c0dc28e4acd5f2673ddf29dca22`，并记录 Node `v22.23.4`。本节只描述该候选，不预写后续 main 分支的运行结果。
+
+主 browser 的 33 份原始报告全部存在并完整通过，**1038/1038 项检查、0 失败、0 缺报告、0 预期后续未执行**。独立 continuity 三份报告全部通过，共 **990/990**，三个引擎各 330。与 run51 对照，所有已记录通过的原检查名称仍然存在；没有删断言、降低目标尺寸、提高 360 秒总截止或用重试掩盖错误。
+
+| 关键补验范围 | 本轮真实结果 |
+|---|---|
+| Sprint | 60/60，Chromium、Firefox、WebKit 各 20；完整执行到提醒、生命周期、输入菜单、账号切换及校园草稿重载。 |
+| Pilot | 33/33，三个引擎各 11；原跨设备接收、退回补充、再提交、解决回执与断线同步链全部走完。 |
+| 冷协作模块加载 | 6 条实际记录：每引擎关闭与离开路由各一次；`module_held=true`，释放前后 options 请求均为 0，控制器均为 `null`，晚到模块没有重开旧界面或退回路由。 |
+| 旧查询处理 | 三引擎处理器均实际进入并捕获响应，再发出新筛选并保持原 800ms 稳定窗口。Firefox 实际观察到迟到响应；Chromium 的旧请求为 `net::ERR_ABORTED`、WebKit 为 `Load request cancelled`，只记录真实迟到 fulfill 尝试，不声称旧响应已经送达。 |
+| Task board | 28/28，Chromium 10、Firefox 9、WebKit 9；同节点与焦点保持、首页返回恢复筛选及拖动/撤销原断言继续通过。 |
+| Agent / Composer | Agent 13/7/7/5、Composer 9 全部通过，**范围为 Chromium**。新增 memory 冷入口、真实回执与迟到守卫，以及合成录音的分段/RIFF/手工输入/503 重试均由第二位审查者逐日志独立核对。 |
+| 其余报告 | 原稳定性123、前端回归201、reference48、workspace120、visual168、notice-flow45、natural-intake33，以及来源/事项/QQ/OpenUI/聊天布局、交互、恢复等原报告全部通过；各自实际引擎在 JSON 中逐份列明。 |
+
+主产物 ID `14103570812`，21,714,160 字节，SHA-256 `fff18d05753717f2bd57e631409efdf10eadd05325f0d9ffae16aa7bef90cad1`；continuity 产物 ID `14102853777`，706,100 字节，SHA-256 `895873452c45c4e85706376e7ebf9e049e781403e481571411c326f72d3bf55c`。两个 ZIP 均只下载一次，解压前校验摘要并检查成员路径；原始数据与逐项计数位于 `ci-evidence/43567666000/`。
+
+### 手机截图与发布按钮的实际结果
+
+已实际打开本轮 `sprint-ui-browser/chromium-mobile-draft.png`、`sprint-ui-browser/webkit-mobile-chat.png` 和 `task-board-browser/chromium-desktop.png`。手机草稿及原附件可见；普通文档滚动后发布按钮完整露出，未提交不完整草稿。聊天输入、发送、代码区与回复菜单入口可见，提示条位于输入框上方；桌面看板三列与撤销入口没有明显横向溢出。根审查者另独立查看 Chromium/Firefox 两张草稿和 WebKit 聊天图，结论一致。
+
+| 引擎，390×844 视口 | 发布按钮高度 | 按钮下沿 | 底栏上沿 | 间隔 |
+|---|---:|---:|---:|---:|
+| Chromium | 44px | 701.17px | 786px | 84.83px |
+| Firefox | 44px | 700.50px | 786px | 85.50px |
+| WebKit | 44px | 701.38px | 786px | 84.63px |
+
+三次均先正常滚动，再执行不触发提交的 `trial` 可点击性检查，并核对完整纵向边界框。run51 中途滚动截图的遮挡没有通过改 CSS 掩盖，已有正常滚动可达性由本轮实际断言与截图建立。
+
+### 同一构建的实际冷、热载入记录
+
+| 引擎 | 冷登录可输入时点 | 热登录可输入时点 | 热聊天可输入时点 | 三次 CSS 请求数 |
+|---|---:|---:|---:|---:|
+| Chromium | 223.3ms | 68ms | 241.4ms | 1 / 1 / 1 |
+| Firefox | 362ms | 126ms | 279ms | 1 / 1 / 1 |
+| WebKit | 246ms | 87ms | 259ms | 1 / 1 / 1 |
+
+每条测量同时保存 DCL、请求数、传输字节和编码体积。run52 为建立确定的网络故障前提显式使用 `serviceWorkers: block`；run51 默认允许 Worker，因此这些值不能被写成同等条件下的性能提升。精确 JavaScript 解析耗时未测，未支持的 Long Task 观测保持未知；本轮 Chromium 支持观测且三次测量未记录长任务。PWA/推送由独立 Chromium 套件使用实际 Worker 验证，模拟 Push 不等价于实体手机锁屏实收。
+
+产品源码、24 个构建产物和 191 个静态源文件与 run51 相同，入口仍为 `/static/dist/app-DFTX33VB.js`。此前 Node24 本地 build/check、275 项 Node 与 23 项构建/审计结果保留真实执行时间；run52 再次在 7 个 Node22 Linux/Windows 门禁验证相同产物，两份夹具调整没有重新构建产品。`frontend-25.json` 已更新全部 25 条实现/验证元数据，并保留原始 8 个字段、过去证据与未测人工边界。209 项参考数组及 35/79/95 的分类完全不变，只更新应用实际运行范围；其中 206 项未逐个实操的上游组件没有被改成已验证。
