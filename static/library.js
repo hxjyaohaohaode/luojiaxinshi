@@ -223,8 +223,10 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     $('#library-source').value=source;$('#library-sort').value=sort;
     $('#library-sort-note').textContent=sort==='priority'?'优先呈现已有事项的变更、有据期限和已核对的相关机会；其余内容仍可完整查找。':sort==='published'?'按原记录发布时间排序；未标注的排在后面，可切换按收录时间查看。':sort==='collected'?'按加入本账号的时间排序。':'按通知记录最近更新的时间排序，不等同于原文发布时间。';
     const hasGroups=state.notices.some(n=>n.matter);
-    if(hasGroups&&!$('[data-library-group]'))$('.library-refine').insertAdjacentHTML('beforeend','<button type="button" class="button small" data-library-group aria-pressed="true">按事项归组</button>');
-    const groupButton=$('[data-library-group]');if(groupButton){groupButton.hidden=!hasGroups;groupButton.setAttribute('aria-pressed',String(grouped));}
+    // Grouping is a display preference, including while a new query has no
+    // loaded rows. Keep its live control stable through loading and errors.
+    if(!$('[data-library-group]'))$('.library-refine').insertAdjacentHTML('beforeend','<button type="button" class="button small" data-library-group aria-pressed="true">按事项归组</button>');
+    $('[data-library-group]').setAttribute('aria-pressed',String(grouped));
 
     const selected=state.insightSelection?.kind==='notices'?state.insightSelection:null;
     const items=value.items,units=grouped?groupNotices(items):items.map(n=>({notices:[n]}));
