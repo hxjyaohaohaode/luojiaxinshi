@@ -12,6 +12,44 @@ await fs.mkdir(out,{recursive:true});
 report.review_regressions={clock_ranges:[],board_ranges:[],list_ranges:[],publication_retries:[],publication_cancellations:[],list_cache_routes:[]};
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
+function authenticationView(){
+  const toast=document.querySelector('#toast'),copy=toast?.querySelector('.toast-copy'),style=toast?getComputedStyle(toast):null,form=document.querySelector('#auth-form');
+  return {route:location.hash,document_marker:window.__sprintAuthDocument||null,form:{present:!!form,mode:form?.dataset.authMode||null,visible:!!form&&form.getBoundingClientRect().width>0&&getComputedStyle(form).visibility==='visible'},account_label:document.querySelector('.account-name')?.textContent||null,toast:{text:copy?.textContent||'',class_name:toast?.className||'',role:toast?.getAttribute('role')||null,visibility:style?.visibility||null,opacity:style?.opacity||null,visible:!!toast&&toast.classList.contains('visible')&&style?.visibility==='visible'&&Number(style?.opacity)>0,has_lifetime:!!toast?.querySelector('.toast-lifetime')}};
+}
+// Observe the real resize result without closing, scrolling or focusing the UI.
+// The same probe supplies failure evidence and the existing-deadline wait.
+function mobileListLayout({expectedIds,wait=false}){
+  const one=selector=>document.querySelector(selector),rect=node=>{if(!node)return null;const r=node.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
+  const describe=node=>node?{tag:node.tagName,id:node.id||null,class_name:typeof node.className==='string'?node.className:null,action:node.getAttribute('data-action'),task_id:node.getAttribute('data-task-id'),workflow_task:node.getAttribute('data-workflow-task')}:null;
+  const shell=one('.shell'),drawer=one('.sidebar'),workspace=one('.workspace'),content=one('#content'),results=one('#task-results'),row=one('#task-results [data-task-id]'),control=row?.querySelector('[data-workflow-task]');
+  const drawerStyle=drawer?getComputedStyle(drawer):null,controlStyle=control?getComputedStyle(control):null;
+  const bounds={drawer:rect(drawer),workspace:rect(workspace),content:rect(content),results:rect(results),task:rect(row),control:rect(control)};
+  const point=bounds.control?{x:(bounds.control.left+bounds.control.right)/2,y:(bounds.control.top+bounds.control.bottom)/2}:null,hit=point?document.elementFromPoint(point.x,point.y):null;
+  const ids=[...(results?.querySelectorAll('[data-task-id]')||[])].map(node=>node.dataset.taskId);
+  const horizontal=r=>!!r&&r.width>0&&r.left>=-1&&r.right<=innerWidth+1;
+  const ancestry=[];for(let node=control;node;node=node.parentElement){const style=getComputedStyle(node);ancestry.push({element:describe(node),visibility:style.visibility,display:style.display,opacity:Number(style.opacity),pointer_events:style.pointerEvents});}
+  const drawerMotion=(drawer?.getAnimations?.()||[]).filter(animation=>animation.pending||animation.playState==='running').map(animation=>({play_state:animation.playState,pending:animation.pending,transition:animation.transitionProperty||null}));
+  const checks={
+    mobile:matchMedia('(max-width:850px)').matches,
+    menu_closed:!!shell&&!shell.classList.contains('menu-open'),
+    drawer_hidden:drawerStyle?.visibility==='hidden'&&!!bounds.drawer&&bounds.drawer.right<=1,
+    drawer_settled:drawerMotion.length===0,
+    route_ready:content?.dataset.page==='tasks'&&!content.inert&&!content.closest('[inert]')&&results?.getAttribute('aria-busy')==='false',
+    same_tasks:JSON.stringify([...ids].sort())===JSON.stringify([...expectedIds].sort())&&ids.length>0,
+    horizontal_bounds:['workspace','content','results','task','control'].every(key=>horizontal(bounds[key])),
+    control_visible:!!bounds.control&&bounds.control.height>0&&bounds.control.top>=0&&bounds.control.bottom<=innerHeight&&controlStyle?.visibility==='visible'&&controlStyle?.display!=='none'&&ancestry.every(item=>item.visibility==='visible'&&item.display!=='none')&&ancestry.reduce((value,item)=>value*item.opacity,1)>=.99,
+    control_enabled:!!control&&!control.disabled&&control.getAttribute('aria-disabled')!=='true'&&!control.closest('[inert]'),
+    control_receives_pointer:!!control&&!!hit&&(hit===control||control.contains(hit))
+  };
+  const visual=window.visualViewport,snapshot={at_ms:performance.now(),route:location.hash,document_hidden:document.hidden,viewport:{width:innerWidth,height:innerHeight,visual:visual?{width:visual.width,height:visual.height,offset_left:visual.offsetLeft,offset_top:visual.offsetTop,scale:visual.scale}:null},menu:{shell_class:shell?.className||null,visibility:drawerStyle?.visibility||null,transform:drawerStyle?.transform||null,motion:drawerMotion},bounds,task_ids:ids,control_ancestry:ancestry,active_element:describe(document.activeElement),pointer:{point,hit:describe(hit)},scroll:Object.fromEntries([['html',document.documentElement],['body',document.body],['shell',shell],['workspace',workspace],['content',content],['results',results]].map(([name,node])=>[name,node?{left:node.scrollLeft,top:node.scrollTop,width:node.scrollWidth,height:node.scrollHeight,client_width:node.clientWidth,client_height:node.clientHeight}:null])),checks,ready:Object.values(checks).every(Boolean)};
+  if(!wait)return snapshot;
+  const key=JSON.stringify({checks,bounds,ids,viewport:snapshot.viewport,scroll:snapshot.scroll}),previous=window.__sprintMobileListLayout;
+  const stableFrames=snapshot.ready?(previous?.key===key?previous.stable_frames+1:1):0;
+  snapshot.stable_frames=stableFrames;
+  const samples=previous?.samples||[];if(previous?.key!==key)samples.push(snapshot);if(samples.length>20)samples.splice(1,samples.length-20);
+  window.__sprintMobileListLayout={key,stable_frames:stableFrames,last:snapshot,samples};
+  return snapshot.ready&&stableFrames>=2?snapshot:false;
+}
 await saveReport();
 for(const engine of engines){
   const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
@@ -408,8 +446,31 @@ for(const engine of engines){
       report.review_regressions.publication_cancellations.push({engine,request_id:original.request_id,replacement_draft_id:newDraft,late_status:409,late_code:'publication_cancelled',published_count:0});
     });
     await check('returning from home or settings reconciles cached pending tasks after independent inserts, deletions and status changes',async()=>{
-      await context.clearCookies();await login('sprint-'+engine,'PilotFixtureOnly2026!');await page.setViewportSize({width:1280,height:850});
       const evidence={engine,status:'running',stages:[]};report.review_regressions.list_cache_routes.push(evidence);await saveReport();
+      await nav('campus/records');
+      const previousSession=await api('/session'),auth=evidence.authentication={status:'expiring previous session',previous_owner:{id:previousSession.user.id,username:previousSession.user.username},requested_route:'#campus'};
+      auth.document_marker=await page.evaluate(()=>window.__sprintAuthDocument=crypto.randomUUID());await saveReport();
+      try{
+        const [expired]=await Promise.all([
+          page.waitForResponse(response=>{const request=response.request(),url=new URL(response.url());return url.origin===origin&&url.pathname.startsWith('/api/')&&request.method()==='GET'&&response.status()===401&&request.headers()['x-workspace-owner']===previousSession.user.id;}),
+          (async()=>{await context.clearCookies();await page.evaluate(()=>{location.hash='#campus';});})()
+        ]);
+        auth.expired_response={path:new URL(expired.url()).pathname+new URL(expired.url()).search,status:expired.status(),method:expired.request().method(),requested_owner:expired.request().headers()['x-workspace-owner'],detail:(await expired.json()).detail};await saveReport();
+        await page.locator('#auth-form[data-auth-mode=login]').waitFor();
+        await page.waitForFunction(()=>{const toast=document.querySelector('#toast');return toast?.classList.contains('visible')&&getComputedStyle(toast).visibility==='visible'&&Number(getComputedStyle(toast).opacity)>0&&/请先登录|登录已过期/.test(toast.textContent);});
+        auth.before_login=await page.evaluate(authenticationView);await saveReport();
+        assert.equal(auth.before_login.document_marker,auth.document_marker);assert.equal(auth.before_login.form.visible,true);assert.equal(auth.before_login.toast.visible,true);assert.equal(auth.before_login.toast.role,'alert');assert.equal(auth.before_login.toast.has_lifetime,false);
+        // Keep this document and its real persistent error alive. Navigating
+        // with page.goto here would erase the very toast the test must check.
+        await page.locator('#auth-form [name=username]').fill('sprint-'+engine);await page.locator('#auth-form [name=password]').fill('PilotFixtureOnly2026!');
+        const [loggedIn]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/auth/login'&&response.request().method()==='POST'),page.locator('#auth-form [type=submit]').click()]);
+        auth.login_response={path:new URL(loggedIn.url()).pathname,status:loggedIn.status(),method:loggedIn.request().method()};await saveReport();assert.equal(loggedIn.status(),200,await loggedIn.text());
+        await page.waitForFunction(({marker,message})=>{const content=document.querySelector('#content');return window.__sprintAuthDocument===marker&&!!content&&!content.inert&&!document.querySelector('#auth-form')&&!document.querySelector('#toast .toast-copy')?.textContent.includes(message);},{marker:auth.document_marker,message:auth.before_login.toast.text});
+        const accepted=await api('/session');auth.accepted_owner={id:accepted.user.id,username:accepted.user.username};auth.after_login=await page.evaluate(authenticationView);await saveReport();
+        assert.equal(accepted.user.username,'sprint-'+engine);assert.equal(auth.after_login.document_marker,auth.document_marker);assert.equal(auth.after_login.form.present,false);assert.equal(auth.after_login.toast.text.includes(auth.before_login.toast.text),false);auth.status='passed';
+      }catch(error){auth.status='failed';auth.error=error.message;throw error;}
+      finally{auth.final=await page.evaluate(authenticationView).catch(error=>({error:error.message}));await saveReport();}
+      await page.setViewportSize({width:1280,height:850});
       for(const away of ['dashboard','settings']){
       const query='跨路由缓存 '+engine+' '+away;
       const creationReceipts=[];evidence.creations??=[];evidence.creations.push({away,query,receipts:creationReceipts});
@@ -474,7 +535,19 @@ for(const engine of engines){
         assert.equal(await page.locator('[data-action=filter][data-filter=pending]').getAttribute('aria-selected'),'true');stage.status='passed';await saveReport();
       }
       }
-      await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,engine+'-mobile-list-cache.png')});evidence.status='passed';await saveReport();
+      const expectedIds=evidence.stages.at(-1).expected_ids;
+      const mobile=evidence.mobile_layout={status:'resizing',expected_ids:expectedIds,before_resize:await page.evaluate(mobileListLayout,{expectedIds})};await saveReport();
+      try{
+        await page.setViewportSize({width:390,height:844});mobile.after_resize=await page.evaluate(mobileListLayout,{expectedIds});await saveReport();
+        // Resizing from a visible desktop sidebar starts the mobile drawer's
+        // real transition. A photo taken immediately is not settled evidence.
+        // Retain the original 15-second page deadline and fail if the UI does
+        // not close naturally or the unchanged task cannot receive a pointer.
+        const settled=await page.waitForFunction(mobileListLayout,{expectedIds,wait:true});mobile.settled=await settled.jsonValue();await settled.dispose();
+        assert.ok(mobile.settled.ready,JSON.stringify(mobile.settled));assert.deepEqual([...mobile.settled.task_ids].sort(),[...expectedIds].sort());
+        await page.screenshot({path:path.join(out,engine+'-mobile-list-cache.png')});mobile.after_capture=await page.evaluate(mobileListLayout,{expectedIds});assert.ok(mobile.after_capture.ready,JSON.stringify(mobile.after_capture));mobile.status='passed';evidence.status='passed';
+      }catch(error){mobile.status='failed';mobile.error=error.message;throw error;}
+      finally{mobile.observation=await page.evaluate(()=>{const probe=window.__sprintMobileListLayout;return probe?{last:probe.last,samples:probe.samples}:null;}).catch(error=>({error:error.message}));mobile.final=await page.evaluate(mobileListLayout,{expectedIds}).catch(error=>({error:error.message}));await saveReport();}
     });
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
   }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await saveReport();await browser.close();}
