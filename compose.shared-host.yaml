@@ -1,0 +1,52 @@
+# Standalone alternative to compose.yaml. Do not merge the two files: this
+# mode reuses a reverse proxy already running on the host and publishes no TLS
+# ports. Every deployment must choose its own project, loopback port and budget.
+name: ${CAMPUS_PROJECT_NAME:?Set a unique project name for this deployment}
+services:
+  app:
+    image: ${CAMPUS_IMAGE:?Set the reviewed locally available image tag or digest}
+    pull_policy: never
+    restart: unless-stopped
+    user: "10001:10001"
+    env_file: ${CAMPUS_ENV_FILE:?Set the private application environment file path}
+    environment:
+      APP_ENV: production
+      APP_ORIGIN: ${APP_ORIGIN:?Set this project's public HTTPS origin}
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8765"
+      DATA_DIR: /data
+      FORWARDED_ALLOW_IPS: ${CAMPUS_TRUSTED_PROXY_IPS:?Set the observed trusted proxy peer addresses}
+    ports:
+      - target: 8765
+        published: "${CAMPUS_LOOPBACK_PORT:?Choose an unused host loopback port}"
+        host_ip: 127.0.0.1
+        protocol: tcp
+    volumes:
+      - campus-data:/data
+    networks:
+      - campus-private
+    mem_limit: ${CAMPUS_MEMORY_LIMIT:?Set a positive per-project memory budget}
+    cpus: ${CAMPUS_CPU_LIMIT:?Set a positive per-project CPU budget}
+    pids_limit: ${CAMPUS_PIDS_LIMIT:?Set a positive per-project process limit}
+    read_only: true
+    tmpfs:
+      - /tmp:size=${CAMPUS_TMPFS_SIZE:?Set the temporary-file memory budget},mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "${CAMPUS_LOG_MAX_SIZE:?Set a positive log rotation size}"
+        max-file: "${CAMPUS_LOG_MAX_FILES:?Set a positive retained log file count}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,os; r=urllib.request.Request('http://127.0.0.1:8765/api/health',headers={'Host':os.environ['APP_ORIGIN'].split('://')[1]}); urllib.request.urlopen(r,timeout=3)"]
+networks:
+  campus-private:
+    driver: bridge
+    enable_ipv6: false
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: nat
+volumes:
+  campus-data:

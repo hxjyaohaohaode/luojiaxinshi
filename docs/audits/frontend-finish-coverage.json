@@ -1,0 +1,3709 @@
+{
+  "schema_version": 1,
+  "record_type": "frontend_finish_overlay_before_new_candidate_ci",
+  "recorded_at": "2026-11-14T15:09:39.135709+00:00",
+  "status": "local_integrated_node_and_build_passed_new_full_ci_and_main_delivery_pending",
+  "working_base_main": "37150dc650f7c40783a84e718a102b9413b815fe",
+  "working_base_tree": "8310dc5346228394e36c102883571ac726066411",
+  "new_candidate_sha": null,
+  "new_candidate_run_id": null,
+  "new_candidate_ci_result": null,
+  "source_integrity": {
+    "attachment_name": "珞珈信使_冲刺前全量审查与优化清单.md",
+    "attachment_sha256": "01f8056c1e854265370341e06429e378d9ec335237a8dec15e4449a7e2fa9bd1",
+    "original_records": {
+      "requirements_128": {
+        "path": "docs/audits/sprint-requirements-128.json",
+        "file_sha256": "a632e55f73e404080769e2a5d2fb7b3dd005a0a659f8a92970e081bfdaed74ff",
+        "array_key": "requirements",
+        "array_count": 128,
+        "array_canonical_sha256": "1bf97ea08381df3d92cc9724ec90cdcd67cf8b0398a6739d4ff37b221a3234ff"
+      },
+      "frontend_25": {
+        "path": "docs/sprint-2026-11-14/frontend-25.json",
+        "file_sha256": "fa86949689d77b76445f0f31bd7bf0c0ff95177472d6930734756995b6c06693",
+        "array_key": "requirements",
+        "array_count": 25,
+        "array_canonical_sha256": "a4932fc1f2185853cd070e37cb2b7c054d584c93cb4ac9a0acab00a76c8836f7"
+      },
+      "components_209": {
+        "path": "docs/sprint-2026-11-14/components-209.json",
+        "file_sha256": "02b9287f58f78073af58eb2bccd617f950338fe085aad5f351cc0703a81c0889",
+        "array_key": "references",
+        "array_count": 209,
+        "array_canonical_sha256": "b4affd4518514ad2df51ea23cc487d048bb9ebacac9e10542d89005ebcab6abd"
+      },
+      "exact_extraction": {
+        "path": "docs/sprint-2026-11-14/requirements-extracted.json",
+        "file_sha256": "b73327d1ba466d04ca0e0346774149212832c783caf41608c23cf63e3788a74e",
+        "array_key": "requirements",
+        "array_count": 128,
+        "array_canonical_sha256": "c7d4f0e93a23d901563c821358b0e3e36027b6d777acc0f682f18bba74389789"
+      }
+    },
+    "original_files_not_modified_by_this_overlay": true,
+    "exact_frontend_ids": [
+      "LJ-085",
+      "LJ-086",
+      "LJ-087",
+      "LJ-088",
+      "LJ-089",
+      "LJ-090",
+      "LJ-091",
+      "LJ-092",
+      "LJ-093",
+      "LJ-094",
+      "LJ-095",
+      "LJ-096",
+      "LJ-097",
+      "LJ-098",
+      "LJ-099",
+      "LJ-100",
+      "LJ-101",
+      "LJ-102",
+      "LJ-103",
+      "LJ-104",
+      "LJ-105",
+      "LJ-106",
+      "LJ-107",
+      "LJ-108",
+      "LJ-109"
+    ],
+    "exact_frontend_count": 25,
+    "exact_priority_counts": {
+      "P1": 25
+    },
+    "comparison_fields": [
+      "id",
+      "section",
+      "priority",
+      "priority_qualifier",
+      "nature",
+      "cost",
+      "requirement",
+      "source_line"
+    ],
+    "excludes_lj_110": "LJ-110 remains a conditional P2 item; no unrequested dark-mode switch is added."
+  },
+  "stable_baseline_69": {
+    "run_id": 43604587511,
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43604587511",
+    "head_sha": "37150dc650f7c40783a84e718a102b9413b815fe",
+    "tested_checkout_sha": "37150dc650f7c40783a84e718a102b9413b815fe",
+    "tree_sha": "8310dc5346228394e36c102883571ac726066411",
+    "event": "push",
+    "branch": "main",
+    "verified_at": "2026-11-14T14:51:06.162429+00:00",
+    "status": "completed",
+    "conclusion": "success",
+    "all_nine_required_jobs_success": true,
+    "browser_slots": 33,
+    "browser_recorded_checks": 1056,
+    "continuity_checks": 990,
+    "backend_unique_per_os": 1875,
+    "linux_passed": 1873,
+    "linux_skipped": 2,
+    "windows_passed": 1874,
+    "windows_skipped": 1,
+    "node_unique": 363,
+    "local_full_proof": "/workspace/scratch/0a6433f08acc/luojiaxinshi/artifacts/sprint-final/ci-run-43604587511.json",
+    "full_proof_bytes": 6926513,
+    "full_proof_sha256": "a625327bdc577ae094da907ca18e6cde62baa75f1e978928f70b1230d6d92a0b",
+    "proof_availability": "6.9MB original remains in the immutable local evidence store; this document includes identity/summary/hash and Actions link, not a claim that local artifacts are repository-downloadable.",
+    "new_working_tree_changes_tested_by_run_69": false
+  },
+  "requirements": [
+    {
+      "id": "LJ-085",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F07样式分层和组件所有权整理，确认最终断点/字号/间距；学院页与事项页纳入统一层序，删除被覆盖旧策略。",
+      "source_line": 273,
+      "raw_original_table_line": "| LJ-085 | P1 / 修复 / M | F07样式分层和组件所有权整理，确认最终断点/字号/间距；学院页与事项页纳入统一层序，删除被覆盖旧策略。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Visual layout bounds",
+            "path": "visual-review-browser/report.json",
+            "recorded": 168,
+            "passed_checks": 168,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 56,
+              "firefox": 56,
+              "webkit": 56
+            }
+          },
+          {
+            "suite": "Source subscriptions and personal inbox",
+            "path": "source-inbox-browser/report.json",
+            "recorded": 5,
+            "passed_checks": 5,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 5
+            }
+          },
+          {
+            "suite": "Independent devices and campus collaboration",
+            "path": "pilot-workspace-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/styles.css",
+          "static/index.html",
+          "static/task-materials.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "verification",
+          "notice_heading",
+          "contrast"
+        ],
+        "targeted_evidence_ids": [
+          "verification_slots_and_errors",
+          "operations"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69证明既有分层构建与相关布局用例；本轮仍在既有system层改控件，不凭静态删去未确认冗余规则。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-086",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "保持珞珈绿、白底和当前导航习惯；制定手机/桌面密度token，避免每个页面继续各写一套尺寸补丁。",
+      "source_line": 274,
+      "raw_original_table_line": "| LJ-086 | P1 / 深化 / S | 保持珞珈绿、白底和当前导航习惯；制定手机/桌面密度token，避免每个页面继续各写一套尺寸补丁。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Visual layout bounds",
+            "path": "visual-review-browser/report.json",
+            "recorded": 168,
+            "passed_checks": 168,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 56,
+              "firefox": 56,
+              "webkit": 56
+            }
+          },
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/system/tokens.css",
+          "static/system/responsive-density.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "verification",
+          "notice_heading",
+          "contrast"
+        ],
+        "targeted_evidence_ids": [
+          "verification_slots_and_errors",
+          "operations"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "保留现有绿白品牌、导航和密度令牌；本轮没有整体缩放页面或更换框架。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-087",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "M",
+      "requirement": "F08点击面积与视觉大小分离，重点更多菜单/勾选/拖动/聊天按钮；不用统一scale缩小，触达面积不相互覆盖。",
+      "source_line": 275,
+      "raw_original_table_line": "| LJ-087 | P1 / 修复 / M | F08点击面积与视觉大小分离，重点更多菜单/勾选/拖动/聊天按钮；不用统一scale缩小，触达面积不相互覆盖。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/system/workspace-clarity.css",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "verification",
+          "contrast"
+        ],
+        "targeted_evidence_ids": [
+          "verification_slots_and_errors",
+          "operations"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "account_lifecycle",
+          "frontend_finish"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69已有任务/聊天目标和移动看板回归。本轮44px认证触区需新CI实际rect/命中验证；44px是本项目目标，不能把旧30px直接宣称为WCAG 2.5.8不合格。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-088",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机通知页压缩顶部层数：标题与收件动作同行，搜索主行，次要筛选收起并显示生效摘要；首条内容更早出现。",
+      "source_line": 276,
+      "raw_original_table_line": "| LJ-088 | P1 / 深化 / M | 手机通知页压缩顶部层数：标题与收件动作同行，搜索主行，次要筛选收起并显示生效摘要；首条内容更早出现。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Source subscriptions and personal inbox",
+            "path": "source-inbox-browser/report.json",
+            "recorded": 5,
+            "passed_checks": 5,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 5
+            }
+          },
+          {
+            "suite": "Visual layout bounds",
+            "path": "visual-review-browser/report.json",
+            "recorded": 168,
+            "passed_checks": 168,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 56,
+              "firefox": 56,
+              "webkit": 56
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/library.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "notice_heading"
+        ],
+        "targeted_evidence_ids": [],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69基线保留资料库分页/筛选/稳定归组；本轮只进一步压缩标题入口，首屏与200%文本几何尚待新CI。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-089",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "首页/待办每行一个主状态、一个关键日期、一句下一步；多警告收为可展开摘要，重要变更仍明显。",
+      "source_line": 277,
+      "raw_original_table_line": "| LJ-089 | P1 / 深化 / M | 首页/待办每行一个主状态、一个关键日期、一句下一步；多警告收为可展开摘要，重要变更仍明显。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          },
+          {
+            "suite": "Workspace interactions",
+            "path": "workspace-interactions-browser/report.json",
+            "recorded": 120,
+            "passed_checks": 120,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 40,
+              "firefox": 40,
+              "webkit": 40
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/task-summary.js",
+          "static/app.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "本轮没有重写task-summary。69相关任务/首页操作用例及既有Node语义作为基线，不把suite总数等同每种业务组合。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-090",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机待办分组与列表策略统一；长标题自适应，拖动有菜单/键盘替代，点击正文与完成/更多区域不打架。",
+      "source_line": 278,
+      "raw_original_table_line": "| LJ-090 | P1 / 深化 / M | 手机待办分组与列表策略统一；长标题自适应，拖动有菜单/键盘替代，点击正文与完成/更多区域不打架。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          },
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/task-views.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "保留原手机分组、长标题、菜单/键盘替代拖动；69看板28与动画18观测为旧树真实证据，新树完整回归仍须执行。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-091",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "修复",
+      "cost": "S",
+      "requirement": "F09完成动效只响应服务端成功；失败回滚、打开办理、阻塞/补件、撤销/取消均不播放完成庆祝。",
+      "source_line": 279,
+      "raw_original_table_line": "| LJ-091 | P1 / 修复 / S | F09完成动效只响应服务端成功；失败回滚、打开办理、阻塞/补件、撤销/取消均不播放完成庆祝。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/choreography.js",
+          "static/app.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "保留服务端done成功后才庆祝的原策略；69成功/失败/撤销覆盖不代替下一候选重验。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-092",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "通知详情按标题→本人关联→关键时间→下一步→原文证据组织；正文/原文/附件/更正关系可直接定位，重要内容不藏hover。",
+      "source_line": 280,
+      "raw_original_table_line": "| LJ-092 | P1 / 深化 / M | 通知详情按标题→本人关联→关键时间→下一步→原文证据组织；正文/原文/附件/更正关系可直接定位，重要内容不藏hover。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Notice intake and flexible workflows",
+            "path": "notice-flow-browser/report.json",
+            "recorded": 45,
+            "passed_checks": 45,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 15,
+              "firefox": 15,
+              "webkit": 15
+            }
+          },
+          {
+            "suite": "Notice matter grouping and campus capacities",
+            "path": "notice-matters-browser/report.json",
+            "recorded": 21,
+            "passed_checks": 21,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 7,
+              "firefox": 7,
+              "webkit": 7
+            }
+          },
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/app.js",
+          "static/system/content-priority.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "保留详情层级和证据定位；新增校园版本链是另一个真实API检查范围，尚不能作为已执行详情全验收。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-093",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机办理面板保留固定标题/滚动内容/底部保存，压缩重复说明；错误自动定位，软键盘不遮保存，关闭可恢复草稿。",
+      "source_line": 281,
+      "raw_original_table_line": "| LJ-093 | P1 / 深化 / M | 手机办理面板保留固定标题/滚动内容/底部保存，压缩重复说明；错误自动定位，软键盘不遮保存，关闭可恢复草稿。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Notice intake and flexible workflows",
+            "path": "notice-flow-browser/report.json",
+            "recorded": 45,
+            "passed_checks": 45,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 15,
+              "firefox": 15,
+              "webkit": 15
+            }
+          },
+          {
+            "suite": "Independent devices and campus collaboration",
+            "path": "pilot-workspace-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/workflow.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "原办理面板/恢复在69的相关suite及连续性检查内；本轮没有修改workflow模块。实体软键盘与系统安全区仍单列。",
+      "original_record_limitations_retained_as_history": [
+        "实体中文软键盘与移动设备系统级输入行为未在本环境实测。"
+      ],
+      "current_limits": [
+        "实体中文软键盘/系统安全区未实测。"
+      ]
+    },
+    {
+      "id": "LJ-094",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "收件表单文本/链接/附件批量回执一致；进度、失败、取消、补传明确，重试不丢已成功材料。",
+      "source_line": 282,
+      "raw_original_table_line": "| LJ-094 | P1 / 深化 / M | 收件表单文本/链接/附件批量回执一致；进度、失败、取消、补传明确，重试不丢已成功材料。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Natural notice intake",
+            "path": "natural-intake-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          },
+          {
+            "suite": "QQ group intake, rules and attachments",
+            "path": "qq-group-intake-browser/report.json",
+            "recorded": 12,
+            "passed_checks": 12,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 4,
+              "firefox": 4,
+              "webkit": 4
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/app.js",
+          "static/notice-intake.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "campus_copy"
+        ],
+        "targeted_evidence_ids": [
+          "campus_copy_original_red",
+          "campus_copy_original_green",
+          "campus_capacity_red",
+          "campus_copy_final"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69个人收件/材料回执已按原suite执行；新校园草稿复制缺件修复是相邻材料合同，不能替代个人收件每种错误/取消组合。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-095",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机聊天输入优先保留文字与发送；附件/表情/录音按频率组织；输入法、语音取消、附件恢复和短视口测试。",
+      "source_line": 283,
+      "raw_original_table_line": "| LJ-095 | P1 / 深化 / M | 手机聊天输入优先保留文字与发送；附件/表情/录音按频率组织；输入法、语音取消、附件恢复和短视口测试。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Composer attachments and dictation",
+            "path": "composer-browser/results.json",
+            "recorded": 9,
+            "passed_checks": 9,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 9
+            }
+          },
+          {
+            "suite": "Compact chat Chromium",
+            "path": "chat-layout/chromium/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 4
+            }
+          },
+          {
+            "suite": "Compact chat Firefox",
+            "path": "chat-layout/firefox/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 4
+            }
+          },
+          {
+            "suite": "Compact chat WebKit",
+            "path": "chat-layout/webkit/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 4
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/chat.js",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69 Composer仅Chromium合成麦克风，13阶段/41事件/3录音clip/0及4截图已核；不替代真实麦克风、输入法或系统权限UI。",
+      "original_record_limitations_retained_as_history": [
+        "Composer录音链仅Chromium；实体麦克风、中文输入法与系统权限UI未由模拟录音证明。"
+      ],
+      "current_limits": [
+        "Chromium合成麦克风与缩短viewport不代表实体麦克风或真实软键盘。"
+      ]
+    },
+    {
+      "id": "LJ-096",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "聊天回复工具栏不出现孤立图标行；复制/再生成/版本/分享有清晰层级，次要动作收入菜单但键盘可达。",
+      "source_line": 284,
+      "raw_original_table_line": "| LJ-096 | P1 / 深化 / M | 聊天回复工具栏不出现孤立图标行；复制/再生成/版本/分享有清晰层级，次要动作收入菜单但键盘可达。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Chat interactions Chromium",
+            "path": "chat-interactions/chromium/report.json",
+            "recorded": 9,
+            "passed_checks": 9,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 9
+            }
+          },
+          {
+            "suite": "Chat interactions Firefox",
+            "path": "chat-interactions/firefox/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 8
+            }
+          },
+          {
+            "suite": "Chat interactions WebKit",
+            "path": "chat-interactions/webkit/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 8
+            }
+          },
+          {
+            "suite": "Chat recovery Chromium",
+            "path": "chat-recovery/chromium/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 3
+            }
+          },
+          {
+            "suite": "Chat recovery Firefox",
+            "path": "chat-recovery/firefox/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 3
+            }
+          },
+          {
+            "suite": "Chat recovery WebKit",
+            "path": "chat-recovery/webkit/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 3
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/genui/chat-presenter.js",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69回复菜单与chat9/8/8已有真实自动回归，次要动作键盘退出/焦点保持范围沿原报告；本轮未改工具栏。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-097",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "AI流式正文、引用和生成界面保留滚动锚点；用户上滑时不吸回底部，停止/重试/断流状态与真实任务一致。",
+      "source_line": 285,
+      "raw_original_table_line": "| LJ-097 | P1 / 深化 / M | AI流式正文、引用和生成界面保留滚动锚点；用户上滑时不吸回底部，停止/重试/断流状态与真实任务一致。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Reference interactions",
+            "path": "reference-interactions-browser/report.json",
+            "recorded": 48,
+            "passed_checks": 48,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 16,
+              "firefox": 16,
+              "webkit": 16
+            }
+          },
+          {
+            "suite": "Compact chat Chromium",
+            "path": "chat-layout/chromium/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 4
+            }
+          },
+          {
+            "suite": "Compact chat Firefox",
+            "path": "chat-layout/firefox/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 4
+            }
+          },
+          {
+            "suite": "Compact chat WebKit",
+            "path": "chat-layout/webkit/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 4
+            }
+          },
+          {
+            "suite": "Chat interactions Chromium",
+            "path": "chat-interactions/chromium/report.json",
+            "recorded": 9,
+            "passed_checks": 9,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 9
+            }
+          },
+          {
+            "suite": "Chat interactions Firefox",
+            "path": "chat-interactions/firefox/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 8
+            }
+          },
+          {
+            "suite": "Chat interactions WebKit",
+            "path": "chat-interactions/webkit/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 8
+            }
+          },
+          {
+            "suite": "Chat recovery Chromium",
+            "path": "chat-recovery/chromium/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 3
+            }
+          },
+          {
+            "suite": "Chat recovery Firefox",
+            "path": "chat-recovery/firefox/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 3
+            }
+          },
+          {
+            "suite": "Chat recovery WebKit",
+            "path": "chat-recovery/webkit/report.json",
+            "recorded": 3,
+            "passed_checks": 3,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 3
+            }
+          },
+          {
+            "suite": "OpenUI streaming Chromium",
+            "path": "openui-browser/chromium/report.json",
+            "recorded": 10,
+            "passed_checks": 10,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 10
+            }
+          },
+          {
+            "suite": "OpenUI streaming Firefox",
+            "path": "openui-browser/firefox/report.json",
+            "recorded": 10,
+            "passed_checks": 10,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 10
+            }
+          },
+          {
+            "suite": "OpenUI streaming WebKit",
+            "path": "openui-browser/webkit/report.json",
+            "recorded": 10,
+            "passed_checks": 10,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 10
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/chat-viewport.js",
+          "static/chat.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69真实受控流/三引擎chat与恢复报告保留；不推断未采样断网、后台系统或实体设备行为。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-098",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "手机记忆页默认只留搜索、当前范围和必要筛选；高级筛选折叠，开始选择后再显示批量工具，返回保留条件。",
+      "source_line": 286,
+      "raw_original_table_line": "| LJ-098 | P1 / 深化 / M | 手机记忆页默认只留搜索、当前范围和必要筛选；高级筛选折叠，开始选择后再显示批量工具，返回保留条件。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Reference interactions",
+            "path": "reference-interactions-browser/report.json",
+            "recorded": 48,
+            "passed_checks": 48,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 16,
+              "firefox": 16,
+              "webkit": 16
+            }
+          },
+          {
+            "suite": "Browser stability",
+            "path": "frontend-v9-browser/report.json",
+            "recorded": 123,
+            "passed_checks": 123,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 41,
+              "firefox": 41,
+              "webkit": 41
+            }
+          },
+          {
+            "suite": "Agent approvals and cancellation",
+            "path": "agent-chat-browser/results.json",
+            "recorded": 13,
+            "passed_checks": 13,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 13
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/memory-tree.js",
+          "static/system/workspace-clarity.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69记忆首次懒加载入口及迟到owner/dialog隔离按Agent13 Chromium范围，记忆筛选/连续性按其三引擎报告。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-099",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "来源卡收起后仍显示手动/自动/暂停/失败及最近成功；手机压缩不能隐藏决定收件可靠性的事实。",
+      "source_line": 287,
+      "raw_original_table_line": "| LJ-099 | P1 / 深化 / S | 来源卡收起后仍显示手动/自动/暂停/失败及最近成功；手机压缩不能隐藏决定收件可靠性的事实。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Source subscriptions and personal inbox",
+            "path": "source-inbox-browser/report.json",
+            "recorded": 5,
+            "passed_checks": 5,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 5
+            }
+          },
+          {
+            "suite": "School source chooser and pending saves",
+            "path": "source-presets-browser/report.json",
+            "recorded": 7,
+            "passed_checks": 7,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 7
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/sources.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "来源主要UI仅Chromium、迟到保存连续性三引擎；真实外部网页/来源可靠性需要其自身读取回执，不由本轮未改源码推断。",
+      "original_record_limitations_retained_as_history": [
+        "来源主UI套件仅Chromium；真实外部来源可用性另依来源检查回执。"
+      ],
+      "current_limits": [
+        "真实来源可用性不由合成来源夹具证明。"
+      ]
+    },
+    {
+      "id": "LJ-100",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "日历手机优先清楚日程列表/日/周切换，月视图拥挤有收纳；滚动、拖动、长按与官方时间修改边界明确。",
+      "source_line": 288,
+      "raw_original_table_line": "| LJ-100 | P1 / 深化 / M | 日历手机优先清楚日程列表/日/周切换，月视图拥挤有收纳；滚动、拖动、长按与官方时间修改边界明确。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Notice intake and flexible workflows",
+            "path": "notice-flow-browser/report.json",
+            "recorded": 45,
+            "passed_checks": 45,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 15,
+              "firefox": 15,
+              "webkit": 15
+            }
+          },
+          {
+            "suite": "Workspace interactions",
+            "path": "workspace-interactions-browser/report.json",
+            "recorded": 120,
+            "passed_checks": 120,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 40,
+              "firefox": 40,
+              "webkit": 40
+            }
+          },
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/calendar.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [],
+        "targeted_evidence_ids": [],
+        "status": "existing_behavior_retained_baseline_verified_new_candidate_regression_pending",
+        "new_browser_suite_ids": [],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69相关日历/工作区真实用例沿用基线；实体长按/系统通知/锁屏呈现不由模拟视口证明。",
+      "original_record_limitations_retained_as_history": [
+        "日历回归不证明实体手机锁屏后的Push/邮件实际呈现。"
+      ],
+      "current_limits": [
+        "实体长按与锁屏消息呈现未因日历浏览器检查而获证明。"
+      ]
+    },
+    {
+      "id": "LJ-101",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "学院发布/成员/审计窄屏使用字段明确的行或分步表单；不能把桌面大表格简单整体缩小。",
+      "source_line": 289,
+      "raw_original_table_line": "| LJ-101 | P1 / 深化 / M | 学院发布/成员/审计窄屏使用字段明确的行或分步表单；不能把桌面大表格简单整体缩小。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Independent devices and campus collaboration",
+            "path": "pilot-workspace-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/campus.js",
+          "static/system/workspace-clarity.css",
+          "static/campus-roster.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "campus_copy"
+        ],
+        "targeted_evidence_ids": [
+          "campus_copy_original_red",
+          "campus_copy_original_green",
+          "campus_capacity_red",
+          "campus_copy_final"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "新缺件/容量Node已通过；新增发布版本链、晚加入补发、成员预检选行、审计分页脚本定义待CI，不用桌面整体缩放替代窄屏布局。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-102",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "空、加载、旧内容刷新、无结果、失败、无权限、离线、已删除分别展示；每种有具体下一步和内容新鲜度。",
+      "source_line": 290,
+      "raw_original_table_line": "| LJ-102 | P1 / 深化 / M | 空、加载、旧内容刷新、无结果、失败、无权限、离线、已删除分别展示；每种有具体下一步和内容新鲜度。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Natural notice intake",
+            "path": "natural-intake-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          },
+          {
+            "suite": "Independent devices and campus collaboration",
+            "path": "pilot-workspace-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/paged-list.js",
+          "static/library.js",
+          "static/app.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "account",
+          "campus_copy",
+          "monitor",
+          "verification"
+        ],
+        "targeted_evidence_ids": [
+          "account_lifecycle",
+          "school_blank",
+          "campus_copy_original_red",
+          "campus_copy_original_green",
+          "campus_capacity_red",
+          "campus_copy_final",
+          "operations",
+          "verification_slots_and_errors"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "新控制流修复分别覆盖401、409、迟到、失败与owner切换；未逐一穷举所有页面×权限×离线×已删除的组合。",
+      "original_record_limitations_retained_as_history": [
+        "未逐一穷举全部空/离线/权限/删除状态的笛卡尔组合。"
+      ],
+      "current_limits": [
+        "完整状态笛卡尔组合未穷举。"
+      ]
+    },
+    {
+      "id": "LJ-103",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "Toast与底部导航/软键盘安全区互不遮挡；普通提示短，冲突/失败有常驻入口及核对动作，不能只要求“刷新”。",
+      "source_line": 291,
+      "raw_original_table_line": "| LJ-103 | P1 / 深化 / M | Toast与底部导航/软键盘安全区互不遮挡；普通提示短，冲突/失败有常驻入口及核对动作，不能只要求“刷新”。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Compact chat Chromium",
+            "path": "chat-layout/chromium/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 4
+            }
+          },
+          {
+            "suite": "Compact chat Firefox",
+            "path": "chat-layout/firefox/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 4
+            }
+          },
+          {
+            "suite": "Compact chat WebKit",
+            "path": "chat-layout/webkit/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 4
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/experience-system.js",
+          "static/experience-system.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "account",
+          "verification"
+        ],
+        "targeted_evidence_ids": [
+          "account_lifecycle",
+          "school_blank",
+          "verification_slots_and_errors"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "account_lifecycle",
+          "frontend_finish"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "坏密码和验证码错误常驻原表单并保留帮助/发送状态，字段修正只清本字段错误；实体软键盘安全区仍需实机。",
+      "original_record_limitations_retained_as_history": [
+        "实体软键盘弹起后的系统安全区与真实设备遮挡仍需实机验证。"
+      ],
+      "current_limits": [
+        "实体软键盘遮挡/安全区仍待。"
+      ]
+    },
+    {
+      "id": "LJ-104",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "搜索/筛选/排序/多选作用范围明确；清空一条件不清空全部，旧搜索响应不能覆盖新结果，返回恢复位置和焦点。",
+      "source_line": 292,
+      "raw_original_table_line": "| LJ-104 | P1 / 深化 / M | 搜索/筛选/排序/多选作用范围明确；清空一条件不清空全部，旧搜索响应不能覆盖新结果，返回恢复位置和焦点。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          },
+          {
+            "suite": "Workspace interactions",
+            "path": "workspace-interactions-browser/report.json",
+            "recorded": 120,
+            "passed_checks": 120,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 40,
+              "firefox": 40,
+              "webkit": 40
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/paged-list.js",
+          "static/library.js",
+          "static/app.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "notice_heading"
+        ],
+        "targeted_evidence_ids": [],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "69所有归组/分页/旧响应/返回范围按原报告通过；标题布局改动没有改变筛选语义，但新候选仍需完整回归。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-105",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "S",
+      "requirement": "长中文、URL、混排、附件名、姓名和学院名可读；关键日期/状态不继续缩到11px，省略内容可展开。",
+      "source_line": 293,
+      "raw_original_table_line": "| LJ-105 | P1 / 深化 / S | 长中文、URL、混排、附件名、姓名和学院名可读；关键日期/状态不继续缩到11px，省略内容可展开。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Visual layout bounds",
+            "path": "visual-review-browser/report.json",
+            "recorded": 168,
+            "passed_checks": 168,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 56,
+              "firefox": 56,
+              "webkit": 56
+            }
+          },
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Compact chat Chromium",
+            "path": "chat-layout/chromium/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 4
+            }
+          },
+          {
+            "suite": "Compact chat Firefox",
+            "path": "chat-layout/firefox/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 4
+            }
+          },
+          {
+            "suite": "Compact chat WebKit",
+            "path": "chat-layout/webkit/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 4
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/system/workspace-clarity.css",
+          "static/system/chat-conversation.css"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "contrast",
+          "verification"
+        ],
+        "targeted_evidence_ids": [
+          "operations",
+          "verification_slots_and_errors"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "原长文本布局回归保留；本轮加强占位及认证提示对比。新200%检查仅把选定通知文字的实际CSS字号乘2，未执行原生浏览器缩放。",
+      "original_record_limitations_retained_as_history": [
+        "读屏与200%真实浏览器缩放未在本环境执行。"
+      ],
+      "current_limits": [
+        "原生浏览器200%zoom与读屏未执行。"
+      ]
+    },
+    {
+      "id": "LJ-106",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "验收",
+      "cost": "M",
+      "requirement": "键盘、读屏、焦点返回、对话框语义、颜色对比、200%字号/缩放、中文输入法全链路验证；不只有布局不溢出。",
+      "source_line": 294,
+      "raw_original_table_line": "| LJ-106 | P1 / 验收 / M | 键盘、读屏、焦点返回、对话框语义、颜色对比、200%字号/缩放、中文输入法全链路验证；不只有布局不溢出。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          },
+          {
+            "suite": "Reference interactions",
+            "path": "reference-interactions-browser/report.json",
+            "recorded": 48,
+            "passed_checks": 48,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 16,
+              "firefox": 16,
+              "webkit": 16
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/system/workspace-clarity.css",
+          "static/genui/chat-presenter.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "verification",
+          "account",
+          "contrast",
+          "notice_heading"
+        ],
+        "targeted_evidence_ids": [
+          "verification_slots_and_errors",
+          "account_lifecycle",
+          "school_blank",
+          "operations"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "键盘/ARIA/颜色/字号需分别核证。Node受控DOM不证明实际读屏播报；CSS字号翻倍不等于原生200%zoom；中文实体IME/系统软键盘/读屏全链路仍未执行。",
+      "original_record_limitations_retained_as_history": [
+        "Actual screen reader, physical soft keyboard and browser 200% zoom not yet verified in this execution environment."
+      ],
+      "current_limits": [
+        "真实中文IME、实体软键盘、读屏软件全链路与原生200%浏览器缩放未执行。"
+      ]
+    },
+    {
+      "id": "LJ-107",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "统一动画生命周期：减少动画、个人关闭、后台标签、离屏、卸载均停止清理；多动效不抢输入和滚动。",
+      "source_line": 295,
+      "raw_original_table_line": "| LJ-107 | P1 / 深化 / M | 统一动画生命周期：减少动画、个人关闭、后台标签、离屏、卸载均停止清理；多动效不抢输入和滚动。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/choreography.js",
+          "static/experience-system.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "verification",
+          "references"
+        ],
+        "targeted_evidence_ids": [
+          "verification_slots_and_errors"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "account_lifecycle"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "原减少动画/生命周期基线保留。验证码仅状态切换并显式reduced-motion；RubberSegment拖动登录切换没有采用，未新增持续装饰动效。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-108",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "保持同一动作在列表/详情/搜索/跨端中的状态和文案；乐观更新失败保留上下文，实际成功后才显示成功。",
+      "source_line": 296,
+      "raw_original_table_line": "| LJ-108 | P1 / 深化 / M | 保持同一动作在列表/详情/搜索/跨端中的状态和文案；乐观更新失败保留上下文，实际成功后才显示成功。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Independent devices and campus collaboration",
+            "path": "pilot-workspace-browser/report.json",
+            "recorded": 33,
+            "passed_checks": 33,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 11,
+              "firefox": 11,
+              "webkit": 11
+            }
+          },
+          {
+            "suite": "Source subscriptions and personal inbox",
+            "path": "source-inbox-browser/report.json",
+            "recorded": 5,
+            "passed_checks": 5,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 5
+            }
+          }
+        ],
+        "existing_code_files": [
+          "static/app.js",
+          "static/campus.js",
+          "static/collaboration.js"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "account",
+          "campus_copy",
+          "monitor",
+          "verification"
+        ],
+        "targeted_evidence_ids": [
+          "account_lifecycle",
+          "school_blank",
+          "campus_copy_original_red",
+          "campus_copy_original_green",
+          "campus_capacity_red",
+          "campus_copy_final",
+          "operations",
+          "verification_slots_and_errors"
+        ],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "frontend_finish",
+          "account_lifecycle",
+          "campus_administration"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "本轮加强真实成功之后才清理、owner/route/dialog迟到隔离和草稿材料一致性；新浏览器跨账号与管理链仍未执行。",
+      "original_record_limitations_retained_as_history": [],
+      "current_limits": []
+    },
+    {
+      "id": "LJ-109",
+      "section": "G. 前端和移动端：LJ-085—110",
+      "priority": "P1",
+      "priority_qualifier": "P1",
+      "nature": "深化",
+      "cost": "M",
+      "requirement": "严格执行209参考采用记录：序号→源码变体→依赖→交互机制→品牌适配→真实API→各状态验证→许可。35优先候选不等于全部安装。",
+      "source_line": 297,
+      "raw_original_table_line": "| LJ-109 | P1 / 深化 / M | 严格执行209参考采用记录：序号→源码变体→依赖→交互机制→品牌适配→真实API→各状态验证→许可。35优先候选不等于全部安装。 |",
+      "original_fields_exactly_equal_across_raw_extraction_128_and_25": true,
+      "baseline_69": {
+        "scope": "Relevant previously executed suites only, not a proof of every clause in the natural-language requirement.",
+        "browser_suites": [
+          {
+            "suite": "Sprint workflows and loading performance",
+            "path": "sprint-ui-browser/report.json",
+            "recorded": 78,
+            "passed_checks": 78,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 26,
+              "firefox": 26,
+              "webkit": 26
+            }
+          },
+          {
+            "suite": "Task board drag and recovery",
+            "path": "task-board-browser/report.json",
+            "recorded": 28,
+            "passed_checks": 28,
+            "engines": [
+              "chromium",
+              "firefox",
+              "webkit"
+            ],
+            "by_engine": {
+              "chromium": 10,
+              "firefox": 9,
+              "webkit": 9
+            }
+          },
+          {
+            "suite": "Composer attachments and dictation",
+            "path": "composer-browser/results.json",
+            "recorded": 9,
+            "passed_checks": 9,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 9
+            }
+          },
+          {
+            "suite": "Compact chat Chromium",
+            "path": "chat-layout/chromium/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 4
+            }
+          },
+          {
+            "suite": "Compact chat Firefox",
+            "path": "chat-layout/firefox/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 4
+            }
+          },
+          {
+            "suite": "Compact chat WebKit",
+            "path": "chat-layout/webkit/report.json",
+            "recorded": 4,
+            "passed_checks": 4,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 4
+            }
+          },
+          {
+            "suite": "Chat interactions Chromium",
+            "path": "chat-interactions/chromium/report.json",
+            "recorded": 9,
+            "passed_checks": 9,
+            "engines": [
+              "chromium"
+            ],
+            "by_engine": {
+              "chromium": 9
+            }
+          },
+          {
+            "suite": "Chat interactions Firefox",
+            "path": "chat-interactions/firefox/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "firefox"
+            ],
+            "by_engine": {
+              "firefox": 8
+            }
+          },
+          {
+            "suite": "Chat interactions WebKit",
+            "path": "chat-interactions/webkit/report.json",
+            "recorded": 8,
+            "passed_checks": 8,
+            "engines": [
+              "webkit"
+            ],
+            "by_engine": {
+              "webkit": 8
+            }
+          }
+        ],
+        "existing_code_files": [
+          "docs/sprint-2026-11-14/components-209.json",
+          "docs/sprint-2026-11-14/reference-source-review.json"
+        ]
+      },
+      "this_round": {
+        "change_ids": [
+          "references"
+        ],
+        "targeted_evidence_ids": [],
+        "status": "source_changes_and_targeted_evidence_recorded_new_browser_pending",
+        "new_browser_suite_ids": [
+          "account_lifecycle"
+        ],
+        "new_browser_execution": "not_executed"
+      },
+      "interpretation": "原209条与35/79/95分类字节不动；额外2项源码/演示深核后累计5项，204项仍未逐一demo+source深核。未安装209项依赖。",
+      "original_record_limitations_retained_as_history": [
+        "其余206项上游组件没有逐个打开demo/源码；不安装209项依赖。"
+      ],
+      "current_limits": [
+        "204项未逐一打开演示并深读源码；原35优先候选不是35项强制安装。"
+      ]
+    }
+  ],
+  "changes": {
+    "verification": {
+      "files": [
+        "static/verification.js",
+        "static/auth-feedback.js",
+        "static/system/auth.css"
+      ],
+      "evidence": [
+        "verification_slots_and_errors"
+      ],
+      "scope": "单原生验证码输入及6个装饰槽；保留自动填充/选区；整段粘贴规范化；填满仅进入输入就绪状态，不等于验证成功；重发先废弃旧proof；字段错误只管理自身描述，保留发送状态与帮助关联。",
+      "file_snapshots": [
+        {
+          "path": "static/verification.js",
+          "sha256": "52e73bafb8363ec077285d248921f094001fd0b02ee0595a8ff8630e33da2182"
+        },
+        {
+          "path": "static/auth-feedback.js",
+          "sha256": "68051aa490a37284b64cea16abb492bee9732073101452a08960d8b94b4d70f2"
+        },
+        {
+          "path": "static/system/auth.css",
+          "sha256": "eb985b3fc4f235c8789100ca149fd10ce0c6d26f2a91e003ae97a53ee4da5874"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "account": {
+      "files": [
+        "static/account-security.js",
+        "static/app.js",
+        "static/push-notifications.js"
+      ],
+      "evidence": [
+        "account_lifecycle",
+        "school_blank"
+      ],
+      "scope": "坏密码保留同一登录表单；安全保存迟到不替换新对话框；注销在服务器确认后才清理本机push/会话，并重核owner；可选学校显式空值不被默认值悄悄恢复。",
+      "file_snapshots": [
+        {
+          "path": "static/account-security.js",
+          "sha256": "3426e72b3b81bae5fec2328370d3408dec70ca97140a32a5b6537a84a33f5866"
+        },
+        {
+          "path": "static/app.js",
+          "sha256": "103baebabbd7c725918fea8de279267d566dc2004a755a586e1efaa3d52f3f23"
+        },
+        {
+          "path": "static/push-notifications.js",
+          "sha256": "e29d62df560e7acf0848240e727f04826944cc5d5b019a3505c9cf6ea835eda6"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "notice_heading": {
+      "files": [
+        "static/library.js",
+        "static/app.js",
+        "static/system/workspace-clarity.css"
+      ],
+      "evidence": [],
+      "scope": "撤除通知标题错误的sr-only隐藏，保留标题与收件动作同行及原筛选/分页/归组合同；没有删除原入口。",
+      "file_snapshots": [
+        {
+          "path": "static/library.js",
+          "sha256": "0d4552b5e92b8da184b07fa13aa686b10d66ebb933ec8472fe6bc28e48d90be8"
+        },
+        {
+          "path": "static/app.js",
+          "sha256": "103baebabbd7c725918fea8de279267d566dc2004a755a586e1efaa3d52f3f23"
+        },
+        {
+          "path": "static/system/workspace-clarity.css",
+          "sha256": "3dd38a9c96e36d134c6f28a5550d1084e815e21385d7ab329d639d946593bf6f"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "campus_copy": {
+      "files": [
+        "static/campus.js"
+      ],
+      "evidence": [
+        "campus_copy_original_red",
+        "campus_copy_original_green",
+        "campus_capacity_red",
+        "campus_copy_final"
+      ],
+      "scope": "409冲突另存时持久保留缺件名称；重选或明确不附加后才继续；超过名称容量先拒绝且不换草稿ID/不丢输入；批量成员审计增加中文标签与筛选选项。",
+      "file_snapshots": [
+        {
+          "path": "static/campus.js",
+          "sha256": "27af35dcd6c58c2dbe22119030f94df7b17d5063bf07f9ea38ec307ff812e271"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "monitor": {
+      "files": [
+        "static/operations.js"
+      ],
+      "evidence": [
+        "operations"
+      ],
+      "scope": "同一owner/dialog刷新在响应回来后保留两个表单最新未保存值；成功仅清理本表单已提交快照；字段保持可编辑，动作串行；失败/离开/owner变化不夺取新视图。",
+      "file_snapshots": [
+        {
+          "path": "static/operations.js",
+          "sha256": "076f7f69fab212881129f60db45529d10c2f8d96a9d022d52439129021ee2fb0"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "contrast": {
+      "files": [
+        "static/system/neutral-surfaces.css",
+        "static/system/auth.css"
+      ],
+      "evidence": [
+        "operations",
+        "verification_slots_and_errors"
+      ],
+      "scope": "占位文字变为既有muted色并固定opacity；认证辅助文字加深、输入/按钮与密码显隐触区44px；保留绿白品牌和页面布局，非全站WCAG通过声明。",
+      "file_snapshots": [
+        {
+          "path": "static/system/neutral-surfaces.css",
+          "sha256": "3f84b1bbe88e0f1429b68fd6ebfc0317cdde5c61e7bebe4c35038e160d4eed13"
+        },
+        {
+          "path": "static/system/auth.css",
+          "sha256": "eb985b3fc4f235c8789100ca149fd10ce0c6d26f2a91e003ae97a53ee4da5874"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "references": {
+      "files": [
+        "docs/audits/frontend-reference-followup.json"
+      ],
+      "evidence": [],
+      "scope": "新增实际深读/操作#125 CodeSlots与#131 RubberSegment；CodeSlots原生适配，RubberSegment审查后不用于拖动切换登录方式；没有新增上游运行依赖。",
+      "file_snapshots": [
+        {
+          "path": "docs/audits/frontend-reference-followup.json",
+          "sha256": "44f03d9c684802f8d5fa4199722066cfd14b98d6bb3091246f1c9ca34f71c044"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    },
+    "deployment": {
+      "files": [
+        "compose.shared-host.yaml",
+        "scripts/verify_shared_host_config.py",
+        "docs/SHARED_HOST_DEPLOYMENT.md"
+      ],
+      "evidence": [
+        "operations"
+      ],
+      "scope": "独立同宿主反代模板只发布127.0.0.1，项目/卷/网络隔离及资源/日志限额显式配置；不替换现主compose、不启动服务。实际Compose config门禁待CI。",
+      "file_snapshots": [
+        {
+          "path": "compose.shared-host.yaml",
+          "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae"
+        },
+        {
+          "path": "scripts/verify_shared_host_config.py",
+          "sha256": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc"
+        },
+        {
+          "path": "docs/SHARED_HOST_DEPLOYMENT.md",
+          "sha256": "47da92c845a7dfd5d3fd721278d6c8472a8db7c6df398af8e8d7bcbc1cdfb0cf"
+        }
+      ],
+      "application_browser_status": "not_executed_on_this_working_tree"
+    }
+  },
+  "targeted_evidence": {
+    "operations": {
+      "local_path": "/workspace/scratch/0a6433f08acc/operations-monitor-evidence/verification.json",
+      "sha256": "240c3668bae99ff041dc04a7996893f880bf4a3ecb1880c42da3a4c69eebc62b",
+      "bytes": 7914,
+      "record": {
+        "verified_at": "2026-11-14T14:44:54.614960+00:00",
+        "base_commit": "37150dc650f7c40783a84e718a102b9413b815fe",
+        "scope": "Operations monitor draft preservation, unchanged-layout placeholder contrast, and standalone same-host Compose configuration preparation. No build, browser, application load, provider or deployment was executed.",
+        "before": {
+          "identity": {
+            "base": "37150dc650f7c40783a84e718a102b9413b815fe",
+            "source_sha256": "d032bc287122f51552ebe5002b0be1c7f553cb77dfd9d51b86d42801ee88a844",
+            "test_sha256": "17301943692409883035d3d202ad0d5c8deafb06b00cdbe8d2fadd44ddcf56d8",
+            "scope": "Real createOperations factory and real captureUiContext; transport/field-only DOM controlled, not native browser layout."
+          },
+          "log": {
+            "path": "/workspace/scratch/0a6433f08acc/operations-monitor-evidence/before.log",
+            "size": 6971,
+            "sha256": "3734831eae7cc10cb553fa154e028a0a8c04b18f03b1c36209bc22d8fc1c4589"
+          },
+          "counts": {
+            "tests": 11,
+            "pass": 3,
+            "fail": 8,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "failures": "Eight field preservation/action-serialization assertion failures; three existing owner/route/dialog completion guards passed."
+        },
+        "after": {
+          "log": {
+            "path": "/workspace/scratch/0a6433f08acc/operations-monitor-evidence/after.log",
+            "size": 1349,
+            "sha256": "7bd0ed9756442046950d4ff11cdc624e159cef92a2a82b7469b4fd423a40780a"
+          },
+          "counts": {
+            "tests": 11,
+            "pass": 11,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "test_identities": [
+            "monitor check refresh preserves both unsaved forms and their expanded section",
+            "monitor mark read refresh preserves both unsaved forms and their expanded section",
+            "monitor acknowledge refresh preserves both unsaved forms and their expanded section",
+            "monitor remove a registered expiry refresh preserves both unsaved forms and their expanded section",
+            "saving thresholds keeps the other form and uses the refreshed server baseline for later changes",
+            "saving an expiry clears only that unchanged submitted form and leaves unsaved thresholds local",
+            "typing during a save and its delayed refresh preserves the latest input, including a return to the old baseline",
+            "monitor actions serialize while fields remain editable and a failed request keeps drafts available",
+            "a close during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view",
+            "a route during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view",
+            "a owner during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view"
+          ],
+          "same_test_bytes_as_before": true
+        },
+        "owned_files": [
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/static/operations.js",
+            "size": 14541,
+            "sha256": "076f7f69fab212881129f60db45529d10c2f8d96a9d022d52439129021ee2fb0"
+          },
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/static/system/neutral-surfaces.css",
+            "size": 3328,
+            "sha256": "3f84b1bbe88e0f1429b68fd6ebfc0317cdde5c61e7bebe4c35038e160d4eed13"
+          },
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/operations-monitor.test.mjs",
+            "size": 13044,
+            "sha256": "17301943692409883035d3d202ad0d5c8deafb06b00cdbe8d2fadd44ddcf56d8"
+          },
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/compose.shared-host.yaml",
+            "size": 2133,
+            "sha256": "9df3c0288099f5bedea4e74d86d3f2943e83f6e64935b0348bb44877b620eaae"
+          },
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py",
+            "size": 8287,
+            "sha256": "1005298020aeb5a3fce49ecec95d2086afbdbca05200028ee793e77dd52256fc"
+          },
+          {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/docs/SHARED_HOST_DEPLOYMENT.md",
+            "size": 6177,
+            "sha256": "47da92c845a7dfd5d3fd721278d6c8472a8db7c6df398af8e8d7bcbc1cdfb0cf"
+          }
+        ],
+        "checks": {
+          "node_syntax": true,
+          "python_verifier_syntax": true,
+          "git_diff_check_owned_tracked": true,
+          "browser_executed": false,
+          "build_executed": false,
+          "shared_host_compose_config_passed_locally": false
+        },
+        "shared_host_local_unavailable": {
+          "file": {
+            "path": "/workspace/scratch/0a6433f08acc/operations-monitor-evidence/shared-host-local-unavailable.json",
+            "size": 1458,
+            "sha256": "699dc367300652869a253babebf31e5edcb656add95cbfa3a6ea6cd35d816f4f"
+          },
+          "record": {
+            "result": "failed",
+            "synthetic_config_only": true,
+            "services_started": false,
+            "error": "FileNotFoundError: [Errno 2] No such file or directory: 'docker'",
+            "traceback": "Traceback (most recent call last):\n  File \"/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py\", line 131, in main\n    record = verify(args.root.resolve())\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_shared_host_config.py\", line 30, in verify\n    version = subprocess.run([\"docker\", \"compose\", \"version\", \"--short\"], env=env,\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py\", line 548, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py\", line 1026, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py\", line 1955, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'docker'\n",
+            "verified_at": "2026-11-14T14:42:50.909191+00:00"
+          },
+          "required_ci_command": "python scripts/verify_shared_host_config.py --output artifacts/shared-host-config.json",
+          "expected_future_scope": "Two synthetic config renderings and twelve missing-variable failures. Future CI must actually execute; no result is prefilled."
+        },
+        "preservation_scope": [
+          "Live fields are sampled after the successful refresh finishes.",
+          "Only changed fields relative to the newest server baseline are retained.",
+          "A successful save retires only the exact submitted form values; later edits, including a return to the old baseline, survive.",
+          "Other monitor actions preserve both forms and expanded section; they do not silently submit those drafts.",
+          "All monitor actions serialize, while field editing remains enabled.",
+          "Existing owner/route/dialog guards reject late completion; no persistent cache is introduced."
+        ],
+        "contrast": {
+          "old_placeholder": "#858585",
+          "old_white_ratio": 3.6900293509358773,
+          "new_placeholder": "var(--muted, #666)",
+          "new_current_token": "#666",
+          "new_white_ratio": 5.74183648145415,
+          "opacity": 1,
+          "scope": "Specified color-pair calculation; actual computed rendering is for the next browser round.",
+          "source": "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum"
+        },
+        "limitations": [
+          "Node DOM has real production factory/guard/event handlers but no browser layout, native validation or pointer hit testing.",
+          "Docker CLI is absent locally; that absence returned exit 1 and is recorded, not skipped as a pass.",
+          "Deployment variables and real host/proxy/resource/network characteristics remain the deployer’s decisions.",
+          "Existing primary compose.yaml and Dockerfile are unchanged."
+        ]
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "account_lifecycle": {
+      "local_path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/verification.json",
+      "sha256": "5e714bdc8be7fa25b1cf17538870cd215fbd61db21f6fa54dceae058646fd443",
+      "bytes": 11458,
+      "record": {
+        "schema_version": 1,
+        "base_main": "37150dc650f7c40783a84e718a102b9413b815fe",
+        "verified_at": "2026-11-14T14:53:33.863527+00:00",
+        "scope": "Account frontend control-flow repairs and actual production-function Node evidence. New browser coverage is syntax checked only and must execute in a later GitHub CI. No local browser or load test was run. No real provider acceptance is claimed.",
+        "status": "targeted_node_passed_browser_pending",
+        "changes": [
+          "Keep credential 401 errors and input on the original guest authentication form; genuine session invalidation still uses the existing API authority path.",
+          "Refresh account-security dialogs only when the original owner/route/dialog still matches; late owner data may update without replacing a newer dialog.",
+          "Authenticate account deletion before push teardown; after a confirmed deletion use local-only teardown and complete clearSession, with owner rechecks before and after cleanup.",
+          "Preserve default logout remote subscription removal; local cleanup failure never disguises an already-confirmed account deletion."
+        ],
+        "source_sha256": {
+          "static/account-security.js": "3426e72b3b81bae5fec2328370d3408dec70ca97140a32a5b6537a84a33f5866",
+          "static/push-notifications.js": "e29d62df560e7acf0848240e727f04826944cc5d5b019a3505c9cf6ea835eda6",
+          "static/app.js": "e5dbc3560b26c08f20461acdfe9ad5775e80a7ca3a3abe2bcacf1fdea7fc1bfe",
+          "static/auth.js": "799d1eeff35790f5050a8b4e01c8b0099aa966701c6472986b32bd3c60f11d16",
+          "tests/account-lifecycle-ui.test.mjs": "e700ad3afb94ad1b5de510abfbbd6db59f3f73931987ca2ce8dd5bb7f1396985",
+          "scripts/verify_account_lifecycle.mjs": "cf45234221396303c357dede724041465822d7946f7eb28b532ad91ddd2d3eb5"
+        },
+        "base_source_sha256": {
+          "static/account-security.js": "83bfc748581f61a0567b191d857fff36537f24d8f9b4cd3005c67a162fbf9dc0",
+          "static/push-notifications.js": "bccf8a81473db593941b3d9cbda97b21fdeacb977da79758359e9c34bfbb7bdf",
+          "static/app.js": "4b5ea19d9bf14cfd981656d7acc1808fc518a603e32d2b6d61067f3703477fdd",
+          "static/auth.js": "799d1eeff35790f5050a8b4e01c8b0099aa966701c6472986b32bd3c60f11d16"
+        },
+        "owned_app_change": {
+          "before": [
+            "  else if(form.id==='delete-account-form'){const values=Object.fromEntries(fd);if(String(values.confirm).trim()!=='注销账号')throw new Error('请输入“注销账号”四个字确认');await push.detachForLogout();await api('/account/delete',{method:'POST',json:values});push.stop();state.session=null;state.invite='';drafts.clear();reminders.stop();state.tasks=[];state.notices=[];state.notice=null;state.legal=null;if($('#dialog').open)$('#dialog').close();location.hash='login';authPage();toast('账号已经注销，谢谢你用过珞珈信使。');return;}",
+            "}catch(error){if(submittedView.sameUser()){if(form.isConnected){if(!error.formHandled)formError(form,error.message);}else toast(error.message,true);if(error.status===401){push.stop();state.session=null;authPage();}}}finally{form.inert=false;finishFeedback();if(form.id==='draft-form')reviewObserver.resume(form);}});"
+          ],
+          "after": [
+            "  else if(form.id==='delete-account-form'){const values=Object.fromEntries(fd);if(String(values.confirm).trim()!=='注销账号')throw new Error('请输入“注销账号”四个字确认');await api('/account/delete',{method:'POST',json:values});if(!submittedView.sameUser())return;let cleanupError='';try{await push.detachForLogout({remote:false});}catch(error){cleanupError=error.message;}if(!submittedView.sameUser())return;clearSession();state.legal=null;location.hash='login';authPage();toast('账号已经注销，谢谢你用过珞珈信使。'+(cleanupError?' 本机提醒清理仍需确认：'+cleanupError:''),!!cleanupError);return;}",
+            "}catch(error){if(submittedView.sameUser()){if(!error.formHandled){if(form.isConnected&&submittedView.sameDialog())formError(form,error.message);else toast(error.message,true);}if(error.status===401&&form.id!=='auth-form'){push.stop();state.session=null;authPage();}}}finally{form.inert=false;finishFeedback();if(form.id==='draft-form')reviewObserver.resume(form);}});"
+          ],
+          "scope": "Only these two delegated account-submission lines are owned here; the shared file also contains the independent library heading change."
+        },
+        "auth_js_unchanged": true,
+        "new_node_cases": [
+          "an incorrect password keeps the current login inputs and its reachable inline error through the real delegated catch",
+          "a corrected login can retry the same form after a credential failure",
+          "an expired authenticated session still transitions to login rather than retaining an authorized form",
+          "a completed security save updates its owner without reopening the abandoned close view",
+          "a completed security save updates its owner without reopening the abandoned leave view",
+          "a completed security save updates its owner without reopening the abandoned replaceDialog view",
+          "a security save in its original dialog still refreshes the current security information",
+          "a late rejected security save has an accessible error after its dialog closes",
+          "repeated submission while the same security request is pending sends only one mutation",
+          "a rejected account deletion preserves the existing device subscription and account form",
+          "a confirmed account deletion revokes the local device after success without an unauthenticated remote teardown",
+          "confirmed deletion resets the previous account workspace before a new registration can start",
+          "a local device cleanup error cannot disguise an already confirmed account deletion as a failed deletion",
+          "a new account accepted during deletion device cleanup is not deleted or logged out by the old completion",
+          "ordinary logout continues to revoke both the local binding and its authenticated remote subscription",
+          "an account change rejects a late security response without opening or editing another account view"
+        ],
+        "deterministic_red": {
+          "tests": 16,
+          "passed": 5,
+          "failed": 11,
+          "failure_kind": "11 actual AssertionError business outcomes; no missing-helper, ReferenceError or TypeError counted",
+          "same_test_sha256": "e700ad3afb94ad1b5de510abfbbd6db59f3f73931987ca2ce8dd5bb7f1396985",
+          "evidence": {
+            "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/before-expanded.tap",
+            "bytes": 31029,
+            "sha256": "2ba44e9689dbf1789335871c7862ba1d659ad8a95a3cb1cb5578872f20b71474"
+          }
+        },
+        "green": {
+          "tests": 16,
+          "passed": 16,
+          "failed": 0,
+          "same_test_sha256": "e700ad3afb94ad1b5de510abfbbd6db59f3f73931987ca2ce8dd5bb7f1396985",
+          "evidence": {
+            "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/after-initial.tap",
+            "bytes": 4251,
+            "sha256": "d80ac26510cee20e8c2c96698f9b3cfed19e43b2829c03eecad0a73881e56206"
+          }
+        },
+        "independent_combined_regression": {
+          "executed_by": "root",
+          "tests": 38,
+          "passed": 38,
+          "contains_all_16_owned_ids": true,
+          "additional_scope": "Root auth-description 5 + old auth 3 + OTP new8/old6; do not add this overlapping round to the 16 unique count.",
+          "evidence": [
+            {
+              "path": "/workspace/scratch/0a6433f08acc/auth-description-evidence/after.xml",
+              "bytes": 9351,
+              "sha256": "c7fd75d1faf7ba25bc1051c028fcd4010e85bdee8f4e4fe435009b7e26dba321"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/auth-description-evidence/after.stderr",
+              "bytes": 0,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/auth-description-evidence/after.json",
+              "bytes": 231,
+              "sha256": "37049b3757cc271ca0dc5b08665a96e0b7a90adb3b8226db9602ff3ec9e0872f"
+            }
+          ]
+        },
+        "earlier_harness_history": {
+          "initial": {
+            "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/before-initial.tap",
+            "bytes": 15172,
+            "sha256": "e2349f5bc0a90ed01cc0623830855b7d5519e65759dcafeae47908f2da748e49"
+          },
+          "explanation": "The first harness extraction accidentally included a workspaceNav const and produced ReferenceErrors. It was corrected before the final unchanged 16-case red/green pair; those setup errors are not treated as product defects.",
+          "intermediate_runs": [
+            {
+              "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/before-second.tap",
+              "bytes": 21730,
+              "sha256": "36399f2efd16f5b46ef14e9b7494cc1e7a53b0fcb4f22cebbdef79d631e467db"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/before.tap",
+              "bytes": 30032,
+              "sha256": "66be2dd7e884b223f808bbbdec32db67a70180884356abffa18693e97e5e88fd"
+            },
+            {
+              "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/before-source-hashes.json",
+              "bytes": 489,
+              "sha256": "885cf7a9eb1e4293ce4f3184ae490a9a361bec990e9fd912c52f722b440c05b8"
+            }
+          ]
+        },
+        "new_browser": {
+          "path": "scripts/verify_account_lifecycle.mjs",
+          "sha256": "cf45234221396303c357dede724041465822d7946f7eb28b532ad91ddd2d3eb5",
+          "engines": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "per_engine": 11,
+          "expected_checks": 33,
+          "identities": [
+            "mobile signup retains a rejected code and verifies normalized six-digit input only after explicit submission",
+            "the three signup stages create the verified owner and open the workspace",
+            "a rejected password keeps the same accessible form and a corrected retry signs in",
+            "verification-code login returns to the same owner through the real proof endpoint",
+            "a private notice and edited personal conditions persist through real workspace forms",
+            "a delayed successful password response cannot replace a newer dialog and invalidates the older device",
+            "verified password recovery renews the same owner without losing private records",
+            "a rejected account deletion retains the account and does not request remote push detachment",
+            "confirmed account deletion clears the session and denies the previous private record",
+            "registering the same contact and account name again creates an empty distinct owner",
+            "the complete account lifecycle has no uncaught browser errors"
+          ],
+          "status": "not_executed",
+          "deadline_ms": 12000,
+          "network": "real APIs; real password response held after route.fetch; no fabricated success body",
+          "provider": "synthetic capture only",
+          "cooldown": "First issue observes real429; explicit opt-in fixture expires only that captured recipient cooldown before challenge retirement. Other limits and proof attempts remain active.",
+          "clipboard": "Synthetic ClipboardEvent to the real paste handler; not an OS clipboard claim.",
+          "push_scope": "Browser verifies no remote DELETE; actual local unsubscribe behavior is covered by production-module Node tests, not a physical push device."
+        },
+        "independent_review": {
+          "campus_workflows": "Read-only review found no blocking account-security/API/owner/cleanup issue. No test rerun.",
+          "requirements_audit": "Read-only lifecycle/browser review found cleanup waiting risk; route.fetch and both cleanup waits now use the unchanged 12s deadline and preserve the original failure."
+        },
+        "verification_errors": []
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "school_blank": {
+      "local_path": "/workspace/scratch/0a6433f08acc/artifacts/account-profile-school/verification.json",
+      "sha256": "04d2cabd53dfd68bbcb5c499a582d4e074917adb8589b48d7b4fc3686649484e",
+      "bytes": 3986,
+      "record": {
+        "schema_version": 1,
+        "verified_at": "2026-11-14T14:55:28.489081+00:00",
+        "status": "targeted_node_passed_browser_pending",
+        "parent_proof": {
+          "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-final/verification.json",
+          "sha256": "5e714bdc8be7fa25b1cf17538870cd215fbd61db21f6fa54dceae058646fd443",
+          "bytes": 11458
+        },
+        "scope": "One optional school input fallback, with the same existing browser check extended. Settings display fallback and the backend profile protocol are unchanged.",
+        "exact_source_change": {
+          "from": "field('学校','school',p.school||'武汉大学'",
+          "to": "field('学校','school',p.school??'武汉大学'",
+          "reverse_single_replacement_matches_previous_app_sha256": true
+        },
+        "source_sha256": "103baebabbd7c725918fea8de279267d566dc2004a755a586e1efaa3d52f3f23",
+        "test": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/account-profile-dialog.test.mjs",
+          "sha256": "47b573933d6fc67e8feab3afa261cfa12c1678646b28fde80f3df0f6c9625b2d",
+          "bytes": 2153
+        },
+        "same_new_test_used_for_red_and_green": true,
+        "deterministic_evidence": [
+          {
+            "phase": "before",
+            "cases": [
+              "the real profile dialog preserves a deliberately cleared school when another field is saved",
+              "the real profile dialog retains the original default only when the school value is missing"
+            ],
+            "passed": 1,
+            "failures": [
+              "the real profile dialog preserves a deliberately cleared school when another field is saved"
+            ],
+            "evidence": [
+              {
+                "path": "/workspace/scratch/0a6433f08acc/artifacts/account-profile-school/before.xml",
+                "sha256": "3ef8e0d9fb1c8049bc86bcd176281bd8138592616b073f2b386c7309643e1de1",
+                "bytes": 1876
+              },
+              {
+                "path": "/workspace/scratch/0a6433f08acc/artifacts/account-profile-school/before.stderr",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            ]
+          },
+          {
+            "phase": "after",
+            "cases": [
+              "the real profile dialog preserves a deliberately cleared school when another field is saved",
+              "the real profile dialog retains the original default only when the school value is missing"
+            ],
+            "passed": 2,
+            "failures": [],
+            "evidence": [
+              {
+                "path": "/workspace/scratch/0a6433f08acc/artifacts/account-profile-school/after.xml",
+                "sha256": "5598ac6ddff8d9ed473df90b69909f52628597664740ad0d412cad063d3088f0",
+                "bytes": 728
+              },
+              {
+                "path": "/workspace/scratch/0a6433f08acc/artifacts/account-profile-school/after.stderr",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            ]
+          }
+        ],
+        "observed_red": "The actual original profileDialog rendered 武汉大学 for a stored empty school; the missing-value default control already passed.",
+        "green_scope": "Actual field markup keeps empty school; actual saveProfileForm/patchProfile sends only the changed college with CAS expected value and does not write a school default.",
+        "new_browser": {
+          "path": "scripts/verify_account_lifecycle.mjs",
+          "sha256": "3df7a5a052b99beef2cd5c8932137d802b17c710b0f79164a9f1b12149dea797",
+          "expected_checks": 33,
+          "identities_unchanged": true,
+          "extended_existing_check": "a private notice and edited personal conditions persist through real workspace forms",
+          "assertions": [
+            "Clear school and save through the real profile UI/API.",
+            "Read actual saved profile.school as empty.",
+            "Reopen the real dialog and assert the school input is still empty."
+          ],
+          "status": "not_executed"
+        },
+        "unique_account_node_cases": 18,
+        "testing_note": "The prior16 and this new2 are distinct. No full Node rerun, local browser, new provider call or load test was performed here.",
+        "verification_errors": []
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "verification_slots_and_errors": {
+      "local_path": "/workspace/scratch/0a6433f08acc/verification-resend-evidence/verification.json",
+      "sha256": "5850e1c5dc3f5eddfefcb81022f6dccb8a55359196b21ce4ff1706222bb54037",
+      "bytes": 4483,
+      "record": {
+        "groups": [
+          {
+            "group": "initial_slots_eight",
+            "before": {
+              "path": "/workspace/scratch/0a6433f08acc/verification-slots-evidence/before.xml",
+              "sha256": "13a921feb0ab9c53e627fe6fedebf27af235926ed6578d733fbb1a636b12a714",
+              "cases": 8,
+              "passed": 0,
+              "failures": [
+                {
+                  "name": "OTP markup has one real autofill input and six non-interactive decorative slots",
+                  "business_assertion": true
+                },
+                {
+                  "name": "pasting spaced full-width OTP normalizes the full clipboard before the six-character limit",
+                  "business_assertion": true
+                },
+                {
+                  "name": "native edits update visible digits without announcing a successful verification",
+                  "business_assertion": true
+                },
+                {
+                  "name": "a real verification rejection preserves the entered code and makes the error perceivable",
+                  "business_assertion": true
+                },
+                {
+                  "name": "verified feedback waits for the real response and remains distinct from a filled input",
+                  "business_assertion": true
+                },
+                {
+                  "name": "changing the contact clears the proof, digits and verified styling together",
+                  "business_assertion": true
+                },
+                {
+                  "name": "a late verification response cannot install a proof after an account change",
+                  "business_assertion": true
+                },
+                {
+                  "name": "editing a rejected code clears its visual error and does not issue another request",
+                  "business_assertion": true
+                }
+              ]
+            },
+            "after": {
+              "path": "/workspace/scratch/0a6433f08acc/verification-slots-evidence/after.xml",
+              "sha256": "d3e3cbf196e16dd7430a1953068bcddc642d1a3d16d249ecaed3872d249f775a",
+              "cases": 14,
+              "passed": 14,
+              "failures": []
+            }
+          },
+          {
+            "group": "owned_help_five",
+            "before": {
+              "path": "/workspace/scratch/0a6433f08acc/auth-description-evidence/before.xml",
+              "sha256": "a6ec0fe87af8e3f62c3dd1c925e54bb73576980e9911edda81efa9fa156211ae",
+              "cases": 5,
+              "passed": 0,
+              "failures": [
+                {
+                  "name": "field errors preserve the existing OTP delivery status and add their own description",
+                  "business_assertion": true
+                },
+                {
+                  "name": "repeated validation updates only its own error and preserves multiple help references",
+                  "business_assertion": true
+                },
+                {
+                  "name": "correcting a field removes only its owned error and keeps help and live status connected",
+                  "business_assertion": true
+                },
+                {
+                  "name": "editing another valid field does not erase a server rejection on the password",
+                  "business_assertion": true
+                },
+                {
+                  "name": "clearing native validity never deletes an unrelated description it does not own",
+                  "business_assertion": true
+                }
+              ]
+            },
+            "after": {
+              "path": "/workspace/scratch/0a6433f08acc/auth-description-evidence/after.xml",
+              "sha256": "c7fd75d1faf7ba25bc1051c028fcd4010e85bdee8f4e4fe435009b7e26dba321",
+              "cases": 38,
+              "passed": 38,
+              "failures": []
+            }
+          },
+          {
+            "group": "resend_proof_nine",
+            "before": {
+              "path": "/workspace/scratch/0a6433f08acc/verification-resend-evidence/before.xml",
+              "sha256": "90e7b14ee979dea6c265748784d12b7fe8de0d985d810052950c33c542431468",
+              "cases": 9,
+              "passed": 8,
+              "failures": [
+                {
+                  "name": "a pending resend cannot reuse the previous verified proof for newly entered digits",
+                  "business_assertion": true
+                }
+              ]
+            },
+            "after": {
+              "path": "/workspace/scratch/0a6433f08acc/verification-resend-evidence/after.xml",
+              "sha256": "31149c7da0c10e45bca651964f3fba976098cc90e0c693bbc2b0fc472ddce7a7",
+              "cases": 39,
+              "passed": 39,
+              "failures": []
+            }
+          }
+        ],
+        "final_node_subset_cases": 39,
+        "local_browser_launched": false,
+        "new_application_browser": "pending CI",
+        "scope": "Preserve successive tests and baseline outcomes; final nine OTP tests add one independent resend proof regression. Node controlled DOM does not prove native layout or a real SMS provider."
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "campus_copy_final": {
+      "local_path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-capacity-after.json",
+      "sha256": "a928ca51752a36712ef0860fa8babb144baf2aa68de0c4a3c05ff452aaf950d3",
+      "bytes": 1978,
+      "record": {
+        "recorded_at": "2026-11-14T14:54:58.410111+00:00",
+        "source": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/static/campus.js",
+          "sha256": "27af35dcd6c58c2dbe22119030f94df7b17d5063bf07f9ea38ec307ff812e271"
+        },
+        "test": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/campus-draft-conflict.test.mjs",
+          "sha256": "cf40827a05da9b93a9371e5fcfd09aff6f6fc73153118216dda9e4dcdd000db0"
+        },
+        "log": {
+          "path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-capacity-after.log",
+          "sha256": "ad426037e9827930a6e40fb297ec6b4a70950eaa6bc8a3c3e56d79b52f73fe77"
+        },
+        "before": {
+          "path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-capacity-before.json",
+          "sha256": "e0ef4bf98e08b22a4579453339603f6bdf391b8d9320797af51d59d5052e4001"
+        },
+        "focused_tests": 18,
+        "passed": 18,
+        "failed": 0,
+        "new_conflict_cases": 5,
+        "prior_retry_and_submission_cases_retained": 13,
+        "capacity_case_red_green": {
+          "before": {
+            "cases": 5,
+            "passed": 4,
+            "failed": 1
+          },
+          "after": {
+            "cases": 5,
+            "passed": 5,
+            "failed": 0
+          },
+          "name": "a repeated conflict copy keeps its current identity and input until attachment names fit the actual limit"
+        },
+        "behavior": "The real copy handler now rejects an over-limit names union before replacing the draft ID or making a PUT. It preserves input and the conflict; an explicit keep-attachments choice then enables a valid persistent copy. No names are silently discarded.",
+        "additional_ui_label": "import_member now has the Chinese audit label and filter option 批量设置学院身份; actual UI acceptance remains in the forthcoming campus administration browser suite.",
+        "browser_execution": "not_run_locally; pending CI",
+        "scope": "Real campus UI handlers and renderer against the documented CAS/attachment transport. Existing 13 submission/retry cases retained."
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "campus_copy_original_red": {
+      "local_path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-conflict-before.json",
+      "sha256": "c8d55d00f80cb52278fd5011ad2000746a9f09ec06a366c15da41a3866ffa0cb",
+      "bytes": 441,
+      "record": {
+        "at": "2026-11-14T14:38:09.072451+00:00",
+        "head": "37150dc650f7c40783a84e718a102b9413b815fe",
+        "source_sha256": "f81721050fd5cf00171232e59449437cb885ee59a971c771fbf972f1d4760df1",
+        "test_sha256": "81cc073faa3413cb6dd45bcb4ac2fd0831529cf250bb39a6ba9de00c7856893b",
+        "command": "node --test tests/campus-draft-conflict.test.mjs",
+        "returncode": 1,
+        "log_sha256": "0bdb358e1227dbee35a97098cdcc2bc2a5c9cef91305d7ab25b63b0273d49d26"
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "campus_copy_original_green": {
+      "local_path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-conflict-after.json",
+      "sha256": "26ac026f56939862bce6451ef4a5f2a1cf62e3c0324c63d0f72de71647ed243e",
+      "bytes": 564,
+      "record": {
+        "at": "2026-11-14T14:39:12.140344+00:00",
+        "head": "37150dc650f7c40783a84e718a102b9413b815fe",
+        "source_sha256": "0909a79ff1edbdb3e0eea8cd4d5d989bb58219c1f03ad5faa3c727c38d4a5780",
+        "test_sha256": "2e5dae5ff243c2c55dcb66549a321643ccd4cbc2b6c5dd532226dfa861ca845f",
+        "command": [
+          "node",
+          "--test",
+          "tests/campus-draft-conflict.test.mjs",
+          "tests/campus-publication-retry.test.mjs",
+          "tests/campus-publication-submission.test.mjs"
+        ],
+        "returncode": 0,
+        "log_sha256": "10d3aa665a5e88800a8d845153fec0adedeb0481d38836791c4b0a6e7cd7cfca"
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    },
+    "campus_capacity_red": {
+      "local_path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-capacity-before.json",
+      "sha256": "e0ef4bf98e08b22a4579453339603f6bdf391b8d9320797af51d59d5052e4001",
+      "bytes": 1053,
+      "record": {
+        "recorded_at": "2026-11-14T14:52:19.797509+00:00",
+        "source": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/static/campus.js",
+          "sha256": "0909a79ff1edbdb3e0eea8cd4d5d989bb58219c1f03ad5faa3c727c38d4a5780"
+        },
+        "test": {
+          "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/tests/campus-draft-conflict.test.mjs",
+          "sha256": "cf40827a05da9b93a9371e5fcfd09aff6f6fc73153118216dda9e4dcdd000db0"
+        },
+        "log": {
+          "path": "/workspace/scratch/0a6433f08acc/frontend-finish-evidence/campus-draft-capacity-before.log",
+          "sha256": "dd70d4413071070d8d9cde0eec0c691df7275bab19774bc7b7f3b4aed313391b"
+        },
+        "tests": 5,
+        "passed": 4,
+        "failed": 1,
+        "actual_failure": "The over-limit copy replaced the current draft identity before the user chose which saved attachments to retain. The new request exceeded the server pending-attachment-name limit.",
+        "scope": "Real createCampusUI event handlers and renderer against the public draft version/attachment contract; no browser execution claimed."
+      },
+      "availability": "Structured record embedded here; local raw paths/hashes are provenance, not public download links."
+    }
+  },
+  "count_semantics": "Targeted red/green rounds overlap and are not added. The separately recorded integrated Node run contains exactly 411 unique cases, all 363 baseline identities retained plus 48 new identities; full backend/native browser/shared-host Compose execution for the new candidate remains pending.",
+  "new_browser_suites": {
+    "frontend_finish": {
+      "path": "scripts/verify_frontend_finish.mjs",
+      "sha256": "34eaf467f4a2433aab5ac58617a9d7dd90c88be10460ce21ff1f506d8b4c4021",
+      "status": "defined_not_executed",
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "checks_per_engine": 6,
+      "expected_checks": 18,
+      "identities": [
+        "notification title and receive action share a compact row with independent usable controls",
+        "actual doubled notification text remains readable and controls remain reachable at narrow widths",
+        "a conflicting publication draft preserves missing originals across copying and reload until explicit removal",
+        "reselecting a copied draft attachment permits one new publication while leaving the conflicting original unchanged",
+        "monitor refresh and independent saves preserve both editable drafts including input made during a held real response",
+        "the final detail flows finish with the declared worker precondition and no uncaught page errors"
+      ],
+      "limitations": [
+        "受控请求需要serviceWorkers:block；不替代正常worker/PWA原suite。",
+        "200%为选定实际CSS字号翻倍，不是原生浏览器zoom。"
+      ]
+    },
+    "account_lifecycle": {
+      "path": "scripts/verify_account_lifecycle.mjs",
+      "sha256": "02f699b4cfc62d79eb31188c57d7c8bf6468313a9940375eb49cf0fe0085c01d",
+      "status": "defined_not_executed",
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "checks_per_engine": 11,
+      "expected_checks": 33,
+      "identities": [
+        "mobile signup retains a rejected code and verifies normalized six-digit input only after explicit submission",
+        "the three signup stages create the verified owner and open the workspace",
+        "a rejected password keeps the same accessible form and a corrected retry signs in",
+        "verification-code login returns to the same owner through the real proof endpoint",
+        "a private notice and edited personal conditions persist through real workspace forms",
+        "a delayed successful password response cannot replace a newer dialog and invalidates the older device",
+        "verified password recovery renews the same owner without losing private records",
+        "a rejected account deletion retains the account and does not request remote push detachment",
+        "confirmed account deletion clears the session and denies the previous private record",
+        "registering the same contact and account name again creates an empty distinct owner",
+        "the complete account lifecycle has no uncaught browser errors"
+      ],
+      "limitations": [
+        "验证提供方仅合成捕获，真实注册/验证码服务由用户配置。",
+        "ClipboardEvent是受控粘贴处理程序检查，不是操作系统剪贴板验收。",
+        "实体push退订与系统消息展示不由API无DELETE断言证明。"
+      ],
+      "previous_definition_sha256": "3df7a5a052b99beef2cd5c8932137d802b17c710b0f79164a9f1b12149dea797",
+      "safe_observation_definition_supplement": {
+        "local_path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-observations/verification.json",
+        "bytes": 3234,
+        "sha256": "ffbab02bf7dc022b5db91ab76a7e052994191aa8973c90f69ebb40825df133de",
+        "record": {
+          "verified_at": "2026-11-14T15:08:07.949641+00:00",
+          "scope": "Static review of safe raw-observation additions only. The browser suite has not run; no Node unit suite or bundle was rerun for this script-only change.",
+          "before": {
+            "path": "/workspace/scratch/0a6433f08acc/artifacts/account-lifecycle-observations/before.mjs",
+            "sha256": "3df7a5a052b99beef2cd5c8932137d802b17c710b0f79164a9f1b12149dea797"
+          },
+          "after": {
+            "path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/scripts/verify_account_lifecycle.mjs",
+            "sha256": "02f699b4cfc62d79eb31188c57d7c8bf6468313a9940375eb49cf0fe0085c01d"
+          },
+          "formal_case_names": [
+            "mobile signup retains a rejected code and verifies normalized six-digit input only after explicit submission",
+            "the three signup stages create the verified owner and open the workspace",
+            "a rejected password keeps the same accessible form and a corrected retry signs in",
+            "verification-code login returns to the same owner through the real proof endpoint",
+            "a private notice and edited personal conditions persist through real workspace forms",
+            "a delayed successful password response cannot replace a newer dialog and invalidates the older device",
+            "verified password recovery renews the same owner without losing private records",
+            "a rejected account deletion retains the account and does not request remote push detachment",
+            "confirmed account deletion clears the session and denies the previous private record",
+            "registering the same contact and account name again creates an empty distinct owner",
+            "the complete account lifecycle has no uncaught browser errors"
+          ],
+          "formal_case_order": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "expected_formal_checks": 33,
+          "assertion_calls": {
+            "before": 87,
+            "after": 87
+          },
+          "interaction_call_counts": {
+            "click": 34,
+            "fill": 23,
+            "check": 4,
+            "uncheck": 0,
+            "selectOption": 0,
+            "setInputFiles": 0,
+            "setViewportSize": 6,
+            "goto": 2,
+            "reload": 0
+          },
+          "original_interaction_counts_equal": true,
+          "default_wait_timeout_ms": 12000,
+          "navigation_timeout_ms": 45000,
+          "added_observations": [
+            "safe response owner/session projections with context and check index",
+            "actual private record IDs, page totals, session 401/old record 404",
+            "profile PATCH HTTP and reopened empty school",
+            "rejected password/form hash and accessible error state",
+            "held password response owner and final same-dialog data",
+            "deletion rejection input preservation and confirmed cleared UI",
+            "OTP countdown/proof/rejected-state/explicit-submit observations"
+          ],
+          "sensitive_data_boundary": "Never records token, password, or original verification digits. Former paste.value is replaced by normalized_length and normalized_code_sha256; all behavior assertions remain. Synthetic ClipboardEvent is not a physical clipboard acceptance claim.",
+          "syntax_command": "node --check scripts/verify_account_lifecycle.mjs",
+          "syntax_result": "executed separately; see parent tool output",
+          "source_files_affected": [
+            "scripts/verify_account_lifecycle.mjs"
+          ],
+          "previous_frozen_proof_preserved": true
+        },
+        "execution_status": "definition_and_static_review_only_not_executed"
+      }
+    },
+    "campus_administration": {
+      "path": "scripts/verify_campus_administration.mjs",
+      "status": "defined_not_executed",
+      "engines": [
+        "chromium",
+        "firefox",
+        "webkit"
+      ],
+      "checks_per_engine": 11,
+      "expected_checks": 33,
+      "identities": [
+        "the system administrator grants a college role and roster review changes only explicitly selected valid members",
+        "publishing from the college workspace delivers the reviewed original and attachment without creating a personal task",
+        "a recipient creates and cancels a personal task before official changes without exposing it to the publisher",
+        "official correction retains the recipient notice and personal record while showing the new source revision",
+        "withdrawal and formal restoration create separate official versions without reactivating the recipient task",
+        "rolling back an older official version creates a new history entry with the original attachment bytes",
+        "a newly authorized member receives an explicitly confirmed current-version backfill without duplicate delivery",
+        "official lifecycle claims require selected source evidence and explicit personal identity verification",
+        "a concurrent lifecycle update preserves the open form without overwriting the newer server record",
+        "member-import audit filtering and cursor pagination show real authorized changes without repeating rows",
+        "the campus administration flows retain independent owners and finish without uncaught page errors"
+      ],
+      "planned_scope": [
+        "系统授权学院管理员；发布受众复核",
+        "更正/撤回/正式恢复/历史版更正与原附件",
+        "原收件人任务/通知身份保留及晚加入显式补发",
+        "成员批量预检仅提交所选行",
+        "学院审计操作筛选及真实超过100条分页"
+      ],
+      "limitations": [
+        "本脚本保留正常Service Worker上下文；不以API注册前置条件冒充注册UI验收。",
+        "本轮只读交审覆盖真实权限/原文版本/附件/个人任务/补发/生命周期/审计合同；尚未执行任何新增浏览器检查。",
+        "受众/发布/变更和101条审计前置数据必须来自真实API；移动发布截图不替代所有管理页的窄屏状态穷举。"
+      ],
+      "sha256": "692de0e09f2543373fffa3a7957622e40fb1dea7b1fce173d88d9d223ca9ef44",
+      "reviewed_contracts": {
+        "first_seven_checks": "Campus workflow owner independently compared source and backend contracts; no identified blocker; no browser was executed.",
+        "lifecycle_and_audit": "Context audit owner separately read task/lifecycle/422/409 and completion contracts; no identified blocker; no browser was executed.",
+        "personal_record_equality_fields": [
+          "id",
+          "notice_id",
+          "version",
+          "status",
+          "data"
+        ],
+        "timeouts_not_increased": {
+          "default_locator_ms": 12000,
+          "runner_seconds": 360
+        },
+        "defined_publication_version_sequence": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      }
+    }
+  },
+  "new_full_ci": {
+    "status": "not_started_or_not_observed_here",
+    "actual_run_id": null,
+    "actual_head_sha": null,
+    "actual_counts": null,
+    "merge_gate": "Require actual new candidate results and exact unchanged baseline case identities, then actual main push CI. Definitions and Node passes are not browser execution."
+  },
+  "reference_followup": {
+    "path": "docs/audits/frontend-reference-followup.json",
+    "sha256": "44f03d9c684802f8d5fa4199722066cfd14b98d6bb3091246f1c9ca34f71c044",
+    "deep_reviews_before": [
+      114,
+      115,
+      133
+    ],
+    "additional": [
+      125,
+      131
+    ],
+    "deep_reviewed_total": 5,
+    "not_individually_demo_and_source_reviewed": 204,
+    "catalog_counts_unchanged": {
+      "priority_candidates": 35,
+      "conditional_candidates": 79,
+      "not_adopted": 95
+    },
+    "copied_upstream_product_code": false,
+    "new_runtime_dependencies": [],
+    "note": "Root actually read sources and operated demos; this overlay attributes those observations to that frozen review. CodeSlots native adaptation is pending application CI; RubberSegment login dragging was not adopted."
+  },
+  "accessibility_boundaries": {
+    "executed_baseline": "Only the keyboard/focus/geometry/semantics and screenshots recorded by each CI69 suite.",
+    "targeted_current": "Actual production functions in controlled Node DOM; field ownership and state transitions, not native accessibility software.",
+    "css_text_enlargement": "New finish suite defines exactly2x selected notification CSS font sizes; actual browser execution pending.",
+    "native_browser_200_percent_zoom": "not_executed",
+    "physical_chinese_ime_and_os_soft_keyboard": "not_executed",
+    "screen_reader_full_flow": "not_executed",
+    "color_contrast": "Placeholder #666 on white mathematical ratio5.74183648145415; not a full-site WCAG or all computed theme states certification."
+  },
+  "deployment_and_external_gates": {
+    "shared_host_template": "compose.shared-host.yaml",
+    "guide": "docs/SHARED_HOST_DEPLOYMENT.md",
+    "config_verifier": "scripts/verify_shared_host_config.py",
+    "local_config_result": "Docker CLI unavailable; verifier returned nonzero, not skipped/pass. New CI must run actual Compose config.",
+    "server_actions_executed": false,
+    "tencent_state": "No authenticated instance inventory or actual CPU/memory/ports/proxy configuration is established by this record.",
+    "user_owned_followup": "Real registration/OTP provider configuration and deployment are assigned to the user; no provider receipt or school authorization is invented.",
+    "remaining_original_external_requirements": 51,
+    "remaining_original_conditional_p2": 8,
+    "cumulative_five_day_campus_acceptance": "not_completed_by_synthetic_ci",
+    "new_ci_config_contract": {
+      "status": "pending_actual_ci_execution",
+      "command": "python scripts/verify_shared_host_config.py --output artifacts/shared-host-config.json",
+      "expected_synthetic_projects": 2,
+      "expected_missing_required_variable_cases": 12,
+      "expected_configuration_cases": 14,
+      "services_started_by_config_verifier": false,
+      "expected_artifact_name": "shared-host-compose-config",
+      "scope": "Require actual official archive SHA/size, actual job checkout, unique source-bound JSON and all 14 original configuration outcomes; no actual-server validation is implied."
+    }
+  },
+  "performance_boundary": {
+    "original_goal": "Total writer wait includes admission queue, connection preparation and SQLite BEGIN; P95<100ms unchanged.",
+    "independent_9e": {
+      "head": "9e86a1e9b798071e870a0e35d73b46610d435988",
+      "five_user_wait_p95_ms": 85.079,
+      "five_user_single_observation_passed": true,
+      "ten_user_wait_p95_ms": 172.555,
+      "ten_user_target_passed": false,
+      "rerun_on_this_working_tree": false
+    },
+    "previous_main_67_shared_linux": {
+      "wait_p95_ms": 176.871,
+      "samples": 776,
+      "target_passed": false,
+      "history_retained": true
+    },
+    "main_69_shared_observations": {
+      "linux": {
+        "wait_p95_ms": 75.745,
+        "samples": 776,
+        "target_passed": true
+      },
+      "windows": {
+        "wait_p95_ms": 68.287,
+        "samples": 776,
+        "target_passed": true
+      }
+    },
+    "interpretation": "Separate actual observations; one5-user pass is not stable launch approval, and later shared CI passes do not erase earlier failures or approve10-user use. No new local load was run for this overlay."
+  },
+  "final_delivery_gates": {
+    "new_candidate_complete_ci": "pending",
+    "new_main_push_complete_ci": "pending",
+    "review_threads_resolved_with_actual_evidence": "pending_new_candidate_review",
+    "remote_branches_exactly_main": "pending_final_api_inventory_after_authorized_cleanup",
+    "layout_and_style": "Retain existing green/light brand, navigation and task/notice flow. Changes target proven state loss and concrete narrow-screen controls.",
+    "old_proofs_frozen": true
+  },
+  "new_browser_suite_definition_counts": {
+    "frontend_finish": 18,
+    "account_lifecycle": 33,
+    "campus_administration": 33,
+    "total_defined_checks": 84,
+    "actual_executed_checks_on_new_tree": 0,
+    "interpretation": "Definitions are expected counts only. None is added to the executed CI69 totals."
+  },
+  "local_integrated_validation": {
+    "path": "docs/audits/frontend-finish-local-verification.json",
+    "local_original_path": "/workspace/scratch/0a6433f08acc/luojiaxinshi-frontend-final/artifacts/frontend-finish-local/verification.json",
+    "sha256": "f2071321573257893c8006efcf3877cf01d4b99df713bd1416ceee9486bb7ea2",
+    "bytes": 17038,
+    "verified_at": "2026-11-14T15:02:55.035363+00:00",
+    "baseline_main": "37150dc650f7c40783a84e718a102b9413b815fe",
+    "scope": "Single integrated local Node execution and reproducible build/check. The full backend, native browser, shared-host Compose and actual target-server checks are not inferred from this local result.",
+    "node": {
+      "tests": 411,
+      "passed": 411,
+      "failures": 0,
+      "skips": 0,
+      "junit_path": "artifacts/frontend-finish-local/node-tests.xml",
+      "junit_sha256": "d49dc66ea415f85d96fa7f11e6cf1defe0935c6192b6879bc5adb43d0265d99e",
+      "baseline_run": 43604587511,
+      "baseline_tests": 363,
+      "baseline_junit_sha256": "fbb1d4d9c40e8c556d8364d6f19795b78643b9b88f0b622ce572d151a844f706",
+      "all_baseline_ids_retained": true,
+      "added_unique_cases": 48,
+      "added_case_ids": [
+        [
+          "test",
+          "OTP markup has one real autofill input and six non-interactive decorative slots"
+        ],
+        [
+          "test",
+          "a close during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view"
+        ],
+        [
+          "test",
+          "a completed security save updates its owner without reopening the abandoned close view"
+        ],
+        [
+          "test",
+          "a completed security save updates its owner without reopening the abandoned leave view"
+        ],
+        [
+          "test",
+          "a completed security save updates its owner without reopening the abandoned replaceDialog view"
+        ],
+        [
+          "test",
+          "a confirmed account deletion revokes the local device after success without an unauthenticated remote teardown"
+        ],
+        [
+          "test",
+          "a corrected login can retry the same form after a credential failure"
+        ],
+        [
+          "test",
+          "a late rejected security save has an accessible error after its dialog closes"
+        ],
+        [
+          "test",
+          "a late verification response cannot install a proof after an account change"
+        ],
+        [
+          "test",
+          "a local device cleanup error cannot disguise an already confirmed account deletion as a failed deletion"
+        ],
+        [
+          "test",
+          "a new account accepted during deletion device cleanup is not deleted or logged out by the old completion"
+        ],
+        [
+          "test",
+          "a owner during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view"
+        ],
+        [
+          "test",
+          "a pending resend cannot reuse the previous verified proof for newly entered digits"
+        ],
+        [
+          "test",
+          "a real verification rejection preserves the entered code and makes the error perceivable"
+        ],
+        [
+          "test",
+          "a rejected account deletion preserves the existing device subscription and account form"
+        ],
+        [
+          "test",
+          "a repeated conflict copy keeps its current identity and input until attachment names fit the actual limit"
+        ],
+        [
+          "test",
+          "a route during monitor refresh cannot reopen the old dialog or copy its draft into a new owner/view"
+        ],
+        [
+          "test",
+          "a security save in its original dialog still refreshes the current security information"
+        ],
+        [
+          "test",
+          "an account change rejects a late security response without opening or editing another account view"
+        ],
+        [
+          "test",
+          "an expired authenticated session still transitions to login rather than retaining an authorized form"
+        ],
+        [
+          "test",
+          "an explicit choice not to retain original attachments does not create a missing-files obligation"
+        ],
+        [
+          "test",
+          "an incorrect password keeps the current login inputs and its reachable inline error through the real delegated catch"
+        ],
+        [
+          "test",
+          "changing the contact clears the proof, digits and verified styling together"
+        ],
+        [
+          "test",
+          "clearing native validity never deletes an unrelated description it does not own"
+        ],
+        [
+          "test",
+          "confirmed deletion resets the previous account workspace before a new registration can start"
+        ],
+        [
+          "test",
+          "conflict copy keeps an existing new upload separate from unresolved original attachment names"
+        ],
+        [
+          "test",
+          "conflicting draft copied without original files persists missing names, blocks publishing and survives reopening"
+        ],
+        [
+          "test",
+          "correcting a field removes only its owned error and keeps help and live status connected"
+        ],
+        [
+          "test",
+          "editing a rejected code clears its visual error and does not issue another request"
+        ],
+        [
+          "test",
+          "editing another valid field does not erase a server rejection on the password"
+        ],
+        [
+          "test",
+          "explicit reselection or removal resolves only the copied draft missing-files record"
+        ],
+        [
+          "test",
+          "field errors preserve the existing OTP delivery status and add their own description"
+        ],
+        [
+          "test",
+          "monitor acknowledge refresh preserves both unsaved forms and their expanded section"
+        ],
+        [
+          "test",
+          "monitor actions serialize while fields remain editable and a failed request keeps drafts available"
+        ],
+        [
+          "test",
+          "monitor check refresh preserves both unsaved forms and their expanded section"
+        ],
+        [
+          "test",
+          "monitor mark read refresh preserves both unsaved forms and their expanded section"
+        ],
+        [
+          "test",
+          "monitor remove a registered expiry refresh preserves both unsaved forms and their expanded section"
+        ],
+        [
+          "test",
+          "native edits update visible digits without announcing a successful verification"
+        ],
+        [
+          "test",
+          "ordinary logout continues to revoke both the local binding and its authenticated remote subscription"
+        ],
+        [
+          "test",
+          "pasting spaced full-width OTP normalizes the full clipboard before the six-character limit"
+        ],
+        [
+          "test",
+          "repeated submission while the same security request is pending sends only one mutation"
+        ],
+        [
+          "test",
+          "repeated validation updates only its own error and preserves multiple help references"
+        ],
+        [
+          "test",
+          "saving an expiry clears only that unchanged submitted form and leaves unsaved thresholds local"
+        ],
+        [
+          "test",
+          "saving thresholds keeps the other form and uses the refreshed server baseline for later changes"
+        ],
+        [
+          "test",
+          "the real profile dialog preserves a deliberately cleared school when another field is saved"
+        ],
+        [
+          "test",
+          "the real profile dialog retains the original default only when the school value is missing"
+        ],
+        [
+          "test",
+          "typing during a save and its delayed refresh preserves the latest input, including a return to the old baseline"
+        ],
+        [
+          "test",
+          "verified feedback waits for the real response and remains distinct from a filled input"
+        ]
+      ]
+    },
+    "build": [
+      {
+        "checked": false,
+        "entries": {
+          "js": "/static/dist/app-5ERMIONU.js",
+          "css": "/static/dist/styles-IB2C4A4G.css"
+        },
+        "files": 25,
+        "source_files": 194
+      },
+      {
+        "checked": true,
+        "entries": {
+          "js": "/static/dist/app-5ERMIONU.js",
+          "css": "/static/dist/styles-IB2C4A4G.css"
+        },
+        "files": 25,
+        "source_files": 194
+      }
+    ],
+    "manifest_sha256": "b850ada872cebc40e3752de96ee097cc687b22e405e915aee23eeafe9414517d",
+    "build_source_and_output_hashes_recomputed": true,
+    "changed_product_source_hashes_match_at_overlay_freeze": true,
+    "full_backend_executed_for_new_tree": false,
+    "native_browser_executed_for_new_tree": false,
+    "shared_host_compose_executed_successfully_locally": false,
+    "later_script_only_change": "After the recorded Node/build run, account-lifecycle browser reporting gained safe owner/status/identity projections only. Its 11 names, 87 assertions, interactions and timeouts remain unchanged; no product/bundle input or Node case changed. The updated script is defined, not executed."
+  }
+}

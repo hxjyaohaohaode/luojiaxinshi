@@ -129,7 +129,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const draft=drafts.get(owner)||{id:'draft-'+crypto.randomUUID(),version:0};drafts.set(owner,draft);
     draft.fileNames ||= draft.pending_attachment_names||[];
     const savedFiles=(draft.attachments||[]).map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('');
-    const missing=draft.fileNames?.length?`<p class="small" id="campus-missing-files">切换页面后请重新选择附件：${draft.fileNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`:'';
+    const missing=draft.fileNames?.length?`<p class="small" id="campus-missing-files">下列附件尚未附加到这份草稿，请重新选择要保留的附件：${draft.fileNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`:'';
     return `<section class="campus-section" id="campus-compose"><h2>发布学院通知</h2><p class="small muted">发送给当前已加入对应范围的成员。个人待办和办理记录不会开放给发布者。</p>
       <details class="details campus-drafts"><summary>我的发布草稿 · ${serverDrafts.length} 份</summary><p class="small muted">草稿只对本人开放，保存后可在其他设备继续；未核对并确认发布前不会送达学生。</p><div class="campus-list">${serverDrafts.map(item=>`<article class="campus-row"><div><strong>${esc(item.title||'未填写标题')}</strong><p class="small muted">${esc(new Date(item.updated_at*1000).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))} · 第 ${item.version} 版 · ${item.attachments.length} 份附件</p></div><div class="row wrap"><button class="button small" type="button" data-campus-action="open-draft" data-id="${esc(item.id)}">继续编辑</button><button class="button small plain danger" type="button" data-campus-action="delete-draft" data-id="${esc(item.id)}">删除草稿</button></div></article>`).join('')||'<p class="small muted">暂无服务器草稿</p>'}</div><button class="button small" type="button" data-campus-action="new-draft">新建另一份草稿</button></details>
       ${publicationRecoveryMarkup()}
@@ -202,7 +202,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       <div class="campus-pagination row wrap"><span class="small muted" role="status">共 ${pubTotal} 条 · 第 ${pubPage} / ${pubPages} 页</span><button class="button small" type="button" data-campus-action="publications-prev" ${pubPage<=1?'disabled':''}>上一页</button><button class="button small" type="button" data-campus-action="publications-next" ${pubPage>=pubPages?'disabled':''}>下一页</button></div></section>`;
   }
   function auditList(items){
-    const labels={assign_member:'设置学院身份',remove_member:'移除学院身份',publish:'发布通知',correct:'更正通知',withdraw:'撤回通知',restore:'正式恢复通知',rollback:'从历史版发布更正',deliver_new:'补发通知'};
+    const labels={assign_member:'设置学院身份',import_member:'批量设置学院身份',remove_member:'移除学院身份',publish:'发布通知',correct:'更正通知',withdraw:'撤回通知',restore:'正式恢复通知',rollback:'从历史版发布更正',deliver_new:'补发通知'};
     return `<section class="campus-section"><h2>学院操作记录</h2><label class="field">按操作筛选<select id="campus-audit-action"><option value="">全部操作</option>${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${auditAction===value?'selected':''}>${label}</option>`).join('')}</select></label><p class="small muted">从服务器按当前学院权限与操作筛选；每批最多 100 条，不把本批记录当作全部。</p>${items.length?`<ul class="campus-audit">${items.map(item=>`<li>${esc(new Date(item.created_at*1000).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))} · ${esc(item.actor_name)} · ${esc(labels[item.action]||item.action)}${item.target_name?' · '+esc(item.target_name):''}</li>`).join('')}</ul>`:'<p class="small muted">当前筛选下暂无操作记录。</p>'}<div class="row wrap"><span class="small muted">第 ${auditPrevious.length+1} 批 · ${items.length} 条</span><button class="button small" type="button" data-campus-action="audit-prev" ${auditPrevious.length?'':'disabled'}>上一批</button><button class="button small" type="button" data-campus-action="audit-next" ${auditHasMore?'':'disabled'}>继续读取</button></div></section>`;
   }
   function syncMemberFields(){
@@ -234,7 +234,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     if(changed)separateSubmittedDraft(form);
     if(changed)delete form.dataset.requestId;
     const prior=drafts.get(owner)||{},files=[...form.elements.files.files];
-    const fileNames=files.length?files.map(f=>f.name):(form.dataset.missingFiles==='1'?prior.fileNames||[]:[]);
+    const fileNames=form.dataset.missingFiles==='1'?prior.fileNames||[]:files.map(f=>f.name);
     drafts.set(owner,{...prior,id:form.dataset.draftId,version:prior.id===form.dataset.draftId?(prior.version||0):(Number(form.dataset.draftVersion)||0),
       audience:form.elements.audience.value,grade:form.elements.grade.value,class_name:form.elements.class_name.value,
       title:form.elements.title.value,body:form.elements.body.value,...readPolicy(form),requestId:form.dataset.requestId||'',fileNames});
@@ -266,7 +266,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       const files=[...form.elements.files.files],snapshot={version:drafts.get(uid)?.version??(Number(form.dataset.draftVersion)||0),
         title:form.elements.title.value,body:form.elements.body.value,audience:form.elements.audience.value,
         grade:form.elements.grade.value,class_name:form.elements.class_name.value,...readPolicy(form),
-        pending_attachment_names:form.dataset.missingFiles==='1'&&!files.length?(drafts.get(uid)?.fileNames||[]):[],
+        pending_attachment_names:form.dataset.missingFiles==='1'?(drafts.get(uid)?.fileNames||[]):[],
         keep_attachments:form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked};
       if(!snapshot.title&&!snapshot.body&&!files.length&&!snapshot.version)return null;
       const body=new FormData();body.append('data',JSON.stringify(snapshot));for(const file of files)body.append('files',file);
@@ -275,8 +275,8 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       if(uid!==state.session?.user?.id||drafts.get(uid)?.id!==id)return saved;
       form.dataset.draftVersion=String(saved.version);
       const sameFiles=[...form.elements.files.files].every((file,i)=>file===files[i])&&form.elements.files.files.length===files.length;
-      const missingFiles=form.dataset.missingFiles==='1'&&!files.length;
-      if(sameFiles&&!missingFiles){form.elements.files.value='';form.dataset.missingFiles='';}
+      const missingFiles=form.dataset.missingFiles==='1';
+      if(sameFiles){form.elements.files.value='';if(!missingFiles)form.dataset.missingFiles='';}
       drafts.set(uid,{...drafts.get(uid),version:saved.version,attachments:saved.attachments,pending_attachment_names:saved.pending_attachment_names||[],fileNames:sameFiles&&!missingFiles?[]:drafts.get(uid).fileNames});
       form.querySelector('[data-campus-saved-files]').innerHTML=savedAttachmentFields(saved.attachments);
       serverDrafts=[saved,...serverDrafts.filter(item=>item.id!==id)];
@@ -368,7 +368,20 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       }
       else if(action==='save-draft'){const form=button.closest('form');await persistDraft(form);}
       else if(action==='inspect-draft'){const form=button.closest('form'),remote=await api('/campus/drafts/'+encodeURIComponent(form.dataset.draftId));if(view.sameDialog())showDialog('核对服务器草稿',`<section class="stack"><p>当前输入仍留在原表单，可关闭此窗口后另存。服务器第 ${remote.version} 版：</p><h3>${esc(remote.title||'未填写标题')}</h3><p class="campus-excerpt">${esc(remote.body)}</p><p class="small muted">${esc(targetText(remote))} · ${remote.attachments.length} 份附件</p></section>`);}
-      else if(action==='copy-draft'){const form=button.closest('form');form.dataset.draftId='draft-'+crypto.randomUUID();form.dataset.draftVersion='0';delete form.dataset.draftConflict;const local=drafts.get(owner)||{};drafts.set(owner,{...local,id:form.dataset.draftId,version:0,attachments:[]});form.querySelectorAll('[data-campus-action="inspect-draft"],[data-campus-action="copy-draft"]').forEach(el=>el.remove());form.querySelector('[data-campus-saved-files]').innerHTML=savedAttachmentFields([]);await persistDraft(form);if(view.sameUser())toast('当前输入已另存；原服务器附件未复制，请按需重新选择。');}
+      else if(action==='copy-draft'){
+        const form=button.closest('form'),local=drafts.get(owner)||{};
+        const keep=form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked;
+        const missing=[...new Set([...(form.dataset.missingFiles==='1'?local.fileNames||[]:[]),...(keep?local.attachments||[]:[]).map(file=>file.name)])];
+        if(missing.length>3)throw Error('另存时需要重新选择的附件最多 3 份；当前有 '+missing.length+' 份。请先取消“保留这些附件”，或重新核对要保留的附件，再另存。当前输入和原草稿仍保留。');
+        form.dataset.draftId='draft-'+crypto.randomUUID();form.dataset.draftVersion='0';form.dataset.missingFiles=missing.length?'1':'';
+        delete form.dataset.draftConflict;delete form.dataset.requestId;
+        drafts.set(owner,{...local,id:form.dataset.draftId,version:0,requestId:'',attachments:[],fileNames:missing,pending_attachment_names:missing});
+        form.querySelectorAll('[data-campus-action="inspect-draft"],[data-campus-action="copy-draft"]').forEach(el=>el.remove());
+        const saved=form.querySelector('[data-campus-saved-files]');saved.innerHTML=savedAttachmentFields([]);$('#campus-missing-files')?.remove();
+        if(missing.length)saved.insertAdjacentHTML('beforebegin',`<p class="small" id="campus-missing-files">原草稿附件尚未复制，请重新选择要保留的附件：${missing.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`);
+        await persistDraft(form);
+        if(view.sameUser())toast(missing.length?'当前输入已另存；原附件仍待重新选择，发布前也可明确不再附加。':'当前输入已另存为新草稿。');
+      }
       else if(action==='new-draft'||action==='open-draft'){
         const form=$('[data-workspace-form="campus-publish"]');if(form)await persistDraft(form);if(!view.sameRoute())return;
         const selected=action==='open-draft'?await api('/campus/drafts/'+encodeURIComponent(button.dataset.id)):{id:'draft-'+crypto.randomUUID(),version:0};

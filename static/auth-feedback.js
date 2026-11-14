@@ -34,8 +34,20 @@ function validationText(input){
 export function showInputError(input,message){
   if(!input)return;input.setAttribute('aria-invalid','true');input.classList.add('auth-input-error');
   const field=input.closest('label');if(!field)return;
-  let error=document.getElementById(input.getAttribute('aria-describedby'));if(!error){error=document.createElement('small');error.className='auth-field-error';error.setAttribute('role','alert');error.id='auth-error-'+(input.name||'code')+'-'+Math.random().toString(36).slice(2,7);field.after(error);}
-  error.textContent=message;input.setAttribute('aria-describedby',error.id);
+  let error=document.getElementById(input.getAttribute('data-auth-error'));
+  if(!error?.classList.contains('auth-field-error')){error=document.createElement('small');error.className='auth-field-error';error.setAttribute('role','alert');error.id='auth-error-'+(input.name||'code')+'-'+Math.random().toString(36).slice(2,7);field.after(error);}
+  error.textContent=message;input.setAttribute('data-auth-error',error.id);
+  const descriptions=new Set((input.getAttribute('aria-describedby')||'').split(/\s+/).filter(Boolean));
+  descriptions.add(error.id);input.setAttribute('aria-describedby',[...descriptions].join(' '));
+}
+function clearInputError(input){
+  const id=input.getAttribute('data-auth-error'),error=id&&document.getElementById(id);
+  if(error?.classList.contains('auth-field-error'))error.remove();
+  if(id){
+    const descriptions=(input.getAttribute('aria-describedby')||'').split(/\s+/).filter(value=>value&&value!==id);
+    if(descriptions.length)input.setAttribute('aria-describedby',descriptions.join(' '));else input.removeAttribute('aria-describedby');
+  }
+  input.removeAttribute('data-auth-error');input.removeAttribute('aria-invalid');input.classList.remove('auth-input-error');
 }
 export function installAuthFeedback(){
   let focusPending=false;
@@ -43,8 +55,10 @@ export function installAuthFeedback(){
   document.addEventListener('input',event=>{
     const form=event.target.closest?.('#auth-form');if(!form)return;
     if(['password','confirm_password'].includes(event.target.name))updatePasswordFeedback(form);
-    for(const input of form.querySelectorAll('[aria-invalid=true]')){
-      if(input.validity.valid){document.getElementById(input.getAttribute('aria-describedby'))?.remove();input.removeAttribute('aria-invalid');input.removeAttribute('aria-describedby');input.classList.remove('auth-input-error');}
+    const changed=[event.target];
+    if(event.target.name==='password')changed.push(form.querySelector('[name=confirm_password]'));
+    for(const input of new Set(changed)){
+      if(input?.validity.valid&&(input.getAttribute('aria-invalid')==='true'||input.getAttribute('data-auth-error')))clearInputError(input);
     }
   });
 }

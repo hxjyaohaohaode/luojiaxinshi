@@ -104,6 +104,37 @@ def pilot_code(cid:str):
     return {'synthetic':True,'code':provider.codes[cid]}
 
 
+@app.post('/api/fixture/account-otp-cooldown')
+def expire_account_fixture_cooldown(payload:dict):
+    """Advance one owned synthetic recipient's resend window, never its budget.
+
+    The account browser suite separately observes the real 429/cooldown before
+    using this explicit fixture operation to continue across authentication
+    purposes. Production routers never import this preview server.
+    """
+    from pathlib import Path
+    from app.security import token_hash
+    provider=app.state.verification.provider
+    cid=payload.get('challenge_id')
+    if (os.getenv('ACCOUNT_BROWSER_FIXTURE')!='1'
+            or os.getenv('PILOT_BROWSER_FIXTURE')!='1'
+            or not isinstance(cid,str) or cid not in getattr(provider,'codes',{})):
+        raise HTTPException(404,'No synthetic account challenge')
+    data=Path(app.state.settings.data_dir).resolve()
+    owned=Path(__file__).resolve().parent.parent/'artifacts'/'ci-browser'
+    database=Path(app.state.db.path).resolve()
+    if data.parent!=owned.resolve() or not data.name.startswith('fixture-') or database!=data/'campus.sqlite3':
+        raise HTTPException(404,'No owned synthetic account database')
+    with app.state.db.connect(write=True) as conn:
+        row=conn.execute('SELECT channel,destination,provider_id FROM auth_challenges WHERE id=?',(cid,)).fetchone()
+        if not row or row['provider_id']!='synthetic-pilot-provider':
+            raise HTTPException(404,'No synthetic account delivery')
+        key='otp-cooldown:'+token_hash(row['channel']+':'+row['destination'])
+        removed=conn.execute('DELETE FROM limits WHERE key=?',(key,)).rowcount
+    return {'synthetic':True,'challenge_id':cid,'cooldown_rows_removed':removed,
+            'scope':'one recipient resend window only; delivery budgets and verification attempts remain active'}
+
+
 if __name__ == '__main__':
     import uvicorn
     seed()

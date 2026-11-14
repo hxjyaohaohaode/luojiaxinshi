@@ -40,7 +40,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select
   background-color: #fff;
   border-color: var(--line-strong);
 }
-input::placeholder, textarea::placeholder { color: #858585; }
+input::placeholder, textarea::placeholder { color: var(--muted, #666); opacity: 1; }
 .settings-item:hover, .scene-choice:hover, .task-row:hover,
 .task-row:focus-within, .notice-row:hover, .catalog-card > summary:hover,
 .overview-brief a:hover, .overview-focus > .button:hover {

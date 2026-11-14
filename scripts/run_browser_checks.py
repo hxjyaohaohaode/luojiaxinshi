@@ -30,7 +30,10 @@ SUITES = [('verify_sprint_ui.mjs', 'sprint-ui-browser'),
           ('verify_notice_matters.mjs', 'notice-matters-browser'),
           ('verify_source_presets_ui.mjs', 'source-presets-browser'),
           ('verify_pilot_workspace.mjs', 'pilot-workspace-browser'),
-          ('verify_qq_group_intake_ui.mjs', 'qq-group-intake-browser')]
+          ('verify_qq_group_intake_ui.mjs', 'qq-group-intake-browser'),
+          ('verify_account_lifecycle.mjs', 'account-lifecycle-browser'),
+          ('verify_frontend_finish.mjs', 'frontend-finish-browser'),
+          ('verify_campus_administration.mjs', 'campus-administration-browser')]
 
 
 def reset_fixture_limits(data):
@@ -59,7 +62,9 @@ def main():
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
     env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
-    env['PILOT_BROWSER_FIXTURE']='1' if not selected or any(name in selected for name in ['verify_pilot_workspace.mjs','verify_sprint_ui.mjs']) else '0'
+    pilot_suites={'verify_pilot_workspace.mjs','verify_sprint_ui.mjs','verify_account_lifecycle.mjs','verify_frontend_finish.mjs','verify_campus_administration.mjs'}
+    env['PILOT_BROWSER_FIXTURE']='1' if not selected or pilot_suites.intersection(selected) else '0'
+    env['ACCOUNT_BROWSER_FIXTURE']='1' if not selected or 'verify_account_lifecycle.mjs' in selected else '0'
     env['SPRINT_BROWSER_FIXTURE']='1' if not selected or 'verify_sprint_ui.mjs' in selected else '0'
     env['QQ_GROUP_BROWSER_FIXTURE']='1' if not selected or 'verify_qq_group_intake_ui.mjs' in selected else '0'
     for key in ('MIMO_API_KEY','AI_API_KEY','OPENAI_API_KEY','ALIYUN_ACCESS_KEY_ID','ALIYUN_ACCESS_KEY_SECRET','SMTP_AUTHORIZATION_CODE','SMTP_PASSWORD'):
