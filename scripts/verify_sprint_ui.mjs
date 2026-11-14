@@ -7,18 +7,21 @@ import {browserExecutable} from './browser-runtime.mjs';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-browser');
 const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=20;
-const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],recent_requests:[]};
+const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',network_fixture:{service_workers:'block',reason:'Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs.'},status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],mobile_controls:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
 await saveReport();
 for(const engine of engines){
   const browser=await pw[engine].launch({headless:true,executablePath:browserExecutable(pw[engine])});
-  const context=await browser.newContext({viewport:{width:1280,height:850}}),page=await context.newPage();
+  // Playwright documents that service workers can bypass page.route. Keep
+  // this network-fault fixture explicit; the separate push suite retains its
+  // real worker registration, account binding and explicit notification opt-in.
+  const context=await browser.newContext({viewport:{width:1280,height:850},serviceWorkers:'block'}),page=await context.newPage();
   await page.addInitScript(()=>{window.__sprintLongTasks=[];window.__sprintLongTaskSupported=typeof PerformanceObserver==='function'&&PerformanceObserver.supportedEntryTypes.includes('longtask');if(window.__sprintLongTaskSupported)new PerformanceObserver(list=>window.__sprintLongTasks.push(...list.getEntries().map(entry=>({startTime:entry.startTime,duration:entry.duration})))).observe({type:'longtask',buffered:true});});
   page.setDefaultTimeout(15000);page.on('pageerror',error=>report.errors.push({engine,error:error.message}));
   const recordRequest=(kind,request,extra={})=>{const url=new URL(request.url());if(url.origin!==origin)return;report.recent_requests.push({engine,kind,method:request.method(),path:url.pathname+url.search,...extra});report.recent_requests=report.recent_requests.slice(-40);};
-  page.on('request',request=>recordRequest('request',request));page.on('response',response=>recordRequest('response',response.request(),{status:response.status()}));page.on('requestfailed',request=>recordRequest('requestfailed',request,{error:request.failure()?.errorText||'unknown'}));
+  page.on('request',request=>recordRequest('request',request));page.on('response',response=>recordRequest('response',response.request(),{status:response.status(),from_service_worker:response.fromServiceWorker()}));page.on('requestfailed',request=>recordRequest('requestfailed',request,{error:request.failure()?.errorText||'unknown'}));
   const api=async(route,method='GET',data)=>{const session=await context.request.get(origin+'/api/session').then(r=>r.json());const response=await context.request.fetch(origin+'/api'+route,{method,headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf,...(data?{'Content-Type':'application/json'}:{})},...(data?{data}:{})});assert.equal(response.status(),200,await response.text());return response.json();};
   const nav=async hash=>{await page.evaluate(hash=>{location.hash='#'+hash;},hash);await page.waitForFunction(hash=>document.querySelector('#content')?.dataset.page===hash&&!document.querySelector('#content')?.inert,hash);};
   const login=async(username,password)=>{await page.goto(origin+'/#login');await page.locator('[name=username]').fill(username);await page.locator('[name=password]').fill(password);await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();};
@@ -102,11 +105,14 @@ for(const engine of engines){
     });
     await check('an obsolete query response cannot overwrite the latest server filter',async()=>{
       let release,observed,rejected,finished;const gate=new Promise(resolve=>release=resolve),began=new Promise((resolve,reject)=>{observed=resolve;rejected=reject;}),completed=new Promise(resolve=>finished=resolve);
-      const race={engine,old_query:prefix,new_query:needle,old_response_captured:false,old_browser_response_observed:false,old_request_failure:null,late_fulfill_attempted:false,late_fulfill_result:null};report.query_races.push(race);
+      const race={engine,old_query:prefix,new_query:needle,service_worker_controller:await page.evaluate(()=>navigator.serviceWorker?.controller?.scriptURL||null),old_handler_entered:false,old_response_captured:false,old_browser_response_observed:false,old_request_failure:null,late_fulfill_attempted:false,late_fulfill_result:null,requests:[]};report.query_races.push(race);
+      assert.equal(race.service_worker_controller,null,'The controlled delay fixture must not be service-worker controlled');
+      const requested=request=>{const url=new URL(request.url());if(url.origin===origin&&url.pathname==='/api/tasks/page')race.requests.push({query:url.searchParams.get('q'),method:request.method()});};page.on('request',requested);
       const failed=request=>{const url=new URL(request.url());if(url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix)race.old_request_failure=request.failure()?.errorText||'unknown';};
       const responded=response=>{if(taskResponse(prefix,response))race.old_browser_response_observed=true;};page.on('requestfailed',failed);page.on('response',responded);
       const handler=async route=>{
         if(new URL(route.request().url()).searchParams.get('q')!==prefix){await route.continue();return;}
+        race.old_handler_entered=true;
         try{const response=await route.fetch({timeout:10000});assert.equal(response.status(),200);race.old_response_captured=true;observed();await gate;race.late_fulfill_attempted=true;try{await route.fulfill({response});race.late_fulfill_result='fulfill_call_completed';}catch(error){race.late_fulfill_result='fulfill_call_rejected';race.late_fulfill_error=error.message;}}
         catch(error){race.fetch_error=error.message;rejected(error);await route.abort().catch(()=>{});}
         finally{finished();}
@@ -118,7 +124,7 @@ for(const engine of engines){
         release();await within(completed,10000,'The held older query did not finish its late fulfill attempt.');await page.waitForTimeout(800);
         race.outcome=race.old_request_failure?'old_request_aborted_late_fulfill_attempted':race.old_browser_response_observed?'old_response_observed_after_new_query':'late_fulfill_attempt_without_observed_browser_response';
         assert.equal(await page.locator('#task-search').inputValue(),needle);assert.equal(await page.locator('#task-results .task-row').count(),1);assert.match(await page.locator('#task-results').innerText(),new RegExp(needle));assert.equal(await page.locator('#task-results').getAttribute('aria-busy'),'false');
-      }finally{release();await page.unroute('**/api/tasks/page?**',handler);page.off('requestfailed',failed);page.off('response',responded);}
+      }finally{release();await page.unroute('**/api/tasks/page?**',handler);page.off('request',requested);page.off('requestfailed',failed);page.off('response',responded);}
     });
     await check('failed completion rolls back and persistent error stays above the mobile navigation',async()=>{
       await page.setViewportSize({width:390,height:844});
@@ -184,6 +190,15 @@ for(const engine of engines){
     await check('incomplete publication draft and attachment survive a full browser reload',async()=>{
       const form=page.locator('[data-workspace-form=campus-publish]'),title='持久草稿 '+engine;await form.locator('[name=title]').fill(title);await form.locator('[name=body]').fill('合成草稿，尚未选择发布范围，不应发送。');await form.locator('[name=files]').setInputFiles({name:'合成原件.txt',mimeType:'text/plain',buffer:Buffer.from('合成草稿附件，唯一证据文本。')});await form.locator('[data-campus-action=save-draft]').click();await page.waitForFunction(()=>document.querySelector('[data-campus-draft-status]')?.textContent.startsWith('已保存第'));const draftId=await form.getAttribute('data-draft-id');assert.equal((await api('/campus/drafts/'+draftId)).attachments.length,1);
       await page.reload();await page.locator('.campus-drafts>summary').click();await page.locator('[data-campus-action=open-draft][data-id="'+draftId+'"]').click();await page.waitForFunction(title=>document.querySelector('[data-workspace-form=campus-publish] [name=title]')?.value===title,title);assert.equal(await page.locator('[name=title]').inputValue(),title);assert.equal(await page.locator('[name=audience]').inputValue(),'');await page.locator('[data-campus-saved-files] details>summary').click();assert.match(await page.locator('[data-campus-saved-files]').innerText(),/合成原件.txt/);assert.equal((await api('/campus/drafts/'+draftId)).attachments.length,1);
+      // A screenshot taken mid-scroll can put the footer behind the fixed
+      // navigation. Prove that normal document scrolling exposes the complete
+      // publication control without submitting the incomplete draft.
+      const publish=page.locator('[data-workspace-form="campus-publish"] [type=submit]');
+      await publish.evaluate(button=>button.scrollIntoView({block:'center',behavior:'instant'}));
+      await publish.click({trial:true});
+      const control=await publish.boundingBox(),navigation=await page.locator('.mobile-bottom-nav').boundingBox();
+      report.mobile_controls.push({engine,name:'publication control after normal document scroll',control,navigation});
+      assert.ok(control.height>=43.9&&control.y>=0&&control.y+control.height<=navigation.y-1,JSON.stringify({control,navigation}));
     });
     await page.screenshot({path:path.join(out,engine+'-mobile-draft.png')});
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
