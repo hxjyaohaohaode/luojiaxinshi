@@ -11,6 +11,7 @@ from typing import Literal
 
 from fastapi import Depends,HTTPException
 from pydantic import Field,field_validator,model_validator
+from pydantic_core import PydanticCustomError
 
 from .ai import normalized
 from .db import audit,dumps
@@ -89,10 +90,10 @@ class TrackingData(Strict):
             raise ValueError('尚未公告的线索不能标记为正式通知')
         if self.phase=='preview' and self.basis!='official_preview':raise ValueError('官方预告须单独核对预告依据')
         if self.phase not in {'unannounced','preview'} and self.basis!='official_notice':raise ValueError('正式阶段需要明确正式通知依据')
-        if self.basis in {'official_preview','official_notice'} and not self.evidence:raise ValueError('请选择当前通知或相关通知中的原文依据')
+        if self.basis in {'official_preview','official_notice'} and not self.evidence:raise PydanticCustomError('lifecycle_evidence_required','请选择当前通知或相关通知中的原文依据')
         if self.phase!='result' and self.outcome!='unknown':raise ValueError('预告、公示及公示结束均不能当作正式结果')
         if self.outcome!='unknown' and (not self.identity_confirmed or len(self.identity_note.strip())<2):
-            raise ValueError('请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果')
+            raise PydanticCustomError('lifecycle_identity_required','请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果')
         if self.phase=='unannounced' and (self.objection_window or self.actions):raise ValueError('未公告线索仅可设置个人查进展安排，不能生成正式办理窗口或行动')
         if self.objection_window and self.phase not in {'publicity','result'}:raise ValueError('异议窗口须关联公示或结果阶段')
         if len({a.task_id for a in self.actions})!=len(self.actions):raise ValueError('同一后续行动不能重复关联')

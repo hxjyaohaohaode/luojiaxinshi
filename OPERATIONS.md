@@ -179,7 +179,9 @@ Remove-Item Env:DATA_DIR
 
 隔离测试入口 `scripts/auth_preview_server.py` 仅用于工程验收，使用独立数据目录及 `example.invalid` 测试邮箱，模型/搜索边界为明确标记的夹具。不要将其当作正式服务。真实模型另以工程 CSV 与工程图片做过识别验证；真实学生导出、真实关注清单与长期来源更新仍需分别验收。
 
-提供单实例应用加 Caddy HTTPS 的 `compose.yaml`、`Dockerfile`、`Caddyfile`。SQLite 数据卷持续保存；前端与 API 同源，应用端口不直接发布到公网。请使用独立 Linux 服务器或兼容 Docker 的主机，域名解析到服务器并开放 80 / 443。
+**已有其它项目或反向代理的主机，先阅读[共享宿主部署说明](docs/SHARED_HOST_DEPLOYMENT.md)。** 宿主进程反代使用 `compose.shared-host.yaml`，普通容器反代使用 `compose.proxy-network.yaml`；两者均只定义本项目应用，不占用现有80/443，须分别核对实际网络、项目名、私有数据卷和资源预算。三种 Compose 模板只选一个独立使用，不能通过多次 `-f` 合并。
+
+下列命令用于需要新建独立反代的方案：单实例应用加 Caddy HTTPS 的 `compose.yaml`、`Dockerfile`、`Caddyfile`。SQLite 数据卷持续保存；前端与 API 同源，应用端口不直接发布到公网。目标环境具备对外开放条件后，再由部署者配置域名和80/443；这些命令不适用于直接覆盖共享主机的既有代理。
 
 本机镜像构建曾被 Docker Hub 身份服务网络超时阻断。仓库 CI 另行构建并检查非 root、只读根文件系统、健康、数据库与界面提示资源，结果以当前提交的 GitHub Checks 为准；容器使用 production 配置和占位 HTTPS 源，主机只发布回环测试端口。此检查不包含公网域名、Caddy 证书或真实服务器部署，服务器阶段仍须实际复验下面的步骤。
 

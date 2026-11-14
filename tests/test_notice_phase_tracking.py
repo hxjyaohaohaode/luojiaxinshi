@@ -66,6 +66,47 @@ def test_results_require_identity_check_and_keep_followup_task_receipts(env):
     assert client.get('/api/notices').json()[0]['phase_tracking']['outcome']=='selected'
 
 
+@pytest.mark.parametrize(('changes','message'),[
+    ({'evidence':[],'outcome':'unknown'},'请选择当前通知或相关通知中的原文依据'),
+    ({'identity_confirmed':False,'identity_note':''},'请本人核实身份及名单依据；不能凭同名或模糊匹配认定结果'),
+],ids=['missing-source-evidence','unverified-personal-identity'])
+def test_lifecycle_business_validation_is_actionable_and_retryable(env,changes,message):
+    client=account(env);n=notice(client,'正式结果公布，须由本人对照学号与院系核实身份。')
+    initial=client.get(path(n)).json()
+    valid={**initial['data'],'phase':'result','basis':'official_notice','evidence':[evidence(n)],
+        'outcome':'selected','identity_confirmed':True,'identity_note':'本人已对照学号与院系',
+        'note':'保留本人正在填写的核对备注'}
+    rejected=save(client,n,{**valid,**changes})
+    assert rejected.status_code==422,rejected.text
+    assert rejected.json()=={'detail':message}
+    assert client.get(path(n)).json()==initial
+    accepted=save(client,n,valid)
+    assert accepted.status_code==200,accepted.text
+    assert accepted.json()['version']==1
+    assert accepted.json()['data']==valid
+    assert client.get(path(n)).json()['data']==valid
+
+
+def test_lifecycle_field_errors_keep_strict_types_and_do_not_echo_input(env):
+    client=account(env);n=notice(client,'正式结果须逐项核实原文和本人身份。')
+    initial=client.get(path(n)).json();private='private-validation-input-must-not-be-echoed'
+    valid={**initial['data'],'phase':'result','basis':'official_notice','evidence':[evidence(n)],
+        'outcome':'selected','identity_confirmed':True,'identity_note':'本人已逐项核对','note':private}
+    payload={'version':0,'notice_version':n['version'],'data':valid}
+    invalid_payloads=[{**payload,'data':{**valid,'identity_confirmed':value}} for value in (0,1,'true','false')]
+    invalid_payloads.extend([
+        {**payload,'data':{**valid,'phase':private}},
+        {**payload,'version':private,'data':{**valid,'evidence':[]}},
+    ])
+    for invalid in invalid_payloads:
+        rejected=client.put(path(n),json=invalid)
+        assert rejected.status_code==422,rejected.text
+        assert rejected.json()['detail'].startswith('字段不符合要求，请检查：')
+        assert private not in rejected.text
+        assert 'ctx' not in rejected.json() and 'input' not in rejected.json()
+        assert client.get(path(n)).json()==initial
+
+
 def test_tracking_is_owner_scoped_versioned_and_invalidated_by_corrected_evidence(env):
     client,other=account(env),account(env,'stranger');n=notice(client,'公示原文请核对。');foreign=notice(other,'其他人的正文。')
     assert other.get(path(n)).status_code==404

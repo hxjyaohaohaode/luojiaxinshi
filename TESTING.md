@@ -71,7 +71,7 @@ npm run build:check
 - `windows-results`：只下载本次 workflow attempt 的四份报告，验证源码摘要、完整文件清单、分片归属及真实 JUnit 一致后合并；缺片、重复、陈旧报告或伪造计数均失败。随后完整执行 Windows Node、GenUI、依赖审计、HTTP 并发恢复及打包，即使分片失败也继续保留其余检查结果。
 - `browser`：使用固定摘要的 Playwright 容器镜像，先确认三种浏览器都能启动，再运行 `run_browser_checks.py`；即使前者失败，也继续运行 `run_agent_browser_checks.py`，避免一组失败遮住另一组结果。
 - `continuity`：在同一固定浏览器镜像中执行全部异步保存与恢复检查，保留每个场景的实际断言、三浏览器／尺寸清单及独立夹具日志。它与其他作业共同组成同一次提交的完整验收。
-- `container`：构建镜像后以只读根文件系统、去除全部权限、非 root 用户和 production 配置启动，检查健康接口、运行用户、`manage.py check`、提示资源和首页。不包含公网域名、HTTPS 证书或真实服务器部署。
+- `container`：先分别核验共享宿主的回环端口模板和容器反代网络模板，每种模式用两个合成项目及12个必填变量缺失场景，仅调用 Compose `version/config`。配置通过后构建镜像，以只读根文件系统、去除全部权限、非 root 用户和 production 配置启动，检查健康接口、运行用户、`manage.py check`、提示资源和首页。两种配置分别上传原始报告；模板渲染不证明实际代理网络已存在，也不包含公网域名、HTTPS 证书或真实服务器部署。
 
 每次运行的 Summary 由 `scripts/write_ci_summary.py` 写入实际数量，JUnit、浏览器 JSON 和合成截图作为 Artifacts 保留 14 天。
 
@@ -157,7 +157,7 @@ npm run build:check
 
 最后一次代码修改后重新执行全部检查，以同一份源码为基础。整轮之间修改代码，原批次只保留为诊断记录，不计为冻结版本通过。完整入口和范围见 [main 整轮验收](docs/proactive/MAIN_SYNC.md)，CI 的全部任务见 `.github/workflows/checks.yml`。
 
-后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、当前16组通用浏览器（以本提交 `run_browser_checks.py` 的 `SUITES` 及实际报告为准）、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py` 与生产 Docker 启动和解析验证也包含在整轮内。
+后端可使用 `python scripts/audit_full_suite.py --workers 4 --output artifacts/full-audit-suite --junitxml artifacts/ci/python-tests.xml`；它执行全部后端文件，合并真实 JUnit，核对源码前后摘要。Node 用例、`run_browser_checks.py` 的完整 `SUITES` 清单、五组 Agent，以及 OpenUI/聊天布局/交互/恢复仍须完整执行。通用浏览器已包含账号创建至注销和重新注册、通知冲突与监控草稿、学院授权及正式版本历史三组流程，不能沿用新增它们之前的套件数量。依赖审计、GenUI 检查、`verify_local_runtime.py`、`build_release.py`、两种共享宿主 Compose 配置与生产 Docker 启动和解析验证也包含在整轮内。
 
 本地完整一轮通过后再正常推送，检查新 main 提交实际触发的 Actions 全部 jobs，再确认功能分支已合入并清理。旧提交、局部补跑、离线模型夹具及桌面模拟视口不替代当前 main CI、真实渠道或真实试点验收。
 

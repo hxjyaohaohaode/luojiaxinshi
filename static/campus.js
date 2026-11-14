@@ -37,12 +37,14 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
   const canManage=()=>siteMode()||ownRole()==='college_admin';
   const canPublish=()=>state.workContext==='college'&&['college_admin','counselor'].includes(ownRole());
 
-  async function render(id=state.renderId,section=location.hash.startsWith('#campus/')?location.hash.split('/')[1]:'home'){
+  async function render(id=state.renderId,section=location.hash.startsWith('#campus/')?location.hash.split('/')[1]:'home',canApply=()=>true){
+    // A deferred background refresh must keep the active gesture's controls mounted.
+    if(!canApply())return false;
     if(section==='home'){pubPage=1;pubQuery='';}
     const uid=state.session?.user?.id,sequence=++renderSequence;
-    const current=()=>sequence===renderSequence&&stillCurrent(id,uid);
+    const current=()=>sequence===renderSequence&&stillCurrent(id,uid)&&canApply();
     if(owner!==uid){clearTimeout(draftTimer);clearTimeout(deliveryTimer);serverDrafts=[];drafts.clear();owner=uid;collegeId='';editing=null;pubPage=1;pubQuery='';auditAction='';auditCursor='';auditPrevious=[];auditNext='';auditHasMore=false;}
-    const next=await api('/campus/context');if(!current())return;context=next;
+    const next=await api('/campus/context');if(!current())return false;context=next;
     state.session.user.campus_membership=context.membership?Object.fromEntries(
       ['role','college_name','grade','class_name','version'].map(key=>[key,context.membership[key]])
     ):null;
@@ -57,7 +59,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       canPublish()&&section==='publish'?api('/campus/drafts'):Promise.resolve({items:[]}),
       canPublish()&&section==='publish'?submission.load():Promise.resolve(null)
     ]);
-    if(!current())return;
+    if(!current())return false;
     if(pendingPublication&&!drafts.has(uid))drafts.set(uid,structuredClone(pendingPublication.draft));
     members=memberResult.members;publications=pubResult.items;serverDrafts=draftResult.items;if(section==='audit'){auditNext=auditResult.next_cursor||'';auditHasMore=!!auditResult.has_more;}
     if(ownRole()==='counselor'&&!siteMode())members=members.filter(m=>m.role==='student'&&context.membership.scopes.some(s=>s.all_college||s.grade===m.grade&&(!s.class_name||s.class_name===m.class_name)));
@@ -79,6 +81,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       ${section==='members'&&canRead?memberList(memberResult.can_manage):''}
       ${section==='audit'&&canManage()?auditList(auditResult.items):''}</div>`;
     syncMemberFields();syncAudienceFields();scheduleDeliveryRefresh(id,uid);
+    return true;
   }
 
   function memberForm(){
@@ -129,7 +132,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const draft=drafts.get(owner)||{id:'draft-'+crypto.randomUUID(),version:0};drafts.set(owner,draft);
     draft.fileNames ||= draft.pending_attachment_names||[];
     const savedFiles=(draft.attachments||[]).map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('');
-    const missing=draft.fileNames?.length?`<p class="small" id="campus-missing-files">切换页面后请重新选择附件：${draft.fileNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`:'';
+    const missing=draft.fileNames?.length?`<p class="small" id="campus-missing-files">下列附件尚未附加到这份草稿，请重新选择要保留的附件：${draft.fileNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`:'';
     return `<section class="campus-section" id="campus-compose"><h2>发布学院通知</h2><p class="small muted">发送给当前已加入对应范围的成员。个人待办和办理记录不会开放给发布者。</p>
       <details class="details campus-drafts"><summary>我的发布草稿 · ${serverDrafts.length} 份</summary><p class="small muted">草稿只对本人开放，保存后可在其他设备继续；未核对并确认发布前不会送达学生。</p><div class="campus-list">${serverDrafts.map(item=>`<article class="campus-row"><div><strong>${esc(item.title||'未填写标题')}</strong><p class="small muted">${esc(new Date(item.updated_at*1000).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))} · 第 ${item.version} 版 · ${item.attachments.length} 份附件</p></div><div class="row wrap"><button class="button small" type="button" data-campus-action="open-draft" data-id="${esc(item.id)}">继续编辑</button><button class="button small plain danger" type="button" data-campus-action="delete-draft" data-id="${esc(item.id)}">删除草稿</button></div></article>`).join('')||'<p class="small muted">暂无服务器草稿</p>'}</div><button class="button small" type="button" data-campus-action="new-draft">新建另一份草稿</button></details>
       ${publicationRecoveryMarkup()}
@@ -139,7 +142,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         ${policyFields(draft)}
         <label class="field">附件（选填，最多 3 份）<input type="file" name="files" multiple accept=".pdf,.docx,.txt,.md,.csv,.xlsx,.png,.jpg,.jpeg,.webp"></label>
         ${missing}
-        <div data-campus-saved-files>${savedAttachmentFields(draft.attachments||[])}</div>
+        <div data-campus-saved-files>${savedAttachmentFields(draft.attachments||[],draft.keep_attachments!==false)}</div>
         <div class="row wrap"><button class="button small" type="button" data-campus-action="save-draft">保存草稿</button><span class="small muted" data-campus-draft-status role="status">${draft.version?'已保存第 '+draft.version+' 版':'尚未保存'}</span></div>
         <p class="small muted">单份不超过 5 MB，合计不超过 8 MB。发布后进入对方的通知资料，仍由本人核对；后来加入的成员可在发布记录中补发，补发时也会重试当前范围内未送达的记录。</p>
         <div><button class="button primary" type="submit">${submission.pending()?'重试上次确认的发布':'核对并发布'}</button></div>
@@ -188,8 +191,8 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     const label=result.state==='withdrawn'?'上次发布已有结果，当前已撤回；此操作没有恢复发布。':recovered.state==='published'?'该通知已经发布，本次停止操作没有撤回；':'已确认发布：';
     toast(`${label}站内收件 ${result.delivery.delivered}/${result.delivery.total}${result.delivery.pending?'，待投递 '+result.delivery.pending:''}${sameDraft?'':'；当前新输入仍是草稿，尚未发布。'}${cleanupError?' 发布已保存，核对记录清理暂未完成；再次重试仍会返回同一发布。':''}`,!!cleanupError||!!result.delivery.failed);
   }
-  function savedAttachmentFields(files){
-    return files.length?`<details class="details"><summary>已保存的附件 · ${files.length} 份</summary><ul>${files.map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('')}</ul><label class="check"><input type="checkbox" name="keep_attachments" checked><span>保留这些附件；取消并保存后移除</span></label></details>`:'<input type="hidden" name="keep_attachments" value="true">';
+  function savedAttachmentFields(files,keep=true){
+    return files.length?`<details class="details"><summary>已保存的附件 · ${files.length} 份</summary><ul>${files.map(file=>`<li>${esc(file.name)} · ${Math.ceil(file.size/1024)} KB${file.warning?' · '+esc(file.warning):''}</li>`).join('')}</ul><label class="check"><input type="checkbox" name="keep_attachments" ${keep?'checked':''}><span>保留这些附件；取消并保存后移除</span></label></details>`:'<input type="hidden" name="keep_attachments" value="true">';
   }
   function publicationList(){
     const rows=publications.map(p=>`<article class="campus-row" data-campus-publication="${esc(p.id)}"><div><strong>${esc(p.title)}</strong>
@@ -202,7 +205,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       <div class="campus-pagination row wrap"><span class="small muted" role="status">共 ${pubTotal} 条 · 第 ${pubPage} / ${pubPages} 页</span><button class="button small" type="button" data-campus-action="publications-prev" ${pubPage<=1?'disabled':''}>上一页</button><button class="button small" type="button" data-campus-action="publications-next" ${pubPage>=pubPages?'disabled':''}>下一页</button></div></section>`;
   }
   function auditList(items){
-    const labels={assign_member:'设置学院身份',remove_member:'移除学院身份',publish:'发布通知',correct:'更正通知',withdraw:'撤回通知',restore:'正式恢复通知',rollback:'从历史版发布更正',deliver_new:'补发通知'};
+    const labels={assign_member:'设置学院身份',import_member:'批量设置学院身份',remove_member:'移除学院身份',publish:'发布通知',correct:'更正通知',withdraw:'撤回通知',restore:'正式恢复通知',rollback:'从历史版发布更正',deliver_new:'补发通知'};
     return `<section class="campus-section"><h2>学院操作记录</h2><label class="field">按操作筛选<select id="campus-audit-action"><option value="">全部操作</option>${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${auditAction===value?'selected':''}>${label}</option>`).join('')}</select></label><p class="small muted">从服务器按当前学院权限与操作筛选；每批最多 100 条，不把本批记录当作全部。</p>${items.length?`<ul class="campus-audit">${items.map(item=>`<li>${esc(new Date(item.created_at*1000).toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}))} · ${esc(item.actor_name)} · ${esc(labels[item.action]||item.action)}${item.target_name?' · '+esc(item.target_name):''}</li>`).join('')}</ul>`:'<p class="small muted">当前筛选下暂无操作记录。</p>'}<div class="row wrap"><span class="small muted">第 ${auditPrevious.length+1} 批 · ${items.length} 条</span><button class="button small" type="button" data-campus-action="audit-prev" ${auditPrevious.length?'':'disabled'}>上一批</button><button class="button small" type="button" data-campus-action="audit-next" ${auditHasMore?'':'disabled'}>继续读取</button></div></section>`;
   }
   function syncMemberFields(){
@@ -234,10 +237,11 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
     if(changed)separateSubmittedDraft(form);
     if(changed)delete form.dataset.requestId;
     const prior=drafts.get(owner)||{},files=[...form.elements.files.files];
-    const fileNames=files.length?files.map(f=>f.name):(form.dataset.missingFiles==='1'?prior.fileNames||[]:[]);
+    const fileNames=form.dataset.missingFiles==='1'?prior.fileNames||[]:files.map(f=>f.name);
     drafts.set(owner,{...prior,id:form.dataset.draftId,version:prior.id===form.dataset.draftId?(prior.version||0):(Number(form.dataset.draftVersion)||0),
       audience:form.elements.audience.value,grade:form.elements.grade.value,class_name:form.elements.class_name.value,
-      title:form.elements.title.value,body:form.elements.body.value,...readPolicy(form),requestId:form.dataset.requestId||'',fileNames});
+      title:form.elements.title.value,body:form.elements.body.value,...readPolicy(form),requestId:form.dataset.requestId||'',fileNames,
+      keep_attachments:form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked});
     if(changed){
       const status=form.querySelector('[data-campus-draft-status]');if(status)status.textContent='修改尚未保存';
       clearTimeout(draftTimer);
@@ -263,10 +267,11 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         return null;
       }
       if(form.dataset.draftConflict)throw Error('服务器草稿已有新版本，请核对后继续，或将当前输入另存为草稿。');
+      const previousAttachments=drafts.get(uid)?.attachments||[];
       const files=[...form.elements.files.files],snapshot={version:drafts.get(uid)?.version??(Number(form.dataset.draftVersion)||0),
         title:form.elements.title.value,body:form.elements.body.value,audience:form.elements.audience.value,
         grade:form.elements.grade.value,class_name:form.elements.class_name.value,...readPolicy(form),
-        pending_attachment_names:form.dataset.missingFiles==='1'&&!files.length?(drafts.get(uid)?.fileNames||[]):[],
+        pending_attachment_names:[...new Set([...(form.dataset.missingFiles==='1'?(drafts.get(uid)?.fileNames||[]):[]),...(drafts.get(uid)?.missingOriginals||[]).map(file=>file.name)])],
         keep_attachments:form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked};
       if(!snapshot.title&&!snapshot.body&&!files.length&&!snapshot.version)return null;
       const body=new FormData();body.append('data',JSON.stringify(snapshot));for(const file of files)body.append('files',file);
@@ -275,13 +280,32 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       if(uid!==state.session?.user?.id||drafts.get(uid)?.id!==id)return saved;
       form.dataset.draftVersion=String(saved.version);
       const sameFiles=[...form.elements.files.files].every((file,i)=>file===files[i])&&form.elements.files.files.length===files.length;
-      const missingFiles=form.dataset.missingFiles==='1'&&!files.length;
-      if(sameFiles&&!missingFiles){form.elements.files.value='';form.dataset.missingFiles='';}
-      drafts.set(uid,{...drafts.get(uid),version:saved.version,attachments:saved.attachments,pending_attachment_names:saved.pending_attachment_names||[],fileNames:sameFiles&&!missingFiles?[]:drafts.get(uid).fileNames});
-      form.querySelector('[data-campus-saved-files]').innerHTML=savedAttachmentFields(saved.attachments);
+      const liveKeep=form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked,keepChanged=liveKeep!==snapshot.keep_attachments;
+      // A response retires the submitted attachment choice, never a newer
+      // checkbox edit. If removal already committed before the user rechecked
+      // it, preserve the missing originals explicitly; their bytes are gone.
+      const restoredOriginals=keepChanged&&liveKeep?previousAttachments.filter(file=>!saved.attachments.some(next=>file.sha256&&file.sha256===next.sha256&&file.name===next.name)):[];
+      const originals=[...new Map([...(drafts.get(uid).missingOriginals||[]),...restoredOriginals].map(file=>[JSON.stringify([file.name,file.sha256]),{name:file.name,sha256:file.sha256}])).values()];
+      const missingOriginals=originals.filter(file=>!saved.attachments.some(next=>file.sha256&&file.sha256===next.sha256&&file.name===next.name));
+      const resolvedNames=originals.filter(file=>!missingOriginals.some(next=>next.name===file.name)).map(file=>file.name);
+      const hadMissing=form.dataset.missingFiles==='1',liveNames=hadMissing?drafts.get(uid).fileNames||[]:[];
+      const pendingNames=[...new Set([...liveNames.filter(name=>!resolvedNames.includes(name)),...missingOriginals.map(file=>file.name)])];
+      form.dataset.missingFiles=pendingNames.length?'1':'';
+      const missingFiles=form.dataset.missingFiles==='1';
+      if(sameFiles){form.elements.files.value='';if(!missingFiles)form.dataset.missingFiles='';}
+      const keep=keepChanged?liveKeep:true;
+      drafts.set(uid,{...drafts.get(uid),version:saved.version,attachments:saved.attachments,keep_attachments:keep,missingOriginals,pending_attachment_names:pendingNames,fileNames:missingFiles?pendingNames:sameFiles?[]:drafts.get(uid).fileNames});
+      const savedHost=form.querySelector('[data-campus-saved-files]'),expanded=savedHost.querySelector('details')?.open;
+      savedHost.innerHTML=savedAttachmentFields(saved.attachments,keep);
+      if(expanded&&savedHost.querySelector('details'))savedHost.querySelector('details').open=true;
+      if(missingFiles&&(restoredOriginals.length||resolvedNames.length||!hadMissing)){$('#campus-missing-files')?.remove();savedHost.insertAdjacentHTML('beforebegin',`<p class="small" id="campus-missing-files">上一次保存已移除你重新选择保留的附件，请重新选择要保留的附件：${pendingNames.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`);}else if(!missingFiles)$('#campus-missing-files')?.remove();
       serverDrafts=[saved,...serverDrafts.filter(item=>item.id!==id)];
-      const stillSame=['title','body','audience','grade','class_name'].every(key=>form.elements[key].value===snapshot[key])&&JSON.stringify(readPolicy(form))===JSON.stringify({valid_until:snapshot.valid_until,reference_only:snapshot.reference_only});
+      const stillSame=sameFiles&&!keepChanged&&JSON.stringify(pendingNames)===JSON.stringify(snapshot.pending_attachment_names)&&['title','body','audience','grade','class_name'].every(key=>form.elements[key].value===snapshot[key])&&JSON.stringify(readPolicy(form))===JSON.stringify({valid_until:snapshot.valid_until,reference_only:snapshot.reference_only});
       if(status){status.textContent=missingFiles?'正文已保存第 '+saved.version+' 版；待重新选择的附件尚未保存，请选择附件或明确不再附加。':stillSame?'已保存第 '+saved.version+' 版 · '+saved.attachments.length+' 份附件':'较早修改已保存，正在保存新输入…';status.setAttribute('role','status');}
+      // Only the server's exact name/SHA confirms a recovered original. Clear
+      // its persisted obligation in this same serial run, using the saved
+      // version and current inputs; never wait on our own draftWrites queue.
+      if(resolvedNames.length&&JSON.stringify(pendingNames)!==JSON.stringify(saved.pending_attachment_names||[]))return run();
       return saved;
     };
     const result=draftWrites.catch(()=>{}).then(run);draftWrites=result.catch(()=>{});return result;
@@ -368,7 +392,20 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       }
       else if(action==='save-draft'){const form=button.closest('form');await persistDraft(form);}
       else if(action==='inspect-draft'){const form=button.closest('form'),remote=await api('/campus/drafts/'+encodeURIComponent(form.dataset.draftId));if(view.sameDialog())showDialog('核对服务器草稿',`<section class="stack"><p>当前输入仍留在原表单，可关闭此窗口后另存。服务器第 ${remote.version} 版：</p><h3>${esc(remote.title||'未填写标题')}</h3><p class="campus-excerpt">${esc(remote.body)}</p><p class="small muted">${esc(targetText(remote))} · ${remote.attachments.length} 份附件</p></section>`);}
-      else if(action==='copy-draft'){const form=button.closest('form');form.dataset.draftId='draft-'+crypto.randomUUID();form.dataset.draftVersion='0';delete form.dataset.draftConflict;const local=drafts.get(owner)||{};drafts.set(owner,{...local,id:form.dataset.draftId,version:0,attachments:[]});form.querySelectorAll('[data-campus-action="inspect-draft"],[data-campus-action="copy-draft"]').forEach(el=>el.remove());form.querySelector('[data-campus-saved-files]').innerHTML=savedAttachmentFields([]);await persistDraft(form);if(view.sameUser())toast('当前输入已另存；原服务器附件未复制，请按需重新选择。');}
+      else if(action==='copy-draft'){
+        const form=button.closest('form'),local=drafts.get(owner)||{};
+        const keep=form.elements.keep_attachments.type==='hidden'||form.elements.keep_attachments.checked;
+        const missing=[...new Set([...(form.dataset.missingFiles==='1'?local.fileNames||[]:[]),...(keep?local.attachments||[]:[]).map(file=>file.name)])];
+        if(missing.length>3)throw Error('另存时需要重新选择的附件最多 3 份；当前有 '+missing.length+' 份。请先取消“保留这些附件”，或重新核对要保留的附件，再另存。当前输入和原草稿仍保留。');
+        form.dataset.draftId='draft-'+crypto.randomUUID();form.dataset.draftVersion='0';form.dataset.missingFiles=missing.length?'1':'';
+        delete form.dataset.draftConflict;delete form.dataset.requestId;
+        drafts.set(owner,{...local,id:form.dataset.draftId,version:0,requestId:'',attachments:[],fileNames:missing,pending_attachment_names:missing});
+        form.querySelectorAll('[data-campus-action="inspect-draft"],[data-campus-action="copy-draft"]').forEach(el=>el.remove());
+        const saved=form.querySelector('[data-campus-saved-files]');saved.innerHTML=savedAttachmentFields([]);$('#campus-missing-files')?.remove();
+        if(missing.length)saved.insertAdjacentHTML('beforebegin',`<p class="small" id="campus-missing-files">原草稿附件尚未复制，请重新选择要保留的附件：${missing.map(esc).join('、')} <button class="button small plain" type="button" data-campus-action="clear-files">不再附加</button></p>`);
+        await persistDraft(form);
+        if(view.sameUser())toast(missing.length?'当前输入已另存；原附件仍待重新选择，发布前也可明确不再附加。':'当前输入已另存为新草稿。');
+      }
       else if(action==='new-draft'||action==='open-draft'){
         const form=$('[data-workspace-form="campus-publish"]');if(form)await persistDraft(form);if(!view.sameRoute())return;
         const selected=action==='open-draft'?await api('/campus/drafts/'+encodeURIComponent(button.dataset.id)):{id:'draft-'+crypto.randomUUID(),version:0};
@@ -398,7 +435,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
       }
       else if(action==='edit-member'&&member){editing=member;await render();if(view.sameRoute())$('[data-workspace-form="campus-member"]')?.scrollIntoView({block:'start'});}
       else if(action==='cancel-member'){editing=null;await render();}
-      else if(action==='clear-files'){const form=button.closest('form');form.dataset.missingFiles='';form.elements.files.value='';$('#campus-missing-files')?.remove();saveDraft(form);}
+      else if(action==='clear-files'){const form=button.closest('form');form.dataset.missingFiles='';form.elements.files.value='';drafts.set(owner,{...drafts.get(owner),missingOriginals:[]});$('#campus-missing-files')?.remove();saveDraft(form);}
       else if(action==='remove-member'&&member&&await ask('移除学院身份',`移除 ${member.display_name} 的学院权限；已有个人通知和资料保留。`,'移除')){
         await api('/campus/members/'+encodeURIComponent(member.username),{method:'DELETE',json:{version:member.version}});if(view.sameRoute()){editing=null;await render();}if(view.sameUser())toast('学院身份已移除');
       }else if(action==='preview'){
@@ -435,6 +472,7 @@ export function createCampusUI({state,api,esc,showDialog,ask,toast,updateAccount
         if(form.dataset.missingFiles==='1')throw Error('请重新选择附件，或点击“不再附加”');
         await persistDraft(form);
         if(!view.sameRoute()||!form.isConnected)return;
+        if(form.dataset.missingFiles==='1')throw Error('请重新选择附件，或点击“不再附加”');
         const selected=audience(form),review=await api('/campus/audience-review',{method:'POST',json:selected});
         if(!view.sameRoute()||!form.isConnected)return;
         const summary=`《${String(values.get('title')).trim()}》将发送至${targetText(selected)}：学生 ${review.students} 人，学院工作人员 ${review.staff} 人。${review.students?'请确认接收范围。':'当前没有学生符合条件，请确认是否仍要发布。'}`;

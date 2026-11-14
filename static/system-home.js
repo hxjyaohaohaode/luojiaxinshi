@@ -1,7 +1,8 @@
 export function createSystemHome({state,api,esc,icon}) {
-  return {async render(id=state.renderId){
+  return {async render(id=state.renderId,canApply=()=>true){
+    if(!canApply())return false;
     const [stats,channels,runtime]=await Promise.all([api('/admin/insights'),api('/integrations'),api('/admin/runtime')]);
-    if(id!==state.renderId)return;
+    if(id!==state.renderId||!canApply())return false;
     const service=state.session.ai;
     document.querySelector('#content').innerHTML=`<section class="role-home" data-home-context="system">
       <header class="home-heading"><div><h1>系统维护</h1><p>账号访问、学院权限与运行配置</p></div><a class="button small" href="#campus/members">${icon('shield')} 管理权限</a></header>
@@ -20,5 +21,6 @@ export function createSystemHome({state,api,esc,icon}) {
       <section class="home-section"><h2>需要关注</h2><div class="home-link-list"><button data-action="settings-model"><span>近 30 天 AI 调用失败</span><b>${Number(stats.ai_30d.failed)}</b>${icon('arrow')}</button><a href="#campus/members"><span>学院身份与负责范围</span>${icon('arrow')}</a><a href="#campus/audit"><span>权限调整记录</span>${icon('arrow')}</a></div><p class="small muted">这里只展示匿名计数。切换至“我的事务”可查看自己的通知和办理记录。</p></section></div>
       <details class="system-statistics"><summary>查看全站匿名统计</summary><dl class="service-status-list"><div><dt>通知</dt><dd>共 ${Number(stats.notices.total)} · 近 30 天 ${Number(stats.notices.last_30d)} · 已确认办理路径 ${Number(stats.notices.confirmed)}</dd></div><div><dt>待办</dt><dd>${Number(stats.tasks.pending)} 待完成 · ${Number(stats.tasks.done)} 已完成 · ${Number(stats.tasks.cancelled)} 已取消</dd></div><div><dt>近 30 天 AI 调用</dt><dd>${Number(stats.ai_30d.calls)} 次 · 失败 ${Number(stats.ai_30d.failed)} 次</dd></div></dl></details>
     </section>`;
+    return true;
   }};
 }

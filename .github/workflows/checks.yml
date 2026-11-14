@@ -230,6 +230,9 @@ jobs:
             artifacts/source-presets-browser/report.json
             artifacts/pilot-workspace-browser/report.json
             artifacts/qq-group-intake-browser/report.json
+            artifacts/account-lifecycle-browser/report.json
+            artifacts/frontend-finish-browser/report.json
+            artifacts/campus-administration-browser/report.json
           retention-days: 14
           if-no-files-found: warn
       - name: Verify embedded Agent approvals, UI, media and incremental rendering
@@ -286,6 +289,9 @@ jobs:
             artifacts/source-presets-browser/*
             artifacts/pilot-workspace-browser/*
             artifacts/qq-group-intake-browser/*
+            artifacts/account-lifecycle-browser/*
+            artifacts/frontend-finish-browser/*
+            artifacts/campus-administration-browser/*
             artifacts/push-browser/*
             artifacts/ci-browser/verify_natural_intake.mjs.log
             artifacts/ci-browser/verify_task_materials.mjs.log
@@ -294,6 +300,9 @@ jobs:
             artifacts/ci-browser/verify_pilot_workspace.mjs.log
             artifacts/ci-browser/verify_notice_matters.mjs.log
             artifacts/ci-browser/verify_qq_group_intake_ui.mjs.log
+            artifacts/ci-browser/verify_account_lifecycle.mjs.log
+            artifacts/ci-browser/verify_frontend_finish.mjs.log
+            artifacts/ci-browser/verify_campus_administration.mjs.log
             artifacts/ci-browser/verify_push_browser.mjs.log
             artifacts/ci-browser/verify_task_board.mjs.log
             artifacts/ci-browser/verify_frontend_stability.mjs.log
@@ -368,6 +377,27 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify shared-host Compose isolation without starting services
+        run: python scripts/verify_shared_host_config.py --output artifacts/shared-host-config.json
+      - name: Preserve the shared-host configuration evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: shared-host-compose-config
+          path: artifacts/shared-host-config.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Verify container proxy network isolation without starting services
+        if: ${{ !cancelled() }}
+        run: python scripts/verify_shared_host_config.py --mode proxy-network --output artifacts/proxy-network-config.json
+      - name: Preserve the container proxy network configuration evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: proxy-network-compose-config
+          path: artifacts/proxy-network-config.json
+          retention-days: 14
+          if-no-files-found: error
       - run: docker build -t campus-notice:ci .
       - name: Start the isolated container without credentials or host data
         run: >-

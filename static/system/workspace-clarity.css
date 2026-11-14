@@ -228,6 +228,9 @@ html[data-input-mode=keyboard] :is(a,button,summary,[role=tab]):focus-visible { 
 
   /* Content stays readable; density comes from spacing and component geometry. */
   .content .workspace-page-heading { margin-bottom:6px; gap:8px; }
+  #content > .library-heading { align-items:center; margin-bottom:6px; gap:8px; }
+  .content .library-heading h1 { font-size:18px; line-height:1.4; letter-spacing:0; }
+  .content .library-heading > .button { min-height:44px; }
   .content #library-summary { margin-bottom:6px; gap:4px; }
   .content #library-summary .collection-stat { min-height:44px; padding:4px 7px; border-radius:7px; }
   .content .library-intent-picker select { min-height:44px; padding-block:4px; }

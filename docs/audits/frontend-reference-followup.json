@@ -1,0 +1,170 @@
+{
+  "reviewed_at": "2026-11-14T14:55:18.747974+00:00",
+  "source_repository": "https://github.com/DavidHDev/react-bits",
+  "observed_tree_sha": "cf2801031f07f53d4684e65b961bde7c2e2a6921",
+  "tree_is_not_a_commit_sha": true,
+  "source_files": [
+    {
+      "path": "src/content/Micro/CodeSlots/CodeSlots.jsx",
+      "blob_sha": "bccb33682f03600f562db876c9d30c6018fc723c",
+      "bytes": 14555,
+      "sha256": "bb81bdf7e0d3e411b9a8fb576856b3ed6d2af9e26fd6f45654d8423bfebfecbf",
+      "line_count": 459,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/CodeSlots/CodeSlots.jsx",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/bccb33682f03600f562db876c9d30c6018fc723c",
+      "full_source_read": true
+    },
+    {
+      "path": "src/content/Micro/CodeSlots/CodeSlots.css",
+      "blob_sha": "9d75e667523761d5dc70a4e2326bd4e741bc3d0c",
+      "bytes": 3499,
+      "sha256": "007ee23eac71c9a1157cb98c4855a94607d280123515a8cbd62672f4a42566c4",
+      "line_count": 185,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/CodeSlots/CodeSlots.css",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/9d75e667523761d5dc70a4e2326bd4e741bc3d0c",
+      "full_source_read": true
+    },
+    {
+      "path": "src/demo/Micro/CodeSlotsDemo.jsx",
+      "blob_sha": "f0cd5986569cae02070685bbdfbf2c53a1b871b5",
+      "bytes": 11599,
+      "sha256": "cf9c7247648382fe379e280bc4e6a0664b722ea54457d3695a446918548238d9",
+      "line_count": 350,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/demo/Micro/CodeSlotsDemo.jsx",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/f0cd5986569cae02070685bbdfbf2c53a1b871b5",
+      "full_source_read": true
+    },
+    {
+      "path": "src/content/Micro/RubberSegment/RubberSegment.jsx",
+      "blob_sha": "869cce08c7d1d5d947435eb1320c744ba39ded9b",
+      "bytes": 11297,
+      "sha256": "35489f6c3c59dae1cd98d82c11e69f3ecee3cfb831bec70278365d07caac0bcf",
+      "line_count": 360,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/RubberSegment/RubberSegment.jsx",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/869cce08c7d1d5d947435eb1320c744ba39ded9b",
+      "full_source_read": true
+    },
+    {
+      "path": "src/content/Micro/RubberSegment/RubberSegment.css",
+      "blob_sha": "6741af3710ba1bb3b54bc11a5c9636aaeac8a669",
+      "bytes": 2545,
+      "sha256": "8e27a0daf7c64dc09939020db11d0461b03368763bceaaa60b88accad1b06cb4",
+      "line_count": 121,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/content/Micro/RubberSegment/RubberSegment.css",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/6741af3710ba1bb3b54bc11a5c9636aaeac8a669",
+      "full_source_read": true
+    },
+    {
+      "path": "src/demo/Micro/RubberSegmentDemo.jsx",
+      "blob_sha": "53e249efac03eac65037c44cef2405fbb2c2f8f3",
+      "bytes": 10649,
+      "sha256": "1475ab15f929096772c89d4f55cb0b52930701bd1454a566f896219af854c295",
+      "line_count": 325,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/src/demo/Micro/RubberSegmentDemo.jsx",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/53e249efac03eac65037c44cef2405fbb2c2f8f3",
+      "full_source_read": true
+    },
+    {
+      "path": "LICENSE.md",
+      "blob_sha": "4069ce9d0ef1a712c93d6ce48ade5d5667e0f5ee",
+      "bytes": 2060,
+      "sha256": "4bdd1fa59a6b7d5954bc3b213dbc34e455c635a94bbcecf9293553797d0fad02",
+      "line_count": 29,
+      "url": "https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md",
+      "immutable_blob_api": "https://api.github.com/repos/DavidHDev/react-bits/git/blobs/4069ce9d0ef1a712c93d6ce48ade5d5667e0f5ee",
+      "full_source_read": true
+    }
+  ],
+  "prior_source_review_file": "docs/sprint-2026-11-14/reference-source-review.json",
+  "prior_source_review_sha256": "78012494321c3089501385150803b3e7d92a3df33499b4f20d43fc7e7669eae7",
+  "original_catalog_sha256": "02b9287f58f78073af58eb2bccd617f950338fe085aad5f351cc0703a81c0889",
+  "original_catalog_rows": 209,
+  "catalog_decisions_unchanged": {
+    "priority_candidates": 35,
+    "conditional_candidates": 79,
+    "not_adopted": 95
+  },
+  "previous_deep_reviews": [
+    114,
+    115,
+    133
+  ],
+  "additional_deep_reviews": [
+    125,
+    131
+  ],
+  "total_deep_reviewed": 5,
+  "remaining_not_individually_demo_and_source_reviewed": 204,
+  "license": {
+    "observed_title": "MIT + Commons Clause License Condition v1.0",
+    "blob_sha": "4069ce9d0ef1a712c93d6ce48ade5d5667e0f5ee",
+    "copied_upstream_product_code": false,
+    "dependencies_added": []
+  },
+  "references": [
+    {
+      "number": 125,
+      "name": "Code Slots",
+      "url": "https://reactbits.dev/micro/code-slots",
+      "variant": "JS-CSS",
+      "upstream_dependencies": [
+        "react",
+        "motion/react",
+        "@hugeicons/react",
+        "@hugeicons/core-free-icons"
+      ],
+      "source_mechanism": "One native input with decorative digit slots; keyboard insertion/deletion/selection and paste update the display. External status, not filled length, determines success or rejection.",
+      "actual_demo_observations": [
+        "Opened the default demo and observed 0/6.",
+        "Entered three digits, observed three filled slots, then Backspace removed one.",
+        "Completed a synthetic six-digit entry and observed Code accepted followed by the demo reset; the exact appended test string is not used as a validation oracle.",
+        "Switched to the 375px demo preview.",
+        "Selected Reject and entered a code; observed the subsequent reset, without claiming the transient red rejection frame was captured.",
+        "Enabled Disabled and confirmed the textbox was disabled; restored enabled state.",
+        "Entered digits and exercised ArrowLeft and Backspace; the filled count changed.",
+        "Read the complete JSX, CSS and demo source; the upstream demo uses synthetic delayed outcomes, not a real verification provider."
+      ],
+      "native_adaptation": [
+        "static/verification.js: one input preserves native selection, password-manager and one-time-code semantics; six aria-hidden slots mirror it.",
+        "Full-width digits and pasted whitespace normalize before native maxlength truncation. Input completion only sets ready, without automatic verification or submission.",
+        "Checking, server rejection and real proof success are separate states; success makes the input readonly.",
+        "Contact or owner change invalidates proofs; starting resend retires the old proof before new digits may be entered.",
+        "static/auth-feedback.js preserves delivery status and help references while owning a separate field error.",
+        "static/system/auth.css retains the existing green and light palette, 44px targets, readable helper text, narrow wrapping, reduced-motion and forced-colors fallback."
+      ],
+      "not_adopted": [
+        "No React, motion or Hugeicons dependency added.",
+        "No copied upstream implementation, automatic submission, fake provider success, six separate tab stops or decorative continuous animation."
+      ],
+      "test_files": [
+        "tests/verification-slots.test.mjs",
+        "tests/verification.test.mjs",
+        "tests/auth-error-descriptions.test.mjs"
+      ],
+      "application_browser_status": "defined in scripts/verify_account_lifecycle.mjs; actual new candidate CI remains required"
+    },
+    {
+      "number": 131,
+      "name": "Rubber Segment",
+      "url": "https://reactbits.dev/micro/rubber-segment",
+      "variant": "JS-CSS",
+      "upstream_dependencies": [
+        "react",
+        "motion/react"
+      ],
+      "source_mechanism": "Controlled selection with pointer drag, displacement/velocity behavior, spring motion, keyboard navigation, disabled state and reduced-motion handling.",
+      "actual_demo_observations": [
+        "Observed Week selected by default; clicked Month.",
+        "ArrowRight selected Year and Home selected Day, verified by aria-checked.",
+        "Enabled Disabled and confirmed the option was unavailable; restored enabled state.",
+        "Read complete JSX, CSS and demo source including drag and reduced-motion paths."
+      ],
+      "unexecuted_demo_paths": [
+        "Pointer drag and flick motion were read in source but not performed; no claim of verified drag behavior."
+      ],
+      "decision": "Reviewed and not adopted for the current login method control. Dragging should not discard an in-progress credential form, and the upstream small default controls do not meet this product target-size requirement. Existing explicit keyboard-focusable login buttons remain.",
+      "dependencies_added": []
+    }
+  ],
+  "scope": "Two additional references actually inspected; all original 209 catalog identities and adoption decisions remain unchanged. Upstream demo observations and local unit checks do not substitute for the application three-engine CI, physical keyboard/IME, real provider delivery or user server deployment."
+}

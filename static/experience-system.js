@@ -310,7 +310,10 @@ export function createToastPresenter({esc, icon, owner = () => null}) {
     }
     position(); resume();
     if (document.hidden || host.matches(':hover') || host.contains(document.activeElement)) pause();
+    return ticket;
   };
-  present.clear = close;
+  // A completed correction may dismiss its own receipt without removing a
+  // newer message. Session cleanup still uses the original no-argument form.
+  present.clear = ticket => { if (ticket === undefined || ticket === revision) close(); };
   return present;
 }

@@ -279,12 +279,21 @@ for(const engine of engines){
         await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 50 / 54 项');
         assert.equal(await page.locator('#task-results .task-row').count(),50);
         evidence.before_ids=await page.locator('#task-results .task-row').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));await saveReport();
-        await page.locator('[data-action=task-more]').click();await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 54 / 54 项');
+        await page.locator('[data-action=task-more]').click();
+        const settled=await page.waitForFunction(()=>{
+          const ids=[...document.querySelectorAll('#task-results .task-row')].map(node=>node.dataset.taskId),busy=document.querySelector('#task-results')?.getAttribute('aria-busy'),count=document.querySelector('#task-count')?.textContent;
+          return busy==='false'&&count==='已加载 54 / 54 项'&&ids.length===54?{ids,busy,count}:false;
+        });
+        try{evidence.final_dom=await settled.jsonValue();evidence.snapshot_phase='settled_completion';}finally{await settled.dispose();}
         assert.equal(await page.locator('#task-results .task-row').count(),54);assert.equal(await page.locator('[data-action=task-more]').count(),0);
         evidence.status='passed';
       }finally{
         page.off('request',observeRequest);page.off('response',observeResponse);await Promise.all(reads);
-        evidence.final_dom=await page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results .task-row')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent}));
+        // The settled gate and its original DOM values come from the same
+        // browser evaluation. Keep the later state separately, including a
+        // new refresh, rather than replacing that measured completion.
+        evidence.after_receipts_dom=await page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results .task-row')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent}));
+        if(!evidence.final_dom){evidence.final_dom=evidence.after_receipts_dom;evidence.snapshot_phase='after_receipts_without_settled_completion';}
         if(evidence.status!=='passed')evidence.status='incomplete';await saveReport();
       }
     });

@@ -1,7 +1,9 @@
 import {passwordEditor,showInputError,installAuthFeedback,successTransition} from './auth-feedback.js';
 import {brandMotion} from './motion.js';
 export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toast,route,moveSelection,verification}){
-  let loginMethod='password';
+  let loginMethod='password',authenticationPending=false;
+  const pendingMessage='正在验证账号，请稍候再切换或提交。';
+  const signupErrors=new WeakMap();
   installAuthFeedback();
   const agreement=()=>'<label class="check auth-agreement"><input type="checkbox" name="accepted_terms" required><span>我已阅读并同意<a href="#privacy" target="_blank" rel="noopener">《隐私政策》</a>和<a href="#terms" target="_blank" rel="noopener">《用户协议》</a>。</span></label>';
   function signupMarkup(username){return `<ol class="auth-progress" aria-label="注册进度">${['验证联系方式','填写账号','设置密码'].map((text,i)=>`<li data-progress-step="${i+1}" ${i===0?'aria-current="step"':''}><span>${i+1}</span>${text}</li>`).join('')}</ol>
@@ -10,6 +12,7 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
     <fieldset data-signup-step="2" class="auth-stage stack" disabled hidden><legend class="sr-only">填写账号</legend>${field('怎么称呼你','display_name','','text','required maxlength="40" autocomplete="nickname"')}${field('账号名','username',username,'text','required minlength="3" maxlength="40" pattern="[a-zA-Z0-9_.@+\\-]+" autocomplete="username" autocapitalize="none" spellcheck="false"')}<label class="field">常用身份<select name="campus_role"><option value="student">学生</option><option value="teacher">教师</option><option value="staff">教职工</option><option value="other">其他</option></select></label><p class="small muted">用于安排个人工作台，可在设置中修改。学院权限由管理员另行核对。</p><div class="form-footer"><button type="button" class="button" data-signup-back="1">上一步</button><button type="button" class="button primary" data-signup-next="2">下一步 ${icon('arrow')}</button></div></fieldset>
     <fieldset data-signup-step="3" class="auth-stage stack" disabled hidden><legend class="sr-only">设置密码</legend>${passwordEditor(field,{creating:true,confirm:true})}${agreement()}<div class="form-footer"><button type="button" class="button" data-signup-back="2">上一步</button><button type="submit" class="button primary auth-submit">注册</button></div></fieldset></form>`;}
   function signupStep(form,step){
+    if(form.isConnected===false)return;
     form.dataset.signupCurrent=String(step);
     form.closest('.auth-form').querySelector('h2').textContent=['','注册','填写账号','设置密码'][step];
     form.querySelectorAll('[data-signup-step]').forEach(group=>{const active=Number(group.dataset.signupStep)===step;group.hidden=!active;group.disabled=!active;});
@@ -38,8 +41,17 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
     moveSelection(document.querySelector('.auth-tabs'),'a.selected');
   }
   async function submit(form,fd){
+    // The submit handler locks one form. Authentication must also remain
+    // single-flight when a route or login-method switch replaces that form:
+    // two successful requests can otherwise race their session cookies.
+    if(authenticationPending)throw Error(pendingMessage);
+    if(state.session)throw Error('你已登录，请先退出当前账号后再登录其他账号。');
     const mode=form.dataset.authMode;
     if(mode==='register'&&form.dataset.signupCurrent!=='3'){form.inert=false;form.querySelector(`[data-signup-next="${form.dataset.signupCurrent}"]`)?.click();return;}
+    authenticationPending=true;
+    const initialSession=state.session;
+    const requireSameSession=()=>{if(state.session!==initialSession)throw Error('登录状态已变化，请重新打开页面核对当前账号。');};
+    try{
     const payload=mode==='register'?Object.fromEntries(['display_name','username','campus_role','password','confirm_password'].map(name=>[name,form.querySelector(`[name="${name}"]`).value])):Object.fromEntries(fd),otp=mode!=='login'||loginMethod==='code';
     if(mode!=='login'&&payload.password!==payload.confirm_password)throw Error('两次输入的密码不一致');
     delete payload.confirm_password;
@@ -51,6 +63,8 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
     }
     if(mode==='register'){payload.accepted_terms=form.querySelector('[name=accepted_terms]').checked;payload.invite=state.invite||'';}
     if(mode==='login'&&otp)delete payload.username;
+    requireSameSession();
+    if(form.isConnected===false)throw Error('登录表单已切换，请在当前页面重新提交。');
     let result;
     try{result=await api('/auth/'+(mode==='login'&&otp?'verified-login':mode),{method:'POST',json:payload});}
     catch(error){
@@ -58,21 +72,40 @@ export function createAuthUI({state,esc,field,api,icon,companion,showDialog,toas
       else if(error.status===401)showInputError(form.querySelector('[name=password]'),'账号或密码不正确');
       throw error;
     }
+    requireSameSession();
     const session=result.session||await api('/session');
+    requireSameSession();
     await successTransition(form);
-    const returnHash=state.loginReturn?.owner===session.user.id?state.loginReturn.hash:location.hash;
-    const canReturn=/^#(?:dashboard|notices|notice|tasks|calendar|chat|sources|memory|settings|campus|insights|intake|new)(?:\/[A-Za-z0-9_-]+)*$/.test(returnHash);
+    requireSameSession();
+    // Legal links remain usable during a request. Accept the actual session
+    // without taking the user away from the policy they chose to read.
+    const readingLegal=location.hash==='#privacy'||location.hash==='#terms';
+    const returnHash=readingLegal?location.hash:state.loginReturn?.owner===session.user.id?state.loginReturn.hash:location.hash;
+    const canReturn=readingLegal||/^#(?:dashboard|notices|notice|tasks|calendar|chat|sources|memory|settings|campus|insights|intake|new)(?:\/[A-Za-z0-9_-]+)*$/.test(returnHash);
     state.session=session;state.loginReturn=null;state.invite='';
     toast.clear();
     try{sessionStorage.removeItem('campus.registration.invite');}catch{}
     history.replaceState(null,'',canReturn?returnHash:'#dashboard');
     await route();
+    }finally{authenticationPending=false;}
   }
   document.addEventListener('click',async event=>{
     const back=event.target.closest('[data-signup-back]');if(back)signupStep(back.closest('form'),Number(back.dataset.signupBack));
     const next=event.target.closest('[data-signup-next]');
-    if(next&&!next.disabled){const form=next.closest('form'),step=Number(next.dataset.signupNext),stage=form.querySelector(`[data-signup-step="${step}"]`);if([...stage.querySelectorAll('input')].some(input=>!input.reportValidity()))return;next.disabled=true;try{if(step===1)await verification.prove(form.querySelector('[data-verification]'));signupStep(form,step+1);}catch(error){toast(error.message,true);}finally{next.disabled=false;}}
-    const method=event.target.closest('[data-login-method]');if(method){loginMethod=method.dataset.loginMethod;render();}
+    if(next&&!next.disabled){
+      const form=next.closest('form'),step=Number(next.dataset.signupNext),stage=form.querySelector(`[data-signup-step="${step}"]`);
+      if([...stage.querySelectorAll('input')].some(input=>!input.reportValidity()))return;
+      next.disabled=true;
+      try{
+        if(step===1){
+          await verification.prove(form.querySelector('[data-verification]'));
+          if(form.isConnected!==false){const ticket=signupErrors.get(form);if(ticket!==undefined)toast.clear(ticket);signupErrors.delete(form);}
+        }
+        signupStep(form,step+1);
+      }catch(error){const ticket=toast(error.message,true);if(step===1)signupErrors.set(form,ticket);}
+      finally{next.disabled=false;}
+    }
+    const method=event.target.closest('[data-login-method]');if(method){if(authenticationPending){toast(pendingMessage);return;}loginMethod=method.dataset.loginMethod;render();}
     const show=event.target.closest('[data-auth-show]');if(show){const input=show.closest('form').querySelector('[name=password]'),visible=input.type==='password';input.type=visible?'text':'password';show.setAttribute('aria-label',visible?'隐藏密码':'显示密码');show.setAttribute('aria-pressed',String(visible));}
     if(event.target.closest('[data-auth-platform]'))showDialog('校园身份与平台接入','<div class="stack"><p>手机号或邮箱经过验证码验证后可用于登录和账号安全验证。学号和工号只作为你填写的账号名，学校统一认证尚未接入。</p><p>微信 / QQ 登录需要单独申请平台应用与权限。现有的群通知接入和公众号内容导入不等同于微信 / QQ 登录。</p></div>');
   });

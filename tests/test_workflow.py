@@ -254,6 +254,43 @@ def test_relative_date_requires_original_publication(env):
     assert ai.validate_extraction(raw,n['sources'],'2027-10-19T10:00:00+08:00')['tasks'][0]['due_date']=='2027-10-20'
 
 
+def test_materials_review_integer_response_round_trip(env):
+    c=account(env);current=notice(c,complete=False)
+    route='/api/notices/'+current['id']
+    blocker='尚未确认通知及关键附件完整'
+    assert type(current['materials_complete']) is int
+    assert current['materials_complete']==0
+    assert blocker in current['blockers']
+    for complete,expected in ((True,1),(False,0)):
+        previous_version=current['version']
+        response=c.post(route+'/materials',json={'version':previous_version,'complete':complete})
+        assert response.status_code==200,response.text
+        current=response.json()
+        # SQLite-backed response flags are integers, unlike the strict boolean input.
+        assert type(current['materials_complete']) is int
+        assert current['materials_complete']==expected
+        assert current['version']==previous_version+1
+        assert (blocker in current['blockers']) is (not complete)
+        persisted=c.get(route)
+        assert persisted.status_code==200,persisted.text
+        persisted=persisted.json()
+        assert type(persisted['materials_complete']) is int
+        assert persisted['materials_complete']==expected
+        assert persisted['version']==current['version']
+        assert persisted['blockers']==current['blockers']
+    # Echoing the numeric response flag back as a request must not bypass strict input.
+    for invalid in (0,1,'0','1',None):
+        response=c.post(route+'/materials',json={'version':current['version'],'complete':invalid})
+        assert response.status_code==422,response.text
+    persisted=c.get(route)
+    assert persisted.status_code==200,persisted.text
+    persisted=persisted.json()
+    assert type(persisted['materials_complete']) is int
+    assert persisted['materials_complete']==0
+    assert persisted['version']==current['version']
+    assert persisted['blockers']==current['blockers']
+
+
 def test_incomplete_materials_block_deadline_until_resolution(env):
     c=account(env);n=manual(c,notice(c,complete=False))
     payload={'version':n['version'],'reviewed':True,'tasks':[task(n)]}

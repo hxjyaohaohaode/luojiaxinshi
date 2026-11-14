@@ -121,9 +121,9 @@ export function createPushNotifications({state,api,esc,toast}){
       if(current(session,version)){lastError=error.message;localEnabled=false;}
     }finally{if(current(session,version)){busy=false;changed();}}
   }
-  async function detachForLogout(){
+  async function detachForLogout({remote=true}={}){
     const uid=owner||state.session?.user.id;epoch++;loading=null;busy=true;localEnabled=false;changed();
-    cleanup=(async()=>{const reg=registration||await registered();const endpoint=await revokeLocal(reg,uid);if(endpoint&&state.session?.user.id===uid){try{await api('/push/subscriptions',{method:'DELETE',json:{endpoint}});}catch(error){feedback='本机提醒已关闭；服务器记录暂未同步，可重新登录后刷新状态。';}}registration=null;subscription=null;binding=null;})();
+    cleanup=(async()=>{const reg=registration||await registered();const endpoint=await revokeLocal(reg,uid);if(remote&&endpoint&&state.session?.user.id===uid){try{await api('/push/subscriptions',{method:'DELETE',json:{endpoint}});}catch(error){feedback='本机提醒已关闭；服务器记录暂未同步，可重新登录后刷新状态。';}}registration=null;subscription=null;binding=null;})();
     try{await cleanup;}finally{busy=false;changed();}
   }
   function stop(){
