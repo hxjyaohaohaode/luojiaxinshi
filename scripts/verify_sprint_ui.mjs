@@ -412,10 +412,15 @@ for(const engine of engines){
       const evidence={engine,status:'running',stages:[]};report.review_regressions.list_cache_routes.push(evidence);await saveReport();
       for(const away of ['dashboard','settings']){
       const query='跨路由缓存 '+engine+' '+away;
+      const creationReceipts=[];evidence.creations??=[];evidence.creations.push({away,query,receipts:creationReceipts});
       const createTask=async label=>{
-        const session=await api('/session'),response=await context.request.post(origin+'/api/notices',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{title:query+' '+label,body:'合成个人事项，用于验证离开清单后的真实新增与变化。无外部提交。',materials_complete:'true'}});
+        const session=await api('/session'),response=await context.request.post(origin+'/api/notices',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{title:query+' '+label,body:'合成个人事项，用于验证离开清单后的真实新增与变化。无外部提交。\n独立事项：'+query+' '+label,materials_complete:'true'}});
         assert.equal(response.status(),200,await response.text());let notice=await response.json();notice=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});
-        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:[{title:query+' '+label,scope:'personal',materials:[],submission:'',details:'跨页面缓存验收的合成事项。'}],plans:{0:{execution_mode:'task'}}});assert.equal(result.task_ids.length,1);return {notice:notice.id,task:result.task_ids[0]};
+        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:[{title:query+' '+label,scope:'personal',materials:[],submission:'',details:'跨页面缓存验收的合成事项。'}],plans:{0:{execution_mode:'task'}}});assert.equal(result.task_ids.length,1);
+        const created={label,notice:notice.id,task:result.task_ids[0],create_status:response.status()};creationReceipts.push(created);await saveReport();
+        assert.equal(new Set(creationReceipts.map(item=>item.notice)).size,creationReceipts.length,'Independent mutation scenarios require distinct real notices');
+        assert.equal(new Set(creationReceipts.map(item=>item.task)).size,creationReceipts.length,'Each independent notice must create its own task');
+        return created;
       };
       const fixed=await createTask('保留'),removed=await createTask('待删除');let inserted;
       const probe=async()=>{const [response]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);assert.equal(response.status(),200,await response.text());const value=await response.json();return {status:response.status(),revision:value.revision,domains:value.domains};};
