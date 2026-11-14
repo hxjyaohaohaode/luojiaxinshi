@@ -10,7 +10,7 @@ from .cloud_messages import CloudMessages
 from .db import dumps, ident
 from .models import Strict
 from .push_delivery import candidates
-from .security import rate_limit
+from .security import rate_limit, rate_limit_connection
 
 TABLES={'mail_preferences','mail_outbox'}
 SCHEMA="""
@@ -73,6 +73,25 @@ def reconcile(conn, uid, now):
                      (dumps(event['payload']),pref['destination'],event['due_at'],now,uid,key))
 
 
+def release_unclaimed_budget(conn, reservation):
+    """Undo this one reservation before the same claim transaction commits.
+
+    Reconciliation may already have cancelled or rescheduled a job. Preserve
+    those writes; only the reserved unit is removed. Never refund a committed
+    sending/accepted/uncertain attempt or a different budget window.
+    """
+    key, reset_at = reservation
+    row=conn.execute('SELECT count FROM limits WHERE key=? AND reset_at=?',(key,reset_at)).fetchone()
+    if not conn.in_transaction or not row or row['count']<1:
+        raise RuntimeError('Mail budget reservation is no longer in its claim transaction')
+    if row['count']==1:
+        changed=conn.execute('DELETE FROM limits WHERE key=? AND reset_at=? AND count=1',(key,reset_at)).rowcount
+    else:
+        changed=conn.execute('UPDATE limits SET count=count-1 WHERE key=? AND reset_at=? AND count=?',
+                             (key,reset_at,row['count'])).rowcount
+    if changed!=1:raise RuntimeError('Mail budget reservation could not be released exactly once')
+
+
 def tick(db, settings, provider=None, now=None):
     sender=provider or CloudMessages(settings)
     if not sender.available('email'):return
@@ -88,36 +107,50 @@ def tick(db, settings, provider=None, now=None):
     from .notification_coordination import coordinate
     for uid in users:coordinate(db,uid,'email',clock(),reconcile)
     for _ in range(12):
-        # Locate a possible job without claiming submission. Budget accounting
-        # can wait on the database; current truth must be checked after it.
+        # A peek is not a claim. Several workers may select the same ID; only
+        # the final write transaction may reserve quota and claim submission.
         with db.connect() as conn:
             row=conn.execute("SELECT id FROM mail_outbox WHERE state='pending' AND due_at<=? ORDER BY due_at,rowid LIMIT 1",(clock(),)).fetchone()
             if not row:return
             jid=row['id']
-        try:rate_limit(db,'mail-reminder-budget',settings.notification_mail_daily_limit,86400)
-        except HTTPException:
-            with db.connect(write=True) as conn:
-                conn.execute("UPDATE mail_outbox SET error='今日邮件额度已用完，等待额度恢复' WHERE id=? AND state='pending'",(jid,))
-            return
         with db.connect(write=True) as conn:
             # Read the live clock only after FIFO/SQLite admission. Explicit
             # now remains fixed for deterministic simulations and tests.
             moment=clock()
             row=conn.execute("SELECT * FROM mail_outbox WHERE id=? AND state='pending' AND due_at<=?",(jid,moment)).fetchone()
             if not row:continue
-            job=dict(row);reconcile(conn,job['user_id'],moment)
-            if conn.execute('SELECT state FROM mail_outbox WHERE id=?',(job['id'],)).fetchone()[0]!='pending':continue
+            job=dict(row)
+            try:
+                reservation=rate_limit_connection(conn,'mail-reminder-budget',settings.notification_mail_daily_limit,86400,now=moment)
+            except HTTPException:
+                moment=clock();reconcile(conn,job['user_id'],moment)
+                window=conn.execute("SELECT reset_at FROM limits WHERE key='mail-reminder-budget'").fetchone()
+                if window and window['reset_at']<moment:continue
+                conn.execute("UPDATE mail_outbox SET error='今日邮件额度已用完，等待额度恢复' WHERE id=? AND state='pending' AND due_at<=?",(jid,moment))
+                return
+            # Budget SQL may take time too. Keep the live check immediately
+            # before claim, and release only our uncommitted unit on any skip.
+            moment=clock();reconcile(conn,job['user_id'],moment)
+            current=conn.execute('SELECT * FROM mail_outbox WHERE id=?',(job['id'],)).fetchone()
             pref=preference(conn,job['user_id'])
-            if not pref or pref['destination']!=job['destination']:continue
-            job=dict(conn.execute('SELECT * FROM mail_outbox WHERE id=?',(job['id'],)).fetchone())
-            if job['due_at']>moment:continue
+            if (not current or current['state']!='pending' or not pref or
+                    pref['destination']!=current['destination'] or current['due_at']>moment or
+                    reservation[1]<moment):
+                release_unclaimed_budget(conn,reservation)
+                continue
+            job=dict(current)
+            try:
+                payload=json.loads(job['payload'])
+                if payload.get('user_id')!=job['user_id']:raise ValueError('invalid_owner')
+                url=payload.get('url','/#dashboard')
+                if not url.startswith('/#'):url='/#dashboard'
+                body=f"{payload.get('title','校园提醒')}\n{payload.get('body','')}\n\n查看并核对：{settings.origin}{url}\n\n此邮件来自你在珞珈信使中开启的提醒。可在提醒设置中随时关闭。"
+            except Exception:
+                release_unclaimed_budget(conn,reservation)
+                conn.execute("UPDATE mail_outbox SET state='uncertain',finished_at=?,error='邮件内容校验失败，未提交；请重新核对提醒记录' WHERE id=?",(moment,job['id']))
+                continue
             conn.execute("UPDATE mail_outbox SET state='sending',lease_until=? WHERE id=?",(moment+60,job['id']))
         try:
-            payload=json.loads(job['payload'])
-            if payload.get('user_id')!=job['user_id']:raise ValueError('invalid_owner')
-            url=payload.get('url','/#dashboard')
-            if not url.startswith('/#'):url='/#dashboard'
-            body=f"{payload.get('title','校园提醒')}\n{payload.get('body','')}\n\n查看并核对：{settings.origin}{url}\n\n此邮件来自你在珞珈信使中开启的提醒。可在提醒设置中随时关闭。"
             receipt=sender.send_mail(job['destination'],'珞珈信使 · 校园提醒',body)
             state,error='accepted',''
         except Exception:

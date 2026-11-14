@@ -3,7 +3,7 @@ import {createGettingStarted} from './getting-started.js';
 import {taskRowSummary} from './task-summary.js';
 import {createPagedList} from './paged-list.js';
 import {preserveListViewport} from './list-viewport.js';
-import {createListClock} from './list-clock.js';
+import {createListClock,invalidateChangedLists} from './list-clock.js';
 import {installDataSync} from './data-sync.js';
 import {bindProfileForm,saveProfileForm,applyProfileForm,patchProfile,profileUndoValues} from './profile-editor.js';
 import {createDialogNavigation,installFormHistory} from './dialog-navigation.js';
@@ -824,9 +824,9 @@ $('#dialog').addEventListener('close',()=>{
   });
 });
 document.addEventListener('invalid',event=>{const group=event.target.closest('[data-profile-group]');if(group?.hidden)document.querySelector(`[data-action="profile-section"][data-section="${group.dataset.profileGroup}"]`)?.click();},true);
-const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData});
+const libraryUI=createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData,projectionRevision:()=>workspaceProjection.revision('notices')});
 const taskListClock=createListClock('tasks');
-const taskCollection=createPagedList({api,path:'/tasks/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:(value,options)=>{
+const taskCollection=createPagedList({api,path:'/tasks/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,revision:()=>workspaceProjection.revision('tasks'),onChange:(value,options)=>{
   if(!location.hash.startsWith('#tasks'))return;state.tasks=value.items;
   if($('#task-results')){if(options.preserveViewport)preserveListViewport(()=>taskList(false));else taskList(false);}
 }});
@@ -1028,6 +1028,7 @@ async function refreshWorkspace(domains,revision){
   }
   if(changed('tasks','notices')&&$('#workflow-form'))await workflowUI.refreshOpen(revision,canUpdate);
   if(!canApply())return false;
+  invalidateChangedLists(domains,[taskCollection,libraryUI]);
   const home=page==='dashboard'&&context==='personal';
   const stableChanged=changed('notices','tasks','account');
   const clockOnly=!stableChanged&&changed('clock'),listRefresh={preserveRange:true,canApply};

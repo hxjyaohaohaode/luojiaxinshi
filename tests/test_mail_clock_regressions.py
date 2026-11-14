@@ -59,19 +59,21 @@ def test_live_mail_tick_rechecks_expiry_after_the_previous_provider_returns(env,
 
 def test_live_mail_tick_rechecks_expiry_after_real_budget_accounting(env, monkeypatch):
     client, db, settings, clock, start = queued_mail(env, monkeypatch, first=False)
-    budget = mail.rate_limit
+    budget = mail.rate_limit_connection
     calls = []
     def delayed_budget(*args, **kwargs):
         result = budget(*args, **kwargs)
         calls.append(True)
         clock[0] = start + 61
         return result
-    monkeypatch.setattr(mail, 'rate_limit', delayed_budget)
+    monkeypatch.setattr(mail, 'rate_limit_connection', delayed_budget)
     provider = CapturedMessages()
     mail.tick(db, settings, provider)
     assert calls == [True]
     assert not provider.mail, 'Budget/write-lock waiting must precede the final expiry check'
     assert outbox(db, 'mail')[0]['state'] == 'cancelled'
+    with db.connect() as conn:
+        assert conn.execute("SELECT count FROM limits WHERE key='mail-reminder-budget'").fetchone() is None
 
 
 def test_explicit_mail_now_keeps_its_fixed_simulation_semantics(env, monkeypatch):

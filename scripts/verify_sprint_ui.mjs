@@ -6,10 +6,10 @@ import {createRequire} from 'node:module';
 import {browserExecutable} from './browser-runtime.mjs';
 const require=createRequire(import.meta.url),pw=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/sprint-ui-browser');
-const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=25;
+const engines=(process.env.UI_ENGINES||'chromium,firefox,webkit').split(','),checksPerEngine=26;
 const report={fixture:'Isolated real application APIs; synthetic publications, tasks and provider; no external recipients',network_fixture:{service_workers:'block',reason:'Controlled request delays and failures require Playwright routing; PWA behavior is exercised separately by verify_push_browser.mjs.'},status:'running',complete:false,passed:false,expected_checks:engines.length*checksPerEngine,active:null,checks:[],errors:[],performance:[],query_races:[],mobile_controls:[],recent_requests:[]};
 await fs.mkdir(out,{recursive:true});
-report.review_regressions={clock_ranges:[],board_ranges:[],publication_retries:[],publication_cancellations:[]};
+report.review_regressions={clock_ranges:[],board_ranges:[],publication_retries:[],publication_cancellations:[],list_cache_routes:[]};
 async function saveReport(){const temporary=path.join(out,'report.json.tmp');await fs.writeFile(temporary,JSON.stringify(report,null,2));await fs.rename(temporary,path.join(out,'report.json'));}
 async function within(work,ms,message){let timer;try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(message)),ms);})]);}finally{clearTimeout(timer);}}
 await saveReport();
@@ -174,18 +174,24 @@ for(const engine of engines){
     await check('a card loaded from the second board page remains on page one after an actual upward move',async()=>{
       const boardPage=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&url.searchParams.get('sort')==='board';};
       const boardFirst=request=>boardPage(request)&&!new URL(request.url()).searchParams.has('cursor');
+      const evidence={engine,status:'running',range_receipts:[],request_paths:[]};report.review_regressions.board_ranges.push(evidence);await saveReport();
+      const boardState=()=>page.evaluate(()=>({ids:[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId),busy:document.querySelector('#task-results')?.getAttribute('aria-busy'),count:document.querySelector('#task-count')?.textContent,route:location.hash}));
+      const observeRequest=request=>{if(boardPage(request))evidence.request_paths.push({path:new URL(request.url()).pathname+new URL(request.url()).search,at:new Date().toISOString()});};
+      page.on('request',observeRequest);
+      try{
       const [firstResponse]=await Promise.all([page.waitForResponse(response=>boardFirst(response.request())),page.locator('[data-task-view=board]').click()]);
       assert.equal(firstResponse.status(),200,await firstResponse.text());const initial=await firstResponse.json();assert.equal(initial.items.length,50);
       const initialIds=initial.items.map(item=>item.id);
+      Object.assign(evidence,{initial_page:initial.items.length,initial_ids:initialIds,initial_response_status:firstResponse.status()});await saveReport();
       await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=board]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},initialIds);
       // Saving the view preference can invalidate the old cursor. Record and
       // verify the real recovery chain instead of requiring its first read to
       // be 200, or treating retained rows during a busy refresh as complete.
-      const rangeReads=[],rangeReceipts=[];
+      const rangeReads=[],rangeReceipts=evidence.range_receipts;
       const observeRange=response=>{if(!boardPage(response.request()))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};rangeReceipts.push(receipt);rangeReads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(item=>item.id),total:body.total,detail:body.detail}),error=>{receipt.parse_error=error.message;}));};
       page.on('response',observeRange);
-      try{await Promise.all([page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelectorAll('#task-results [data-task-id]').length===54),page.locator('[data-action=task-more]').click()]);}
-      finally{page.off('response',observeRange);await Promise.all(rangeReads);}
+      try{evidence.more_requested_at=new Date().toISOString();await Promise.all([page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelectorAll('#task-results [data-task-id]').length===54),page.locator('[data-action=task-more]').click()]);}
+      finally{page.off('response',observeRange);await Promise.all(rangeReads);evidence.range_dom=await boardState();await saveReport();}
       for(const receipt of rangeReceipts){assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));if(receipt.status===409)assert.equal(receipt.detail?.code,'list_changed',JSON.stringify(receipt));else{assert.equal(receipt.status,200,JSON.stringify(receipt));assert.ok(Array.isArray(receipt.ids),JSON.stringify(receipt));}}
       const rangeIds=[...new Set(initialIds.concat(...rangeReceipts.filter(receipt=>receipt.status===200).map(receipt=>receipt.ids)))];
       const ordered=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.equal(ordered.length,54);const moved=ordered[50];assert.equal(initial.items.some(item=>item.id===moved),false);
@@ -204,11 +210,13 @@ for(const engine of engines){
       assert.equal(result.items.length,50);assert.equal(result.items[49].id,moved);
       await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},result.items.map(item=>item.id));
       const ids=await page.locator('[data-task-lane=action] [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));assert.deepEqual(ids,[...ordered.slice(0,49),moved]);
-      report.review_regressions.board_ranges.push({engine,initial_page:50,loaded:54,moved_id:moved,from_index:50,to_index:49,after_first_page:ids,range_receipts:rangeReceipts,refresh_request_after_move_response:true});
+      Object.assign(evidence,{loaded:ordered.length,moved_id:moved,from_index:50,to_index:49,after_first_page:ids,refresh_request_after_move_response:true});await saveReport();
       await page.screenshot({path:path.join(out,engine+'-desktop-board-page-move.png')});
       const [listResponse]=await Promise.all([page.waitForResponse(response=>{const url=new URL(response.url());return response.request().method()==='GET'&&url.origin===origin&&url.pathname==='/api/tasks/page'&&url.searchParams.get('q')===prefix&&!url.searchParams.has('sort')&&!url.searchParams.has('cursor');}),page.locator('[data-task-view=list]').click()]);
       assert.equal(listResponse.status(),200,await listResponse.text());const list=await listResponse.json();
       await page.waitForFunction(ids=>{const result=document.querySelector('#task-results'),actual=[...document.querySelectorAll('#task-results [data-task-id]')].map(node=>node.dataset.taskId);return result?.getAttribute('aria-busy')==='false'&&document.querySelector('[data-task-view=list]')?.getAttribute('aria-pressed')==='true'&&actual.length===ids.length&&actual.every((id,index)=>id===ids[index]);},list.items.map(item=>item.id));
+      evidence.status='passed';
+      }finally{page.off('request',observeRequest);evidence.final_dom=await boardState().catch(error=>({error:error.message}));if(evidence.status!=='passed')evidence.status='incomplete';await saveReport();}
     });
     await page.locator('#task-search').fill(prefix);
     await check('task list reports a bounded first page and loads the remaining real records',async()=>{
@@ -373,6 +381,70 @@ for(const engine of engines){
       const newDraft=await form.getAttribute('data-draft-id');assert.notEqual(newDraft,original.draft_id);assert.equal(await form.locator('[name=title]').inputValue(),title);assert.equal((await api('/edit-cache/campus-publication')).payload,null);
       const session=await api('/session'),late=await context.request.post(origin+'/api/campus/publications',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{data:JSON.stringify(original)}});assert.equal(late.status(),409);assert.equal((await late.json()).detail.code,'publication_cancelled');assert.equal((await api('/campus/publications?q='+encodeURIComponent(title))).items.length,0);
       report.review_regressions.publication_cancellations.push({engine,request_id:original.request_id,replacement_draft_id:newDraft,late_status:409,late_code:'publication_cancelled',published_count:0});
+    });
+    await check('returning from home or settings reconciles cached pending tasks after independent inserts, deletions and status changes',async()=>{
+      await context.clearCookies();await login('sprint-'+engine,'PilotFixtureOnly2026!');await page.setViewportSize({width:1280,height:850});
+      const evidence={engine,status:'running',stages:[]};report.review_regressions.list_cache_routes.push(evidence);await saveReport();
+      for(const away of ['dashboard','settings']){
+      const query='跨路由缓存 '+engine+' '+away;
+      const createTask=async label=>{
+        const session=await api('/session'),response=await context.request.post(origin+'/api/notices',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{title:query+' '+label,body:'合成个人事项，用于验证离开清单后的真实新增与变化。无外部提交。',materials_complete:'true'}});
+        assert.equal(response.status(),200,await response.text());let notice=await response.json();notice=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});
+        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:[{title:query+' '+label,scope:'personal',materials:[],submission:'',details:'跨页面缓存验收的合成事项。'}],plans:{0:{execution_mode:'task'}}});assert.equal(result.task_ids.length,1);return {notice:notice.id,task:result.task_ids[0]};
+      };
+      const fixed=await createTask('保留'),removed=await createTask('待删除');let inserted;
+      const probe=async()=>{const [response]=await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname==='/api/proactive/revision'),page.evaluate(()=>window.dispatchEvent(new Event('focus')))]);assert.equal(response.status(),200,await response.text());const value=await response.json();return {status:response.status(),revision:value.revision,domains:value.domains};};
+      const projectionRequest=request=>{const url=new URL(request.url());return request.method()==='GET'&&url.origin===origin&&url.pathname==='/api/workspace/projection'&&(url.searchParams.get('include')||'').split(',').includes('tasks');};
+      await nav('tasks');if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('pending');else await page.locator('[data-action=filter][data-filter=pending]').click();
+      if(await page.locator('[data-task-view=list]').getAttribute('aria-pressed')!=='true')await page.locator('[data-task-view=list]').click();
+      await searchTasks(query);await settledTaskSearch(query,2);
+      for(const change of ['insert','delete','status']){
+        const stage={away,query,change,status:'running',home_projection_receipts:[],return_page_receipts:[],sync_probes:[]};evidence.stages.push(stage);await saveReport();
+        await nav(away);
+        const idle=page.locator(away==='dashboard'?'.personal-home .home-heading a[href="#new"]':'[data-settings-category=personal]');await idle.focus();assert.equal(await idle.evaluate(node=>document.activeElement===node),true);
+        const projectionReads=[],observeProjection=response=>{
+          if(!projectionRequest(response.request()))return;
+          const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};stage.home_projection_receipts.push(receipt);
+          projectionReads.push(response.json().then(body=>Object.assign(receipt,{revision:body.revision,clock_only:body.clock_only,matching_pending_ids:body.tasks?.filter(task=>task.data?.title?.startsWith(query)&&task.status==='pending'&&!task.action_excluded).map(task=>task.id)}),error=>{receipt.parse_error=error.message;}));
+        };
+        page.on('response',observeProjection);
+        try{
+          if(change==='insert')inserted=await createTask('后台新增');
+          else if(change==='delete'){const notice=await api('/notices/'+removed.notice);await api('/notices/'+removed.notice,'DELETE',{version:notice.version});}
+          else{const task=(await api('/tasks/'+inserted.task+'/workflow')).task;await api('/tasks/'+task.id,'PUT',{version:task.version,data:task.data,status:'cancelled',reason:'本人取消合成个人事项，验证待办筛选及时更新'});}
+          const expected=await api('/tasks/page?status=pending&limit=50&q='+encodeURIComponent(query)),home=await api('/tasks/page?status=pending&scope=personal&limit=1');
+          stage.expected_ids=expected.items.map(task=>task.id);stage.expected_total=expected.total;stage.expected_home_pending=home.total;
+          assert.deepEqual([...stage.expected_ids].sort(),(change==='insert'?[fixed.task,removed.task,inserted.task]:change==='delete'?[fixed.task,inserted.task]:[fixed.task]).sort());
+          // This read observes only the server's committed domain values; it
+          // cannot warm or mutate the application's projection cache.
+          const signalResponse=await context.request.get(origin+'/api/proactive/revision',{headers:{'X-Workspace-Revision':'1'}});assert.equal(signalResponse.status(),200,await signalResponse.text());stage.expected_domains=(await signalResponse.json()).domains;
+          stage.sync_probes.push(await probe());
+          if(away==='dashboard')await page.waitForFunction(total=>document.querySelector('.home-counts [data-overview-filter=pending] b')?.textContent===String(total),home.total);
+          // Subsequent real probes serialize after the stable update even on
+          // settings, where no task projection is needed. Keep their observed
+          // domains so an unconsumed signal cannot hide a stale route cache.
+          stage.sync_probes.push(await probe(),await probe());
+          for(const receipt of stage.sync_probes.slice(-2))for(const domain of ['tasks','notices','account'])assert.equal(receipt.domains?.[domain],stage.expected_domains[domain],JSON.stringify({domain,receipt,expected:stage.expected_domains}));
+        }finally{page.off('response',observeProjection);await Promise.all(projectionReads);await saveReport();}
+        for(const receipt of stage.home_projection_receipts){assert.equal(receipt.status,200,JSON.stringify(receipt));assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));}
+        if(away==='dashboard'){
+          const full=stage.home_projection_receipts.filter(receipt=>receipt.clock_only===false).at(-1);assert.ok(full,'The real home route must consume a full changed task projection');
+          assert.deepEqual([...full.matching_pending_ids].sort(),[...stage.expected_ids].sort());stage.home_revision=full.revision;
+        }else assert.equal(stage.home_projection_receipts.length,0,'Settings must consume the stable signal without fetching a task projection');
+        const pageReads=[],observePage=response=>{
+          if(!taskResponse(query,response))return;const receipt={path:new URL(response.url()).pathname+new URL(response.url()).search,status:response.status()};stage.return_page_receipts.push(receipt);
+          pageReads.push(response.json().then(body=>Object.assign(receipt,{ids:body.items?.map(task=>task.id),total:body.total}),error=>{receipt.parse_error=error.message;}));
+        };
+        page.on('response',observePage);
+        try{await nav('tasks');await settledTaskSearch(query,stage.expected_total);}
+        finally{page.off('response',observePage);await Promise.all(pageReads);stage.actual_ids=await page.locator('#task-results [data-task-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.taskId));stage.actual_count=await page.locator('#task-count').innerText();await saveReport();}
+        assert.ok(stage.return_page_receipts.length>0,'An authoritative stable change must revalidate this collection on route return');
+        for(const receipt of stage.return_page_receipts){assert.equal(receipt.status,200,JSON.stringify(receipt));assert.equal(receipt.parse_error,undefined,JSON.stringify(receipt));}
+        assert.equal(await page.locator('#task-search').inputValue(),query);assert.deepEqual([...stage.actual_ids].sort(),[...stage.expected_ids].sort());
+        assert.equal(await page.locator('[data-action=filter][data-filter=pending]').getAttribute('aria-selected'),'true');stage.status='passed';await saveReport();
+      }
+      }
+      await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,engine+'-mobile-list-cache.png')});evidence.status='passed';await saveReport();
     });
     await check('new routes and interactions finish without uncaught page errors',()=>assert.deepEqual(report.errors.filter(item=>item.engine===engine),[]));
   }catch(error){console.error(engine,error.message);if(!report.checks.some(item=>item.engine===engine&&!item.ok))report.checks.push({engine,name:'setup or fatal execution',ok:false,error:error.stack});}finally{await saveReport();await browser.close();}

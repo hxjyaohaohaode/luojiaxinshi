@@ -39,5 +39,5 @@ export function createWorkspaceProjection({api,owner,context=()=>null}){
     }
     return complete;
   }
-  return {load,clear:reset};
+  return {load,clear:reset,revision:kind=>identity===owner()?cache[kind]?.revision??null:null};
 }

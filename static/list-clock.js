@@ -30,6 +30,14 @@ export function clockSensitiveList(kind, filters) {
   return kind === 'tasks' ? ['soon','followup'].includes(filters.status) :
     !['','all'].includes(filters.intent||'') || ['priority','deadline'].includes(filters.sort);
 }
+export function invalidateChangedLists(domains, collections) {
+  // These stable domains are shared by the authenticated list cursor contract.
+  // A route that does not need a projection must still invalidate its cached
+  // collections before the sync controller consumes the committed revision.
+  if (domains && !['notices','tasks','account'].some(key => domains.has(key))) return false;
+  for (const collection of collections) collection.invalidate();
+  return true;
+}
 export function createListClock(kind) {
   let lastKey='', lastSignature='';
   return {async refresh(collection, projection, {owner,canApply=()=>true,reload}={}) {
@@ -40,7 +48,7 @@ export function createListClock(kind) {
       [item.id,item.intent,item.recommended,item.assessment?.priority,item.assessment?.urgency])]):'';
     // A new/deleted record can be outside the visible range. Comparing only
     // loaded IDs cannot detect it, so use the projection's cache-bound revision.
-    const changedStable=projection.baseline_known!==true || projection.stable_changed===true || value.items.some(item=>{
+    const changedStable=value.projection_stale===true || projection.baseline_known!==true || projection.stable_changed===true || value.items.some(item=>{
       const next=byId.get(item.id);return !next || next.version!==item.version ||
         kind==='tasks'&&next.workflow?.version!==item.workflow?.version ||
         ['status','updated_at','disposition'].some(field=>field in next&&next[field]!==item[field]);

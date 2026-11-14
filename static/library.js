@@ -81,7 +81,7 @@ export function groupNotices(items){
   return units;
 }
 
-export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData}){
+export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelection,refreshData,projectionRevision=()=>null}){
   let owner=null,query='',status='all',from='',to='',relevance='all',intent='current',source='',sort='priority',page=1,view='cards';
   let grouped=true;
   let searchSequence=0,searchTimer=null,searchResult=null,searchQuery='',searchError='',searching=false,sourceSequence=0;
@@ -89,7 +89,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
   const listClock=createListClock('notices');
   const $=s=>document.querySelector(s);
   const button=(label,value,disabled=false)=>`<button type="button" class="button small" data-library-page="${value}" ${disabled?'disabled':''}>${label}</button>`;
-  const collection=createPagedList({api,path:'/notices/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,onChange:(value,options)=>{
+  const collection=createPagedList({api,path:'/notices/page',owner:()=>state.session?.user?.id,context:()=>state.renderId,revision:projectionRevision,onChange:(value,options)=>{
     if(owner!==state.session?.user?.id||!$('#library-results'))return;
     state.notices=value.items;searching=value.loading;searchError=value.error;
     if(options.preserveViewport)preserveListViewport(update);else update();
@@ -272,5 +272,5 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     if(e.target.closest('[data-library-reset]')){state.insightSelection=null;clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;$('#library-search').value='';$('#library-from').value='';$('#library-to').value='';queueSearch(true);$('#library-search').focus({preventScroll:true});}
   });
   const reload=options=>options?.preserveRange?collection.load(currentFilters(),{...options,force:true}):loadFilters(true);
-  return {render,reload,refreshClock:(projection,canApply)=>listClock.refresh(collection,projection,{owner:state.session?.user?.id,canApply,reload}),clear:()=>collection.clear(),snapshot:()=>collection.snapshot(),resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
+  return {render,reload,refreshClock:(projection,canApply)=>listClock.refresh(collection,projection,{owner:state.session?.user?.id,canApply,reload}),clear:()=>collection.clear(),invalidate:()=>collection.invalidate(),snapshot:()=>collection.snapshot(),resetFilters(){clearSearch();query='';status='all';from='';to='';relevance='all';intent='all';source='';page=1;}};
 }
