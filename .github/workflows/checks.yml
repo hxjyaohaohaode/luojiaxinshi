@@ -41,7 +41,7 @@ jobs:
       - run: node --test --test-reporter=junit --test-reporter-destination=artifacts/ci/node-tests.xml tests/*.test.mjs
       - run: python scripts/genui_catalog.py --check
       - run: python scripts/evaluate_genui.py
-      - run: npm audit --omit=dev
+      - run: npm audit
       - run: python -m pip_audit -r requirements.lock --strict
       - run: python scripts/verify_retrieval_quality.py
       - run: python scripts/verify_campus_capacity.py
@@ -64,6 +64,7 @@ jobs:
             artifacts/ci/summary.md
             artifacts/proactive-retrieval-comparison.json
             artifacts/campus-capacity-matters/capacity-benchmark.json
+            artifacts/runtime-acceptance.json
           retention-days: 14
           if-no-files-found: warn
   windows-backend:
@@ -140,9 +141,9 @@ jobs:
           python scripts/genui_catalog.py --check
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/evaluate_genui.py
-      - name: Audit production Node dependencies
+      - name: Audit all locked Node dependencies including the build toolchain
         if: always()
-        run: npm audit --omit=dev
+        run: npm audit
       - name: Audit production Python dependencies
         if: always()
         run: python -m pip_audit -r requirements.lock --strict
@@ -173,6 +174,7 @@ jobs:
             artifacts/ci/summary.md
             artifacts/proactive-retrieval-comparison.json
             artifacts/campus-capacity-matters/capacity-benchmark.json
+            artifacts/runtime-acceptance.json
           retention-days: 14
           if-no-files-found: warn
   browser:

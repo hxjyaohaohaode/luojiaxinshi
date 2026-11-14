@@ -240,9 +240,22 @@ def detach(conn,uid,nid):
 def annotate(conn,uid,records):
     if not records:return records
     selected=dumps([record['id'] for record in records])
-    mapping = {r['notice_id']:dict(r) for r in conn.execute('SELECT m.notice_id,g.id,g.title,g.version,(SELECT COUNT(*) FROM notice_matter_members a WHERE a.matter_id=g.id) AS member_count FROM notice_matter_members m JOIN notice_matters g ON g.id=m.matter_id WHERE g.user_id=? AND m.notice_id IN (SELECT value FROM json_each(?))',(uid,selected))}
-    from .notice_tracking import summary
-    tracking=summary(conn,uid,[record['id'] for record in records])
+    # Group and phase are both optional metadata for the same owner-scoped page.
+    # Load them together, including current versions for phase evidence checks.
+    rows=conn.execute('''SELECT n.id AS notice_id,n.version AS current_notice_version,
+        g.id,g.title,g.version,
+        (SELECT COUNT(*) FROM notice_matter_members a WHERE a.matter_id=g.id) AS member_count,
+        p.version AS phase_version,p.notice_version,p.data
+        FROM notices n
+        LEFT JOIN notice_matter_members m ON m.notice_id=n.id
+        LEFT JOIN notice_matters g ON g.id=m.matter_id AND g.user_id=n.user_id
+        LEFT JOIN notice_phase_tracking p ON p.notice_id=n.id AND p.user_id=n.user_id
+        WHERE n.user_id=? AND n.id IN (SELECT value FROM json_each(?))''',(uid,selected)).fetchall()
+    mapping={r['notice_id']:{key:r[key] for key in ('notice_id','id','title','version','member_count')}
+             for r in rows if r['id'] is not None}
+    from .notice_tracking import summarize_rows
+    tracking=summarize_rows(conn,uid,({'notice_id':r['notice_id'],'current_notice_version':r['current_notice_version'],
+        'version':r['phase_version'],'notice_version':r['notice_version'],'data':r['data']} for r in rows))
     for n in records:
         n['matter']=mapping.get(n['id'])
         n['phase_tracking']=tracking.get(n['id'])

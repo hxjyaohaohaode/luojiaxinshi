@@ -1,0 +1,40 @@
+{
+  "id": "notice-query-regression-45",
+  "kind": "synthetic_backend",
+  "result": "passed",
+  "passed": 45,
+  "warnings": 1,
+  "seconds": 28.82,
+  "frozen_at": "2026-11-14T05:01:09Z",
+  "scope_files": [
+    "tests/test_usage_limits.py",
+    "tests/test_notice_matters.py",
+    "tests/test_notice_phase_tracking.py",
+    "tests/test_sprint_lists.py",
+    "tests/test_workspace_projection.py"
+  ],
+  "failure": {
+    "test": "tests/test_usage_limits.py::test_search_query_count_does_not_grow_per_notice",
+    "records": 100,
+    "before_select_count": 15,
+    "original_limit": "<15",
+    "independently_reproduced": true,
+    "threshold_changed": false
+  },
+  "fix": {
+    "after_select_count": 14,
+    "records_returned": 100,
+    "files": ["app/notice_matters.py", "app/notice_tracking.py"],
+    "behavior": "同一 owner 和通知 ID 范围批量读取归组、阶段与当前版本；关联通知不在批次内时才额外查询其 owner 限定版本。",
+    "added_regression_cases": 2,
+    "preserved": ["全部记录", "归组字段", "阶段摘要", "当前及关联版本复核", "账号隔离", "关联通知删除后的复核要求"]
+  },
+  "command": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_usage_limits.py tests/test_notice_matters.py tests/test_notice_phase_tracking.py tests/test_sprint_lists.py tests/test_workspace_projection.py -o addopts='' --tb=short --junitxml=artifacts/sprint-final/notice-query-regression.xml",
+  "artifacts": [
+    "artifacts/sprint-final/notice-query-regression.xml",
+    "artifacts/sprint-final/notice-query-regression-before.json",
+    "artifacts/sprint-final/notice-query-regression-after.json"
+  ],
+  "document": "docs/audits/sprint-sources-evidence.md",
+  "limits": "此轮含原来源／投影定向范围，不能与其他轮次简单累加；不是整个分支重新冻结后的完整后端／CI 通过证明。"
+}

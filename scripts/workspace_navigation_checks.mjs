@@ -93,7 +93,10 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
   await nav('tasks');await nav('calendar');
   await check('mini calendar filters the selected day while keeping the list view',async()=>{
     await page.locator('[data-calendar-action="options"]').click();await page.locator('#calendar-option-date').fill(calendarDates[0]);await page.locator('#calendar-option-date').press('Tab');await page.locator('#dialog .dialog-head [data-action="close-dialog"]').click();
-    await page.locator('[data-calendar-view="list"]').click();await page.locator('#calendar-query').fill(tag);
+    await page.locator('[data-calendar-view="list"]').click();
+    const search=page.waitForResponse(response=>{const url=new URL(response.url());return url.pathname==='/api/workspace/calendar-search'&&url.searchParams.get('q')===tag;});
+    await page.locator('#calendar-query').fill(tag);const result=await search;assert.equal(result.status(),200);assert.equal((await result.json()).query,tag);
+    await page.waitForFunction(()=>document.querySelector('#calendar-body')?.getAttribute('aria-busy')==='false'&&[...document.querySelectorAll('[data-calendar-search-status]')].every(node=>node.hidden));
     assert.equal(await page.locator('.calendar-agenda .agenda-row').count(),2);
     await page.locator('#calendar-mini [data-calendar-day="'+calendarDates[0]+'"]').click();
     assert.equal(await page.locator('#calendar-body').getAttribute('data-view'),'list');assert.equal(await page.locator('.calendar-agenda .agenda-row').count(),1);assert.ok((await page.locator('.calendar-agenda .agenda-title').textContent()).includes(calendarDates[0]));
@@ -141,7 +144,9 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
   });
   await check('settings show one category and keep hidden profile values intact',async()=>{
     await nav('settings');assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);
-    assert.equal(await page.locator('[data-settings-panel=personal] .settings-item:visible').count(),3);
+    const personal=page.locator('[data-settings-panel=personal]');assert.equal(await personal.locator('.settings-item:visible').count(),4);
+    assert.deepEqual(await personal.locator('.settings-item').evaluateAll(items=>items.map(item=>item.dataset.action||item.getAttribute('href'))),['getting-started','settings-profile','settings-preferences','#memory']);
+    await personal.locator('[data-action=getting-started]').click();await page.locator('[data-onboarding-guide]').waitFor();assert.equal(await page.locator('[data-onboarding-guide] ol>li').count(),3);await page.locator('[data-onboarding-guide] [data-action=close-dialog]').click();await page.locator('#dialog').waitFor({state:'hidden'});
     for(const category of ['account','display','personal']){await page.locator('[data-settings-category='+category+']').click();assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);assert.equal(await page.locator('[data-settings-panel='+category+']').isVisible(),true);}
     await page.locator('[data-settings-category=personal]').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('[data-settings-panel=account]').isVisible(),true);await page.keyboard.press('Home');
     await page.locator('[data-action=settings-profile]').click();const before=await page.locator('#profile-form').evaluate(form=>Object.fromEntries(new FormData(form)));

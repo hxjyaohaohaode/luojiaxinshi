@@ -1,0 +1,1441 @@
+{
+  "schema_version": 1,
+  "title": "首次完整 CI：失败分组、实际修复与待复验状态",
+  "recorded_at": "2026-11-14T05:30:45.151053+00:00",
+  "status": "修复待新CI",
+  "scope": "只归档首轮证据与已落地修复。不是 main 全绿、最终冻结回归或真实外部验收结论；未修改 128 项总账最终状态。",
+  "run": {
+    "repository": "hxjyaohaohaode/luojiaxinshi",
+    "run_id": 43558958724,
+    "attempt": 1,
+    "url": "https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43558958724",
+    "branch_head": "6145f129169aae160d7ae9fcf3ccda3f42cbdbae",
+    "tested_merge_sha": "aa0f12d6930228cc14d568ade72d8e745eae639c",
+    "base_main_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
+    "jobs": {
+      "linux_backend": 132338108536,
+      "windows_aggregate": 132342817817,
+      "windows_shard4": 132338108427,
+      "browser": 132338108551,
+      "continuity": 132338108285,
+      "container": 132338108591
+    }
+  },
+  "evidence_interpretation": [
+    "所有已通过数量指明确对应的首轮或定向执行；修复之后的完整浏览器/远程 CI 尚未执行通过。",
+    "Linux/Windows 各有 1779 个唯一后端测试，是同一清单的两种环境，不能相加为不同测试。平台专属 skip 数不同有明确原因。",
+    "browser 报告的 checks 有两种格式：显式结果对象，或已完成检查名称。名称列表遇顶层错误时表示中途失败，不能伪算完整总数。",
+    "pilot-workspace 的 errors 重复记载同三个 failed checks，不能相加成六个独立失败。",
+    "composer 无 JSON 报告，runner returncode 与原始日志证实失败；不把缺失报告当作零失败。",
+    "33 个 browser 报告槽包含 16 个主套件、5 个 Agent/composer 套件及 OpenUI/布局/聊天交互/恢复各 3 个引擎报告；33 不是 33 个独立浏览器引擎。",
+    "7 个主浏览器套件首轮完整通过；另有 4 个 Agent、3 个 OpenUI、3 个紧凑聊天布局报告通过，共 17 个报告槽。其余 16 个失败或中断。",
+    "合成来源、推送和模型 fixtures 不证明真实校园权限、供应商投递、真机锁屏、人工标注准确率或累计不少于 5 天真实应用。"
+  ],
+  "backend_first_run": [
+    {
+      "os": "ubuntu-latest",
+      "first_run_outcome": "failed",
+      "current_validation_status": "修复待新CI",
+      "file_count": 133,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 2,
+      "tests": 1779,
+      "unique_tests": 1779,
+      "passed": 1776,
+      "complete_inventory": true,
+      "implementation_unchanged": true,
+      "implementation_sha256": "66397f54a15043e70612728a28713016f4835c66be68ccfa0ecf77d04aed8eef",
+      "unique_failure": "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+      "observed_select_count": 15,
+      "required_select_count": "<15",
+      "evidence": {
+        "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/ubuntu/ci/python-tests.xml",
+        "sha256": "7e3c9f082b26e156fd76225cefb7daf85b2faceb8e604bbd7b493bea884151d0",
+        "artifact": "unit-reports-ubuntu-latest",
+        "path_in_artifact": "ci/python-tests.xml"
+      }
+    },
+    {
+      "os": "windows-latest",
+      "first_run_outcome": "failed",
+      "current_validation_status": "修复待新CI",
+      "file_count": 133,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 1,
+      "tests": 1779,
+      "unique_tests": 1779,
+      "passed": 1777,
+      "complete_inventory": true,
+      "implementation_unchanged": true,
+      "implementation_sha256": "94b41093dd392c4176381d450470f499cc669d194d888d474287163f58c49813",
+      "unique_failure": "tests.test_usage_limits::test_search_query_count_does_not_grow_per_notice",
+      "observed_select_count": 15,
+      "required_select_count": "<15",
+      "evidence": {
+        "local_path": "artifacts/ci-readonly/run-43558958724-windows/ci/python-tests.xml",
+        "sha256": "a7aa773f6d1962f4b3c57773e479ae58361892003b49d49149bfde4051120d9e",
+        "artifact": "unit-reports-windows-latest",
+        "path_in_artifact": "ci/python-tests.xml"
+      }
+    }
+  ],
+  "windows_other_gates": {
+    "node_unique_cases": {
+      "tests": 275,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "genui_synthetic": {
+      "synthetic": true,
+      "passed": 40,
+      "total": 40,
+      "failed": 0
+    },
+    "dependencies": {
+      "node_command": "npm audit --omit=dev",
+      "node_known_vulnerabilities": 0,
+      "python_command": "python -m pip_audit -r requirements.lock --strict",
+      "python_result": "No known vulnerabilities found",
+      "scope": "This initial workflow did not use the later all-dependency npm audit step."
+    },
+    "steps": [
+      {
+        "name": "Require reproducible frontend bundles and route chunks",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7
+      },
+      {
+        "name": "Download every partition from this exact workflow attempt",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 8
+      },
+      {
+        "name": "Require the complete current-code inventory and real JUnit union",
+        "status": "completed",
+        "conclusion": "failure",
+        "number": 9
+      },
+      {
+        "name": "Run all Windows frontend unit cases",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 10
+      },
+      {
+        "name": "Validate the generated UI catalog and evaluation",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 11
+      },
+      {
+        "name": "Audit production Node dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 12
+      },
+      {
+        "name": "Audit production Python dependencies",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13
+      },
+      {
+        "name": "Verify real HTTP concurrency, restart and restore",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14
+      },
+      {
+        "name": "Verify offline retrieval and full default account capacity",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15
+      },
+      {
+        "name": "Build the source delivery archive",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16
+      },
+      {
+        "name": "Write complete Windows counts",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      },
+      {
+        "name": "Upload complete Windows evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      }
+    ],
+    "evidence": {
+      "local_path": "artifacts/ci-readonly/run-43558958724-windows-verification.json",
+      "sha256": "52db908020a5d7a23e2d2d8e304dc48b408b1319a0c27ae31f587f81acec84c3"
+    }
+  },
+  "browser_first_run": {
+    "report_slots": 33,
+    "main_suite_count": 16,
+    "main_suites_fully_passed": 7,
+    "report_slots_fully_passed": 17,
+    "report_slots_failed_or_aborted": 16,
+    "records": [
+      {
+        "name": "Sprint workflows and loading performance",
+        "report": "sprint-ui-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_sprint_ui.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 15,
+        "recorded_successful_checks": 12,
+        "recorded_failed_checks": 3,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/sprint-ui-browser/report.json",
+          "sha256": "c1c7701569e28953fef925e683d11d53b5ab2f29428e208aa17347f2bc482f97",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "sprint-ui-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "home totals and calendar use the full lightweight account projection",
+            "error_first_line": "locator.waitFor: Timeout 15000ms exceeded."
+          },
+          {
+            "engine": "firefox",
+            "name": "home totals and calendar use the full lightweight account projection",
+            "error_first_line": "locator.waitFor: Timeout 15000ms exceeded."
+          },
+          {
+            "engine": "webkit",
+            "name": "home totals and calendar use the full lightweight account projection",
+            "error_first_line": "locator.waitFor: Timeout 15000ms exceeded."
+          }
+        ]
+      },
+      {
+        "name": "Browser stability",
+        "report": "frontend-v9-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_frontend_stability.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 123,
+        "recorded_successful_checks": 117,
+        "recorded_failed_checks": 6,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/frontend-v9-browser/report.json",
+          "sha256": "b1d3212c1c8029a40a8c8abba615a87f79f13197f28bad6da7f023777ee4b0f3",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "frontend-v9-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "repeated play pause close reopen reuses generated audio",
+            "error_first_line": "locator.click: Timeout 20000ms exceeded."
+          },
+          {
+            "engine": "chromium",
+            "name": "used memory appears as a small accessible SVG",
+            "error_first_line": "{\"svg\":1,\"label\":\"本次使用 1 条记忆；1 条记忆被 Agent 报告采用，查看记忆记录\",\"w\":44,\"h\":44}"
+          },
+          {
+            "engine": "firefox",
+            "name": "repeated play pause close reopen reuses generated audio",
+            "error_first_line": "locator.click: Timeout 20000ms exceeded."
+          },
+          {
+            "engine": "firefox",
+            "name": "used memory appears as a small accessible SVG",
+            "error_first_line": "{\"svg\":1,\"label\":\"本次使用 1 条记忆；1 条记忆被 Agent 报告采用，查看记忆记录\",\"w\":44,\"h\":44}"
+          },
+          {
+            "engine": "webkit",
+            "name": "repeated play pause close reopen reuses generated audio",
+            "error_first_line": "locator.click: Timeout 20000ms exceeded."
+          },
+          {
+            "engine": "webkit",
+            "name": "used memory appears as a small accessible SVG",
+            "error_first_line": "{\"svg\":1,\"label\":\"本次使用 1 条记忆；1 条记忆被 Agent 报告采用，查看记忆记录\",\"w\":44,\"h\":44}"
+          }
+        ]
+      },
+      {
+        "name": "Browser regression",
+        "report": "frontend-v8-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_frontend_review.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 201,
+        "recorded_successful_checks": 201,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/frontend-v8-browser/report.json",
+          "sha256": "0b29034a1d122d156922562a10414a9e63264c58a3d42d1b902021a978feac14",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "frontend-v8-browser/report.json"
+        }
+      },
+      {
+        "name": "Reference interactions",
+        "report": "reference-interactions-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_reference_interactions.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 48,
+        "recorded_successful_checks": 48,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/reference-interactions-browser/report.json",
+          "sha256": "5b5e27449732db81134511417d4ec9603ed3edaf4c8b19c55a1b11543ab67f8f",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "reference-interactions-browser/report.json"
+        }
+      },
+      {
+        "name": "Workspace interactions",
+        "report": "workspace-interactions-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_workspace_interactions.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 120,
+        "recorded_successful_checks": 108,
+        "recorded_failed_checks": 12,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/workspace-interactions-browser/report.json",
+          "sha256": "42696f60035a97799f8a994f6da2d58719758343557abe27947f53a6763db36c",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "workspace-interactions-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "mini calendar filters the selected day while keeping the list view",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "chromium",
+            "name": "settings show one category and keep hidden profile values intact",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "chromium",
+            "name": "single-purpose navigation cards have complete independent pointer and keyboard targets",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "chromium",
+            "name": "insight metrics open exact task and notice selections and clear back to all records",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "firefox",
+            "name": "mini calendar filters the selected day while keeping the list view",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "firefox",
+            "name": "settings show one category and keep hidden profile values intact",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "firefox",
+            "name": "single-purpose navigation cards have complete independent pointer and keyboard targets",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "firefox",
+            "name": "insight metrics open exact task and notice selections and clear back to all records",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "webkit",
+            "name": "mini calendar filters the selected day while keeping the list view",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "webkit",
+            "name": "settings show one category and keep hidden profile values intact",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "webkit",
+            "name": "single-purpose navigation cards have complete independent pointer and keyboard targets",
+            "error_first_line": "Expected values to be strictly equal:"
+          },
+          {
+            "engine": "webkit",
+            "name": "insight metrics open exact task and notice selections and clear back to all records",
+            "error_first_line": "Expected values to be strictly equal:"
+          }
+        ]
+      },
+      {
+        "name": "Visual layout bounds",
+        "report": "visual-review-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_visual_review.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 168,
+        "recorded_successful_checks": 168,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/visual-review-browser/report.json",
+          "sha256": "8dc573b60be9bb063201fd85541dd4d8dff076ebb75b0b5a63f664d1ba2ae3ec",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "visual-review-browser/report.json"
+        }
+      },
+      {
+        "name": "Notice intake and flexible workflows",
+        "report": "notice-flow-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_notice_flow.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 45,
+        "recorded_successful_checks": 41,
+        "recorded_failed_checks": 4,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/notice-flow-browser/report.json",
+          "sha256": "c917a505632dbfaa60c0fee3a9e2a127d5d5e95b5c2cff2b54ee620d0c6a5643",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "notice-flow-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "firefox",
+            "name": "batch partial success survives retry; duplicates reuse the notice unless another batch is selected",
+            "error_first_line": "locator.click: Timeout 12000ms exceeded."
+          },
+          {
+            "engine": "firefox",
+            "name": "batch can supplement an existing notice, reopening it and preserving originals",
+            "error_first_line": "locator.click: Error: strict mode violation: locator('[data-intake-entry]').locator('.intake-metadata>summary') resolved to 2 elements:"
+          },
+          {
+            "engine": "webkit",
+            "name": "batch partial success survives retry; duplicates reuse the notice unless another batch is selected",
+            "error_first_line": "locator.click: Timeout 12000ms exceeded."
+          },
+          {
+            "engine": "webkit",
+            "name": "batch can supplement an existing notice, reopening it and preserving originals",
+            "error_first_line": "locator.click: Error: strict mode violation: locator('[data-intake-entry]').locator('.intake-metadata>summary') resolved to 2 elements:"
+          }
+        ]
+      },
+      {
+        "name": "Task board drag and recovery",
+        "report": "task-board-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_task_board.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 25,
+        "recorded_successful_checks": 22,
+        "recorded_failed_checks": 3,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/task-board-browser/report.json",
+          "sha256": "f608387f4c28814e4cdd839eb13233816a4b84930aadc86cd785ffdfd3544dc7",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "task-board-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "whole-card drag reorders, persists after reload, and does not open the task",
+            "error_first_line": "Expected values to be strictly deep-equal:"
+          },
+          {
+            "engine": "firefox",
+            "name": "whole-card drag reorders, persists after reload, and does not open the task",
+            "error_first_line": "Expected values to be strictly deep-equal:"
+          },
+          {
+            "engine": "webkit",
+            "name": "compact 390px layout retains reachable move targets and no horizontal overflow",
+            "error_first_line": "locator.scrollIntoViewIfNeeded: Element is not attached to the DOM"
+          }
+        ]
+      },
+      {
+        "name": "Natural notice intake",
+        "report": "natural-intake-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_natural_intake.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 24,
+        "recorded_successful_checks": 21,
+        "recorded_failed_checks": 3,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/natural-intake-browser/report.json",
+          "sha256": "5368cad7da1854c8ac44a37f0d2305d5f400951e8d24fb2adf0ef53f68beba68",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "natural-intake-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "older search responses cannot overwrite the newer query",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          },
+          {
+            "engine": "firefox",
+            "name": "older search responses cannot overwrite the newer query",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          },
+          {
+            "engine": "webkit",
+            "name": "older search responses cannot overwrite the newer query",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          }
+        ]
+      },
+      {
+        "name": "Personal materials and submissions",
+        "report": "task-materials-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_task_materials.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 9,
+        "recorded_successful_checks": 9,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/task-materials-browser/report.json",
+          "sha256": "96c4d5b0a6617b79a9167d796f9648f162a07832e6e8866cf92a6f61fbadfdf8",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "task-materials-browser/report.json"
+        }
+      },
+      {
+        "name": "Source subscriptions and personal inbox",
+        "report": "source-inbox-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_source_inbox.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 0,
+        "recorded_successful_checks": 0,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 1,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/source-inbox-browser/report.json",
+          "sha256": "724a49d96642c50f4510c97755c41b36c28fecaf5504b1e6b983a0982f3bd87c",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "source-inbox-browser/report.json"
+        },
+        "error_first_lines": [
+          "locator.waitFor: Timeout 10000ms exceeded."
+        ]
+      },
+      {
+        "name": "Persistent push and device ownership",
+        "report": "push-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_push_browser.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 8,
+        "recorded_successful_checks": 8,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/push-browser/report.json",
+          "sha256": "0378bf9303872db827faef8712be55d136ecc6e9b0500ab75bdeccb62328ef00",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "push-browser/report.json"
+        }
+      },
+      {
+        "name": "Notice matter grouping and campus capacities",
+        "report": "notice-matters-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_notice_matters.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 21,
+        "recorded_successful_checks": 21,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/notice-matters-browser/report.json",
+          "sha256": "6efca39aedb5f0851573017624180aad133b011316a67f2bffb954e750d2183f",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "notice-matters-browser/report.json"
+        }
+      },
+      {
+        "name": "School source chooser and pending saves",
+        "report": "source-presets-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_source_presets_ui.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 2,
+        "recorded_successful_checks": 2,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 1,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/source-presets-browser/report.json",
+          "sha256": "afa9d138892ab31fffb276d66cfba9dbd3814f49b8486604aa10bf33fb7dcdc2",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "source-presets-browser/report.json"
+        },
+        "error_first_lines": [
+          "page.waitForFunction: Timeout 30000ms exceeded."
+        ]
+      },
+      {
+        "name": "Independent devices and campus collaboration",
+        "report": "pilot-workspace-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_pilot_workspace.mjs",
+        "first_run_outcome": "failed",
+        "recorded_checks": 9,
+        "recorded_successful_checks": 6,
+        "recorded_failed_checks": 3,
+        "report_error_entries": 3,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/pilot-workspace-browser/report.json",
+          "sha256": "e08ef35b4f442b3d2687b7ce90ad91eb03e1d04e4a3c347d368f4bb77ef21506",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "pilot-workspace-browser/report.json"
+        },
+        "failed_cases": [
+          {
+            "engine": "chromium",
+            "name": "notice receipt becomes a task and updates the other device selectively",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          },
+          {
+            "engine": "firefox",
+            "name": "notice receipt becomes a task and updates the other device selectively",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          },
+          {
+            "engine": "webkit",
+            "name": "notice receipt becomes a task and updates the other device selectively",
+            "error_first_line": "The expression evaluated to a falsy value:"
+          }
+        ],
+        "error_first_lines": [
+          "The expression evaluated to a falsy value:",
+          "The expression evaluated to a falsy value:",
+          "The expression evaluated to a falsy value:"
+        ],
+        "error_entries_duplicate_failed_cases": true
+      },
+      {
+        "name": "QQ group intake, rules and attachments",
+        "report": "qq-group-intake-browser/report.json",
+        "current_validation_status": "修复待新CI",
+        "script": "scripts/verify_qq_group_intake_ui.mjs",
+        "first_run_outcome": "passed",
+        "recorded_checks": 12,
+        "recorded_successful_checks": 12,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "explicit_case_results",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/qq-group-intake-browser/report.json",
+          "sha256": "b9ec592b65003063bafa2b57bc505036eeb09a714c26a148d5c6c9ee51dea476",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "qq-group-intake-browser/report.json"
+        }
+      },
+      {
+        "name": "Agent approvals and cancellation",
+        "report": "agent-chat-browser/results.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 10,
+        "recorded_successful_checks": 10,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/agent-chat-browser/results.json",
+          "sha256": "1ac788f661e18f32e91c8a1d66c0e6dca30fd2644645afe2501f882e6ec7e38c",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "agent-chat-browser/results.json"
+        }
+      },
+      {
+        "name": "Agent authored UI and persistence",
+        "report": "agent-adaptive-browser/results.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 7,
+        "recorded_successful_checks": 7,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/agent-adaptive-browser/results.json",
+          "sha256": "8fe7f3ed4fff31bea6779b8f271c0c8fffd9b484b03632052e9a2e37f934e20e",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "agent-adaptive-browser/results.json"
+        }
+      },
+      {
+        "name": "Agent private media and resize",
+        "report": "reference-fusion/browser/results.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 7,
+        "recorded_successful_checks": 7,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/reference-fusion/browser/results.json",
+          "sha256": "2ded6a3f530095e1a0e847900a303cb404da091b75c935ed62546d8d5f51c0c2",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "reference-fusion/browser/results.json"
+        }
+      },
+      {
+        "name": "Agent incremental rendering",
+        "report": "agent-quality-browser/performance.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 5,
+        "recorded_successful_checks": 5,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/agent-quality-browser/performance.json",
+          "sha256": "58b4c29dbeda17f6afedc8d9dc4ba693e13966e0cf52dad0e50beb1bb2bcca75",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "agent-quality-browser/performance.json"
+        }
+      },
+      {
+        "name": "Composer attachments and dictation",
+        "report": "composer-browser/results.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "aborted_without_report",
+        "recorded_checks": null,
+        "recorded_successful_checks": null,
+        "recorded_failed_checks": null,
+        "report_missing": true,
+        "process_returncode": 1,
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/ci-agent-browser/composer-browser.mjs.log",
+          "sha256": "677c6a2d9268d5f54ac5116e211ddda660a0e1770c82ad03075ac3574870356d",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "ci-agent-browser/composer-browser.mjs.log"
+        },
+        "count_note": "JSON 未生成；原始 stderr 与 runner results.json 均证实失败。不得把无报告当成零失败或任意通过数量。"
+      },
+      {
+        "name": "OpenUI streaming Chromium",
+        "report": "openui-browser/chromium/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 10,
+        "recorded_successful_checks": 10,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/openui-browser/chromium/report.json",
+          "sha256": "0fe1773b599f6ca6d63858d14857e2efbda3aa53b18b1c8aa0b61098859845b5",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "openui-browser/chromium/report.json"
+        }
+      },
+      {
+        "name": "OpenUI streaming Firefox",
+        "report": "openui-browser/firefox/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 10,
+        "recorded_successful_checks": 10,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/openui-browser/firefox/report.json",
+          "sha256": "2150fb2f5ed3a05fcdc3f800a1fb34738c27391a1918c4340807fb7b1a31db29",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "openui-browser/firefox/report.json"
+        }
+      },
+      {
+        "name": "OpenUI streaming WebKit",
+        "report": "openui-browser/webkit/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 10,
+        "recorded_successful_checks": 10,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/openui-browser/webkit/report.json",
+          "sha256": "82138d3ac6ae88e6ecfe6df20e92fa9008b4ee6366171e99955d5ef1e9bbd3ec",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "openui-browser/webkit/report.json"
+        }
+      },
+      {
+        "name": "Compact chat Chromium",
+        "report": "chat-layout/chromium/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-layout/chromium/report.json",
+          "sha256": "2e9648a3ef450ea4c1b04b3427f455f49c02f033a71b60b96ec5c5a42a54f233",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-layout/chromium/report.json"
+        }
+      },
+      {
+        "name": "Compact chat Firefox",
+        "report": "chat-layout/firefox/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-layout/firefox/report.json",
+          "sha256": "e9bc508f0e3acc33b7c753f55bd7c2cee2174b3eda9439881559215bb3120aeb",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-layout/firefox/report.json"
+        }
+      },
+      {
+        "name": "Compact chat WebKit",
+        "report": "chat-layout/webkit/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "passed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": false,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-layout/webkit/report.json",
+          "sha256": "bae340e2cc426efa23715ed9312e455fbe0211239dc1f686446a39ae798526f5",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-layout/webkit/report.json"
+        }
+      },
+      {
+        "name": "Chat interactions Chromium",
+        "report": "chat-interactions/chromium/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-interactions/chromium/report.json",
+          "sha256": "e1b1c291893de7082e9a077eac44c726ca57f3424c243e983209dc210c36beef",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-interactions/chromium/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: locator.scrollIntoViewIfNeeded: Timeout 12000ms exceeded.",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      },
+      {
+        "name": "Chat interactions Firefox",
+        "report": "chat-interactions/firefox/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-interactions/firefox/report.json",
+          "sha256": "7027c0355309ae2081ee6c7c971b6346ab6032371098eae29593a016049523b3",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-interactions/firefox/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: locator.scrollIntoViewIfNeeded: Timeout 12000ms exceeded.",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      },
+      {
+        "name": "Chat interactions WebKit",
+        "report": "chat-interactions/webkit/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 4,
+        "recorded_successful_checks": 4,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-interactions/webkit/report.json",
+          "sha256": "e1b1c291893de7082e9a077eac44c726ca57f3424c243e983209dc210c36beef",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-interactions/webkit/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: locator.scrollIntoViewIfNeeded: Timeout 12000ms exceeded.",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      },
+      {
+        "name": "Chat recovery Chromium",
+        "report": "chat-recovery/chromium/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 2,
+        "recorded_successful_checks": 2,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-recovery/chromium/report.json",
+          "sha256": "55ab86c9791623eab5ba45f3341667736dc8fc02b3324ae4267abe95290d44fb",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-recovery/chromium/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      },
+      {
+        "name": "Chat recovery Firefox",
+        "report": "chat-recovery/firefox/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 2,
+        "recorded_successful_checks": 2,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-recovery/firefox/report.json",
+          "sha256": "5d35c33058f2da13fde87c2eb1586fcba8f2a4f66095e2365f7a6639cbe0fcb5",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-recovery/firefox/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      },
+      {
+        "name": "Chat recovery WebKit",
+        "report": "chat-recovery/webkit/report.json",
+        "current_validation_status": "修复待新CI",
+        "first_run_outcome": "failed",
+        "recorded_checks": 2,
+        "recorded_successful_checks": 2,
+        "recorded_failed_checks": 0,
+        "report_error_entries": 0,
+        "top_level_failure": true,
+        "count_kind": "completed_check_names",
+        "evidence": {
+          "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/browser/chat-recovery/webkit/report.json",
+          "sha256": "b94b53159d4ddd04bddf5a76f5cad79235f6dce54ed52bd12dbf28a8edf278f0",
+          "artifact": "synthetic-browser-reports",
+          "path_in_artifact": "chat-recovery/webkit/report.json"
+        },
+        "suite_error_first_line": "TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event \"response\"",
+        "count_note": "这些名称是失败前已完成检查；顶层异常另行记录，不能从 completed 数量减一来推算通过数，也不能视为全套完成。"
+      }
+    ]
+  },
+  "repairs": [
+    {
+      "id": "backend_notice_query_count",
+      "kind": "product_regression",
+      "status": "修复待新CI",
+      "first_run_evidence": "Linux 与 Windows 同一 100 条搜索测试均为 15 SELECT，违反原 <15 门槛；返回 100 条本身正确。",
+      "affected_suites": [
+        "Linux and Windows backend"
+      ],
+      "changed_files": [
+        "app/notice_matters.py",
+        "app/notice_tracking.py",
+        "tests/test_notice_phase_tracking.py"
+      ],
+      "repair": "合并本批次 owner 限定归组/阶段/当前版本读取；关联通知仅在批次外才额外查询。实测减少至 14，未改原门槛。",
+      "preserved_assertions_or_contracts": [
+        "100 条结果不裁减",
+        "当前及关联通知版本变化/删除继续要求核对",
+        "owner 隔离",
+        "原 <15 SELECT 断言"
+      ]
+    },
+    {
+      "id": "task_board_baseline_order",
+      "kind": "product_regression",
+      "status": "修复待新CI",
+      "first_run_evidence": "Chromium、Firefox 的真实拖拽后顺序不符；分页前端按 created_at/id 倒序，旧服务端从 legacy updated_at 倒序保留未排序卡片。",
+      "affected_suites": [
+        "Task board drag and recovery"
+      ],
+      "changed_files": [
+        "app/task_board.py",
+        "tests/test_task_board.py"
+      ],
+      "repair": "ordered 先建立与分页一致的 created_at/id 倒序基线，再稳定应用已保存 board_order；新增故意反转 legacy updated_at 顺序的回归。",
+      "preserved_assertions_or_contracts": [
+        "真实 UI 可见顺序",
+        "隐藏卡片相对序",
+        "全 owner lane 原子移动",
+        "task data 不因排序修改",
+        "task/workflow 版本核对",
+        "跨 owner anchor 拒绝",
+        "办理完成门禁与撤销"
+      ]
+    },
+    {
+      "id": "task_board_duplicate_render",
+      "kind": "product_regression",
+      "status": "修复待新CI",
+      "first_run_evidence": "WebKit 390px 手柄操作报 DOM detached；loadTaskList 在 onChange 绘制之后的 await continuation 又重复替换整张列表。",
+      "affected_suites": [
+        "Task board drag and recovery"
+      ],
+      "changed_files": [
+        "static/app.js",
+        "scripts/task_list_stability_checks.mjs",
+        "scripts/verify_task_board.mjs"
+      ],
+      "repair": "删除重复绘制，仍在 owner/render 匹配时回填缓存投影。新增同一真实 row/handle 跨 350ms 保持连接与焦点、首页返回保持筛选 ID 的浏览器检查。",
+      "preserved_assertions_or_contracts": [
+        "原拖拽/刷新/撤销断言",
+        "账号与路由迟到保护",
+        "缓存数据恢复",
+        "手柄最小尺寸门槛由 27.5 提高至 43.9"
+      ]
+    },
+    {
+      "id": "sprint_execution_mode_fixture",
+      "kind": "fixture_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎 sprint home check 等不到撤销 toast；fixture 没传 plans，后端沿用 submission/preparing 语义，点击应打开办理记录。",
+      "affected_suites": [
+        "Sprint workflows and loading performance"
+      ],
+      "changed_files": [
+        "scripts/verify_sprint_ui.mjs"
+      ],
+      "repair": "需要直接完成的 54 项合成本人任务明确 plans.execution_mode=task，并先断言前提；另外新增 submission/preparing 点击仍 pending、不庆祝、打开 workflow 的反向检查。",
+      "preserved_assertions_or_contracts": [
+        "54 项全账户投影",
+        "跨页搜索",
+        "完成与撤销保存原正文",
+        "办理事项不能被列表点击假完成"
+      ]
+    },
+    {
+      "id": "workspace_calendar_async_search",
+      "kind": "assertion_timing",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎日历 6 != 2；截图明确仍显示“正在查找，当前保留上次结果”。",
+      "affected_suites": [
+        "Workspace interactions"
+      ],
+      "changed_files": [
+        "scripts/workspace_navigation_checks.mjs"
+      ],
+      "repair": "等待与输入 q 精确匹配的真实 calendar-search 200 回执及返回 query，再等待 aria-busy=false 且无错误提示。",
+      "preserved_assertions_or_contracts": [
+        "2→1→0→2 精确数量",
+        "mini 日历不擅改 list 视图",
+        "新日程进入所选当天视图"
+      ]
+    },
+    {
+      "id": "workspace_getting_started_entry",
+      "kind": "assertion_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎个人资料设置项 4 != 3；新增第 4 项实际为“现在能用什么”找回引导。",
+      "affected_suites": [
+        "Workspace interactions"
+      ],
+      "changed_files": [
+        "scripts/workspace_navigation_checks.mjs"
+      ],
+      "repair": "精确核对 getting-started、profile、preferences、memory 四入口，实际打开三步说明再返回。",
+      "preserved_assertions_or_contracts": [
+        "只显示一个设置分类",
+        "键盘切换分类",
+        "17 个 profile 字段不因隐藏分组丢失"
+      ]
+    },
+    {
+      "id": "workspace_navigation_fixture",
+      "kind": "fixture_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎独立导航 fixture 卡片 0 != 1；原 fixture 未提供新分页 API。",
+      "affected_suites": [
+        "Workspace interactions"
+      ],
+      "changed_files": [
+        "scripts/navigation_target_checks.mjs"
+      ],
+      "repair": "提供单通知分页合同与 source catalog/subscription 只读结果，await 真实 library.render。",
+      "preserved_assertions_or_contracts": [
+        "完整独立指针目标",
+        "键盘目标",
+        "单条合成通知的真实卡片"
+      ]
+    },
+    {
+      "id": "workspace_insight_counts",
+      "kind": "assertion_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎旧“N 项”文案断言与真实“已加载 N / N 项”冲突。",
+      "affected_suites": [
+        "Workspace interactions"
+      ],
+      "changed_files": [
+        "scripts/insight_data_checks.mjs"
+      ],
+      "repair": "等待分页 loaded/total 实值；新增逐 ID 属于 insight selection 的检查；清空后恢复全部总数。",
+      "preserved_assertions_or_contracts": [
+        "待办与通知 selection 语义",
+        "当前页每个 ID 均属于选择范围",
+        "加载与总数",
+        "清空筛选"
+      ]
+    },
+    {
+      "id": "source_inbox_trial_apply",
+      "kind": "fixture_flow",
+      "status": "修复待新CI",
+      "first_run_evidence": "首个 check 中等待 dialog 隐藏超时；截图其实已是成功试读回执，并显示“启用这条规则”。",
+      "affected_suites": [
+        "Source subscriptions and personal inbox"
+      ],
+      "changed_files": [
+        "scripts/verify_source_inbox.mjs"
+      ],
+      "repair": "使用真实 API 与合成 reader 完成试读、核对回执、用户点击应用；启用与保存暂停都核对相同 trial_id。",
+      "preserved_assertions_or_contracts": [
+        "试读不启用、不接收个人通知",
+        "试读不更改原规则版本",
+        "更正保留同一通知并要求核对",
+        "暂停保留通知",
+        "无真实外部采集或模型调用"
+      ]
+    },
+    {
+      "id": "source_presets_trial_contract",
+      "kind": "fixture_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "已完成 2 个 check 后超时；截图报 Unexpected fixture request: /source-catalog/source-whu-notices/subscription/preview。",
+      "affected_suites": [
+        "School source chooser and pending saves"
+      ],
+      "changed_files": [
+        "scripts/verify_source_presets_ui.mjs"
+      ],
+      "repair": "isolated fixture 增加只读试读和显式 apply 的来源/版本绑定，试读前后有效配置完全相等，应用后才暂停。",
+      "preserved_assertions_or_contracts": [
+        "预设 identity、固定 URL 和路径",
+        "interval=45",
+        "试读不保存",
+        "仅显式应用保存",
+        "无外部请求",
+        "迟到响应不替换新账号/路由/窗口"
+      ]
+    },
+    {
+      "id": "reply_menu_real_user_flow",
+      "kind": "fixture_flow",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎 chat interactions 的“上一版回复”定位超时、recovery 等不到版本 POST、朗读后后续按钮隐藏；操作位于 reply-more 或菜单自动收起。",
+      "affected_suites": [
+        "Browser stability",
+        "Chat interactions Chromium",
+        "Chat interactions Firefox",
+        "Chat interactions WebKit",
+        "Chat recovery Chromium",
+        "Chat recovery Firefox",
+        "Chat recovery WebKit"
+      ],
+      "changed_files": [
+        "scripts/reply_menu_checks.mjs",
+        "scripts/verify_chat_interactions.mjs",
+        "scripts/verify_chat_recovery.mjs",
+        "scripts/verify_frontend_stability.mjs"
+      ],
+      "repair": "每次通过真实按钮打开操作菜单，再点击其内操作；不使用 force click 或直接调用产品模块替代交互。",
+      "preserved_assertions_or_contracts": [
+        "阅读锚点",
+        "版本持久化",
+        "刷新恢复",
+        "朗读缓存/暂停/重开",
+        "实际请求回执"
+      ]
+    },
+    {
+      "id": "memory_svg_touch_target",
+      "kind": "assertion_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎 memory 小图标断言测量到 44×44 的按钮，旧测试要求整按钮 <=32，与触控尺寸要求冲突。",
+      "affected_suites": [
+        "Browser stability"
+      ],
+      "changed_files": [
+        "scripts/verify_frontend_stability.mjs"
+      ],
+      "repair": "分别断言 SVG <=32 且按钮 >=43.9，继续检查唯一 SVG 和无障碍 label。",
+      "preserved_assertions_or_contracts": [
+        "图标紧凑",
+        "可触达按钮尺寸",
+        "无障碍说明",
+        "唯一图标"
+      ]
+    },
+    {
+      "id": "natural_intake_stale_response_route",
+      "kind": "fixture_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎 delayed 标记一直 false；拦截的旧 /notices/search 已不是列表实际使用的 /notices/page。",
+      "affected_suites": [
+        "Natural notice intake"
+      ],
+      "changed_files": [
+        "scripts/verify_natural_intake.mjs"
+      ],
+      "repair": "拦截真实分页旧查询，先取得并扣住其响应；新查询响应与 UI 完成后才释放旧响应。",
+      "preserved_assertions_or_contracts": [
+        "旧查询确实被拦截",
+        "800ms 稳定窗口",
+        "当前输入 query",
+        "附件正文命中",
+        "旧响应不得覆盖新结果"
+      ]
+    },
+    {
+      "id": "pilot_workspace_paginated_refresh",
+      "kind": "assertion_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "三引擎已经看到跨设备任务更新，但旧断言要求发生 /api/tasks 全量读取。",
+      "affected_suites": [
+        "Independent devices and campus collaboration"
+      ],
+      "changed_files": [
+        "scripts/verify_pilot_workspace.mjs"
+      ],
+      "repair": "核对真实 /api/tasks/page，并明确禁止此次任务刷新读取全量 tasks、全量 notices 或 notices/page。",
+      "preserved_assertions_or_contracts": [
+        "跨设备实际更新",
+        "独立账号和协作业务断言",
+        "选择性刷新",
+        "不重读无关通知库"
+      ]
+    },
+    {
+      "id": "notice_flow_acknowledge_persistent_error",
+      "kind": "fixture_flow",
+      "status": "修复待新CI",
+      "first_run_evidence": "Firefox、WebKit 已验证的常驻失败 toast 跨路由遮住批量 metadata；后续 supplement check 又受前一失败残留两张卡片影响。",
+      "affected_suites": [
+        "Notice intake and flexible workflows"
+      ],
+      "changed_files": [
+        "scripts/verify_notice_flow.mjs"
+      ],
+      "repair": "通过真实关闭按钮确认“示例链接暂时不可读取”错误，再次检查 fallback 正文仍完整，然后进入批量操作。",
+      "preserved_assertions_or_contracts": [
+        "常驻错误需要可见确认",
+        "失败正文不丢失",
+        "批量部分成功与重试",
+        "原件/重复收件/补件语义",
+        "不使用 force click"
+      ]
+    },
+    {
+      "id": "composer_bundle_module_isolation",
+      "kind": "fixture_contract",
+      "status": "修复待新CI",
+      "first_run_evidence": "composer 原始 log 报 .dictation-panel 严格定位匹配 2 个；fixture 直接 import 源模块的 active 与 bundle 实例不同。",
+      "affected_suites": [
+        "Composer attachments and dictation"
+      ],
+      "changed_files": [
+        "tests/composer-browser.mjs"
+      ],
+      "repair": "改为点击真实麦克风入口并拦截公开 speech/config、speech/transcribe 接口；不调用另一模块实例的内部操作。",
+      "preserved_assertions_or_contracts": [
+        "真实 WAV 上传",
+        "多段与手工输入合并",
+        "唯一按钮",
+        "结束状态",
+        "故障重试"
+      ]
+    }
+  ],
+  "task_board_readonly_review": {
+    "result": "在本次排序改动范围内未发现新缺陷；浏览器修复待新CI",
+    "evidence_files": [
+      "app/task_board.py",
+      "app/listing.py",
+      "static/task-views.js",
+      "static/app.js",
+      "tests/test_task_board.py"
+    ],
+    "findings": [
+      "task_page 普通及高级筛选分支均先按 created_at DESC,id DESC；前端 taskLanes 对 board_order 稳定排序。服务端的新基线与该顺序相同。",
+      "服务端仍在事务中装载本人完整 tasks，再按 lane 排序并插入；未显示卡片保留其相对顺序，不以客户端当前页替换完整 lane。",
+      "排序只更新 task_workflows 的 board_order/board_lane；改变完成状态仍调用既有 update_task_record、TaskData 校验及办理完成门禁。",
+      "owner 限定查询、跨账号 anchor 拒绝、task/workflow 双版本核对、取消/不参加禁止直接拖回与原子撤销均未移除。",
+      "新增回归故意让 legacy updated_at 与 page 基线逆序，断言移动后为 d,a,b 并逐 ID 比较全部 data；原隐藏卡片/权限/并发/stale/撤销测试继续保留。"
+    ]
+  },
+  "executed_after_repairs": [
+    {
+      "scope": "查询优化五文件定向",
+      "counts": {
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "tests": 45,
+        "unique_tests": 45,
+        "passed": 45
+      },
+      "evidence": {
+        "local_path": "artifacts/sprint-final/notice-query-regression.xml",
+        "sha256": "d3ce52dbf6356587c4bbdac142a70122bde12384582e6f32fb9a371f74da9f94"
+      },
+      "details": "docs/audits/sprint-query-regression.json",
+      "not_a_full_suite": true
+    },
+    {
+      "scope": "board/listing/projection 定向",
+      "counts": {
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "tests": 26,
+        "unique_tests": 26,
+        "passed": 26
+      },
+      "junit_seconds": 21.621,
+      "evidence": {
+        "local_path": "artifacts/sprint-final/board-pagination-regression.xml",
+        "sha256": "aef02e8ae1eee83a9aee373f3d59cc74adf37eecaffc82ce8f64f25b319572e4"
+      },
+      "not_a_full_suite": true
+    },
+    {
+      "scope": "前端修复后 Node 全套",
+      "passed": 275,
+      "failed": 0,
+      "skipped": 0,
+      "evidence": {
+        "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/frontend-fix-node-tests.log",
+        "sha256": "0b6d96e8b91ef0ea5f77980674455e896e9fcca3ee728f3b52f85cbcfd873b9d"
+      },
+      "is_browser_run": false
+    },
+    {
+      "scope": "frontend bundle 与 audit report 两文件定向",
+      "passed": 23,
+      "failed": 0,
+      "warnings": 1,
+      "tests": [
+        "tests/test_frontend_bundle.py",
+        "tests/test_audit_reports.py"
+      ],
+      "evidence": {
+        "local_path": "/workspace/scratch/0a6433f08acc/ci-evidence/43558958724/frontend-fix-bundle-tests.log",
+        "sha256": "eb0477d3f5b0a5fa10de23b37615420353684e1f25f3db9c0b69e280c381d5a4"
+      },
+      "is_browser_run": false
+    },
+    {
+      "scope": "本代理日历/设置/source 三脚本与 isolated fixture 内嵌模块",
+      "validation": "node --check 与 git diff --check 通过",
+      "files": [
+        "scripts/workspace_navigation_checks.mjs",
+        "scripts/verify_source_inbox.mjs",
+        "scripts/verify_source_presets_ui.mjs"
+      ],
+      "is_browser_run": false
+    }
+  ],
+  "pending": [
+    "修复后同一冻结代码的完整 Linux/Windows 后端 CI",
+    "修复后三引擎浏览器所有套件与未执行到的后续检查",
+    "最终 5/10 人真实 HTTP 工程门槛及完整运行/恢复证据",
+    "真实设备/来源/供应商/人工标注与累计应用验收"
+  ],
+  "master_audits_unchanged": [
+    "docs/audits/SPRINT_AUDIT_2026-11-13.md",
+    "docs/audits/sprint-requirements-128.json"
+  ],
+  "related_audits": [
+    "docs/sprint-2026-11-14/frontend-build-verification.json",
+    "docs/sprint-2026-11-14/FRONTEND_AUDIT.md",
+    "docs/audits/sprint-query-regression.json"
+  ]
+}

@@ -120,3 +120,19 @@
 ## 6. 发布说明应保留的限制
 
 真实官网应用链路、QQ／公众号平台权限、真实手机触达、独立人工标注和大赛要求的真实使用日仍是外部验收条件。来源与阶段本轮新增功能已得到离线合同验证，但总分支的全量回归、构建、部署与主分支状态应引用主执行记录。任何后续真实联调结果都应附实际日期、来源、账号权限范围和可复核回执，不能用本文件的合成通过替代。
+
+## 7. 全套发现的查询回归与重新冻结
+
+第一次完整后端运行实际出现 1 项回归：`test_search_query_count_does_not_grow_per_notice` 对 100 条合成通知检索的限制为少于 15 条 SELECT，新阶段摘要令实际数达到 15。原断言没有放宽。先独立原样复现，再将归组和阶段元数据合并为同一 owner／通知 ID 范围查询，复用已加载的当前版本；只有关联证据通知不在本次范围内时，才另用一次 owner 限定查询核对版本。没有减少库存、跳过阶段状态或删除版本保护。
+
+修复后相同 100 条记录仍完整返回，查询数为 **14**。新增两个参数化用例分别验证关联通知在批次内／外，覆盖归组投影保持一致、其他账号不泄露、关联通知更正与删除仍要求复核。阶段摘要单独读取与列表批量读取使用同一逻辑。
+
+```bash
+CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest \
+  tests/test_usage_limits.py tests/test_notice_matters.py \
+  tests/test_notice_phase_tracking.py tests/test_sprint_lists.py \
+  tests/test_workspace_projection.py -o addopts='' --tb=short \
+  --junitxml=artifacts/sprint-final/notice-query-regression.xml
+```
+
+该轮实际 **45 passed、1 warning、28.82 秒**，重新冻结于 **2026-11-14 05:01:09 UTC**。结果及失败→修复记录见 [查询回归记录](sprint-query-regression.json)。45 项与之前来源、校园、投影定向范围存在重叠，不累加为完整测试总数；修复后的整个分支仍须重新执行完整后端与最终 CI。

@@ -24,7 +24,7 @@ def summary(path):
         bucket=_databases.get(str(path.resolve()))
         if not bucket:return {'observed':False,'sample_limit':MAX_SAMPLES,'scope':'本进程尚无写事务计时'}
         result={'observed':True,'sample_limit':MAX_SAMPLES,'failed_acquisitions':bucket['failed_acquisitions'],
-                'scope':'本进程最近最多4096次 BEGIN IMMEDIATE 等待与写事务持有时间；重启清零，非生产吞吐承诺'}
+                'scope':'本进程最近最多4096次写入总等待（公平准入排队、连接准备、SQLite BEGIN IMMEDIATE等待），以及成功BEGIN至提交或回滚的事务持有时间；重启清零，非生产吞吐承诺'}
         for kind in ('wait','hold'):
             values=sorted(bucket[kind]);n=len(values)
             result[kind]={'total_observations':bucket[kind+'_count'],'samples':n,

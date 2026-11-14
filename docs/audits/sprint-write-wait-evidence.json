@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-11-14T05:25:58Z",
+  "status": "five_user_engineering_condition_met_ten_user_expansion_not_met",
+  "scope": "隔离本地Uvicorn、合成账号、真实HTTP和SQLite；不是生产容量上限、学校批准或真人试用验收。不同运行与诊断样本不相加。",
+  "unchanged_targets": {
+    "ordinary_crud_p95_ms_exclusive": 1000,
+    "write_total_wait_p95_ms_exclusive": 100,
+    "allowed_failed_write_acquisitions": 0,
+    "percentile_method": "nearest_rank"
+  },
+  "adopted_implementation": {
+    "change": "同一规范化数据库路径的进程内FIFO写入准入；正常读取并行，SQLite仍决定跨进程锁。",
+    "timing": "写入总等待从准入前起算，包含排队、连接准备及SQLite BEGIN IMMEDIATE等待；共同使用15秒预算。持锁从成功BEGIN到提交或回滚完成。",
+    "shared_cache_enabled": false,
+    "cross_thread_connection_pool_added": false,
+    "schema_warmup_experiment_adopted": false,
+    "targeted_regression": {
+      "artifact": "artifacts/sprint-final/write-coordination.xml",
+      "passed": 49,
+      "elapsed_seconds": 20.48,
+      "new_coordination_cases": 10,
+      "scope": "FIFO/路径别名、读并行、超时与取消、真实连接失败、提交/回滚/关闭故障、总等待计时及既有容量/恢复边界；不是全项目测试总数。"
+    }
+  },
+  "independent_runtime_runs": [
+    {
+      "kind": "before_fifo",
+      "artifact": "artifacts/sprint-final/runtime-5-before-writer-admission.json",
+      "verified_at": "2026-11-14T05:01:50.559486+00:00",
+      "implementation_sha256": null,
+      "version_limit": "原报告未记录实现摘要；仅能定位为FIFO准入优化前，不能追补为最终提交的成绩。",
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "wait_samples": 775,
+      "wait_p95_ms": 129.035,
+      "wait_max_ms": 1832.123,
+      "wait_scope": "旧指标为SQLite BEGIN IMMEDIATE等待；当时没有进程内准入队列，连接准备尚未纳入旧字段。后续指标口径更完整。",
+      "write_wait_gate_passed": false,
+      "hold_p95_ms": 30.287,
+      "failed_acquisitions": 0,
+      "ordinary_crud_samples": 625,
+      "ordinary_crud_p50_ms": 61.3,
+      "ordinary_crud_p95_ms": 203.5,
+      "ordinary_crud_max_ms": 1883.6
+    },
+    {
+      "kind": "fifo_five_users",
+      "artifact": "artifacts/sprint-final/runtime-5-users-after-admission.json",
+      "verified_at": "2026-11-14T05:11:23.739784+00:00",
+      "implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+      "implementation_unchanged": true,
+      "users": 5,
+      "http_requests": 766,
+      "functional_fixture_result": "passed",
+      "wait_samples": 776,
+      "write_total_wait_p95_ms": 75.304,
+      "write_total_wait_max_ms": 127.713,
+      "write_wait_gate_passed": true,
+      "hold_p95_ms": 39.018,
+      "failed_acquisitions": 0,
+      "ordinary_crud_samples": 625,
+      "ordinary_crud_p50_ms": 99.1,
+      "ordinary_crud_p95_ms": 173.9,
+      "ordinary_crud_max_ms": 250.3,
+      "restart_and_restore_task_identity_and_content_equal": true,
+      "tradeoff": "等待尾部和CRUD尾部下降，CRUD中位数由61.3ms升至99.1ms；保留这一成本，不只报告改善项。"
+    },
+    {
+      "kind": "fifo_ten_users",
+      "artifact": "artifacts/sprint-final/runtime-10-users-after-admission.json",
+      "verified_at": "2026-11-14T05:12:22.377567+00:00",
+      "implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+      "implementation_unchanged": true,
+      "users": 10,
+      "http_requests": 1531,
+      "functional_fixture_result": "passed",
+      "wait_samples": 1589,
+      "write_total_wait_p95_ms": 166.57,
+      "write_total_wait_max_ms": 306.797,
+      "write_wait_gate_passed": false,
+      "hold_p95_ms": 75.84,
+      "hold_max_ms": 219.066,
+      "failed_acquisitions": 0,
+      "ordinary_crud_samples": 1250,
+      "ordinary_crud_p95_ms": 443.8,
+      "restart_and_restore_task_identity_and_content_equal": true,
+      "interpretation": "功能和恢复断言通过，但原100ms扩大工程条件未通过，不能标成10人容量验收成功。"
+    }
+  ],
+  "diagnostic_attribution": {
+    "release_acceptance_evidence": false,
+    "runtime_artifact": "artifacts/sprint-final/runtime-10-users-instrumented-live.json",
+    "transaction_artifact": "artifacts/sprint-final/write-diagnostic-10-live/writes-13.jsonl",
+    "summary_artifact": "artifacts/sprint-final/write-diagnostic-10-live/summary.json",
+    "repository_implementation_sha256": "593f967c7ec9fb336f07fbddadc8ac4b38bbf8907e898fb0b2cd69ddb4597242",
+    "runtime_overlay": "scratch sitecustomize按调用点采样SQL类别/耗时及线程CPU，存在采样开销；不记录SQL参数、正文或身份。仓库指纹不包含此注入代码。",
+    "transactions_including_shutdown": 1589,
+    "readiness_wait_samples_before_shutdown": 1588,
+    "evidence": [
+      "200笔最终返回409的update事务没有业务写入，只有一条own_task业务SELECT；该组hold P95为91.563ms，最慢一笔140.708ms中该SELECT占138.762ms。",
+      "最慢manual事务hold159.081ms，own_notice查询组占148.578ms；memory_jobs最慢样本的首SELECT占123.737ms。后续多数语句不足1ms。",
+      "按首SELECT调用点分组的执行时间约占总持锁时间71.12%；同一调用点重复执行时该诊断会合并时长，不能把该占比称为逐条首语句的精确因果比例。"
+    ],
+    "cold_connection_probe": {
+      "artifact": "artifacts/sprint-final/write-diagnostic-10-live/schema-probe.json",
+      "implementation_sha256": null,
+      "version_limit": "同轮隔离Database结构探针自身没有记录源码摘要；不补造提交对应关系。",
+      "schema_objects": {"tables": 198, "indexes": 280, "triggers": 247},
+      "sequential_samples": 20,
+      "first_select_1_p95_ms": 4.625,
+      "ten_thread_samples": 200,
+      "concurrent_first_select_1_p95_ms": 192.855,
+      "concurrent_first_select_thread_cpu_p95_ms": 80.294,
+      "following_table_query_p95_ms": 0.201,
+      "inference": "主要尾部集中于新连接的首次schema/语句准备及其并发争用；未隔离SQLite内部互斥机制，不声称已证明GIL、内存分配器或notify_all是唯一原因。"
+    },
+    "excluded_capture": {
+      "artifact": "artifacts/sprint-final/runtime-10-users-instrumented.json",
+      "reason": "首次采样没有在子服务退出前留存事务明细，仅留下父进程初始化记录；未将其用于持锁调用点归因。"
+    }
+  },
+  "unadopted_experiment": {
+    "artifact": "artifacts/sprint-final/runtime-10-users-experimental-schema-warmup.json",
+    "verified_at": "2026-11-14T05:24:38.135433+00:00",
+    "repository_implementation_sha256": "bf21573be9d3bd98f6234157f3962bdc8e71ac034f38ad9c4ac495fc736f854e",
+    "repository_implementation_unchanged_during_run": true,
+    "version_limit": "与593f967运行的仓库版本不同，且另有未进入仓库指纹的scratch运行时注入；只能作受控诊断，不是产品版本准入成绩。",
+    "runtime_overlay": "按数据库路径短暂串行冷schema准备，将SELECT 1放在BEGIN前；公平写队列顺序不变，准备仍计入总等待和原15秒预算；正常数据读取继续并行。",
+    "users": 10,
+    "http_requests": 1531,
+    "functional_fixture_result": "passed",
+    "wait_samples": 1553,
+    "write_total_wait_p95_ms": 152.876,
+    "write_wait_gate_passed": false,
+    "hold_p95_ms": 7.707,
+    "failed_acquisitions": 0,
+    "ordinary_crud_p95_ms": 348.4,
+    "adopted": false,
+    "reason": "虽然持锁与HTTP尾部改善，总等待仍超过原100ms门槛；没有通过移动计时起点、放宽门槛或引入连接池/shared cache把结果标绿。"
+  },
+  "decision": {
+    "performance_product_code_change_after_diagnostic": false,
+    "change_scope": "本项诊断未再改数据库、写入准入或业务产品代码；其他任务的并行改动仅由各自版本指纹限定，不归入本项性能改善。",
+    "five_user_scope": "仅可作为首批小范围工程试运行建议的依据，须另行取得参与及学校所需授权；不代表学校批准。",
+    "ten_user_expansion": "原等待门槛未通过，保留失败报告，不扩大通过声明。",
+    "next_gate": "统一冻结后的全项目回归与对应提交CI另行记录，本文件不替代它们。",
+    "load_generators_stopped": true
+  }
+}

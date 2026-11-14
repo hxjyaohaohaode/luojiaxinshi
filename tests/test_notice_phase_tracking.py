@@ -111,3 +111,39 @@ def test_portable_phase_history_preserves_quotes_without_restoring_result_or_rem
     assert restore(b,exported)['id']==imported['id']
     again=restore(c,b.get('/api/export').json())
     assert len(c.get(path(again)).json()['imported_history'])==1
+
+
+@pytest.mark.parametrize('include_related',[False,True])
+def test_batched_phase_summary_keeps_related_version_and_owner_checks(env,include_related):
+    from app.notice_matters import annotate
+    from app.notice_tracking import summary
+    from tests.test_notice_matters import join
+    client,other=account(env),account(env,'summary-other')
+    a=notice(client,'本人等待正式公告的线索。');b=notice(client,'另一个待核对的补充线索。')
+    untracked=notice(client,'尚未建立阶段记录的线索。');foreign=notice(other,'其他账号的私有线索。')
+    group=join(client,a,b)
+    assert save(client,a,{'related_notice_versions':{b['id']:b['version']}}).status_code==200
+    assert save(other,foreign,{'note':'不应进入本人列表'}).status_code==200
+    uid=client.get('/api/session').json()['user']['id'];db=env[0].state.db
+    ids=[a['id'],untracked['id'],foreign['id']]+([b['id']] if include_related else [])
+    with db.connect(write=True) as conn:
+        statements=[];conn.set_trace_callback(statements.append)
+        records={r['id']:r for r in annotate(conn,uid,[{'id':nid} for nid in ids])}
+        conn.set_trace_callback(None)
+        selects=[s for s in statements if s.lstrip().upper().startswith('SELECT')]
+        assert len(selects)==(1 if include_related else 2)
+        phase=records[a['id']]['phase_tracking']
+        assert phase==summary(conn,uid,[a['id']])[a['id']]
+        assert phase['phase']=='unannounced' and not phase['review_required']
+        assert records[a['id']]['matter']=={'notice_id':a['id'],'id':group['id'],
+            'title':group['title'],'version':group['version'],'member_count':2}
+        assert records[untracked['id']]['phase_tracking'] is None
+        assert records[foreign['id']]['phase_tracking'] is None and records[foreign['id']]['matter'] is None
+        assert summary(conn,uid,[foreign['id']])=={}
+        conn.execute('UPDATE notices SET version=version+1 WHERE id=?',(b['id'],))
+        changed=annotate(conn,uid,[{'id':nid} for nid in ids])
+        assert next(r for r in changed if r['id']==a['id'])['phase_tracking']['review_required']
+        assert summary(conn,uid,[a['id']])[a['id']]['review_required']
+        conn.execute('DELETE FROM notices WHERE id=?',(b['id'],))
+        removed=annotate(conn,uid,[{'id':a['id']}])[0]
+        assert removed['phase_tracking']['review_required']

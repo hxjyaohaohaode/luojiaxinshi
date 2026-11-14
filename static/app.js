@@ -804,7 +804,15 @@ const taskCollection=createPagedList({api,path:'/tasks/page',owner:()=>state.ses
   if(!location.hash.startsWith('#tasks'))return;state.tasks=value.items;if($('#task-results'))taskList(false);
 }});
 function taskFilters(){const selected=state.insightSelection?.kind==='tasks'?state.insightSelection:null;return {q:state.query.trim(),status:state.filter,day:state.dateFilter,...(selected?{ids:selected.ids.join(',')||'no-matching-record'}:{})};}
-async function loadTaskList(force=false){const value=await taskCollection.load(taskFilters(),{force});if(value&&location.hash.startsWith('#tasks')){state.tasks=value.items;if($('#task-results'))taskList(false);}return value;}
+async function loadTaskList(force=false){
+  const owner=state.session?.user?.id,render=state.renderId;
+  const value=await taskCollection.load(taskFilters(),{force});
+  // Requests already paint through onChange. A cache hit still restores the
+  // task projection after another route, but must not replace freshly focused
+  // rows a second time in this promise's continuation.
+  if(value&&owner===state.session?.user?.id&&render===state.renderId&&location.hash.startsWith('#tasks'))state.tasks=value.items;
+  return value;
+}
 const operationsUI=lazyUI(()=>import('./operations.js').then(({createOperations})=>createOperations({state,api,esc,showDialog,toast})),['open','trace']);
 const noticeLifecycle=lazyUI(()=>import('./notice-lifecycle.js').then(({createNoticeLifecycle})=>createNoticeLifecycle({state,api,esc,showDialog,toast,onChanged:async nid=>{if(state.notice?.id===nid&&location.hash==='#notice/'+nid)await refreshNotice();}})),['open']);
 let boardSaving=false;

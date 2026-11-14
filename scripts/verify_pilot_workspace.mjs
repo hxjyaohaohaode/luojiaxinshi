@@ -148,8 +148,10 @@ for(const [engineIndex,engine] of (process.env.UI_ENGINES||'chromium,firefox,web
         tid=saved.task_ids[0];
       },()=>mobile.getByText(title,{exact:true}).waitFor());
       mobile.off('request',track);
-      assert.ok(calls.includes('/api/tasks'));
+      assert.ok(calls.includes('/api/tasks/page'),'The other device refreshes the real paginated task collection');
+      assert.ok(!calls.includes('/api/tasks'),'The task list must not fetch the full task collection');
       assert.ok(!calls.includes('/api/notices'),'A task list refresh must not download the notice library');
+      assert.ok(!calls.includes('/api/notices/page'),'A task list refresh must not fetch notice pages');
       task=(await api(a,'/tasks/'+tid+'/workflow')).task;
     });
     await check('an open notice receives a new source and the updated material count',async()=>{

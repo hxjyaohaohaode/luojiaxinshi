@@ -1,6 +1,6 @@
 {
-  "scope": "Final frontend local gates; actual browser results require GitHub CI",
-  "performed_at": "2026-11-14T04:51:18.088Z",
+  "scope": "Post-first-CI frontend local gates; corrected browser scripts await the next GitHub CI run",
+  "performed_at": "2026-11-14T05:26:48.742469+00:00",
   "node": "v24.22.1",
   "platform": "linux",
   "commands": [
@@ -16,13 +16,15 @@
       "command": "npm test",
       "exit_code": 0,
       "tests": 275,
-      "passed": 275
+      "passed": 275,
+      "log": "ci-evidence/43558958724/frontend-fix-node-tests.log"
     },
     {
-      "command": ".venv/bin/python -m pytest tests/test_frontend_bundle.py tests/test_audit_reports.py -q",
+      "command": ".venv/bin/python -m pytest -q tests/test_frontend_bundle.py tests/test_audit_reports.py",
       "exit_code": 0,
       "tests": 23,
-      "passed": 23
+      "passed": 23,
+      "log": "ci-evidence/43558958724/frontend-fix-bundle-tests.log"
     },
     {
       "command": "git diff --check",
@@ -32,7 +34,7 @@
   "build": {
     "checked": true,
     "entries": {
-      "js": "/static/dist/app-JL3KAYN2.js",
+      "js": "/static/dist/app-XK3PQMAE.js",
       "css": "/static/dist/styles-BKR4PFDD.css"
     },
     "files": 24,
@@ -57,11 +59,6 @@
         "bytes": 43913,
         "gzip": 15664,
         "brotli": 13372
-      },
-      "static/dist/app-JL3KAYN2.js": {
-        "bytes": 431372,
-        "gzip": 147295,
-        "brotli": 115099
       },
       "static/dist/chunks/chunk-VHWCVQYR.js": {
         "bytes": 15828,
@@ -150,18 +147,300 @@
       },
       "static/dist/index.html": {
         "bytes": 1525,
-        "gzip": 774,
+        "gzip": 776,
         "brotli": 514
+      },
+      "static/dist/app-XK3PQMAE.js": {
+        "bytes": 431421,
+        "gzip": 147313,
+        "brotli": 115118
       }
-    }
+    },
+    "metrics_source": "Already observed npm run build:check output after the task-list repaint fix; no compression or build was rerun during the documentation update.",
+    "source_app_sha256": "69dd774e90e8aef2fc9314425cc4a9977157c4c16f73fd833a6e17b1d7d8f7d1"
   },
   "browser": {
-    "state": "not_executed_locally",
-    "reason": "Local browser launch is blocked by environment permissions; fixed Chromium/Firefox/WebKit CI is required. No privilege bypass.",
-    "suite": "scripts/verify_sprint_ui.mjs"
+    "state": "first_ci_failed_fixes_pending_revalidation",
+    "local_execution": "not_executed",
+    "reason": "Local browser launch is blocked by environment permissions; real Chromium/Firefox/WebKit validation uses GitHub CI. No privilege bypass.",
+    "suite": "scripts/verify_sprint_ui.mjs",
+    "first_ci": {
+      "run_id": 43558958724,
+      "attempt": 1,
+      "pull_request": 4,
+      "head_sha": "6145f129169aae160d7ae9fcf3ccda3f42cbdbae",
+      "merge_sha": "aa0f12d6930228cc14d568ade72d8e745eae639c",
+      "browser_job": 132338108551,
+      "browser_conclusion": "failure",
+      "artifact": {
+        "id": 14099809716,
+        "name": "synthetic-browser-reports",
+        "bytes": 24195304,
+        "sha256": "979920c9cc611afd1317531e9327240b3d26754f5f6b001a28c931dbb57b042a"
+      },
+      "sprint": {
+        "checks": 15,
+        "passed": 12,
+        "failures": 3,
+        "page_errors": 0,
+        "engines": [
+          "chromium",
+          "firefox",
+          "webkit"
+        ],
+        "stopped_at": "home totals and calendar use the full lightweight account projection",
+        "later_scenarios": "not reached; no sprint mobile draft screenshot"
+      },
+      "continuity": {
+        "job": 132338108285,
+        "conclusion": "success",
+        "checks": 990,
+        "errors": 0,
+        "failures": 0
+      },
+      "detail_record": "docs/audits/sprint-ci-first-round.json",
+      "current_build_browser_status": "pending_next_ci"
+    }
   },
   "node22": {
-    "state": "not_executed_locally",
-    "gate": "GitHub CI uses Node22 and validates the identical committed output."
-  }
+    "state": "first_ci_build_checks_passed_current_build_pending_ci",
+    "local_execution": "not_executed",
+    "first_ci_run_id": 43558958724,
+    "version_observed": "v22.23.4",
+    "first_ci_platforms": [
+      "Linux browser job",
+      "Linux continuity job",
+      "Linux unit job",
+      "Windows backend partitions 1-4"
+    ],
+    "gate": "The first committed build passed Node22 output checks on Linux and Windows. The new app-XK3PQMAE.js build still requires the next CI validation."
+  },
+  "time_basis": "Completion time from the existing local verification logs; no verification was rerun for this documentation update.",
+  "documented_at": "2026-11-14T05:29:29.234307+00:00",
+  "history": [
+    {
+      "round": "pre_first_ci",
+      "record": {
+        "scope": "Final frontend local gates; actual browser results require GitHub CI",
+        "performed_at": "2026-11-14T04:51:18.088Z",
+        "node": "v24.22.1",
+        "platform": "linux",
+        "commands": [
+          {
+            "command": "npm run build",
+            "exit_code": 0
+          },
+          {
+            "command": "npm run build:check",
+            "exit_code": 0
+          },
+          {
+            "command": "npm test",
+            "exit_code": 0,
+            "tests": 275,
+            "passed": 275
+          },
+          {
+            "command": ".venv/bin/python -m pytest tests/test_frontend_bundle.py tests/test_audit_reports.py -q",
+            "exit_code": 0,
+            "tests": 23,
+            "passed": 23
+          },
+          {
+            "command": "git diff --check",
+            "exit_code": 0
+          }
+        ],
+        "build": {
+          "checked": true,
+          "entries": {
+            "js": "/static/dist/app-JL3KAYN2.js",
+            "css": "/static/dist/styles-BKR4PFDD.css"
+          },
+          "files": 24,
+          "source_files": 191,
+          "metrics": {
+            "static/dist/chunks/operations-CWOQ6DW4.js": {
+              "bytes": 11088,
+              "gzip": 4540,
+              "brotli": 3591
+            },
+            "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": {
+              "bytes": 13129,
+              "gzip": 5349,
+              "brotli": 4318
+            },
+            "static/dist/chunks/insights-J6NHPJTV.js": {
+              "bytes": 8924,
+              "gzip": 3469,
+              "brotli": 2918
+            },
+            "static/dist/chunks/calendar-45THDV6Z.js": {
+              "bytes": 43913,
+              "gzip": 15664,
+              "brotli": 13372
+            },
+            "static/dist/app-JL3KAYN2.js": {
+              "bytes": 431372,
+              "gzip": 147295,
+              "brotli": 115099
+            },
+            "static/dist/chunks/chunk-VHWCVQYR.js": {
+              "bytes": 15828,
+              "gzip": 5811,
+              "brotli": 4735
+            },
+            "static/dist/chunks/memory-BFXNPUUY.js": {
+              "bytes": 88942,
+              "gzip": 30139,
+              "brotli": 24891
+            },
+            "static/dist/chunks/collaboration-AR26JSE5.js": {
+              "bytes": 16552,
+              "gzip": 6402,
+              "brotli": 5307
+            },
+            "static/dist/chunks/charts-UCDSXHVD.js": {
+              "bytes": 6016,
+              "gzip": 2968,
+              "brotli": 2630
+            },
+            "static/dist/chunks/chat-3FTYZ52U.js": {
+              "bytes": 188379,
+              "gzip": 64664,
+              "brotli": 54324
+            },
+            "static/dist/chunks/chunk-ZE6GBC5S.js": {
+              "bytes": 31845,
+              "gzip": 13470,
+              "brotli": 11528
+            },
+            "static/dist/chunks/chunk-HHFMEND4.js": {
+              "bytes": 3677,
+              "gzip": 1609,
+              "brotli": 1483
+            },
+            "static/dist/chunks/chunk-URIZXBGG.js": {
+              "bytes": 6306,
+              "gzip": 2501,
+              "brotli": 2288
+            },
+            "static/dist/chunks/chunk-52VEMMR4.js": {
+              "bytes": 38252,
+              "gzip": 7656,
+              "brotli": 6518
+            },
+            "static/dist/chunks/sources-AO7MVCU5.js": {
+              "bytes": 43018,
+              "gzip": 14947,
+              "brotli": 12606
+            },
+            "static/dist/chunks/chunk-KRBNAJD2.js": {
+              "bytes": 10968,
+              "gzip": 4029,
+              "brotli": 3386
+            },
+            "static/dist/chunks/chunk-43FC37BF.js": {
+              "bytes": 129909,
+              "gzip": 37373,
+              "brotli": 26365
+            },
+            "static/dist/chunks/chunk-OFOGQT63.js": {
+              "bytes": 7269,
+              "gzip": 2809,
+              "brotli": 2408
+            },
+            "static/dist/chunks/chunk-5XLQ4GUR.js": {
+              "bytes": 9941,
+              "gzip": 3899,
+              "brotli": 3377
+            },
+            "static/dist/chunks/campus-JHXVYY32.js": {
+              "bytes": 50936,
+              "gzip": 16547,
+              "brotli": 14086
+            },
+            "static/dist/chunks/chunk-HWBRJJQM.js": {
+              "bytes": 1319,
+              "gzip": 715,
+              "brotli": 583
+            },
+            "static/dist/styles-BKR4PFDD.css": {
+              "bytes": 600210,
+              "gzip": 114991,
+              "brotli": 89582
+            },
+            "static/dist/index.html": {
+              "bytes": 1525,
+              "gzip": 774,
+              "brotli": 514
+            }
+          }
+        },
+        "browser": {
+          "state": "not_executed_locally",
+          "reason": "Local browser launch is blocked by environment permissions; fixed Chromium/Firefox/WebKit CI is required. No privilege bypass.",
+          "suite": "scripts/verify_sprint_ui.mjs"
+        },
+        "node22": {
+          "state": "not_executed_locally",
+          "gate": "GitHub CI uses Node22 and validates the identical committed output."
+        }
+      }
+    }
+  ],
+  "repairs_after_first_ci": [
+    {
+      "kind": "product",
+      "files": [
+        "static/app.js"
+      ],
+      "reason": "loadTaskList painted again after taskCollection.onChange, including a cache-hit microtask that replaced freshly focused rows.",
+      "change": "Remove the duplicate continuation paint; retain account/render guards and cached item restoration for route return.",
+      "browser_revalidation": "pending"
+    },
+    {
+      "kind": "browser_test",
+      "files": [
+        "tests/composer-browser.mjs"
+      ],
+      "reason": "Source dictate active state differed from the bundled click-handler state; the first CI observed two dictation panels.",
+      "change": "Use the real microphone button and public speech endpoint fixtures; preserve WAV, segmented transcript, manual input, single control, stop and retry assertions.",
+      "browser_revalidation": "pending"
+    },
+    {
+      "kind": "browser_test",
+      "files": [
+        "scripts/reply_menu_checks.mjs",
+        "scripts/verify_chat_interactions.mjs",
+        "scripts/verify_chat_recovery.mjs",
+        "scripts/verify_frontend_stability.mjs"
+      ],
+      "reason": "Secondary reply actions are inside the native more-actions disclosure; old direct clicks targeted hidden controls.",
+      "change": "Open the actual disclosure before every action; keep audio reuse, reading anchor and reply persistence assertions. Check small SVG and 44px button separately.",
+      "browser_revalidation": "pending"
+    },
+    {
+      "kind": "browser_test",
+      "files": [
+        "scripts/navigation_target_checks.mjs",
+        "scripts/insight_data_checks.mjs",
+        "scripts/verify_natural_intake.mjs",
+        "scripts/verify_pilot_workspace.mjs"
+      ],
+      "reason": "Fixtures, count text and request assertions still used the previous unpaged interfaces.",
+      "change": "Use real page contracts and settled UI counts, verify selected record IDs, release an older fetched response only after the newer response, and preserve cross-device synchronization assertions.",
+      "browser_revalidation": "pending"
+    },
+    {
+      "kind": "browser_test",
+      "files": [
+        "scripts/task_list_stability_checks.mjs",
+        "scripts/verify_task_board.mjs"
+      ],
+      "reason": "Need observable regression coverage for duplicate task DOM replacement and the new minimum touch target.",
+      "change": "Record actual nodes after a view click and verify connection, identity and focus over 350ms; verify home-to-task cache restoration; require at least 43.9px touch dimensions. Existing drag, ordering and undo assertions remain.",
+      "browser_revalidation": "pending"
+    }
+  ]
 }

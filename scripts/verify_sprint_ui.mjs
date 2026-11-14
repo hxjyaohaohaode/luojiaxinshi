@@ -49,7 +49,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
         const session=await api('/session');
         const r=await context.request.post(origin+'/api/notices',{headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf},multipart:{title:prefix+' 原件 '+batch,body:'合成自选整理清单，仅作工程验收。本人自行整理以下事项；无官方期限，也不触发外部提交。',materials_complete:'true'}});assert.equal(r.status(),200,await r.text());
         let notice=await r.json();notice=await api('/notices/'+notice.id+'/manual','POST',{version:notice.version});noticeId=notice.id;
-        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:Array.from({length:27},(_,i)=>({title:prefix+' '+String(batch*27+i).padStart(2,'0'),scope:'personal',materials:[],submission:'',details:'合成本人整理事项，无外部提交。'}))});tasks.push(...result.task_ids);
+        const result=await api('/notices/'+notice.id+'/confirm','POST',{version:notice.version,reviewed:true,tasks:Array.from({length:27},(_,i)=>({title:prefix+' '+String(batch*27+i).padStart(2,'0'),scope:'personal',materials:[],submission:'',details:'合成本人整理事项，无外部提交。'})),plans:Object.fromEntries(Array.from({length:27},(_,i)=>[i,{execution_mode:'task'}]))});tasks.push(...result.task_ids);
       }
       assert.equal(tasks.length,54);
       const first=await api('/tasks/page?status=all&limit=50&q='+encodeURIComponent(prefix)),present=new Set(first.items.map(task=>task.id)),outside=tasks.find(id=>!present.has(id));assert.ok(outside,'A real record must be outside the first page');const task=(await api('/tasks/'+outside+'/workflow')).task;await api('/tasks/'+outside,'PUT',{version:task.version,data:{...task.data,title:task.data.title+' '+needle},status:'pending',reason:'合成验收跨页搜索'});tasks=tasks.filter(id=>id!==outside).concat(outside);
@@ -60,6 +60,7 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
         await nav('dashboard');await page.waitForFunction(()=>document.querySelector('.home-counts [data-overview-filter=pending] b')?.textContent==='54');
         const visible=page.locator('.personal-home [data-action=toggle-task]').first(),id=await visible.getAttribute('data-id'),before=(await api('/tasks/'+id+'/workflow')).task;
         assert.ok(before.data.details.length>0,'The fixture must carry real data omitted by the projection');
+        assert.equal(before.workflow.data.execution_mode,'task','Direct completion requires an explicitly confirmed personal task, not a legacy submission workflow');
         await visible.click();await page.locator('#toast .toast-action').waitFor();const saved=(await api('/tasks/'+id+'/workflow')).task;assert.equal(saved.status,'done');assert.deepEqual(saved.data,before.data,'A light home row must fetch full task data before changing status');
         await page.locator('#toast .toast-action').click();await page.waitForFunction(()=>document.querySelector('.home-counts [data-overview-filter=pending] b')?.textContent==='54');assert.equal((await api('/tasks/'+id+'/workflow')).task.status,'pending');
         const target=(await api('/tasks/'+tasks.at(-1)+'/workflow')).task;
@@ -104,6 +105,18 @@ for(const engine of (process.env.UI_ENGINES||'chromium,firefox,webkit').split(',
       const row=control.locator('..'),boxes=await row.locator('.task-check,.task-main,.task-more>summary').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>{const r=n.getBoundingClientRect();return {name:n.className,x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height};}));
       for(const box of boxes)assert.ok(box.width>=43.9&&box.height>=43.9,JSON.stringify(box));for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];assert.ok(a.right<=b.x+1||b.right<=a.x+1||a.bottom<=b.y+1||b.bottom<=a.y+1,JSON.stringify(boxes));}
       await control.click();await page.waitForFunction(tid=>document.querySelector('[data-action=toggle-task][data-id="'+tid+'"]')?.getAttribute('aria-pressed')==='true',tid);assert.equal((await api('/tasks/'+tid+'/workflow')).task.status,'done');
+    });
+    await check('a pending submission opens its handling record without completion or celebration',async()=>{
+      const tid=tasks.at(-1),completed=(await api('/tasks/'+tid+'/workflow')).task;
+      await api('/tasks/'+tid,'PUT',{version:completed.version,data:completed.data,status:'pending',reason:'合成验收：恢复本人记录以核对办理入口'});
+      const current=(await api('/tasks/'+tid+'/workflow')).task;
+      await api('/tasks/'+tid+'/workflow','PUT',{version:current.workflow.version,task_version:current.version,data:{...current.workflow.data,execution_mode:'submission',stage:'preparing'}});
+      await nav('dashboard');await nav('tasks');await page.locator('#task-search').fill(needle);
+      await page.waitForFunction(()=>document.querySelector('#task-results')?.getAttribute('aria-busy')==='false'&&document.querySelector('#task-count')?.textContent==='已加载 1 / 1 项');
+      const before=await page.evaluate(()=>window.__sprintConfetti);
+      await page.locator('[data-action=toggle-task][data-id="'+tid+'"]').click();await page.locator('#workflow-form').waitFor();
+      assert.equal((await api('/tasks/'+tid+'/workflow')).task.status,'pending');assert.equal(await page.evaluate(()=>window.__sprintConfetti),before);
+      await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});
     });
     await check('notification matrix and plan are actual account data; category change is saved',async()=>{
       await nav('settings');await page.locator('[data-settings-category=account]').click();await page.locator('[data-action=settings-notification]').click();const form=page.locator('#proactive-preferences');await form.waitFor();

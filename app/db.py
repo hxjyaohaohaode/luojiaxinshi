@@ -1,4 +1,4 @@
-from contextlib import closing, contextmanager
+from contextlib import closing, contextmanager, nullcontext
 import json
 from pathlib import Path
 import sqlite3
@@ -372,40 +372,55 @@ class Database:
 
     @contextmanager
     def connect(self, write=False):
-        conn = sqlite3.connect(self.path, timeout=15, factory=CapacityConnection)
-        conn.usage_limits = self.usage_limits
-        conn.row_factory = sqlite3.Row
-        from .memory_store import tokens,digest
-        conn.create_function('memory_tokens',1,tokens,deterministic=True)
-        conn.create_function('memory_digest',1,digest,deterministic=True)
-        from .memory_lifecycle import facet,canonical,context_key,admit
-        conn.create_function('memory_facet',2,facet,deterministic=True)
-        conn.create_function('memory_value',2,canonical,deterministic=True)
-        conn.create_function('memory_context_key',2,context_key,deterministic=True)
-        conn.create_function('memory_admit',2,admit,deterministic=True)
-        conn.execute("PRAGMA foreign_keys=ON")
-        conn.execute("PRAGMA busy_timeout=15000")
-        conn.execute("PRAGMA secure_delete=ON")
-        holding_since=None
+        from .runtime_metrics import record
+        from .write_coordination import admission
+        waiting_since=time.perf_counter() if write else None
+        holding_since=None;transaction_ended=None;wait_recorded=False;conn=None
         try:
-            if write:
-                from .runtime_metrics import record
-                waiting_since=time.perf_counter()
-                try:conn.execute("BEGIN IMMEDIATE")
+            with admission(self.path) if write else nullcontext(None) as permit:
+                try:
+                    conn = sqlite3.connect(self.path, timeout=permit.remaining() if permit else 15,
+                                           factory=CapacityConnection)
+                    conn.usage_limits = self.usage_limits
+                    conn.row_factory = sqlite3.Row
+                    from .memory_store import tokens,digest
+                    conn.create_function('memory_tokens',1,tokens,deterministic=True)
+                    conn.create_function('memory_digest',1,digest,deterministic=True)
+                    from .memory_lifecycle import facet,canonical,context_key,admit
+                    conn.create_function('memory_facet',2,facet,deterministic=True)
+                    conn.create_function('memory_value',2,canonical,deterministic=True)
+                    conn.create_function('memory_context_key',2,context_key,deterministic=True)
+                    conn.create_function('memory_admit',2,admit,deterministic=True)
+                    conn.execute("PRAGMA foreign_keys=ON")
+                    conn.execute("PRAGMA secure_delete=ON")
+                    if write:
+                        # Queue, connection setup and SQLite share one budget.
+                        # Truncation to milliseconds cannot grant a new 15s wait.
+                        conn.execute('PRAGMA busy_timeout='+str(int(permit.remaining()*1000)))
+                        conn.execute("BEGIN IMMEDIATE")
+                        holding_since=time.perf_counter();wait_recorded=True
+                        record(self.path,'wait',(holding_since-waiting_since)*1000)
+                        conn.execute("PRAGMA busy_timeout=15000")
+                    else:
+                        conn.execute("PRAGMA busy_timeout=15000")
+                    yield conn
+                    conn.commit()
+                    transaction_ended=time.perf_counter()
                 except BaseException:
-                    record(self.path,'wait',(time.perf_counter()-waiting_since)*1000,failed=True)
+                    if conn is not None:
+                        conn.rollback()
+                        transaction_ended=time.perf_counter()
                     raise
-                record(self.path,'wait',(time.perf_counter()-waiting_since)*1000)
-                holding_since=time.perf_counter()
-            yield conn
-            conn.commit()
+                finally:
+                    try:
+                        if conn is not None:conn.close()
+                    finally:
+                        if holding_since is not None:
+                            record(self.path,'hold',((transaction_ended or time.perf_counter())-holding_since)*1000)
         except BaseException:
-            conn.rollback()
+            if write and not wait_recorded:
+                record(self.path,'wait',(time.perf_counter()-waiting_since)*1000,failed=True)
             raise
-        finally:
-            if holding_since is not None:
-                record(self.path,'hold',(time.perf_counter()-holding_since)*1000)
-            conn.close()
 
     def backup(self, destination: Path):
         if destination.exists():

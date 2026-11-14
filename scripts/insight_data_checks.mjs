@@ -43,20 +43,29 @@ export async function verifyInsightData(page,base='http://127.0.0.1:8765') {
 }
 
 export async function verifyInsightNavigation({page,api,nav}) {
+  const loaded=async(selector,total,unit)=>{
+    const expected=`已加载 ${Math.min(50,total)} / ${total} ${unit}`;
+    await page.waitForFunction(({selector,expected})=>document.querySelector(selector)?.textContent===expected,{selector,expected});
+    assert.equal(await page.locator(selector).textContent(),expected);
+  };
   await nav('insights');await page.locator('[data-insight-selection="tasks:pending"]').waitFor();
   const data=await api('/insights'),pending=data.dimensions.tasks.find(row=>row.key==='pending');
   await page.locator('[data-insight-selection="tasks:pending"]').click();
   await page.locator('#task-insight-filter').waitFor();
-  assert.equal(await page.locator('#task-count').textContent(),pending.count+' 项');
+  await loaded('#task-count',pending.count,'项');
+  const shownTasks=await page.locator('#task-results [data-action=toggle-task]').evaluateAll(nodes=>nodes.map(node=>node.dataset.id));
+  assert.equal(shownTasks.length,Math.min(50,pending.count));assert.ok(shownTasks.every(id=>pending.ids.includes(id)));
   await page.locator('#task-insight-filter [data-action="clear-task-filters"]').click();
-  assert.equal(await page.locator('#task-count').textContent(),(await api('/tasks')).length+' 项');
+  await loaded('#task-count',(await api('/tasks/page?status=all&limit=50')).total,'项');
   assert.equal(await page.locator('#task-insight-filter').textContent(),'');
   await nav('insights');await page.locator('[data-insight-selection="notices:all"]').waitFor();
   const current=await api('/insights'),notice=current.dimensions.notices.find(row=>row.key!=='all'&&row.count>0)||current.dimensions.notices[0];
   await page.locator('[data-insight-selection="notices:'+notice.key+'"]').click();
   await page.locator('#library-filter-note [data-library-reset]').waitFor();
-  assert.equal(await page.locator('#library-count').textContent(),notice.count+' / '+current.notices.total+' 则');
+  await loaded('#library-count',notice.count,'则');
+  const shownNotices=await page.locator('#library-results a[href^="#notice/"]').evaluateAll(nodes=>[...new Set(nodes.map(node=>node.getAttribute('href').slice('#notice/'.length)))]);
+  assert.equal(shownNotices.length,Math.min(50,notice.count));assert.ok(shownNotices.every(id=>notice.ids.includes(id)));
   await page.locator('#library-filter-note [data-library-reset]').click();
-  assert.equal(await page.locator('#library-count').textContent(),current.notices.total+' / '+current.notices.total+' 则');
+  await loaded('#library-count',current.notices.total,'则');
   assert.equal(await page.locator('#library-filter-note').textContent(),'');
 }

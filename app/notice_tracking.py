@@ -203,17 +203,26 @@ def save_tracking(conn,uid,nid,payload):
 
 
 def summary(conn,uid,notice_ids=None):
-    query='SELECT p.* FROM notice_phase_tracking p JOIN notices n ON n.id=p.notice_id WHERE p.user_id=? AND n.user_id=?'
+    query='SELECT p.*,n.version AS current_notice_version FROM notice_phase_tracking p JOIN notices n ON n.id=p.notice_id WHERE p.user_id=? AND n.user_id=?'
     params=[uid,uid]
     if notice_ids is not None:
         if not notice_ids:return {}
         query+=' AND p.notice_id IN (SELECT value FROM json_each(?))';params.append(dumps(notice_ids))
-    rows=[];needed=set()
-    for row in conn.execute(query,params):
-        data=json.loads(row['data']);rows.append((row,data));needed.add(row['notice_id'])
+    return summarize_rows(conn,uid,conn.execute(query,params))
+
+
+def summarize_rows(conn,uid,records):
+    """Reuse owner-checked phase/current-version rows already loaded by a list."""
+    rows=[];needed=set();versions={}
+    for row in records:
+        versions[row['notice_id']]=row['current_notice_version']
+        if row['data'] is None:continue
+        data=json.loads(row['data']);rows.append((row,data))
         needed.update(data.get('related_notice_versions',{}))
     if not rows:return {}
-    versions={row['id']:row['version'] for row in conn.execute('SELECT id,version FROM notices WHERE user_id=? AND id IN (SELECT value FROM json_each(?))',(uid,dumps(list(needed))))}
+    needed.difference_update(versions)
+    if needed:
+        versions.update({row['id']:row['version'] for row in conn.execute('SELECT id,version FROM notices WHERE user_id=? AND id IN (SELECT value FROM json_each(?))',(uid,dumps(sorted(needed))))})
     result={}
     for row,data in rows:
         review=row['notice_version']!=versions.get(row['notice_id']) or any(versions.get(nid)!=version for nid,version in data.get('related_notice_versions',{}).items())

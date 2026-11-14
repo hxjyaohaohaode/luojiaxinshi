@@ -1,4 +1,5 @@
 import {browserOverride} from './browser-runtime.mjs';
+import {verifyTaskListStability} from './task_list_stability_checks.mjs';
 // Fault-injection routes must reach Playwright; actual workers are exercised by verify_push_browser.mjs.
 /** Real pointer movement with isolated synthetic tasks, never the user's data. */
 import fs from 'node:fs/promises';
@@ -41,6 +42,7 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
     const [a,b,c]=saved.task_ids;
     await page.goto(origin+'/#tasks');await page.locator('[data-task-view=board]').click();await page.locator('#task-search').fill(prefix);if(await page.locator('#task-status-select').isVisible())await page.locator('#task-status-select').selectOption('all');else await page.locator('[data-filter=all]').click();await page.waitForFunction(()=>document.querySelectorAll('#task-results .task-row').length===3);await settle();
     const initial=await ids('action');
+    await check('cached task views retain live row nodes and focus, and restore filters after the home route',()=>verifyTaskListStability(page,initial[0]));
     await check('whole-card drag reorders, persists after reload, and does not open the task',async()=>{
       const target=await row(initial[0]).boundingBox();await drag(initial[2],target.x+target.width/2,target.y+12);
       assert.deepEqual(await ids('action'),[initial[2],initial[0],initial[1]]);assert.equal(await page.locator('#dialog').evaluate(n=>n.open),false);
@@ -117,7 +119,7 @@ for(const engine of (process.env.UI_ENGINES||process.env.OPENUI_BROWSER||'chromi
     });
     for(const width of [390,320])await check('compact '+width+'px layout retains reachable move targets and no horizontal overflow',async()=>{
       await page.setViewportSize({width,height:844});await settle();const handle=row(c).locator('[data-task-drag-handle]');await handle.scrollIntoViewIfNeeded();
-      const box=await handle.boundingBox();assert.ok(box.width>=27.5&&box.height>=27.5,JSON.stringify(box));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      const box=await handle.boundingBox();assert.ok(box.width>=43.9&&box.height>=43.9,JSON.stringify(box));assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
       await handle.click();await page.getByRole('button',{name:'移到留意反馈',exact:true}).waitFor();await page.keyboard.press('Escape');
       await page.screenshot({path:path.join(out,engine+'-'+width+'.png')});
     });

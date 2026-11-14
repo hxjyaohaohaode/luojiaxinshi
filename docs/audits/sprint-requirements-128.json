@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "title": "珞珈信使冲刺 128 项证据总账",
-  "reviewed_at": "2026-11-14T04:49:14.430238+00:00",
+  "reviewed_at": "2026-11-14T05:02:17.337114+00:00",
   "baseline_sha": "b362ab2100f835ace66bbc2b92921e865af1e1ce",
   "source_attachments": [
     {
@@ -32,7 +32,7 @@
     },
     "status_labels": {
       "实现证据": 120,
-      "已执行定向验证": 62,
+      "已执行定向验证": 63,
       "待冻结全套": 128,
       "真实外部验收": 51,
       "条件扩展": 8
@@ -125,6 +125,70 @@
       ],
       "document": "docs/audits/sprint-sources-evidence.md",
       "limits": "LJ-019 新增 6 项＋相应旧群收件、事项、来源及年度合同，实际签名合成回调；不代表真实 QQ 平台验收。"
+    },
+    {
+      "id": "workspace-projection-targeted-14",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "passed": 14,
+      "seconds": 39.79,
+      "time": "2026-11-14T04:49:49Z",
+      "scope_files": [
+        "tests/test_workspace_projection.py",
+        "tests/test_campus_policies.py"
+      ],
+      "document": "docs/audits/sprint-workspace-projection.md",
+      "limits": "本地 JUnit 14 项真实通过；早于 05:01 查询回归修复，不能代替修复后完整后端。"
+    },
+    {
+      "id": "notice-query-regression-45",
+      "kind": "synthetic_backend",
+      "result": "passed",
+      "passed": 45,
+      "warnings": 1,
+      "seconds": 28.82,
+      "frozen_at": "2026-11-14T05:01:09Z",
+      "scope_files": [
+        "tests/test_usage_limits.py",
+        "tests/test_notice_matters.py",
+        "tests/test_notice_phase_tracking.py",
+        "tests/test_sprint_lists.py",
+        "tests/test_workspace_projection.py"
+      ],
+      "failure": {
+        "test": "tests/test_usage_limits.py::test_search_query_count_does_not_grow_per_notice",
+        "records": 100,
+        "before_select_count": 15,
+        "original_limit": "<15",
+        "independently_reproduced": true,
+        "threshold_changed": false
+      },
+      "fix": {
+        "after_select_count": 14,
+        "records_returned": 100,
+        "files": [
+          "app/notice_matters.py",
+          "app/notice_tracking.py"
+        ],
+        "behavior": "同一 owner 和通知 ID 范围批量读取归组、阶段与当前版本；关联通知不在批次内时才额外查询其 owner 限定版本。",
+        "added_regression_cases": 2,
+        "preserved": [
+          "全部记录",
+          "归组字段",
+          "阶段摘要",
+          "当前及关联版本复核",
+          "账号隔离",
+          "关联通知删除后的复核要求"
+        ]
+      },
+      "command": "CAMPUS_AUTO_LOAD_ENV=0 .venv/bin/python -m pytest tests/test_usage_limits.py tests/test_notice_matters.py tests/test_notice_phase_tracking.py tests/test_sprint_lists.py tests/test_workspace_projection.py -o addopts='' --tb=short --junitxml=artifacts/sprint-final/notice-query-regression.xml",
+      "artifacts": [
+        "artifacts/sprint-final/notice-query-regression.xml",
+        "artifacts/sprint-final/notice-query-regression-before.json",
+        "artifacts/sprint-final/notice-query-regression-after.json"
+      ],
+      "document": "docs/audits/sprint-sources-evidence.md",
+      "limits": "此轮含原来源／投影定向范围，不能与其他轮次简单累加；不是整个分支重新冻结后的完整后端／CI 通过证明。"
     }
   ],
   "observed_local_metrics": {
@@ -254,10 +318,24 @@
   "dependencies": {
     "esbuild": "0.28.2",
     "kind": "development_build_only",
-    "runtime_dependency_changes": "none_intended_require_lockfile_diff_check"
+    "playwright": "1.62.1",
+    "runtime_dependency_changes": [
+      {
+        "package": "opentelemetry-api",
+        "from": "1.45.1",
+        "to": "1.45.2",
+        "reason": "pip-audit 在冻结前发现上游已修复漏洞；官方公告影响 <=1.45.1，修复 1.45.2。",
+        "advisory": "https://github.com/open-telemetry/opentelemetry-python/security/advisories/GHSA-mf5v-w3w3-f6cg",
+        "cve": "CVE-2026-126360",
+        "exploitation_in_this_app": "not_established"
+      }
+    ],
+    "other_python_pins": "unchanged_vs_baseline_verified",
+    "javascript_runtime_dependencies": "unchanged_vs_baseline_verified",
+    "audit_state": "npm 全依赖 0 漏洞由主执行者报告；pip check 已过，修复后 pip-audit 最终结果待主执行证据。"
   },
   "reference_validation": {
-    "checked_files": 198,
+    "checked_files": 201,
     "missing_files": []
   },
   "requirements": [
@@ -409,7 +487,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -455,7 +534,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -499,7 +579,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_permissions.py",
@@ -658,7 +739,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -1057,7 +1139,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_group_context_candidates.py",
@@ -1072,7 +1155,8 @@
         "没有保留可核实回复线程时只称邻近候选，绝不编造 thread；实际 QQ 授权与真实连续消息语料仍需联调。无任何候选自动改期限、合并通知或提交材料。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1306,7 +1390,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py"
@@ -1319,7 +1404,8 @@
         "线索真实性仍需本人核对；系统不猜测公告日期。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1348,7 +1434,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
@@ -1362,7 +1449,8 @@
         "自动相似度仅作候选，不能证明正式效力或覆盖关系。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1518,7 +1606,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_matters.py"
@@ -1533,7 +1622,8 @@
         "冲突效力由本人依据核实；收到时间和模型置信度不决定优先级。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1605,7 +1695,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_unified_intake.py",
@@ -1619,7 +1710,8 @@
         "字节相同文件的新名称是元数据，校园共享原件名称历史由校园专项核查；未把相似标题直接判同一事项。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1736,7 +1828,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
@@ -1753,7 +1846,8 @@
         "相对日期需要原文发布日期和时区；省略年份不能仅据今年猜补。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1952,7 +2046,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "qq-context-domain-41"
+          "qq-context-domain-41",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_matters.py",
@@ -1968,7 +2063,8 @@
         "本硕博／联合团队的具体子流程仍依真实材料拆分，不按名单或标题自行推断。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -1997,7 +2093,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py"
@@ -2012,7 +2109,8 @@
         "同名检索不能直接下结论；本轮没有真实异议业务办理／官方受理回执。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -2041,7 +2139,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
@@ -2057,7 +2156,8 @@
         "外发仍按主通知模块的本人偏好与渠道授权，未做真实设备到达验收；本人记录不等于学校最终确认。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -2132,7 +2232,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_phase_tracking.py",
@@ -2149,7 +2250,8 @@
         "Provider accepted 不代表设备展示或本人已读，官方办理结果需独立依据。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -2255,7 +2357,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_action_workflow.py",
@@ -2267,7 +2370,9 @@
       },
       "external_acceptance": [],
       "remaining": [],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -2625,7 +2730,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2668,7 +2774,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2712,7 +2819,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2758,7 +2866,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2805,7 +2914,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2848,7 +2958,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -2894,7 +3005,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_policies.py",
@@ -3008,7 +3120,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_policies.py",
@@ -3055,7 +3168,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -3098,7 +3212,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_campus_sprint.py",
@@ -3485,7 +3600,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "workspace-projection-targeted-14"
         ],
         "test_files": [
           "tests/test_push_delivery.py",
@@ -4766,7 +4882,8 @@
       },
       "verification": {
         "executed_runs": [
-          "source-domain-109"
+          "source-domain-109",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_notice_semantics.py",
@@ -4783,7 +4900,8 @@
         "本轮仅把这些门槛复用到新阶段／异议窗口，并补跨年度与 Feed 证据；未改成凭模型置信度认定事实。PDF／图像真实语义准确率仍未测得。"
       ],
       "evidence_documents": [
-        "docs/audits/sprint-sources-evidence.md"
+        "docs/audits/sprint-sources-evidence.md",
+        "docs/audits/sprint-query-regression.json"
       ],
       "status_labels": [
         "实现证据",
@@ -4994,10 +5112,13 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "workspace-projection-targeted-14",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
+          "tests/test_workspace_projection.py",
           "tests/paged-list.test.mjs",
           "tests/workspace-projection.test.mjs"
         ],
@@ -5006,9 +5127,12 @@
       },
       "external_acceptance": [],
       "remaining": [
-        "新工作区投影尚在根集成定向验证，最后冻结及 1 万条完整语义对照由最终运行记录更新。"
+        "新工作区投影已集成；完整库存、原业务语义及分钟差量的实际执行结果仍以最终冻结记录为准。"
       ],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-workspace-projection.md",
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -5033,7 +5157,9 @@
         ]
       },
       "verification": {
-        "executed_runs": [],
+        "executed_runs": [
+          "notice-query-regression-45"
+        ],
         "test_files": [
           "tests/test_sprint_lists.py"
         ],
@@ -5044,9 +5170,12 @@
       "remaining": [
         "五个热样本的 P95 为 nearest-rank 最大值，仅为本机微基准，不代表校园并发生产性能。"
       ],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
+        "已执行定向验证",
         "待冻结全套"
       ]
     },
@@ -5060,7 +5189,7 @@
       "requirement": "看板/提醒共享增量投影，稳定数据与分钟时钟派生拆分；没变化时不重读重绘全列表，跨分钟必要状态仍准确。",
       "source_line": 317,
       "implementation": {
-        "state": "integration_in_progress",
+        "state": "implemented_or_strengthened",
         "summary": "新增 /api/workspace/projection：按数据库／本人／提交修订缓存完整轻量数据，时间变化仅返回 intent、tracking、推荐及任务时效差量；notice_queue 纯重算与 task_timing 复用原业务公式，草稿仅作为内部稳定依据。",
         "files": [
           "app/workspace_projection.py",
@@ -5074,9 +5203,12 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "workspace-projection-targeted-14",
+          "notice-query-regression-45"
         ],
         "test_files": [
+          "tests/test_workspace_projection.py",
           "tests/workspace-projection.test.mjs",
           "tests/data-sync.test.mjs",
           "tests/test_workspace.py",
@@ -5089,7 +5221,10 @@
       "remaining": [
         "投影缓存有 48 MiB／24 owner／300 秒边界；缓存失效或超限会重新构建，不能声称任何账号永久不读草稿。分钟重算与完整语义等价待最终定向／全套记录。"
       ],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-workspace-projection.md",
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -5160,21 +5295,27 @@
       },
       "verification": {
         "executed_runs": [
-          "frontend-node-270"
+          "frontend-node-270",
+          "workspace-projection-targeted-14",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/paged-list.test.mjs",
           "tests/workspace-projection.test.mjs",
-          "tests/test_sprint_lists.py"
+          "tests/test_sprint_lists.py",
+          "tests/test_workspace_projection.py"
         ],
         "freeze_suite": "pending",
         "browser": "not_assessed"
       },
       "external_acceptance": [],
       "remaining": [
-        "实体文件预览内存、长时滚动和真实辅助技术待浏览器／设备验收；新投影集成待根冻结结果。"
+        "实体文件预览内存、长时滚动和真实辅助技术待浏览器／设备验收；投影集成实际验证以冻结结果为准。"
       ],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-workspace-projection.md",
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -5204,7 +5345,8 @@
       },
       "verification": {
         "executed_runs": [
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_sprint_lists.py",
@@ -5218,7 +5360,9 @@
         "学校目标活跃人数与峰值尚待确认；本机样本不能据此宣称生产容量上限或迁库阈值已实测。"
       ],
       "remaining": [],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -5302,7 +5446,8 @@
       "verification": {
         "executed_runs": [
           "source-domain-109",
-          "campus-domain-54-plus-rename"
+          "campus-domain-54-plus-rename",
+          "notice-query-regression-45"
         ],
         "test_files": [
           "tests/test_workflow.py",
@@ -5319,7 +5464,9 @@
         "真实生产磁盘满、部署回滚、远端损坏备份、停机恢复的 RTO／丢失窗口需在目标环境记实；本地演练只证明所测范围。"
       ],
       "remaining": [],
-      "evidence_documents": [],
+      "evidence_documents": [
+        "docs/audits/sprint-query-regression.json"
+      ],
       "status_labels": [
         "实现证据",
         "已执行定向验证",
@@ -5379,7 +5526,7 @@
       "source_line": 324,
       "implementation": {
         "state": "implemented_with_owner_decision_pending",
-        "summary": "README／TESTING／第三方登记与构建门禁更新；新增 esbuild 仅为开发构建依赖且精确锁为 0.28.2，现有运行时依赖保持；209 组件采用不等于批量引库。",
+        "summary": "README／TESTING／第三方登记与构建门禁更新；新增 esbuild 仅为开发构建依赖且精确锁为 0.28.2。冻结前 pip-audit 实际检出 opentelemetry-api 1.45.1 的已知漏洞，核对官方公告后精确升级至 1.45.2；其他 Python 锁定版本保持。209 组件采用不等于批量引库。",
         "files": [
           "README.md",
           "TESTING.md",
@@ -5494,5 +5641,19 @@
         "真实外部验收"
       ]
     }
-  ]
+  ],
+  "regressions": [
+    {
+      "initial_run": "artifacts/sprint-final/backend-round1",
+      "reported_tests": 1779,
+      "reported_files": 133,
+      "reported_passed": 1775,
+      "reported_skipped": 3,
+      "reported_failed": 1,
+      "test": "tests/test_usage_limits.py::test_search_query_count_does_not_grow_per_notice",
+      "fix_evidence": "docs/audits/sprint-query-regression.json",
+      "full_rerun_after_fix": "pending"
+    }
+  ],
+  "source_domain_refrozen_at": "2026-11-14T05:01:09Z"
 }
