@@ -312,6 +312,8 @@ jobs:
             artifacts/reference-fusion/browser/*.png
             artifacts/agent-quality-browser/performance.json
             artifacts/composer-browser/results.json
+            artifacts/composer-browser/failure.json
+            artifacts/composer-browser/geometry.json
             artifacts/composer-browser/*.png
             artifacts/openui-browser/*/report.json
             artifacts/openui-browser/*/*.png

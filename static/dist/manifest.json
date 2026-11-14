@@ -3,7 +3,7 @@
   "esbuild": "0.28.2",
   "entries": {
     "js": "/static/dist/app-EXBTH7EL.js",
-    "css": "/static/dist/styles-BKR4PFDD.css"
+    "css": "/static/dist/styles-BHHEBXRE.css"
   },
   "sources": {
     "static/account-security.js": "83bfc748581f61a0567b191d857fff36537f24d8f9b4cd3005c67a162fbf9dc0",
@@ -158,7 +158,7 @@
     "static/system/campus-roster.css": "3b7b6be934937cc174412dfaaa4385084211bab0f0e66dafc52e8e5314a2ae91",
     "static/system/chat-conversation.css": "fc7a2aa660a14aaffdf06d1edc0a3abdeb5f694a1b8faa94816eaec687c76154",
     "static/system/chat-layout.css": "d50c203f982c6d79f914563ffeab3585718cf06c01f782d5a632422ec1152d46",
-    "static/system/chat-refinements.css": "3a1b3aa551bf0bae6b3346d5418f8b881fb65b321a5dd110b69a5446a3538f9c",
+    "static/system/chat-refinements.css": "2ca76c017f7b172c2ce701cb69f21e220c5a213add05ffdbab98bdd5369042f6",
     "static/system/collaboration-followup.css": "46764ae96b2b53126edee1021a041fb1fd3a645c03cecc585c1e396f7a33bf20",
     "static/system/content-priority.css": "0bca61e7df31e92b87407778a1228e0bc503e2fe3f0f93f9fef1db3cdb9a37dc",
     "static/system/execution-trace.css": "e774be087464ce701cd072177ce17e399675523e22da84b0dd6b06f84a81fde7",
@@ -229,7 +229,7 @@
     "static/dist/chunks/campus-I3DPT7PW.js": "a1f463aa2ecfdb85beb588f7b9083b0c3f94e4593a7e534a73de66596425feda",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-BKR4PFDD.css": "e58a1099af4a0652db3fb2fe5164815c763ec3daaafebef3078514040b6eafa3",
-    "static/dist/index.html": "3fe555973334829898755bbe4966f84480c1151c3aba2e23f64692ef422ebe23"
+    "static/dist/styles-BHHEBXRE.css": "534ce4587b9e9c4ea6ac135ecf9f5abb3abee63665c4c8bb22d9993ff445e350",
+    "static/dist/index.html": "6b1004288a9ed1acc7f510bd82985e16e8d019e9e2b80e4cf4c5d1a6494d1b0e"
   }
 }

@@ -85,12 +85,12 @@ try{
   await page.evaluate(()=>{
     const started=performance.now(),events=[];let dropped=0;
     const structuralSelector='html,body,#app,.shell,.workspace,#content,#chat-workspace,.chat-main,.chat-reading-area';
-    const selectors=['html','body','#app','.shell','.sidebar','.workspace','#content','#chat-workspace','.chat-main','.chat-reading-area','#chat-thread','.chat-heading','#chat-composer','#chat-input','#chat-composer .composer-plus','#composer-menu','.dictation-panel','.dictation-time','.dictation-panel > button'];
+    const selectors=['html','body','#app','.shell','.sidebar','.workspace','#content','#chat-workspace','#chat-materials','.reply-sources-panel','.chat-main','.chat-reading-area','#chat-thread','.chat-heading','#chat-composer','#chat-input','#chat-composer .composer-plus','#composer-menu','.dictation-panel','.dictation-time','.dictation-panel > button'];
     const identity=node=>node instanceof Element?node.tagName.toLowerCase()+(node.id?'#'+node.id:'')+(node.classList.length?'.'+[...node.classList].join('.'):''):String(node?.nodeName||'window');
     const rectangle=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
     const describe=node=>{
       const style=getComputedStyle(node);
-      return {identity:identity(node),structural:node.matches(structuralSelector),rect:rectangle(node),scrollLeft:node.scrollLeft,scrollTop:node.scrollTop,scrollWidth:node.scrollWidth,scrollHeight:node.scrollHeight,clientLeft:node.clientLeft,clientWidth:node.clientWidth,clientHeight:node.clientHeight,overflowX:style.overflowX,overflowY:style.overflowY,position:style.position,transform:style.transform,display:style.display,visibility:style.visibility,hidden:node.hidden,ariaExpanded:node.getAttribute('aria-expanded'),gridTemplateColumns:style.gridTemplateColumns};
+      return {identity:identity(node),structural:node.matches(structuralSelector),rect:rectangle(node),scrollLeft:node.scrollLeft,scrollTop:node.scrollTop,scrollWidth:node.scrollWidth,scrollHeight:node.scrollHeight,clientLeft:node.clientLeft,clientWidth:node.clientWidth,clientHeight:node.clientHeight,overflowX:style.overflowX,overflowY:style.overflowY,paddingLeft:style.paddingLeft,paddingRight:style.paddingRight,borderLeftWidth:style.borderLeftWidth,borderRightWidth:style.borderRightWidth,position:style.position,transform:style.transform,display:style.display,visibility:style.visibility,hidden:node.hidden,ariaExpanded:node.getAttribute('aria-expanded'),gridTemplateColumns:style.gridTemplateColumns};
     };
     const capture=phase=>{
       const targets={},ancestors=new Set(),visual=window.visualViewport;
