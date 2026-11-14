@@ -22,9 +22,9 @@ export function createAccountSecurity({state,esc,field,api,verification,showDial
     }else{
       payload.verification_token=await verification.prove(form.querySelector('[data-verification]'));
       if(state.session?.user.id!==uid)return;
-      result=await api('/auth/password',{method:'POST',json:payload});
+      result=await api('/auth/password',{method:'POST',json:payload,rotateSession:true});
     }
-    const session=result?.session||await api('/session');if(state.session?.user.id!==uid)return;state.session=session;if(view.sameDialog())open();toast('账号安全信息已更新，其他设备需要重新登录');
+    const session=result?.session||await api('/session');if(state.session?.user.id!==uid||(result?.session&&state.session!==session))return;if(!result?.session)state.session=session;if(view.sameDialog())open();toast('账号安全信息已更新，其他设备需要重新登录');
   }
   document.addEventListener('click',event=>{if(event.target.closest('[data-contact-bind]'))bindDialog();});
   return {open,submit};

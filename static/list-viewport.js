@@ -8,10 +8,16 @@ export function preserveListViewport(render, root = document.querySelector('#con
     if (!node) return null;
     if (node.id) return '#' + CSS.escape(node.id);
     if (node.dataset?.taskId) return '[data-task-id="' + CSS.escape(node.dataset.taskId) + '"]';
+    if (node.tagName === 'BUTTON' && node.closest('[data-getting-started]')) {
+      for (const attribute of ['data-onboarding-open', 'data-onboarding-dismiss']) {
+        if (node.getAttribute(attribute) !== null) return '[data-getting-started] button[' + attribute + ']';
+      }
+    }
     for (const attribute of ['data-workflow-task', 'data-id', 'href']) {
       const value = node.getAttribute(attribute);
       if (value) return node.tagName.toLowerCase() + '[' + attribute + '="' + CSS.escape(value) + '"]' +
-        (node.dataset.action ? '[data-action="' + CSS.escape(node.dataset.action) + '"]' : '');
+        (node.dataset.action ? '[data-action="' + CSS.escape(node.dataset.action) + '"]' : '') +
+        (attribute === 'href' && node.getAttribute('data-overview-filter') !== null ? '[data-overview-filter="' + CSS.escape(node.getAttribute('data-overview-filter')) + '"]' : '');
     }
     return null;
   };
