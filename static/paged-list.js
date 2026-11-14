@@ -142,7 +142,9 @@ export function createPagedList({api, path, owner, context = () => null, revisio
       if (data.loaded && !outdated) { requestView = context(); return Promise.resolve(snapshot()); }
     }
     preserveRange = (preserveRange || outdated) && nextKey === key && data.loaded && (requestView === context() || outdated);
-    if (preserveRange && data.loading && pending && pendingCurrent) return pending;
+    // A forced read can follow a write whose new server state was not yet
+    // present when the older request began. Only ordinary loads above may
+    // reuse pending work; keeping the range must not override force.
     if (nextKey !== key) { data = empty(); dataRevision = null; }
     filters = normalized; key = nextKey;
     return request(false, false, {preserveRange, canApply, equal});
