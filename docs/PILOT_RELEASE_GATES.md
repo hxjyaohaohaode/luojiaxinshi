@@ -4,18 +4,125 @@
 
 **本文是本轮可审阅的工程建议，不是院方批准、正式用户规模、服务等级承诺或已经通过的生产验收。** 未填写的真实来源、设备、人员、费用和期限一律保持待确认。实际运行结果由冲刺验证记录另行保存，不能从本文中的目标数值推导“已达标”。
 
-### 最近一次独立本地观测
+### 最新同源独立本地观测
 
-代码候选 `05498ae154403c239ee4efddca0041fd530ce6c3`（Linux 实现指纹 `d55ba13592713d9de75a6e2344cb0d2092f2302896cc895d15544fc25f603c12`）于 2026-11-14 UTC 完成的两档独立本地演练，结果如下。完整请求、事务样本和恢复结果见 [冻结验证记录](audits/sprint-validation.json)，历史及诊断边界见 [写入等待证据](audits/sprint-write-wait-evidence.json)。
+新整合提交 `9e86a1e9b798071e870a0e35d73b46610d435988`、tree `849605264ce3af3bffd15896f7a530b3685438af`、实现指纹 `81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31` 已按原负载串行完成 5 人与 10 人独立进程测量，每人仍为 20 条合成通知。两次执行前后源码指纹未变，原始 JSON 与各自日志中的唯一结果逐字段相等，下面列的是新实际运行，不沿用旧提交的数值。
 
-后续候选 `6b15c7452966e7600cca87acf36a2e11ad034fbc` 仅修订两个浏览器测试夹具，产品源码、静态构建、依赖与本地运行脚本逐路径未变。因此保留这组最近的独立本地观测及其原始提交／指纹，适用范围另行核对，不将数据改写成新提交上重新执行的测量；新候选的完整 CI 独立记录。
+| 本地观测 | UTC 报告时间 | HTTP / 正常 CRUD 样本 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 100 ms 等待门槛 |
+|---|---|---:|---:|---:|---:|---|
+| 5 人，9e86 / 81f | 2026-11-14 09:35:04 | 766 / 625 | 196.4 ms | **85.079 ms / 776** | 0 | **仅本次通过** |
+| 10 人，9e86 / 81f | 2026-11-14 09:35:58 | 1,531 / 1,250 | 471.2 ms | **172.555 ms / 1,590** | 0 | **未通过** |
 
-| 并发合成账号 | 普通成功 CRUD P95 | 写入总等待 P95 | 获取失败 | 功能及内容恢复 | 本文性能门槛 |
-|---|---:|---:|---:|---|---|
-| 5 | 282.6 ms | **114.149 ms** | 0 | 通过 | **未通过 100 ms 等待门槛** |
-| 10 | 743.1 ms | **272.906 ms** | 0 | 通过 | **未通过 100 ms 等待门槛** |
+两档均通过真实 HTTP、owner 隔离、幂等、旧版本与恢复断言；重启及备份恢复比较全部任务 ID 与 `notice_id/status/version/data`。**编辑缓存仍只检查 revision == 20，没有比较完整 payload**，恢复范围没有扩大。全部等待样本都低于 4,096 条环形上限，等待口径仍包括公平准入、连接准备和 SQLite BEGIN，原 `<100ms` 门槛不变。完整结构化原报告、命令、身份、日志 SHA 和逐字段核验保存在[写入等待证据](audits/sprint-write-wait-evidence.json)的 `integrated_58_frozen_5_users`、`integrated_58_frozen_10_users` 记录中；本地原日志路径仅用于溯源。
 
-此前本地 5 人曾观测到 88.957 ms，本轮共享 Linux CI 也有通过该等待门槛的观测；这些分别保留，不能覆盖表中的失败或推出“5 人稳定达标”。当前聚合数据没有证明新尾延迟属于哪一条事务或哪一种环境因素，不据此归咎宿主噪声。**首批和扩大仍是进入条件未全部满足的方案，当前证据不满足 5 人或 10 人真实试点的上述工程准入条件。** 仓库工程回归通过、合并代码和实际试点准入分别判断。
+**5 人这一次通过等待门槛，尚不能推断稳定通过或试点批准；10 人扩大条件仍未满足。** 本次测量不证明与旧观测差异的唯一原因，不将改善归因于某一修复，也不宣称统计显著性。原 101.063／178.194 ms、29ce 成对 101.063／165.573 ms、v3 114.149／272.906 ms 以及更早结果全部保留，预检实验 182.852 ms 仍未采用。新整合提交的本地六个阶段已全部完成：后端 139 个文件、1,875 个唯一案例，其中 1,872 通过、3 个声明跳过；Node 329 项通过，可重建构建检查通过。完整计数与原件摘要见[写入等待证据](audits/sprint-write-wait-evidence.json)的 `integrated_local_validation_summary`。但 [CI58](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43581184272) 官方整轮为 failure，不能用本地或 runtime 功能通过覆盖浏览器失败。
+
+**候选工程与视觉验收冻结时刻：2026-11-14T12:18:27.857754+00:00。** [CI63](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43592108675) 的候选 `70226e910b7fe2ecdfd49b0a34dcd62ba00484bc`、tree `894b7ef5b4c77da666177649e853afb0811f1359`、Linux 指纹 `4e4d3e2ca56b7ccbc8e9bd9a197b07e539ea8d8d987d47656b7486504b991634` 已完成九个 required jobs 和独立视觉复核。实际 PR checkout 为 `e3adde8146fec6fbb9f4f63057fabb97a6a8d975`。这份记录停在合并前候选；最终 main 实际提交与其自身 push CI 见 [PR5 最终交付记录](https://github.com/hxjyaohaohaode/luojiaxinshi/pull/5)，不能把候选 CI 自动算作 main 的实际执行。
+
+相对上述真实本地 `9e86 / 81f` 基线，逐路径 Git blob 与 mode 核对为 **18 项变化、859 条其余路径相同**。变化是已审阅的前端修复、回归和构建，以及 workflow 精确增加的两条 Composer `failure.json`／`geometry.json` 上传路径；**workflow 字节不完全相同，执行命令、原门槛、超时、权限、浏览器与保留期没有变动**。全部后端、schema、依赖、runtime、容量脚本和写入计时字节相同。完整身份摘要及 SHA `b6f5e246106fcc8691a9c834fce94b1c5781c30e21cf40f4455fdf7848aa159b` 保存在[写入等待证据](audits/sprint-write-wait-evidence.json)的 `frontend_only_candidate_applicability`，旧 6701／6687／2e1dac／4cd 候选与历史结果各自保留。
+
+**独立 5／10 人测量仍绑定 9e86 / 81f 实际执行，仍为 85.079／172.555 ms，没有为取得较好数值重复挑选测量。** 字节一致性只支持既有 HTTP／SQLite 观测对未变受测路径的有限适用性，不是新候选独立重跑或浏览器性能实测，也不声明全部产品未变。完整候选原件摘要可读[CI63 机器验收记录](audits/sprint-review-ci-63-success.json)；被 Git 忽略的本地路径和 SHA 仅作溯源，不声称那些完整日志可以从仓库下载。
+
+### 历史独立观测与未采用实验
+
+本次整合前，最近 5 人独立观测是 `29ce79282ec772a9470f0db092fd1eb1de866c0a` / 指纹 `956d87e97ab18a86baa06b6613d7b97523ae03f6e6e7337b53193b34eb9d5121`。后续在未改动的 `c4b13a270df0bc988fd955a70a46acd3e64639f8`、tree `a1d35c233b7ee912b482868ea7c47658458aab63`、指纹 `2a3318786d131edd824b719421ecea703edf0d4919f24112ae6be739fbacc488` 上执行了新的 10 人基线。**该历史阶段不同人数的最近观测有不同执行身份，不拼成同一次成对测试；原 29ce 成对记录全部保留。**
+
+| 本地观测 / 实际执行身份 | UTC 完成时间 | HTTP / 正常 CRUD 样本 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 100 ms 等待门槛 |
+|---|---|---:|---:|---:|---:|---|
+| 5 人，29ce / 956（前一阶段 5 人） | 2026-11-14 07:47:06 | 766 / 625 | 261.5 ms | **101.063 ms / 777** | 0 | **未通过** |
+| 10 人，29ce / 956（原成对记录） | 2026-11-14 07:48:00 | 1,531 / 1,250 | 473.4 ms | **165.573 ms / 1,590** | 0 | **未通过** |
+| 10 人，未改动 c4 / 2a（前一阶段 10 人） | 2026-11-14 08:25:38 | 1,531 / 1,250 | 477.9 ms | **178.194 ms / 1,589** | 0 | **未通过** |
+
+三次功能断言均通过：逐任务 ID 比较 `notice_id/status/version/data` 全部稳定业务内容，重启和备份恢复后的 fixture 记录未丢失；owner、幂等、旧版本与恢复后旧会话拒绝均有实际断言。**编辑缓存恢复仅断言 revision 等于保存次数，没有逐字段比较 payload**；原始字段 `restore_preserved_tasks_and_edit_caches` 不应扩大为缓存正文逐字一致。连续恢复 UI 另按独立浏览器证据判断。`result=passed` 是功能结果，不能覆盖 `write_total_wait_p95.passed=false`。
+
+为检验仍可改进的方向，在独立工作树尝试把已陈旧／无权访问的任务写请求并入现有认证 read 连接预拒绝，成功请求仍保留所有写事务重核。原 17 项定向用例修前 **14 通过 / 3 失败**，修后 **17 通过**；10 项既有兼容用例也通过。随后使用未改动的 `verify_local_runtime.py --users 10`，依次对照未改 c4 基线与实验，计时起点、采样定义、负载、后台 worker 和拒绝断言没有改动。
+
+| 单次有界对照 | CRUD P95 | 总等待 P95 | 实际 writer 样本 | 结果 |
+|---|---:|---:|---:|---|
+| 未改动 c4 基线 | 477.9 ms | 178.194 ms | 1,589 | 等待门槛未通过 |
+| 未采用预检补丁，指纹 `eef5841fe5fb8df141cfa928b4ea29c67e33b280cb702bea67aff3a36b5c9059` | 523.8 ms | 182.852 ms | 1,379 | **未观察到两项 P95 收益，不采用** |
+
+两轮均保留相同的 1,531 HTTP、200 个旧版本 409、10 个跨账号 PUT 404 和恢复断言。连接计数测试证明这些拒绝在实验中不再请求 writer，总样本也正好少 210；这是实际避免的写准入，不是漏采样。没有逐条跟踪后台事务，不能据此宣称每个 worker 活动完全相同。工作负载时长 42.69→41.59 秒的单次轻降不能证明 P95 门槛达标，也不宣称统计显著性或唯一因果。新增认证／请求模型分支复杂度没有获得本次目标收益，**补丁和实验 17 + 10 用例不并入正式版本，正式测试总数不因此增加**。
+
+两轮完整 runtime、17 项 identity、修前／修后／兼容 JUnit 计数与摘要、原日志路径／SHA、完整候选源 diff 已记录于[写入等待证据](audits/sprint-write-wait-evidence.json)的 `bounded_experiments`；本地日志路径仅供溯源，不声称被 Git 忽略的原日志已发布。原 29ce 完整结构化记录也保留于[补修总账](audits/sprint-review-followup.json)。
+
+### 共享 CI 观察单独记录
+
+[run55](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43573296055) 的 Ubuntu / Windows 5 人总等待分别为 **101.963 / 104.799 ms**，均未过 100 ms；原始报告与本轮官方整 CI **failure（8 个 job 成功、主 browser 失败）**完整保留。
+
+以下 run56 对应未采用实验补丁的历史候选 c4。[run56](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43575513212) 两平台原 JSON 均与实际 job 输出逐字段相等，ZIP 大小及 SHA256 与官方元数据相等；每个平台分别为 5 人、766 HTTP、625 次正常 CRUD：
+
+| run56 共享 runner 单次观测 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 单轮等待目标 |
+|---|---:|---:|---:|---|
+| Ubuntu | 95.4 ms | 40.241 ms / 741 | 0 | 通过 |
+| Windows | 164.1 ms | 58.240 ms / 776 | 0 | 通过 |
+
+实际 checkout 都是 `b320eb60ad2296d182013c8d250c507e567ddec4`；Linux 指纹 `2a3318786d131edd824b719421ecea703edf0d4919f24112ae6be739fbacc488`、Windows 指纹 `07b8d5b935d85ead40de0e92e7da86e33db0447c7f1e6f9fc77018c1a747ccc7` 各自内部未变，不推测平台指纹差异的唯一成因。两平台功能与恢复断言通过，恢复证据仍限于前述任务稳定字段与缓存 revision。
+
+**run56 官方整 CI 为 completed / failure：9 个 job 中 8 个成功，仅主 browser 失败。** Sprint 的三引擎在“稳定 all 筛选分钟刷新不得读取任务列表”的断言失败，实际记录 18 项中 15 通过、3 失败，后续 57 项未执行；不能从较早通过的 54 项范围、节点、零 DOM 变动和滚动断言推定剩余发布场景通过。原报告未记录 projection 的当时缓存身份，不将源码推断表述为唯一实测原因。**共享 CI 的两次低于 100 ms 观察不覆盖当时本地 101.063 / 178.194 ms 失败，也不表示 5 人稳定通过。**
+
+7319→c4 只改两份浏览器测试脚本与 workflow 的既有证据上传路径；29ce→c4 的 `app/`、`static/`、依赖和运行验收脚本逐路径比较无差异。保留各次真实实现指纹，不把旧本地数据改写为新提交执行。
+
+#### run57 历史候选的新增共享观察
+
+[run57](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43578124182) 实际 head 为 `19d9162fc9395f9c140ca13545f5975e9d74ea81`，两平台实际 checkout 均为 `568111d44b83baecf2f0a5683914294604713fd3`。两份 runtime 原 JSON 已与各自 job 输出逐字段核对，ZIP 大小及 SHA256 与官方 artifact 元数据一致；每个平台仍各为 5 人、766 HTTP、625 次正常 CRUD。
+
+| run57 共享 runner 单次观测 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 单轮等待目标 |
+|---|---:|---:|---:|---|
+| Ubuntu | 157.5 ms | 67.596 ms / 772 | 0 | 通过 |
+| Windows | 143.1 ms | 50.909 ms / 772 | 0 | 通过 |
+
+Linux 指纹为 `173f5093d7b97a8676dbf6d62c29c5fa3faee9819206a15b9046d70e269ecf78`，Windows 为 `27cec02647cee8276b6854b521b1ba214b107f1570b6440b7054ccef6c141ec1`，各自在执行期间未变。功能、授权、幂等、旧版本和恢复断言通过；恢复仍只证明全部任务稳定字段及编辑缓存 revision，不扩展为缓存 payload 逐字一致。结构化原始 runtime、artifact 链接与日志 SHA 已追加到[写入等待证据](audits/sprint-write-wait-evidence.json)，被忽略的本地日志路径仅作溯源。
+
+**run57 官方整轮仍为 completed / failure：9 个 job 中 8 个成功，仅 browser 失败。** 主 Sprint 的 Chromium／Firefox 未完成 board-more54 等待，WebKit 25 项通过；另一步 chat-controls 的 WebKit 在已记录 3 项后，于“新增动画字串不包含旧文字”断言失败，Chromium 9 项、Firefox 8 项通过。旧报告没有动画事件、节点身份或当时耗时，不能从该失败认定旧动画被重播。Agent 13／Composer 9 的 Chromium 通过证据属于另一组测试，不覆盖上述失败。
+
+c4→19d 的实际 Git 路径差异只有 workflow 与 Sprint 浏览器夹具，产品、依赖和 runtime 脚本未变；本地 29ce／c4 的原始执行身份不改写。**CI57 不包含后续邮件配额原子领取、列表或聊天夹具修复，不能用于验收新整合代码。** 该历史共享观察不将当时独立本地 **101.063 / 178.194 ms** 改成通过；新整合 9e86 的实际观测见本文开头，旧值与新值分别保留，不声称 5 人稳定达标。
+
+#### run58 新整合提交的共享观察
+
+[run58](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43581184272) 对应 `head9e86a1e9b798071e870a0e35d73b46610d435988`，两平台实际 checkout 均由 job 日志确认是 `a39babb0406615384323b3ae346ca722a8253f3d`。两份 runtime 原 JSON 均与本轮实际日志中的唯一结果逐字段一致，官方 ZIP 大小与 SHA256 均核验一致。每个平台各为 5 人、766 HTTP、625 个正常 CRUD 样本；以下数据属于共享 runner，不与本地或另一平台合并。
+
+| run58 共享 runner 单次观测 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 原 100 ms 等待门槛 |
+|---|---:|---:|---:|---|
+| Ubuntu | 94.4 ms | 38.658 ms / 741 | 0 | 仅该次通过 |
+| Windows | 279.0 ms | **111.719 ms / 808** | 0 | **未通过** |
+
+两平台功能、授权、幂等、旧版本和恢复断言通过，但 Windows 的 `result=passed` 不能覆盖其等待目标 `passed=false`。任务完整稳定业务内容、缓存仅 revision 的恢复范围保持不变。Linux 指纹为 `81f4a6742ac738468295e007da2571db9d1ea09275eaf11530d0fc02944d3f31`，Windows 为 `ab22396851c28f3b9ea4755dfd3f1ed6b80a15eab0f6ef910add5b6054ef0d21`，各自执行前后未变。完整原始 runtime、artifact 下载入口、实际日志路径与 SHA 均已追加到[写入等待证据](audits/sprint-write-wait-evidence.json)。
+
+**run58 官方整轮为 completed / failure：9 个 job 全部结束，8 个成功，browser 仅主套件步骤失败。** Agent 13 项、Composer 9 项和 chat-controls 的 Chromium／Firefox／WebKit 9／8／8 项原报告均通过；这些局部结果不覆盖主套件失败。新的 stream 记录证明本轮追加前已实际完成首段清理，但旧 run57 没有当时事件与耗时记录，不倒推出旧失败的唯一时序原因。**本地 5 人这一次 85.079 ms 通过、10 人 172.555 ms 未通过，以及共享 Windows 111.719 ms 未通过同时保留；不声称稳定容量、整体发布验收或学校试点批准。**
+
+**更早失败与较早通过值完整保留。** 上一阶段 `05498ae / d55ba135…` 本地 v3 的 5 人为 CRUD 282.6 ms / wait **114.149 ms**，10 人为 CRUD 743.1 ms / wait **272.906 ms**，均未通过。更早 5 人也曾出现 88.957 ms，旧共享 CI 有低于 100 ms 的单轮值；这些都不能覆盖失败或推出“5 人稳定达标”。已有冷 schema 归因及预热实验按原阶段记录；没有证明新观测的唯一事务或环境原因，不据此归咎宿主噪声。**首批和扩大仍是工程准入未全部满足的方案，不是学校批准；代码回归／合并与实际试点准入分别判断。**
+
+#### CI59—63 原件追加与候选冻结
+
+以下十个观察各自使用该轮官方 unit artifact，ZIP 大小／SHA、原 runtime JSON 与唯一 job 输出均核对一致。每一行仍是 **共享 runner 的 5 个合成账号、766 HTTP、625 次正常 CRUD**；各平台指纹仅核执行期间未变，不推测平台差异唯一原因，不将十行合并成独立本地或稳定性结论。
+
+| CI / 实际候选 head | 平台 | CRUD P95 | 写入总等待 P95 / 样本 | 获取失败 | 原 100 ms 等待门槛 |
+|---|---|---:|---:|---:|---|
+| 59 / `6701b65` | Ubuntu | 153.3 ms | 65.004 ms / 772 | 0 | 仅该次通过 |
+| 59 / `6701b65` | Windows | 135.0 ms | 52.311 ms / 772 | 0 | 仅该次通过 |
+| 60 / `66879e6` | Ubuntu | 195.1 ms | 78.641 ms / 776 | 0 | 仅该次通过 |
+| 60 / `66879e6` | Windows | 149.5 ms | 51.937 ms / 772 | 0 | 仅该次通过 |
+| 61 / `2e1dac1` | Ubuntu | 152.0 ms | 64.300 ms / 772 | 0 | 仅该次通过 |
+| 61 / `2e1dac1` | Windows | 209.1 ms | 76.791 ms / 777 | 0 | 仅该次通过 |
+| 62 / `4cd93fb` | Ubuntu | 157.3 ms | 69.059 ms / 776 | 0 | 仅该次通过 |
+| 62 / `4cd93fb` | Windows | 131.3 ms | 50.574 ms / 772 | 0 | 仅该次通过 |
+| 63 / `70226e9` | Ubuntu | 158.3 ms | 67.636 ms / 775 | 0 | 仅该次通过 |
+| 63 / `70226e9` | Windows | 194.4 ms | 70.429 ms / 776 | 0 | 仅该次通过 |
+
+每行完整原始 runtime、实际 checkout／平台指纹、来源 artifact 下载入口、摘要、日志路径和 SHA 均已内嵌[写入等待证据](audits/sprint-write-wait-evidence.json)；本地日志路径仍仅供溯源。任务 ID／`notice_id/status/version/data` 的完整稳定业务恢复、编辑缓存仅 revision 的范围不变。所有样本均低于原 4,096 环形上限，0 获取失败并不等于所有原性能门槛稳定通过。
+
+| 整轮身份 | 实际官方结论及不能覆盖的事实 |
+|---|---|
+| [CI59](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43583884442) | 8／9 jobs 成功、整轮 failure；主 Sprint 未完整完成，runtime 成功不覆盖其失败。 |
+| [CI60](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43585083774) | 8／9 jobs 成功、整轮 failure；保留当时浏览器夹具前提失败，不能将后续修正反填到这一轮。 |
+| [CI61](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43586065580) | 自动 9／9 success，但人工原图发现录音主体左移 51 px，视觉验收没有通过。旧记录没有祖先完整轨迹，不唯一推定触发事件。 |
+| [CI62](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43589199738) | 8／9 jobs 成功、整轮 failure；WebKit 看板断言失败，Composer 原日志证明 workspace `scrollLeft=51`、`overflow:hidden`。其结果 JSON 未产出，failure／geometry 未上传，不能补造九项实际通过计数或完整旧时序。 |
+| [CI63](https://github.com/hxjyaohaohaode/luojiaxinshi/actions/runs/43592108675) | 本轮 9／9 success，候选工程与视觉复核通过：两 OS 各 1,875 后端用例及 358 Node，33 份正式浏览器报告 1,056／1,056，连续性 990／990。候选冻结及原件绑定见公开机器记录。 |
+
+本轮 Composer 原九项已完成；全部 13 个几何阶段与 41 条事件均无结构横滚，丢弃事件 0。录音截图前、后及再两帧的实际桌面样式为 `overflow:clip`、`scrollLeft=0`，关键控件的祖先裁剪交集逐项重算通过；录音、桌面、手机和缩短视口原图另经实际查看。它证明本轮修复合同成立，**不抹掉 CI61／62 的异常，也不唯一重建旧触发时序**；诊断读取与等待本身可能影响时序，不能据有限采样断言所有未记录时刻。Agent 13／Composer 9 的范围是 Chromium 合成夹具；chat-controls 的 Chromium／Firefox／WebKit 分别 9／8／8，没有扩展为真实语音供应商或真机验收。
+
+**独立 5 人单次 85.079 ms 通过、独立 10 人 172.555 ms 未通过，以及历史本地和共享 CI 失败同时保留。** CI63 的工程与视觉成功没有改变 `<100ms` 原标准，不构成五人稳定容量、十人扩大或学校批准。
 
 ## 1. 分批范围
 
