@@ -107,7 +107,24 @@
 /* Filter animations can crash the Linux WebKit compositor during navigation
    (microsoft/playwright#42637). Keep feedback on opacity and transforms. */
 .route-pending { opacity: .55; transition: opacity var(--dur-3) var(--ease-out); }
-.route-feedback { animation: float-in var(--dur-4) var(--ease-spring) both; }
+.route-feedback {
+  /* The loading text and decorative placeholders must not compete for a
+     percentage-sized row: that can leave only one or two characters per line. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: min(440px, calc(100% - 24px));
+  animation: float-in var(--dur-4) var(--ease-spring) both;
+}
+.route-feedback .state-loading { width: 100%; min-width: 0; }
+.route-feedback .state-loading > div { flex: 1; min-width: 0; }
+.route-feedback .route-skeleton { width: auto; margin: 0 18px 12px 76px; gap: 6px; }
+.route-feedback .route-skeleton span { height: 6px; }
+.route-feedback > .button { align-self: flex-end; margin: 0 16px 12px; }
+@media (max-width: 600px) {
+  .route-feedback .route-skeleton { margin-left: 63px; }
+}
 @keyframes float-in { from { opacity: 0; transform: translate(-50%, -8px) scale(.96); } }
 
 /* ---------- 文字逐字浮现（choreography.js 拆分字符） ---------- */

@@ -1,5 +1,6 @@
 """Offline contracts using bounded excerpts of live public columns."""
 import asyncio
+import json
 from pathlib import Path
 
 import httpx
@@ -51,6 +52,70 @@ def test_index_rejects_structure_drift_wrong_host_and_out_of_scope_links():
     text = '<ul class="p-list5"><li><a href="https://other.example.org/graduate/notice/20261029abc">外站</a></li><li><a href="/graduate/notice/index">栏目</a></li></ul>'
     with pytest.raises(HTTPException):
         parse_official_index(text, preset['url'], preset['id'])
+
+
+def test_library_article_reads_only_literal_public_data_and_checks_identity():
+    url = 'https://www.lib.whu.edu.cn/engine2/d/23898836/5619257/0?t=11166542&p=1'
+    payload = {'engineInstanceId': 5619257, 'id': 23898836, 'publicUse': True,
+               'isPublish': 1, 'pageType': 1, 'isOuter': False, 'typeId': None,
+               '1': {'value': '图书馆开放通知'}, '6': {'value': '2026-06-08 16:30:44'},
+               'content': '<p>开放时间见附件。</p><a href="/files/hours.pdf">开放时间.pdf</a>'}
+    def page(data):
+        return '<nav>图书馆导航</nav><script>var app = {data: ' + json.dumps(data, ensure_ascii=False) + '};</script>'
+    result = parse_official_article(page(payload), url)
+    assert result['title'] == '图书馆开放通知' and result['published_at'] == '2026-06-08'
+    assert '开放时间见附件' in result['text'] and '图书馆导航' not in result['text']
+    assert result['attachments'] == ['https://www.lib.whu.edu.cn/files/hours.pdf']
+    for changed in ({**payload, 'id': 999}, {**payload, 'isOuter': True}, {**payload, 'isPublish': 0}):
+        with pytest.raises(HTTPException):
+            parse_official_article(page(changed), url)
+    with pytest.raises(HTTPException):
+        parse_official_article(page(payload), url.replace('t=11166542', 't=other'))
+
+
+@pytest.mark.parametrize(('preset_id', 'column'), [
+    ('whu-undergrad-student', '1517'), ('whu-undergrad-teaching', '1520')])
+def test_undergrad_columns_keep_dates_separate_and_read_attachments(preset_id, column):
+    preset = get_preset(preset_id)
+    html = f'''<nav><a href="/info/{column}/888.htm">导航</a></nav>
+      <div class="list_txt"><ul class="am-list"><li><a href="../info/{column}/123.htm">
+      <span>教务通知</span><i>2026-11-11</i></a></li><li><a href="/info/9999/1.htm">别的栏目</a></li></ul></div>'''
+    rows = parse_official_index(html, preset['url'], preset_id)
+    assert rows == [{'url': f'https://uc.whu.edu.cn/info/{column}/123.htm', 'title': '教务通知', 'published_at': '2026-11-11'}]
+    article = '''<nav>网站导航</nav><div class="title_nei"><b>教务通知</b><i>时间：2026-11-11</i></div>
+      <div class="news_show"><div class="v_news_content"><p>请按规定办理退课。</p></div>
+      <a href="/system/_content/download.jsp?wbfileid=1">说明.pdf</a></div>'''
+    result = parse_official_article(article, rows[0]['url'])
+    assert result['title'] == '教务通知' and result['published_at'] == '2026-11-11'
+    assert result['text'] == '请按规定办理退课。' and result['attachment_names'][result['attachments'][0]] == '说明.pdf'
+    with pytest.raises(HTTPException):
+        parse_official_index('<nav><a href="/info/1517/123.htm">非列表</a></nav>', preset['url'], preset_id)
+
+
+def test_aid_notices_read_public_body_date_and_exclude_other_columns():
+    preset = get_preset('whu-student-aid')
+    index = '''<nav><a href="/info/1019/55.htm">导航</a></nav><div class="list-box"><div class="list"><ul>
+      <li><a href="info/1019/18271.htm"><p>勤工助学到账通知</p><span class="time">2026-11-13</span></a></li>
+      <li><a href="info/1020/3.htm"><p>其他栏目</p></a></li></ul></div></div>'''
+    rows = parse_official_index(index, preset['url'], preset['id'])
+    assert len(rows) == 1 and rows[0]['title'] == '勤工助学到账通知' and rows[0]['published_at'] == '2026-11-13'
+    article = '''<nav>导航内容</nav><div class="article"><h2 class="title">勤工助学到账通知</h2>
+      <h4 class="xinxi">发布时间：2026-11-13 16:15</h4><div class="v_news_content"><p>工资发放说明。</p></div></div>'''
+    result = parse_official_article(article, rows[0]['url'])
+    assert result['text'] == '工资发放说明。' and result['published_at'] == '2026-11-13'
+    assert parse_official_article(article, 'https://zzgl.whu.edu.cn/info/1020/3.htm') is None
+
+
+def test_undergrad_pdf_only_notice_keeps_original_document_for_review():
+    url = 'https://uc.whu.edu.cn/info/1520/127931.htm'
+    html = '''<div class="title_nei"><b>假期值班通知</b><i>时间：2026-06-30</i></div>
+      <div class="news_show"><div class="v_news_content"><script>
+      showVsbpdfIframe("/__local/notice.pdf","100%","600","0","",[]);
+      </script></div></div>'''
+    result = parse_official_article(html, url)
+    assert result['text'] == '假期值班通知' and result['attachment_only']
+    assert result['attachments'] == ['https://uc.whu.edu.cn/__local/notice.pdf']
+    assert '仅为标题' in result['warnings'][0]
 
 
 def test_sres_current_column_preserves_real_links_and_separates_title_from_date():

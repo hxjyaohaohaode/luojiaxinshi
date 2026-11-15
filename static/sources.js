@@ -3,7 +3,7 @@ import {searchControls,WorkspaceSearch} from './workspace-search.js';
 import {detailsExpanded} from './reference-interactions.js';
 import {createQQGroupIntake} from './qq-group-intake.js';
 const $=(s)=>document.querySelector(s);
-const platforms={website:'学校 / 学院官网',wechat_public:'微信公众号',qq_group:'QQ 群',wechat_group:'微信群',campus:'校内平台',other:'其他来源'};
+const platforms={website:'网站',wechat_public:'微信公众号',qq_group:'QQ 群',wechat_group:'微信群',campus:'校内平台',other:'其他来源'};
 export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,toast,route}){
   let entries=[],query='',editing=null,integrations=null,publisherItems=[],publisherNext=null,page=1,searchController=null,matchedIds=null,subscriptions=[],automation=null;
   const expanded=new Map();let expansionOwner=null;
@@ -30,13 +30,13 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     if(expansionOwner!==state.session?.user?.id){expanded.clear();expansionOwner=state.session?.user?.id;}
     const [result,channels,sync,auto]=await Promise.all([api('/source-catalog'),api('/integrations'),api('/source-subscriptions'),api('/notice-automation')]);if(renderId!==state.renderId||!view.sameRoute())return;entries=result;integrations=channels;subscriptions=sync;automation=auto;query='';page=1;matchedIds=null;searchController?.dispose();
     $('#content').innerHTML=`<div class="page-title between"><div><h1>我的通知来源</h1></div></div>
-      <div class="source-access row wrap">${action('选择学校官网','school-presets','','primary')}<button type="button" class="button" data-campus-import="accounts">导入公众号清单</button><span class="small muted">选好栏目后，持续接收学校发布的新通知。</span></div>
+      <div class="source-access row wrap">${action('选择武汉大学来源','school-presets','','primary')}<button type="button" class="button" data-campus-import="accounts">导入公众号清单</button><span class="small muted">选好栏目后，持续接收武汉大学相关通知。</span></div>
       <div class="toolbar source-toolbar"><h2>我常看的来源 <span class="muted small" id="catalog-total"></span></h2>${searchControls({id:"source",esc,icon,scope:"sources",kinds:Object.entries(platforms)})}${action(icon('plus')+' 添加来源','add','','primary')}</div><div id="source-catalog-list" class="source-catalog-list"></div><nav id="source-pages" class="calendar-pagination" aria-label="来源分页" hidden></nav>
       <div class="source-access row wrap">${action('能接入哪些平台 '+icon('arrow'),'platforms','','small plain')}${action('自动整理'+(automation.enabled?' · 已开启':' · 未开启'),'automation','','small')}<span class="small" data-source-failures ${automation.counts?.failed?'':'hidden'}>${automation.counts?.failed?automation.counts.failed+' 条整理失败':''}</span></div>`;
     searchController=new WorkspaceSearch(document.querySelector('[data-search-host="source"]'),{api,scope:'sources',onResult:result=>{matchedIds=new Set(result.items.map(s=>s.id));query=result.query;page=1;list();},onError:message=>toast(message,true)});list();
   }
   async function schoolPresetsDialog(){
-    showDialog('选择学校官网','<div id="source-presets" class="stack" aria-live="polite"><p role="status">正在读取学校栏目…</p></div>');
+    showDialog('选择武汉大学来源','<div id="source-presets" class="stack" aria-live="polite"><p role="status">正在读取学校栏目…</p></div>');
     const view=captureUiContext(state);
     try{
       const presets=await api('/source-presets');if(!view.sameDialog())return;

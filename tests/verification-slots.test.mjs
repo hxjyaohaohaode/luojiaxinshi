@@ -70,6 +70,18 @@ test('verified feedback waits for the real response and remains distinct from a 
   assert.match(h.status.textContent,/已验证/);assert.equal(await h.ui.prove(h.group),'actual-receipt');assert.equal(h.calls.length,2);
 });
 
+test('registration proof remains usable after the code expires, then expires after half an hour',async t=>{
+  const realNow=Date.now;let now=realNow();Date.now=()=>now;t.after(()=>{Date.now=realNow;});
+  const h=fixture(t,async()=>({verification_token:'registration-proof',expires_in:30*60}));
+  await h.send();h.enter('123456');assert.equal(await h.ui.prove(h.group),'registration-proof');
+  assert.match(h.status.textContent,/30 分钟/);
+  now+=29*60*1000;
+  assert.equal(await h.ui.prove(h.group),'registration-proof');
+  assert.equal(h.calls.filter(call=>call.path==='/auth/verify').length,1);
+  now+=60*1000;
+  await assert.rejects(h.ui.prove(h.group),/联系方式验证已过期/);
+});
+
 test('changing the contact clears the proof, digits and verified styling together',async t=>{
   const h=fixture(t);await h.send();h.enter('123456');await h.ui.prove(h.group);
   h.destination.value='changed@example.invalid';h.event('input',h.destination);

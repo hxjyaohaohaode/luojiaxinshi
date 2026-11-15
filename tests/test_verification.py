@@ -7,6 +7,52 @@ from verification_helpers import proof,install_capture,advance_cooldown
 def anonymous(app):return TestClient(app,base_url=ORIGIN,headers={'Origin':ORIGIN,'X-Requested-With':'campus-notice'})
 
 
+def test_registration_proof_survives_a_long_pause_and_is_single_use(env,monkeypatch):
+    from app import verification
+    app,_=env;c=anonymous(app);provider=install_capture(app)
+    clock=[int(verification.time.time())]
+    monkeypatch.setattr(verification.time,'time',lambda:clock[0])
+    challenge=c.post('/api/auth/challenges',json={'purpose':'register','channel':'email','destination':'pause@example.invalid'}).json()
+    clock[0]+=120
+    verified=c.post('/api/auth/verify',json={'challenge_id':challenge['challenge_id'],'code':provider.codes[challenge['challenge_id']]})
+    assert verified.status_code==200,verified.text
+    assert verified.json()['expires_in']==30*60
+    clock[0]+=29*60
+    body={'username':'paused-signup','password':PASSWORD,'display_name':'Paused','accepted_terms':True,'verification_token':verified.json()['verification_token']}
+    registered=c.post('/api/auth/register',json=body)
+    assert registered.status_code==200,registered.text
+    assert c.post('/api/auth/register',json={**body,'username':'another-signup'}).status_code==400
+
+
+def test_registration_code_expires_in_five_minutes_and_proof_after_half_an_hour(env,monkeypatch):
+    from app import verification
+    app,_=env;c=anonymous(app);provider=install_capture(app)
+    clock=[int(verification.time.time())]
+    monkeypatch.setattr(verification.time,'time',lambda:clock[0])
+    first=c.post('/api/auth/challenges',json={'purpose':'register','channel':'email','destination':'expired-code@example.invalid'}).json()
+    clock[0]+=300
+    assert c.post('/api/auth/verify',json={'challenge_id':first['challenge_id'],'code':provider.codes[first['challenge_id']]}).status_code==400
+    second=c.post('/api/auth/challenges',json={'purpose':'register','channel':'email','destination':'expired-proof@example.invalid'}).json()
+    verified=c.post('/api/auth/verify',json={'challenge_id':second['challenge_id'],'code':provider.codes[second['challenge_id']]})
+    assert verified.status_code==200,verified.text
+    clock[0]+=30*60
+    body={'username':'expired-signup','password':PASSWORD,'display_name':'Expired','accepted_terms':True,'verification_token':verified.json()['verification_token']}
+    assert c.post('/api/auth/register',json=body).status_code==400
+
+
+def test_login_proof_keeps_its_short_expiry(env,monkeypatch):
+    from app import verification
+    app,_=env;account(env);advance_cooldown(app);provider=install_capture(app);c=anonymous(app)
+    clock=[int(verification.time.time())]
+    monkeypatch.setattr(verification.time,'time',lambda:clock[0])
+    challenge=c.post('/api/auth/challenges',json={'purpose':'login','channel':'email','destination':'alice@example.invalid'}).json()
+    verified=c.post('/api/auth/verify',json={'challenge_id':challenge['challenge_id'],'code':provider.codes[challenge['challenge_id']]})
+    assert verified.status_code==200,verified.text
+    assert verified.json()['expires_in']==300
+    clock[0]+=300
+    assert c.post('/api/auth/verified-login',json={'verification_token':verified.json()['verification_token']}).status_code==400
+
+
 def test_mandatory_verification_and_unconfigured_channels_fail_closed(env):
     app,_=env;c=anonymous(app)
     body={'username':'alice','password':PASSWORD,'display_name':'A','accepted_terms':True}

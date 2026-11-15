@@ -114,6 +114,7 @@
 #chat-composer #composer-menu{max-height:min(420px,calc(var(--visual-height,100dvh) - 100px));overflow:auto;overscroll-behavior:contain}
 #chat-composer #composer-menu .button{justify-content:flex-start;min-height:44px;white-space:normal;line-height:1.4;font-size:13px}
 #chat-composer #composer-menu .composer-emoji{font-family:inherit}
+#chat-composer #composer-menu .composer-voice{width:100%;height:auto}
 #chat-composer .dictation-panel .composer-voice{width:44px;height:44px;min-height:44px;flex:none}
 
 #material-list .material-item {

@@ -42,20 +42,23 @@ function fixture({verify}={}){
   group.querySelector=selector=>({'[data-otp-destination]':destination,'[data-otp-code]':code,'[data-otp-status]':status,'[data-otp-send]':send,'[data-otp-shell]':shell}[selector]||null);
   const stages=[1,2,3].map(step=>{const stage=new Node();stage.dataset.signupStep=String(step);stage.querySelectorAll=()=>step===1?[code,destination]:[];return stage;});
   wrapper.querySelector=value=>value==='h2'?heading:null;form.closest=()=>wrapper;form.querySelectorAll=value=>value==='[data-signup-step]'?stages:[];
-  form.querySelector=selector=>selector==='[data-verification]'?group:selector==='[name=verification_consent]'?{checked:true}:selector==='[name=username]'?{value:'synthetic.account'}:selector.match(/^\[data-signup-step="(\d)"\]$/)?stages[Number(selector.match(/\d/)[0])-1]:selector.endsWith(' input')?code:null;
+  const fields={verification_consent:{checked:true},accepted_terms:{checked:true},username:{value:'synthetic.account'},display_name:{value:'Synthetic'},campus_role:{value:'student'},password:{value:'Synthetic-Password-2026'},confirm_password:{value:'Synthetic-Password-2026'}};
+  form.querySelector=selector=>{const field=selector.match(/^\[name="?([^"\]]+)"?\]$/);return selector==='[data-verification]'?group:field?fields[field[1]]:selector.match(/^\[data-signup-step="(\d)"\]$/)?stages[Number(selector.match(/\d/)[0])-1]:selector.endsWith(' input')?code:null;};
   const next=new Node();next.dataset.signupNext='1';next.disabled=false;next.closest=value=>value==='form'?form:null;
+  const nextAccount=new Node();nextAccount.dataset.signupNext='2';nextAccount.disabled=false;nextAccount.closest=value=>value==='form'?form:null;
   const sandbox={document:doc,window:new Node(),innerHeight:850,performance,clearTimeout(){},setTimeout(callback,delay){timers.push({callback,delay});return timers.length;},requestAnimationFrame:()=>1,MutationObserver:class{observe(){}},motionAllowed:()=>false,
     installAuthFeedback(){},passwordEditor:()=>'',brandMotion:()=>'',showInputError(){},successTransition:()=>Promise.resolve(),location:{hash:'#register'},history:{replaceState(){}},sessionStorage:{removeItem(){}}};
   vm.createContext(sandbox);vm.runInContext(toastSource+'\n'+verificationSource+'\n'+authSource+'\nglobalThis.factories={createToastPresenter,createVerificationUI,createAuthUI};',sandbox);
   const toast=sandbox.factories.createToastPresenter({esc:String,icon:()=>'',owner:()=>state.session?.user?.id});
   const api=async(path,options)=>{calls.push({path,...options});if(path==='/auth/challenges')return {challenge_id:'synthetic-challenge',retry_after:0,expires_in:300,message:'发送请求已接受'};
+    if(path==='/auth/register')return {session:{user:{id:'registered-user'}}};
     assert.equal(path,'/auth/verify');if(verify)return verify(options.json);if(options.json.code!=='123456')throw Object.assign(Error(rejected),{status:400});return {verification_token:'synthetic-proof',expires_in:300};};
   const verification=sandbox.factories.createVerificationUI({state,api,esc:String,toast});
-  sandbox.factories.createAuthUI({state,esc:String,field:()=>'',api,icon:()=>'',companion:()=>'',showDialog(){},toast,route:async()=>{},moveSelection(){},verification});
+  const auth=sandbox.factories.createAuthUI({state,esc:String,field:()=>'',api,icon:()=>'',companion:()=>'',showDialog(){},toast,route:async()=>{},moveSelection(){},verification});
   const fire=async(type,target)=>{for(const listener of doc.listeners.get(type)||[])await listener({target,preventDefault(){}});};
   const click=async(selector,target)=>fire('click',{closest:value=>value===selector?target:null});
-  return {host,state,form,code,shell,status,calls,timers,toast,visible:()=>host.classList.contains('visible'),
-    send:()=>click('[data-otp-send]',send),next:()=>click('[data-signup-next]',next),
+  return {host,state,form,code,shell,status,calls,timers,toast,auth,sandbox,visible:()=>host.classList.contains('visible'),
+    send:()=>click('[data-otp-send]',send),next:()=>click('[data-signup-next]',next),nextAccount:()=>click('[data-signup-next]',nextAccount),
     enter:async value=>{code.value=value;code.selectionStart=code.selectionEnd=value.length;await fire('input',code);}};
 }
 
@@ -65,6 +68,17 @@ test('a corrected signup OTP clears its own persistent failure only after real v
   const f=fixture();await rejectOnce(f);await f.enter('123456');assert.equal(f.visible(),true,'Editing alone must not claim the failure is resolved');
   await f.next();assert.equal(f.form.dataset.signupCurrent,'2');assert.equal(f.shell.dataset.state,'verified');assert.equal(f.visible(),false);assert.equal(f.host.innerHTML,'');
   assert.deepEqual(f.calls.map(item=>item.path),['/auth/challenges','/auth/verify','/auth/verify']);
+});
+
+test('signup can finish 29 minutes after the first-step verification without another code request',async()=>{
+  const f=fixture({verify:async()=>({verification_token:'long-lived-signup-proof',expires_in:30*60})});
+  await f.send();await f.enter('123456');await f.next();await f.nextAccount();
+  assert.equal(f.form.dataset.signupCurrent,'3');
+  vm.runInContext(`Date.now = () => ${Date.now()+29*60*1000}`,f.sandbox);
+  await f.auth.submit(f.form,new Map());
+  assert.deepEqual(f.calls.map(item=>item.path),['/auth/challenges','/auth/verify','/auth/register']);
+  assert.equal(f.calls.at(-1).json.verification_token,'long-lived-signup-proof');
+  assert.equal(f.state.session.user.id,'registered-user');
 });
 
 test('the original verification error remains visible throughout a corrective request still awaiting acceptance',async()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {batchEntry,validateEntry,prepareEntry} from '../static/notice-intake.js';
+import {batchEntry,validateEntry,prepareEntry,noticeLinkForReading} from '../static/notice-intake.js';
 import {filterNotices} from '../static/library.js';
 import {searchRecords,highlightMatch} from '../static/command-search.js';
 import {noticeSearchExcerpt} from '../static/notice-search.js';
@@ -27,6 +27,20 @@ test('a pasted URL is locally acceptable but cannot submit without fetched conte
   assert.throws(()=>prepareEntry(entry,[],x=>x),/尚未读取/);
   const ready=prepareEntry({...entry,link_preview:'stored-preview'},[],x=>x);
   assert.equal(ready.get('link_preview'),'stored-preview');assert.equal(ready.has('read_url'),false);
+});
+
+test('school recruitment and presentation detail links resolve to their readable public endpoints',()=>{
+  const job='fef494926e184598999bbcf67c3ec3fd', fair='ab3adf7cd5334c3dbc013181f1c75507';
+  assert.equal(noticeLinkForReading(`https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentinfoForm.html?positionDetailId=${job}`),
+    `https://xsjy.whu.edu.cn/f/recruitmentinfo/show?recruitmentId=${job}`);
+  assert.equal(noticeLinkForReading(`https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentFairForm.html?id=${fair}`),
+    `https://xsjy.whu.edu.cn/f/recruitmentFair/show?recruitmentFairId=${fair}`);
+  for(const url of [
+    `https://other.example/frontpage/whu/html/recruitmentFairForm.html?id=${fair}`,
+    `https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentFairForm.html?id=${fair}&next=`,
+    `https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentFairForm.html?id=${fair}&id=${job}`,
+    'https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentFairForm.html?id=invalid',
+  ])assert.equal(noticeLinkForReading(url),url);
 });
 
 test('notice search finds original body and active attachment content beyond list metadata',()=>{

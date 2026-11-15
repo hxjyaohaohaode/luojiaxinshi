@@ -44,10 +44,28 @@ export function prepareEntry(item,files,toTime){
   return form;
 }
 
+// The school's browser detail pages and its public reading endpoints refer to
+// the same item. Use the latter so the current reader can obtain the content.
+export function noticeLinkForReading(input){
+  try{
+    const url=new URL(input);
+    if(!['http:','https:'].includes(url.protocol)||url.hostname!=='xsjy.whu.edu.cn'||url.port||url.username||url.password)return input;
+    const routes={
+      '/frontpage/whu/html/recruitmentinfoForm.html':['positionDetailId','/f/recruitmentinfo/show','recruitmentId'],
+      '/frontpage/whu/html/recruitmentFairForm.html':['id','/f/recruitmentFair/show','recruitmentFairId'],
+    };
+    const route=routes[url.pathname];if(!route)return input;
+    const values=url.searchParams.getAll(route[0]);
+    if(values.length!==1||![...url.searchParams.keys()].every(key=>key===route[0])||!/^[0-9a-f]{32}$/i.test(values[0]))return input;
+    return `https://xsjy.whu.edu.cn${route[1]}?${route[2]}=${values[0]}`;
+  }catch{return input;}
+}
+
 export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,area,drafts,persist,refreshData,onNotice,toTime}){
   const $=s=>document.querySelector(s),key='intake-batch';
   let owner=null,items=[],fileMap=new Map(),generation=0,busy=false,previewRequest=0;
   const sameOwner=session=>!!session&&state.session===session;
+  const readSourceLink=url=>api('/intake/link',{method:'POST',json:{url:noticeLinkForReading(url)}});
   const linkFields=()=>`<div class="notice-link-entry"><label class="field">原文链接<input type="url" data-read-url placeholder="https://…" maxlength="2000"></label><button type="button" class="button" data-read-link>预览链接</button></div><input type="hidden" name="link_preview"><div data-link-preview role="status"></div>`;
   function previewLabel(form,name='已读取的链接材料'){
     const target=form.querySelector('[data-link-preview]');if(!target)return;
@@ -66,7 +84,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
       const user=state.session,route=state.renderId,request=++previewRequest;
       let resume=false;form.inert=true;
       try{
-        const preview=await api('/intake/link',{method:'POST',json:{url}});
+        const preview=await readSourceLink(url);
         if(!sameOwner(user)||route!==state.renderId||request!==previewRequest||!form.isConnected||input.value.trim()!==url)return;
         applyLink(form,preview);persist();resume=true;
       }catch(error){if(sameOwner(user)&&form.isConnected)toast(error.message,true);}
@@ -92,7 +110,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     if(!url){input.focus();toast('先填入原文链接',true);return;}
     const button=form.querySelector('[data-read-link]');button.disabled=true;button.textContent='正在读取…';
     try{
-      const preview=await api('/intake/link',{method:'POST',json:{url}});
+      const preview=await readSourceLink(url);
       if(request!==previewRequest||!sameOwner(user)||!form.isConnected)return;
       if(input.value.trim()&&input.value.trim()!==url){toast('网址已改变，请读取新的链接');return;}
       const source=preview.source,origin=source.origin;
@@ -194,7 +212,7 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
         try{
           const typedUrl=snapshot.item.read_url?.trim();
           if(typedUrl&&(!snapshot.item.link_preview||snapshot.item.source_url!==typedUrl)){
-            const preview=await api('/intake/link',{method:'POST',json:{url:typedUrl}});
+            const preview=await readSourceLink(typedUrl);
             if(!sameOwner(user)||run!==generation)break;
             for(const target of [item,snapshot.item]){target.link_preview=preview.id;target.source_url=preview.source.origin.url;target.read_url=preview.source.origin.url;if(!target.title.trim())target.title=preview.title||preview.source.name;}
           }

@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 from fastapi.testclient import TestClient
 from app.config import Settings
 from app.main import create_app
+from app.official_sources import PRESETS
 from synthetic_auth import verified_registration
 from app.security import new_invite
 
@@ -20,7 +21,7 @@ from app.security import new_invite
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--allow-public-network', action='store_true', required=True)
-    parser.add_argument('--preset', action='append', choices=['whu-sres-notices', 'whu-notices', 'whu-journal-affairs'])
+    parser.add_argument('--preset', action='append', choices=[preset['id'] for preset in PRESETS])
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts' / 'public-sources-2026-10-29')
     args = parser.parse_args()
     out = args.output.resolve()
@@ -68,12 +69,14 @@ def main():
                     rows = conn.execute('SELECT DISTINCT notice_id FROM notice_ingest_receipts WHERE external_key LIKE ?',
                                         ('website:' + sid + ':%',)).fetchall()
                 notices = []
+                listed_dates = {entry['url']: entry['published_at'] for entry in entries}
                 for row in rows:
                     detail = request('GET', '/notices/' + row['notice_id'])
                     sources = detail['sources']
                     text = '\n'.join(s['text'] for source in sources for s in source['sections'])
                     assert text.strip(), 'Empty notice was saved'
-                    assert detail['published_at'], 'Known publication date was lost'
+                    if listed_dates.get(detail['source_url']):
+                        assert detail['published_at'], 'Known publication date was lost'
                     notices.append({'id': detail['id'], 'title': detail['title'], 'url': detail['source_url'],
                                     'published_at': detail['published_at'], 'characters': len(text),
                                     'text_sha256': hashlib.sha256(text.encode()).hexdigest(),
@@ -92,7 +95,8 @@ def main():
         finally:
             client.close()
     report['result'] = ('failed' if report['failures'] else 'partial' if any(
-        e['error'] for c in report['columns'] for e in c['entries']) else 'passed')
+        e['error'] for c in report['columns'] for e in c['entries']) or any(
+        r['error'] for c in report['columns'] for r in c['rounds']) else 'passed')
     (out / 'live-report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({k: report[k] for k in ('result', 'failures')}, ensure_ascii=False))
     return int(bool(report['failures']))

@@ -15,6 +15,7 @@ from .models import Strict
 from .security import rate_limit, token_hash, verify_password
 
 TABLES = {'verified_contacts', 'auth_challenges'}
+REGISTRATION_PROOF_TTL_SECONDS = 30 * 60
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS verified_contacts(
  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -221,14 +222,16 @@ class VerificationService:
         # roll back the counter or allow parallel requests to exceed five guesses.
         with self.db.connect(write=True) as conn:
             row=conn.execute('SELECT * FROM auth_challenges WHERE id=?',(payload.challenge_id,)).fetchone()
-            if row and row['state']=='sent' and row['expires_at']>int(time.time()) and row['attempts']<5:
+            now=int(time.time())
+            if row and row['state']=='sent' and row['expires_at']>now and row['attempts']<5:
                 protected=row['purpose'] in {'password','contact_authorize','contact_bind'}
                 if protected and (not current or current['id']!=row['user_id']):raise HTTPException(403,'请在发起验证的账号中操作')
                 valid=hmac.compare_digest(row['digest'],self.digest(row['id'],payload.code))
-                conn.execute('UPDATE auth_challenges SET attempts=attempts+1,state=?,proof_hash=?,digest=? WHERE id=?',
-                    ('verified' if valid else 'sent',token_hash(proof) if valid else None,'' if valid else row['digest'],row['id']))
+                expires_at=now+REGISTRATION_PROOF_TTL_SECONDS if valid and row['purpose']=='register' else row['expires_at']
+                conn.execute('UPDATE auth_challenges SET attempts=attempts+1,state=?,proof_hash=?,digest=?,expires_at=? WHERE id=?',
+                    ('verified' if valid else 'sent',token_hash(proof) if valid else None,'' if valid else row['digest'],expires_at,row['id']))
         if not valid:raise HTTPException(400,'验证码错误、已使用或已过期，请检查后重试')
-        return {'verification_token':proof,'expires_in':max(0,row['expires_at']-int(time.time()))}
+        return {'verification_token':proof,'expires_in':max(0,expires_at-int(time.time()))}
 
 
 def install(app, db, settings, user, session_response):

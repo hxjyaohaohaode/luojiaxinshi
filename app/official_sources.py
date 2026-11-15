@@ -1,11 +1,12 @@
-"""Small, explicit adapters for public WHU notice columns.
+"""Small, explicit adapters for public notice columns.
 
-Dates keep the precision supplied by the publisher. No login, browser script,
-URL rewriting, or traversal is used to obtain an article.
+Dates keep the precision supplied by the publisher. No login or browser script
+execution is used to obtain an article.
 """
 from dataclasses import dataclass, field
 from datetime import date
 from html.parser import HTMLParser
+import json
 import re
 from urllib.parse import parse_qs, urldefrag, urljoin, urlsplit
 
@@ -22,14 +23,46 @@ PRESETS = [
     {'id': 'whu-notices', 'name': '武汉大学通知公告', 'institution': '武汉大学',
      'url': 'https://www.whu.edu.cn/tzgg.htm', 'article_path_prefix': '/info/5231/',
      'purpose': '学校通知公告当前列表中的公开原文；需要校内权限的文章会提示未能读取'},
+    {'id': 'whu-undergrad-student', 'name': '本科生院学生通知', 'institution': '武汉大学本科生院',
+     'url': 'https://uc.whu.edu.cn/tzgg/xstz.htm', 'article_path_prefix': '/info/1517/',
+     'purpose': '本科生院发布的学生通知，包括退课、教学评价、竞赛和相关事项'},
+    {'id': 'whu-undergrad-teaching', 'name': '本科生院教务安排', 'institution': '武汉大学本科生院',
+     'url': 'https://uc.whu.edu.cn/tzgg/zhyw.htm', 'article_path_prefix': '/info/1520/',
+     'purpose': '本科生院综合业务通知，包括考试、教学安排和其他教务事项'},
+    {'id': 'whu-student-aid', 'name': '学生资助通知公告', 'institution': '武汉大学学生资助管理中心',
+     'url': 'https://zzgl.whu.edu.cn/tzgg.htm', 'article_path_prefix': '/info/1019/',
+     'purpose': '学校奖助学金、勤工助学和困难资助相关的公开通知与公示'},
+    {'id': 'whu-employment', 'name': '学生就业通知公告', 'institution': '武汉大学学生就业指导与服务中心',
+     'url': 'https://xsjy.whu.edu.cn/frontpage/whu/html/newsList.html?id=739BEBB72A0B2B25E0538713470A6C41',
+     'article_path_prefix': '/frontpage/whu/html/newsDetail.html',
+     'purpose': '学校就业中心发布的就业通知和活动公告，保留来源原文与发布日期'},
+    {'id': 'whu-employment-jobs', 'name': '校园招聘岗位', 'institution': '武汉大学学生就业指导与服务中心',
+     'url': 'https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentinfoList.html?type=1',
+     'article_path_prefix': '/f/recruitmentinfo/show',
+     'purpose': '就业信息网的校园招聘信息，保留用人单位、职位要求和原文；内容由用人单位发布'},
+    {'id': 'whu-employment-internships', 'name': '校园实习招聘', 'institution': '武汉大学学生就业指导与服务中心',
+     'url': 'https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentinfoList.html?type=2',
+     'article_path_prefix': '/f/recruitmentinfo/show',
+     'purpose': '就业信息网的实习招聘信息，保留职位、申请要求和原文；内容由用人单位发布'},
+    {'id': 'whu-employment-fairs', 'name': '校园宣讲会', 'institution': '武汉大学学生就业指导与服务中心',
+     'url': 'https://xsjy.whu.edu.cn/frontpage/whu/html/recruitmentFairList.html',
+     'article_path_prefix': '/f/recruitmentFair/show',
+     'purpose': '就业信息网的宣讲会，保留举办时间、地点、用人单位和招聘原文'},
     {'id': 'whu-journal-affairs', 'name': '新闻与传播学院学生事务',
      'institution': '武汉大学新闻与传播学院',
      'url': 'https://journal.whu.edu.cn/undergraduate/affairs/index',
      'article_path_prefix': '/undergraduate/',
      'purpose': '学院学生事务栏目当前列表，包含该栏目实际发布的本科生和研究生通知'},
+    {'id': 'whu-library-notices', 'name': '武汉大学图书馆通知公告',
+     'institution': '武汉大学图书馆',
+     'url': 'https://www.lib.whu.edu.cn/engine2/general/more?appId=4627353&wfwfid=25295&pageId=740716&websiteId=425039&currentBranch=0',
+     'article_path_prefix': '/engine2/d/',
+     'purpose': '图书馆通知公告当前列表，接收本馆官网的开放、服务等通知；跳往其他平台的文章会提示未接收'},
 ]
 _HOSTS = {'sres.whu.edu.cn': 'whu-sres-notices', 'www.whu.edu.cn': 'whu-notices',
-          'journal.whu.edu.cn': 'whu-journal-affairs'}
+          'journal.whu.edu.cn': 'whu-journal-affairs',
+          'www.lib.whu.edu.cn': 'whu-library-notices',
+          'uc.whu.edu.cn': 'whu-undergrad', 'zzgl.whu.edu.cn': 'whu-student-aid'}
 _VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 _BLOCKED = {'script', 'style', 'noscript', 'svg', 'iframe', 'template'}
 _BLOCKS = {'p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'h4', 'tr', 'article', 'section'}
@@ -134,6 +167,14 @@ def _article_url(href, base, preset_id):
         allowed = bool(re.fullmatch(r'/info/3771/\d+\.htm', parts.path)) or (
             parts.path == '/xzcontent.jsp' and query.get('wbtreeid') == ['3771']
             and len(query.get('wbnewsid', [])) == 1 and query['wbnewsid'][0].isdigit())
+    elif preset_id in {'whu-undergrad-student', 'whu-undergrad-teaching'}:
+        column = '1517' if preset_id == 'whu-undergrad-student' else '1520'
+        allowed = bool(re.fullmatch(r'/info/' + column + r'/\d+\.htm', parts.path)) and not parts.query
+    elif preset_id == 'whu-student-aid':
+        query = parse_qs(parts.query)
+        allowed = bool(re.fullmatch(r'/info/1019/\d+\.htm', parts.path)) or (
+            parts.path == '/content.jsp' and query.get('wbtreeid') == ['1019']
+            and len(query.get('wbnewsid', [])) == 1 and query['wbnewsid'][0].isdigit())
     else:
         # The column contains articles from both undergraduate and graduate paths.
         allowed = bool(re.fullmatch(r'/(?:undergraduate|graduate|notice)/(?:[A-Za-z0-9_-]+/)*\d{8}[A-Za-z0-9]+', parts.path))
@@ -152,6 +193,14 @@ def parse_official_index(text, url, preset_id):
     elif preset_id == 'whu-sres-notices':
         container = _first(root, tag='ul', cls='list-container')
         rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
+    elif preset_id in {'whu-undergrad-student', 'whu-undergrad-teaching'}:
+        section = _first(root, cls='list_txt')
+        container = _first(section, tag='ul', cls='am-list')
+        rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
+    elif preset_id == 'whu-student-aid':
+        section = _first(root, cls='list-box')
+        container = _first(_first(section, cls='list'), tag='ul')
+        rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
     else:
         container = _first(root, tag='ul', cls='p-list5')
         rows = [n for n in container.children if isinstance(n, _Node) and n.tag == 'li'] if container else []
@@ -161,7 +210,9 @@ def parse_official_index(text, url, preset_id):
     for row in rows:
         for link in (n for n in row.walk() if n.tag == 'a'):
             target = _article_url(link.attrs.get('href'), url, preset_id)
-            title_node = _first(link, cls='content') if preset_id == 'whu-sres-notices' else None
+            title_node = (_first(link, cls='content') if preset_id == 'whu-sres-notices' else
+                          _first(link, tag='span') if preset_id in {'whu-undergrad-student', 'whu-undergrad-teaching'} else
+                          _first(link, tag='p') if preset_id == 'whu-student-aid' else None)
             title = _clean(title_node.text() if title_node else link.text())
             if not target or not title or target in seen:
                 continue
@@ -169,6 +220,12 @@ def parse_official_index(text, url, preset_id):
                 cells = [n for n in row.children if isinstance(n, _Node) and n.tag == 'td']
                 published = _date(cells[2].text()) if len(cells) >= 3 else None
             elif preset_id == 'whu-sres-notices':
+                stamp = _first(row, cls='time')
+                published = _date(stamp.text()) if stamp else None
+            elif preset_id in {'whu-undergrad-student', 'whu-undergrad-teaching'}:
+                stamp = _first(row, tag='i')
+                published = _date(stamp.text()) if stamp else None
+            elif preset_id == 'whu-student-aid':
                 stamp = _first(row, cls='time')
                 published = _date(stamp.text()) if stamp else None
             else:
@@ -188,7 +245,40 @@ def parse_official_article(text, url):
     preset_id = _HOSTS.get(urlsplit(url).hostname)
     if not preset_id:
         return None
-    root = _Tree(text).root
+    parts = urlsplit(url)
+    if preset_id == 'whu-undergrad':
+        match = re.fullmatch(r'/info/(1517|1520)/\d+\.htm', parts.path)
+        if not match:
+            return None
+        preset_id = 'whu-undergrad-student' if match[1] == '1517' else 'whu-undergrad-teaching'
+    if preset_id == 'whu-student-aid' and not _article_url(url, url, preset_id):
+        return None
+    if preset_id == 'whu-library-notices':
+        article_match = re.fullmatch(r'/engine2/d/(\d+)/5619257/0', parts.path)
+        if not article_match:
+            return None
+        query = parse_qs(parts.query)
+        if query not in ({'t': ['11166542'], 'p': ['740716']}, {'t': ['11166542'], 'p': ['1']}):
+            raise HTTPException(422, '图书馆文章不属于已订阅的公告栏目')
+        matches = list(re.finditer(r'\bdata\s*:\s*(?=\{\s*"engineInstanceId"\s*:\s*5619257\s*,)', text))
+        if len(matches) != 1:
+            raise HTTPException(422, '图书馆正文结构已变化，未将页面脚本当作通知')
+        try:
+            payload, _ = json.JSONDecoder().raw_decode(text[matches[0].end():])
+            if (str(payload.get('id')) != article_match[1] or payload.get('engineInstanceId') != 5619257 or
+                    payload.get('publicUse') is not True or payload.get('isPublish') != 1 or
+                    payload.get('pageType') != 1 or payload.get('isOuter') is not False or
+                    (payload.get('typeId') is not None and str(payload['typeId']) != '11166542') or
+                    not isinstance(payload.get('content'), str)):
+                raise ValueError('unexpected article')
+            title = _clean(payload['1']['value'])
+            published = _date(payload['6']['value'])
+        except (ValueError, TypeError, KeyError, AttributeError):
+            raise HTTPException(422, '图书馆公告数据不完整或不属于公开栏目') from None
+        root = _Tree(payload['content']).root
+        body = material_area = root
+    else:
+        root = _Tree(text).root
     if preset_id == 'whu-notices':
         header = _first(root, cls='ar_tit')
         title_node = _first(header, tag='h3')
@@ -209,7 +299,23 @@ def parse_official_article(text, url):
         title = _clean(title_node.text()) if title_node else ''
         stamp = _first(article, cls='time-info')
         published = _date(stamp.text()) if stamp else None
-    else:
+    elif preset_id in {'whu-undergrad-student', 'whu-undergrad-teaching'}:
+        header = _first(root, cls='title_nei')
+        title_node = _first(header, tag='b')
+        body = _first(root, cls='v_news_content')
+        material_area = _first(root, cls='news_show') or body
+        title = _clean(title_node.text()) if title_node else ''
+        stamp = _first(header, tag='i')
+        published = _date(stamp.text()) if stamp else None
+    elif preset_id == 'whu-student-aid':
+        article = _first(root, cls='article')
+        title_node = _first(article, tag='h2', cls='title')
+        body = _first(article, cls='v_news_content')
+        material_area = article or body
+        title = _clean(title_node.text()) if title_node else ''
+        stamp = _first(article, cls='xinxi')
+        published = _date(stamp.text()) if stamp else None
+    elif preset_id == 'whu-journal-affairs':
         article = _first(root, cls='m-txt2')
         header = _first(article, cls='con-top')
         title_node = _first(header, tag='h1')
@@ -234,7 +340,7 @@ def parse_official_article(text, url):
             names[target] = label[:160]
             if len(attachments) == 30:
                 break
-    if preset_id == 'whu-sres-notices':
+    if preset_id in {'whu-sres-notices', 'whu-undergrad-student', 'whu-undergrad-teaching'}:
         # VSB embeds some notices as a PDF rather than visible paragraphs. Read
         # only the literal URL argument of this observed call; never run script.
         for script in (n for n in body.walk() if n.tag == 'script'):

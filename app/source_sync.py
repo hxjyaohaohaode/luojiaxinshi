@@ -122,7 +122,7 @@ class Subscription(Strict):
             preset = get_preset(self.preset_id)
             if (not preset or self.mode != 'html' or canonical_url(self.url) != canonical_url(preset['url'])
                     or self.article_path_prefix != preset['article_path_prefix']):
-                raise ValueError('预设栏目范围已改变，请重新选择学校官网或使用自定义来源')
+                raise ValueError('预设栏目范围已改变，请重新选择武汉大学来源或使用自定义来源')
         if self.mode == 'html' and (not self.article_path_prefix.startswith('/') or
                 len(self.article_path_prefix) < 2 or any(x in self.article_path_prefix for x in ('?', '#', '..', '\\'))):
             raise ValueError('网页订阅须填写通知正文的路径前缀，例如 /info/；不能订阅整站所有链接')
@@ -351,10 +351,25 @@ async def fetch_index(config):
                         if len(content) > 1_500_000:
                             raise HTTPException(413, '来源列表过大，请选择具体通知栏目')
                     text, _ = decode_page(content, response.charset_encoding)
-                    entries=parse_index(text, url, config)
+                    snapshot_extra = {}
+                    if config.get('preset_id') == 'whu-library-notices':
+                        from .library_source import fetch_library_entries
+                        data, rejected, snapshot_extra = await fetch_library_entries(client, url, text)
+                        entries = IndexEntries(data, rejected=rejected)
+                    elif config.get('preset_id') == 'whu-employment':
+                        from .employment_source import fetch_employment_entries
+                        data, rejected, snapshot_extra = await fetch_employment_entries(client)
+                        entries = IndexEntries(data, rejected=rejected)
+                    elif config.get('preset_id') in {'whu-employment-jobs', 'whu-employment-internships', 'whu-employment-fairs'}:
+                        from .whu_careers import fetch_career_entries
+                        data, rejected, snapshot_extra, empty = await fetch_career_entries(client, config['preset_id'])
+                        entries = IndexEntries(data, rejected=rejected, empty_confirmed=empty)
+                    else:
+                        entries=parse_index(text, url, config)
                     if not isinstance(entries,IndexEntries):entries=IndexEntries(entries)
                     entries.snapshot={'url':url,'sha256':hashlib.sha256(content).hexdigest(),
-                        'checked_at':int(time.time()),'acquisition':response.headers.get('x-luojia-cache','fetched')}
+                        'checked_at':int(time.time()),'acquisition':response.headers.get('x-luojia-cache','fetched'),
+                        **snapshot_extra}
                     return entries
             raise HTTPException(422, '来源跳转次数过多')
     except (httpx.HTTPError, OSError, TimeoutError, ValueError, LookupError):
@@ -475,8 +490,9 @@ async def sync_source(db, sid, uid=None, force=False):
             for entry in entries:
                 conn.execute('INSERT INTO source_subscription_items(source_id,url,title,published_at,discovered_at) VALUES(?,?,?,?,?) ON CONFLICT(source_id,url) DO UPDATE SET title=excluded.title,published_at=COALESCE(excluded.published_at,source_subscription_items.published_at)',
                              (sid, entry['url'], entry['title'], entry['published_at'], now))
+                list_snapshot = getattr(entries,'snapshot',{})
                 provenance={'listed_url':entry['url'],'listed_title':entry['title'],'listed_published_at':entry['published_at'],
-                    'list_snapshot_sha256':getattr(entries,'snapshot',{}).get('sha256'),
+                    'list_snapshot_sha256':list_snapshot.get('data_sha256') or list_snapshot.get('sha256'),
                     'subscription_rule_version':snapshot['version'],'subscription_config_hash':config_hash}
                 if config['mode']=='feed':
                     provenance.update(feed_service_url=config['url'],feed_entry_id=entry.get('feed_entry_id',''),

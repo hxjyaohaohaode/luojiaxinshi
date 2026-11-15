@@ -97,6 +97,12 @@ class IntakePage(PageText):
 
 async def read_link(url):
     """Bound every response and redirect; PublicHTTPTransport pins public DNS."""
+    from .employment_source import article_id, read_employment_article
+    if article_id(url):
+        return await read_employment_article(url)
+    from .whu_careers import career_identity, read_career_article
+    if career_identity(url):
+        return await read_career_article(url)
     return await _read_link(url)
 
 

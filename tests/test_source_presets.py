@@ -1,4 +1,6 @@
 """Preset subscriptions reuse existing owner, version, and intake boundaries."""
+from urllib.parse import urlsplit
+
 from app import source_sync
 from app.documents import text_source
 from tests.test_workflow import account, env
@@ -14,7 +16,11 @@ def subscribe(client, preset='whu-notices'):
 def test_preset_subscription_is_atomic_idempotent_and_owner_scoped(env):
     a, b = account(env), account(env, 'bob')
     presets = a.get('/api/source-presets').json()
-    assert {p['id'] for p in presets} == {'whu-notices', 'whu-sres-notices', 'whu-journal-affairs'}
+    assert {p['id'] for p in presets} == {'whu-notices', 'whu-sres-notices', 'whu-journal-affairs',
+                                          'whu-library-notices', 'whu-undergrad-student',
+                                          'whu-undergrad-teaching', 'whu-student-aid', 'whu-employment',
+                                          'whu-employment-jobs', 'whu-employment-internships', 'whu-employment-fairs'}
+    assert all(urlsplit(p['url']).hostname.endswith('.whu.edu.cn') for p in presets)
     assert [p['id'] for p in presets[:2]] == ['whu-sres-notices', 'whu-notices']
     first, again, other = subscribe(a), subscribe(a), subscribe(b)
     assert first['created'] and not again['created']
@@ -60,8 +66,10 @@ def test_preset_sync_keeps_date_materials_and_duplicate_identity(env, monkeypatc
     client = account(env)
     saved = subscribe(client)
     async def index(config):
-        return [{'title': '公开通知', 'url': 'https://www.whu.edu.cn/info/5231/123.htm',
-                 'published_at': '2026-10-28'}]
+        entries = source_sync.IndexEntries([{'title': '公开通知', 'url': 'https://www.whu.edu.cn/info/5231/123.htm',
+                                           'published_at': '2026-10-28'}])
+        entries.snapshot = {'sha256': 'page-shell', 'data_sha256': 'actual-list'}
+        return entries
     async def read(url):
         source = text_source('通知原文：请核对条件。')
         source['origin'] = {'url': url, 'published_at': '2026-10-29', 'attachments': [], 'warnings': []}
@@ -80,6 +88,7 @@ def test_preset_sync_keeps_date_materials_and_duplicate_identity(env, monkeypatc
     detail = client.get('/api/notices/' + notices[0]['id']).json()
     assert detail['published_at'] == '2026-10-29'
     assert detail['sources'][0]['origin']['listed_published_at'] == '2026-10-28'
+    assert detail['sources'][0]['origin']['list_snapshot_sha256'] == 'actual-list'
     assert any('列表日期' in w for w in detail['sources'][0]['origin']['warnings'])
     assert len(detail['sources']) == 2
     assert not detail['materials_complete']

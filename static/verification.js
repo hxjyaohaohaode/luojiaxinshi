@@ -8,7 +8,7 @@ export function createVerificationUI({state,api,esc,toast}){
     return `<fieldset class="verification stack" data-verification="${id}" data-purpose="${purpose}"><legend>${esc(title)}</legend>
     ${contacts.length?`<label class="field">已验证的联系方式<select data-otp-contact>${contacts.map(c=>`<option value="${esc(c.value)}" data-channel="${c.channel}">${c.channel==='sms'?'手机':'邮箱'} · ${esc(c.value)}</option>`).join('')}</select></label>`:
     `<label class="field">手机号或邮箱<input data-otp-destination required maxlength="254" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="输入手机号或邮箱地址"></label>`}
-    <div class="verification-code-row"><label class="field">验证码<span class="verification-code-input" data-otp-shell data-state="idle"><input data-otp-code type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" aria-describedby="${statusId}" required><span class="verification-code-slots" aria-hidden="true">${'<span data-otp-slot></span>'.repeat(6)}</span></span></label><button type="button" class="button" data-otp-send>发送验证码</button></div><p id="${statusId}" class="small muted" data-otp-status role="status">验证码 5 分钟内有效，支持粘贴完整的 6 位数字。</p></fieldset>`;
+    <div class="verification-code-row"><label class="field">验证码<span class="verification-code-input" data-otp-shell data-state="idle"><input data-otp-code type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" aria-describedby="${statusId}" required><span class="verification-code-slots" aria-hidden="true">${'<span data-otp-slot></span>'.repeat(6)}</span></span></label><button type="button" class="button" data-otp-send>发送验证码</button></div><p id="${statusId}" class="small muted" data-otp-status role="status">验证码 5 分钟内有效，支持粘贴完整的 6 位数字。${purpose==='register'?'验证通过后，请保留当前页面并在 30 分钟内完成注册。':''}</p></fieldset>`;
   }
   function values(group){const saved=group.querySelector('[data-otp-contact]');if(saved)return {channel:saved.selectedOptions[0].dataset.channel,destination:saved.value};let destination=group.querySelector('[data-otp-destination]').value.trim();const channel=destination.includes('@')?'email':'sms';destination=channel==='email'?destination.toLowerCase():destination.replace(/[\s-]/g,'').replace(/^\+86/,'');return {channel,destination};}
   const identity=group=>JSON.stringify({...values(group),username:['login','recover'].includes(group.dataset.purpose)?group.closest('form')?.querySelector('[name=username]')?.value.trim()||'':'',purpose:group.dataset.purpose});
@@ -73,7 +73,7 @@ export function createVerificationUI({state,api,esc,toast}){
   async function prove(group){
     const record=records.get(group);
     if(!record||record.identity!==identity(group)||record.owner!==state.session?.user.id){records.delete(group);throw Error('请先向当前手机号或邮箱发送验证码；修改联系方式后需重新发送');}
-    if(record.expires<=Date.now()){codeFeedback(group,'error','验证码已过期，请重新发送');throw Error('验证码已过期，请重新发送');}
+    if(record.expires<=Date.now()){const message=record.proof?'联系方式验证已过期，请重新发送验证码':'验证码已过期，请重新发送';codeFeedback(group,'error',message);throw Error(message);}
     if(record.proof)return record.proof;
     const input=group.querySelector('[data-otp-code]'),code=input.value.normalize('NFKC').trim();
     if(!/^[0-9]{6}$/.test(code)){codeFeedback(group,'error','请输入 6 位验证码');throw Error('请输入 6 位验证码');}
@@ -85,7 +85,7 @@ export function createVerificationUI({state,api,esc,toast}){
         throw Error('验证信息已改变，请重新操作');
       }
       record.proof=result.verification_token;record.expires=Date.now()+result.expires_in*1000;
-      codeFeedback(group,'verified','已验证，提交后生效');return record.proof;
+      codeFeedback(group,'verified',group.dataset.purpose==='register'?'联系方式已验证，请保留当前页面并在 30 分钟内完成注册。':'已验证，提交后生效');return record.proof;
     }catch(error){
       if(group.isConnected&&record===records.get(group)&&record.identity===identity(group)&&record.owner===state.session?.user.id)codeFeedback(group,'error',error.message);
       throw error;
