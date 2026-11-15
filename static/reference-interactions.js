@@ -123,8 +123,21 @@ export function installReferenceInteractions(){
     for(const other of document.querySelectorAll('details.notice-actions[open]'))if(other!==disclosure)other.open=false;
     animateLocalPanel(disclosure.querySelector('.notice-actions-menu'));
   },true);
-  document.addEventListener('pointerdown',event=>{for(const menu of document.querySelectorAll('details.notice-actions[open]'))if(!menu.contains(event.target))menu.open=false;});
-  document.addEventListener('focusin',event=>{for(const menu of document.querySelectorAll('details.notice-actions[open]'))if(!menu.contains(event.target))menu.open=false;});
+  let pressedNoticeMenu=null;
+  document.addEventListener('pointerdown',event=>{
+    pressedNoticeMenu=event.target.closest?.('details.notice-actions[open]')||null;
+    for(const menu of document.querySelectorAll('details.notice-actions[open]'))if(menu!==pressedNoticeMenu)menu.open=false;
+  });
+  // WebKit can focus the workspace before the pressed menu button receives its click.
+  document.addEventListener('focusin',event=>{
+    for(const menu of document.querySelectorAll('details.notice-actions[open]')){
+      if(menu!==pressedNoticeMenu&&!menu.contains(event.target))menu.open=false;
+    }
+  });
+  document.addEventListener('pointerup',()=>{
+    if(pressedNoticeMenu)setTimeout(()=>{pressedNoticeMenu=null;},0);
+  });
+  document.addEventListener('pointercancel',()=>{pressedNoticeMenu=null;});
   document.addEventListener('click',event=>{if(event.target.closest('.composer-plus'))queueMicrotask(()=>{const menu=document.querySelector('#composer-menu');if(menu&&!menu.hidden)animateLocalPanel(menu);});});
   document.addEventListener('keydown',event=>{
     if(event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;

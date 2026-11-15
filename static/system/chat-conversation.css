@@ -52,6 +52,9 @@
 }
 .chat-thread .message-footer .reply-action svg { width:16px;height:16px; }
 .chat-thread .message-footer .reply-action:focus-visible { outline-offset:-2px; }
+.message-footer > .reply-action:is(.memory-use-icon,.memory-change-icon) {
+  width:44px;min-width:44px;height:44px;min-height:44px;
+}
 .message-footer .reply-versions { margin-inline-start:4px;padding-inline-start:4px;border-inline-start:1px solid var(--line); }
 .reply-version-count { font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums; }
 .message-footer .gu-save-feedback { white-space:nowrap; }

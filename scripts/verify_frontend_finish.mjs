@@ -74,7 +74,7 @@ for(const engine of engines){
   const network=(kind,request,extra={})=>{const url=new URL(request.url());if(url.origin!==origin)return;report.requests.push({engine,kind,at:Date.now(),method:request.method(),path:url.pathname+url.search,...extra});if(report.requests.length>180)report.requests.splice(0,report.requests.length-180);};
   page.on('request',request=>network('request',request));page.on('response',response=>network('response',response.request(),{status:response.status(),from_service_worker:response.fromServiceWorker()}));page.on('requestfailed',request=>network('failed',request,{error:request.failure()?.errorText||'unknown'}));
   const api=async(route,method='GET',data,expected=200)=>{
-    const current=await context.request.get(origin+'/api/session');assert.equal(current.status(),200);const session=await current.json();
+    const current=await context.request.get(origin+'/api/session',{maxRetries:1});assert.equal(current.status(),200);const session=await current.json();
     const response=await context.request.fetch(origin+'/api'+route,{method,headers:{Origin:origin,'X-Requested-With':'campus-notice','X-CSRF-Token':session.csrf,...(data===undefined?{}:{'Content-Type':'application/json'})},...(data===undefined?{}:{data})});
     assert.equal(response.status(),expected,await response.text());return response.json();
   };

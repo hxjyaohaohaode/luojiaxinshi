@@ -337,7 +337,16 @@ for(const engine of engines){
       const tid=tasks.at(-1),control=page.locator('[data-action=toggle-task][data-id="'+tid+'"]');
       const row=control.locator('..'),boxes=await row.locator('.task-check,.task-main,.task-more>summary').evaluateAll(nodes=>nodes.filter(n=>n.getClientRects().length).map(n=>{const r=n.getBoundingClientRect();return {name:n.className,x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height};}));
       for(const box of boxes)assert.ok(box.width>=43.9&&box.height>=43.9,JSON.stringify(box));for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];assert.ok(a.right<=b.x+1||b.right<=a.x+1||a.bottom<=b.y+1||b.bottom<=a.y+1,JSON.stringify(boxes));}
-      await control.click();await page.waitForFunction(tid=>document.querySelector('[data-action=toggle-task][data-id="'+tid+'"]')?.getAttribute('aria-pressed')==='true',tid);assert.equal((await api('/tasks/'+tid+'/workflow')).task.status,'done');
+      const [saved]=await Promise.all([
+        page.waitForResponse(response=>response.url()===origin+'/api/tasks/'+tid&&response.request().method()==='PUT'),
+        control.click(),
+      ]);
+      assert.equal(saved.status(),200,await saved.text());
+      await page.waitForFunction(tid=>{
+        const button=document.querySelector('[data-action=toggle-task][data-id="'+tid+'"]');
+        return button?.getAttribute('aria-pressed')==='true'&&button.getAttribute('aria-busy')!=='true';
+      },tid);
+      assert.equal((await api('/tasks/'+tid+'/workflow')).task.status,'done');
     });
     await check('a pending submission opens its handling record without completion or celebration',async()=>{
       const tid=tasks.at(-1),completed=(await api('/tasks/'+tid+'/workflow')).task;
@@ -379,7 +388,10 @@ for(const engine of engines){
       await page.waitForFunction(()=>document.querySelector('.message-assistant pre code')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
       const footer=page.locator('.message-assistant .message-footer').last();
       const speak=footer.getByRole('button',{name:'朗读这条回复'});
-      const positions=await footer.locator('.reply-action').evaluateAll(buttons=>buttons.filter(b=>b.getClientRects().length).map(b=>b.getBoundingClientRect().top));
+      const positions=await footer.locator('.reply-action').evaluateAll(buttons=>buttons.filter(b=>b.getClientRects().length).map(button=>{
+        const {top,height}=button.getBoundingClientRect();
+        return top+height/2;
+      }));
       assert.ok(positions.length>5&&Math.max(...positions)-Math.min(...positions)<1);
       await speak.focus();
       await page.keyboard.press('Tab');
