@@ -5,7 +5,7 @@ export function createPagedList({api, path, owner, context = () => null, revisio
   let data = empty(), dataRevision = null, invalidation = 0, verifiedInvalidation = 0, requestMode, queuedMore, moreTimer;
   function empty() { return {items: [], total: 0, has_more: false, next_cursor: null, facets: {}, loaded: false, loading: false, error: '', notice: '', limit}; }
   const stale = () => data.loaded && (dataRevision !== revision() || verifiedInvalidation !== invalidation);
-  const snapshot = () => ({...data, items: [...data.items], filters: {...filters}, projection_revision: dataRevision, projection_stale: stale()});
+  const snapshot = () => ({...data, visibleLoading: data.loading && !!requestMode?.visibleLoading, items: [...data.items], filters: {...filters}, projection_revision: dataRevision, projection_stale: stale()});
   const emit = (options = {}) => onChange(snapshot(), options);
   const moreScopeMatches = entry => entry.uid === owner() && entry.key === key && entry.view === context();
   function cancelMore() {
@@ -68,7 +68,10 @@ export function createPagedList({api, path, owner, context = () => null, revisio
     // an older in-flight page, or the unchanged prefix of an appended page.
     const requestedRevision = revision(), prefixRevision = dataRevision;
     const requestedInvalidation = invalidation, prefixInvalidation = verifiedInvalidation;
-    requestMode = {append,preserveRange,invalidation:requestedInvalidation,revision:requestedRevision};
+    // Keep a displayed user request busy until the replacement settles.
+    // An otherwise silent refresh must not show a spinner during another paint.
+    const visibleLoading = !preserveRange || (data.loading && !!requestMode?.visibleLoading);
+    requestMode = {append,preserveRange,visibleLoading,invalidation:requestedInvalidation,revision:requestedRevision};
     controller?.abort(); controller = new AbortController(); const signal = controller.signal; requestView = view;
     const params = new URLSearchParams({...filters, limit: String(limit)});
     if (append && data.next_cursor) params.set('cursor', data.next_cursor);
@@ -108,7 +111,7 @@ export function createPagedList({api, path, owner, context = () => null, revisio
         dataRevision = append ? prefixRevision : requestedRevision;
         verifiedInvalidation = append ? prefixInvalidation : requestedInvalidation;
         committed = true;
-        if (!unchanged) emit({preserveViewport: preserveRange}); return snapshot();
+        if (!unchanged || visibleLoading) emit({preserveViewport: preserveRange}); return snapshot();
       } catch (error) {
         if (!sameScope()) return null;
         const apply = canApply();

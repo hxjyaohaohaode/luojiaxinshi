@@ -139,6 +139,36 @@ test('a clock response arriving during a new user interaction remains pending in
   assert.equal(await refreshing,null);assert.deepEqual(list.snapshot().items.map(item=>item.id),['before']);assert.equal(list.snapshot().loading,false);
 });
 
+test('background range refresh stays quiet and clears any inherited visible loading state',async()=>{
+  const rows=response(['first','second']);
+  const requests=[],paints=[];
+  const list=createPagedList({
+    path:'/tasks/page',owner:()=> 'alice',onChange:value=>paints.push(value.visibleLoading),
+    api:()=>{const request=deferred();requests.push(request);return request.promise;},
+  });
+  const initial=list.load();
+  requests[0].resolve(rows);
+  await initial;
+  const preRefreshPaints=paints.length;
+  const quiet=list.reload({preserveRange:true});
+  assert.equal(list.snapshot().loading,true);
+  assert.equal(list.snapshot().visibleLoading,false);
+  requests[1].resolve(rows);
+  await quiet;
+  assert.equal(paints.length,preRefreshPaints);
+
+  const displayed=list.reload();
+  assert.equal(paints.at(-1),true);
+  const replacement=list.reload({preserveRange:true});
+  assert.equal(list.snapshot().visibleLoading,true);
+  requests[3].resolve(rows);
+  await replacement;
+  assert.equal(paints.at(-1),false);
+  assert.deepEqual(list.snapshot().items,rows.items);
+  requests[2].resolve(response(['superseded']));
+  assert.equal(await displayed,null);
+});
+
 test('returning to a cached route binds subsequent light clock patches to the new visible route',async()=>{
   let route=1,reads=0;const list=createPagedList({path:'/tasks/page',owner:()=> 'alice',context:()=>route,api:async()=>{reads++;return response(['cached']);}});
   await list.load({status:'all'});route=3;await list.load({status:'all'});
