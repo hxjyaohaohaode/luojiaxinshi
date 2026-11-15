@@ -7,14 +7,21 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
   const files=installNoticeFiles({esc,icon,toast,onChange:updateReadiness});
   function render(){
     $('#content').innerHTML=`<div class="notice-compose natural-intake">
-      <div class="page-title between"><h1>收通知</h1><a class="button small" href="#notices">返回通知</a></div>
+      <header class="notice-compose-head"><h1>收通知</h1><div class="notice-compose-actions">
+        <a class="button small plain" href="#intake">批量收通知</a>
+        <a class="button small plain notice-compose-back" href="#notices">返回通知</a>
+      </div></header>
       <form id="notice-form" class="panel stack">
-        <div class="compose-section-heading"><h2>通知原文</h2></div>
-        ${area('正文','body','',6,'maxlength="10000" placeholder="粘贴通知，或添加原件、截图"')}
-        <div class="between small muted"><button type="button" class="button small plain" data-notice-voice aria-label="语音补充通知正文">${icon('mic')} 语音补充</button><span id="char-count">0 / 10,000 字</span></div>
-        <label class="upload notice-upload"><span class="upload-symbol">${icon('upload')}</span><strong>添加通知原件或截图</strong><span class="small muted">可拖入或粘贴 · 最多 5 份，每份 5 MB</span><input type="file" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.md,.txt,.png,.jpg,.jpeg,.webp,.mp4,.webm" aria-label="添加通知原件或截图" aria-describedby="notice-file-help"></label>
-        <p class="field-note" id="notice-file-help">申请表填写件、成绩单等本人办理文件，请到对应待办中添加。</p>
-        <div class="files-list" id="files-list"></div>
+        <section class="notice-original" aria-label="通知原文">
+          <div data-intake-link></div>
+          ${area('通知正文','body','',4,'maxlength="10000" placeholder="粘贴通知，或添加原件、截图"')}
+          <div class="notice-compose-tools small muted"><button type="button" class="button small plain" data-notice-voice aria-label="语音补充通知正文">${icon('mic')} 语音补充</button><span id="char-count">0 / 10,000 字</span></div>
+          <label class="upload notice-upload"><span class="upload-symbol">${icon('upload')}</span><span class="notice-upload-copy">
+            <strong>添加通知原件或截图</strong><span class="small muted">可拖入或粘贴 · 最多 5 份，每份 5 MB</span>
+          </span><input type="file" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.md,.txt,.png,.jpg,.jpeg,.webp,.mp4,.webm" aria-label="添加通知原件或截图" aria-describedby="notice-file-help"></label>
+          <p class="field-note" id="notice-file-help">申请表、成绩单等个人办理材料，请在对应待办中添加。</p>
+          <div class="files-list" id="files-list"></div>
+        </section>
         <details class="details intake-metadata"><summary>标题与来源（选填）</summary><div class="stack">
           ${field('标题','title','','text','maxlength="160" placeholder="留空时从通知内容生成"')}
           <div class="form-grid">${field('来源名称','source_label','','text','maxlength="100" placeholder="学院官网、年级群等"')}${field('原发布时间（北京时间）','published_at','','datetime-local')}</div>
@@ -22,8 +29,10 @@ export function createNoticeComposer({esc,field,area,icon,toast,persist,showDial
           ${field('原文地址','source_url','','url','maxlength="2000" placeholder="https://…"')}
           <label class="check"><input type="checkbox" name="allow_duplicate" value="true"><span>这是另一学期或批次，单独收件</span></label>
         </div></details>
-        <label class="check"><input type="checkbox" name="materials_complete"><span>已核对通知正文和关键附件齐全</span></label>
-        <label class="check"><input type="checkbox" name="rights" required><span>确认有权保存这些通知原件</span></label>
+        <div class="notice-confirmations">
+          <label class="check"><input type="checkbox" name="materials_complete"><span>已核对通知正文和关键附件齐全</span></label>
+          <label class="check"><input type="checkbox" name="rights" required><span>确认有权保存这些通知原件</span></label>
+        </div>
         ${getAI().configured?`${noticeModePicker(getAI(),esc)}<label class="check"><input type="checkbox" name="prepare_consent"><span>同意将本则通知和必要个人条件交给小米 MiMo，整理办理路径</span></label><p class="field-note">先保存原件，再整理步骤、材料和入口。${getAI().notice_auto_repair?'通常整理和复核各一次，发现问题时最多再补正、复核各一次。':''}结果由你确认后保存。</p>`:''}
         <div class="form-footer"><span id="notice-intake-count" class="small muted" role="status"></span><button class="button ${getAI().configured?'':'primary'}" type="submit" name="intent" value="save">仅保存原件</button>${getAI().configured?`<button class="button primary" type="submit" name="intent" value="prepare">整理成办理路径 ${icon('arrow')}</button>`:''}</div>
       </form></div>`;

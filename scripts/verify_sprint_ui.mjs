@@ -372,8 +372,18 @@ for(const engine of engines){
     await check('composer prioritizes text and its More menu supports keyboard exit at 320 pixels',async()=>{
       await page.setViewportSize({width:320,height:640});const plus=page.locator('.composer-plus');await plus.click();assert.equal(await page.locator('#composer-menu').isVisible(),true);await page.keyboard.press('Escape');assert.equal(await plus.evaluate(n=>document.activeElement===n),true);assert.equal(await page.locator('#composer-menu').isVisible(),false);const controls=await page.locator('#chat-composer .composer-plus,#chat-composer .send-button').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return [r.width,r.height];}));for(const [w,h]of controls)assert.ok(w>=43.9&&h>=43.9);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
     });
-    await check('secondary reply actions remain available behind an accessible disclosure',async()=>{
-      await page.setViewportSize({width:390,height:844});await page.locator('#chat-input').fill('【合成验收】输出代码块');await page.locator('#chat-composer [type=submit]').click();await page.waitForFunction(()=>document.querySelector('.message-assistant pre code')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));const more=page.locator('.message-assistant .reply-more').last();assert.equal(await more.getAttribute('open'),null);await more.locator('summary').focus();await page.keyboard.press('Enter');assert.equal(await more.locator('[data-chat-action=speak]').isVisible(),true);await page.keyboard.press('Escape');assert.equal(await more.getAttribute('open'),null);assert.equal(await more.locator('summary').evaluate(n=>n===document.activeElement),true);
+    await check('reply actions share a single row and stay keyboard reachable on mobile',async()=>{
+      await page.setViewportSize({width:390,height:844});
+      await page.locator('#chat-input').fill('【合成验收】输出代码块');
+      await page.locator('#chat-composer [type=submit]').click();
+      await page.waitForFunction(()=>document.querySelector('.message-assistant pre code')&&!document.querySelector('#chat-composer')?.classList.contains('is-processing'));
+      const footer=page.locator('.message-assistant .message-footer').last();
+      const speak=footer.getByRole('button',{name:'朗读这条回复'});
+      const positions=await footer.locator('.reply-action').evaluateAll(buttons=>buttons.filter(b=>b.getClientRects().length).map(b=>b.getBoundingClientRect().top));
+      assert.ok(positions.length>5&&Math.max(...positions)-Math.min(...positions)<1);
+      await speak.focus();
+      await page.keyboard.press('Tab');
+      assert.equal(await footer.getByRole('button',{name:'这条回答有帮助'}).evaluate(n=>n===document.activeElement),true);
     });
     await page.screenshot({path:path.join(out,engine+'-mobile-chat.png')});
     await check('warm chat reload records route asset costs and retains usable composer',()=>measureLoad('warm-chat-same-context',()=>page.reload({waitUntil:'domcontentloaded'}),'#chat-input'));

@@ -1,5 +1,5 @@
 import {browserOverride} from './browser-runtime.mjs';
-import {openReplyMenu} from './reply_menu_checks.mjs';
+import {waitForReplyTools} from './reply_toolbar_checks.mjs';
 // Original SSE, persisted checkpoints and browser reloads; isolated synthetic data.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -31,7 +31,7 @@ async function readyReply(id){
 }
 async function selectAndReload(label,id){
   phase='select '+label;
-  await openReplyMenu(page.locator('.message-assistant').last());
+  await waitForReplyTools(page.locator('.message-assistant').last());
   const [response]=await Promise.all([
     page.waitForResponse(response=>new URL(response.url()).pathname===url+'/messages/'+id+'/select'&&response.request().method()==='POST'),
     page.locator('.message-assistant').last().getByRole('button',{name:label,exact:true}).click()

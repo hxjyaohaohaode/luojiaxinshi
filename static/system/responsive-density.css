@@ -4,12 +4,15 @@ body { font-size:14px; line-height:1.55; }
 .workspace > .content:not([data-page^=chat]):not([data-page=calendar]):not([data-page=memory]) { padding:var(--density-page-block) var(--density-page-inline); }
 .workspace > .topbar { min-height:44px; padding-block:0; gap:12px; }
 .shell > .sidebar { padding-block:12px 10px; }
-.sidebar .brand { min-height:42px; gap:8px; }
+.sidebar > .brand { min-height:36px;gap:8px;margin-bottom:0; }
 .sidebar .brand strong { font-size:15px; letter-spacing:0; }
 .sidebar .brand img,.sidebar .brand svg { width:30px; height:30px; }
-.sidebar .sidebar-create { margin-block:20px 12px; min-height:36px; padding-block:7px; font-size:13px; }
-.sidebar .nav-item { min-height:38px; padding-block:8px; margin-block:1px; font-size:13px; }
-.sidebar .nav-item > .icon { width:17px; height:17px; }
+.sidebar .sidebar-create { margin-block:9px 6px;min-height:36px;padding-block:7px;font-size:13px; }
+.sidebar :is(.nav-item,.sidebar-more > summary) {
+  display:flex;align-items:center;gap:9px;min-height:38px;
+  padding:7px 11px;margin-block:1px;font-size:13px;
+}
+.sidebar :is(.nav-item,.sidebar-more > summary) > .icon { width:17px;height:17px;flex:0 0 17px; }
 #content > .page-title { margin-bottom:14px; gap:12px; }
 .content > .toolbar { margin-bottom:10px; gap:10px; }
 .content > .divider { margin-block:12px; }

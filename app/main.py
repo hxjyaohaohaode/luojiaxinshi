@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import hashlib
 import json
 import logging
+import mimetypes
 import re
 from pathlib import Path
 import secrets
@@ -1231,6 +1232,7 @@ def create_app(settings=None):
     @app.get('/notification-worker.js')
     def notification_worker():
         return FileResponse(ROOT/'static'/'notification-worker.js',media_type='application/javascript',headers={'Service-Worker-Allowed':'/'})
+    mimetypes.add_type('image/webp','.webp')
     app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 
     @app.get('/')

@@ -22,7 +22,21 @@ function setWidth(value,save=false){
 }
 function setReading(value){if(mobile())value=false;if(document.documentElement.classList.contains('reading-content')===value)return;chromeResizeUntil=performance.now()+100;document.documentElement.classList.toggle('reading-content',value);}
 export function revealChrome(){clearTimeout(idleTimer);lastGesture=-Infinity;setReading(false);}
-export function syncChrome(page){document.documentElement.dataset.route=page;revealChrome();const shell=$('.shell');if(!shell)return;shell.classList.toggle('sidebar-collapsed',preferredCollapse());const toggle=$('.workspace-chrome-toggle'),host=['chat','calendar'].includes(page)?$('.workspace'):$('.topbar-left');if(toggle&&host&&toggle.parentElement!==host)host.prepend(toggle);setWidth(preferredWidth());updateToggle();}
+export function syncChrome(page){
+ document.documentElement.dataset.route=page;
+ revealChrome();
+ const shell=$('.shell');if(!shell)return;
+ shell.classList.toggle('sidebar-collapsed',preferredCollapse());
+ const toggle=$('.workspace-chrome-toggle'),host=page==='calendar'?$('.workspace'):$('.topbar-left');
+ if(toggle&&host&&toggle.parentElement!==host)host.prepend(toggle);
+ setWidth(preferredWidth());
+ updateToggle();
+}
+
+export function positionChatToggle(){
+ const toggle=$('.workspace-chrome-toggle'),heading=$('.chat-heading');
+ if(toggle&&heading&&toggle.parentElement!==heading)heading.prepend(toggle);
+}
 function updateToggle(){const shell=$('.shell'),collapsed=shell?.classList.contains('sidebar-collapsed');document.querySelectorAll('[data-shell-toggle]').forEach(b=>{b.setAttribute('aria-label',mobile()?'打开导航菜单':collapsed?'展开侧栏':'收起侧栏');b.setAttribute('aria-expanded',String(mobile()?!!shell?.classList.contains('menu-open'):!collapsed));});}
 export function installChrome({setMenu,saveDisplayPreferences}){
  if(installed)return;installed=true;

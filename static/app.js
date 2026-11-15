@@ -12,7 +12,7 @@ import {captureUiContext,beginFormFeedback} from './ui-request.js';
 import {brandMotion,loadingState,beginRouteFeedback,initializeMotion,motionToggle} from './motion.js';
 import {installDataTransfer} from './data-transfer.js';
 import {installAttachmentPreviews,attachmentPreview} from './attachments.js';
-import {installChrome,syncChrome} from './chrome.js';
+import {installChrome,syncChrome,positionChatToggle} from './chrome.js';
 import {createAuthUI} from './auth.js';
 import {createVerificationUI} from './verification.js';
 import {createAccountSecurity} from './account-security.js';
@@ -215,13 +215,13 @@ async function api(path, options={}) {
     }
   }
 }
-function showDialog(title,body,{replaceHistory=false}={}){
+function showDialog(title,body,{replaceHistory=false,dismissFooter=true}={}){
   persistCurrentForms();if(replaceHistory)dialogNavigation.clear();else dialogNavigation.remember(title);state.dialogRequest=(state.dialogRequest||0)+1;const request=state.dialogRequest,d=$('#dialog');
   if(!d.open)dialogReturnTarget=lastDialogTrigger?.isConnected?lastDialogTrigger:document.activeElement;
   d.setAttribute('aria-labelledby','dialog-title');
   const wasOpen=d.open,forward=dialogNavigation.hasParent();
   d.innerHTML=`<div class="dialog-head">${dialogNavigation.hasParent()?`<button type="button" class="icon-button" data-dialog-back aria-label="返回上一级" title="返回上一级">${icon('back')}</button>`:''}<h2 id="dialog-title" tabindex="-1">${esc(title)}</h2><button class="icon-button" data-action="close-dialog" aria-label="关闭">${icon('close')}</button></div><div class="dialog-body">${body}</div>`;
-  if(!d.querySelector('form')&&!d.querySelector('.dialog-body [data-dialog-cancel],.dialog-body [data-action="close-dialog"]')){
+  if(dismissFooter&&!d.querySelector('form')&&!d.querySelector('.dialog-body [data-dialog-cancel],.dialog-body [data-action="close-dialog"]')){
     let footer=d.querySelector('.form-footer');
     if(!footer){footer=document.createElement('div');footer.className='form-footer dialog-dismiss';d.querySelector('.dialog-body').append(footer);}
     footer.insertAdjacentHTML('afterbegin',`<button type="button" class="button" data-dialog-cancel>${dialogNavigation.hasParent()?'返回上一级':'关闭'}</button>`);
@@ -482,6 +482,8 @@ async function route(){
     content.dataset.page=page;
     if(page==='chat'||page.startsWith('chat/')){
       await chatUI.render(page.split('/')[1],id,branchTarget?.[2]);
+      if(id!==state.renderId)return;
+      positionChatToggle();
       page=location.hash.slice(1)||'chat';
     }else if(page==='collaboration'||page.startsWith('collaboration/')){
       await collaborationUI.render(id,page.split('/')[1]);

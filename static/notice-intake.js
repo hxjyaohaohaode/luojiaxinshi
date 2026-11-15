@@ -54,10 +54,8 @@ export function createNoticeIntakeUI({state,api,esc,icon,toast,showDialog,field,
     target.innerHTML=form.elements.link_preview.value?`<div class="intake-preview-ready"><span>${esc(name)}</span><button type="button" class="button small plain" data-remove-link>移除链接材料</button></div>`:'';
   }
   function attachSingle(form){
-    const head=form.querySelector('.compose-section-heading');
-    head.insertAdjacentHTML('afterend',linkFields());
+    form.querySelector('[data-intake-link]').innerHTML=linkFields();
     form.insertAdjacentHTML('beforeend',`<input type="hidden" name="request_id" value="${crypto.randomUUID()}">`);
-    head.insertAdjacentHTML('beforebegin','<div class="intake-switch"><a class="button small plain" href="#intake">多则通知一起保存</a></div>');
     // A pasted URL is an input, not a separate mandatory preview workflow.
     // The form resumes its ordinary save only after that URL has been read.
     form.addEventListener('submit',async event=>{

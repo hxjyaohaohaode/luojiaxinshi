@@ -65,7 +65,6 @@
 
 /* ===== 聊天 ===== */
 /* 侧栏切换按钮中线比聊天标题低 4px。 */
-@media (min-width: 851px) { .shell:has(.chat-workspace) .workspace-chrome-toggle { top: 6px; } }
 /* 输入文字比下方“+”图标左缘靠外 5px：让占位文字与图标对齐成一条线。 */
 #chat-input { padding-left: 13px; }
 

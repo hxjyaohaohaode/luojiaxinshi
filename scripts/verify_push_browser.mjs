@@ -19,7 +19,7 @@ let deviceId=null;let page=await context.newPage();page.setDefaultTimeout(10000)
 const check=async(title,fn)=>{try{await fn();report.checks.push({title,passed:true});}catch(error){report.checks.push({title,passed:false,error:error.message});await page.screenshot({path:path.join(out,'failure.png')});throw error;}};
 const waitReady=()=>page.waitForFunction(()=>document.querySelector('#content')?.dataset.page==='dashboard'&&!document.querySelector('#content').inert);
 const login=async()=>{await page.goto(origin+'/#login');await page.locator('[name=username]').fill('workflow.demo');await page.locator('[name=password]').fill('Mvp-Verification-Only-2026');await page.locator('#auth-form [type=submit]').click();await waitReady();};
-const open=async()=>{await page.locator('.reminder-bell').click();await page.locator('[data-push-settings]').waitFor();await page.waitForFunction(()=>!document.querySelector('[data-push-settings]').textContent.includes('正在读取'));};
+const open=async()=>{await page.locator('.reminder-bell').click();await page.locator('.reminder-preferences > summary').click();await page.locator('[data-push-settings]').waitFor();await page.waitForFunction(()=>!document.querySelector('[data-push-settings]').textContent.includes('正在读取'));};
 const binding=()=>page.evaluate(async()=>{const reg=await navigator.serviceWorker.getRegistration('/');if(!reg)return null;return new Promise((resolve,reject)=>{const ch=new MessageChannel(),timer=setTimeout(()=>reject(Error('Worker timeout')),5000);ch.port1.onmessage=e=>{clearTimeout(timer);ch.port1.close();resolve(e.data.binding);};reg.active.postMessage({type:'CAMPUS_PUSH_STATUS'},[ch.port2]);});});
 try{
  await login();

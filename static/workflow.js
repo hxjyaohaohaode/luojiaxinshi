@@ -133,14 +133,21 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
     const form=$('#workflow-form'),nodes=[...form.children],head=form.querySelector('.workflow-task-head'),save=form.querySelector('.workflow-save');
     const content=document.createElement('div');content.className='workflow-editing workflow-route';
     const guide=document.createElement('div');guide.innerHTML=handlingGuide(task,{esc,candidates});
+    const preparation=document.createElement('section');
+    preparation.className='workflow-preparation';
+    const progress=document.createElement('section');
+    progress.className='workflow-progress';
+    progress.setAttribute('aria-label','办理进度与反馈');
     const advanced=document.createElement('details');advanced.className='workflow-section workflow-advanced';
     advanced.innerHTML='<summary>办理前提、事项类型与安排</summary><div class="stack"></div>';
     const advancedBody=advanced.querySelector('div');
     const grid=form.querySelector('.form-grid'),stage=grid.querySelector('[name=stage]').closest('label'),kind=grid.querySelector('[name=action_kind]').closest('label');
-    const history=[],record=[],optional=[];
+    const history=[],record=[],optional=[],warnings=[];
     advancedBody.append(kind);
     for(const node of nodes){
       if([head,save,grid].includes(node))continue;
+      if(node.matches('[data-prepared-materials]')){preparation.append(node);continue;}
+      if(node.matches('[data-workflow-review],.alert')){warnings.push(node);continue;}
       if(node.matches('[data-optional-choice]')){optional.push(node);continue;}
       if(node.matches('.workflow-tools')||node.matches('details')&&node.textContent.includes('办理时间线')){history.push(node);continue;}
       if(node.matches('.handling-editor')||node.querySelector('[data-condition-list]')||node.querySelector('[name=dependency]')||node.textContent.includes('办理前提与外部条件')){advancedBody.append(node);continue;}
@@ -154,9 +161,10 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
       }
       record.push(node);
     }
-    const cancel=document.createElement('button');cancel.type='button';cancel.className='button';cancel.dataset.action='close-dialog';cancel.textContent='返回';
+    const cancel=document.createElement('button');cancel.type='button';cancel.className='button plain';cancel.dataset.action='close-dialog';cancel.textContent='返回';
     save.querySelector('span')?.remove();save.insertBefore(cancel,save.querySelector('[type=submit]'));
-    content.append(head,guide,...optional,stage,...record,advanced,...history);
+    progress.append(stage,...record);
+    content.append(head,...warnings,guide,...optional,preparation,progress,advanced,...history);
     form.replaceChildren(content,save);
     form.addEventListener('change',event=>{if(event.target.name==='stage'&&event.target.value!=='preparing')setDetailsExpanded(form.querySelector('.workflow-receipt'),true);});
     let invalidFocusPending=false;

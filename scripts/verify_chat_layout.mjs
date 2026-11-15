@@ -1,7 +1,7 @@
 import {browserOverride} from './browser-runtime.mjs';
 // Real controls and scroll gestures in an isolated account; no paid model.
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {chromium,firefox,webkit,request} from 'playwright';
 
 const name=process.env.OPENUI_BROWSER||'chromium',engine={chromium,firefox,webkit}[name];
@@ -63,6 +63,62 @@ try{
   await input.fill('');await page.locator('#composer-file-input').setInputFiles({name:'布局验收.txt',mimeType:'text/plain',buffer:Buffer.from('用于布局检查的合成附件。')});
   await page.locator('.composer-attachment.ready').waitFor();const attached=await geometry();assert.ok(attached.form.height>empty.form.height);assert.ok(attached.form.bottom<=700+1);
   await page.locator('.attachment-remove').click();await page.locator('.composer-attachment').waitFor({state:'detached'});assert.ok((await geometry()).form.height<=60);checks.push('附件独立占用内容行，移除后收回；菜单与发送控件不受压缩影响');
+  const current=await (await api.get('/api/conversations/'+chat.id)).json();
+  const upload=await api.post('/api/conversations/'+chat.id+'/sources',{headers,multipart:{
+    version:String(current.version),files:{name:'合成预览.png',mimeType:'image/png',buffer:await readFile('static/assets/campus-notice-icon-v4-64.png')},
+  }});
+  assert.equal(upload.status(),200,await upload.text());
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#content:not([inert]) .materials-toggle').click();
+  const thumbnail=page.locator('#material-list .material-thumbnail');
+  await thumbnail.waitFor();
+  await page.waitForFunction(()=>document.querySelector('#material-list .material-thumbnail')?.naturalWidth>0);
+  await thumbnail.click();
+  await page.locator('#dialog[open]').waitFor();
+  await page.keyboard.press('Escape');
+  checks.push('真实图片材料在列表中以缩略图显示，点击可打开原有预览');
+
+  await page.goto(origin+'/#chat/new');
+  await page.locator('#content:not([inert]) .chat-welcome-doodle').waitFor();
+  await page.waitForFunction(()=>document.querySelector('.chat-welcome-doodle')?.naturalWidth>0);
+  await page.locator('.recent-chats > summary').click();
+  for(const width of [320,390,814,1171]){
+    await page.setViewportSize({width,height:871});
+    await page.waitForFunction(width=>innerWidth===width,width);
+    const layout=await page.evaluate(()=>{
+      const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+      const center=selector=>{const box=rect(selector);return box.left+box.width/2;};
+      return {
+        thread:center('#chat-thread'),
+        welcome:['.chat-welcome-doodle','.chat-welcome h2','.scene-choices','.recent-chats'].map(center),
+        visibleIcons:[...document.querySelectorAll('.scene-choice > svg')].every(svg=>svg.getBoundingClientRect().width>0),
+        toggleRight:rect('.workspace-chrome-toggle').right,titleLeft:rect('#conversation-title').left,
+        toggleCenter:(rect('.workspace-chrome-toggle').top+rect('.workspace-chrome-toggle').bottom)/2,
+        headingCenter:(rect('.chat-heading').top+rect('.chat-heading').bottom)/2,
+      };
+    });
+    assert.ok(layout.welcome.every(center=>Math.abs(center-layout.thread)<3),JSON.stringify({width,...layout}));
+    assert.ok(layout.visibleIcons&&layout.toggleRight<=layout.titleLeft&&Math.abs(layout.toggleCenter-layout.headingCenter)<2,JSON.stringify({width,...layout}));
+    if(width===390||width===1171)await page.screenshot({path:out+'/welcome-'+width+'.png',caret:'hide'});
+  }
+  checks.push('最近对话展开后，插画、标题、快捷入口和列表仍共用中线，顶栏图标在四种宽度下可见且无碰撞');
+  await page.getByRole('button',{name:'历史对话',exact:true}).click();
+  const history=page.locator('#dialog .history-workspace');
+  await history.locator('.history-chat').first().waitFor();
+  const compact=await history.evaluate(n=>({entries:n.querySelectorAll('.history-chat').length,height:n.closest('dialog').getBoundingClientRect().height}));
+  if(compact.entries<=4)assert.ok(compact.height<360,JSON.stringify(compact));
+  await history.getByRole('button',{name:'筛选',exact:true}).click();
+  await history.getByLabel('关键词匹配范围').selectOption('materials');
+  await history.locator('#chat-history-search').fill('合成预览');
+  await history.locator('#chat-history-search').press('Enter');
+  const hit=history.locator(`.history-chat[href="#chat/${chat.id}"]`).filter({hasText:'合成预览.png'});
+  await hit.waitFor();
+  assert.equal(await hit.getAttribute('href'),'#chat/'+chat.id);
+  await history.getByLabel('搜索历史对话材料').selectOption('without-materials');
+  await history.getByText('没找到匹配的对话').waitFor();
+  await history.getByRole('button',{name:'移除筛选：无材料'}).click();
+  await hit.waitFor();
+  checks.push('历史对话可按材料名查找，并可叠加和移除有无材料筛选');
   assert.deepEqual(errors,[]);const report={passed:true,browser:name,checks,emptyComposerHeight:empty.form.height,expandedInputHeight:expanded.input.height,floatingHeaderHeight:hidden.header.height,footnoteHeight:before.note.height,errors};await writeFile(out+'/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }catch(error){await page.screenshot({path:out+'/failure.png',caret:'initial'}).catch(()=>{});await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors},null,2));throw error;}
 finally{await context.close();await browser.close();await api.dispose();}

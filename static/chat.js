@@ -159,12 +159,22 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     fitComposer();update();revealLatestChatReply($('#chat-thread'));endGesture=createChatEndGesture({reader:$('#chat-thread'),onNew:openNewChat,enabled:()=>!!current?.messages.length&&!current.processing&&!sending&&!branchDraft&&!attachments?.busy&&!isDictating($('#chat-input')),onError:error=>toast(error.message,true)});if(current?.processing)schedulePoll(current.id,state.renderId);
   }
   function thread(){
-    if(!current?.messages.length)return `<div class="chat-welcome chat-welcome-compact"><h2>你想了解什么？</h2><div class="scene-choices">${[
+    if(current?.messages.length)return '';
+    const choices=[
       ['doc','读懂通知','请帮我读懂这则通知，指出哪些条件还需要核实。'],
       ['tasks','办理路径','请根据我提供的材料，列出可以先开始的准备步骤。'],
-      ['calendar','安排时间','请区分材料中的正式期限和可以自行安排的时间。']
-    ].map(([i,title,prompt])=>`<button type="button" class="scene-choice" data-chat-action="prompt" data-prompt="${esc(prompt)}">${icon(i)}<strong>${title}</strong></button>`).join('')}</div>${historyItems.length?`<details class="recent-chats"><summary>接着上次聊</summary>${historyItems.slice(0,2).map(c=>`<a href="#chat/${c.id}">${icon('history')}<span>${esc(c.title)}</span><small>${date(c.updated_at)}</small></a>`).join('')}${call('全部对话','history','','small plain')}</details>`:''}</div>`;
-    return '';
+      ['calendar','安排时间','请区分材料中的正式期限和可以自行安排的时间。'],
+    ];
+    const recent=historyItems.length?`<details class="recent-chats"><summary>接着上次聊</summary>
+      ${historyItems.slice(0,2).map(c=>`<a href="#chat/${encodeURIComponent(c.id)}">${icon('history')}<span>${esc(c.title)}</span><small>${date(c.updated_at)}</small></a>`).join('')}
+      <button type="button" class="button small plain" data-chat-action="history">全部对话</button>
+    </details>`:'';
+    return `<div class="chat-welcome chat-welcome-compact">
+      <img class="chat-welcome-doodle" src="/static/assets/luojia-messenger-sketch.webp" alt="" width="112" height="112" decoding="async">
+      <h2>你想了解什么？</h2>
+      <div class="scene-choices">${choices.map(([i,title,prompt])=>`<button type="button" class="scene-choice" data-chat-action="prompt" data-prompt="${esc(prompt)}">${icon(i)}<strong>${title}</strong></button>`).join('')}</div>
+      ${recent}
+    </div>`;
   }
   function update(){
     if(!$('#chat-workspace'))return;
@@ -192,6 +202,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if(kindSelect){const kinds=[...new Set(all.map(s=>s.kind))];if(selectedKind&&!kinds.includes(selectedKind))kinds.push(selectedKind);kindSelect.innerHTML='<option value="">全部类型</option>'+kinds.map(k=>`<option value="${esc(k)}">${esc(k.toUpperCase())}</option>`).join('');kindSelect.value=selectedKind;}
     materialTreeState.update(target,{scope:current?.id,filtered:!!materialSearch?.hasFilters()},()=>{
     target.innerHTML=matched.length?materialTree(matched,{esc,icon,sourceStatus,cid:current.id,processing:current.processing,matches:materialQuery?materialMatches:null}):all.length?`<div class="material-empty">${brandMotion('search')}<strong>没有匹配的材料</strong><p>换个关键词，或清空筛选再找。</p><button class="button small" data-chat-action="clear-material-search">清空搜索</button></div>`:`<div class="material-empty">${companion('organize','material-companion')}<strong>从一份材料开始</strong><p>文件、文件夹、截图或一段原文<br>都可以放在这里。</p><small>文档 · 表格 · 幻灯片 · 图片 · 音视频</small></div>`;
+    for(const picture of $$('.material-thumbnail',target)){
+      const fallback=()=>{picture.hidden=true;picture.nextElementSibling.hidden=false;};
+      picture.addEventListener('error',fallback,{once:true});
+      if(picture.complete&&!picture.naturalWidth)fallback();
+    }
     for(const folder of $$('details[data-folder-path]',target))if(materialSearch?.hasFilters())folder.open=true;
     });
   }
@@ -425,13 +440,23 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     showDialog('选出要办理的通知原文',`<form data-workspace-form="promote" id="chat-promote-form" class="stack"><p class="small muted">只选这则通知的原文和附件就行，简历、课表这类参考资料不用转。小信使的回复不会被当成通知原文。</p>${field('通知标题','title',current.title==='新的校园对话'?'':current.title,'text','required maxlength="160"')}${field('发布来源','source_label','','text','maxlength="100" list="known-sources" placeholder="学院官网、班级群或公众号"')}<datalist id="known-sources">${catalog.map(s=>`<option value="${esc(s.data.name)}">`).join('')}</datalist>${field('原文链接（选填）','source_url','','url','maxlength="2000" placeholder="https://…"')}<fieldset class="material-select"><legend>要转入的材料</legend>${current.sources.filter(s=>!videoKinds.has(s.kind)).map(s=>`<label class="check"><input type="checkbox" name="source_ids" value="${s.id}"><span>${esc(s.name)}<small class="muted"> · ${sourceStatus(s)}</small></span></label>`).join('')}</fieldset><div class="form-footer"><button class="button" type="button" data-action="close-dialog">再想一下</button><button class="button primary" type="submit">保存通知并核对 ${icon('arrow')}</button></div></form>`);
   }
   function historyDialog(){
-    historyPage=1;historyMatches=historyItems;showDialog('接着上次的对话',`<div class="history-workspace">${searchControls({id:'chat-history',esc,icon,scope:'history',kinds:[['with-materials','含材料的对话']]})}<div id="chat-history-results" tabindex="0"></div><div id="history-pages" class="calendar-pagination"></div></div>`);
+    historyPage=1;historyMatches=historyItems;
+    showDialog('接着上次的对话',`<div class="history-workspace">${searchControls({id:'chat-history',esc,icon,scope:'history'})}
+      <div id="chat-history-results" aria-label="对话记录" tabindex="0"></div>
+      <div id="history-pages" class="history-pagination"></div>
+    </div>`,{dismissFooter:false});
     historySearch?.dispose();historySearch=new WorkspaceSearch($('[data-search-host="chat-history"]'),{api,scope:'history',onResult:result=>{historyMatches=result.items;historyPage=1;historyResults();},onError:message=>toast(message,true)});historyResults();
   }
   function historyResults(){
     const results=$('#chat-history-results');if(!results)return;const pages=Math.max(1,Math.ceil(historyMatches.length/12));historyPage=Math.max(1,Math.min(historyPage,pages));
-    results.innerHTML=historyMatches.slice((historyPage-1)*12,historyPage*12).map(c=>`<a class="history-chat" href="#chat/${c.id}" data-action="close-dialog">${icon('history')}<span><strong>${esc(c.title||c.name)}</strong><small>${c.source_count} 份材料 · ${date(c.updated_at)}${c.snippet?' · '+esc(c.snippet.slice(0,70)):''}</small></span>${icon('arrow')}</a>`).join('')||`<div class="history-empty">${brandMotion(historyItems.length?'search':'listening')}<strong>${historyItems.length?'没找到匹配的对话':'每一次交流，都可以在这里找回'}</strong><p>${historyItems.length?'换个关键词，或清空筛选试试。':'从一份材料、一句问题开始就好。'}</p></div>`;
-    $('#history-pages').innerHTML=`<button type="button" class="button small" data-chat-action="history-prev" ${historyPage===1?'disabled':''}>上一页</button><span>${historyMatches.length} 段对话 · ${historyPage} / ${pages}</span><button type="button" class="button small" data-chat-action="history-next" ${historyPage===pages?'disabled':''}>下一页</button>`;results.scrollTop=0;
+    const fieldNames={messages:'消息',materials:'材料'};
+    results.innerHTML=historyMatches.slice((historyPage-1)*12,historyPage*12).map(c=>`<a class="history-chat" href="#chat/${encodeURIComponent(c.id)}" data-action="close-dialog">
+      ${icon('history')}<span class="history-chat-main"><strong>${esc(c.title||c.name)}</strong>
+      <small>${c.source_count} 份材料 · ${date(c.updated_at)}</small>
+      ${c.snippet&&fieldNames[c.matched_field]?`<span class="history-snippet"><b>${fieldNames[c.matched_field]}</b> ${esc(c.snippet)}</span>`:''}</span>
+      ${icon('arrow')}</a>`).join('')||`<div class="history-empty"><strong>${historyItems.length?'没找到匹配的对话':'暂无历史对话'}</strong>${historyItems.length?'<p>试试其他关键词或筛选条件。</p>':''}</div>`;
+    $('#history-pages').innerHTML=pages>1?`<button type="button" class="button small plain" data-chat-action="history-prev" ${historyPage===1?'disabled':''}>上一页</button><span>${historyMatches.length} 段对话 · ${historyPage} / ${pages}</span><button type="button" class="button small plain" data-chat-action="history-next" ${historyPage===pages?'disabled':''}>下一页</button>`:'';
+    results.scrollTop=0;
   }
   function shareDialog(mid){const message=current.messages.find(m=>m.id===mid),body=presenter.copy(message);showDialog('分享这条回复',`<div class="stack"><p class="small muted">分享前先看看下面的内容。只会分享这条回复和当前的互动选项；链接 7 天内有效，拿到链接的人都能看。</p><textarea id="reply-share-body" rows="7" maxlength="80000" aria-label="分享内容">${esc(body)}</textarea><div id="reply-share-result" role="status"></div><div class="form-footer">${call('复制内容','share-text',`data-id="${mid}"`,'small')}${call('生成分享链接','share-link',`data-id="${mid}"`,'primary')}</div></div>`);}
   document.addEventListener('click',async event=>{

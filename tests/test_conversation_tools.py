@@ -1,6 +1,7 @@
 """Acceptance cases for material folders and real reply revision semantics."""
 import io
 import json
+import time
 import uuid
 import zipfile
 from PIL import Image
@@ -88,6 +89,30 @@ def test_history_reference_queries_and_owner_boundaries(env):
     assert not search(other,scope='history',query='土壤分析')['items']
     assert other.post('/api/workspace-search',data={'scope':'materials','conversation_id':chat['id']}).status_code==404
     assert other.get(f"/api/conversations/{chat['id']}/sources/{chat['sources'][0]['id']}/preview").status_code==404
+
+def test_history_filter_scope_materials_dates_and_sort(env):
+    c=account(env)
+    recent=upload(c,conversation(c),'说明.txt','材料正文代号 Nimbus'.encode(),'地学资料/说明.txt')
+    recent,_=send(c,recent,'消息代号 Spring')
+    old=conversation(c)
+    with env[0].state.db.connect(write=True) as conn:
+        conn.execute('UPDATE conversations SET updated_at=? WHERE id=?',(int(time.time())-100*86400,old['id']))
+
+    def ids(**fields):
+        return [row['id'] for row in search(c,scope='history',**fields)['items']]
+
+    assert ids(kind='with-materials')==[recent['id']]
+    assert ids(kind='without-materials')==[old['id']]
+    assert ids(period='quarter')==[recent['id']]
+    assert ids(sort='recent')==[recent['id'],old['id']]
+    assert ids(sort='oldest')==[old['id'],recent['id']]
+    assert ids(field='title',query='Spring')==[recent['id']]
+    assert ids(field='messages',query='Spring')==[recent['id']]
+    assert ids(field='materials',query='Spring')==[]
+    assert ids(field='materials',query='地学资料')==[recent['id']]
+    result=search(c,scope='history',field='materials',query='nimbus')['items'][0]
+    assert result['matched_field']=='materials' and 'Nimbus' in result['snippet']
+
 
 def test_visual_keyword_search_uses_real_adapter_and_is_ephemeral(env,monkeypatch):
     c=account(env);chat=material(c,conversation(c),'地学实验申请。');env[1].ai_api_key='fixture';seen=[]

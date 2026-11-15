@@ -50,5 +50,15 @@ export function handlingGuide(task,{esc,candidates=[]}){
   if(step.kind==='receipt')actions.push(focus('receipt','查看提交与实际反馈'));
   if(step.kind==='blocked')actions.push(focus('receipt','更新阻碍与办理进度'));
   if(step.kind==='followup')actions.push(focus('followup','查看本次跟进安排'));
-  return `<section class="handling-guide" aria-label="当前办理路径"><div class="route-eyebrow">现在可以做</div><h3>${esc(step.label)}</h3><p>${esc(step.detail)}</p>${step.kind!=='blocked'&&progress.stage==='blocked'&&progress.outcome?`<p class="small route-unknown">已记录的阻碍：${esc(progress.outcome)}</p>`:''}${actions.length?'<div class="row wrap">'+actions.join('')+'</div>':''}${d.submission?`<p class="small"><strong>办理渠道</strong> ${esc(d.submission)}</p>`:''}${d.location?`<p class="small"><strong>地点</strong> ${esc(d.location)}</p>`:''}${d.contact?`<p class="small"><strong>联系</strong> ${esc(d.contact)}</p>`:''}${links.length?`<div class="row wrap">${links.map(url=>`<a class="button small ${step.kind==='start'?'primary':''}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${step.kind==='start'?'前往办理入口':'查看原通知中的渠道'} ↗</a>`).join('')}</div>`:''}${progress.execution_mode==='submission'&&!d.submission?'<p class="small route-unknown">原文未明确提交渠道，可先准备材料，再向发布方确认入口。</p>':''}</section>`;
+  const facts=[['办理渠道',d.submission],['地点',d.location],['联系',d.contact]].filter(([,value])=>value);
+  const channelActions=links.map(url=>`<a class="button small ${step.kind==='start'?'primary':''}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${step.kind==='start'?'前往办理入口':'查看原通知中的渠道'} ↗</a>`);
+  return `<section class="handling-guide" aria-label="当前办理路径">
+    <div class="route-eyebrow">现在可以做</div>
+    <h3>${esc(step.label)}</h3>
+    ${step.detail!==d.submission?`<p>${esc(step.detail)}</p>`:''}
+    ${step.kind!=='blocked'&&progress.stage==='blocked'&&progress.outcome?`<p class="small route-unknown">已记录的阻碍：${esc(progress.outcome)}</p>`:''}
+    ${actions.length||channelActions.length?`<div class="row wrap handling-actions">${actions.concat(channelActions).join('')}</div>`:''}
+    ${facts.length?`<dl class="handling-facts">${facts.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`:''}
+    ${progress.execution_mode==='submission'&&!d.submission?'<p class="small route-unknown">原文未明确提交渠道，可先准备材料，再向发布方确认入口。</p>':''}
+  </section>`;
 }

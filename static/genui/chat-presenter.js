@@ -148,12 +148,48 @@ export class ConversationView{
       if(!r.copy){r.copy=replyAction('copy','复制回复');r.copy.dataset.chatAction='copy';r.copy.dataset.id=message.id;r.footer.append(r.copy);}
       r.copy.hidden=!policy.copy;r.copy.disabled=!policy.copy||r.copy.getAttribute('aria-busy')==='true';
       const toolsKey=JSON.stringify([message.id,policy,message.reaction,message.versions?.map(v=>v.id),message.version_index]);
-      if(r.toolsKey!==toolsKey){r.toolsKey=toolsKey;
-        if(!r.tools){r.tools=el('div','reply-tools');r.more=el('details','reply-more');const summary=el('summary','','更多');summary.setAttribute('aria-label','这条回复的更多操作');r.more.append(summary,r.tools);r.more.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();r.more.open=false;summary.focus();}});r.tools.addEventListener('click',event=>{if(event.target.closest('[data-chat-action]')?.dataset.chatAction!=='version')r.more.open=false;});r.footer.append(r.more);}
+      if(r.toolsKey!==toolsKey){
+        r.toolsKey=toolsKey;
+        if(!r.tools){
+          r.tools=el('div','reply-tools');
+          r.tools.setAttribute('role','group');
+          r.tools.setAttribute('aria-label','回复操作');
+          r.footer.append(r.tools);
+        }
         const controls=[];
-        for(const [action,label,pressed]of [['speak','朗读这条回复',false],['like','这条回答有帮助',message.reaction===1],['dislike','这条回答没有帮助',message.reaction===-1],['branch','从这条回复开启分支',false],['regenerate','重新生成回复',false],['share','分享回复',false]]){if(!policy[action])continue;const b=[...r.tools.children].find(n=>n.dataset.chatAction===action)||replyAction(action,label);b.dataset.chatAction=action;b.dataset.id=message.id;b.disabled=b.getAttribute('aria-busy')==='true';if(!b.querySelector('.reply-action-label'))b.append(el('span','reply-action-label',label));if(['like','dislike'].includes(action))b.setAttribute('aria-pressed',String(pressed));controls.push(b);}
-        if(message.versions?.length>1){const index=message.version_index??message.versions.findIndex(v=>v.id===message.id),pager=el('span','reply-versions');for(const [step,label]of [[-1,'‹'],[1,'›']]){const b=replyAction(step<0?'previous':'next',step<0?'上一版回复':'下一版回复');b.dataset.chatAction='version';b.dataset.id=message.id;b.dataset.index=index+step;b.setAttribute('aria-label',step<0?'上一版回复':'下一版回复');b.disabled=!policy.version||index+step<0||index+step>=message.versions.length;pager.append(b);if(step===-1)pager.append(el('span','',`${index+1} / ${message.versions.length}`));}controls.push(pager);}
-        replaceInOrder(r.tools,controls);r.more.hidden=!controls.length;
+        const actions=[
+          ['speak','朗读这条回复'],['like','这条回答有帮助'],['dislike','这条回答没有帮助'],
+          ['branch','从这条回复开启分支'],['regenerate','重新生成回复'],['share','分享回复'],
+        ];
+        for(const [action,label] of actions){
+          if(!policy[action])continue;
+          const control=[...r.tools.children].find(node=>node.dataset.chatAction===action)||replyAction(action,label);
+          control.dataset.chatAction=action;
+          control.dataset.id=message.id;
+          control.disabled=control.getAttribute('aria-busy')==='true';
+          if(action==='like'||action==='dislike')control.setAttribute('aria-pressed',String(message.reaction===(action==='like'?1:-1)));
+          controls.push(control);
+        }
+        if(message.versions?.length>1){
+          const index=message.version_index??message.versions.findIndex(version=>version.id===message.id);
+          if(!r.versions){
+            r.versions=el('span','reply-versions');
+            r.versionCount=el('span','reply-version-count');
+            r.versionCount.setAttribute('aria-live','polite');
+            r.versions.append(replyAction('previous','上一版回复'),r.versionCount,replyAction('next','下一版回复'));
+          }
+          r.versionCount.textContent=`${index+1} / ${message.versions.length}`;
+          for(const [offset,control] of [[-1,r.versions.firstChild],[1,r.versions.lastChild]]){
+            const target=index+offset;
+            control.dataset.chatAction='version';
+            control.dataset.id=message.id;
+            control.dataset.index=target;
+            control.disabled=!policy.version||target<0||target>=message.versions.length||control.getAttribute('aria-busy')==='true';
+          }
+          controls.push(r.versions);
+        }
+        replaceInOrder(r.tools,controls);
+        r.tools.hidden=!controls.length;
       }
       if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer||r.save.disabled)return;r.save.disabled=true;r.save.setAttribute('aria-busy','true');r.saveFeedback.textContent='';const snapshots=r.renderer.snapshots(),sent=JSON.stringify(snapshots);try{await this.options.save(message.id,snapshots);if(JSON.stringify(r.renderer.snapshots())===sent){r.renderer.markSaved();actionSucceeded(r.save,'互动进度已保存');r.saveFeedback.textContent='互动进度已保存';}else r.saveFeedback.textContent='上次选择已保存，当前修改尚未保存';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.removeAttribute('aria-busy');r.save.disabled=!replyPolicy(this.messages,message,this.options).save;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
       r.save.hidden=!(policy.save&&feature.enabled&&r.parts?.some(p=>p.kind==='ui'&&(p.spec.sandbox||Object.values(p.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart')))));r.save.disabled=!policy.save||r.save.getAttribute('aria-busy')==='true';

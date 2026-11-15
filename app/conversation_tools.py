@@ -75,6 +75,25 @@ def keywords(text):
         if re.fullmatch(r'[\u4e00-\u9fff]+',token) and len(token)>3:result.extend(token[i:i+2] for i in range(len(token)-1))
     return list(dict.fromkeys(result))[:80]
 
+def history_match(fields, query):
+    phrase = ' '.join(query.lower().split())
+    terms = keywords(phrase) or phrase.split()
+    scores = []
+    for name, parts in fields.items():
+        original = ' '.join(' '.join(parts).split())
+        text = original.lower()
+        positions = [pos for term in terms if (pos := text.find(term)) >= 0]
+        exact = text.find(phrase)
+        if exact < 0 and not positions:
+            continue
+        weight = {'title': 3, 'messages': 1, 'materials': 2}[name]
+        score = weight * (len(positions) + (len(terms) + 1 if exact >= 0 else 0))
+        pos = exact if exact >= 0 else min(positions)
+        start, end = max(0, pos - 18), min(len(original), pos + 70)
+        snippet = ('…' if start else '') + original[start:end] + ('…' if end < len(original) else '')
+        scores.append((score, name, snippet))
+    return scores
+
 class Reaction(Strict):value:int=Field(ge=-1,le=1)
 class Share(Strict):body:str=Field(default='',max_length=80000)
 
@@ -276,8 +295,11 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
         rate_limit(db,'retrieval:'+current['id'],60,60)
         form=await request.form(max_files=1,max_fields=12,max_part_size=10000)
         try:
-            query=str(form.get('query',''))[:200];cid=str(form.get('conversation_id',''));scope=str(form.get('scope','materials'));kind=str(form.get('kind',''));status=str(form.get('status',''));period=str(form.get('period','all'));method='文字检索'
+            query=str(form.get('query',''))[:200].strip();cid=str(form.get('conversation_id',''));scope=str(form.get('scope','materials'));kind=str(form.get('kind',''));status=str(form.get('status',''));period=str(form.get('period','all'));method='文字检索'
+            field=str(form.get('field',''));sort=str(form.get('sort',''))
             if scope not in {'materials','history','sources'}:raise HTTPException(422,'请选择材料、历史对话或来源检索')
+            if scope=='history' and (field not in {'','title','messages','materials'} or sort not in {'','recent','oldest'}):
+                raise HTTPException(422,'请选择有效的检索范围和排序')
             if scope=='materials':
                 with db.connect() as conn:own(conn,cid,current['id'])
             file=form.get('file')
@@ -305,7 +327,9 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                     text=' '.join(s['text'] for s in source['full_sections'])
                     if not text.strip():raise HTTPException(422,'查询文件没有可读取文字，请换成文字文档或图片')
                     query=(query+' '+' '.join(keywords(text)[:20]))[:300];method='文件文字相似检索'
-            terms=keywords(query);cutoff=int(time.time())-({'week':7,'month':30}.get(period,99999)*86400)
+            terms=keywords(query)
+            days={'week':7,'month':30,'quarter':90}.get(period)
+            cutoff=int(time.time())-days*86400 if days else 0
             def find_matches():
                 with db.connect() as conn:
                     if scope=='materials':
@@ -316,14 +340,47 @@ def install_tools(app,db,settings,user,own,changed,detail,sources_for,heavy_lock
                         for c in conn.execute('SELECT * FROM source_catalog WHERE user_id=? ORDER BY updated_at DESC',(current['id'],)):
                             d=json.loads(c['data']);rows.append({'id':c['id'],'name':d['name'],'kind':d['platform'],'created_at':c['updated_at'],'text':' '.join(str(v) for v in d.values())})
                     else:
-                        rows=[]
-                        for c in conn.execute('SELECT * FROM conversations WHERE user_id=? ORDER BY updated_at DESC',(current['id'],)):
-                            messages=[m['content'] for m in conn.execute('SELECT content FROM conversation_messages WHERE conversation_id=?',(c['id'],))]
-                            source_rows=[dict(s) for s in conn.execute('SELECT s.id,s.name,s.sections,l.full_sections FROM conversation_sources s LEFT JOIN material_library l ON l.source_id=s.id WHERE s.conversation_id=?',(c['id'],))]
-                            if kind=='with-materials' and not source_rows:continue
-                            if status and not conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND role=?',(c['id'],status)).fetchone():continue
-                            text=c['title']+' '+' '.join(messages)+' '+' '.join(s['name']+' '+' '.join(p['text'] for p in json.loads(s['full_sections'] or s['sections'])) for s in source_rows)
-                            rows.append({'id':c['id'],'name':c['title'],'title':c['title'],'created_at':c['updated_at'],'updated_at':c['updated_at'],'source_count':len(source_rows),'text':text})
+                        result=[]
+                        conversations=conn.execute("""
+                            SELECT c.id,c.title,c.updated_at,
+                                   (SELECT COUNT(*) FROM conversation_sources s WHERE s.conversation_id=c.id) AS source_count
+                            FROM conversations c WHERE c.user_id=? AND c.updated_at>=?
+                            ORDER BY c.updated_at DESC,c.rowid DESC
+                        """,(current['id'],cutoff))
+                        for conversation in conversations:
+                            row=dict(conversation)
+                            cid_match=row['id']
+                            if kind=='with-materials' and not row['source_count']:continue
+                            if kind=='without-materials' and row['source_count']:continue
+                            if status and not conn.execute('SELECT 1 FROM conversation_messages WHERE conversation_id=? AND role=?',(cid_match,status)).fetchone():continue
+                            row.update(name=row['title'],created_at=row['updated_at'],score=0,snippet='')
+                            if query:
+                                fields={}
+                                if field in {'','title'}:
+                                    fields['title']=[row['title']]
+                                if field in {'','messages'}:
+                                    fields['messages']=[m['content'] for m in conn.execute(
+                                        'SELECT content FROM conversation_messages WHERE conversation_id=? ORDER BY created_at,rowid',(cid_match,)
+                                    )]
+                                if field in {'','materials'}:
+                                    materials=conn.execute("""
+                                        SELECT s.name,s.sections,l.path,l.full_sections FROM conversation_sources s
+                                        LEFT JOIN material_library l ON l.source_id=s.id WHERE s.conversation_id=?
+                                    """,(cid_match,))
+                                    fields['materials']=[
+                                        ' '.join((s['name'],s['path'] or '',*(p['text'] for p in json.loads(s['full_sections'] or s['sections']))))
+                                        for s in materials
+                                    ]
+                                matches=history_match(fields,query)
+                                if not matches:continue
+                                _,row['matched_field'],row['snippet']=max(matches,key=lambda match:match[0])
+                                row['score']=sum(match[0] for match in matches)
+                            result.append(row)
+                        if sort=='oldest':
+                            result.sort(key=lambda row:row['updated_at'])
+                        elif sort!='recent':
+                            result.sort(key=lambda row:-row['score'])
+                        return {'items':result,'query':query,'method':method,'total':len(result)}
                     result=[]
                     for r in rows:
                         if r['created_at']<cutoff or (scope in {'materials','sources'} and ((kind and r['kind']!=kind) or (status and r.get('status')!=status))):continue

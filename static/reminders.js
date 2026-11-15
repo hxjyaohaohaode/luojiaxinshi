@@ -80,9 +80,11 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
     const disabled=saving?'disabled':'',bulkDisabled=saving||!selected.size?'disabled':'';
     const counts={unread:unreadItems().length,read:activeItems().filter(item=>item.is_read).length,all:activeItems().length,archived:(data?.items||[]).filter(item=>item.is_archived).length};
     const groups=reminderGroups(items),selection=items.filter(item=>selected.has(item.id));
-    return `<div class="reminder-toolbar"><strong role="status">${saving?'正在保存…':`${counts.unread} 条未读`}</strong><div class="row wrap"><button type="button" class="button small" data-reminder-all ${saving||!counts.unread?'disabled':''}>全部已读</button><button type="button" class="button small ${managing?'primary':''}" data-reminder-manage aria-pressed="${managing}" ${disabled}>${managing?'完成管理':'管理'}</button></div></div>
+    return `<div class="reminder-controls">
+      <div class="tabs reminder-filters" role="tablist" aria-label="提醒状态">${Object.entries({unread:'未读',all:'全部',read:'已读',archived:'已归档'}).map(([key,label])=>`<button type="button" class="tab ${filter===key?'active':''}" role="tab" aria-selected="${filter===key}" tabindex="${filter===key?0:-1}" data-reminder-filter="${key}" ${disabled}>${label} <span>${counts[key]}</span></button>`).join('')}</div>
+      <div class="reminder-toolbar"><span class="sr-only" role="status">${saving?'正在保存…':`${counts.unread} 条未读`}</span><div class="row"><button type="button" class="button small plain" data-reminder-all ${saving||!counts.unread?'disabled':''}>全部已读</button><button type="button" class="button small ${managing?'primary':''}" data-reminder-manage aria-pressed="${managing}" ${disabled}>${managing?'完成管理':'管理'}</button></div></div>
+    </div>
     ${lastError?`<div class="alert error" role="alert">${esc(lastError)} <button type="button" class="button small" data-reminder-refresh>重试</button></div>`:''}
-    <div class="tabs reminder-filters" role="tablist" aria-label="提醒状态">${Object.entries({unread:'未读',all:'全部',read:'已读',archived:'已归档'}).map(([key,label])=>`<button type="button" class="tab ${filter===key?'active':''}" role="tab" aria-selected="${filter===key}" tabindex="${filter===key?0:-1}" data-reminder-filter="${key}" ${disabled}>${label} ${counts[key]}</button>`).join('')}</div>
     ${managing?`<div class="reminder-bulk"><label class="check"><input type="checkbox" data-reminder-select-all aria-label="全选当前列表" ${items.length&&selected.size===items.length?'checked':''} ${saving||!items.length?'disabled':''}><span>全选 · 已选 ${selected.size}</span></label><div class="row wrap">${filter!=='archived'&&filter!=='read'?`<button type="button" class="button small" data-reminder-bulk="read" ${saving||!selection.some(item=>!item.is_read)?'disabled':''}>标为已读</button>`:''}${filter!=='unread'?`<button type="button" class="button small" data-reminder-bulk="unread" ${saving||!selection.some(item=>item.is_read||item.is_archived)?'disabled':''}>${filter==='archived'?'恢复为未读':'标为未读'}</button>`:''}${filter!=='archived'?`<button type="button" class="button small" data-reminder-bulk="archived" ${bulkDisabled}>归档</button>`:''}</div></div>`:''}
     <div class="reminder-groups">${groups.map(group=>`<section class="reminder-group"><h3>${group.label} · ${group.items.length}</h3><div class="reminder-list">${group.items.map(itemMarkup).join('')}</div></section>`).join('')||`<div class="reminder-empty">${icon('check')}<p>${lastError&&!data?'暂未取得提醒':{unread:'暂无未读提醒',all:'暂无提醒',read:'暂无已读提醒',archived:'暂无已归档提醒'}[filter]}</p></div>`}</div>`;
   }
@@ -103,7 +105,16 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   async function open() {
     const view=captureUiContext(state);await refresh();if(!view.sameDialog())return;
     filter='unread';managing=false;selected.clear();
-    showDialog('提醒',`<div class="reminder-center"><div data-reminder-content>${centerMarkup()}</div><details class="reminder-rules"><summary>提醒规则</summary><ul class="small muted"><li>截止事项查看未来 7 天；24 小时内优先，3 天内列为留意。未确认的期限另行标注。</li><li>日程显示今天、明天和仍在进行的跨日安排；已知结束时间后移出列表，未写结束时间的保留至开始后 1 小时。</li><li>已读和归档只管理提醒。新的发生日、期限或通知变化会产生新提醒，不会完成或删除待办。</li><li>页面内通知迟到超过 90 秒不补发；关闭页面后的通知由本机提醒设置决定。</li></ul></details>${push?`<div data-push-settings>${push.markup()}</div><details class="details"><summary>页面内提醒</summary>${browserControl()}</details>`:browserControl()}${email?`<div data-mail-settings>${email.markup()}</div>`:''}<button type="button" class="button small" data-action="settings-notification">智能通知偏好</button><button type="button" class="button small" data-pwa-open>添加到桌面与设备提醒说明</button></div>`);push?.refresh();email?.refresh();
+    showDialog('提醒',`<div class="reminder-center">
+      <div data-reminder-content>${centerMarkup()}</div>
+      <details class="reminder-preferences"><summary>提醒设置</summary><div class="reminder-delivery">
+        ${push?`<div data-push-settings>${push.markup()}</div><details class="reminder-browser"><summary>页面内提醒</summary>${browserControl()}</details>`:browserControl()}
+        ${email?`<div data-mail-settings>${email.markup()}</div>`:''}
+        <div class="row wrap"><button type="button" class="button small plain" data-action="settings-notification">智能通知偏好</button><button type="button" class="button small plain" data-pwa-open>添加到桌面与设备提醒说明</button></div>
+      </div></details>
+      <details class="reminder-rules"><summary>提醒规则</summary><ul class="small muted"><li>截止事项查看未来 7 天；24 小时内优先，3 天内列为留意。未确认的期限另行标注。</li><li>日程显示今天、明天和仍在进行的跨日安排；已知结束时间后移出列表，未写结束时间的保留至开始后 1 小时。</li><li>已读和归档只管理提醒。新的发生日、期限或通知变化会产生新提醒，不会完成或删除待办。</li><li>页面内通知迟到超过 90 秒不补发；关闭页面后的通知由本机提醒设置决定。</li></ul></details>
+    </div>`,{dismissFooter:false});
+    push?.refresh();email?.refresh();
   }
   async function update(ids,status) {
     if(saving||!ids.length||owner!==state.session?.user.id)return false;
