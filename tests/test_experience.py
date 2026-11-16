@@ -8,12 +8,13 @@ from app.models import Profile
 from test_workflow import env,account,notice,manual,confirm
 
 
-def workbook(target='worksheets/sheet1.xml',cell='<c r="A1" t="inlineStr"><is><t>报名材料</t></is></c>'):
+def workbook(target='worksheets/sheet1.xml',cell='<c r="A1" t="inlineStr"><is><t>报名材料</t></is></c>',rows=None):
     data=io.BytesIO()
     with zipfile.ZipFile(data,'w') as z:
         z.writestr('xl/workbook.xml','<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="准备" r:id="rId1"/></sheets></workbook>')
         z.writestr('xl/_rels/workbook.xml.rels',f'<Relationships><Relationship Id="rId1" Target="{target}"/></Relationships>')
-        z.writestr('xl/worksheets/sheet1.xml',f'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1">{cell}</row></sheetData></worksheet>')
+        data_rows=rows if rows is not None else f'<row r="1">{cell}</row>'
+        z.writestr('xl/worksheets/sheet1.xml',f'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>{data_rows}</sheetData></worksheet>')
     return data.getvalue()
 
 
@@ -27,6 +28,15 @@ def test_spreadsheet_bounds_and_no_formula_execution():
     with pytest.raises(ValueError):spreadsheet_sections(('a,'*51).encode(),'csv')
     assert spreadsheet_sections('名称,数量\n申请表,2'.encode(),'csv')['sections'][1]['text']=='申请表\t2'
     assert file_source('sheet.xlsx',workbook())['status']=='review'
+
+
+def test_spreadsheet_ignores_styled_empty_cells_but_preserves_real_rows():
+    blank=''.join(f'<row r="{i}"><c r="BH{i}" s="1"/></row>' for i in range(1,1101))
+    filled='<row r="1101"><c r="B1101" t="inlineStr"><is><t>申请材料</t></is></c><c r="ZZ1101" s="1"/></row>'
+    result=spreadsheet_sections(workbook(rows=blank+filled),'xlsx')
+    assert result['sections']==[{'locator':'准备 · 第 1101 行','text':'\t申请材料','table':True}]
+    with pytest.raises(ValueError,match='超过 50 列'):
+        spreadsheet_sections(workbook(cell='<c r="ZZ1"><f>1+1</f></c>'),'xlsx')
 
 
 def test_profile_preferences_reach_model_but_contacts_do_not(env):

@@ -17,7 +17,7 @@ def spreadsheet_sections(data,kind,full=False):
         try:text=data.decode('utf-8-sig')
         except UnicodeDecodeError:text=data.decode('gb18030')
         if len(text)>(1000000 if full else 10000):raise ValueError('表格文字超过读取上限，请拆分上传')
-        rows=list(csv.reader(io.StringIO(text)))
+        rows=list(enumerate(csv.reader(io.StringIO(text)),1))
         sheets=[('CSV',rows)]
     else:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
@@ -39,25 +39,33 @@ def spreadsheet_sections(data,kind,full=False):
                 name=posixpath.normpath('xl/'+target) if not target.startswith('/') else target.lstrip('/')
                 if not name.startswith('xl/worksheets/') or not name.endswith('.xml'):raise ValueError('工作表引用无效')
                 root=ET.fromstring(archive.read(name));rows=[]
-                for row in root.findall('s:sheetData/s:row',NS):
+                for ordinal,row in enumerate(root.findall('s:sheetData/s:row',NS),1):
                     values=[]
                     for cell in row.findall('s:c',NS):
                         match=re.fullmatch(r'([A-Z]{1,3})([0-9]{1,7})',cell.attrib.get('r',''))
                         if not match:raise ValueError('工作表单元格地址无效')
+                        formula=cell.find('s:f',NS)
+                        # Spreadsheet templates often apply styles to thousands
+                        # of empty rows and faraway columns. They are not data.
+                        if cell.find('s:v',NS) is None and cell.find('s:is',NS) is None and formula is None:
+                            continue
                         col=0
                         for char in match[1]:col=col*26+ord(char)-64
-                        if col>50:raise ValueError('表格超过 50 列，请只保留相关列')
-                        while len(values)<col:values.append('')
                         value=cell.findtext('s:v','',NS)
                         if cell.attrib.get('t')=='s':
                             if not value.isdigit() or int(value)>=len(strings):raise ValueError('共享字符串引用无效')
                             value=strings[int(value)]
                         elif cell.attrib.get('t')=='inlineStr':value=''.join(x.text or '' for x in cell.findall('.//s:t',NS))
-                        if cell.find('s:f',NS) is not None:
+                        if formula is not None:
                             if '公式显示文件中保存的值，未重新计算' not in warnings:warnings.append('公式显示文件中保存的值，未重新计算')
                             value=value or '[公式无缓存值]'
+                        if not value.strip():continue
+                        if col>50:raise ValueError('表格超过 50 列，请只保留相关列')
+                        while len(values)<col:values.append('')
                         values[col-1]=value.replace('\t',' ').replace('\r',' ').replace('\n',' ')
-                    rows.append(values)
+                    if not values:continue
+                    number=row.attrib.get('r','')
+                    rows.append((int(number) if number.isdigit() and int(number)>0 else ordinal,values))
                     if len(rows)>(10000 if full else 1000):raise ValueError('单工作表行数超限，请拆分上传')
                 if root.find('s:mergeCells',NS) is not None:warnings.append('含合并单元格，请下载原件核对对应关系')
                 sheets.append((sheet.attrib.get('name','工作表'),rows))
@@ -65,7 +73,7 @@ def spreadsheet_sections(data,kind,full=False):
     sections=[];total=0;cells=0
     for name,rows in sheets:
         if len(rows)>(10000 if full else 1000):raise ValueError('单工作表行数超限，请拆分上传')
-        for i,row in enumerate(rows,1):
+        for i,row in rows:
             if len(row)>50:raise ValueError('表格超过 50 列，请只保留相关列')
             cells+=len(row)
             if cells>(100000 if full else 5000):raise ValueError('表格单元格数量超限，请拆分上传')

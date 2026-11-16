@@ -4,6 +4,7 @@ import json
 import re
 from urllib.parse import parse_qs, urljoin, urlsplit
 
+import httpx
 from fastapi import HTTPException
 
 from .evidence_web import public_url
@@ -71,6 +72,19 @@ def _article_url(index_url, item_id, page_id, raw):
     return candidate
 
 
+def _external_listing_url(index_url, item):
+    """Expose an official-list link for a person to open, without fetching it."""
+    value = item.get('url')
+    if not isinstance(value, str):
+        return ''
+    wrapper = public_url(urljoin(index_url, value))
+    parts = urlsplit(wrapper)
+    if parts.hostname != HOST or parts.path != '/engine2/general-rest/outer-proxy-detail-url':
+        return ''
+    targets = parse_qs(parts.query).get('url', [])
+    return public_url(targets[0]) if len(targets) == 1 else ''
+
+
 async def fetch_library_entries(client, index_url, index_text):
     for variable, expected in [('engineInstanceId', '5619257'), ('appId', '4627353')]:
         values = re.findall(r'\bvar\s+' + variable + r'\s*=\s*(\d+)\s*;', index_text)
@@ -98,6 +112,13 @@ async def fetch_library_entries(client, index_url, index_text):
         item_id = item.get('id')
         label = item.get('1', {})
         label = _clean(label.get('value', '')) if isinstance(label, dict) and isinstance(label.get('value', ''), str) else ''
+        if (isinstance(item_id, int) and not isinstance(item_id, bool) and item_id > 0 and
+                item.get('typeId') == '11166542' and item.get('pageType') == 3 and
+                item.get('isOuter') is True and item.get('publicUse') is True and
+                item.get('isPublish') == 1 and label):
+            rejected.append({'url': _external_listing_url(index_url, item) or index_url, 'title': label[:160],
+                             'reason': '图书馆列表链接到外部网页，未在当前订阅范围内自动读取'})
+            continue
         if (not isinstance(item_id, int) or isinstance(item_id, bool) or item_id <= 0 or
                 item.get('typeId') != '11166542' or item.get('pageType') != 1 or
                 item.get('isOuter') is not False or item.get('publicUse') is not True or
@@ -116,7 +137,7 @@ async def fetch_library_entries(client, index_url, index_text):
             if error.status_code == 429:
                 raise
             target = None
-        except UnicodeError:
+        except (UnicodeError, httpx.HTTPError, OSError, TimeoutError, LookupError):
             target = None
         if not target:
             rejected.append({'url': index_url, 'title': label[:160], 'reason': '无法确认图书馆公告原文地址'})

@@ -327,6 +327,8 @@ def parse_official_article(text, url):
     body_text = '\n'.join(_clean(line) for line in body.text().splitlines() if _clean(line)) if body else ''
     # Inspect the content area, or a short page without a content area, for access gates.
     gate_text = body_text if body else _clean(root.text())
+    if not body and len(gate_text) < 200 and '无效的访问地址' in gate_text:
+        raise HTTPException(422, '学校网站提示原网页地址无效；已有内容保留，请打开原网页核对')
     if _PERMISSION.search(gate_text) and (not body or len(body_text) < 300):
         raise HTTPException(422, '这则通知需要校内权限或登录，未作为公开正文接收；请本人提供原文')
     if not body or not title:

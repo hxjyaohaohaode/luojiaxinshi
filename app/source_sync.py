@@ -333,8 +333,11 @@ def parse_index(text, url, config):
 
 async def fetch_index(config):
     url = config['url']
+    # The library list resolves individual article links as separate requests.
+    # Keep a bounded window without turning one slow link into a false outage.
+    deadline = 60 if config.get('preset_id') == 'whu-library-notices' else 20
     try:
-        async with asyncio.timeout(20), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
+        async with asyncio.timeout(deadline), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
                 follow_redirects=False, timeout=httpx.Timeout(15, connect=5)) as client:
             for _ in range(4):
                 if not public_url(url) or urlsplit(url).hostname != urlsplit(config['url']).hostname:
@@ -383,6 +386,41 @@ def owned(conn, sid, uid):
     return row
 
 
+def source_issues(conn, sid, uid, limit=20):
+    """Explain unresolved items using only this owner's saved evidence."""
+    from .source_coverage import coverage
+    items=conn.execute("""SELECT title,url,error FROM source_subscription_items
+        WHERE source_id=? AND error<>'' ORDER BY checked_at DESC,url LIMIT ?""",(sid,limit)).fetchall()
+    issues=[]
+    for item in items:
+        receipt=conn.execute('''SELECT notice_id FROM notice_ingest_receipts
+            WHERE user_id=? AND external_key=? ORDER BY observed_at DESC,rowid DESC LIMIT 1''',
+            (uid,'website:'+sid+':'+item['url'])).fetchone()
+        # A failed current fetch is more important than an older saved
+        # attachment warning; show both rather than masking the outage.
+        reasons=[]
+        if not item['error'].startswith(('正文已接收，部分附件', '部分附件或关联内容未完整复查')):
+            reasons.append(item['error'])
+        if receipt:
+            for source in conn.execute('''SELECT s.name,s.status,s.warning,o.data FROM sources s
+                    JOIN notices n ON n.id=s.notice_id JOIN notice_source_origins o ON o.source_id=s.id
+                    WHERE s.notice_id=? AND n.user_id=? AND s.active=1''',(receipt['notice_id'],uid)):
+                material={'status':source['status'],'origin':json.loads(source['data'])}
+                info=coverage(material)
+                for part in info['unread_attachments']:
+                    reasons.append((part.get('label') or '附件')+'：'+part['reason'])
+                if info['parse_failed']:
+                    reasons.append((source['name'] or '附件')+'：'+(source['warning'] or '附件解析未完成'))
+                for related in info['related_errors']:
+                    reasons.append('关联材料：'+str(related.get('error') or '未完整读取'))
+                if info['retained_snapshots']:
+                    reasons.append('部分材料保留了上次成功读取的版本，请核对原文')
+        reasons=list(dict.fromkeys(reasons))
+        issues.append({'title':item['title'],'url':public_url(item['url']),'notice_id':receipt['notice_id'] if receipt else None,
+                       'reason':'；'.join(reasons[:3]) or item['error']})
+    return issues
+
+
 def status(conn, sid, uid):
     owned(conn, sid, uid)
     row = conn.execute('SELECT * FROM source_subscriptions WHERE source_id=? AND user_id=?', (sid, uid)).fetchone()
@@ -396,6 +434,8 @@ def status(conn, sid, uid):
     result['enabled'] = bool(result['enabled'])
     result['state'] = 'paused' if not result['enabled'] else 'syncing' if result['running_until'] > time.time() else 'error' if result['error'] else 'active' if result['succeeded_at'] else 'waiting'
     result['pending_count'] = conn.execute('SELECT count(*) FROM source_subscription_items WHERE source_id=? AND checked_at=0', (sid,)).fetchone()[0]
+    result['issue_count'] = conn.execute("SELECT count(*) FROM source_subscription_items WHERE source_id=? AND error<>''", (sid,)).fetchone()[0]
+    result['issues'] = source_issues(conn,sid,uid) if result['issue_count'] else []
     result['feed_service_url']=result['config']['url'] if result['config']['mode']=='feed' else None
     result['allowed_article_origins']=result['config'].get('allowed_article_origins') or [origin(result['config']['url'])]
     result['source_identity']=result['config'].get('source_identity','')
@@ -443,6 +483,51 @@ def retry_delay(snapshot,config,*,pending,failed):
     return min(base*8,previous*2) if snapshot.get('error') else base
 
 
+def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updated=False):
+    """Upgrade a previously failed parse only when the same saved bytes now parse.
+
+    The file and its identity stay unchanged. A newly readable attachment can
+    affect an existing draft, so advance the notice version while preserving
+    the draft and personal task records for review.
+    """
+    from .db import audit
+    from .documents import MAX_CHARS, total_chars
+    from .notice_intake import reopen
+
+    rows = conn.execute('''SELECT s.id,s.kind,s.sha256,s.status,s.sections,s.warning
+        FROM sources s JOIN notices n ON n.id=s.notice_id
+        WHERE s.notice_id=? AND n.user_id=? AND s.active=1''', (notice_id, uid)).fetchall()
+    current = {(row['kind'],row['sha256']):row for row in rows}
+    current_total = sum(total_chars([{'sections':json.loads(row['sections'])}]) for row in rows)
+    recovered, deferred = [], []
+    for material in materials:
+        if material.get('kind') == 'text' or material.get('status') not in {'ok','review'}:
+            continue
+        row = current.get((material.get('kind'),material.get('sha256')))
+        if not row or row['status'] != 'failed':
+            continue
+        sections = material.get('sections') or []
+        if not sections and material.get('kind') not in {'png','jpg','jpeg','webp'}:
+            continue
+        new_total = current_total - total_chars([{'sections':json.loads(row['sections'])}]) + total_chars([{'sections':sections}])
+        if new_total > MAX_CHARS:
+            deferred.append(material.get('name') or '附件')
+            continue
+        conn.execute('UPDATE sources SET status=?,sections=?,warning=? WHERE id=? AND status=\'failed\'',
+                     (material['status'],dumps(sections),material.get('warning',''),row['id']))
+        recovered.append({'source_id':row['id'],'previous_status':row['status'],'status':material['status']})
+        current_total = new_total
+        current.pop((row['kind'],row['sha256']),None)
+    if recovered:
+        audit(conn,uid,notice_id,'source_parse_recovered',after={'sources':recovered})
+        if not already_updated:
+            reopen(conn,notice_id)
+            conn.execute("""UPDATE notices SET version=version+1,status='received',materials_complete=0,
+                processing_token=NULL,processing_at=NULL,error=NULL,updated_at=? WHERE id=? AND user_id=?""",
+                (int(time.time()),notice_id,uid))
+    return recovered, deferred
+
+
 async def sync_source(db, sid, uid=None, force=False):
     from .notice_ingest import ingest_notice
     now = int(time.time())
@@ -480,7 +565,7 @@ async def sync_source(db, sid, uid=None, force=False):
         if canonical_url(catalog.get('url',''))==canonical_url(config['url']):
             receipt['entrypoint'].update(state='read_as_list',verified_at=int(time.time()))
         receipt['rejected_entries']=getattr(entries,'rejected',[])
-        if receipt['rejected_entries']:errors.append(f"{len(receipt['rejected_entries'])} 个原文地址未获授权，已拒绝读取")
+        if receipt['rejected_entries']:errors.append(f"{len(receipt['rejected_entries'])} 条列表项目未能确认原文，请查看来源状态")
         with db.connect(write=True) as conn:
             if not unchanged(conn):
                 return None
@@ -501,8 +586,13 @@ async def sync_source(db, sid, uid=None, force=False):
                 conn.execute('INSERT INTO source_entry_provenance VALUES(?,?,?) ON CONFLICT(source_id,url) DO UPDATE SET data=excluded.data',
                     (sid,entry['url'],dumps(provenance)))
             # Retain discovered backlog across polls. Recent known pages are also
-            # revisited so a correction at an existing URL is detected.
-            pending = [dict(r) for r in conn.execute('SELECT i.*,p.data AS provenance FROM source_subscription_items i LEFT JOIN source_entry_provenance p ON p.source_id=i.source_id AND p.url=i.url WHERE i.source_id=? ORDER BY i.checked_at,i.discovered_at DESC LIMIT 8', (sid,))]
+            # revisited so a correction at an existing URL is detected. An
+            # explicit refresh gives unresolved items priority; ordinary polling
+            # remains round-robin so persistent failures cannot starve updates.
+            pending = [dict(r) for r in conn.execute('''SELECT i.*,p.data AS provenance
+                FROM source_subscription_items i LEFT JOIN source_entry_provenance p ON p.source_id=i.source_id AND p.url=i.url
+                WHERE i.source_id=? ORDER BY CASE WHEN ?=1 AND i.checked_at>0 AND i.error='' THEN 1 ELSE 0 END,
+                    i.checked_at,i.discovered_at DESC LIMIT 8''', (sid,int(force)))]
         for item in pending:
             receipt['articles']['attempted']+=1
             try:
@@ -536,12 +626,16 @@ async def sync_source(db, sid, uid=None, force=False):
                     result = ingest_notice(conn, snapshot['user_id'], title=source.get('origin',{}).get('title') or item['title'], sources=materials,
                         source_label=catalog['name'], source_url=item['url'], published_at=published,
                         external_key='website:' + sid + ':' + item['url'], materials_complete=False,observed_at=time.time())
+                    recovered, deferred = ([],[]) if result.get('stale') else recover_failed_attachments(
+                        conn,snapshot['user_id'],result['notice_id'],materials,already_updated=bool(result.get('updated')))
+                    if recovered:
+                        result['updated'] = True
                     created += bool(result.get('created'))
                     if result.get('created') and conn.execute('SELECT 1 FROM source_baseline_items WHERE source_id=? AND url=?',(sid,item['url'])).fetchone():
                         conn.execute('INSERT OR IGNORE INTO notice_delivery_suppressions VALUES(?,?)',(result['notice_id'],'initial_website_snapshot'))
                     updated += bool(result.get('updated'))
                     from .source_coverage import coverage
-                    incomplete=any(coverage(material)['reading_incomplete'] for material in materials)
+                    incomplete=bool(deferred) or any(coverage(material)['reading_incomplete'] for material in materials)
                     receipt['articles']['succeeded']+=1
                     receipt['articles']['items'].append({'url':item['url'],'notice_id':result['notice_id'],
                         'checked_at':int(time.time()),'sha256':source['sha256'],'published_at':published,
@@ -555,7 +649,7 @@ async def sync_source(db, sid, uid=None, force=False):
                         for attachment in material_origin.get('attachment_reads',[]):
                             receipt['attachments']['items'].append({**attachment,'article_url':material_origin.get('url'),
                                 'recorded_at':int(time.time())})
-                    article_error='部分附件或关联内容未完整复查；已有正文和旧证据已保留' if incomplete else ''
+                    article_error='正文已接收，部分附件或关联材料仍需核对' if incomplete else ''
                     if article_error:errors.append(article_error)
                     conn.execute('UPDATE source_subscription_items SET checked_at=?,error=? WHERE source_id=? AND url=?', (int(time.time()), article_error, sid, item['url']))
             except HTTPException as exc:

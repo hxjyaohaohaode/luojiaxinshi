@@ -51,6 +51,12 @@ def test_link_redirect_rechecks_destination_and_failure_keeps_existing_materials
     assert c.get('/api/notices/' + n['id']).json()['sources'] == n['sources']
 
 
+def test_gone_public_article_reports_actual_http_status(env, monkeypatch):
+    mock_web(monkeypatch, lambda request: httpx.Response(404))
+    result=account(env).post('/api/intake/link',json={'url':'https://school.example.edu.cn/info/gone.htm'})
+    assert result.status_code==422 and 'HTTP 404' in result.json()['detail']
+
+
 def test_link_expiry_and_oversized_text_are_explicit(env, monkeypatch):
     c = account(env)
     mock_web(monkeypatch, lambda request: httpx.Response(200, headers={'content-type': 'text/plain'}, text='校园公告'))

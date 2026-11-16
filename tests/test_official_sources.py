@@ -54,6 +54,12 @@ def test_index_rejects_structure_drift_wrong_host_and_out_of_scope_links():
         parse_official_index(text, preset['url'], preset['id'])
 
 
+def test_invalid_official_address_reports_the_site_message():
+    with pytest.raises(HTTPException, match='原网页地址无效'):
+        parse_official_article('<html><body>无效的访问地址</body></html>',
+                               'https://www.whu.edu.cn/new2024/tzggnr.jsp?urltype=tree.TreeTempUrl')
+
+
 def test_library_article_reads_only_literal_public_data_and_checks_identity():
     url = 'https://www.lib.whu.edu.cn/engine2/d/23898836/5619257/0?t=11166542&p=1'
     payload = {'engineInstanceId': 5619257, 'id': 23898836, 'publicUse': True,

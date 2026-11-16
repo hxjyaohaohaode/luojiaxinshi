@@ -16,6 +16,10 @@
 
 预设同步与通用订阅共用正文/附件读取：支持同域 PDF、DOC、DOCX、XLS、XLSX、CSV、TXT、Markdown 和常见静态图片。一次完整解析最多六个来源、五份文件，附件阶段最多 25 秒，正文与附件总文字最多 10,000 字、原件总大小最多 5 MB；失败的下载尝试不占成功文件名额。每个附件均记录实际读取结果及原因，下载、解析和内容核验分别判断；不执行网页脚本或文档宏，也不递归读取附件中的链接。跨域、超限、表格/图片未核对和需校内验证的材料保留明确缺口，收到文件不自动标记材料完整。
 
+同一附件的原件已保存但之前解析失败时，后续成功解析会更新原有材料而不重复收件；新增的可读内容会使旧整理版本待重新核对，已有草稿和个人待办保留。手动“立即刷新”优先重试未完成的通知，后台定时检查仍轮流复核，避免单条失败阻塞其他通知。来源页可展开查看具体通知与未读取原因。
+
+XLSX 解析忽略只含格式的空白行列，保留有内容行的实际行号；真正超出行数、列数或文字预算的附件仍提示核对。图书馆列表指向其他网站时，来源状态展示该条标题和原链接，不自动读取站外内容。
+
 DOC/XLS 使用本地隔离的 Apache Tika 4.2.0 读取，工具不会在用户请求中自动下载，也不会将原件发给外部解析服务器。管理员可在 Windows 运行 `.venv/Scripts/python.exe scripts/install_legacy_parser.py --with-java` 安装已固定并校验哈希的 Tika 与便携 Temurin JRE；Linux 使用系统 Java 17+，运行同一安装脚本安装 Tika，必要时通过 `LEGACY_PARSER_DIR` 指定工具目录。魔搭构建文件已包含该安装步骤，但容器构建和真实 Linux 运行尚须独立验证。工具未就绪时保留原件并明确报告解析未就绪，不返回伪造正文。表格按行保留定位，合并单元格、图片和嵌入内容仍有核对标记。
 
 接口：`GET /api/source-presets` 查询可选栏目；`POST /api/source-presets/{id}/subscribe` 原子保存本人来源及订阅（无模型调用）；之后复用既有刷新、暂停与状态接口。适配器在 `app/official_sources.py`、`app/library_source.py`、`app/employment_source.py` 和 `app/whu_careers.py`，增加栏目时须先检查真实列表、正文和附件结构。可以用 `python scripts/verify_school_sources.py --allow-public-network` 在隔离账号验证真实收件与重复刷新；报告在 `artifacts/public-sources-2026-10-29/live-report.json`。该脚本不使用现有账号数据，不开启后台轮询、推送或模型调用。

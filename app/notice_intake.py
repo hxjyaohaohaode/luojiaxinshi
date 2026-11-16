@@ -129,7 +129,11 @@ async def _read_link(url, allowed_host=None, referrer=None):
                         url = urljoin(url, response.headers.get('location', ''))
                         continue
                     if response.status_code != 200:
-                        raise HTTPException(422, '这个链接无法公开读取，请上传原件或粘贴正文')
+                        if response.status_code in {404, 410}:
+                            raise HTTPException(422, f'原网页返回 HTTP {response.status_code}，可能已删除或地址变更；已有内容保留')
+                        if response.status_code in {401, 403}:
+                            raise HTTPException(422, f'网站拒绝访问（HTTP {response.status_code}），可能需要登录或校园网；已有内容保留')
+                        raise HTTPException(422, f'网站返回 HTTP {response.status_code}，本次未读取；已有内容保留')
                     mime = response.headers.get('content-type', '').split(';')[0].lower().strip()
                     content = bytearray()
                     limit = 1_500_000 if mime in {'text/html', 'application/xhtml+xml'} else MAX_FILE

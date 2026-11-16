@@ -48,6 +48,68 @@ def test_subscription_discovers_updates_and_deduplicates_with_owner_isolation(en
     assert len(a.get('/api/notices').json())==1
 
 
+def test_retry_recovers_a_previously_failed_attachment_without_duplicate_notice(env,monkeypatch):
+    a=account(env);sid=website(a);enable(a,sid)
+    article='https://school.example.edu.cn/info/100/1.htm'
+    attachment='https://school.example.edu.cn/files/application.doc'
+    works=[False]; unavailable=[False]
+    async def index(config):return [{'url':article,'title':'报名通知','published_at':None}]
+    async def read(url):
+        if url==article:
+            if unavailable[0]:raise HTTPException(422,'原网页地址无效')
+            source=text_source('报名通知正文','报名通知')
+            source['origin']={'url':url,'attachments':[attachment],'attachment_names':{attachment:'申请表.doc'},'warnings':[]}
+            return source,'报名通知'
+        source=text_source('申请表内容' if works[0] else '', '申请表.doc')
+        source.update(kind='doc',content=b'unchanged-office-file',sha256='identical-file-hash',
+                      status='review' if works[0] else 'failed',warning='请核对表格' if works[0] else '解析器未就绪')
+        source['origin']={'url':url,'attachments':[],'warnings':[]}
+        return source,'申请表'
+    monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
+    first=a.post('/api/source-catalog/'+sid+'/refresh');assert first.status_code==200
+    n=a.get('/api/notices').json()[0];db=env[0].state.db
+    assert first.json()['issue_count']==1
+    assert first.json()['issues'][0]['notice_id']==n['id']
+    assert '解析器未就绪' in first.json()['issues'][0]['reason']
+    with db.connect() as conn:
+        saved=conn.execute("SELECT id,status,sections FROM sources WHERE notice_id=? AND kind='doc'",(n['id'],)).fetchone()
+        source_id=saved['id'];assert saved['status']=='failed' and json.loads(saved['sections'])==[]
+    unavailable[0]=True
+    failed=a.post('/api/source-catalog/'+sid+'/refresh').json()
+    assert '原网页地址无效' in failed['issues'][0]['reason'] and '解析器未就绪' in failed['issues'][0]['reason']
+    unavailable[0]=False
+    works[0]=True
+    second=a.post('/api/source-catalog/'+sid+'/refresh');assert second.status_code==200
+    assert second.json()['updated_count']==1 and second.json()['error']=='' and second.json()['issues']==[]
+    with db.connect() as conn:
+        saved=conn.execute("SELECT id,status,sections,warning FROM sources WHERE notice_id=? AND kind='doc'",(n['id'],)).fetchone()
+        assert saved['id']==source_id and saved['status']=='review' and '申请表内容' in saved['sections']
+        assert saved['warning']=='请核对表格'
+        assert conn.execute('SELECT version FROM notices WHERE id=?',(n['id'],)).fetchone()[0]==2
+        assert conn.execute('SELECT count(*) FROM notices').fetchone()[0]==1
+    assert a.post('/api/source-catalog/'+sid+'/refresh').json()['updated_count']==1
+    with db.connect() as conn:
+        assert conn.execute('SELECT version FROM notices WHERE id=?',(n['id'],)).fetchone()[0]==2
+
+
+def test_manual_refresh_retries_failed_items_before_older_successful_items(env,monkeypatch):
+    a=account(env);sid=website(a);enable(a,sid);db=env[0].state.db
+    urls=[f'https://school.example.edu.cn/info/{i}.htm' for i in range(9)]
+    entries=[{'url':url,'title':f'通知{i}','published_at':None} for i,url in enumerate(urls)]
+    with db.connect(write=True) as conn:
+        conn.executemany('INSERT INTO source_subscription_items(source_id,url,title,discovered_at,checked_at,error) VALUES(?,?,?,?,?,?)',
+                         [(sid,url,f'通知{i}',1,100+i,'旧附件未读到' if i==8 else '') for i,url in enumerate(urls)])
+    seen=[]
+    async def index(config):return entries
+    async def read(url):
+        seen.append(url);source=text_source('公告内容','短标题')
+        source['origin']={'url':url,'attachments':[],'warnings':[]};return source,'短标题'
+    monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
+    assert a.post('/api/source-catalog/'+sid+'/refresh').status_code==200
+    assert urls[8] in seen and len(seen)==8
+    assert urls[7] not in seen
+
+
 def test_initial_website_snapshot_stays_readable_but_only_later_notices_are_announced(env,monkeypatch):
     import time
     from app.push_delivery import candidates
