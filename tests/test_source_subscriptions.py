@@ -110,6 +110,35 @@ def test_manual_refresh_retries_failed_items_before_older_successful_items(env,m
     assert urls[7] not in seen
 
 
+def test_unavailable_article_links_only_the_owners_other_saved_copy(env,monkeypatch):
+    from app.notice_ingest import ingest_notice
+    a,b=account(env),account(env,'other-owner');sid=website(a);enable(a,sid)
+    article='https://school.example.edu.cn/info/old.htm'
+    attachment='https://school.example.edu.cn/files/guide.docx';offline=[False]
+    async def index(config):return [{'url':article,'title':'原公告','published_at':None}]
+    async def read(url):
+        if url==article:
+            if offline[0]:raise HTTPException(422,'原网页返回 HTTP 404')
+            root=text_source('通知正文','原公告');root['origin']={'url':url,'attachments':[attachment]}
+            return root,'原公告'
+        raise HTTPException(422,'附件暂时无法读取')
+    monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
+    assert a.post('/api/source-catalog/'+sid+'/refresh').status_code==200
+    db=env[0].state.db
+    def save_copy(client,title):
+        uid=client.get('/api/session').json()['user']['id']
+        file=text_source('已经读取的附件内容','指南.docx')
+        file.update(kind='docx',content=b'synthetic-file',status='review',origin={'url':attachment,'attachments':[]})
+        with db.connect(write=True) as conn:
+            return ingest_notice(conn,uid,sources=[text_source(title),file],title=title)['notice_id']
+    save_copy(b,'其他账号的通知');offline[0]=True
+    failed=a.post('/api/source-catalog/'+sid+'/refresh').json()
+    assert 'HTTP 404' in failed['issues'][0]['reason'] and failed['issues'][0]['alternatives']==[]
+    own_copy=save_copy(a,'本人已收取的通知')
+    issue=a.get('/api/source-subscriptions').json()[0]['issues'][0]
+    assert issue['alternatives'][0]['notice_id']==own_copy
+
+
 def test_initial_website_snapshot_stays_readable_but_only_later_notices_are_announced(env,monkeypatch):
     import time
     from app.push_delivery import candidates

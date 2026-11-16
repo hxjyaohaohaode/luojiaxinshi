@@ -189,6 +189,8 @@ def prepare_notice_input(settings, notice, sources, profile):
     except (OSError,ValueError):
         raise AIError('图片原件或尺寸不可读取，请重新补充原图；未发送模型请求') from None
     limit=min(settings.notice_input_tokens,settings.ai_context_tokens-settings.ai_output_tokens)
+    if limit<=0:
+        raise AIError('通知整理的模型输出预算不小于上下文容量，请检查通知专用上下文和输出设置；未发送模型请求。')
     if estimate>limit:
         raise AIError(f'本则通知含提示词和图片的保守输入估算为 {estimate:,}，超过当前预算 {limit:,}。原件已保留，未发送模型请求；请缩小本次材料范围，或请维护者调整输入预算后重试。估算不代表实际计费用量。')
     return sources,system,content

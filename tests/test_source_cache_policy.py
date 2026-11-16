@@ -118,3 +118,12 @@ def test_policy_upgrade_discards_only_unverifiable_public_cache(reader):
         assert conn.execute('SELECT count(*) FROM source_public_cache').fetchone()[0]==0
         assert conn.execute('SELECT count(*) FROM source_host_limits').fetchone()[0]==1
         assert conn.execute("SELECT value FROM meta WHERE key='source_fetch_policy_version'").fetchone()[0]=='2'
+
+
+def test_large_response_is_retained_for_reader_without_oversized_cache(reader,monkeypatch):
+    read,count,_,_=reader
+    monkeypatch.setattr(source_fetch,'MAX_CACHE_BYTES',10)
+    payload=b'0123456789-large-attachment'
+    response=read(lambda request:httpx.Response(200,content=payload))
+    assert response.content==payload and response.headers['x-luojia-cache']=='fetched_uncached'
+    assert count()==0

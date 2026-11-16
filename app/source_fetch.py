@@ -213,7 +213,8 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                     raise HTTPException(429,'来源要求稍后重试，已有内容保留',headers={'Retry-After':str(max(1,int(limit['retry_after']-now)))})
                 wait=max(limit['lease_until'],limit['next_allowed'])-now
                 if wait<=0:
-                    conn.execute('UPDATE source_host_limits SET lease_id=?,lease_until=? WHERE hostname=?',(lease,now+25,host))
+                    lease_seconds=240 if context['max_bytes']>5*1024*1024 else 25
+                    conn.execute('UPDATE source_host_limits SET lease_id=?,lease_until=? WHERE hostname=?',(lease,now+lease_seconds,host))
                     break
             if now>=deadline:raise HTTPException(503,'同域名采集正在进行，已保留任务等待下轮',headers={'Retry-After':'30'})
             await asyncio.sleep(min(max(wait,.02),.15))
@@ -250,6 +251,9 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                     return self.response(cached,request,'revalidated' if permitted else 'revalidated_uncached')
                 permitted=cache_policy(response.headers,time.time())[0] and request_store
                 if not permitted:self.purge(url)
+                declared=response.headers.get('content-length','')
+                if declared.isascii() and declared.isdecimal() and int(declared)>context['max_bytes']:
+                    raise HTTPException(413,'来源响应超过读取上限，旧快照保留；未截断')
                 body=bytearray()
                 async for chunk in response.aiter_bytes():
                     body.extend(chunk)
@@ -259,7 +263,8 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                 headers=stored_headers(response.headers)
                 if response.status_code==200:
                     now=time.time();digest=hashlib.sha256(body).hexdigest()
-                    if permitted:
+                    cacheable=permitted and len(body)<=MAX_CACHE_BYTES
+                    if cacheable:
                         with db.connect(write=True) as conn:
                             conn.execute('INSERT INTO source_public_cache VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(cache_key) DO UPDATE SET headers=excluded.headers,content=excluded.content,sha256=excluded.sha256,fetched_at=excluded.fetched_at,checked_at=excluded.checked_at',
                                 (key,context['scope'],url,dumps(headers),bytes(body),digest,now,now))
@@ -269,7 +274,9 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                             for old in conn.execute('SELECT cache_key,length(content) AS size FROM source_public_cache WHERE cache_key<>? ORDER BY checked_at',(key,)).fetchall():
                                 if total<=MAX_CACHE_BYTES:break
                                 conn.execute('DELETE FROM source_public_cache WHERE cache_key=?',(old['cache_key'],));total-=old['size']
-                    headers.update({'x-luojia-cache':'fetched' if permitted else 'fetched_uncached','x-luojia-content-sha256':digest})
+                    elif permitted:
+                        self.purge(url)
+                    headers.update({'x-luojia-cache':'fetched' if cacheable else 'fetched_uncached','x-luojia-content-sha256':digest})
                 return httpx.Response(response.status_code,headers=headers,content=bytes(body),request=request)
             finally:await response.aclose()
         finally:

@@ -10,7 +10,7 @@ from pypdf import PdfReader
 MAX_TEXT = 10000
 
 
-def extract(data, kind):
+def extract(data, kind, *, max_pages=50):
     if kind in {'csv','xlsx'}:
         from .spreadsheet import spreadsheet_sections
         return spreadsheet_sections(data,kind)
@@ -35,7 +35,7 @@ def extract(data, kind):
         text = text.replace('\x00', '').strip()
         total += len(text)
         if total > MAX_TEXT:
-            raise ValueError('提取文本超过 10000 字，未截断；请拆分材料后重新上传')
+            raise ValueError(f'提取文本超过 {MAX_TEXT:,} 字，未截断；请拆分材料后重新上传')
         if text:
             sections.append({'locator': locator, 'text': text})
 
@@ -45,8 +45,8 @@ def extract(data, kind):
         reader = PdfReader(io.BytesIO(data), strict=False)
         if reader.is_encrypted:
             raise ValueError('加密 PDF 不可解析，请上传解密后的有权处理版本')
-        if len(reader.pages) > 50:
-            raise ValueError('PDF 超过 50 页，请拆分后上传')
+        if len(reader.pages) > max_pages:
+            raise ValueError(f'PDF 超过 {max_pages} 页，请拆分后上传')
         for i, page in enumerate(reader.pages, 1):
             content = page.get_contents()
             if content and len(content.get_data()) > 8*1024*1024:

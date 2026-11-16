@@ -398,8 +398,9 @@ def source_issues(conn, sid, uid, limit=20):
             (uid,'website:'+sid+':'+item['url'])).fetchone()
         # A failed current fetch is more important than an older saved
         # attachment warning; show both rather than masking the outage.
-        reasons=[]
-        if not item['error'].startswith(('正文已接收，部分附件', '部分附件或关联内容未完整复查')):
+        reasons=[];alternatives=[]
+        current_failure=not item['error'].startswith(('正文已接收，部分附件', '部分附件或关联内容未完整复查'))
+        if current_failure:
             reasons.append(item['error'])
         if receipt:
             for source in conn.execute('''SELECT s.name,s.status,s.warning,o.data FROM sources s
@@ -408,7 +409,15 @@ def source_issues(conn, sid, uid, limit=20):
                 material={'status':source['status'],'origin':json.loads(source['data'])}
                 info=coverage(material)
                 for part in info['unread_attachments']:
-                    reasons.append((part.get('label') or '附件')+'：'+part['reason'])
+                    reasons.append(('上次记录：' if current_failure else '')+(part.get('label') or '附件')+'：'+part['reason'])
+                    if current_failure and part.get('url'):
+                        alternative=conn.execute('''SELECT n.id,n.title,s.name FROM sources s
+                            JOIN notices n ON n.id=s.notice_id JOIN notice_source_origins o ON o.source_id=s.id
+                            WHERE n.user_id=? AND n.id<>? AND s.active=1 AND s.status IN ('ok','review')
+                              AND json_extract(o.data,'$.url')=? ORDER BY s.created_at DESC,s.id LIMIT 1''',
+                            (uid,receipt['notice_id'],part['url'])).fetchone()
+                        if alternative:
+                            alternatives.append({'notice_id':alternative['id'],'title':alternative['title'],'label':part.get('label') or alternative['name']})
                 if info['parse_failed']:
                     reasons.append((source['name'] or '附件')+'：'+(source['warning'] or '附件解析未完成'))
                 for related in info['related_errors']:
@@ -417,7 +426,7 @@ def source_issues(conn, sid, uid, limit=20):
                     reasons.append('部分材料保留了上次成功读取的版本，请核对原文')
         reasons=list(dict.fromkeys(reasons))
         issues.append({'title':item['title'],'url':public_url(item['url']),'notice_id':receipt['notice_id'] if receipt else None,
-                       'reason':'；'.join(reasons[:3]) or item['error']})
+                       'reason':'；'.join(reasons[:3]) or item['error'],'alternatives':alternatives[:3]})
     return issues
 
 
@@ -483,7 +492,7 @@ def retry_delay(snapshot,config,*,pending,failed):
     return min(base*8,previous*2) if snapshot.get('error') else base
 
 
-def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updated=False):
+def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updated=False, max_chars=None):
     """Upgrade a previously failed parse only when the same saved bytes now parse.
 
     The file and its identity stay unchanged. A newly readable attachment can
@@ -494,6 +503,7 @@ def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updat
     from .documents import MAX_CHARS, total_chars
     from .notice_intake import reopen
 
+    max_chars=MAX_CHARS if max_chars is None else max_chars
     rows = conn.execute('''SELECT s.id,s.kind,s.sha256,s.status,s.sections,s.warning
         FROM sources s JOIN notices n ON n.id=s.notice_id
         WHERE s.notice_id=? AND n.user_id=? AND s.active=1''', (notice_id, uid)).fetchall()
@@ -510,7 +520,7 @@ def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updat
         if not sections and material.get('kind') not in {'png','jpg','jpeg','webp'}:
             continue
         new_total = current_total - total_chars([{'sections':json.loads(row['sections'])}]) + total_chars([{'sections':sections}])
-        if new_total > MAX_CHARS:
+        if new_total > max_chars:
             deferred.append(material.get('name') or '附件')
             continue
         conn.execute('UPDATE sources SET status=?,sections=?,warning=? WHERE id=? AND status=\'failed\'',
@@ -530,6 +540,7 @@ def recover_failed_attachments(conn, uid, notice_id, materials, *, already_updat
 
 async def sync_source(db, sid, uid=None, force=False):
     from .notice_ingest import ingest_notice
+    from .source_limits import MAX_SOURCE_CHARS, MAX_SOURCE_FILE
     now = int(time.time())
     with db.connect(write=True) as conn:
         row = conn.execute('SELECT s.*,c.data AS catalog,c.version AS catalog_version FROM source_subscriptions s JOIN source_catalog c ON c.id=s.source_id WHERE s.source_id=?', (sid,)).fetchone()
@@ -615,19 +626,19 @@ async def sync_source(db, sid, uid=None, force=False):
                     source['origin'].setdefault('warnings', []).append(
                         f"列表日期 {item['published_at'][:10]} 与正文日期 {article_date[:10]} 不同，已保留两者并采用正文日期，请核对原文")
                 from .notice_network import read_network,retain_unavailable
-                with acquisition(db,config,origins=origins,hosts=hosts):
-                    materials = await read_network(source,config,entries,read=read_link)
+                with acquisition(db,config,origins=origins,hosts=hosts,max_bytes=MAX_SOURCE_FILE):
+                    materials = await read_network(source,config,entries,read=read_link,expanded=True)
                 published = article_date or item['published_at']
                 with db.connect(write=True) as conn:
                     if not unchanged(conn):
                         return None
                     key='website:'+sid+':'+item['url']
-                    materials=retain_unavailable(conn,snapshot['user_id'],key,materials,title=source.get('origin',{}).get('title') or item['title'],published_at=published)
+                    materials=retain_unavailable(conn,snapshot['user_id'],key,materials,title=source.get('origin',{}).get('title') or item['title'],published_at=published,expanded=True)
                     result = ingest_notice(conn, snapshot['user_id'], title=source.get('origin',{}).get('title') or item['title'], sources=materials,
                         source_label=catalog['name'], source_url=item['url'], published_at=published,
-                        external_key='website:' + sid + ':' + item['url'], materials_complete=False,observed_at=time.time())
+                        external_key='website:' + sid + ':' + item['url'], materials_complete=False,observed_at=time.time(),expanded_limits=True)
                     recovered, deferred = ([],[]) if result.get('stale') else recover_failed_attachments(
-                        conn,snapshot['user_id'],result['notice_id'],materials,already_updated=bool(result.get('updated')))
+                        conn,snapshot['user_id'],result['notice_id'],materials,already_updated=bool(result.get('updated')),max_chars=MAX_SOURCE_CHARS)
                     if recovered:
                         result['updated'] = True
                     created += bool(result.get('created'))

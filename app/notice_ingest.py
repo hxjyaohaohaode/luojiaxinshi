@@ -178,14 +178,17 @@ def _refresh_origins(conn, uid, nid, sources):
 
 def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='', external_key='',
                   published_at=None, materials_complete=False, allow_duplicate=False, observed_at=None,
-                  separate_rounds=True):
+                  separate_rounds=True, expanded_limits=False):
     """Call within a write transaction. No network, model, or outgoing message."""
     if not sources:
         raise HTTPException(422, '请提供通知正文、链接原文或附件')
-    if total_chars([{**s, 'sections': sections(s)} for s in sources]) > MAX_CHARS:
-        raise HTTPException(422, '通知正文与附件合计超过 10000 字，请按事项拆分；未截断')
-    if sum(s['kind'] != 'text' for s in sources) > 5:
-        raise HTTPException(422, '单则通知最多保留 5 份当前附件，请按事项拆分')
+    from .source_limits import MAX_SOURCE_CHARS, MAX_SOURCE_FILES, MAX_SOURCE_MATERIALS
+    text_limit=MAX_SOURCE_CHARS if expanded_limits else MAX_CHARS
+    file_limit=MAX_SOURCE_FILES if expanded_limits else 5
+    if total_chars([{**s, 'sections': sections(s)} for s in sources]) > text_limit:
+        raise HTTPException(422, f'通知正文与附件合计超过 {text_limit:,} 字，请按事项拆分；未截断')
+    if sum(s['kind'] != 'text' for s in sources) > file_limit or expanded_limits and len(sources)>MAX_SOURCE_MATERIALS:
+        raise HTTPException(422, f'单则通知最多保留 {file_limit} 份当前附件，请按事项拆分')
     explicit_title=bool(title.strip())
     title = title.strip() or infer_title(sources)
     source_url = safe_url(source_url)

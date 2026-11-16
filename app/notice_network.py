@@ -17,14 +17,14 @@ MAX_RELATED=2
 RESEARCH_SECONDS=35
 
 
-def within_budget(materials):
-    # Match the existing notice extractor/reviewer: six sources, five file
-    # attachments. Image pages share their parent source; token budgets count
-    # every rendered page. Never fetch seven sources and fail only after paying
-    # for a review whose source_index schema cannot represent the seventh.
-    return (len(materials)<=6 and sum(s.get('kind')!='text' for s in materials)<=5
-        and total_chars(materials)<=MAX_CHARS
-        and sum(len(s.get('content') or b'') for s in materials)<=MAX_FILE)
+def within_budget(materials, *, expanded=False):
+    # Count the complete retained text and original bytes. The automatic
+    # website path has its own larger, still bounded collection budget.
+    from .source_limits import MAX_SOURCE_BYTES, MAX_SOURCE_CHARS, MAX_SOURCE_FILES, MAX_SOURCE_MATERIALS
+    return (len(materials)<=(MAX_SOURCE_MATERIALS if expanded else 6)
+        and sum(s.get('kind')!='text' for s in materials)<=(MAX_SOURCE_FILES if expanded else 5)
+        and total_chars(materials)<=(MAX_SOURCE_CHARS if expanded else MAX_CHARS)
+        and sum(len(s.get('content') or b'') for s in materials)<=(MAX_SOURCE_BYTES if expanded else MAX_FILE))
 
 
 def subject(title):
@@ -65,9 +65,10 @@ def candidates(primary,config,entries):
     return sorted(choices.values(),key=lambda item:(-item['score'],item['url']))[:MAX_RELATED]
 
 
-async def read_network(primary,config,entries,*,read=None):
+async def read_network(primary,config,entries,*,read=None,expanded=False):
     reader=read or read_link
-    materials=await read_notice_materials(primary,read=reader)
+    materials=(await read_notice_materials(primary,read=reader,expanded=True) if expanded
+               else await read_notice_materials(primary,read=reader))
     root=materials[0];origin=root['origin'];warnings=origin.setdefault('warnings',[])
     proposed=candidates(root,config,entries)
     origin['related_search']={'scope':'authorized_source_index_and_links','candidates':proposed,
@@ -84,7 +85,8 @@ async def read_network(primary,config,entries,*,read=None):
             source['origin']={**source.get('origin',{}),'parent_url':origin['url'],
                 'relationship':item['relationship'],'relationship_verified':False}
             source['warning']='自动找到的关联候选；须核对事项、对象、轮次和效力，不能仅按新日期覆盖原通知。'+source.get('warning','')
-            return await read_notice_materials(source,read=reader)
+            return (await read_notice_materials(source,read=reader,expanded=True) if expanded
+                    else await read_notice_materials(source,read=reader))
         except (HTTPException,OSError,ValueError,TimeoutError) as exc:
             return {'url':item['url'],'error':str(exc.detail) if isinstance(exc,HTTPException) else '关联来源未读到正文'}
     try:
@@ -94,7 +96,7 @@ async def read_network(primary,config,entries,*,read=None):
             if isinstance(result,dict):report['errors'].append(result);continue
             known={s['sha256'] for s in materials}
             additions=[s for s in result if s['sha256'] not in known]
-            if not within_budget(materials+additions):
+            if not within_budget(materials+additions,expanded=expanded):
                 report['errors'].append({'url':result[0]['origin']['url'],'error':'关联材料超过本次完整解析预算，未截断加入'})
                 continue
             materials.extend(additions)
@@ -114,7 +116,7 @@ def provenance(sources):
             for s in sources if s.get('origin')]
 
 
-def retain_unavailable(conn,uid,external_key,materials,*,title='',published_at=None):
+def retain_unavailable(conn,uid,external_key,materials,*,title='',published_at=None,expanded=False):
     """A transient auxiliary failure cannot remove a previously read extension.
 
     The current root records which old snapshots were retained. Reusing a byte
@@ -147,7 +149,7 @@ def retain_unavailable(conn,uid,external_key,materials,*,title='',published_at=N
             old=source['origin'];url=old.get('url')
             if source['sha256'] in known or not old.get('relationship'):continue
             if url not in failed and old.get('parent_url') not in failed:continue
-            if not within_budget(materials+[source]):
+            if not within_budget(materials+[source],expanded=expanded):
                 raise HTTPException(413,'本轮材料与旧证据快照合计过大；保留上次完整版本，待复查后更新')
             materials.append(source);known.add(source['sha256']);failed.add(url);changed=True
             retained.append({'url':url,'sha256':source['sha256'],'retrieved_at':old.get('retrieved_at')})

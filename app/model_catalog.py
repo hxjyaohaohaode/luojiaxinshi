@@ -73,6 +73,8 @@ def notice_processing_modes(settings):
 
 
 def notice_settings(settings,mode):
+    if settings.notice_context_tokens is not None:
+        settings=replace(settings,ai_context_tokens=settings.notice_context_tokens)
     if mode=='configured':return settings
     if mode=='daily' and any(item['id']==mode for item in notice_processing_modes(settings)):
         return replace(settings,ai_model='mimo-v2.6-flash',notice_review_model='mimo-v2.6-flash',

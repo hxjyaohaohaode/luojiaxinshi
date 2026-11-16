@@ -883,8 +883,9 @@ def create_app(settings=None):
                 from .visual_evidence import image_sources
                 try:images=image_sources(sources)
                 except ai.AIError as exc:raise HTTPException(422,str(exc)) from None
-                if not sources or (total_chars(sources)==0 and not images) or total_chars(sources)>MAX_CHARS:
-                    raise HTTPException(422,'当前材料没有可处理文字或合计超过 10000 字')
+                from .source_limits import MAX_SOURCE_CHARS
+                if not sources or (total_chars(sources)==0 and not images) or total_chars(sources)>MAX_SOURCE_CHARS:
+                    raise HTTPException(422,f'当前材料没有可处理文字或合计超过 {MAX_SOURCE_CHARS:,} 字')
                 try:
                     ai.prepare_notice_input(run_settings,record,sources,json.loads(current['profile']))
                 except ai.AIError as exc:

@@ -74,7 +74,7 @@ def test_preset_sync_keeps_date_materials_and_duplicate_identity(env, monkeypatc
         source = text_source('通知原文：请核对条件。')
         source['origin'] = {'url': url, 'published_at': '2026-10-29', 'attachments': [], 'warnings': []}
         return source, '公开通知'
-    async def materials(source, read=None):
+    async def materials(source, read=None, *, expanded=False):
         assert read is not None
         return [source, text_source('附件说明：材料清单。', '附件说明')]
     monkeypatch.setattr(source_sync, 'fetch_index', index)

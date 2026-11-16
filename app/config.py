@@ -63,6 +63,8 @@ class Settings:
     ai_workflow_timeout: int = 1800
     registration_mode: str = 'public'
     notice_input_tokens: int = 868928
+    # Optional notice-specific model context; absent preserves the global setting.
+    notice_context_tokens: int | None = None
     ai_stage_summaries: bool = False
     notice_semantic_review: bool = True
     notice_auto_repair: bool = True
@@ -180,11 +182,15 @@ class Settings:
         result.ai_ui_thinking=os.getenv('MIMO_UI_THINKING','false').strip().lower() in {'true','1','yes'}
         result.ai_context_tokens=int(os.getenv('AI_CONTEXT_TOKENS',str(cls.ai_context_tokens)))
         result.ai_output_tokens=int(os.getenv('AI_OUTPUT_TOKENS',str(cls.ai_output_tokens)))
+        notice_context=os.getenv('NOTICE_CONTEXT_TOKENS','').strip()
+        result.notice_context_tokens=int(notice_context) if notice_context else None
         result.ai_workflow_timeout=int(os.getenv('AI_WORKFLOW_TIMEOUT_SECONDS','1800'))
         if not 4096<=result.ai_output_tokens<=131072 or not 60<=result.ai_workflow_timeout<=1800:
             raise ValueError('AI_OUTPUT_TOKENS 须为 4096—131072，AI_WORKFLOW_TIMEOUT_SECONDS 须为 60—1800')
         if result.genui_tier not in {'auto','1','2','3'} or not 2048<=result.ai_context_tokens<=1000000:
             raise ValueError('GENUI_TIER 或 AI_CONTEXT_TOKENS 配置无效')
+        if result.notice_context_tokens is not None and not 2048<=result.notice_context_tokens<=1000000:
+            raise ValueError('NOTICE_CONTEXT_TOKENS 须为 2048—1000000')
         from .genui import LIMITS
         result.genui_limits=json.loads(os.getenv('GENUI_LIMITS_JSON','{}'))
         if not isinstance(result.genui_limits,dict) or any(k not in LIMITS or type(v) is not int or not 1<=v<=LIMITS[k] for k,v in result.genui_limits.items()):

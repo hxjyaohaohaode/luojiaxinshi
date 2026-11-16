@@ -51,13 +51,14 @@ def key(kind,item):
 
 
 def sources(items):
+    from .source_limits import MAX_SOURCE_CHARS
     result=[];total=0
     if not isinstance(items,list) or len(items)>100 or any(not isinstance(s,dict) for s in items):raise ValueError('材料列表格式不正确或单份记录的材料过多')
     for s in items:
         sections=[]
-        for section in collection(s,'sections',2000):
-            value=text(section.get('text'),10000);total+=len(value)
-            if total>100000:raise ValueError('单份记录的材料文字过多')
+        for section in collection(s,'sections',10000):
+            value=text(section.get('text'),MAX_SOURCE_CHARS);total+=len(value)
+            if total>MAX_SOURCE_CHARS:raise ValueError('单份记录的材料文字过多')
             sections.append({'locator':text(section.get('locator'),80),'text':value,**({'table':True} if section.get('table') is True else {})})
         origin=s.get('origin') or {}
         if not isinstance(origin,dict):raise ValueError('材料来源记录格式不正确')

@@ -42,14 +42,14 @@ class Issue(Strict):
 
 
 class SourceCheck(Strict):
-    source_index:int=Field(ge=0,le=5,strict=True)
+    source_index:int=Field(ge=0,le=23,strict=True)
     requirements_summary:str=Field(min_length=8,max_length=700)
     evidence_refs:list[Reference]=Field(max_length=16)
     coverage:Literal['covered','gaps','uncertain','background']
 
 
 class Review(Strict):
-    source_checks:list[SourceCheck]=Field(min_length=1,max_length=6)
+    source_checks:list[SourceCheck]=Field(min_length=1,max_length=24)
     checked_task_indices:list[int]=Field(max_length=30)
     issues:list[Issue]=Field(max_length=24)
 

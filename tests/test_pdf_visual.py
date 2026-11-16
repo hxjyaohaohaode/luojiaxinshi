@@ -56,6 +56,18 @@ def test_scanned_pdf_retains_original_and_renders_the_complete_page_with_annotat
         check_evidence([{'source_id':source['id'],'locator':visual_locator(2),'quote':visual_note(2)}],normalized)
 
 
+def test_large_public_scanned_pdf_can_render_original_page_without_truncation():
+    raw=scanned_pdf()
+    offset=raw.rfind(b'startxref');assert offset>0
+    # Padding is a legal PDF comment after the xref; referenced objects and
+    # their offsets remain unchanged while exercising the >5 MB input path.
+    large=raw[:offset]+b'%'+b'x'*(5*1024*1024)+b'\n'+raw[offset:]
+    source=file_source('large-scanned.pdf',large,expanded=True)
+    assert source['content']==large and source['status']=='review'
+    pages=image_sources([source])
+    assert len(pages)==1 and pages[0]['_pdf_page']==1 and pages[0]['content'].startswith(b'\xff\xd8')
+
+
 def test_pdf_author_and_independent_reviewer_receive_identical_pages_and_explicit_page_citations(monkeypatch):
     source=file_source('synthetic-two-pages.pdf',scanned_pdf(2));sources=register_images([source])
     result={'answer':'测试文档第2页有演示日期，须对照原PDF核对。[1]',

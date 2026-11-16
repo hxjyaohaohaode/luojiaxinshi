@@ -26,7 +26,7 @@ def text_source(text, name='通知正文'):
             'sections':sections,'status':'ok','warning':''}
 
 
-def file_source(filename, data):
+def file_source(filename, data, *, expanded=False):
     name = re.split(r'[/\\]', filename)[-1][:160]
     suffix = Path(name).suffix.lower().lstrip('.')
     if suffix in {'mp4','webm'}:
@@ -34,17 +34,19 @@ def file_source(filename, data):
         return chat_file_source(filename,data)
     if suffix not in {'pdf','doc','docx','txt','md','csv','xls','xlsx','png','jpg','jpeg','webp'}:
         raise ValueError('支持 PDF、DOC、DOCX、XLS、XLSX、CSV、TXT、Markdown、图片、MP4 和 WebM')
-    if not data or len(data)>MAX_FILE:
-        raise ValueError('每份附件须大于 0 字节且不超过 5 MB')
-    if not PARSER_SLOTS.acquire(timeout=2):
+    from .source_limits import MAX_SOURCE_FILE
+    limit=MAX_SOURCE_FILE if expanded else MAX_FILE
+    if not data or len(data)>limit:
+        raise ValueError(f'每份附件须大于 0 字节且不超过 {limit//(1024*1024)} MB')
+    if not PARSER_SLOTS.acquire(timeout=60 if expanded else 2):
         return {'id':ident(),'name':name,'kind':suffix,'content':data,'sha256':hashlib.sha256(data).hexdigest(),
                 'sections':[],'status':'failed','warning':'附件解析当前繁忙，请稍后补传；原件已保存'}
     try:
-        worker='app.legacy_office_worker' if suffix in {'doc','xls'} else 'app.parser_worker'
+        worker='app.source_document_worker' if expanded else 'app.legacy_office_worker' if suffix in {'doc','xls'} else 'app.parser_worker'
         proc = subprocess.run([sys.executable,'-m',worker,suffix], input=data, capture_output=True,
-                              timeout=WORKER_TIMEOUT_SECONDS if suffix in {'doc','xls'} else 20,
+                              timeout=90 if expanded else WORKER_TIMEOUT_SECONDS if suffix in {'doc','xls'} else 20,
                               cwd=ROOT, creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-        if proc.returncode or len(proc.stdout)>300000:
+        if proc.returncode or len(proc.stdout)>(8*1024*1024 if expanded else 300000):
             raise ValueError('解析程序未正常返回')
         result = json.loads(proc.stdout)
     except (subprocess.TimeoutExpired, ValueError, OSError):
@@ -59,6 +61,7 @@ def total_chars(sources):
 
 
 def blockers(notice, sources):
+    from .source_limits import MAX_SOURCE_CHARS
     result=[]
     if not any(source['sections'] or source['kind'] in {'png','jpg','jpeg','webp'} and source['status']!='failed' for source in sources):
         result.append('当前没有可核对的有效材料，请补充正文或可解析附件')
@@ -67,6 +70,6 @@ def blockers(notice, sources):
     for source in sources:
         if source['status'] != 'ok':
             result.append(f"{source['name']}：{source['warning']}")
-    if total_chars(sources)>MAX_CHARS:
-        result.append('正文与附件合计超过 10000 字，请删除无关内容或拆分通知')
+    if total_chars(sources)>MAX_SOURCE_CHARS:
+        result.append(f'正文与附件合计超过 {MAX_SOURCE_CHARS:,} 字，请删除无关内容或拆分通知')
     return result

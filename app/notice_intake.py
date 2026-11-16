@@ -106,15 +106,16 @@ async def read_link(url):
     return await _read_link(url)
 
 
-async def _read_link(url, allowed_host=None, referrer=None):
+async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
     # Public CMS attachment handlers often require their actual parent article.
     # This comes from our saved provenance, never from browser history. Strip
     # query/fragment values and send only to that same public source host.
     parent=urlsplit(referrer) if referrer and public_url(referrer) else None
     try:
         from .source_fetch import transport
-        async with asyncio.timeout(20), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
-                follow_redirects=False, timeout=httpx.Timeout(15, connect=5)) as client:
+        from .source_limits import MAX_SOURCE_FILE
+        async with asyncio.timeout(180 if expanded else 20), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
+                follow_redirects=False, timeout=httpx.Timeout(60 if expanded else 15, connect=5)) as client:
             for _ in range(4):
                 if not public_url(url):
                     raise HTTPException(422, '链接跳转到了非公开地址，未读取')
@@ -136,7 +137,7 @@ async def _read_link(url, allowed_host=None, referrer=None):
                         raise HTTPException(422, f'网站返回 HTTP {response.status_code}，本次未读取；已有内容保留')
                     mime = response.headers.get('content-type', '').split(';')[0].lower().strip()
                     content = bytearray()
-                    limit = 1_500_000 if mime in {'text/html', 'application/xhtml+xml'} else MAX_FILE
+                    limit = 1_500_000 if mime in {'text/html', 'application/xhtml+xml'} else MAX_SOURCE_FILE if expanded else MAX_FILE
                     declared=response.headers.get('content-length','')
                     if declared.isascii() and declared.isdecimal() and int(declared)>limit:
                         raise HTTPException(413, '链接内容超过读取上限，请下载后按事项分别上传；未截断')
@@ -194,7 +195,10 @@ async def _read_link(url, allowed_host=None, referrer=None):
                         if mime == 'application/vnd.ms-excel' and not name.lower().endswith('.xls'):
                             name += '.xls'
                         try:
-                            source = await run_in_threadpool(file_source, name, bytes(content))
+                            if expanded:
+                                source = await run_in_threadpool(file_source, name, bytes(content), expanded=True)
+                            else:
+                                source = await run_in_threadpool(file_source, name, bytes(content))
                         except ValueError as exc:
                             # The download succeeded; format/budget rejection is
                             # not a transport failure and must remain actionable.
@@ -202,7 +206,7 @@ async def _read_link(url, allowed_host=None, referrer=None):
                         title = PurePosixPath(source['name']).stem[:160]
                         origin = {'url': url, 'retrieved_at': int(time.time()), 'attachments': [],
                                   'warnings': [source['warning']] if source['warning'] else []}
-                    if total_chars([source]) > MAX_CHARS:
+                    if not expanded and total_chars([source]) > MAX_CHARS:
                         raise HTTPException(422, f'链接正文超过 {MAX_CHARS:,} 字，请按事项拆分后粘贴或上传；未截断')
                     source['origin'] = origin
                     if response.headers.get('x-luojia-content-sha256'):
@@ -214,7 +218,7 @@ async def _read_link(url, allowed_host=None, referrer=None):
         raise HTTPException(422, '链接读取失败，请粘贴原文或上传附件；已有内容未修改') from None
 
 
-async def read_notice_materials(source, read=None):
+async def read_notice_materials(source, read=None, *, expanded=False):
     """Bounded same-host document/table/text/image attachments, keeping originals.
 
     Only an explicit subscription caller uses this helper. Link previews remain
@@ -240,8 +244,15 @@ async def read_notice_materials(source, read=None):
         if message not in warnings:
             warnings.append(message)
 
+    from .source_limits import (MAX_SOURCE_BYTES, MAX_SOURCE_CHARS, MAX_SOURCE_FILE,
+                                MAX_SOURCE_FILES, MAX_SOURCE_MATERIALS, SOURCE_ATTACHMENT_SECONDS)
+    max_bytes=MAX_SOURCE_BYTES if expanded else MAX_FILE
+    max_file=MAX_SOURCE_FILE if expanded else MAX_FILE
+    max_chars=MAX_SOURCE_CHARS if expanded else MAX_CHARS
+    max_files=MAX_SOURCE_FILES if expanded else 5
+    max_materials=MAX_SOURCE_MATERIALS if expanded else 6
     try:
-        async with asyncio.timeout(ATTACHMENT_READ_SECONDS):
+        async with asyncio.timeout(SOURCE_ATTACHMENT_SECONDS if expanded else ATTACHMENT_READ_SECONDS):
             for item in readings:
                 url, label = item['url'], item['label']
                 supported = re.search(AUTO_ATTACHMENT_PATTERN,url,re.I) or re.search(AUTO_ATTACHMENT_PATTERN,label,re.I)
@@ -253,14 +264,14 @@ async def read_notice_materials(source, read=None):
                     item.update(state='out_of_scope', reason='附件不在已授权通知来源域名内，未自动读取')
                     warn('部分附件不在通知来源域名内，未自动读取，请核对并补上传')
                     continue
-                if (len(materials) >= 6 or sum(s['kind'] != 'text' for s in materials) >= 5
-                        or total_bytes >= MAX_FILE or total_chars(materials) >= MAX_CHARS):
+                if (len(materials) >= max_materials or sum(s['kind'] != 'text' for s in materials) >= max_files
+                        or total_bytes >= max_bytes or total_chars(materials) >= max_chars):
                     item.update(state='budget', reason='正文与已收附件已达到完整解析预算，本附件未读取')
                     warn('正文与已收附件达到材料大小上限，剩余附件未读取，请拆分或补充关键内容')
                     continue
                 try:
                     if reader is read_link:
-                        attachment, _ = await _read_link(url, allowed_host=host,referrer=origin.get('url'))
+                        attachment, _ = await _read_link(url, allowed_host=host,referrer=origin.get('url'),expanded=expanded)
                     else:
                         attachment, _ = await reader(url)
                     if urlsplit(attachment.get('origin', {}).get('url', url)).hostname != host:
@@ -270,7 +281,7 @@ async def read_notice_materials(source, read=None):
                     if kind not in AUTO_ATTACHMENT_KINDS and not plain:
                         raise HTTPException(422, '返回内容不是声明的可读取附件，未作为已读材料')
                     size = len(attachment.get('content') or b'')
-                    if total_bytes + size > MAX_FILE or total_chars(materials + [attachment]) > MAX_CHARS:
+                    if size > max_file or total_bytes + size > max_bytes or total_chars(materials + [attachment]) > max_chars:
                         item.update(state='budget', reason='该附件加入后超过完整解析预算，未截断加入')
                         warn(f'{label}：加入后超过材料大小上限，主文已保留，请按事项拆分附件')
                         continue
@@ -290,7 +301,7 @@ async def read_notice_materials(source, read=None):
                                 reason=detail)
                     warn(f'{label}：{detail}')
     except TimeoutError:
-        warn('附件读取达到 25 秒上限，主文及已读取附件已保留，其余请核对并补上传')
+        warn(f'附件读取达到 {SOURCE_ATTACHMENT_SECONDS if expanded else ATTACHMENT_READ_SECONDS} 秒上限，主文及已读取附件已保留，其余请核对并补上传')
     for item in readings:
         if item['state'] == 'pending':
             item.update(state='timeout', reason='本轮附件读取达到时间上限，尚未取得原件')

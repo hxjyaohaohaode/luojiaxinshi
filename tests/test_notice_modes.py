@@ -70,3 +70,17 @@ def test_disabled_review_is_described_without_promising_a_second_call(tmp_path):
     cfg.notice_semantic_review=True;cfg.notice_daily_enabled=False
     assert 'daily' not in [mode['id'] for mode in notice_processing_modes(cfg)]
     with pytest.raises(ValueError):notice_settings(cfg,'daily')
+
+
+def test_notice_specific_context_leaves_chat_budget_unchanged(tmp_path):
+    from app.ai import AIError,prepare_notice_input
+    from app.documents import text_source
+    cfg=Settings(tmp_path,ai_context_tokens=32768,notice_context_tokens=1000000)
+    run=notice_settings(cfg,'configured')
+    assert cfg.ai_context_tokens==32768 and run.ai_context_tokens==1000000
+    notice={'source_label':'测试来源','published_at':None,'materials_complete':False}
+    _,_,content=prepare_notice_input(run,notice,[text_source('原文开头'+('甲'*12000)+'原文结尾')],{})
+    assert '原文结尾' in content
+    cfg.notice_context_tokens=None
+    with pytest.raises(AIError,match='输出预算不小于上下文容量'):
+        prepare_notice_input(notice_settings(cfg,'configured'),notice,[text_source('正文')],{})

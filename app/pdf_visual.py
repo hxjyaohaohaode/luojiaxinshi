@@ -17,8 +17,8 @@ from .config import ROOT
 PAGE_MARKER = re.compile(r'^第 ([1-9][0-9]*) 页（图像待核对）$')
 PAGE_NOTE = '本页没有足够的可提取文字，需依据本页完整渲染图核对；这不是通知正文或 OCR。'
 PDF_LOCATOR = re.compile(r'^PDF 第 ([1-9][0-9]*) 页（图像观察，非 OCR）$')
-MAX_PDF_VISUAL_PAGES = 50  # Same document/parser resource limit; model input is budgeted separately.
-MAX_RENDER_BYTES = 5 * 1024 * 1024
+MAX_PDF_VISUAL_PAGES = 50  # Complete visual coverage is separately model-budgeted.
+MAX_RENDER_BYTES = 20 * 1024 * 1024
 _cache = OrderedDict()
 _cache_size = 0
 _cache_lock = threading.Lock()
@@ -30,13 +30,14 @@ def page_marker(page):
 
 
 def declared_pages(source):
+    from .source_limits import MAX_SOURCE_PAGES
     if source.get('kind') != 'pdf' or source.get('status') == 'failed':
         return []
     pages = source.get('_pdf_visual_pages')
     if pages is None:
         pages = [int(match[1]) for section in source.get('sections', [])
                  if section.get('text') == PAGE_NOTE and (match := PAGE_MARKER.fullmatch(section.get('locator', '')))]
-    if not isinstance(pages, list) or any(type(page) is not int or not 1 <= page <= 50 for page in pages):
+    if not isinstance(pages, list) or any(type(page) is not int or not 1 <= page <= MAX_SOURCE_PAGES for page in pages):
         raise ValueError('PDF 图像页索引无效，请重新读取原件')
     return sorted(set(pages))
 
@@ -63,10 +64,11 @@ def visual_note(page):
 
 def render_pages(source, *, force=False):
     global _cache_size
+    from .source_limits import MAX_SOURCE_FILE
     if not needs_visual_pages(source) and not (force and source.get('kind')=='pdf'):
         return []
     raw = source.get('content')
-    if not isinstance(raw, bytes) or not raw.startswith(b'%PDF-') or len(raw) > MAX_RENDER_BYTES:
+    if not isinstance(raw, bytes) or not raw.startswith(b'%PDF-') or len(raw) > MAX_SOURCE_FILE:
         raise ValueError('PDF 原件不可读取或超过图像解析预算，请核对原文件')
     key = (hashlib.sha256(raw).hexdigest(), 'all-pages', 'pdf-pages-v2')
     with _cache_lock:
@@ -78,9 +80,9 @@ def render_pages(source, *, force=False):
         raise ValueError('PDF 图像解析当前繁忙，原件已保留，请稍后重试')
     try:
         proc = subprocess.run([sys.executable, '-m', 'app.pdf_render_worker', 'null'],
-                              input=raw, capture_output=True, timeout=20, cwd=ROOT,
+                              input=raw, capture_output=True, timeout=90, cwd=ROOT,
                               creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-        if proc.returncode or len(proc.stdout) > 7_500_000:
+        if proc.returncode or len(proc.stdout) > 28 * 1024 * 1024:
             raise ValueError('PDF 页面渲染未完整返回，未将部分页面视为全部已读')
         result = json.loads(proc.stdout)
         if result.get('error'):
@@ -101,7 +103,7 @@ def render_pages(source, *, force=False):
         if key not in _cache:
             _cache[key] = rendered
             _cache_size += size
-        while _cache_size > 16 * 1024 * 1024:
+        while _cache_size > 32 * 1024 * 1024:
             _, removed = _cache.popitem(last=False)
             _cache_size -= sum(len(item['content']) for item in removed)
     return rendered

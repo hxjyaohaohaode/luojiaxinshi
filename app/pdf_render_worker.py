@@ -5,10 +5,12 @@ import json
 import math
 import sys
 
+from .source_limits import MAX_SOURCE_FILE
+
 
 def render(data, pages):
     import pypdfium2 as pdfium
-    if not data.startswith(b'%PDF-') or len(data) > 5 * 1024 * 1024:
+    if not data.startswith(b'%PDF-') or len(data) > MAX_SOURCE_FILE:
         raise ValueError('PDF 原件格式或大小无效')
     if pages is not None and (not pages or len(pages) > 50 or any(type(page) is not int or page < 1 for page in pages)):
         raise ValueError('PDF 图像页数量或页码无效')
@@ -36,7 +38,7 @@ def render(data, pages):
                 finally:
                     bitmap.close()
                 size += len(content)
-                if size > 5 * 1024 * 1024:
+                if size > 20 * 1024 * 1024:
                     raise ValueError('PDF 页面图像总大小超出预算，未发送部分页面冒充完整内容')
                 result.append({'page': number, 'jpeg': base64.b64encode(content).decode('ascii')})
             finally:
@@ -48,9 +50,9 @@ if __name__ == '__main__':
     try:
         if sys.platform != 'win32':
             import resource
-            resource.setrlimit(resource.RLIMIT_AS, (384 * 1024 * 1024, 384 * 1024 * 1024))
-            resource.setrlimit(resource.RLIMIT_CPU, (18, 18))
-        value = render(sys.stdin.buffer.read(5 * 1024 * 1024 + 1), json.loads(sys.argv[1]))
+            resource.setrlimit(resource.RLIMIT_AS, (768 * 1024 * 1024, 768 * 1024 * 1024))
+            resource.setrlimit(resource.RLIMIT_CPU, (75, 75))
+        value = render(sys.stdin.buffer.read(MAX_SOURCE_FILE + 1), json.loads(sys.argv[1]))
     except Exception as error:
         value = {'error': str(error) if isinstance(error, ValueError) else 'PDF 页面无法完整渲染，请核对原件或补充清晰页面'}
     sys.stdout.buffer.write(json.dumps(value).encode('utf-8'))
