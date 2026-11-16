@@ -66,6 +66,7 @@ class CatalogItem(Strict):
     platform: Literal['website','wechat_public','qq_group','wechat_group','campus','other']
     institution: str = Field(default='',max_length=100)
     purpose: str = Field(default='',max_length=300)
+    category: Literal['','学校公告','教务教学','资助奖助','就业招聘','学生事务','学院通知','图书馆','校园服务','群聊与公众号','其他'] = ''
     semester: str = Field(default='',max_length=40)
     url: str = Field(default='',max_length=2000)
     followed: bool = False
@@ -565,7 +566,12 @@ def install_workspace(app,db,settings,user,heavy_lock):
                 raise HTTPException(404,'来源不存在')
             if record['version']!=payload.version:
                 raise HTTPException(409,'来源已更新，请刷新后重新编辑')
-            conn.execute('UPDATE source_catalog SET data=?,version=version+1,updated_at=? WHERE id=?',(dumps(payload.model_dump(exclude={'version'})),int(time.time()),sid))
+            data=payload.model_dump(exclude={'version'})
+            # Older clients do not send the new optional category. Editing a
+            # name or URL from one of them must not erase a chosen category.
+            if 'category' not in payload.model_fields_set:
+                data['category']=json.loads(record['data']).get('category','')
+            conn.execute('UPDATE source_catalog SET data=?,version=version+1,updated_at=? WHERE id=?',(dumps(data),int(time.time()),sid))
         return {'ok':True}
 
     @app.delete('/api/source-catalog/{sid}')

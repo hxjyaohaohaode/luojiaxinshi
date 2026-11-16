@@ -67,7 +67,11 @@ try{
  await fresh();
  await check('320px: selecting two school columns is read-only until the explicit subscribe click',async()=>{
   await open();await subscribe().waitFor();assert.equal(await page.locator('#source-presets article').count(),2);
-  assert.equal(await page.locator('#source-presets input').count(),0);
+  assert.equal(await page.locator('#source-preset-search').count(),1);
+  await page.locator('#source-preset-category').selectOption('学院通知');
+  assert.equal(await page.locator('#source-presets article').count(),1);
+  assert.match(await page.locator('#source-presets article').textContent(),/新闻与传播学院/);
+  await page.locator('#source-preset-category').selectOption('');
   assert.equal(await page.evaluate(()=>fixture.calls.filter(c=>c.method!=='GET').length),0);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1||document.querySelector('#dialog').scrollWidth>document.querySelector('#dialog').clientWidth+1),false);
   await page.screenshot({path:path.join(out,'school-presets-320.png')});
@@ -123,6 +127,43 @@ try{
   await page.evaluate(()=>{fixture.showDialog('继续编辑','<input id="new-input" value="保留输入">');document.querySelector('#new-input').focus();fixture.release('/source-presets/whu-notices/subscribe');});
   await page.waitForFunction(()=>fixture.calls.filter(c=>c.path==='/source-catalog').length===2);await page.evaluate(()=>new Promise(requestAnimationFrame));
   assert.equal(await page.locator('#new-input').inputValue(),'保留输入');assert.equal(await page.evaluate(()=>document.activeElement.id),'new-input');assert.equal(await page.locator('#dialog').evaluate(n=>n.open),true);
+ });
+ await check('source groups and reception labels distinguish optional checks from missing files',async()=>{
+  await fresh();
+  await page.evaluate(async()=>{
+   const add=(id,name,institution,url,state)=>{
+    fixture.entries.push({id,version:1,data:{name,institution,url,platform:'website'}});
+    fixture.subscriptions.push({source_id:id,enabled:true,state:'error',error:'正文已接收，部分附件或关联材料仍需核对',
+      issue_count:1,delivery_issue_count:state.length,delivery_issues:state,
+      config:{url,mode:'html',article_path_prefix:'/info/',interval_minutes:30},
+      coverage:{list:{succeeded:true,entry_count:1},articles:{succeeded:1,attempted:1},attachments:{received:0,discovered:0},rejected_entries:[]}});
+   };
+   add('teaching','本科生院教务安排','武汉大学本科生院','https://uc.whu.edu.cn/tzgg.htm',[]);
+   add('aid','学生资助通知公告','武汉大学学生资助管理中心','https://zzgl.whu.edu.cn/tzgg.htm',[]);
+   add('job','校园招聘岗位','武汉大学就业中心','https://job.whu.edu.cn/position',
+     [{title:'岗位通知',url:'https://job.whu.edu.cn/info/1.htm',delivery_kind:'attachment',delivery_message:'正文已接收，部分附件未下载，可打开原文查看'}]);
+   await fixture.ui.render(fixture.state.renderId);
+  });
+  for(const name of ['教务教学','资助奖助','就业招聘'])assert.ok(await page.getByRole('heading',{name:new RegExp(name)}).count());
+  await page.locator('#source-category-filter').selectOption('资助奖助');
+  assert.equal(await page.locator('.catalog-card').count(),1);
+  assert.match(await page.locator('[data-source-record="aid"] > summary').textContent(),/自动接收/);
+  await page.locator('[data-source-record="aid"] > summary').click();
+  assert.equal(await page.locator('[data-source-record="aid"] .source-reception-note').count(),0);
+  assert.equal(await page.locator('[data-source-record="aid"] .alert.error').count(),0);
+  await page.locator('#source-category-filter').selectOption('就业招聘');
+  assert.match(await page.locator('[data-source-record="job"] > summary').textContent(),/含原文链接/);
+  await page.locator('[data-source-record="job"] > summary').click();
+  await page.locator('[data-source-record="job"] details summary').first().click();
+  assert.equal(await page.locator('[data-source-record="job"] .source-issue-list a').first().getAttribute('href'),'https://job.whu.edu.cn/info/1.htm');
+  await page.evaluate(()=>fixture.ui.refresh(fixture.state.renderId));
+  assert.equal(await page.locator('[data-source-record="job"] details[data-source-detail="delivery"]').evaluate(n=>n.open),true);
+  for(const width of [320,1280]){
+    await page.setViewportSize({width,height:720});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    const box=await page.locator('[data-source-record="job"]').boundingBox();assert.ok(box.width>=Math.min(300,width-32),JSON.stringify(box));
+    await page.screenshot({path:path.join(out,`source-categories-${width}.png`)});
+  }
  });
  assert.deepEqual(report.errors,[]);assert.equal(report.external_requests,0);
 }catch(error){report.errors.push(error.stack);process.exitCode=1;await page.screenshot({path:path.join(out,'failure.png')});}

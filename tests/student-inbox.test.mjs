@@ -43,7 +43,18 @@ test('website source status distinguishes failed, paused and manual subscription
   assert.deepEqual(rows.map(r=>[r.id,r.state]),[['college','error'],['school','paused'],['manual','manual']]);
   assert.equal(rows[0].pending_count,2);
   assert.deepEqual(rows.filter(r=>r.enabled).map(r=>r.id),['college']);
-  assert.equal(sourceHealthSummary(rows),'已开启 1 个网站 · 1 个检查未完成 · 1 个已暂停 · 查看详情');
+  assert.equal(sourceHealthSummary(rows),'已开启 1 个网站 · 1 个本轮未更新 · 1 个已暂停 · 查看详情');
   assert.equal(sourceHealthSummary([]),'尚未添加网站来源 · 查看详情');
   assert.match(sourceHealthSummary([{enabled:true,state:'syncing',pending_count:1}]),/1 个仍在读取或等待/);
+});
+
+test('optional related reading does not appear as a failed source',()=>{
+  const catalog=[{id:'a',data:{name:'学校来源',platform:'website'}},{id:'b',data:{name:'另一来源',platform:'website'}}];
+  const rows=sourceOverview(catalog,[
+    {source_id:'a',state:'error',enabled:true,coverage:{list:{succeeded:true}},delivery_issue_count:0},
+    {source_id:'b',state:'error',enabled:true,coverage:{list:{succeeded:true}},delivery_issue_count:1},
+  ]);
+  assert.equal(rows.find(row=>row.id==='a').state,'active');
+  assert.equal(rows.find(row=>row.id==='b').state,'link');
+  assert.doesNotMatch(sourceHealthSummary(rows),/未更新/);
 });

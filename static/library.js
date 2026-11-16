@@ -5,6 +5,7 @@ import {numberMarkup,animateSurface} from './experience-system.js';
 import {noticeState,isNoticeOpen} from './notice-intake.js';
 import {noticeSearchText,noticeSearchExcerpt} from './notice-search.js';
 import {highlightMatch} from './command-search.js';
+import {isSchoolOfficial} from './source-presentation.js';
 export const RELEVANCE={matches_known:['和你有关','green'],needs_review:['需确认是否适用','orange'],not_matching:['可能不适用','']};
 export const INBOX_INTENTS={current:'与你相关',all:'全部记录',tracking:'系统跟踪中',act:'要做',decide:'可加入待办',verify:'要核实',followup:'待跟进',read:'知悉 / 阅读',discussion:'普通群聊',irrelevant:'不适用',closed:'历史 / 已结束'};
 export function noticeOrigins(notice){
@@ -52,9 +53,12 @@ export function sortNotices(items,sort='published'){
 }
 export function sourceOverview(catalog,subscriptions){
   const statuses=new Map((subscriptions||[]).map(item=>[item.source_id,item]));
-  const priority={error:0,syncing:1,waiting:2,paused:3,active:4,manual:5};
-  return (catalog||[]).filter(entry=>entry.data?.platform==='website').map(entry=>{const item=statuses.get(entry.id)||{};return {id:entry.id,name:entry.data?.name||'未命名来源',
-    state:item.state||'manual',enabled:!!item.enabled,checked_at:item.checked_at||null,pending_count:Number(item.pending_count)||0};})
+  const priority={error:0,link:1,syncing:2,waiting:3,awaiting_access:4,paused:5,active:6,manual:7};
+  return (catalog||[]).filter(entry=>entry.data?.platform==='website').map(entry=>{const item=statuses.get(entry.id)||{};
+    const listRead=item.enabled&&item.coverage?.list?.succeeded,actual=listRead&&item.delivery_issue_count>0;
+    const currentState=listRead&&item.state==='error'?(actual?'link':'active'):item.state||'manual';
+    return {id:entry.id,name:entry.data?.name||'未命名来源',
+    state:currentState,enabled:!!item.enabled,checked_at:item.checked_at||null,pending_count:Number(item.pending_count)||0};})
     .sort((a,b)=>(priority[a.state]??6)-(priority[b.state]??6)||a.name.localeCompare(b.name,'zh-CN'));
 }
 export function sourceHealthSummary(rows){
@@ -62,7 +66,7 @@ export function sourceHealthSummary(rows){
   const enabled=rows.filter(row=>row.enabled).length,failed=rows.filter(row=>row.state==='error').length;
   const pending=rows.filter(row=>row.enabled&&row.state!=='error'&&(row.state==='waiting'||row.state==='syncing'||row.pending_count)).length;
   const paused=rows.filter(row=>row.state==='paused').length;
-  return `已开启 ${enabled} 个网站${failed?' · '+failed+' 个检查未完成':''}${pending?' · '+pending+' 个仍在读取或等待':''}${paused?' · '+paused+' 个已暂停':''} · 查看详情`;
+  return `已开启 ${enabled} 个网站${failed?' · '+failed+' 个本轮未更新':''}${pending?' · '+pending+' 个仍在读取或等待':''}${paused?' · '+paused+' 个已暂停':''} · 查看详情`;
 }
 export function filterNotices(items,{query='',status='all',from='',to='',relevance='all',intent='all',source=''}={}){
   const q=query.trim().toLocaleLowerCase();
@@ -124,7 +128,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
   }
   function noticeCard(notice) {
     const [label,color]=noticeState(notice);
-    const origins=noticeOrigins(notice).join('、'),meta=sourceMeta(notice),flags=[notice.assessment?.urgency?.state==='due_soon'?'临近原文期限':'',notice.pending_intake_updates?'来源有更新':'',notice.source_review_count?'材料需核对':''].filter(Boolean);
+    const origins=noticeOrigins(notice).join('、'),meta=sourceMeta(notice),flags=[notice.assessment?.urgency?.state==='due_soon'?'临近原文期限':'',notice.pending_intake_updates?'来源有更新':'',notice.source_review_count&&!isSchoolOfficial(notice.source_url)?'材料需核对':''].filter(Boolean);
     const excerpt=!query.trim()&&notice.source_excerpt?`<p class="student-notice-excerpt"><span>原文节选 · </span>${esc(String(notice.source_excerpt).replace(/\s+/g,' ').trim())}</p>`:'';
     const accessible=`打开通知 ${notice.title}，${origins}，${meta}，${label}${flags.length?'，'+flags.join('，'):''}`;
     return `<a class="notice-card notice-row" href="#notice/${encodeURIComponent(notice.id)}" aria-label="${esc(accessible)}" data-state="${esc(notice.status)}" data-priority="${esc(notice.assessment?.priority||'R')}"><div class="notice-card-content"><span class="link-button">${esc(notice.title)}</span>${notice.assessment?.focus?.key_time?`<p class="notice-card-keytime"><span>${esc(notice.assessment.focus.key_time.label)}</span><strong>${esc(notice.assessment.focus.key_time.date)}${notice.assessment.focus.key_time.time?' '+esc(notice.assessment.focus.key_time.time):''}</strong></p>`:''}<p>${esc(origins)}</p>${query.trim()?snippet(notice):excerpt}</div><div class="notice-card-top"><span class="notice-folder" aria-hidden="true">${icon('doc')}</span><span class="notice-card-pills">${notice.applicability&&RELEVANCE[notice.applicability]?`<span class="pill ${RELEVANCE[notice.applicability][1]}">${RELEVANCE[notice.applicability][0]}</span>`:''}<span class="pill ${color}">${label}</span>${flags.map(flag=>`<span class="pill orange">${flag}</span>`).join('')}</span></div><div class="notice-card-footer"><span>${esc(meta)}</span><span>${notice.task_count||0} 项待办</span><span class="notice-card-arrow" aria-hidden="true">${icon('arrow')}</span></div></a>`;
@@ -134,9 +138,9 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
   }
   function sourceHealthMarkup(rows){
     if(!rows.length)return '<p class="small muted">还没有添加网站来源。可以选择学校或学院官网，并按需开启自动接收。</p>';
-    const labels={active:'自动接收已开启',syncing:'正在检查',waiting:'等待首次检查',error:'最近检查未完成',paused:'已暂停',manual:'未开启自动接收'};
+    const labels={active:'自动接收已开启',link:'含原文链接',syncing:'正在接收',waiting:'等待接收',awaiting_access:'等待院方接通',error:'本轮未更新',paused:'已暂停',manual:'未开启自动接收'};
     const checked=value=>{const date=new Date(Number(value)*1000);return value&&Number.isFinite(date.getTime())?new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(date):'';};
-    return `<div class="student-source-list">${rows.slice(0,3).map(item=>`<div class="student-source-status" data-state="${esc(item.state)}"><strong>${esc(item.name)}</strong><span>${esc(labels[item.state]||'状态待核对')}${item.checked_at?' · 检查于 '+esc(checked(item.checked_at)):''}${item.pending_count?' · 等待读取 '+item.pending_count+' 则':''}</span></div>`).join('')}</div>${rows.length>3?`<p class="small muted">另有 ${rows.length-3} 个官网来源，可在来源页查看。</p>`:''}`;
+    return `<div class="student-source-list">${rows.slice(0,3).map(item=>`<div class="student-source-status" data-state="${esc(item.state)}"><strong>${esc(item.name)}</strong><span>${esc(labels[item.state]||'待连接')}${item.checked_at?' · 更新于 '+esc(checked(item.checked_at)):''}${item.pending_count?' · 等待读取 '+item.pending_count+' 则':''}</span></div>`).join('')}</div>${rows.length>3?`<p class="small muted">另有 ${rows.length-3} 个官网来源，可在来源页查看。</p>`:''}`;
   }
   async function loadSourceHealth(){
     const target=$('#library-source-health'),uid=state.session?.user?.id,route=state.renderId,sequence=++sourceSequence;
@@ -244,7 +248,7 @@ export function createLibraryUI({state,api,esc,icon,noticeRow,empty,moveSelectio
     const hasFilter=!!(selected||query.trim()||status!=='all'||relevance!=='all'||intent!=='all'||source||from||to),emptyKey=items.length?'':hasFilter||state.notices.length?'search':'listening',results=$('#library-results');
     results.classList.toggle('card-view',view==='cards'&&items.length>0);
     document.querySelectorAll('[data-library-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.libraryView===view)));
-    if(!emptyKey||results.dataset.emptyKey!==emptyKey)results.innerHTML=items.length?units.map(unit=>unit.matter?matterCard(unit):(view==='cards'?noticeCard:n=>`<div class="notice-search-list-row">${noticeRow(n)}<p class="student-list-meta">${esc(sourceMeta(n))}${n.pending_intake_updates?' · 来源有更新':''}${n.source_review_count?' · 材料需核对':''}</p>${query.trim()?`<a class="notice-search-detail" href="#notice/${encodeURIComponent(n.id)}">${snippet(n)}</a>`:''}</div>`)(unit.notices[0])).join(''):empty(hasFilter||state.notices.length?'暂时没有匹配的通知':'先收好第一则通知',hasFilter||state.notices.length?'换一个正文或附件中的词，或清空筛选。':'订阅学校或学院官网，也可以自行保存正文、附件和截图。',hasFilter||state.notices.length?'<button class="button small" type="button" data-library-reset>清空筛选</button>':'<a class="button" href="#sources">选择通知来源</a>',false,hasFilter||state.notices.length?'search':'listening');
+    if(!emptyKey||results.dataset.emptyKey!==emptyKey)results.innerHTML=items.length?units.map(unit=>unit.matter?matterCard(unit):(view==='cards'?noticeCard:n=>`<div class="notice-search-list-row">${noticeRow(n)}<p class="student-list-meta">${esc(sourceMeta(n))}${n.pending_intake_updates?' · 来源有更新':''}${n.source_review_count&&!isSchoolOfficial(n.source_url)?' · 材料需核对':''}</p>${query.trim()?`<a class="notice-search-detail" href="#notice/${encodeURIComponent(n.id)}">${snippet(n)}</a>`:''}</div>`)(unit.notices[0])).join(''):empty(hasFilter||state.notices.length?'暂时没有匹配的通知':'先收好第一则通知',hasFilter||state.notices.length?'换一个正文或附件中的词，或清空筛选。':'订阅学校或学院官网，也可以自行保存正文、附件和截图。',hasFilter||state.notices.length?'<button class="button small" type="button" data-library-reset>清空筛选</button>':'<a class="button" href="#sources">选择通知来源</a>',false,hasFilter||state.notices.length?'search':'listening');
     results.dataset.emptyKey=emptyKey;
     $('#library-pages').innerHTML=`${value.notice?`<p class="small" role="status">${esc(value.notice)}</p>`:''}${searchError?`<p class="alert error" role="alert">${esc(searchError)} <button type="button" class="button small" data-library-search-retry>重试读取</button></p>`:''}<span class="small muted">${searching?'正在读取…':`已加载 ${items.length} / ${value.total} 则${grouped&&hasGroups?'；归组仅含已加载通知':''}`}</span>${value.has_more?`<button type="button" class="button small" data-library-more ${searching?'disabled':''}>再加载 ${value.limit} 则</button>`:''}`;
 

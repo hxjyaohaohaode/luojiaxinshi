@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS notice_link_previews(
 CREATE INDEX IF NOT EXISTS notice_link_previews_owner ON notice_link_previews(user_id,expires_at);
 CREATE TABLE IF NOT EXISTS notice_source_origins(
  source_id TEXT PRIMARY KEY REFERENCES sources(id) ON DELETE CASCADE, data TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS notice_source_origins_url ON notice_source_origins(json_extract(data,'$.url'));
 CREATE TABLE IF NOT EXISTS notice_submissions(
  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, request_id TEXT NOT NULL,
  notice_id TEXT REFERENCES notices(id) ON DELETE SET NULL, digest TEXT NOT NULL,

@@ -166,6 +166,10 @@ def catalog_matches(catalog,config):
     return urlsplit(catalog['url']).hostname==urlsplit(config['url']).hostname
 
 
+def missing_original(error):
+    return any(value in str(error) for value in ('HTTP 404','HTTP 410','原网页地址无效'))
+
+
 class IndexEntries(list):
     def __init__(self,entries=(),*,rejected=(),empty_confirmed=False):
         super().__init__(entries)
@@ -216,9 +220,12 @@ async def trial_rule(db,sid,uid,config,version):
             if len(result['articles'])>=2:break
         result['can_apply']=bool(result['articles']) and all(x['status']=='ok' for x in result['articles'])
         if not result['articles']:
-            if config.get('preset_id')=='whu-school-target-notices' and entries:
-                # This fixed, independently verified school-board adapter can
-                # save labelled list metadata while article access is gated.
+            all_known_missing=(len(result['sample_errors'])>=len(entries) and
+                               all(missing_original(item.get('reason','')) for item in result['sample_errors']))
+            if config.get('preset_id') and get_preset(config['preset_id']) and entries and not all_known_missing:
+                # A fixed official column can still deliver its labelled title,
+                # date and original link when its individual pages are gated.
+                # List-only records are never presented as full text or AI input.
                 result.update(can_apply=True,list_only=True)
             else:
                 result['errors'].append('没有读到公开正文样本，暂不安装自动接收规则')
@@ -463,21 +470,26 @@ def source_issues(conn, sid, uid, limit=20):
             (uid,'website:'+sid+':'+item['url'])).fetchone()
         # A failed current fetch is more important than an older saved
         # attachment warning; show both rather than masking the outage.
-        reasons=[];alternatives=[]
+        reasons=[];alternatives=[];missing_direct=False;list_only=False
         current_failure=not item['error'].startswith(('正文已接收，部分附件', '部分附件或关联内容未完整复查'))
+        if item['error'].startswith(('仅接收学校公告列表','仅接收官网栏目列表')):
+            current_failure=False;list_only=True
         if current_failure:
             reasons.append(item['error'])
         if receipt:
-            for source in conn.execute('''SELECT s.name,s.status,s.warning,o.data FROM sources s
+            for source in conn.execute('''SELECT s.name,s.kind,s.status,s.warning,o.data FROM sources s
                     JOIN notices n ON n.id=s.notice_id JOIN notice_source_origins o ON o.source_id=s.id
                     WHERE s.notice_id=? AND n.user_id=? AND s.active=1''',(receipt['notice_id'],uid)):
                 material={'status':source['status'],'origin':json.loads(source['data'])}
                 info=coverage(material)
+                primary=not material['origin'].get('parent_url')
+                if primary and material['origin'].get('list_only'):list_only=True
+                if primary and info['unread_attachments']:missing_direct=True
                 for part in info['unread_attachments']:
                     reasons.append(('上次记录：' if current_failure else '')+(part.get('label') or '附件')+'：'+part['reason'])
                     if current_failure and part.get('url'):
-                        alternative=conn.execute('''SELECT n.id,n.title,s.name FROM sources s
-                            JOIN notices n ON n.id=s.notice_id JOIN notice_source_origins o ON o.source_id=s.id
+                        alternative=conn.execute('''SELECT n.id,n.title,s.name FROM notice_source_origins o INDEXED BY notice_source_origins_url
+                            CROSS JOIN sources s ON s.id=o.source_id CROSS JOIN notices n ON n.id=s.notice_id
                             WHERE n.user_id=? AND n.id<>? AND s.active=1 AND s.status IN ('ok','review')
                               AND json_extract(o.data,'$.url')=? ORDER BY s.created_at DESC,s.id LIMIT 1''',
                             (uid,receipt['notice_id'],part['url'])).fetchone()
@@ -490,8 +502,16 @@ def source_issues(conn, sid, uid, limit=20):
                 if info['retained_snapshots']:
                     reasons.append('部分材料保留了上次成功读取的版本，请核对原文')
         reasons=list(dict.fromkeys(reasons))
+        invalid_link=current_failure and missing_original(item['error'])
+        kind=('unavailable' if invalid_link else 'article' if current_failure else 'link_only' if list_only else 'attachment' if missing_direct else 'supplemental')
+        message={'article':'本次未读到正文，可尝试打开原文',
+                 'unavailable':'原文页面暂时不存在或已变更',
+                 'link_only':'已收到原文链接，正文和附件尚未读取',
+                 'attachment':'正文已接收，部分附件未下载，可尝试打开原文',
+                 'supplemental':''}[kind]
         issues.append({'title':item['title'],'url':public_url(item['url']),'notice_id':receipt['notice_id'] if receipt else None,
-                       'reason':'；'.join(reasons[:3]) or item['error'],'alternatives':alternatives[:3]})
+                       'reason':'；'.join(reasons[:3]) or item['error'],'alternatives':alternatives[:3],
+                       'delivery_kind':kind,'delivery_message':message})
     return issues
 
 
@@ -515,7 +535,11 @@ def status(conn, sid, uid):
     result['state'] = 'paused' if not result['enabled'] else 'syncing' if result['running_until'] > time.time() else 'error' if result['error'] else 'active' if result['succeeded_at'] else 'waiting'
     result['pending_count'] = conn.execute('SELECT count(*) FROM source_subscription_items WHERE source_id=? AND checked_at=0', (sid,)).fetchone()[0]
     result['issue_count'] = conn.execute("SELECT count(*) FROM source_subscription_items WHERE source_id=? AND error<>''", (sid,)).fetchone()[0]
-    result['issues'] = source_issues(conn,sid,uid) if result['issue_count'] else []
+    all_issues=source_issues(conn,sid,uid,limit=200) if result['issue_count'] else []
+    result['issues']=all_issues[:20]
+    delivery_issues=[issue for issue in all_issues if issue['delivery_kind']!='supplemental']
+    result['delivery_issues']=delivery_issues[:20]
+    result['delivery_issue_count']=len(delivery_issues)
     result['feed_service_url']=result['config']['url'] if result['config']['mode']=='feed' else None
     result['allowed_article_origins']=result['config'].get('allowed_article_origins') or [origin(result['config']['url'])]
     result['source_identity']=result['config'].get('source_identity','')
@@ -573,6 +597,18 @@ def school_list_snapshot(item, reason):
         '发布日期：'+(item.get('published_at') or '未标明'),
         '原文及附件尚未读取，请打开来源链接核对。',
     ]), '学校公告列表记录')
+    source.update(status='review',warning=warning)
+    source['origin']={'url':item['url'],'retrieved_at':int(time.time()),'attachments':[],
+                      'warnings':[warning],'list_only':True,'related_links':[]}
+    return source
+
+
+def official_list_snapshot(item,reason):
+    from .documents import text_source
+    warning='仅收到官网栏目中的标题和原文链接，正文及附件尚未读取。'+reason[:300]
+    source=text_source('\n'.join(['这是一条官网栏目记录，不是通知正文。',
+        '标题：'+item['title'],'发布日期：'+(item.get('published_at') or '未标明'),
+        '正文和附件请打开原文查看。']),'官网栏目记录')
     source.update(status='review',warning=warning)
     source['origin']={'url':item['url'],'retrieved_at':int(time.time()),'attachments':[],
                       'warnings':[warning],'list_only':True,'related_links':[]}
@@ -721,7 +757,11 @@ async def sync_source(db, sid, uid=None, force=False):
                     with acquisition(db,config,origins=origins,hosts=hosts,bypass_shared=force):
                         source, _ = await read_link(item['url'])
                 except HTTPException as exc:
-                    if config.get('preset_id')!='whu-school-target-notices':
+                    preset_id=config.get('preset_id','')
+                    if not preset_id or not get_preset(preset_id):
+                        raise
+                    if missing_original(exc.detail):
+                        # A known missing page is not a usable link-only notice.
                         raise
                     # Never replace a previously received full article with a
                     # shorter list-only snapshot when the origin is unavailable.
@@ -730,7 +770,8 @@ async def sync_source(db, sid, uid=None, force=False):
                             raise
                     provenance=json.loads(item['provenance']) if item.get('provenance') else {}
                     list_only_reason=str(exc.detail)
-                    source=school_list_snapshot({**item,'publisher':provenance.get('listed_publisher','')},list_only_reason)
+                    source=(school_list_snapshot({**item,'publisher':provenance.get('listed_publisher','')},list_only_reason)
+                            if preset_id=='whu-school-target-notices' else official_list_snapshot(item,list_only_reason))
                 if not article_allowed(source.get('origin', {}).get('url', item['url']),config):
                     raise HTTPException(422, '正文跳转出了订阅授权范围')
                 source.setdefault('origin',{}).update(json.loads(item['provenance']) if item.get('provenance') else {})
@@ -781,7 +822,8 @@ async def sync_source(db, sid, uid=None, force=False):
                         for attachment in material_origin.get('attachment_reads',[]):
                             receipt['attachments']['items'].append({**attachment,'article_url':material_origin.get('url'),
                                 'recorded_at':int(time.time())})
-                    article_error=('仅接收学校公告列表，正文和附件未读取：'+list_only_reason[:300] if list_only_reason else
+                    article_error=(('仅接收学校公告列表' if config.get('preset_id')=='whu-school-target-notices' else '仅接收官网栏目列表')+
+                                   '，正文和附件未读取：'+list_only_reason[:300] if list_only_reason else
                                    '正文已接收，部分附件或关联材料仍需核对' if incomplete else '')
                     if article_error:errors.append(article_error)
                     conn.execute('UPDATE source_subscription_items SET checked_at=?,error=? WHERE source_id=? AND url=?', (int(time.time()), article_error, sid, item['url']))
@@ -1044,7 +1086,7 @@ def install(app, db, user):
                              (preset_id,now+PENDING_RETRY_SECONDS,now,'；'.join(trial.get('errors') or [])[:500]))
                 return {'source_id':sid,'created':created,'activated':False,'pending':True,'subscription':status(conn,sid,current['id'])}
             result=status(conn,sid,current['id']) if previous else apply_trial(conn,sid,current['id'],RuleApply(version=0,trial_id=trial['trial_id']))
-            return {'source_id':sid,'created':created,'activated':not bool(previous),'subscription':result}
+            return {'source_id':sid,'created':created,'activated':not bool(previous),'list_only':bool(trial.get('list_only')),'subscription':result}
 
     @app.post('/api/source-presets/{preset_id}/subscribe')
     async def subscribe_preset(preset_id: str, current=Depends(user)):
@@ -1066,7 +1108,8 @@ def install(app, db, user):
                     result=await subscribe_one(preset_id,current,individual_limit=False)
                     subscription=result['subscription']
                     return {'id':preset_id,'name':preset['name'],'source_id':result['source_id'],
-                            'state':'pending' if result.get('pending') else 'added' if result['activated'] else 'existing','subscription_state':subscription['state']}
+                            'state':'pending' if result.get('pending') else 'added' if result['activated'] else 'existing',
+                            'list_only':bool(result.get('list_only')),'subscription_state':subscription['state']}
                 except HTTPException as exc:
                     return {'id':preset_id,'name':preset['name'],'state':'failed','reason':str(exc.detail)[:500]}
                 except Exception:
