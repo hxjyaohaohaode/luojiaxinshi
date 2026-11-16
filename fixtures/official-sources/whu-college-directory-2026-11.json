@@ -1,0 +1,217 @@
+[
+  {
+    "group": "人文科学学部",
+    "name": "哲学学院",
+    "home": "http://philosophy.whu.edu.cn/"
+  },
+  {
+    "group": "人文科学学部",
+    "name": "文学院",
+    "home": "http://chinese.whu.edu.cn/"
+  },
+  {
+    "group": "人文科学学部",
+    "name": "外国语言文学学院",
+    "home": "http://fls.whu.edu.cn/"
+  },
+  {
+    "group": "人文科学学部",
+    "name": "新闻与传播学院",
+    "home": "http://journal.whu.edu.cn/"
+  },
+  {
+    "group": "人文科学学部",
+    "name": "历史学院",
+    "home": "http://history.whu.edu.cn/"
+  },
+  {
+    "group": "人文科学学部",
+    "name": "艺术与文化学院（艺术教育中心）",
+    "home": "http://art.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "经济与管理学院",
+    "home": "http://ems.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "法学院",
+    "home": "http://law.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "政治与公共管理学院",
+    "home": "https://pspa.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "马克思主义学院",
+    "home": "http://marx.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "社会学院",
+    "home": "http://shxy.whu.edu.cn/"
+  },
+  {
+    "group": "社会科学学部",
+    "name": "信息管理学院",
+    "home": "http://sim.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "数学与统计学院",
+    "home": "http://maths.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "物理学院",
+    "home": "http://physics.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "化学与分子科学学院",
+    "home": "http://chem.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "生命科学学院",
+    "home": "http://bio.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "资源与环境科学学院",
+    "home": "http://sres.whu.edu.cn/"
+  },
+  {
+    "group": "理学部",
+    "name": "地球与空间科学技术学院",
+    "home": "https://esst.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "动力与机械学院",
+    "home": "http://pmc.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "电气工程学院",
+    "home": "http://eea.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "土木建筑工程学院",
+    "home": "http://civ.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "水利水电学院",
+    "home": "http://swrh.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "城市设计学院",
+    "home": "https://sud.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "机器人学院",
+    "home": "https://robotics.whu.edu.cn/"
+  },
+  {
+    "group": "工学部",
+    "name": "集成电路学院",
+    "home": "http://ic.whu.edu.cn"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "电子信息学院",
+    "home": "http://eis.whu.edu.cn/"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "计算机学院",
+    "home": "http://cs.whu.edu.cn/"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "遥感信息工程学院",
+    "home": "http://rsgis.whu.edu.cn/"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "测绘学院",
+    "home": "http://www.sgg.whu.edu.cn/"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "国家网络安全学院",
+    "home": "http://cse.whu.edu.cn"
+  },
+  {
+    "group": "信息科学学部",
+    "name": "人工智能学院",
+    "home": "https://sai.whu.edu.cn/"
+  },
+  {
+    "group": "医学部",
+    "name": "泰康医学院(基础医学院)",
+    "home": "http://wbm.whu.edu.cn/"
+  },
+  {
+    "group": "医学部",
+    "name": "公共卫生学院",
+    "home": "http://sph.whu.edu.cn/"
+  },
+  {
+    "group": "医学部",
+    "name": "药学院",
+    "home": "http://pharmacy.whu.edu.cn"
+  },
+  {
+    "group": "医学部",
+    "name": "第一临床学院",
+    "home": "http://www.rmhospital.com/"
+  },
+  {
+    "group": "医学部",
+    "name": "第二临床学院",
+    "home": "http://www.znhospital.cn/"
+  },
+  {
+    "group": "医学部",
+    "name": "口腔医学院",
+    "home": "https://www.whuss.com/"
+  },
+  {
+    "group": "医学部",
+    "name": "护理学院",
+    "home": "http://sns.whu.edu.cn"
+  },
+  {
+    "group": "跨学科类",
+    "name": "弘毅学堂",
+    "home": "http://hyxt.whu.edu.cn/"
+  },
+  {
+    "group": "跨学科类",
+    "name": "前沿交叉学科研究院",
+    "home": "https://aais.whu.edu.cn"
+  },
+  {
+    "group": "跨学科类",
+    "name": "国家卓越工程师学院",
+    "home": "https://ncee.whu.edu.cn"
+  },
+  {
+    "group": "跨学科类",
+    "name": "科技与产业学院",
+    "home": "https://sti.whu.edu.cn/"
+  },
+  {
+    "group": "跨学科类",
+    "name": "武汉大学杜伦大学联合学院",
+    "home": "https://wdj.whu.edu.cn"
+  }
+]

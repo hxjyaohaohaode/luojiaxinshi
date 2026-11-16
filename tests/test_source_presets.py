@@ -16,11 +16,12 @@ def subscribe(client, preset='whu-notices'):
 def test_preset_subscription_is_atomic_idempotent_and_owner_scoped(env):
     a, b = account(env), account(env, 'bob')
     presets = a.get('/api/source-presets').json()
-    assert {p['id'] for p in presets} == {'whu-notices', 'whu-sres-notices', 'whu-journal-affairs',
+    assert {p['id'] for p in presets} >= {'whu-notices', 'whu-sres-notices', 'whu-journal-affairs',
                                           'whu-library-notices', 'whu-undergrad-student',
                                           'whu-undergrad-teaching', 'whu-student-aid', 'whu-employment',
                                           'whu-employment-jobs', 'whu-employment-internships', 'whu-employment-fairs'}
-    assert all(urlsplit(p['url']).hostname.endswith('.whu.edu.cn') for p in presets)
+    assert all(urlsplit(p['url']).hostname.endswith('.whu.edu.cn') or
+               urlsplit(p['url']).hostname in {'www.whuss.com','www.rmhospital.com','www.znhospital.cn'} for p in presets)
     assert [p['id'] for p in presets[:2]] == ['whu-sres-notices', 'whu-notices']
     first, again, other = subscribe(a), subscribe(a), subscribe(b)
     assert first['created'] and not again['created']

@@ -1,0 +1,915 @@
+[
+  {
+    "id": "whu-college-philosophy",
+    "name": "哲学学院通知公告",
+    "institution": "武汉大学哲学学院",
+    "url": "https://philosophy.whu.edu.cn/xwzx/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "人文科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://philosophy.whu.edu.cn/",
+    "purpose": "学校官网列出的哲学学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-chinese",
+    "name": "文学院通知公告",
+    "institution": "武汉大学文学院",
+    "url": "https://chinese.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "人文科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "list_news"
+    ],
+    "homepage": "http://chinese.whu.edu.cn/",
+    "purpose": "学校官网列出的文学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-fls",
+    "name": "外国语言文学学院通知公告",
+    "institution": "武汉大学外国语言文学学院",
+    "url": "https://fls.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "人文科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "wy-list"
+    ],
+    "homepage": "http://fls.whu.edu.cn/",
+    "purpose": "学校官网列出的外国语言文学学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-journal",
+    "name": "新闻与传播学院通知公告",
+    "institution": "武汉大学新闻与传播学院",
+    "url": "https://journal.whu.edu.cn/notice/index",
+    "article_path_prefix": "/notice/",
+    "group": "人文科学学部",
+    "adapter": "journal",
+    "list_tag": "ul",
+    "list_tokens": [
+      "p-list5"
+    ],
+    "homepage": "http://journal.whu.edu.cn/",
+    "purpose": "学校官网列出的新闻与传播学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-history",
+    "name": "历史学院通知公告",
+    "institution": "武汉大学历史学院",
+    "url": "https://history.whu.edu.cn/index/xxgk.htm",
+    "article_path_prefix": "/info/",
+    "group": "人文科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "news-list2"
+    ],
+    "homepage": "http://history.whu.edu.cn/",
+    "purpose": "学校官网列出的历史学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-art",
+    "name": "艺术与文化学院（艺术教育中心）通知公告",
+    "institution": "武汉大学艺术与文化学院（艺术教育中心）",
+    "url": "https://art.whu.edu.cn/xwzx/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "人文科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://art.whu.edu.cn/",
+    "purpose": "学校官网列出的艺术与文化学院（艺术教育中心）公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-ems",
+    "name": "经济与管理学院通知公告",
+    "institution": "武汉大学经济与管理学院",
+    "url": "https://ems.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://ems.whu.edu.cn/",
+    "purpose": "学校官网列出的经济与管理学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-law",
+    "name": "法学院通知公告",
+    "institution": "武汉大学法学院",
+    "url": "https://law.whu.edu.cn/xxgk/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "fxy-list"
+    ],
+    "homepage": "http://law.whu.edu.cn/",
+    "purpose": "学校官网列出的法学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-pspa",
+    "name": "政治与公共管理学院通知公告",
+    "institution": "武汉大学政治与公共管理学院",
+    "url": "https://pspa.whu.edu.cn/xsgz/xgtz/bksxgtz.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://pspa.whu.edu.cn/",
+    "purpose": "学校官网列出的政治与公共管理学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-marx",
+    "name": "马克思主义学院通知公告",
+    "institution": "武汉大学马克思主义学院",
+    "url": "https://marx.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://marx.whu.edu.cn/",
+    "purpose": "学校官网列出的马克思主义学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-shxy",
+    "name": "社会学院通知公告",
+    "institution": "武汉大学社会学院",
+    "url": "https://shxy.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://shxy.whu.edu.cn/",
+    "purpose": "学校官网列出的社会学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sim",
+    "name": "信息管理学院通知公告",
+    "institution": "武汉大学信息管理学院",
+    "url": "https://sim.whu.edu.cn/tzgg/jwgl.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sim.whu.edu.cn/",
+    "purpose": "学校官网列出的信息管理学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-maths",
+    "name": "数学与统计学院通知公告",
+    "institution": "武汉大学数学与统计学院",
+    "url": "https://maths.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "理学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://maths.whu.edu.cn/",
+    "purpose": "学校官网列出的数学与统计学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-physics",
+    "name": "物理学院通知公告",
+    "institution": "武汉大学物理学院",
+    "url": "https://physics.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "理学部",
+    "adapter": "vsb",
+    "list_tag": "div",
+    "list_tokens": [
+      "news_box"
+    ],
+    "homepage": "http://physics.whu.edu.cn/",
+    "purpose": "学校官网列出的物理学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-chem",
+    "name": "化学与分子科学学院通知公告",
+    "institution": "武汉大学化学与分子科学学院",
+    "url": "https://chem.whu.edu.cn/tzgg/rcrs.htm",
+    "article_path_prefix": "/info/",
+    "group": "理学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://chem.whu.edu.cn/",
+    "purpose": "学校官网列出的化学与分子科学学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-bio",
+    "name": "生命科学学院通知公告",
+    "institution": "武汉大学生命科学学院",
+    "url": "https://bio.whu.edu.cn/ksdh/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "理学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://bio.whu.edu.cn/",
+    "purpose": "学校官网列出的生命科学学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-esst",
+    "name": "地球与空间科学技术学院通知公告",
+    "institution": "武汉大学地球与空间科学技术学院",
+    "url": "https://esst.whu.edu.cn/notice.htm",
+    "article_path_prefix": "/info/",
+    "group": "理学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://esst.whu.edu.cn/",
+    "purpose": "学校官网列出的地球与空间科学技术学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-pmc",
+    "name": "动力与机械学院通知公告",
+    "institution": "武汉大学动力与机械学院",
+    "url": "https://pmc.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "clearfix"
+    ],
+    "homepage": "http://pmc.whu.edu.cn/",
+    "purpose": "学校官网列出的动力与机械学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-eea",
+    "name": "电气工程学院通知公告",
+    "institution": "武汉大学电气工程学院",
+    "url": "https://eea.whu.edu.cn/kjdaohan/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "dqh-tzgg-list"
+    ],
+    "homepage": "http://eea.whu.edu.cn/",
+    "purpose": "学校官网列出的电气工程学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-civ",
+    "name": "土木建筑工程学院通知公告",
+    "institution": "武汉大学土木建筑工程学院",
+    "url": "https://civ.whu.edu.cn/sy/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://civ.whu.edu.cn/",
+    "purpose": "学校官网列出的土木建筑工程学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-swrh",
+    "name": "水利水电学院通知公告",
+    "institution": "武汉大学水利水电学院",
+    "url": "https://swrh.whu.edu.cn/xxgk/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "am-list"
+    ],
+    "homepage": "http://swrh.whu.edu.cn/",
+    "purpose": "学校官网列出的水利水电学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因",
+    "list_multi": true
+  },
+  {
+    "id": "whu-college-sud",
+    "name": "城市设计学院通知公告",
+    "institution": "武汉大学城市设计学院",
+    "url": "https://sud.whu.edu.cn/lmdh/tzgg/gs.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://sud.whu.edu.cn/",
+    "purpose": "学校官网列出的城市设计学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-robotics",
+    "name": "机器人学院通知公告",
+    "institution": "武汉大学机器人学院",
+    "url": "https://robotics.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "noticeList",
+      "disFlex",
+      "flexWrap",
+      "fz16"
+    ],
+    "homepage": "https://robotics.whu.edu.cn/",
+    "purpose": "学校官网列出的机器人学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-ic",
+    "name": "集成电路学院通知公告",
+    "institution": "武汉大学集成电路学院",
+    "url": "https://ic.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "list202",
+      "content"
+    ],
+    "homepage": "http://ic.whu.edu.cn",
+    "purpose": "学校官网列出的集成电路学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-eis",
+    "name": "电子信息学院通知公告",
+    "institution": "武汉大学电子信息学院",
+    "url": "https://eis.whu.edu.cn/xsgz/xgtz.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "clearfix"
+    ],
+    "homepage": "http://eis.whu.edu.cn/",
+    "purpose": "学校官网列出的电子信息学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-cs",
+    "name": "计算机学院通知公告",
+    "institution": "武汉大学计算机学院",
+    "url": "https://cs.whu.edu.cn/xwdt/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://cs.whu.edu.cn/",
+    "purpose": "学校官网列出的计算机学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-rsgis",
+    "name": "遥感信息工程学院通知公告",
+    "institution": "武汉大学遥感信息工程学院",
+    "url": "https://rsgis.whu.edu.cn/tzgg1/xytz.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://rsgis.whu.edu.cn/",
+    "purpose": "学校官网列出的遥感信息工程学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sgg",
+    "name": "测绘学院通知公告",
+    "institution": "武汉大学测绘学院",
+    "url": "https://www.sgg.whu.edu.cn/tzgg1/jx.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "am-list"
+    ],
+    "homepage": "http://www.sgg.whu.edu.cn/",
+    "purpose": "学校官网列出的测绘学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-cse",
+    "name": "国家网络安全学院通知公告",
+    "institution": "武汉大学国家网络安全学院",
+    "url": "https://cse.whu.edu.cn/kjdh/tzgg/zx.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://cse.whu.edu.cn",
+    "purpose": "学校官网列出的国家网络安全学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sai",
+    "name": "人工智能学院通知公告",
+    "institution": "武汉大学人工智能学院",
+    "url": "https://sai.whu.edu.cn/xwzx/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://sai.whu.edu.cn/",
+    "purpose": "学校官网列出的人工智能学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-wbm",
+    "name": "泰康医学院(基础医学院)通知公告",
+    "institution": "武汉大学泰康医学院(基础医学院)",
+    "url": "https://wbm.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "ny-news-list"
+    ],
+    "homepage": "http://wbm.whu.edu.cn/",
+    "purpose": "学校官网列出的泰康医学院(基础医学院)公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sph",
+    "name": "公共卫生学院通知公告",
+    "institution": "武汉大学公共卫生学院",
+    "url": "https://sph.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sph.whu.edu.cn/",
+    "purpose": "学校官网列出的公共卫生学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-pharmacy",
+    "name": "药学院通知公告",
+    "institution": "武汉大学药学院",
+    "url": "https://pharmacy.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://pharmacy.whu.edu.cn",
+    "purpose": "学校官网列出的药学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-rmhospital",
+    "name": "第一临床学院官网",
+    "institution": "武汉大学第一临床学院",
+    "url": "http://www.rmhospital.com/",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "manual",
+    "homepage": "http://www.rmhospital.com/",
+    "purpose": "学校院系目录列出的官网；公开自动读取暂不可用，请打开官网核对",
+    "manual_reason": "院方官网当前限制自动访问，暂不能公开自动读取"
+  },
+  {
+    "id": "whu-college-znhospital",
+    "name": "第二临床学院官网",
+    "institution": "武汉大学第二临床学院",
+    "url": "http://www.znhospital.cn/",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "manual",
+    "homepage": "http://www.znhospital.cn/",
+    "purpose": "学校院系目录列出的官网；公开自动读取暂不可用，请打开官网核对",
+    "manual_reason": "院方官网当前限制自动访问，暂不能公开自动读取"
+  },
+  {
+    "id": "whu-college-whuss",
+    "name": "口腔医学院通知公告",
+    "institution": "武汉大学口腔医学院",
+    "url": "https://www.whuss.com/category/14",
+    "article_path_prefix": "/article/",
+    "group": "医学部",
+    "adapter": "oral",
+    "list_tag": "dl",
+    "list_tokens": [],
+    "homepage": "https://www.whuss.com/",
+    "purpose": "学校官网列出的口腔医学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sns",
+    "name": "护理学院通知公告",
+    "institution": "武汉大学护理学院",
+    "url": "https://sns.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "医学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sns.whu.edu.cn",
+    "purpose": "学校官网列出的护理学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-hyxt",
+    "name": "弘毅学堂通知公告",
+    "institution": "武汉大学弘毅学堂",
+    "url": "https://hyxt.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "ul-list-d2"
+    ],
+    "homepage": "http://hyxt.whu.edu.cn/",
+    "purpose": "学校官网列出的弘毅学堂公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-aais",
+    "name": "前沿交叉学科研究院通知公告",
+    "institution": "武汉大学前沿交叉学科研究院",
+    "url": "https://aais.whu.edu.cn/index/tzgg/xsgz.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://aais.whu.edu.cn",
+    "purpose": "学校官网列出的前沿交叉学科研究院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-ncee",
+    "name": "国家卓越工程师学院通知公告",
+    "institution": "武汉大学国家卓越工程师学院",
+    "url": "https://ncee.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "h-newsLs2",
+      "ul-newhs2"
+    ],
+    "homepage": "https://ncee.whu.edu.cn",
+    "purpose": "学校官网列出的国家卓越工程师学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sti",
+    "name": "科技与产业学院通知公告",
+    "institution": "武汉大学科技与产业学院",
+    "url": "https://sti.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://sti.whu.edu.cn/",
+    "purpose": "学校官网列出的科技与产业学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-wdj",
+    "name": "武汉大学杜伦大学联合学院通知公告",
+    "institution": "武汉大学杜伦大学联合学院",
+    "url": "https://wdj.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "news_list"
+    ],
+    "homepage": "https://wdj.whu.edu.cn",
+    "purpose": "学校官网列出的武汉大学杜伦大学联合学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-gs",
+    "name": "研究生院通知公告",
+    "institution": "武汉大学研究生院",
+    "url": "https://gs.whu.edu.cn/tzgg/qb.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://gs.whu.edu.cn/",
+    "purpose": "学校官网列出的研究生院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-xgbnew",
+    "name": "党委学生工作部通知公告",
+    "institution": "武汉大学党委学生工作部",
+    "url": "https://xgbnew.whu.edu.cn/2025/list1.jsp?urltype=tree.TreeTempUrl&wbtreeid=4201",
+    "article_path_prefix": "/2025/content.jsp",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://xgbnew.whu.edu.cn/",
+    "purpose": "学校官网列出的党委学生工作部公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-future",
+    "name": "校团委通知公告",
+    "institution": "武汉大学校团委",
+    "url": "https://future.whu.edu.cn/list.jsp?urltype=tree.TreeTempUrl&wbtreeid=1007",
+    "article_path_prefix": "/content.jsp",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://future.whu.edu.cn/",
+    "purpose": "学校官网列出的校团委公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-oir",
+    "name": "国际交流部通知公告",
+    "institution": "武汉大学国际交流部",
+    "url": "https://oir.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "list"
+    ],
+    "homepage": "https://oir.whu.edu.cn/",
+    "purpose": "学校官网列出的国际交流部公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-nic",
+    "name": "智慧校园部通知公告",
+    "institution": "武汉大学智慧校园部",
+    "url": "https://nic.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://nic.whu.edu.cn/",
+    "purpose": "学校官网列出的智慧校园部公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-zwhqb",
+    "name": "总务后勤部通知公告",
+    "institution": "武汉大学总务后勤部",
+    "url": "https://zwhqb.whu.edu.cn/zhxx/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://zwhqb.whu.edu.cn/",
+    "purpose": "学校官网列出的总务后勤部公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-tyb",
+    "name": "体育部通知公告",
+    "institution": "武汉大学体育部",
+    "url": "https://tyb.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://tyb.whu.edu.cn/",
+    "purpose": "学校官网列出的体育部公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-hospital",
+    "name": "校医院通知公告",
+    "institution": "武汉大学校医院",
+    "url": "https://hospital.whu.edu.cn/xwgg/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "my_n_r_m_ul01"
+    ],
+    "homepage": "https://hospital.whu.edu.cn/",
+    "purpose": "学校官网列出的校医院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-finance",
+    "name": "财务部通知公告",
+    "institution": "武汉大学财务部",
+    "url": "https://finance.whu.edu.cn/listnotice.jsp?urltype=tree.TreeTempUrl&wbtreeid=1121",
+    "article_path_prefix": "/content.jsp",
+    "group": "校级部门",
+    "adapter": "manual",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://finance.whu.edu.cn/",
+    "purpose": "武汉大学财务部官网当前要求访问验证，暂不能自动读取，请打开官网核对",
+    "manual_reason": "官网当前要求访问验证，暂不能公开自动读取"
+  },
+  {
+    "id": "whu-unit-kfy",
+    "name": "科学技术发展研究院通知公告",
+    "institution": "武汉大学科学技术发展研究院",
+    "url": "https://kfy.whu.edu.cn/kjdh/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://kfy.whu.edu.cn/",
+    "purpose": "学校官网列出的科学技术发展研究院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-ssroff",
+    "name": "人文社会科学研究院通知公告",
+    "institution": "武汉大学人文社会科学研究院",
+    "url": "https://ssroff.whu.edu.cn/xmsb.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "rwsky-listPage-list-cont-ul"
+    ],
+    "homepage": "https://ssroff.whu.edu.cn/",
+    "purpose": "学校官网列出的人文社会科学研究院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-unit-sie",
+    "name": "国际教育学院通知公告",
+    "institution": "武汉大学国际教育学院",
+    "url": "https://sie.whu.edu.cn/index/tzgg.htm",
+    "article_path_prefix": "/info/",
+    "group": "校级部门",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "lawsList",
+      "padBtm20"
+    ],
+    "homepage": "https://sie.whu.edu.cn/",
+    "purpose": "学校官网列出的国际教育学院公开通知栏目；保留原文、发布日期和附件，受限页面会说明原因"
+  },
+  {
+    "id": "whu-college-sim-dzzh",
+    "name": "信息管理学院党政通知",
+    "institution": "武汉大学信息管理学院",
+    "url": "https://sim.whu.edu.cn/tzgg/dzzh.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sim.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的信息管理学院党政通知栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-sim-zszp",
+    "name": "信息管理学院招生招聘",
+    "institution": "武汉大学信息管理学院",
+    "url": "https://sim.whu.edu.cn/tzgg/zszp.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "manual",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sim.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的信息管理学院招生招聘栏目，保留公开原文、发布时间和附件",
+    "manual_reason": "栏目当前没有可验证的公开正文，暂不能自动读取"
+  },
+  {
+    "id": "whu-college-sim-bks",
+    "name": "信息管理学院本科生工作",
+    "institution": "武汉大学信息管理学院",
+    "url": "https://sim.whu.edu.cn/rcpy/xsgz/bksgz.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sim.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的信息管理学院本科生工作栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-sim-yjs",
+    "name": "信息管理学院研究生工作",
+    "institution": "武汉大学信息管理学院",
+    "url": "https://sim.whu.edu.cn/rcpy/xsgz/yjsgz.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "http://sim.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的信息管理学院研究生工作栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-pspa-yjs",
+    "name": "政治与公共管理学院研究生工作",
+    "institution": "武汉大学政治与公共管理学院",
+    "url": "https://pspa.whu.edu.cn/xsgz/xgtz/yjsxgtz.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://pspa.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的政治与公共管理学院研究生工作栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-pspa-teaching",
+    "name": "政治与公共管理学院研究生教学",
+    "institution": "武汉大学政治与公共管理学院",
+    "url": "https://pspa.whu.edu.cn/tzgg/jxtz/yjs.htm",
+    "article_path_prefix": "/info/",
+    "group": "社会科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://pspa.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的政治与公共管理学院研究生教学栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-eis-general",
+    "name": "电子信息学院综合通知",
+    "institution": "武汉大学电子信息学院",
+    "url": "https://eis.whu.edu.cn/dqxz/zhtz.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "clearfix"
+    ],
+    "homepage": "http://eis.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的电子信息学院综合通知栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-eis-research",
+    "name": "电子信息学院科研通知",
+    "institution": "武汉大学电子信息学院",
+    "url": "https://eis.whu.edu.cn/kxyj/kytz.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "clearfix"
+    ],
+    "homepage": "http://eis.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的电子信息学院科研通知栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-sud-notice",
+    "name": "城市设计学院通知",
+    "institution": "武汉大学城市设计学院",
+    "url": "https://sud.whu.edu.cn/lmdh/tzgg/tz.htm",
+    "article_path_prefix": "/info/",
+    "group": "工学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://sud.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的城市设计学院通知栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-aais-research",
+    "name": "前沿交叉学科研究院科研通知",
+    "institution": "武汉大学前沿交叉学科研究院",
+    "url": "https://aais.whu.edu.cn/index/tzgg/kxyj.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://aais.whu.edu.cn",
+    "purpose": "武汉大学学院官网的前沿交叉学科研究院科研通知栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-aais-training",
+    "name": "前沿交叉学科研究院人才培养",
+    "institution": "武汉大学前沿交叉学科研究院",
+    "url": "https://aais.whu.edu.cn/index/tzgg/rcpy.htm",
+    "article_path_prefix": "/info/",
+    "group": "跨学科类",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [],
+    "homepage": "https://aais.whu.edu.cn",
+    "purpose": "武汉大学学院官网的前沿交叉学科研究院人才培养栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-college-sgg-research",
+    "name": "测绘学院科研通知",
+    "institution": "武汉大学测绘学院",
+    "url": "https://www.sgg.whu.edu.cn/kxyj/kytz.htm",
+    "article_path_prefix": "/info/",
+    "group": "信息科学学部",
+    "adapter": "vsb",
+    "list_tag": "ul",
+    "list_tokens": [
+      "am-list"
+    ],
+    "homepage": "http://www.sgg.whu.edu.cn/",
+    "purpose": "武汉大学学院官网的测绘学院科研通知栏目，保留公开原文、发布时间和附件"
+  }
+]

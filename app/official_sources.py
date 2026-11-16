@@ -59,6 +59,11 @@ PRESETS = [
      'article_path_prefix': '/engine2/d/',
      'purpose': '图书馆通知公告当前列表，接收本馆官网的开放、服务等通知；跳往其他平台的文章会提示未接收'},
 ]
+for _preset in PRESETS:
+    _preset['group'] = ('理学部' if _preset['id']=='whu-sres-notices' else
+                        '人文科学学部' if _preset['id']=='whu-journal-affairs' else '校级部门')
+from .whu_generic_sources import CATALOG as COLLEGE_AND_UNIT_PRESETS
+PRESETS.extend(COLLEGE_AND_UNIT_PRESETS)
 _HOSTS = {'sres.whu.edu.cn': 'whu-sres-notices', 'www.whu.edu.cn': 'whu-notices',
           'journal.whu.edu.cn': 'whu-journal-affairs',
           'www.lib.whu.edu.cn': 'whu-library-notices',
@@ -185,6 +190,9 @@ def parse_official_index(text, url, preset_id):
     preset = get_preset(preset_id)
     if not preset or urlsplit(url).hostname != urlsplit(preset['url']).hostname:
         raise HTTPException(422, '官网预设与来源地址不匹配')
+    if preset.get('adapter') in {'vsb','oral','journal'}:
+        from .whu_generic_sources import parse_index
+        return parse_index(text,url,preset)
     root = _Tree(text).root
     if preset_id == 'whu-notices':
         tables = [n for n in root.walk() if n.tag == 'table']
@@ -242,6 +250,9 @@ def parse_official_index(text, url, preset_id):
 
 def parse_official_article(text, url):
     """Return None for other hosts; known hosts must match an article structure."""
+    from .whu_generic_sources import matching_article,parse_article
+    generic=matching_article(url)
+    if generic:return parse_article(text,url,generic)
     preset_id = _HOSTS.get(urlsplit(url).hostname)
     if not preset_id:
         return None

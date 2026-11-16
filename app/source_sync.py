@@ -18,7 +18,7 @@ from pydantic import Field, field_validator, model_validator
 from .db import dumps, ident
 from .evidence_web import decode_page, public_url
 from .models import Strict
-from .notice_intake import read_link
+from .notice_intake import access_restriction, read_link
 from .official_sources import PRESETS, get_preset, parse_official_index
 from .public_http import PublicHTTPTransport
 from .security import rate_limit
@@ -165,25 +165,37 @@ class RuleRollback(Strict):
     restore_version:int=Field(ge=1)
 
 
+class PresetBatch(Strict):
+    preset_ids:list[str]=Field(min_length=1,max_length=80)
+
+
 async def trial_rule(db,sid,uid,config,version):
     """Read in isolation; never ingest personal notices or send notifications."""
     from .source_coverage import coverage
-    result={'can_apply':False,'list':{},'articles':[],'errors':[]}
+    result={'can_apply':False,'list':{},'articles':[],'errors':[],'sample_errors':[]}
     try:
         with acquisition(db,config,hosts=[urlsplit(config['url']).hostname],max_bytes=1_500_000):
             entries=await fetch_index(config)
         result['list']={'count':len(entries),'snapshot':getattr(entries,'snapshot',{}),
             'empty_confirmed':getattr(entries,'empty_confirmed',False),'rejected_entries':getattr(entries,'rejected',[])}
         origins,hosts=article_scope(config)
-        for entry in entries[:2]:
-            with acquisition(db,config,origins=origins,hosts=hosts):
-                source,_=await read_link(entry['url'])
+        for entry in entries[:5]:
+            try:
+                with acquisition(db,config,origins=origins,hosts=hosts):
+                    source,_=await read_link(entry['url'])
+            except HTTPException as exc:
+                result['sample_errors'].append({'url':entry['url'],'reason':str(exc.detail)[:500]})
+                continue
             if not article_allowed(source.get('origin',{}).get('url',entry['url']),config):
                 raise HTTPException(422,'试读正文超出授权范围')
+            if source['status']!='ok':
+                result['sample_errors'].append({'url':entry['url'],'reason':source.get('warning') or '样本正文仍需核对'})
+                continue
             result['articles'].append({'url':entry['url'],'title':source.get('origin',{}).get('title') or entry['title'],
                 'sha256':source['sha256'],'status':source['status'],'coverage':coverage(source)})
+            if len(result['articles'])>=2:break
         result['can_apply']=bool(result['articles']) and all(x['status']=='ok' for x in result['articles'])
-        if not result['articles']:result['errors'].append('栏目确认为空，但尚无正文样本验证此规则；暂不安装新规则')
+        if not result['articles']:result['errors'].append('没有读到公开正文样本，暂不安装自动接收规则')
     except HTTPException as exc:result['errors'].append(str(exc.detail))
     trial_id=ident()
     with db.connect(write=True) as conn:
@@ -342,6 +354,9 @@ async def fetch_index(config):
             for _ in range(4):
                 if not public_url(url) or urlsplit(url).hostname != urlsplit(config['url']).hostname:
                     raise HTTPException(422, '订阅列表跳转出了授权的来源域名')
+                restriction=access_restriction(url)
+                if restriction:
+                    raise HTTPException(422, restriction)
                 async with client.stream('GET', url, headers={'User-Agent': 'LuojiaNoticeReader/1.0'}) as response:
                     if response.status_code in {301, 302, 303, 307, 308}:
                         url = urljoin(url, response.headers.get('location', ''))
@@ -580,7 +595,8 @@ async def sync_source(db, sid, uid=None, force=False):
         with db.connect(write=True) as conn:
             if not unchanged(conn):
                 return None
-            if not conn.execute('SELECT 1 FROM source_baseline_runs WHERE source_id=?',(sid,)).fetchone():
+            first_baseline=not conn.execute('SELECT 1 FROM source_baseline_runs WHERE source_id=?',(sid,)).fetchone()
+            if first_baseline:
                 conn.executemany('INSERT OR IGNORE INTO source_baseline_items VALUES(?,?)',[(sid,e['url']) for e in entries])
                 conn.execute('INSERT INTO source_baseline_runs VALUES(?,?)',(sid,now))
             for entry in entries:
@@ -600,10 +616,14 @@ async def sync_source(db, sid, uid=None, force=False):
             # revisited so a correction at an existing URL is detected. An
             # explicit refresh gives unresolved items priority; ordinary polling
             # remains round-robin so persistent failures cannot starve updates.
+            # A newly added group of many colleges should make a first pass
+            # across schools instead of spending a long time on one backlog.
+            first_school_pass=first_baseline and not force and str(config.get('preset_id','')).startswith(('whu-college-','whu-unit-'))
+            batch_size=2 if first_school_pass else 8
             pending = [dict(r) for r in conn.execute('''SELECT i.*,p.data AS provenance
                 FROM source_subscription_items i LEFT JOIN source_entry_provenance p ON p.source_id=i.source_id AND p.url=i.url
                 WHERE i.source_id=? ORDER BY CASE WHEN ?=1 AND i.checked_at>0 AND i.error='' THEN 1 ELSE 0 END,
-                    i.checked_at,i.discovered_at DESC LIMIT 8''', (sid,int(force)))]
+                    i.checked_at,i.discovered_at DESC LIMIT ?''', (sid,int(force),batch_size))]
         for item in pending:
             receipt['articles']['attempted']+=1
             try:
@@ -797,13 +817,14 @@ def install(app, db, user):
     def presets(current=Depends(user)):
         return PRESETS
 
-    @app.post('/api/source-presets/{preset_id}/subscribe')
-    async def subscribe_preset(preset_id: str, current=Depends(user)):
+    async def subscribe_one(preset_id: str, current, *, individual_limit=True):
         from .usage_limits import check_count
         from .workspace import CatalogItem
         preset = get_preset(preset_id)
         if not preset:
             raise HTTPException(404, '此学校栏目不存在，请重新选择')
+        if preset.get('adapter')=='manual':
+            raise HTTPException(409, preset.get('manual_reason') or '该官网暂无法自动读取，请打开官网核对')
         # Registering a source is not a working connection. First activation
         # must read real list/body samples; failure retains a manual source and
         # its diagnostic trial, never an active subscription.
@@ -823,8 +844,8 @@ def install(app, db, user):
                 conn.execute('INSERT INTO source_catalog(id,user_id,data,created_at,updated_at) VALUES(?,?,?,?,?)',
                              (sid, current['id'], catalog.model_dump_json(), now, now))
             previous = conn.execute('SELECT source_id FROM source_subscriptions WHERE source_id=?', (sid,)).fetchone()
-            if previous:return {'source_id':sid,'created':created,'subscription':status(conn,sid,current['id'])}
-        rate_limit(db,'source-trial:'+current['id'],20,3600)
+            if previous:return {'source_id':sid,'created':created,'activated':False,'subscription':status(conn,sid,current['id'])}
+        if individual_limit:rate_limit(db,'source-trial:'+current['id'],20,3600)
         config=Subscription(url=preset['url'],article_path_prefix=preset['article_path_prefix'],
             preset_id=preset_id).model_dump(exclude={'enabled','version'})
         trial=await trial_rule(db,sid,current['id'],config,0)
@@ -833,7 +854,36 @@ def install(app, db, user):
             # paused or reconfigured while this request was reading.
             previous=conn.execute('SELECT 1 FROM source_subscriptions WHERE source_id=?',(sid,)).fetchone()
             result=status(conn,sid,current['id']) if previous else apply_trial(conn,sid,current['id'],RuleApply(version=0,trial_id=trial['trial_id']))
-            return {'source_id':sid,'created':created,'subscription':result}
+            return {'source_id':sid,'created':created,'activated':not bool(previous),'subscription':result}
+
+    @app.post('/api/source-presets/{preset_id}/subscribe')
+    async def subscribe_preset(preset_id: str, current=Depends(user)):
+        return await subscribe_one(preset_id,current)
+
+    @app.post('/api/source-presets/bulk-subscribe')
+    async def subscribe_many(payload:PresetBatch,current=Depends(user)):
+        # One explicit batch is bounded separately from individual rule edits;
+        # every source still receives the same isolated list/body trial.
+        rate_limit(db,'source-preset-batch:'+current['id'],10,3600)
+        slots=asyncio.Semaphore(3)
+        async def one(preset_id):
+            preset=get_preset(preset_id)
+            if not preset:return {'id':preset_id,'state':'failed','reason':'学校栏目不存在'}
+            if preset.get('adapter')=='manual':
+                return {'id':preset_id,'name':preset['name'],'state':'manual','reason':preset.get('manual_reason','暂无法自动读取')}
+            async with slots:
+                try:
+                    result=await subscribe_one(preset_id,current,individual_limit=False)
+                    subscription=result['subscription']
+                    return {'id':preset_id,'name':preset['name'],'source_id':result['source_id'],
+                            'state':'added' if result['activated'] else 'existing','subscription_state':subscription['state']}
+                except HTTPException as exc:
+                    return {'id':preset_id,'name':preset['name'],'state':'failed','reason':str(exc.detail)[:500]}
+                except Exception:
+                    logging.getLogger('campus').exception('source_batch_trial_failed')
+                    return {'id':preset_id,'name':preset['name'],'state':'failed','reason':'试读未完成，请稍后重试'}
+        results=await asyncio.gather(*(one(pid) for pid in dict.fromkeys(payload.preset_ids)))
+        return {'results':results}
 
     @app.get('/api/source-subscriptions')
     def subscriptions(current=Depends(user)):

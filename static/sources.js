@@ -40,10 +40,35 @@ export function createSourcesUI({state,api,esc,icon,field,area,showDialog,ask,to
     const view=captureUiContext(state);
     try{
       const presets=await api('/source-presets');if(!view.sameDialog())return;
-      $('#source-presets').innerHTML=`<p class="small muted">点击“订阅此栏目”后开始自动接收，可随时暂停。自动整理需在来源页单独开启。</p>${presets.length?presets.map(p=>{
-        const existing=subscriptions.find(s=>s.config?.preset_id===p.id),pending=pendingPresets.has(state.session?.user?.id+':'+p.id);
-        return `<article class="integration-card stack"><div><p class="small muted">${esc(p.institution)}</p><h3>${esc(p.name)}</h3></div><p>${esc(p.purpose)}</p><div class="row wrap"><a class="button small plain" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">打开官网 ↗</a><button type="button" class="button small primary" data-source-action="${existing?'preset-view':'preset-subscribe'}" data-id="${esc(existing?.source_id||p.id)}" ${pending?'disabled aria-busy="true"':''}>${existing?'已添加 · 查看来源':pending?'正在订阅…':'订阅此栏目'}</button></div></article>`;
-      }).join(''):'<p>暂时没有可选栏目，可返回后自行添加来源。</p>'}`;
+      const groups=[...new Set(presets.map(p=>p.group||'校级来源'))];
+      $('#source-presets').innerHTML=`<p class="small muted">可按学院或部门查找；订阅前会试读公开原文。自动整理需单独授权，采集本身不调用 AI。</p><div class="row wrap"><label class="field">查找学院或来源<input id="source-preset-search" type="search" placeholder="例如：信息管理学院"></label><label class="field">所属分类<select id="source-preset-group"><option value="">全部分类</option>${groups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')}</select></label></div><div class="row wrap"><button type="button" class="button primary" id="source-preset-bulk">订阅当前显示的可用来源</button><span class="small muted" id="source-preset-count"></span></div><p class="small" id="source-preset-progress" role="status"></p><div class="stack" id="source-preset-list"></div>`;
+      let visible=[],bulkPending=false;
+      const draw=()=>{
+        const term=$('#source-preset-search').value.trim().toLocaleLowerCase(),group=$('#source-preset-group').value;
+        visible=presets.filter(p=>(!group||(p.group||'校级来源')===group)&&(!term||[p.name,p.institution,p.purpose].some(v=>String(v||'').toLocaleLowerCase().includes(term))));
+        const available=visible.filter(p=>p.adapter!=='manual');
+        $('#source-preset-count').textContent=`显示 ${visible.length} 个，其中 ${available.length} 个可尝试自动接收`;
+        $('#source-preset-bulk').disabled=bulkPending||!available.length;
+        $('#source-preset-list').innerHTML=visible.length?visible.map(p=>{
+          const existing=subscriptions.find(s=>s.config?.preset_id===p.id),pending=pendingPresets.has(state.session?.user?.id+':'+p.id);
+          const control=p.adapter==='manual'?`<span class="small muted">${esc(p.manual_reason||'官网暂无法自动读取')}</span>`:`<button type="button" class="button small primary" data-source-action="${existing?'preset-view':'preset-subscribe'}" data-id="${esc(existing?.source_id||p.id)}" ${pending?'disabled aria-busy="true"':''}>${existing?'已添加 · 查看来源':pending?'正在订阅…':'订阅此栏目'}</button>`;
+          return `<article class="integration-card stack"><div><p class="small muted">${esc(p.group||'校级来源')} · ${esc(p.institution)}</p><h3>${esc(p.name)}</h3></div><p>${esc(p.purpose)}</p><div class="row wrap"><a class="button small plain" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">打开官网 ↗</a>${control}</div></article>`;
+        }).join(''):'<p>没有找到匹配的学校来源。</p>';
+      };
+      $('#source-preset-search').addEventListener('input',draw);$('#source-preset-group').addEventListener('change',draw);draw();
+      $('#source-preset-bulk').addEventListener('click',async event=>{
+        const button=event.currentTarget,ids=visible.filter(p=>p.adapter!=='manual').map(p=>p.id);if(!ids.length||bulkPending)return;
+        bulkPending=true;button.disabled=true;button.setAttribute('aria-busy','true');$('#source-preset-progress').textContent=`正在逐个试读 ${ids.length} 个来源，不会调用 AI，请稍候…`;
+        try{
+          const result=await api('/source-presets/bulk-subscribe',{method:'POST',json:{preset_ids:ids}});
+          if(!view.sameDialog())return;
+          await refresh(state.renderId);if(!view.sameDialog())return;
+          const added=result.results.filter(x=>x.state==='added'),existing=result.results.filter(x=>x.state==='existing'),failed=result.results.filter(x=>x.state==='failed');
+          $('#source-preset-progress').innerHTML=`已添加 ${added.length} 个，原有 ${existing.length} 个${failed.length?'，未通过试读 '+failed.length+' 个':''}。${failed.map(x=>`<br>${esc(x.name||x.id)}：${esc(x.reason)}`).join('')}`;
+          draw();toast('学校来源试读完成');
+        }catch(error){if(view.sameDialog())$('#source-preset-progress').textContent=error.message;}
+        finally{bulkPending=false;if(view.sameDialog()){button.removeAttribute('aria-busy');button.disabled=!visible.some(p=>p.adapter!=='manual');}}
+      });
     }catch(error){if(view.sameDialog())$('#source-presets').innerHTML=`<p class="alert error" role="status">${esc(error.message)}</p>${action('重新读取','school-presets','','small')}`;}
   }
   function showSource(id){

@@ -106,6 +106,15 @@ async def read_link(url):
     return await _read_link(url)
 
 
+def access_restriction(url):
+    path=urlsplit(url).path.rstrip('/').lower()
+    if path in {'/login','/system/resource/code/auth/caslogin.jsp'}:
+        return '这则通知需要登录，未作为公开正文接收；请本人打开原网页核对'
+    if path=='/system/resource/visitcode/visitcode.jsp':
+        return '网站要求访问验证，暂不能自动读取；请本人打开原网页核对'
+    return None
+
+
 async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
     # Public CMS attachment handlers often require their actual parent article.
     # This comes from our saved provenance, never from browser history. Strip
@@ -121,6 +130,9 @@ async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
                     raise HTTPException(422, '链接跳转到了非公开地址，未读取')
                 if allowed_host and urlsplit(url).hostname != allowed_host:
                     raise HTTPException(422, '附件跳转出了通知来源域名，未读取')
+                restriction=access_restriction(url)
+                if restriction:
+                    raise HTTPException(422, restriction)
                 headers={'User-Agent': 'LuojiaNoticeReader/1.0',
                          'Accept': 'text/html,text/plain,application/pdf,application/octet-stream'}
                 if parent and parent.hostname==urlsplit(url).hostname:
