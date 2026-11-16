@@ -470,7 +470,7 @@
     "group": "医学部",
     "adapter": "clinical",
     "homepage": "http://www.rmhospital.com/",
-    "purpose": "第一临床学院研究生招生就业栏目；服务器需能公开读取院方网站，试读通过后才能启用"
+    "purpose": "第一临床学院研究生招生就业栏目；院方暂不可读时可登记等待，服务器试读通过后自动启用"
   },
   {
     "id": "whu-college-znhospital",
@@ -481,7 +481,7 @@
     "group": "医学部",
     "adapter": "clinical",
     "homepage": "http://www.znhospital.cn/",
-    "purpose": "第二临床学院研究生通知栏目；服务器需能公开读取院方网站，试读通过后才能启用"
+    "purpose": "第二临床学院研究生通知栏目；院方暂不可读时可登记等待，服务器试读通过后自动启用"
   },
   {
     "id": "whu-college-whuss",

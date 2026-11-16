@@ -1,4 +1,4 @@
-"""Short-lived, account-independent observations for three public WHU columns.
+"""Short-lived, account-independent observations for fixed public WHU columns.
 
 Only normalized anonymous public results are shared. Browser credentials,
 cookies, raw response headers and user progress are never persisted here.
@@ -17,7 +17,9 @@ from fastapi import HTTPException
 from .db import dumps,ident
 
 HOSTS={'whu-unit-xgbnew':'xgbnew.whu.edu.cn','whu-unit-future':'future.whu.edu.cn',
-       'whu-unit-finance':'finance.whu.edu.cn'}
+       'whu-unit-finance':'finance.whu.edu.cn',
+       'whu-college-rmhospital':'www.rmhospital.com',
+       'whu-college-znhospital':'www.znhospital.cn'}
 TABLES={'school_public_observations','school_public_leases'}
 TTL=300
 ITEM_LIMIT=8*1024*1024

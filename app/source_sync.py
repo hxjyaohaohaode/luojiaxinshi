@@ -62,6 +62,22 @@ CREATE TABLE IF NOT EXISTS source_entry_provenance(
  url TEXT NOT NULL, data TEXT NOT NULL, PRIMARY KEY(source_id,url));
 INSERT OR IGNORE INTO meta VALUES('source_observation_schema_version','1');
 """
+PENDING_PRESETS={'whu-college-rmhospital','whu-college-znhospital'}
+PENDING_TABLES={'source_pending_activations','source_pending_groups'}
+PENDING_RETRY_SECONDS=1800
+PENDING_BATCH_SIZE=20
+PENDING_SCHEMA="""
+CREATE TABLE IF NOT EXISTS source_pending_activations(
+ source_id TEXT PRIMARY KEY REFERENCES source_catalog(id) ON DELETE CASCADE,
+ user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+ preset_id TEXT NOT NULL, config TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS source_pending_preset ON source_pending_activations(preset_id);
+CREATE TABLE IF NOT EXISTS source_pending_groups(
+ preset_id TEXT PRIMARY KEY, next_attempt INTEGER NOT NULL,
+ lease_id TEXT NOT NULL DEFAULT '', lease_until INTEGER NOT NULL DEFAULT 0,
+ checked_at INTEGER, last_error TEXT NOT NULL DEFAULT '');
+INSERT OR IGNORE INTO meta VALUES('source_pending_activation_schema_version','1');
+"""
 
 
 def initialize(conn):
@@ -78,6 +94,10 @@ def initialize(conn):
         # existing marker requires all of its historical receipts to exist.
         raise ValueError('来源实读回执版本不兼容或缺少必要数据表')
     conn.executescript(OBSERVATION_SCHEMA)
+    pending_version=conn.execute("SELECT value FROM meta WHERE key='source_pending_activation_schema_version'").fetchone()
+    if pending_version and (pending_version[0]!='1' or not PENDING_TABLES.issubset(tables)):
+        raise ValueError('待接入来源记录版本不兼容或缺少必要数据表')
+    conn.executescript(PENDING_SCHEMA)
 
 
 class Subscription(Strict):
@@ -211,6 +231,14 @@ async def trial_rule(db,sid,uid,config,version):
     return {'trial_id':trial_id,'version':version,'config':config,**result}
 
 
+def remove_pending(conn,sid):
+    pending=conn.execute('SELECT preset_id FROM source_pending_activations WHERE source_id=?',(sid,)).fetchone()
+    conn.execute('DELETE FROM source_pending_activations WHERE source_id=?',(sid,))
+    if pending:
+        conn.execute('DELETE FROM source_pending_groups WHERE preset_id=? AND NOT EXISTS '
+                     '(SELECT 1 FROM source_pending_activations WHERE preset_id=?)',(pending['preset_id'],pending['preset_id']))
+
+
 def apply_trial(conn,sid,uid,payload):
     catalog=json.loads(owned(conn,sid,uid)['data'])
     previous=conn.execute('SELECT * FROM source_subscriptions WHERE source_id=? AND user_id=?',(sid,uid)).fetchone()
@@ -239,6 +267,7 @@ def apply_trial(conn,sid,uid,payload):
     # table requires a real notice and must not be populated with a fake id.
     applied={**json.loads(trial['data']),'applied_at':now,'applied_version':current['version']}
     conn.execute('UPDATE source_rule_trials SET data=? WHERE id=?',(dumps(applied),trial['id']))
+    remove_pending(conn,sid)
     return current
 
 
@@ -472,6 +501,12 @@ def status(conn, sid, uid):
     if not row:
         trial=conn.execute('SELECT id,data,created_at FROM source_rule_trials WHERE source_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1',(sid,)).fetchone()
         latest={**dict(trial),'data':json.loads(trial['data'])} if trial else None
+        pending=conn.execute('''SELECT p.config,g.checked_at,g.next_attempt,g.last_error FROM source_pending_activations p
+            JOIN source_pending_groups g ON g.preset_id=p.preset_id WHERE p.source_id=? AND p.user_id=?''',(sid,uid)).fetchone()
+        if pending:
+            return {'source_id':sid,'enabled':False,'state':'awaiting_access','config':json.loads(pending['config']),
+                'version':0,'last_trial':latest,'checked_at':pending['checked_at'],'next_poll':pending['next_attempt'],
+                'error':'院方栏目暂未通过服务端试读，系统会自动重试；通过试读前不会收到该来源的通知'}
         return {'source_id':sid,'enabled':False,'state':'manual','error':('；'.join(latest['data'].get('errors') or ['样本尚待核对']) if latest and not latest['data'].get('can_apply') else ''),
             'last_trial':latest,'checked_at':trial['created_at'] if trial else None}
     result = dict(row)
@@ -824,6 +859,73 @@ def due_sources(conn,now,limit=8):
     return result
 
 
+def due_pending_groups(conn,now):
+    return [row['preset_id'] for row in conn.execute('''SELECT g.preset_id FROM source_pending_groups g
+        WHERE g.next_attempt<=? AND g.lease_until<=? AND EXISTS
+        (SELECT 1 FROM source_pending_activations p WHERE p.preset_id=g.preset_id)
+        ORDER BY g.next_attempt,g.preset_id LIMIT 2''',(now,now))]
+
+
+async def activate_pending_group(db,preset_id):
+    """Retry an opted-in fixed hospital source once per group when blocked.
+
+    Every owner still gets an independently recorded successful trial before
+    activation. Only the anonymous public reads may be shared by the fetcher.
+    """
+    if preset_id not in PENDING_PRESETS:return
+    now=int(time.time());lease=ident()
+    with db.connect(write=True) as conn:
+        claimed=conn.execute('''UPDATE source_pending_groups SET lease_id=?,lease_until=?
+            WHERE preset_id=? AND next_attempt<=? AND lease_until<=?''',
+            (lease,now+300,preset_id,now,now)).rowcount
+    if not claimed:return
+    error='';completed=0
+    try:
+        while completed<PENDING_BATCH_SIZE:
+            with db.connect(write=True) as conn:
+                group=conn.execute('SELECT lease_id FROM source_pending_groups WHERE preset_id=?',(preset_id,)).fetchone()
+                if not group or group['lease_id']!=lease:return
+                conn.execute('UPDATE source_pending_groups SET lease_until=? WHERE preset_id=?',(int(time.time())+300,preset_id))
+                row=conn.execute('''SELECT p.source_id,p.user_id,p.config,c.data AS catalog FROM source_pending_activations p
+                    JOIN source_catalog c ON c.id=p.source_id AND c.user_id=p.user_id WHERE p.preset_id=? ORDER BY p.rowid LIMIT 1''',(preset_id,)).fetchone()
+                if not row:break
+                if conn.execute('SELECT 1 FROM source_subscriptions WHERE source_id=?',(row['source_id'],)).fetchone():
+                    remove_pending(conn,row['source_id']);completed+=1;continue
+                try:
+                    config=Subscription.model_validate(json.loads(row['config'])).model_dump(exclude={'enabled','version'})
+                    valid=config['preset_id']==preset_id and catalog_matches(json.loads(row['catalog']),config)
+                except (ValueError,TypeError,KeyError):valid=False
+                if not valid:
+                    remove_pending(conn,row['source_id']);completed+=1;continue
+                sid,uid=row['source_id'],row['user_id']
+            try:trial=await trial_rule(db,sid,uid,config,0)
+            except HTTPException as exc:
+                if exc.status_code==404:completed+=1;continue
+                error=str(exc.detail)[:500];break
+            if not trial['can_apply']:
+                error='；'.join(trial.get('errors') or ['院方栏目正文暂未通过试读'])[:500];break
+            with db.connect(write=True) as conn:
+                pending=conn.execute('SELECT config FROM source_pending_activations WHERE source_id=? AND user_id=? AND preset_id=?',
+                                     (sid,uid,preset_id)).fetchone()
+                group=conn.execute('SELECT lease_id FROM source_pending_groups WHERE preset_id=?',(preset_id,)).fetchone()
+                if not pending or not group or group['lease_id']!=lease:continue
+                if conn.execute('SELECT 1 FROM source_subscriptions WHERE source_id=?',(sid,)).fetchone():
+                    remove_pending(conn,sid);completed+=1;continue
+                catalog=json.loads(owned(conn,sid,uid)['data'])
+                if not same_config(json.loads(pending['config']),config) or not catalog_matches(catalog,config):
+                    remove_pending(conn,sid);completed+=1;continue
+                apply_trial(conn,sid,uid,RuleApply(version=0,trial_id=trial['trial_id']))
+            completed+=1
+    except Exception:
+        logging.getLogger('campus').exception('pending_hospital_activation_failed')
+        error='院方来源暂未完成试读，系统会稍后重试'
+    finally:
+        with db.connect(write=True) as conn:
+            delay=PENDING_RETRY_SECONDS if error else POLL_SECONDS
+            conn.execute('''UPDATE source_pending_groups SET next_attempt=?,checked_at=?,last_error=?,lease_id='',lease_until=0
+                WHERE preset_id=? AND lease_id=?''',(int(time.time())+delay,int(time.time()),error,preset_id,lease))
+
+
 async def run_worker(db, settings=None):
     from starlette.concurrency import run_in_threadpool
     from .integrations import PublisherClient
@@ -836,6 +938,10 @@ async def run_worker(db, settings=None):
             with db.connect() as conn:
                 rows = due_sources(conn,int(time.time()))
             await poll_batch(db,rows)
+            with db.connect() as conn:
+                pending_groups=due_pending_groups(conn,int(time.time()))
+            if pending_groups:
+                await asyncio.gather(*(activate_pending_group(db,preset_id) for preset_id in pending_groups))
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -920,6 +1026,8 @@ def install(app, db, user):
                              (sid, current['id'], catalog.model_dump_json(), now, now))
             previous = conn.execute('SELECT source_id FROM source_subscriptions WHERE source_id=?', (sid,)).fetchone()
             if previous:return {'source_id':sid,'created':created,'activated':False,'subscription':status(conn,sid,current['id'])}
+            pending=conn.execute('SELECT 1 FROM source_pending_activations WHERE source_id=?',(sid,)).fetchone()
+            if pending:return {'source_id':sid,'created':created,'activated':False,'pending':True,'subscription':status(conn,sid,current['id'])}
         if individual_limit:rate_limit(db,'source-trial:'+current['id'],20,3600)
         config=Subscription(url=preset['url'],article_path_prefix=preset['article_path_prefix'],
             preset_id=preset_id).model_dump(exclude={'enabled','version'})
@@ -928,6 +1036,13 @@ def install(app, db, user):
             # Concurrent repeated subscription cannot resume a source that was
             # paused or reconfigured while this request was reading.
             previous=conn.execute('SELECT 1 FROM source_subscriptions WHERE source_id=?',(sid,)).fetchone()
+            if not previous and not trial['can_apply'] and preset_id in PENDING_PRESETS:
+                now=int(time.time())
+                conn.execute('INSERT OR IGNORE INTO source_pending_activations VALUES(?,?,?,?)',
+                             (sid,current['id'],preset_id,dumps(config)))
+                conn.execute('INSERT OR IGNORE INTO source_pending_groups(preset_id,next_attempt,checked_at,last_error) VALUES(?,?,?,?)',
+                             (preset_id,now+PENDING_RETRY_SECONDS,now,'；'.join(trial.get('errors') or [])[:500]))
+                return {'source_id':sid,'created':created,'activated':False,'pending':True,'subscription':status(conn,sid,current['id'])}
             result=status(conn,sid,current['id']) if previous else apply_trial(conn,sid,current['id'],RuleApply(version=0,trial_id=trial['trial_id']))
             return {'source_id':sid,'created':created,'activated':not bool(previous),'subscription':result}
 
@@ -951,7 +1066,7 @@ def install(app, db, user):
                     result=await subscribe_one(preset_id,current,individual_limit=False)
                     subscription=result['subscription']
                     return {'id':preset_id,'name':preset['name'],'source_id':result['source_id'],
-                            'state':'added' if result['activated'] else 'existing','subscription_state':subscription['state']}
+                            'state':'pending' if result.get('pending') else 'added' if result['activated'] else 'existing','subscription_state':subscription['state']}
                 except HTTPException as exc:
                     return {'id':preset_id,'name':preset['name'],'state':'failed','reason':str(exc.detail)[:500]}
                 except Exception:
@@ -964,6 +1079,13 @@ def install(app, db, user):
     def subscriptions(current=Depends(user)):
         with db.connect() as conn:
             return [status(conn, row['id'], current['id']) for row in conn.execute('SELECT id FROM source_catalog WHERE user_id=?', (current['id'],))]
+
+    @app.delete('/api/source-catalog/{sid}/subscription/pending')
+    def cancel_pending(sid:str,current=Depends(user)):
+        with db.connect(write=True) as conn:
+            owned(conn,sid,current['id'])
+            remove_pending(conn,sid)
+            return status(conn,sid,current['id'])
 
     @app.put('/api/source-catalog/{sid}/subscription')
     async def configure(sid: str, payload: Subscription, current=Depends(user)):

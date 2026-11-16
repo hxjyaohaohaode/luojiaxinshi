@@ -75,7 +75,7 @@ def restore_database(source:Path,destination:Path):
             from .campus import SPRINT_TABLES
             from .source_fetch import TABLES as FETCH_TABLES
             from .school_public_observations import TABLES as SCHOOL_PUBLIC_TABLES
-            from .source_sync import OBSERVATION_TABLES
+            from .source_sync import OBSERVATION_TABLES,PENDING_TABLES
             from .notice_tracking import TABLES as TRACKING_TABLES
             from .listing import TABLES as LISTING_TABLES
             from .observability import TABLES as OBSERVABILITY_TABLES
@@ -85,6 +85,7 @@ def restore_database(source:Path,destination:Path):
                                   ('source_fetch_schema_version',FETCH_TABLES),
                                   ('school_public_observation_schema_version',SCHOOL_PUBLIC_TABLES),
                                   ('source_observation_schema_version',OBSERVATION_TABLES),
+                                  ('source_pending_activation_schema_version',PENDING_TABLES),
                                   ('notice_tracking_schema_version',TRACKING_TABLES),
                                   ('bounded_lists_version',LISTING_TABLES),
                                   ('observability_schema_version',OBSERVABILITY_TABLES),
@@ -168,6 +169,9 @@ def restore_database(source:Path,destination:Path):
                     if table in tables:
                         target.execute("UPDATE "+table+" SET enabled=0,running_until=0,error='从备份恢复，请重新确认来源授权'")
                 if 'school_public_leases' in tables:target.execute('DELETE FROM school_public_leases')
+                # A restored old snapshot must not revive later-cancelled opt-ins.
+                if 'source_pending_activations' in tables:target.execute('DELETE FROM source_pending_activations')
+                if 'source_pending_groups' in tables:target.execute('DELETE FROM source_pending_groups')
                 if 'notice_automation_settings' in tables:
                     target.execute('UPDATE notice_automation_settings SET enabled=0,consented_at=NULL')
                     target.execute("UPDATE notice_automation_jobs SET state='cancelled',lease_until=NULL,error='从备份恢复，请重新确认自动整理' WHERE state IN ('queued','running')")

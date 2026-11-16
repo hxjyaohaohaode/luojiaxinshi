@@ -303,7 +303,7 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                     elif permitted:
                         self.purge(url)
                     headers.update({'x-luojia-cache':'fetched' if cacheable else 'fetched_uncached','x-luojia-content-sha256':digest})
-                    # Only these three anonymous, fixed school columns can be
+                    # Only explicitly listed anonymous, fixed school columns can be
                     # normalized into shared public observations. Session
                     # cookies themselves are never stored or sent onward.
                     from .school_public_observations import eligible as eligible_observation,TTL as OBSERVATION_TTL

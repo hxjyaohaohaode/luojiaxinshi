@@ -99,10 +99,18 @@ def authorized_source(conn,uid,nid,settings):
 def eligible(conn,notice,settings,*,quiet_ids=None):
     from .qq_group_intake import quiet_notices
     if notice['status'] in {'confirmed','processing'}:return False
-    # List metadata without the original body is never an AI input, even if a
-    # user later chooses to enable automatic organization for other notices.
+    # List-only notices and the two clinical collectors never start AI work,
+    # even if automatic organization is enabled for the user's other sources.
     if conn.execute('''SELECT 1 FROM sources s JOIN notice_source_origins o ON o.source_id=s.id
-        WHERE s.notice_id=? AND s.active=1 AND json_extract(o.data,'$.list_only')=1 LIMIT 1''',(notice['id'],)).fetchone():return False
+        WHERE s.notice_id=? AND s.active=1 AND (json_extract(o.data,'$.list_only')=1
+        OR json_extract(o.data,'$.parser_id')='whu-clinical-education') LIMIT 1''',(notice['id'],)).fetchone():return False
+    # Identical notices from different channels can share an existing source
+    # object; the new hospital receipt must still prevent automatic AI work.
+    for row in conn.execute('SELECT source_url FROM notice_ingest_receipts WHERE notice_id=? AND user_id=?',
+                            (notice['id'],notice['user_id'])):
+        try:host=urlsplit(row['source_url']).hostname
+        except ValueError:host=None
+        if host in {'www.rmhospital.com','www.znhospital.cn'}:return False
     if quiet_ids is None:
         quiet_ids=quiet_notices(conn,notice['user_id'],notice['id'])
     if notice['id'] in quiet_ids:return False
