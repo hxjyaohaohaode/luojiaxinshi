@@ -21,7 +21,7 @@ def coverage(source):
     failed = source.get('status') == 'failed'
     review = source.get('status') == 'review'
     retained = origin.get('retained_snapshots') or []
-    incomplete = bool(missing or related_errors or failed or retained)
+    incomplete = bool(missing or related_errors or failed or retained or origin.get('list_only'))
     return {'state': 'partial' if incomplete else 'review' if review else 'complete',
             'reading_incomplete': incomplete, 'review_required': review,
             'parse_failed': failed, 'attachment_total': len(set(origin.get('attachments') or [])),

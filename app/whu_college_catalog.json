@@ -463,27 +463,27 @@
   },
   {
     "id": "whu-college-rmhospital",
-    "name": "第一临床学院官网",
+    "name": "第一临床学院医学教育通知",
     "institution": "武汉大学第一临床学院",
-    "url": "http://www.rmhospital.com/",
-    "article_path_prefix": "/info/",
+    "url": "https://www.rmhospital.com/maineducation.html",
+    "article_path_prefix": "/article/id/",
     "group": "医学部",
     "adapter": "manual",
     "homepage": "http://www.rmhospital.com/",
-    "purpose": "学校院系目录列出的官网；公开自动读取暂不可用，请打开官网核对",
-    "manual_reason": "院方官网当前限制自动访问，暂不能公开自动读取"
+    "purpose": "武汉大学人民医院医学教育入口，院方网站当前无法自动读取，可尝试在浏览器打开核对",
+    "manual_reason": "院方网站当前限制自动访问；学校公告补充只覆盖学校官网刊出的部分"
   },
   {
     "id": "whu-college-znhospital",
-    "name": "第二临床学院官网",
+    "name": "第二临床学院研究生通知",
     "institution": "武汉大学第二临床学院",
-    "url": "http://www.znhospital.cn/",
-    "article_path_prefix": "/info/",
+    "url": "https://www.znhospital.cn/graduate_student_notice.html",
+    "article_path_prefix": "/graduate_student_notice_detail/",
     "group": "医学部",
     "adapter": "manual",
     "homepage": "http://www.znhospital.cn/",
-    "purpose": "学校院系目录列出的官网；公开自动读取暂不可用，请打开官网核对",
-    "manual_reason": "院方官网当前限制自动访问，暂不能公开自动读取"
+    "purpose": "武汉大学中南医院研究生通知栏目，院方网站当前无法自动读取，可尝试在浏览器打开核对",
+    "manual_reason": "院方网站当前限制自动访问；学校公告补充只覆盖学校官网刊出的部分"
   },
   {
     "id": "whu-college-whuss",
@@ -896,6 +896,17 @@
     "list_tokens": [],
     "homepage": "https://aais.whu.edu.cn",
     "purpose": "武汉大学学院官网的前沿交叉学科研究院人才培养栏目，保留公开原文、发布时间和附件"
+  },
+  {
+    "id": "whu-school-target-notices",
+    "name": "学工、团委、财务及临床学院（学校公告补充）",
+    "institution": "武汉大学",
+    "url": "https://www.whu.edu.cn/tzgg.htm",
+    "article_path_prefix": "/info/5231/",
+    "group": "校级部门",
+    "adapter": "school_publishers",
+    "homepage": "https://www.whu.edu.cn/",
+    "purpose": "仅接收武汉大学官网最近五页公告中，发布单位标明为学工部、校团委、财务部或第一、第二临床学院的通知；原文受限时仅保存列表信息并标注未读取，学校公告补充不能覆盖各单位官网全部通知"
   },
   {
     "id": "whu-college-sgg-research",

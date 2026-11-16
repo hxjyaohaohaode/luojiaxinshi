@@ -99,6 +99,10 @@ def authorized_source(conn,uid,nid,settings):
 def eligible(conn,notice,settings,*,quiet_ids=None):
     from .qq_group_intake import quiet_notices
     if notice['status'] in {'confirmed','processing'}:return False
+    # List metadata without the original body is never an AI input, even if a
+    # user later chooses to enable automatic organization for other notices.
+    if conn.execute('''SELECT 1 FROM sources s JOIN notice_source_origins o ON o.source_id=s.id
+        WHERE s.notice_id=? AND s.active=1 AND json_extract(o.data,'$.list_only')=1 LIMIT 1''',(notice['id'],)).fetchone():return False
     if quiet_ids is None:
         quiet_ids=quiet_notices(conn,notice['user_id'],notice['id'])
     if notice['id'] in quiet_ids:return False
