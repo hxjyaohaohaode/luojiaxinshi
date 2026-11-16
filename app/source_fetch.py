@@ -35,6 +35,11 @@ INSERT OR IGNORE INTO meta VALUES('source_fetch_schema_version','1');
 CONTEXT=ContextVar('public_source_acquisition',default=None)
 FRESH_SECONDS=30
 DOMAIN_INTERVAL=.25
+WHU_GROUP_KEY='__whu_shared_visitor_rate__'
+WHU_GROUP_INTERVAL=5.0
+WHU_VERIFICATION_COOLDOWN=1800
+CLINICAL_HOSTS={'www.rmhospital.com','www.znhospital.cn'}
+CLINICAL_RESTRICTION_COOLDOWN=1800
 MAX_CACHE_BYTES=64*1024*1024
 # These are the only negotiated request fields the anonymous reader can reuse.
 # Values (including absence, distinct from an empty value) are always in the key.
@@ -48,6 +53,8 @@ def initialize(conn):
     if version and (version[0]!='1' or not TABLES.issubset(tables)):
         raise ValueError('公开来源缓存版本不兼容或缺少必要数据表')
     conn.executescript(SCHEMA)
+    from .school_public_observations import initialize as init_school_observations
+    init_school_observations(conn)
     policy=conn.execute("SELECT value FROM meta WHERE key='source_fetch_policy_version'").fetchone()
     if not policy or policy[0]!=CACHE_POLICY_VERSION:
         # Old entries did not retain enough negotiation/privacy information to
@@ -70,12 +77,13 @@ def allowed(value,origins,hosts=()):
 
 
 @contextmanager
-def acquisition(db,config,*,origins=(),hosts=(),max_bytes=5*1024*1024):
+def acquisition(db,config,*,origins=(),hosts=(),max_bytes=5*1024*1024,bypass_shared=False):
     scope=hashlib.sha256(dumps({'mode':config.get('mode'),'url':config.get('url'),
         'allowed_article_origins':sorted(config.get('allowed_article_origins') or []),
         'article_path_prefix':config.get('article_path_prefix',''),'preset_id':config.get('preset_id',''),
         'parser_version':'2'}).encode()).hexdigest()
-    token=CONTEXT.set({'db':db,'scope':scope,'origins':set(origins),'hosts':set(hosts),'max_bytes':max_bytes})
+    token=CONTEXT.set({'db':db,'scope':scope,'origins':set(origins),'hosts':set(hosts),'max_bytes':max_bytes,
+                       'preset_id':config.get('preset_id',''),'bypass_shared':bypass_shared})
     try:yield
     finally:CONTEXT.reset(token)
 
@@ -110,7 +118,7 @@ def http_date(value):
     except (ValueError,TypeError,OverflowError):return None
 
 
-def cache_policy(headers,received_at):
+def cache_policy(headers,received_at,*,max_fresh=FRESH_SECONDS):
     """Return storage permission and freshness after conservative HTTP policy.
 
     This reader's shared freshness is capped at 30 seconds. It never serves a
@@ -139,7 +147,7 @@ def cache_policy(headers,received_at):
     if not age.isascii() or not age.isdigit():return True,0
     initial_age=max(min(int(age[:12]),2**31) if len(age)<=12 else 2**31,
                     max(0,received_at-date) if date is not None else 0)
-    return True,max(0,min(FRESH_SECONDS,min(lifetimes or [FRESH_SECONDS])-initial_age))
+    return True,max(0,min(max_fresh,min(lifetimes or [max_fresh])-initial_age))
 
 
 def stored_headers(headers):
@@ -148,7 +156,7 @@ def stored_headers(headers):
     blocked={'content-encoding','content-length','set-cookie','transfer-encoding',
              'connection','keep-alive','proxy-authenticate','proxy-authorization','te','trailer','upgrade'}
     blocked.update(field.strip().lower() for field in headers.get('connection','').split(','))
-    return {k.lower():v for k,v in headers.items() if k.lower() not in blocked}
+    return {k.lower():v for k,v in headers.items() if k.lower() not in blocked and not k.lower().startswith('x-luojia-')}
 
 
 class CachedPublicTransport(httpx.AsyncBaseTransport):
@@ -203,18 +211,27 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
         if not request_store:self.purge(url);cached=None
         if self.fresh(cached,now,request):
             return self.response(cached,request,'shared')
-        host=urlsplit(url).hostname;lease=ident();deadline=now+12
+        host=urlsplit(url).hostname;lease=ident()
+        group=WHU_GROUP_KEY if host=='whu.edu.cn' or host.endswith('.whu.edu.cn') else None
+        keys=[host,group] if group else [host]
+        deadline=now+(30 if group else 12)
         while True:
             now=time.time()
             with db.connect(write=True) as conn:
-                conn.execute('INSERT OR IGNORE INTO source_host_limits(hostname) VALUES(?)',(host,))
-                limit=conn.execute('SELECT * FROM source_host_limits WHERE hostname=?',(host,)).fetchone()
-                if limit['retry_after']>now:
-                    raise HTTPException(429,'来源要求稍后重试，已有内容保留',headers={'Retry-After':str(max(1,int(limit['retry_after']-now)))})
-                wait=max(limit['lease_until'],limit['next_allowed'])-now
+                for key_name in keys:
+                    conn.execute('INSERT OR IGNORE INTO source_host_limits(hostname) VALUES(?)',(key_name,))
+                limits=[conn.execute('SELECT * FROM source_host_limits WHERE hostname=?',(key_name,)).fetchone() for key_name in keys]
+                retry_at=max(limit['retry_after'] for limit in limits)
+                if retry_at>now:
+                    reason=('学校来源暂时需要休息，稍后重试；已有内容保留' if group else
+                            '院方网站当前限制服务器访问，需院方允许服务端读取后再试' if host in CLINICAL_HOSTS else
+                            '来源要求稍后重试，已有内容保留')
+                    raise HTTPException(429,reason,headers={'Retry-After':str(max(1,int(retry_at-now)))})
+                wait=max(max(limit['lease_until'],limit['next_allowed']) for limit in limits)-now
                 if wait<=0:
                     lease_seconds=240 if context['max_bytes']>5*1024*1024 else 25
-                    conn.execute('UPDATE source_host_limits SET lease_id=?,lease_until=? WHERE hostname=?',(lease,now+lease_seconds,host))
+                    for key_name in keys:
+                        conn.execute('UPDATE source_host_limits SET lease_id=?,lease_until=? WHERE hostname=?',(lease,now+lease_seconds,key_name))
                     break
             if now>=deadline:raise HTTPException(503,'同域名采集正在进行，已保留任务等待下轮',headers={'Retry-After':'30'})
             await asyncio.sleep(min(max(wait,.02),.15))
@@ -236,7 +253,16 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                 if response.status_code in {429,503}:
                     until=retry_until(response.headers.get('retry-after','60'),time.time())
                     with db.connect(write=True) as conn:
-                        conn.execute('UPDATE source_host_limits SET retry_after=max(retry_after,?) WHERE hostname=?',(until,host))
+                        for key_name in (keys if group and response.status_code==429 else [host]):
+                            conn.execute('UPDATE source_host_limits SET retry_after=max(retry_after,?) WHERE hostname=?',(until,key_name))
+                if group and response.status_code in {301,302,303,307,308} and '/system/resource/visitcode/visitcode.jsp' in response.headers.get('location','').lower():
+                    with db.connect(write=True) as conn:
+                        conn.execute('UPDATE source_host_limits SET retry_after=max(retry_after,?) WHERE hostname=?',
+                                     (time.time()+WHU_VERIFICATION_COOLDOWN,group))
+                if host in CLINICAL_HOSTS and response.status_code in {412,521} and context.get('preset_id','').startswith('whu-college-'):
+                    with db.connect(write=True) as conn:
+                        conn.execute('UPDATE source_host_limits SET retry_after=max(retry_after,?) WHERE hostname=?',
+                                     (time.time()+CLINICAL_RESTRICTION_COOLDOWN,host))
                 if response.status_code==304:
                     if not cached:raise HTTPException(502,'来源返回304但没有可用快照，请重新检查来源')
                     now=time.time()
@@ -277,8 +303,18 @@ class CachedPublicTransport(httpx.AsyncBaseTransport):
                     elif permitted:
                         self.purge(url)
                     headers.update({'x-luojia-cache':'fetched' if cacheable else 'fetched_uncached','x-luojia-content-sha256':digest})
+                    # Only these three anonymous, fixed school columns can be
+                    # normalized into shared public observations. Session
+                    # cookies themselves are never stored or sent onward.
+                    from .school_public_observations import eligible as eligible_observation,TTL as OBSERVATION_TTL
+                    if eligible_observation(context,url):
+                        public_headers={k:v for k,v in response.headers.items() if k.lower()!='set-cookie'}
+                        shareable,ttl=cache_policy(public_headers,now,max_fresh=OBSERVATION_TTL)
+                        if shareable and ttl>=1:headers['x-luojia-public-observation-ttl']=str(int(ttl))
                 return httpx.Response(response.status_code,headers=headers,content=bytes(body),request=request)
             finally:await response.aclose()
         finally:
             with db.connect(write=True) as conn:
-                conn.execute('UPDATE source_host_limits SET lease_id=\'\',lease_until=0,next_allowed=? WHERE hostname=? AND lease_id=?',(time.time()+DOMAIN_INTERVAL,host,lease))
+                for key_name in keys:
+                    interval=WHU_GROUP_INTERVAL if key_name==group else DOMAIN_INTERVAL
+                    conn.execute('UPDATE source_host_limits SET lease_id=\'\',lease_until=0,next_allowed=? WHERE hostname=? AND lease_id=?',(time.time()+interval,key_name,lease))

@@ -9,12 +9,36 @@ from fastapi import HTTPException
 
 from app import notice_intake,source_sync
 from app.source_fetch import CachedPublicTransport,acquisition,CONTEXT
+from app import source_fetch
 from tests.test_source_subscriptions import website
 from tests.test_workflow import account,env
 from tests.source_trial_fixture import successful_rule_trial
 
 FEED='https://feeds.example.org/whu/notices'
 ARTICLE='https://school.example.edu.cn/info/one'
+
+
+def test_school_verification_pauses_other_school_hosts_before_more_requests(env):
+    db=env[0].state.db;seen=[]
+    def handler(request):
+        seen.append(str(request.url))
+        return httpx.Response(302,headers={'location':'/system/resource/visitcode/visitcode.jsp'})
+    async def check():
+        config={'url':'https://finance.whu.edu.cn/list','mode':'html','article_path_prefix':'/info/'}
+        with acquisition(db,config,hosts=['finance.whu.edu.cn']):
+            async with httpx.AsyncClient(transport=source_fetch.transport(lambda:httpx.MockTransport(handler))) as client:
+                response=await client.get(config['url'])
+                assert response.status_code==302
+        config={'url':'https://future.whu.edu.cn/list','mode':'html','article_path_prefix':'/info/'}
+        with acquisition(db,config,hosts=['future.whu.edu.cn']):
+            async with httpx.AsyncClient(transport=source_fetch.transport(lambda:httpx.MockTransport(handler))) as client:
+                with pytest.raises(HTTPException,match='稍后重试'):
+                    await client.get(config['url'])
+    asyncio.run(check())
+    assert seen==['https://finance.whu.edu.cn/list']
+    with db.connect() as conn:
+        row=conn.execute('SELECT retry_after FROM source_host_limits WHERE hostname=?',(source_fetch.WHU_GROUP_KEY,)).fetchone()
+        assert row['retry_after']>time.time()+1700
 
 
 def enable_feed(client,sid,**changes):

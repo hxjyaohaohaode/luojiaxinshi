@@ -90,7 +90,8 @@ async def read_network(primary,config,entries,*,read=None,expanded=False):
         except (HTTPException,OSError,ValueError,TimeoutError) as exc:
             return {'url':item['url'],'error':str(exc.detail) if isinstance(exc,HTTPException) else '关联来源未读到正文'}
     try:
-        async with asyncio.timeout(RESEARCH_SECONDS):
+        school_host=(urlsplit(config.get('url','')).hostname or '').endswith('.whu.edu.cn')
+        async with asyncio.timeout(60 if school_host else RESEARCH_SECONDS):
             results=await asyncio.gather(*(fetch(item) for item in proposed))
         for result in results:
             if isinstance(result,dict):report['errors'].append(result);continue

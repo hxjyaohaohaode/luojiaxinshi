@@ -116,6 +116,13 @@ def access_restriction(url):
 
 
 async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
+    from .source_fetch import CONTEXT
+    from .school_public_observations import material
+    return await material(CONTEXT.get(),url,referrer=referrer,expanded=expanded,
+                          compute=lambda: _read_link_uncached(url,allowed_host=allowed_host,referrer=referrer,expanded=expanded))
+
+
+async def _read_link_uncached(url, allowed_host=None, referrer=None, *, expanded=False):
     # Public CMS attachment handlers often require their actual parent article.
     # This comes from our saved provenance, never from browser history. Strip
     # query/fragment values and send only to that same public source host.
@@ -123,7 +130,9 @@ async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
     try:
         from .source_fetch import transport
         from .source_limits import MAX_SOURCE_FILE
-        async with asyncio.timeout(180 if expanded else 20), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
+        school_host=(urlsplit(url).hostname or '').endswith('.whu.edu.cn')
+        deadline=180 if expanded else 50 if school_host else 20
+        async with asyncio.timeout(deadline), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
                 follow_redirects=False, timeout=httpx.Timeout(60 if expanded else 15, connect=5)) as client:
             for _ in range(4):
                 if not public_url(url):
@@ -142,6 +151,8 @@ async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
                         url = urljoin(url, response.headers.get('location', ''))
                         continue
                     if response.status_code != 200:
+                        if urlsplit(url).hostname in {'www.rmhospital.com','www.znhospital.cn'} and response.status_code in {412,521}:
+                            raise HTTPException(422,'院方网站当前限制服务器访问，需院方允许服务端读取后再试')
                         if response.status_code in {404, 410}:
                             raise HTTPException(422, f'原网页返回 HTTP {response.status_code}，可能已删除或地址变更；已有内容保留')
                         if response.status_code in {401, 403}:
@@ -224,6 +235,7 @@ async def _read_link(url, allowed_host=None, referrer=None, *, expanded=False):
                     if response.headers.get('x-luojia-content-sha256'):
                         origin.update(raw_sha256=response.headers['x-luojia-content-sha256'],
                             acquisition=response.headers.get('x-luojia-cache','fetched'),parser_version='2')
+                    origin['public_observation_ttl']=int(response.headers.get('x-luojia-public-observation-ttl','0'))
                     return source, title
             raise HTTPException(422, '链接跳转次数过多，请打开最终原文链接再试')
     except (httpx.HTTPError, OSError, ValueError, LookupError, TimeoutError):

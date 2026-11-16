@@ -350,10 +350,17 @@ def parse_index(text, url, config):
 
 
 async def fetch_index(config):
+    from .source_fetch import CONTEXT
+    from .school_public_observations import index
+    return await index(CONTEXT.get(),config,lambda: _fetch_index(config))
+
+
+async def _fetch_index(config):
     url = config['url']
     # The library list resolves individual article links as separate requests.
     # Keep a bounded window without turning one slow link into a false outage.
-    deadline = 60 if config.get('preset_id') == 'whu-library-notices' else 20
+    deadline = (90 if config.get('preset_id') == 'whu-library-notices' else
+                60 if urlsplit(url).hostname.endswith('.whu.edu.cn') else 20)
     try:
         async with asyncio.timeout(deadline), httpx.AsyncClient(transport=transport(PublicHTTPTransport), trust_env=False,
                 follow_redirects=False, timeout=httpx.Timeout(15, connect=5)) as client:
@@ -368,6 +375,9 @@ async def fetch_index(config):
                         url = urljoin(url, response.headers.get('location', ''))
                         continue
                     if response.status_code != 200:
+                        preset=get_preset(config.get('preset_id',''))
+                        if preset and preset.get('adapter')=='clinical' and response.status_code in {412,521}:
+                            raise HTTPException(502,'院方网站当前限制服务器访问，需院方允许服务端读取后才能启用')
                         raise HTTPException(502, f'来源返回 HTTP {response.status_code}，本次未完成同步')
                     content = bytearray()
                     async for chunk in response.aiter_bytes():
@@ -397,6 +407,7 @@ async def fetch_index(config):
                     if not isinstance(entries,IndexEntries):entries=IndexEntries(entries)
                     entries.snapshot={'url':url,'sha256':hashlib.sha256(content).hexdigest(),
                         'checked_at':int(time.time()),'acquisition':response.headers.get('x-luojia-cache','fetched'),
+                        'public_observation_ttl':int(response.headers.get('x-luojia-public-observation-ttl','0')),
                         **snapshot_extra}
                     return entries
             raise HTTPException(422, '来源跳转次数过多')
@@ -618,7 +629,7 @@ async def sync_source(db, sid, uid=None, force=False):
     def unchanged(conn):
         return conn.execute('SELECT 1 FROM source_subscriptions s JOIN source_catalog c ON c.id=s.source_id WHERE s.source_id=? AND s.enabled=1 AND s.version=? AND c.version=?', (sid, snapshot['version'],snapshot['catalog_version'])).fetchone()
     try:
-        with acquisition(db,config,hosts=[urlsplit(config['url']).hostname],max_bytes=1_500_000):
+        with acquisition(db,config,hosts=[urlsplit(config['url']).hostname],max_bytes=1_500_000,bypass_shared=force):
             entries = await fetch_index(config)
         index_succeeded=True
         receipt['list'].update(succeeded=True,entry_count=len(entries),empty_confirmed=getattr(entries,'empty_confirmed',False),snapshot=getattr(entries,'snapshot',{}))
@@ -672,7 +683,7 @@ async def sync_source(db, sid, uid=None, force=False):
                 origins,hosts=article_scope(config)
                 list_only_reason=''
                 try:
-                    with acquisition(db,config,origins=origins,hosts=hosts):
+                    with acquisition(db,config,origins=origins,hosts=hosts,bypass_shared=force):
                         source, _ = await read_link(item['url'])
                 except HTTPException as exc:
                     if config.get('preset_id')!='whu-school-target-notices':
@@ -697,7 +708,7 @@ async def sync_source(db, sid, uid=None, force=False):
                 if list_only_reason:
                     materials=[source]
                 else:
-                    with acquisition(db,config,origins=origins,hosts=hosts,max_bytes=MAX_SOURCE_FILE):
+                    with acquisition(db,config,origins=origins,hosts=hosts,max_bytes=MAX_SOURCE_FILE,bypass_shared=force):
                         materials = await read_network(source,config,entries,read=read_link,expanded=True)
                 published = article_date or item['published_at']
                 with db.connect(write=True) as conn:
@@ -996,3 +1007,21 @@ def install(app, db, user):
         with db.connect() as conn:
             owned(conn, sid, current['id'])
         return await sync_source(db, sid, current['id'], force=True)
+
+    @app.post('/api/source-catalog/{sid}/verification-finished')
+    async def verification_finished(sid: str, current=Depends(user)):
+        # The user completes any CAPTCHA at the official site. This only ends
+        # our own shared cooldown and retries the same owner-authorized source.
+        if app.state.settings.production and current['role']!='admin':
+            raise HTTPException(403,'部署后的来源验证由服务管理员处理')
+        rate_limit(db,'school-verification-retry:'+current['id'],6,3600)
+        from .source_fetch import WHU_GROUP_KEY
+        with db.connect(write=True) as conn:
+            owned(conn,sid,current['id'])
+            row=conn.execute('SELECT config,enabled FROM source_subscriptions WHERE source_id=? AND user_id=?',(sid,current['id'])).fetchone()
+            if not row or not row['enabled']:raise HTTPException(409,'请先开启这条学校来源')
+            host=urlsplit(json.loads(row['config'])['url']).hostname or ''
+            if host!='whu.edu.cn' and not host.endswith('.whu.edu.cn'):
+                raise HTTPException(422,'此操作只适用于武汉大学学校网站')
+            conn.execute('UPDATE source_host_limits SET retry_after=0 WHERE hostname=?',(WHU_GROUP_KEY,))
+        return await sync_source(db,sid,current['id'],force=True)

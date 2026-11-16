@@ -190,6 +190,9 @@ def parse_official_index(text, url, preset_id):
     preset = get_preset(preset_id)
     if not preset or urlsplit(url).hostname != urlsplit(preset['url']).hostname:
         raise HTTPException(422, '官网预设与来源地址不匹配')
+    if preset.get('adapter')=='clinical':
+        from .clinical_sources import parse_index
+        return parse_index(text,url,preset)
     if preset.get('adapter') in {'vsb','oral','journal'}:
         from .whu_generic_sources import parse_index
         return parse_index(text,url,preset)
@@ -250,6 +253,8 @@ def parse_official_index(text, url, preset_id):
 
 def parse_official_article(text, url):
     """Return None for other hosts; known hosts must match an article structure."""
+    from .clinical_sources import article_url as clinical_article_url,parse_article as parse_clinical_article
+    if clinical_article_url(url,url):return parse_clinical_article(text,url)
     from .whu_generic_sources import matching_article,parse_article
     generic=matching_article(url)
     if generic:return parse_article(text,url,generic)

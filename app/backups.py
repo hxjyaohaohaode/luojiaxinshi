@@ -74,6 +74,7 @@ def restore_database(source:Path,destination:Path):
             from .proactive_feedback import TABLES as FEEDBACK_TABLES
             from .campus import SPRINT_TABLES
             from .source_fetch import TABLES as FETCH_TABLES
+            from .school_public_observations import TABLES as SCHOOL_PUBLIC_TABLES
             from .source_sync import OBSERVATION_TABLES
             from .notice_tracking import TABLES as TRACKING_TABLES
             from .listing import TABLES as LISTING_TABLES
@@ -82,6 +83,7 @@ def restore_database(source:Path,destination:Path):
             from .campus_submissions import TABLES as SUBMISSION_TABLES
             for key, required in (('campus_sprint_schema_version',SPRINT_TABLES),
                                   ('source_fetch_schema_version',FETCH_TABLES),
+                                  ('school_public_observation_schema_version',SCHOOL_PUBLIC_TABLES),
                                   ('source_observation_schema_version',OBSERVATION_TABLES),
                                   ('notice_tracking_schema_version',TRACKING_TABLES),
                                   ('bounded_lists_version',LISTING_TABLES),
@@ -165,6 +167,7 @@ def restore_database(source:Path,destination:Path):
                 for table in ('source_subscriptions','publisher_subscriptions'):
                     if table in tables:
                         target.execute("UPDATE "+table+" SET enabled=0,running_until=0,error='从备份恢复，请重新确认来源授权'")
+                if 'school_public_leases' in tables:target.execute('DELETE FROM school_public_leases')
                 if 'notice_automation_settings' in tables:
                     target.execute('UPDATE notice_automation_settings SET enabled=0,consented_at=NULL')
                     target.execute("UPDATE notice_automation_jobs SET state='cancelled',lease_until=NULL,error='从备份恢复，请重新确认自动整理' WHERE state IN ('queued','running')")

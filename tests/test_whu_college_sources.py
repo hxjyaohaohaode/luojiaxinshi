@@ -21,8 +21,8 @@ def test_catalog_covers_official_colleges_and_keeps_restricted_sites_manual():
     assert {'whu-college-sim','whu-college-physics','whu-college-robotics',
             'whu-college-whuss','whu-college-rmhospital','whu-college-znhospital',
             'whu-unit-gs','whu-unit-future','whu-unit-nic'}.issubset(presets)
-    assert presets['whu-college-rmhospital']['adapter']=='manual'
-    assert presets['whu-college-znhospital']['adapter']=='manual'
+    assert presets['whu-college-rmhospital']['adapter']=='clinical'
+    assert presets['whu-college-znhospital']['adapter']=='clinical'
     for p in presets.values():
         host=urlsplit(p['url']).hostname
         assert host.endswith('.whu.edu.cn') or host in {'www.whuss.com','www.rmhospital.com','www.znhospital.cn'}
@@ -111,7 +111,7 @@ def test_bulk_subscription_trials_each_source_without_enabling_ai(env,monkeypatc
     async def read(url):
         source=text_source('公开通知正文');source['origin']={'url':url,'attachments':[]};return source,'公开通知'
     monkeypatch.setattr(source_sync,'fetch_index',index);monkeypatch.setattr(source_sync,'read_link',read)
-    ids=['whu-college-sim','whu-college-physics','whu-college-rmhospital','missing']
+    ids=['whu-college-sim','whu-college-physics','whu-college-sim-zszp','missing']
     response=a.post('/api/source-presets/bulk-subscribe',json={'preset_ids':ids})
     assert response.status_code==200,response.text
     results={item['id']:item for item in response.json()['results']}

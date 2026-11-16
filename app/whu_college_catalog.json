@@ -463,15 +463,14 @@
   },
   {
     "id": "whu-college-rmhospital",
-    "name": "第一临床学院医学教育通知",
+    "name": "第一临床学院研究生招生",
     "institution": "武汉大学第一临床学院",
-    "url": "https://www.rmhospital.com/maineducation.html",
+    "url": "https://www.rmhospital.com/c/zsjy.html",
     "article_path_prefix": "/article/id/",
     "group": "医学部",
-    "adapter": "manual",
+    "adapter": "clinical",
     "homepage": "http://www.rmhospital.com/",
-    "purpose": "武汉大学人民医院医学教育入口，院方网站当前无法自动读取，可尝试在浏览器打开核对",
-    "manual_reason": "院方网站当前限制自动访问；学校公告补充只覆盖学校官网刊出的部分"
+    "purpose": "第一临床学院研究生招生就业栏目；服务器需能公开读取院方网站，试读通过后才能启用"
   },
   {
     "id": "whu-college-znhospital",
@@ -480,10 +479,9 @@
     "url": "https://www.znhospital.cn/graduate_student_notice.html",
     "article_path_prefix": "/graduate_student_notice_detail/",
     "group": "医学部",
-    "adapter": "manual",
+    "adapter": "clinical",
     "homepage": "http://www.znhospital.cn/",
-    "purpose": "武汉大学中南医院研究生通知栏目，院方网站当前无法自动读取，可尝试在浏览器打开核对",
-    "manual_reason": "院方网站当前限制自动访问；学校公告补充只覆盖学校官网刊出的部分"
+    "purpose": "第二临床学院研究生通知栏目；服务器需能公开读取院方网站，试读通过后才能启用"
   },
   {
     "id": "whu-college-whuss",
@@ -698,12 +696,11 @@
     "url": "https://finance.whu.edu.cn/listnotice.jsp?urltype=tree.TreeTempUrl&wbtreeid=1121",
     "article_path_prefix": "/content.jsp",
     "group": "校级部门",
-    "adapter": "manual",
+    "adapter": "vsb",
     "list_tag": "ul",
     "list_tokens": [],
     "homepage": "https://finance.whu.edu.cn/",
-    "purpose": "武汉大学财务部官网当前要求访问验证，暂不能自动读取，请打开官网核对",
-    "manual_reason": "官网当前要求访问验证，暂不能公开自动读取"
+    "purpose": "武汉大学财务部公开通知栏目；遇到访问验证时会暂停采集并提示，不调用 AI"
   },
   {
     "id": "whu-unit-kfy",

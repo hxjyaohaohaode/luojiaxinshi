@@ -2,7 +2,7 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-UD44CL3N.js",
+    "js": "/static/dist/app-FUWI65JG.js",
     "css": "/static/dist/styles-4VJTJOO2.css"
   },
   "sources": {
@@ -146,7 +146,7 @@
     "static/reminders.js": "ec7547b3cd417a2f54e77571276ce70420beef94fc14001c3fb878ffbb083d85",
     "static/reply-speech.js": "3e7505a83e373a5f6104c3f178398e1cbff8069b01d6400e0d18735a02be11cf",
     "static/review-observation.js": "bd9196b0bb446ca3ac11866a972d412a309dd5707ff5878445222dc1b39be3df",
-    "static/sources.js": "3ace5e938cd68625b2e656b2f2961a7b9818861101ece5985a36c7132e76cf1e",
+    "static/sources.js": "c49a007a8a04f2ce1f935e47017c5839d0124811cbe8ef2e617211b8cd912f79",
     "static/speech-text.js": "b1a2482ef2b5519e11ed47b814358acce48e3db4abe024db2a6d220db2a4cb07",
     "static/speech.js": "1a87c98138d15fa0af368d13f6bb4473a950bb3b6f27dad4661aee1a28cd7737",
     "static/styles.css": "003bd5db2b5ad0b9a828f62af65cc83c298d25feebd13c60a33500095b3c1ffd",
@@ -211,7 +211,7 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-NW7ZOBBX.js": "2a0cda9f63783d1477d7fe20ca4ad4323aa9ad91e390bf53ac24668d99d6707d",
     "static/dist/chunks/calendar-45THDV6Z.js": "1c14e107172daef2a851d17630bb8ed5933339bd1df24890bf96e32c0b18a69a",
-    "static/dist/app-UD44CL3N.js": "ae1f707a7c87342bc68d9104aa1b38e4288833323b79d409d57a5ffd2edfabbf",
+    "static/dist/app-FUWI65JG.js": "f3d7c80b13f0400888efb188e0e0369b4592ca9afdf10d2a0a33087c8b7c7617",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
     "static/dist/chunks/memory-CMBMXAQ5.js": "881679d5707d5570684593af545e8c1e054c563875a26910aa2401c693ca8fdb",
     "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
@@ -221,7 +221,7 @@
     "static/dist/chunks/chunk-HHFMEND4.js": "a9f4b9f3bdece3db9e4e4d8c4c8373783ec47fc9d2d0d405fbb7709e8136a246",
     "static/dist/chunks/chunk-O743CP2V.js": "8b5803ab8245f2d0a20a9a583a0225c52af71ab7509cc0a124acffd395ab155f",
     "static/dist/chunks/chunk-HH2XZIY6.js": "7241c095c3f6b1bd0970cf10cc9c37492634c4b8b89ab09acda0870ae5554984",
-    "static/dist/chunks/sources-AY522OUI.js": "e918e21cb9f653d6187e0968ecd19993afc2cd5ec5d5e7bce9bb0117a542525d",
+    "static/dist/chunks/sources-RFCTGRYH.js": "6093ec0b84444c6c1fbc6665f5ac1eef44e55b540dfcb3ecba1582aad9b3aa3d",
     "static/dist/chunks/chunk-W4G55L46.js": "0947b6de4a9269e0bfa09d1b42b35fd5d53e73a61d1626b0ea965ee769dc860c",
     "static/dist/chunks/chunk-43FC37BF.js": "c2cb25b5ad2a8298d1cf73d9f447e93d52018aa45431bf780fbb715e86ec3940",
     "static/dist/chunks/chunk-VUWH4HEF.js": "e23704172cd9edd4219ef28ae2be31a05cc804df1f12489c3ef45a2c4d9ebbe0",
@@ -230,6 +230,6 @@
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
     "static/dist/styles-4VJTJOO2.css": "12632d497dcae244084a4876de7baf9eb75ed4c26ab856b6de06247a8691ca6b",
-    "static/dist/index.html": "08ad17ebc0e8bf24fd88d9687684fe714174845ebb3bd709dc383dd3c4275b74"
+    "static/dist/index.html": "ee2653c234500a2fba071d5f47644457417fcc7e3ecc80958eefb722c177df7b"
   }
 }
