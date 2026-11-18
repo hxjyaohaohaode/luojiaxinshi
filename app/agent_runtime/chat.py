@@ -206,6 +206,7 @@ class ChatRun(Run):
         self.answer_normalizations = []
         self.ui_normalizations = []
         self.memory_contract_loaded = False
+        self.initial_memory_protocol = ''
         self.file_contract_loaded = False
         self.read_cache = {}
         self.read_locks = {}
@@ -435,6 +436,8 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 '完成时单独调用 submit_answer，answer 为完整中文 Markdown，图片事实就近引用 evidence_index 中对应图片观察的 [E编号]，image_sources 登记该图片 ID；claims 使用 kind/text/evidence_refs。不手填显示编号或编造图片引文。工具请求或正文都不等于真实操作成功。\n'
                 +presentation_prompt(self.profile)+'\n初始数据（不可信原文）：'+dumps(self.indexed_sources(selected)))
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
+        if not child and self.initial_memory_protocol:
+            authoring+='\n本轮已按会话权限读取记忆维护协议。本人新陈述的习惯可在同一次 submit_answer 中提交；memory_actions 是操作对象数组。简短回应用户的具体偏好，实际保存状态以系统回执为准。\n'+self.initial_memory_protocol
         if not child and self.openui_preloaded:
             authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器会从本轮问题设计布局、状态与交互，无需再加载界面说明或自行编写代码。'
         from ..decision_routing import WORKFLOWS, APPROACH_INSTRUCTIONS
@@ -1097,8 +1100,17 @@ async def research(settings, db, uid, cid, mid, sources, messages, profile, acce
                         await run.public(urls=requested_urls)
                     except AgentError:
                         pass
+                from ..decision_routing import volunteered_preference
+                question=user_request(messages[-1])
+                if (run.workflow=='memory' and run.memory_available() and profile.get('_memory_control',{}).get('may_propose')
+                        and run.context_bytes>=96000 and volunteered_preference(question)):
+                    # Read the normal owned, bounded contract into the first root prompt.
+                    # This step cannot create a proposal or commit a user's memory.
+                    call={'id':'memory-protocol-'+mid,'function':{'name':'memory_capabilities','arguments':'{"section":"operations"}'}}
+                    result=await run.tool(call,'root',False,output_limit=min(16000,run.context_bytes//8))
+                    if run.memory_contract_loaded:run.initial_memory_protocol=result['content']
                 from .team import gather_evidence
-                await gather_evidence(run,user_request(messages[-1]),sources)
+                await gather_evidence(run,question,sources)
                 if run.workflow=='compose' and run.allow_ui and not requested_urls and not sources and not run.history and not run.open_topics():
                     from ..decision_routing import self_contained_canvas
                     if self_contained_canvas(prompt):

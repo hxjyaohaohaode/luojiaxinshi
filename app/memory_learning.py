@@ -19,6 +19,7 @@ from .memory_policy import catalog, effective, normalized, rows_for, save_policy
 from .memory_store import (decorate, digest, insert_memory, invalidate_dependents,
                            record_revision, settings_for, usable_derived)
 
+DECLINE_LEARNING = re.compile(r'不要记住|不用记住|不要保存|别记住|别记录|不要自动记忆')
 UNCERTAIN = re.compile(r'如果|假如|假设|例如|举例|示例|例子|演示|假装|引用|据说|也许|可能|想象|是不是|是否|[？?]|他说|她说|朋友说|同学说|老师说')
 SECRET = re.compile(r'\b(?:sk|tp|ttp)-[a-zA-Z0-9_-]{16,}|'
                     r'-----BEGIN[^\r\n]*PRIVATE KEY-----[\s\S]*?(?:-----END[^\r\n]*PRIVATE KEY-----|$)|-----BEGIN[^\r\n]*PRIVATE KEY|'
@@ -120,7 +121,7 @@ def learning_allowed(conn, uid, cid, messages=None):
     if latest_id and message_scope(conn,latest_id)['generation']<generation(conn,uid):return False
     if latest_id and conn.execute("SELECT 1 FROM memory_action_receipts WHERE message_id=? AND action_hash='natural-forget'",(latest_id,)).fetchone():return False
     latest = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
-    if re.search(r'不要记住|不用记住|不要保存|别记住|别记录|不要自动记忆', latest):
+    if DECLINE_LEARNING.search( latest):
         return False
     return memory_access(messages) and account_access(messages)['profile'] and message_scope_start(messages) is None
 
@@ -258,7 +259,7 @@ def ingest_message(conn, uid, cid, mid, messages=None,explicit_backfill=False):
     allowed = allowed and (source_scope['learning_allowed'] or explicit_backfill)
     from .memory_lifecycle import generation
     allowed = allowed and source_scope['generation']>=generation(conn,uid)
-    if re.search(r'不要记住|不用记住|不要保存|别记住|别记录|不要自动记忆',row['content']):allowed=False
+    if DECLINE_LEARNING.search(row['content']):allowed=False
     if allowed:
         capture_session(conn,uid,cid,mid)
         text = row['content']

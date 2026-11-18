@@ -117,10 +117,27 @@ def safe_direct(text, *, has_context, has_materials):
                 and not (_HIGH.search(text) or _UI.search(text) or _MEMORY.search(text) or _WORK.search(text) or _DRAFT.search(text)))
 
 
+def volunteered_preference(text):
+    from .memory_learning import DECLINE_LEARNING, classify, direct_quote
+    from .memory_lifecycle import admit
+    # A quoted biography, example, one-off instruction or another person's
+    # statement cannot turn an ordinary question into personal memory work.
+    if DECLINE_LEARNING.search(text):return False
+    for sentence in re.split(r'[。；！\n]', text):
+        statement=sentence.strip()
+        if (re.match(r'^(?:我(?:自己)?(?:长期|通常|一直|平时|每次|始终|习惯|喜欢)|我的(?:习惯|偏好))',statement)
+                and classify(statement)=='preference' and direct_quote(statement,text)
+                and admit(statement,'preference')=='long_term'):
+            return True
+    return False
+
+
 def local_route(text, direct):
+    original=text
     text=positive_request(text)
     for pattern, name in ((_MEMORY,'memory'),(_UI,'compose'),(_CONTINUE,'continue'),(_WORK,'workspace'),(_DRAFT,'draft')):
         if pattern.search(text):return name
+    if volunteered_preference(original):return 'memory'
     return 'direct' if direct else 'research'
 
 

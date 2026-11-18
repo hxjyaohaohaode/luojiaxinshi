@@ -36,6 +36,30 @@ def test_plain_text_agent_autonomously_uses_original_memory_protocol_and_receipt
     assert result['grounding']['agent_execution']['tool_calls'] == 1
 
 
+@pytest.mark.parametrize('enabled_memory',[True,False])
+def test_self_report_reads_the_allowed_memory_contract_before_the_first_model_call(env,monkeypatch,enabled_memory):
+    from test_memory_context import context
+    client=account(env); chat=conversation(client); forbid_writer(monkeypatch)
+    env[1].openrouter_api_key='synthetic-local-routing'
+    if not enabled_memory:context(client,chat,memory_enabled=False)
+    quote='我习惯先看结论，再看依据'
+    def respond(messages,tools):
+        system=messages[0]['content']
+        submit=next(t['function'] for t in tools if t['function']['name']=='submit_answer')
+        assert ('memory_actions_schema' in system) == enabled_memory
+        assert ('memory_actions' in submit['parameters']['properties']) == enabled_memory
+        if not enabled_memory:return draft('这次先给结论。')
+        return draft('以后先给结论，再列依据。',memory_actions=[{
+            'operation':'remember','content':quote,'source_quote':quote,'kind':'preference',
+            'basis':'explicit','lifetime':'long_term'}])
+    model=Script([respond]);env[0].state.agent_service.provider_factory=lambda *_:model
+    reply=final(send(client,chat,quote+'。请用纯文字回应。',allow_decision_routing=False))
+    assert reply['status']=='complete',reply['error']
+    assert len(model.inputs)==1
+    assert reply['grounding']['agent_execution']['tool_calls']==int(enabled_memory)
+    assert any(r['status']=='accepted' for r in reply['grounding']['memory_operations'])==enabled_memory
+
+
 @pytest.mark.parametrize('restricted', [True, False])
 def test_memory_protocol_cannot_reenable_disabled_or_restricted_memory(env, monkeypatch, restricted):
     from test_memory_context import context

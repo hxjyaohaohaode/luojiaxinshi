@@ -52,3 +52,13 @@ def test_two_decisions_share_one_private_projection_and_fail_independently(monke
     assert partial['via']=='local_uncertain' and partial['approach_via']=='openrouter'
     denied=asyncio.run(routing.decide('dummy','请核对课表',{'schedule':False},direct=False,allow_external=False))
     assert len(requests)==2 and denied['approach_via']=='local'
+
+
+def test_volunteered_preferences_use_the_owned_memory_route_only_for_actual_self_reports():
+    stated='我长期用中文写报告，所有项目都习惯先看结论再看依据。请用纯文字简短回复，不联网。'
+    assert routing.local_route(stated,False)=='memory'
+    assert routing.volunteered_preference(stated)
+    for value in ('同学说我习惯先看结论。','示例：\n我习惯先看结论。','我习惯先看结论，但仅本次。',
+                  '我习惯先看结论。不要记住。','“我习惯先看结论”。','我习惯先看结论吗？'):
+        assert not routing.volunteered_preference(value)
+    assert routing.local_route('我习惯先看结论。请查我的日历。',False)=='workspace'
