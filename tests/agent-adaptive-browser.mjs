@@ -23,7 +23,17 @@ try{
   assert.equal(await reply.locator('.work-body li').count(),0,'Collapsed work history must be lazy');
   checks.push('原聊天由 Agent 自由组合清单和折叠原文，默认不展开工作记录或详情');
   await frame.locator('input[type=checkbox]').first().check();
-  await reply.getByRole('button',{name:'保存互动进度',exact:true}).click();
+  const saveProgress=reply.getByRole('button',{name:'保存互动进度',exact:true});
+  for(const width of [320,390]){
+    await page.setViewportSize({width,height:844});
+    assert.ok(await saveProgress.evaluate(button=>{
+      const range=document.createRange();range.selectNodeContents(button);
+      const box=button.getBoundingClientRect();
+      return range.getClientRects().length===1 && box.x>=0 && box.right<=document.documentElement.clientWidth+1;
+    }),'The save action must stay visible on one line at '+width+'px');
+  }
+  await page.setViewportSize({width:1440,height:1000});
+  await saveProgress.click();
   await reply.getByRole('button',{name:'互动进度已保存',exact:true}).waitFor();
   await page.reload();await frame.locator('input[type=checkbox]').first().waitFor();
   assert.equal(await frame.locator('input[type=checkbox]').first().isChecked(),true);

@@ -2,8 +2,8 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-B3ACPMHV.js",
-    "css": "/static/dist/styles-ELX5PHEL.css"
+    "js": "/static/dist/app-J7GN7LAJ.js",
+    "css": "/static/dist/styles-HW43TZMB.css"
   },
   "sources": {
     "static/account-security.js": "642c490d48fb77e1d2ccbe153378a29d9a91e12b30d8ce512fe781389658dfe9",
@@ -64,7 +64,7 @@
     "static/genui/chart-layout.js": "51c8a4a318e25fa1890ff49ba1b4a1156d40a3af6173f6f7a8c51c09c06f833a",
     "static/genui/charts.js": "041b3c5473e0d362ca98e95e017dd01f74a4db693c83dac7cb408bd1d922af1b",
     "static/genui/chat-policy.js": "bd003183c36ea8f988cc33023e13bfa585948f4c5c0c93ddac1a220f23dcaa08",
-    "static/genui/chat-presenter.js": "ee38fb9579f9843d1fb983f84444dafa936057aadd3ddbf999ab1f7f8a3654cd",
+    "static/genui/chat-presenter.js": "0a129ad30a0de844461f89e3fd9286c4a1460ad2942a1aa37b4bea7885364f86",
     "static/genui/citations.css": "f26b424488eea3d161661512fce871ca84f90a4adf409bce787d9f65a3080350",
     "static/genui/citations.js": "cc638b430d921a9170b0c3ce64359eb73e23f339dda10348237ad8ef02d9f058",
     "static/genui/core.js": "37258ef75af46044fce1aafb4ef878b102860fe1ee0fb62c8de33d399a0ae999",
@@ -158,7 +158,7 @@
     "static/system/base.css": "27da96f073ed16fce3a3baa6b5db0f21756a4d1a5aac5e128355763ba11c0a2b",
     "static/system/campus-imports.css": "c5e9fe3a09526fd8886d0ff36158873ee0e3aed061e3c008e5986f4d8dd45f38",
     "static/system/campus-roster.css": "3b7b6be934937cc174412dfaaa4385084211bab0f0e66dafc52e8e5314a2ae91",
-    "static/system/chat-conversation.css": "ade56d1a108ab108c9457d6255a4b37697837b7b6e3f42ffab0f86ab777c0bf8",
+    "static/system/chat-conversation.css": "01a87c5abd9c27b07c46c623892b28642278a5b8f34fc5ef3c11c69a67450adb",
     "static/system/chat-layout.css": "bc0f5166d720035e207bd884012d701e5d44167ad2467662264faa090516b3d8",
     "static/system/chat-refinements.css": "808edde120e476677b40273021a390d42abc655ecf26f30babcc0f8815553f11",
     "static/system/collaboration-followup.css": "46764ae96b2b53126edee1021a041fb1fd3a645c03cecc585c1e396f7a33bf20",
@@ -215,12 +215,12 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-NW7ZOBBX.js": "2a0cda9f63783d1477d7fe20ca4ad4323aa9ad91e390bf53ac24668d99d6707d",
     "static/dist/chunks/calendar-EBEUPB25.js": "53a92b48df50e558392800201150fcacf13cd717ff6c5e91e45fa85f98d2d7f9",
-    "static/dist/app-B3ACPMHV.js": "c5a8a9612a6b32f1252de0de503228c5be54cbde963d92f771064872ba701373",
+    "static/dist/app-J7GN7LAJ.js": "a7036396de32a687594cd67b75352f388525326a1fae923419fd810c3103b07e",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
     "static/dist/chunks/memory-CMBMXAQ5.js": "881679d5707d5570684593af545e8c1e054c563875a26910aa2401c693ca8fdb",
     "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
     "static/dist/chunks/charts-NJK6ZI2V.js": "4fca2a9b77faf1b0f558fc6c5ce1d20e2066b1102f4918b4b698345907471608",
-    "static/dist/chunks/chat-JPYZJBEU.js": "518add7d313f4b75a2a25e4ddf528b7b62dcce63389c8ba1573f756fd339f7cb",
+    "static/dist/chunks/chat-OHSWH4IN.js": "2ce6946dc62dae23ddf08e0fa6af2f8405d57e3b430d52804c96fbeca03b999c",
     "static/dist/chunks/chunk-QRC6NDUT.js": "6cbca853771c7d7235b56033dfbc403dc04a856b6c6d3ea0a9d2f67531a35763",
     "static/dist/chunks/chunk-HHFMEND4.js": "a9f4b9f3bdece3db9e4e4d8c4c8373783ec47fc9d2d0d405fbb7709e8136a246",
     "static/dist/chunks/chunk-O743CP2V.js": "8b5803ab8245f2d0a20a9a583a0225c52af71ab7509cc0a124acffd395ab155f",
@@ -233,7 +233,7 @@
     "static/dist/chunks/campus-D2CCLL6V.js": "5a9c7eb95125d864aed3db72b8ac24a2cc90610784cb27be5cf1b7db523d0892",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-ELX5PHEL.css": "d8723e8f120d196a6fde072ec1a5724a49c3ded2a7fd27f7abadd841caccb7d3",
-    "static/dist/index.html": "783de5dead6d549fffa5d15cd0baaf6894467d16c2110275326d30aa970e4fa4"
+    "static/dist/styles-HW43TZMB.css": "cf1d348efe878cb656b2be91db505aabd876aedf3cc62d85babcdf9020ac245e",
+    "static/dist/index.html": "2816c4a38fb2068aec18b4b65a5dbc20965717242fb421fe70e45aadeebf9929"
   }
 }
