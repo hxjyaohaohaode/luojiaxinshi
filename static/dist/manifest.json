@@ -3,7 +3,7 @@
   "esbuild": "0.28.2",
   "entries": {
     "js": "/static/dist/app-J7GN7LAJ.js",
-    "css": "/static/dist/styles-HW43TZMB.css"
+    "css": "/static/dist/styles-FZCEW2GS.css"
   },
   "sources": {
     "static/account-security.js": "642c490d48fb77e1d2ccbe153378a29d9a91e12b30d8ce512fe781389658dfe9",
@@ -158,8 +158,8 @@
     "static/system/base.css": "27da96f073ed16fce3a3baa6b5db0f21756a4d1a5aac5e128355763ba11c0a2b",
     "static/system/campus-imports.css": "c5e9fe3a09526fd8886d0ff36158873ee0e3aed061e3c008e5986f4d8dd45f38",
     "static/system/campus-roster.css": "3b7b6be934937cc174412dfaaa4385084211bab0f0e66dafc52e8e5314a2ae91",
-    "static/system/chat-conversation.css": "01a87c5abd9c27b07c46c623892b28642278a5b8f34fc5ef3c11c69a67450adb",
-    "static/system/chat-layout.css": "bc0f5166d720035e207bd884012d701e5d44167ad2467662264faa090516b3d8",
+    "static/system/chat-conversation.css": "2c8282870ecab2e5b177b358dad2c520bfdcb2218b3a05c2ba9c3b6700486951",
+    "static/system/chat-layout.css": "2577c31633ed3aeba771d4d7acb00f67c8333d9d678d4e7a2b11f7a756b7a5c2",
     "static/system/chat-refinements.css": "808edde120e476677b40273021a390d42abc655ecf26f30babcc0f8815553f11",
     "static/system/collaboration-followup.css": "46764ae96b2b53126edee1021a041fb1fd3a645c03cecc585c1e396f7a33bf20",
     "static/system/content-priority.css": "0bca61e7df31e92b87407778a1228e0bc503e2fe3f0f93f9fef1db3cdb9a37dc",
@@ -233,7 +233,7 @@
     "static/dist/chunks/campus-D2CCLL6V.js": "5a9c7eb95125d864aed3db72b8ac24a2cc90610784cb27be5cf1b7db523d0892",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-HW43TZMB.css": "cf1d348efe878cb656b2be91db505aabd876aedf3cc62d85babcdf9020ac245e",
-    "static/dist/index.html": "2816c4a38fb2068aec18b4b65a5dbc20965717242fb421fe70e45aadeebf9929"
+    "static/dist/styles-FZCEW2GS.css": "7163110ac7664e5c443f9428edd9e3fe7094572d35d3c2f5476691a8928fd15c",
+    "static/dist/index.html": "c7abd89f335665389f12fdadcc4a38d4a67dff5869b607f310b001273c15155c"
   }
 }

@@ -15,9 +15,13 @@ const browser=await engine.launch({headless:true,...browserOverride(engine),...(
 const context=await browser.newContext({storageState:await api.storageState(),viewport:{width:1651,height:871},reducedMotion:'reduce'});
 const page=await context.newPage(),checks=[],errors=[];page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(15000);
 const geometry=()=>page.evaluate(()=>{const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};return {form:rect(document.querySelector('#chat-composer')),input:rect(document.querySelector('#chat-input')),plus:rect(document.querySelector('.composer-plus')),send:rect(document.querySelector('.send-button')),header:rect(document.querySelector('.chat-heading')),thread:rect(document.querySelector('#chat-thread')),note:rect(document.querySelector('.chat-footnote')),width:innerWidth,scroll:document.documentElement.scrollWidth};});
+function assertHeaderCoversReader({header,thread}) {
+  assert.ok(header.x<=thread.x+1 && header.right>=thread.right-1,
+    'The transcript must stay covered at both edges of the visible header: '+JSON.stringify({header,thread}));
+}
 try{
   await page.goto(origin+'/#chat/'+chat.id,{waitUntil:'domcontentloaded'});const input=page.locator('#chat-input');await page.locator('#content:not([inert])').waitFor();await input.waitFor();
-  const empty=await geometry();assert.ok(empty.form.height<=58,JSON.stringify(empty));
+  const empty=await geometry();assertHeaderCoversReader(empty);assert.ok(empty.form.height<=58,JSON.stringify(empty));
   for(const value of ['输入一行内容','连续单行文字'.repeat(120)]){
     await input.fill(value);const current=await geometry();assert.ok(Math.abs(current.form.height-empty.form.height)<=1);assert.equal(await input.getAttribute('wrap'),'off');
     for(const key of ['plus','send'])assert.ok(Math.abs(current[key].y+current[key].height/2-(current.input.y+current.input.height/2))<=3,JSON.stringify(current));
@@ -55,7 +59,7 @@ try{
     // Measure only once the app has applied that event and layout has settled.
     await page.waitForFunction(({width,height})=>innerWidth===width&&innerHeight===height&&Math.abs(parseFloat(document.documentElement.style.getPropertyValue('--visual-height'))-height)<1,{width,height});
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-    await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();
+    await input.fill('连续输入'.repeat(120));await input.focus();const size=await geometry();assertHeaderCoversReader(size);
     assert.ok(size.form.height<=60&&size.form.bottom<=height+1&&size.scroll<=width+1&&size.thread.height>90,JSON.stringify(size));
     for(const key of ['plus','send'])assert.ok(size[key].x>=0&&size[key].right<=width+1&&size[key].height>=44);
     await page.screenshot({path:out+'/'+label+'.png',caret:'initial'});

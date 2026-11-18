@@ -29,7 +29,19 @@
 
 /* The reader owns a stable rectangle. Chrome floats over it without reflow. */
 .chat-main { position:relative; }
-.chat-main > .chat-heading { position:absolute; inset:0 var(--page-inset) auto var(--page-inset); z-index:12; height:44px; min-height:44px; margin:0; padding-block:0; background:rgb(255 255 255 / .94); backdrop-filter:blur(12px); opacity:1; transform:translateY(0); transition:opacity 160ms ease,transform 180ms ease,visibility 0s; }
+.chat-main > .chat-heading {
+  position:absolute;
+  inset:0 0 auto;
+  z-index:12;
+  height:44px;
+  min-height:44px;
+  margin:0;
+  padding:0 var(--page-inset);
+  background:var(--surface,#fff);
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity 160ms ease,transform 180ms ease,visibility 0s;
+}
 .chat-reading-area > .chat-thread { scroll-padding-top:52px; padding-top:52px; }
 html.reading-content .chat-main > .chat-heading {
   height:44px;min-height:44px;max-height:none;
