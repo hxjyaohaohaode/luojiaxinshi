@@ -167,7 +167,7 @@ def test_sources_catalog_is_private_and_does_not_claim_sync(env):
     a=account(env);b=account(env,'bob');body={'name':'工程测试公众号','platform':'wechat_public','followed':True,'semester':'测试学期'}
     sid=a.post('/api/source-catalog',json=body).json()['id']
     assert b.get('/api/source-catalog').json()==[]
-    assert a.get('/api/source-catalog').json()[0]['data']=={**body,'institution':'','purpose':'','url':'','wechat_id':''}
+    assert a.get('/api/source-catalog').json()[0]['data']=={**body,'institution':'','purpose':'','category':'','url':'','wechat_id':''}
     assert b.put('/api/source-catalog/'+sid,json={**body,'version':1}).status_code==404
     assert a.put('/api/source-catalog/'+sid,json={**body,'version':1,'url':'javascript:alert(1)'}).status_code==422
     assert a.put('/api/source-catalog/'+sid,json={**body,'version':1,'purpose':'跟进通知'}).status_code==200
