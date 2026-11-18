@@ -18,7 +18,7 @@ from ..ai import AIError
 from ..db import dumps
 from ..models import Strict
 from ..genui import parse_message
-from ..openui import SandboxUI, UIStreamDecoder
+from ..openui import AuthoredCanvas, UIStreamDecoder
 from .runtime import MODEL_CALL_LIMIT, Run, bounded_result
 from .store import finish
 from .tools import REGISTRY
@@ -126,7 +126,7 @@ def message_state(conn, uid, cid, mid):
             'operations': personal_workspace.operations(conn, uid, cid, mid)}
 
 
-class GenerateSandboxedUI(SandboxUI):
+class GenerateSandboxedUI(AuthoredCanvas):
     lead: str = Field(min_length=1,max_length=240)
     claims: list[AgentClaim] = Field(default_factory=list,max_length=60)
     memory_actions: list[dict] = Field(default_factory=list,max_length=8)
@@ -150,9 +150,9 @@ class ChatRun(Run):
         'research_complete': (ResearchComplete, '资料已够用或缺口已明确时结束采集。先等待子任务结束。回答随后独立生成并复核。', False, False, False),
         'memory_capabilities': (MemoryCapabilities, '读取原有记忆系统的操作协议或当前上下文。有新事实、偏好、目标、纠错时按当前模式自主维护；纯文字也可用。操作随最终答复提交，保存回执由原系统产生。', False, True, False),
         'submit_answer': (SubmitAnswer, '提交本轮文字答复，claims 使用 kind/text/evidence_refs，随后独立核验。', False, False, False),
-        'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
+        'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/preferredWidth/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
         'openui_capabilities': (Empty, '按需加载互动界面编排能力。加载后优先用 compose_interface 提交简短目标，由专用生成器处理完整 HTML/CSS/JS；已有完整代码的直接提交仍兼容。简单问答不用调用。', False, True, False),
-        'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，宿主处理代码与排版；不调用业务工具，不可与其他工具同批。', False, False, False),
+        'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，专用模型设计版式与交互；不调用业务工具，不可与其他工具同批。', False, False, False),
     }
 
     def __init__(self, service, thread, row, provider, *, mid, sources, messages, profile, access,

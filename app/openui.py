@@ -26,6 +26,10 @@ class SandboxUI(Strict):
     jsExpressions: list[str] = Field(default_factory=list, max_length=40)
 
 
+class AuthoredCanvas(SandboxUI):
+    preferredWidth: int = Field(default=840, ge=280, le=1440, description='根据本题信息密度选取的舒适桌面宽度，实际宽度随容器收缩。')
+
+
 class Document(HTMLParser):
     """Extract accessible text and native control contracts, never execute HTML."""
     def __init__(self):
@@ -208,7 +212,7 @@ class UIStreamDecoder:
         self.stack, self.token, self.string, self.escape = [], '', False, ''
         self.is_key, self.path, self.literal = False, (), ''
         self.high_surrogate = None
-        self.content = {'renderer':'', 'css':'', 'html':[], 'jsFunctions':'', 'jsExpressions':[], 'generating':True, 'cssComplete':False, 'htmlComplete':False}
+        self.content = {'renderer':'', 'preferredWidth':AuthoredCanvas.model_fields['preferredWidth'].default, 'css':'', 'html':[], 'jsFunctions':'', 'jsExpressions':[], 'generating':True, 'cssComplete':False, 'htmlComplete':False}
         self.changed = False
         self.emitted = None
         self.completed_expressions=0

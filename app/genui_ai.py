@@ -16,7 +16,7 @@ from .genui import parse_message,CATALOG
 from .models import Strict
 from .genui_state import context_text
 from .visual_evidence import IMAGE_POLICY
-from .openui import SandboxUI, UIStreamDecoder
+from .openui import AuthoredCanvas, SandboxUI, UIStreamDecoder
 
 
 class IndexedClaim(GroundingClaim):
@@ -53,10 +53,6 @@ class AuthoredUI(Strict):
 class UIAnswer(IndexedAnswer):
     answer: str = Field(min_length=0,max_length=80000)
     ui: SandboxUI | AuthoredUI | None = None
-
-
-class AuthoredCanvas(SandboxUI):
-    preferredWidth: int = Field(default=840, ge=280, le=1440, description='根据本题信息密度选取的舒适桌面宽度，实际宽度随容器收缩。')
 
 
 class CanvasAnswer(IndexedAnswer):

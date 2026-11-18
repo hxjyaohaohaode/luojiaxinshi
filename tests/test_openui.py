@@ -72,6 +72,7 @@ def test_stream_decoder_ignores_strings_and_wrong_nested_paths():
     d=UIStreamDecoder();d.push(json.dumps({'answer':'\"ui\":{\"html\":[\"evil\"]}', 'untrusted':{'ui':UI},'ui':None}))
     assert not d.content['html']
     d=UIStreamDecoder(prefix=());d.push(json.dumps(UI));assert d.content['html']==UI['html']
+    assert d.content['preferredWidth']==genui_ai.AuthoredCanvas.model_fields['preferredWidth'].default
 
 
 def test_literal_css_unicode_escape_is_not_treated_as_a_json_surrogate():

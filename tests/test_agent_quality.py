@@ -245,7 +245,7 @@ def test_interface_stream_only_previews_lead_never_nodes_or_actions():
         async def aiter_bytes(self):
             for fragment in ('{"lead":"正在','整理","nodes":[{"props":{"text":"PRIVATE-NODE"}}]}'):
                 packet={'choices':[{'delta':{'tool_calls':[{'index':0,'function':{'arguments':fragment},
-                    **({'id':'ui1','function':{'name':'submit_interface','arguments':fragment}} if not shown else {})}]}}]}
+                    **({'id':'ui1','function':{'name':'generateSandboxedUi','arguments':fragment}} if not shown else {})}]}}]}
                 yield ('data: '+json.dumps(packet)+'\n\n').encode()
             yield b'data: {"choices":[{"delta":{},"finish_reason":"tool_calls"}]}\n\n'
     asyncio.run(stream_message(Response(),lambda _:None,lambda text:shown.append(decoder.push(text))))
@@ -253,9 +253,9 @@ def test_interface_stream_only_previews_lead_never_nodes_or_actions():
 
 
 def test_native_claim_schema_has_one_stable_citation_protocol():
-    from app.agent_runtime.chat import SubmitAnswer,SubmitInterface
+    from app.agent_runtime.chat import SubmitAnswer,GenerateSandboxedUI
     from pydantic import ValidationError
-    for model in (SubmitAnswer,SubmitInterface):
+    for model in (SubmitAnswer,GenerateSandboxedUI):
         claim=model.model_json_schema()['$defs']['AgentClaim']
         assert set(claim['properties'])=={'kind','text','evidence_refs'}
     with pytest.raises(ValidationError):
