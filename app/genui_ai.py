@@ -359,6 +359,11 @@ def payload(settings, sources, messages, profile, tier):
         output_schema['properties']['citation_refs']['items']['enum']=[item['ref'] for item in context['evidence_index']]
         output_schema['$defs']['IndexedClaim']['properties']['evidence_refs']['items']['enum']=[item['ref'] for item in context['evidence_index']]
     prompt = system_prompt(tier,output_schema,settings.ai_supports_json,indexed_evidence=bool(profile.get('_grounding_context')))+presentation_prompt(profile)
+    if tier == 1:
+        from .openui_prompt import READING_WIDTH
+        hint = READING_WIDTH.get(profile.get('_reading_width'))
+        if hint:
+            prompt += '\n' + hint
     from .memory_learning import AGENT_POLICY
     prompt+='\n'+AGENT_POLICY
     if profile.get('_grounding_context'):

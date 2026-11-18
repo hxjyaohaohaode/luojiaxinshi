@@ -711,10 +711,13 @@ def drain_jobs(db, *, uid=None, limit=24):
     """Each local job and receipt commit together; restart safely retries it."""
     processed, failed, owners = 0, 0, set()
     with db.connect() as conn:
-        jobs = [dict(r) for r in conn.execute('''SELECT j.* FROM memory_jobs j WHERE j.state='queued'
-            AND (? IS NULL OR j.user_id=?)
-            AND NOT EXISTS(SELECT 1 FROM conversations c WHERE c.user_id=j.user_id AND c.processing_token IS NOT NULL)
-            ORDER BY j.created_at,j.id LIMIT ?''', (uid, uid, limit))]
+        # Pick oldest work per owner in rounds. Importing a large archive must
+        # not postpone another person's current update behind the entire import.
+        jobs = [dict(r) for r in conn.execute('''WITH ready AS (
+            SELECT j.*,ROW_NUMBER() OVER(PARTITION BY j.user_id ORDER BY j.created_at,j.id) AS owner_position
+            FROM memory_jobs j WHERE j.state='queued' AND (? IS NULL OR j.user_id=?)
+            AND NOT EXISTS(SELECT 1 FROM conversations c WHERE c.user_id=j.user_id AND c.processing_token IS NOT NULL))
+            SELECT * FROM ready ORDER BY owner_position,created_at,id LIMIT ?''', (uid, uid, limit))]
     for job in jobs:
         try:
             with db.connect(write=True) as conn:

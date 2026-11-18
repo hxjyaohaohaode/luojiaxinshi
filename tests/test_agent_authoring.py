@@ -323,3 +323,10 @@ def test_component_protocol_pages_whole_schemas_within_budget():
     with pytest.raises(ValueError):page_capabilities(complete,512)
     ui_schema=SubmitAnswer.model_json_schema()['properties']['ui']
     assert ui_schema['type']=='null'  # The text tool accepts only an omitted or empty UI.
+
+
+def test_tool_argument_order_and_spacing_do_not_reset_progress():
+    from app.agent_runtime.runtime import tool_signature
+    def fields(args):return [{'function':{'name':'read_source','arguments':args}}]
+    assert tool_signature(fields('{"page":1,"id":"a"}'))==tool_signature(fields('{ "id":"a", "page":1 }'))
+    assert tool_signature(fields('{"page":1}'))!=tool_signature(fields('{"page":2}'))

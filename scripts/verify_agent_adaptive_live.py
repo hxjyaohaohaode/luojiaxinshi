@@ -58,12 +58,15 @@ class StreamTimeline:
         await self.app(scope,receive,timed)
 
 
-def check(case='files', output_name=None):
+def check(case='files', output_name=None, max_provider_requests=None):
+    if max_provider_requests is None and case=='team_review':max_provider_requests=8
+    if max_provider_requests is not None and max_provider_requests<0:raise ValueError('Request allowance must be nonnegative')
     output=ROOT/'artifacts'/(output_name or ('agent-adaptive-live' if case=='files' else 'agent-adaptive-live-'+case));output.mkdir(parents=True,exist_ok=True)
     prompts={
         'files':PROMPT,
         'agenda_plan':'请核对我 2027-03-02 上午的日历，看看哪些已保存的安排撞在一起，重叠多久？11:00 之后还能在上午安排一段连续 30 分钟的复盘吗？给出理由和建议时间，只需分析。',
         'travel_ui':'请帮我做一个可以操作的行程比较。合成的两种步行方案分别是 12 分钟和 20 分钟，09:00 出发。让我输入第一条路等待的分钟数，立即看到两条路到达的钟点和哪条更早，打平也要准确。让计算、路程示意图和简短文字自然接在一起，手机上可以直接改。',
+        'paint_mix':'我想在手机上试算一个配色配方。合成条件：蓝色与白色用量比为 3 比 2，初始总量 50 克。请让我输入任意非负总克数，立即看到两种颜色各要多少克，用图形表现比例。0 克也能输入，空白或负数要指出原因并清掉旧结果。只用题中条件。',
         'direct':'用两句话解释什么是中位数，再给一个短例子。',
         'continuation':'接着刚才的合成草案，只改第二项的时长为45分钟。请列出两项的名称和当前时长。',
         'mixed_layout':'制作一个可以操作的图文互动答复。合成小组在4天内每天读6页，公式为总页数＝天数×每天页数。请绘制阅读进度示意图，展示公式，用一个可编辑输入改变天数并立即更新总页数。只用题中这些数值，以自然的文档布局连接图、公式和计算。',
@@ -146,12 +149,14 @@ def check(case='files', output_name=None):
             requests_made=[]
             async def meter(session,request,**kwargs):
                 if str(request.url).startswith(settings.ai_base_url.rstrip('/')+'/') and request.url.path.endswith('/chat/completions'):
-                    if case=='team_review' and len(requests_made)>=8:raise RuntimeError('Synthetic team acceptance request limit reached')
+                    if max_provider_requests and len(requests_made)>=max_provider_requests:
+                        from app.ai import AIBudgetError
+                        raise AIBudgetError('合成验收已到本次设定的模型请求上限')
                     requests_made.append(round(time.monotonic()-started,3))
                 return await send_http(session,request,**kwargs)
             with patch.object(httpx.AsyncClient,'send',meter):
                 response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
-                    'content':prompts[case],'request_id':ident(),'allow_external_processing':True,'allow_decision_routing':case in ('direct','research','continuation','mixed_layout','team_review','travel_ui','agenda_plan')})
+                    'content':prompts[case],'reading_width':'compact' if case in ('paint_mix','travel_ui') else None,'request_id':ident(),'allow_external_processing':True,'allow_decision_routing':case in ('direct','research','continuation','mixed_layout','team_review','travel_ui','paint_mix','agenda_plan')})
             response.raise_for_status()
             final=client.get('/api/conversations/'+chat['id']).json()['messages'][-1]
             with app.state.db.connect() as conn:
@@ -175,6 +180,7 @@ def check(case='files', output_name=None):
                 authored=next(p['spec']['sandbox'] for p in final['parts'] if p['kind']=='ui' and p['spec'].get('sandbox'))
                 (output/'generated-ui.json').write_text(json.dumps(authored,ensure_ascii=False,indent=2),encoding='utf-8')
             report['case']=case
+            report['max_provider_requests']=max_provider_requests
             report['actual_mimo_request_starts']=requests_made
             report['stream_timeline']=stream_timeline
             if case=='workspace':
@@ -208,12 +214,16 @@ def check(case='files', output_name=None):
                 assert len(readers)==3 and all(r['status']=='completed' and r['verified_quotes'] for r in readers),readers
                 assert max(r['start_ms'] for r in readers)<min(r['end_ms'] for r in readers)
                 assert all(term in report['answer'] for term in ('二年级','成绩单','申请表','305','12:00'))
-                assert len(grounding['work_summary']['cited_sources'])>=2 and len(requests_made)<=8
+                assert len(grounding['work_summary']['cited_sources'])>=2
+                assert not max_provider_requests or len(requests_made)<=max_provider_requests
             if case=='continuation':
                 assert all(term in report['answer'] for term in ('20','45','初读','复核'))
             if case=='agenda_plan':
                 assert 'workspace_read' in calls and all(value in report['answer'] for value in ('10:00','10:30','11:30'))
                 assert '30' in report['answer'] and not final.get('agent',{}).get('operations')
+            if case=='paint_mix':
+                assert report['openui_blocks']==1 and report['stream_has_ui_preview']
+                assert grounding['work_summary']['verified'] and not final.get('agent',{}).get('operations')
             if case=='travel_ui':
                 assert report['openui_blocks']==1 and report['stream_has_ui_preview']
             if case=='mixed_layout':
@@ -263,5 +273,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','agenda_plan','travel_ui','direct','continuation','mixed_layout','team_review','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
-    check_review() if args.case=='review' else check(args.case,args.output_name)
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','agenda_plan','travel_ui','paint_mix','direct','continuation','mixed_layout','team_review','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');parser.add_argument('--max-provider-requests',type=int,help='Override the synthetic request allowance (0 uses the normal runtime budget)');args=parser.parse_args()
+    check_review() if args.case=='review' else check(args.case,args.output_name,args.max_provider_requests)

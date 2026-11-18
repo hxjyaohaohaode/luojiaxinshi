@@ -274,3 +274,31 @@ def test_only_dedicated_ui_composition_can_use_the_fast_thinking_mode(env):
     assert genui_ai.payload(cfg,[],messages,profile,1)['thinking']['type']=='disabled'
     profile['_ui_composition_thinking']=True
     assert genui_ai.payload(cfg,[],messages,profile,1)['thinking']['type']=='enabled'
+
+
+def test_dedicated_writer_recovers_a_schema_error_without_replaying_business_tools(env,monkeypatch):
+    from app import grounding
+    from app.ai import ReplyValidationError
+    from test_agent_runtime import Script,answer,call
+    cfg=env[1];cfg.agent_enabled=cfg.ai_grounding=True;cfg.ai_api_key='synthetic'
+    owner=account(env);chat=conversation(owner)
+    main=Script([answer('',[call('compose_interface',{'brief':'按当前输入试算'})])])
+    env[0].state.agent_service.provider_factory=lambda *_:main
+    seen=[]
+    raw=json.dumps({'answer':'可以试算。','ui':UI,'claims':[{'kind':'interface','text':'输入改变本地结果'}]},ensure_ascii=False)
+    async def writer(settings,sources,messages,profile,tier):
+        seen.append((messages,profile.get('_reading_width')))
+        if len(seen)==1:
+            yield {'type':'preview','text':'初稿'}
+            raise ReplyValidationError('多余字段',draft='仅供修复的上份草稿')
+        yield {'type':'complete','result':{},'repair_draft':raw,'usage':{}}
+    async def review(settings,result,sources,*_):return [],{},grounding.check_result(result,sources)
+    monkeypatch.setattr(genui_ai,'stream_reply',writer)
+    monkeypatch.setattr(grounding,'verify',review)
+    body={**payload(chat,content='生成互动试算界面'),'reading_width':'compact'}
+    packets=events(owner.post('/api/conversations/'+chat['id']+'/messages/stream',json=body))
+    final=packets[-1]['data']['conversation']['messages'][-1]
+    assert final['status']=='complete' and final['genui']['validated']
+    assert len(main.inputs)==1 and len(seen)==2 and all(width=='compact' for _,width in seen)
+    assert any(m['content'].endswith('仅供修复的上份草稿') for m in seen[1][0])
+    assert any(p['data'].get('clear_ui') for p in packets)

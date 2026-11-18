@@ -44,6 +44,7 @@ class SendMessage(Version):
     steer_message_id: str | None = Field(default=None,max_length=40)
     allow_external_processing: bool = True
     allow_decision_routing: bool = False
+    reading_width: Literal["compact", "regular", "wide"] | None = None
     reply_to: QuoteInput | None = None
     additional_messages: list[MessageInput] = Field(default_factory=list,max_length=15)
     ui_context: Interaction | None = None

@@ -28,6 +28,8 @@ def response_contract(messages):
                 value = max(candidates, key=lambda m:m.start())[1]
                 result['max_sentences'] = COUNTS[value] if value in COUNTS else int(value)
         if 'no_ui' not in result:
+            from .decision_routing import instruction_text
+            text = instruction_text(text)
             if re.search(r'(?:不|不要|无需)(?:重新)?(?:生成|重建)(?:互动)?(?:界面|工作区|UI)|只(?:要|用)(?:纯)?文字', text, re.I):
                 result['no_ui'] = True
             elif re.search(r'(?:生成|做|制作|提供|给出).{0,25}(?:界面|工作区|面板|交互组件|图表)', text):

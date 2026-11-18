@@ -94,3 +94,20 @@ def test_real_http_disconnect_finishes_and_restores_the_full_reply(env,monkeypat
     finally:
         server.should_exit=True;thread.join(4)
         assert not thread.is_alive()
+
+
+def test_unresponsive_connected_subscriber_cannot_stall_a_saved_turn():
+    async def exercise():
+        committed=[]
+        async def source():
+            for i in range(160):
+                committed.append(i)
+                yield str(i)
+        job=StreamJob(source(),set(),heartbeat=.02,subscriber_timeout=.02)
+        reader=job.subscribe()
+        assert await anext(reader)=='0'
+        await asyncio.wait_for(job.task,1)
+        assert committed==list(range(160))
+        assert not job.connected and [item async for item in reader]==[]
+        assert job.queue.qsize()<=1
+    asyncio.run(exercise())

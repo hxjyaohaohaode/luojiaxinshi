@@ -26,7 +26,7 @@ function draftKey(options){
 export class SandboxRenderer{
   constructor(container,spec,options={}){
     this.container=container;this.options=options;this.spec=spec;this.controls={};this.initial={};this.storage={};this.draftKey=draftKey(options);this.records=new Map();this.view={};
-    this.token=crypto.randomUUID();this.status=el('p','openui-status','正在生成界面…');this.status.setAttribute('role','status');
+    this.token=crypto.randomUUID();this.status=el('p','openui-status',spec.complete?'正在打开互动内容…':'正在生成内容…');this.status.setAttribute('role','status');
     this.frame=el('iframe','openui-frame');this.frame.title=spec.sandbox?.title||'互动回答';this.frame.setAttribute('sandbox','allow-scripts');this.frame.setAttribute('allow','camera \'none\'; microphone \'none\'; geolocation \'none\'; clipboard-read \'none\'; clipboard-write \'none\'');this.frame.setAttribute('referrerpolicy','no-referrer');this.frame.setAttribute('scrolling','no');
     this.frame.src='/static/genui/sandbox.html';this.frame.height=String(spec.sandbox?.preferredWidth ? 1 : spec.sandbox?.initialHeight||160);this.frame.hidden=!spec.complete&&!spec.sandbox?.html?.join('').trim();
     this.toolbar=el('div','openui-toolbar');this.reset=button('重置选择',()=>this.post('restore',{controls:this.initial}),'button small plain');this.toolbar.append(this.reset);this.toolbar.hidden=true;
@@ -60,14 +60,14 @@ export class SandboxRenderer{
     this.frame.hidden=!spec.complete&&(!ui.html?.join('').trim()||(!ui.preferredWidth&&!ui.cssComplete));
     const signature=JSON.stringify([ui,spec.complete]);if(signature===this.signature)return;this.signature=signature;
     this.declaredMedia=new Set();
-    this.placeMedia([]);
+    if(!spec.complete||spec.errors?.length)this.placeMedia([]);
     if(spec.complete&&!spec.errors?.length&&ui.html.some(part=>part.includes('data-material'))){
       const template=document.createElement('template');template.innerHTML=ui.html.join('');
       for(const node of template.content.querySelectorAll('img[data-material],video[data-material]'))this.declaredMedia.add(node.localName+'/'+node.dataset.material);
     }
     this.fallback.lastChild.textContent=openUIPlainText(ui).replace(/\[E\d+\]/g,'');
     this.fallback.hidden=!this.fallback.lastChild.textContent.trim();
-    if(!spec.complete)this.status.textContent=ui.localReady?'正在核对内容…':ui.htmlComplete?'正在生成交互…':ui.html?.length?'正在生成内容…':'正在准备内容…';
+    if(!spec.complete)this.status.textContent=this.localInteractive?'可操作 · 内容复核中':ui.localReady?'正在连接交互…':ui.htmlComplete?'正在生成交互…':ui.html?.length?'正在生成内容…':'正在准备内容…';
     this.render();
   }
   program(){const ui=this.spec.sandbox;return JSON.stringify([ui.jsFunctions,ui.jsExpressions]);}
@@ -122,7 +122,7 @@ export class SandboxRenderer{
     const data=event.data;
     if(data.type==='boot'){this.initialize();return;}
     if(data.token!==this.token)return;
-    if(data.type==='ready'){this.ready=true;clearTimeout(this.timer);this.render();return;}
+    if(data.type==='ready'){this.ready=true;clearTimeout(this.timer);this.status.classList.remove('is-error');this.render();return;}
     if(data.type==='resize'){
       if(typeof data.height==='number'&&Number.isFinite(data.height)&&data.height>=0&&data.height<=200000){const height=Math.max(1,Math.ceil(data.height));if(this.frame.height!==String(height)){const follow=this.options.beforeRender?.();this.frame.height=String(height);this.options.afterRender?.(follow);}this.placeMedia(data.media);}
     }else if(data.type==='reading'&&Number.isFinite(data.delta)&&Math.abs(data.delta)<=240){
@@ -132,9 +132,9 @@ export class SandboxRenderer{
     }else if(data.type==='text'&&typeof data.text==='string'&&data.text.length<=80000){
       this.readableText=data.text;this.fallback.lastChild.textContent=data.text;
     }else if(data.type==='local_ready'){
-      this.localInteractive=true;this.status.textContent='正在核对内容…';
+      this.localInteractive=true;this.status.textContent='可操作 · 内容复核中';
     }else if(data.type==='interactive'){
-      this.localInteractive=true;this.interactive=true;this.status.hidden=true;this.toolbar.hidden=!Object.keys(this.controls).length;
+      this.localInteractive=true;this.interactive=true;this.status.hidden=true;this.toolbar.hidden=!this.interaction().changed;
     }else if(data.type==='state'&&(this.spec.complete||this.spec.sandbox?.localReady)){
       try{
         const next=boundedControls(data.controls);
@@ -144,7 +144,7 @@ export class SandboxRenderer{
         const fieldsChanged=JSON.stringify(this.storage)!==JSON.stringify(fields);
         const changed=fieldsChanged||JSON.stringify(this.controls)!==JSON.stringify(next);
         this.controls=next;this.storage=fields;this.storageEdited=data.storageEdited===true;
-        this.toolbar.hidden=!this.interactive||!Object.keys(next).length;
+        this.toolbar.hidden=!this.interactive||!this.interaction().changed;
         if(fieldsChanged||data.initial)this.keepDraft();
         if(changed)this.options.onChange?.();
       }catch(error){this.error(error.message);}

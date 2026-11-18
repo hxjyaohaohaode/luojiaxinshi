@@ -110,6 +110,17 @@
     const width=root.clientWidth;
     if(width===reflowWidth&&!flowChanged)return;
     reflowWidth=width;flowChanged=false;
+    // Do not enlarge an illustration beyond its drawing coordinates just to
+    // fill a wide text column. A deliberately sized or normalized SVG keeps
+    // its authored dimensions. The coordinate system and aspect stay intact.
+    for(const svg of root.querySelectorAll('figure svg[viewBox]:not([width]):not([height])')){
+      const units=svg.viewBox.baseVal.width;
+      if(units>=320 && svg.preserveAspectRatio.baseVal.align!==1){
+        svg.style.setProperty('--campus-vector-width',units+'px');
+      }else{
+        svg.style.removeProperty('--campus-vector-width');
+      }
+    }
     for(const node of root.querySelectorAll('[data-campus-reflow]'))node.removeAttribute('data-campus-reflow');
     if(root.scrollWidth<=width+1){scheduleDiagramLabels();return;}
     for(const node of root.querySelectorAll('article,section,main,header,footer,div,figure,form,fieldset,table,ul,ol,dl,nav')){

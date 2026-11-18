@@ -21,9 +21,45 @@ export class SSEDecoder{
   }
   finish(){this.buffer+=this.decoder.decode();if(this.buffer.trim()||this.frame.length||!this.done)throw Error('连接中断，已收到的内容保留，请稍后重试。');}
 }
-export async function streamChat(cid,payload,{csrf,signal,onEvent}){
-  const response=await fetch('/api/conversations/'+encodeURIComponent(cid)+'/messages/stream',{method:'POST',credentials:'same-origin',signal,headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':csrf,'Content-Type':'application/json','Accept':'text/event-stream'},body:JSON.stringify(payload)});
-  if(!response.ok){let body;try{body=await response.json();}catch{}const error=new Error(typeof body?.detail==='string'?body.detail:'暂时无法开始回复，请重试。');error.status=response.status;throw error;}
-  if(!response.body||!response.headers.get('content-type')?.includes('text/event-stream'))throw Error('服务未返回流式回复，请刷新后重试。');
-  const reader=response.body.getReader(),decoder=new SSEDecoder(onEvent);try{while(true){const item=await reader.read();if(item.done)break;decoder.push(item.value);}decoder.finish();}catch(error){try{await reader.cancel();}catch{}throw error;}finally{reader.releaseLock();}
+export async function streamChat(cid,payload,{csrf,signal,onEvent,idleMs=45000}){
+  const connection=new AbortController();
+  const stop=()=>connection.abort(signal.reason);
+  if(signal?.aborted)stop();else signal?.addEventListener('abort',stop,{once:true});
+  // The server sends a comment every 15s even while an agent is thinking.
+  // Measure transport silence, independent of the duration of the model call.
+  let timer,timedOut=false,reader;
+  function arm(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{timedOut=true;connection.abort();},idleMs);
+  }
+  try{
+    arm();
+    const response=await fetch('/api/conversations/'+encodeURIComponent(cid)+'/messages/stream',{
+      method:'POST',credentials:'same-origin',signal:connection.signal,
+      headers:{'X-Requested-With':'campus-notice','X-CSRF-Token':csrf,'Content-Type':'application/json','Accept':'text/event-stream'},
+      body:JSON.stringify(payload)
+    });
+    if(!response.ok){
+      let body;try{body=await response.json();}catch{}
+      const error=new Error(typeof body?.detail==='string'?body.detail:'暂时无法开始回复，请重试。');
+      error.status=response.status;throw error;
+    }
+    if(!response.body||!response.headers.get('content-type')?.includes('text/event-stream'))throw Error('服务未返回流式回复。');
+    reader=response.body.getReader();
+    const decoder=new SSEDecoder(onEvent);
+    while(!decoder.done){
+      arm();
+      const item=await reader.read();
+      if(item.done)break;
+      decoder.push(item.value);
+    }
+    decoder.finish();
+  }catch(error){
+    if(timedOut)throw Error('回复连接长时间没有收到数据，正在核对服务器进度。');
+    throw error;
+  }finally{
+    clearTimeout(timer);signal?.removeEventListener('abort',stop);
+    if(reader){reader.cancel().catch(()=>{});reader.releaseLock();}
+    connection.abort();
+  }
 }

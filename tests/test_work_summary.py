@@ -100,3 +100,23 @@ def test_cancellation_closes_provider_and_full_queue_without_deadlock(env,monkey
     assert closed and not cancelled
     with db.connect() as conn:report=json.loads(conn.execute('SELECT report FROM reply_grounding WHERE message_id=?',(mid,)).fetchone()['report'])
     assert report['steps'][-1]['state']=='interrupted'
+
+
+def test_buffered_text_keeps_first_delivery_and_revisions_in_order(env):
+    db,mid=stored_message(env)
+    release=asyncio.Event()
+    async def source():
+        yield {'type':'preview','text':'甲'}
+        await release.wait()
+        for _ in range(180):yield {'type':'preview','text':'乙'}
+        yield {'type':'preview','reset':True,'clear_ui':True,'text':'丙'}
+        yield {'type':'delta','text':'丁'}
+    async def exercise():
+        stream=work_summary.stream(env[1],db,mid,source())
+        first=await asyncio.wait_for(anext(stream),1)
+        assert first=={'type':'preview','text':'甲'}
+        release.set()
+        events=[e async for e in stream]
+        assert len(events)<30 and ''.join(e['text'] for e in events[:-2])=='乙'*180
+        assert events[-2:]==[{'type':'preview','reset':True,'clear_ui':True,'text':'丙'},{'type':'delta','text':'丁'}]
+    asyncio.run(exercise())

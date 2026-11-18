@@ -67,7 +67,7 @@ INTENT_WORDS = (
     '生成 界面 网页 互动 交互 拖动 点击 可视化 公式 图片 图表 时间轴 图文 展开 切换 滑块 计算器 '
     '接着 继续 刚才 上次 上一条 第二项 上面 前面 换成 调整 下一步 改为 上一轮 '
     '记住 记忆 记得 以后 偏好 习惯 更正 忘记 遗忘 跨会话 临时 长期 '
-    '帮我 请问 如何 怎么 能不能 需要 是否 准备 安排 拟稿 草稿 拟写 写一封 建议 计划 '
+    '帮我 请问 如何 怎么 能不能 需要 是否 准备 安排 拟稿 草稿 拟写 起草 写一封 建议 计划 纯文字 摘要 核验 梳理 '
     '期限 截止 地点 资格 条件 流程 来源 范围 报名 申请 学分 约分 平均数 中位数 '
     '操作 调节 示意图 立即 输入 排期 撞期 冲突 空闲 空档 课表 时段 分步 依次 然后 跟进 核查 补件 交叉 '
     'explain define compare summarize draft translate research verify sources workflow requirements '
@@ -75,9 +75,26 @@ INTENT_WORDS = (
 ).split()
 _WORDS = re.compile('|'.join(re.escape(w) if not w.isascii() else r'(?<![a-z])'+w+r'(?![a-z])'
                              for w in sorted(set(INTENT_WORDS), key=len, reverse=True)), re.I)
-_PRIVATE = re.compile(r'(?is)https?://\S+|[\w.+-]+@[\w.-]+|(?:\x60{3}.*?(?:\x60{3}|$))|'
-                      r'「[^」]*(?:」|$)|“[^”]*(?:”|$)|"[^"]*(?:"|$)|《[^》]*(?:》|$)|'
-                      r'(?:原文如下|正文如下|我的资料是|材料内容|通知全文|粘贴内容|以下是原文)\s*[：:].*$')
+# Preserve the surrounding directive, including subsequent lines. Pasted source
+# bodies have no representation on the decision service, even if they contain
+# imperative verbs. The solver still receives the original, authorized text.
+_QUOTED = re.compile(r"(?ims)^[ \t]*>[^\n]*|(?:`{3}.*?(?:`{3}|\Z))|(?:~{3}.*?(?:~{3}|\Z))|"
+                     r"`[^`\n]*(?:`|\Z)|“[^”]*(?:”|\Z)|「[^」]*(?:」|\Z)|『[^』]*(?:』|\Z)|《[^》]*(?:》|\Z)|"
+                     r'"[^"]*(?:"|\Z)|(?<![A-Za-z])\x27[^\x27\n]*(?:\x27|\Z)|https?://[^\s，。；<>]+|[\w.+-]+@[\w.-]+')
+_SOURCE_START = re.compile(r'(?:原文如下|正文如下|我的资料是|材料内容|通知全文|粘贴内容|以下是原文|'
+                           r'(?:附件|材料|通知|邮件|网页)(?:的)?(?:原文|正文|全文)|(?:直接)?引用|示例(?:原文)?|例子|附件|正文|原文|'
+                           r'(?:pasted (?:text|material)|source text|quoted (?:text|passage)))\s*[：:]',re.I)
+_NEGATED = re.compile(r"(?:不要|不用|不必|无需|不许|禁止|不允许|别|不)(?:再|自动|重新|帮我)?"
+                      r"(?:写入|创建|保存|修改|使用|读取|访问|联网|发送|提交|记录|记住|生成|制作|做|做成|画|展示|调用|查询|搜索|检索|更新|添加|显示)"
+                      r"(?:(?!但|改为|而是|只需|只要|请帮)[^，,。；;！!？?\n]){0,80}"
+                      r"|\b(?:do not|don't|never)\s+(?:use|save|remember|create|submit|generate|search|update|draw)\b"
+                      r"(?:(?!\b(?:but|instead|please)\b)[^,.;!?\n]){0,100}",re.I)
+
+
+def instruction_text(text):
+    return _SOURCE_START.split(_QUOTED.sub(' ', text.replace('\r\n','\n')), maxsplit=1)[0]
+
+
 _HIGH = re.compile(r'通知|规定|条例|学校|武大|本校|校历|官网|官方|联网|最新|今年|今天|明天|期限|截止|资格|报名|'
                    r'政策|附件|证件|学号|药|疾病|症状|诊断|医疗|法律|诉讼|投资|贷款|学费|金额|付款|'
                    r'记住|记忆|偏好|忘记|我的|我在|我是|请帮我查|材料|日历|待办|保存|已提交|提醒|上面|刚才|'
@@ -90,13 +107,13 @@ _UI = re.compile(r'互动|交互|可(?:以)?操作|可(?:以)?调节|让我输�
 _CONTINUE = re.compile(r'接着|继续|刚才|上次|上一[条轮]|第二项|前面|那[么个]|上面的|follow.up|continue',re.I)
 _MEMORY = re.compile(r'记住|记得|记忆|偏好|以后都|遗忘|忘记|remember|forget',re.I)
 _WORK = re.compile(r'待办|日历|日程|回执|办理进度|我的材料|标记完成|撤销|calendar|my tasks',re.I)
-_DRAFT = re.compile(r'起草|拟写|拟稿|草稿|写一封|写一段|润色|改写|draft|rewrite',re.I)
+_DRAFT = re.compile(r'起草|拟写|拟稿|草稿|写一封|写一段|润色|改写|翻译|提炼|摘要|draft|rewrite|translate|summari[sz]e',re.I)
 COOLDOWN_UNTIL = 0.0
 
 
 def positive_request(text):
     # Prohibitions still govern access. They do not select a write or memory workflow.
-    return re.sub(r'(?:不要|不必|不许|禁止|不允许|不)(?:写入|创建|保存|修改|使用|读取|访问|联网|发送|提交|记录|记住)[^，,。；;！!？?\\n]{0,60}', ' ', text)
+    return _NEGATED.sub(' ', instruction_text(text))
 
 
 def self_contained_canvas(text):
@@ -105,9 +122,18 @@ def self_contained_canvas(text):
 
 
 def routing_state(text, flags):
-    line=text.splitlines()[0][:1000] if text.splitlines() else ''
-    words = _WORDS.findall(positive_request(_PRIVATE.sub(' ',line)))
-    return {'request': ' '.join(w.lower() for w in words[:48]),
+    request = positive_request(text)
+    lines = request.strip().splitlines()
+    # Subsequent free-form paragraphs may be pasted materials. Only explicit
+    # instruction lines contribute closed-vocabulary tokens on the wire.
+    directive = re.compile(r'^(?:[-*•]\s*|\d+[.)、]\s*)?(?:请|帮我|我(?:需要|想要|希望)|要求|问题|'
+                           r'只(?:要|用)|核对|核实|检索|查证|查询|生成|起草|比较|解释|继续|记住|'
+                           r'please\b|compare\b|explain\b|verify\b|draft\b|summarize\b)',re.I)
+    projected = [line for i,line in enumerate(lines) if i==0 or directive.match(line.strip())]
+    words = _WORDS.findall(' '.join(projected))
+    # Long introductions must not displace the user's last instruction.
+    selected = words if len(words)<=48 else words[:24]+words[-24:]
+    return {'request': ' '.join(w.lower() for w in selected),
             'capabilities': {key: bool(flags.get(key)) for key in
                              ('web','library','attachments','profile','schedule','memory','canvas')}}
 
@@ -137,7 +163,7 @@ def local_route(text, direct):
     text=positive_request(text)
     for pattern, name in ((_MEMORY,'memory'),(_UI,'compose'),(_CONTINUE,'continue'),(_WORK,'workspace'),(_DRAFT,'draft')):
         if pattern.search(text):return name
-    if volunteered_preference(original):return 'memory'
+    if text.strip() and volunteered_preference(original):return 'memory'
     return 'direct' if direct else 'research'
 
 
@@ -156,6 +182,14 @@ async def decide(key, text, flags, *, direct, allow_external):
     global COOLDOWN_UNTIL
     start=time.monotonic()
     route=local_route(text,direct)
+    # A guessed workflow cannot unlock a disabled capability or replace
+    # a safe independent explanation with unrelated private work.
+    allowed=set(WORKFLOWS)
+    if not flags.get('canvas'):allowed.discard('compose')
+    if not flags.get('memory') or route!='memory':allowed.discard('memory')
+    if not (flags.get('schedule') or flags.get('library')):allowed.discard('workspace')
+    if not direct:allowed.discard('direct')
+    if route not in allowed:route='direct' if direct else 'research'
     approach=local_approach(text,direct)
     approach_via='local'
     via='local'
@@ -174,7 +208,7 @@ async def decide(key, text, flags, *, direct, allow_external):
                 strategy=choice(answers,'approach',APPROACHES)
             if strategy and (not direct or strategy=='straight') and (strategy!='time_plan' or flags.get('schedule')):
                 approach,approach_via=strategy,'openrouter'
-            if selected and (selected!='direct' or direct):
+            if selected in allowed and (not direct or selected=='direct'):
                 route,via=selected,'openrouter'
             else:via='local_uncertain'
         except (httpx.HTTPError, TimeoutError, ValueError, AttributeError):

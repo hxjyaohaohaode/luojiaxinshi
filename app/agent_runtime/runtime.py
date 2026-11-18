@@ -37,6 +37,51 @@ SYSTEM = '''你是珞珈信使的任务智能体。通过提供的工具核对�
 '''
 
 
+def tool_signature(calls):
+    """Compare semantic calls while retaining the ordering of side effects."""
+    items=[]
+    for call in calls:
+        arguments=call['function']['arguments']
+        try:
+            arguments=json.loads(arguments)
+        except (TypeError,ValueError):
+            pass
+        items.append((call['function']['name'],arguments))
+    return hashlib.sha256(json.dumps(items,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
+
+
+def parameter_feedback(model, error):
+    # Only server-declared field names and constraints are returned. Paths of
+    # extra keys may themselves contain user data. Do not reflect them.
+    schema=model.model_json_schema()
+    fields, expected=[], {}
+    for problem in error.errors(include_input=False, include_context=False)[:6]:
+        node,path=schema,[]
+        for key in problem['loc']:
+            if '$ref' in node:
+                node=schema.get('$defs',{}).get(node['$ref'].split('/')[-1],{})
+            if isinstance(key,int) and 'items' in node:
+                node=node['items']
+                path.append(str(key))
+            elif key in node.get('properties',{}):
+                node=node['properties'][key]
+                path.append(key)
+            else:
+                path.append('*')
+                node={}
+                break
+        location='.'.join(path)
+        issue={'path':location,'type':problem['type']}
+        if problem['type']=='ui_json':
+            issue['hint']=problem['msg']
+        fields.append(issue)
+        hints={k:node[k] for k in ('type','enum','minimum','maximum','minLength','maxLength','minItems','maxItems') if k in node}
+        if hints:
+            expected[location]=hints
+    return {'error':'工具参数未通过校验，请参照字段约束修正，再继续原任务','fields':fields,
+            'expected':expected,'accepted_fields':list(schema.get('properties',{}))[:32]}
+
+
 def bounded_result(value, limit=16000):
     raw = dumps(value).encode('utf-8')
     # Tool JSON becomes a JSON string inside a message: count that escaping too.
@@ -208,11 +253,7 @@ class Run:
                 result = self.bound_tool_result(name, actual, output_limit)
                 observation = self.tool_observation(name, args, result if name == 'ui_capabilities' else actual)
         except ValidationError as exc:
-            # Expose field paths and error categories, never supplied values.
-            fields = [{'path': '.'.join(str(k) for k in e['loc']), 'type': e['type'],
-                       **({'hint': e['msg']} if e['type'] == 'ui_json' else {})}
-                      for e in exc.errors(include_input=False, include_context=False)[:6]]
-            result = {'error': '工具参数未通过类型或范围校验，请按字段协议修正', 'fields': fields}
+            result = parameter_feedback(rule[0], exc)
         except json.JSONDecodeError:
             result = {'error': '工具参数不是完整 JSON 对象，请修正 JSON 语法'}
         except TimeoutError:
@@ -363,7 +404,7 @@ class Run:
                     return value
                 feedback(self.continuation_prompt())
                 continue
-            signature = hashlib.sha256(dumps([c['function'] for c in calls]).encode()).hexdigest()
+            signature = tool_signature(calls)
             repetitions = repetitions + 1 if signature == previous else 1
             previous = signature
             waiting_for_children = any(not a['task'].done() for a in self.agents.values()) and all(

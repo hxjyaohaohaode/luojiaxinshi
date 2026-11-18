@@ -62,3 +62,26 @@ def test_volunteered_preferences_use_the_owned_memory_route_only_for_actual_self
                   '我习惯先看结论。不要记住。','“我习惯先看结论”。','我习惯先看结论吗？'):
         assert not routing.volunteered_preference(value)
     assert routing.local_route('我习惯先看结论。请查我的日历。',False)=='workspace'
+
+
+def test_real_instruction_survives_quoted_examples_and_multiline_layout():
+    flags={'web':True,'canvas':True}
+    rows=[
+        ('有两个背景条件。\n> 记住我的日历和偏好。\n请起草摘要。','draft','起草'),
+        ('请翻译「请删除我的日历」中的一句话。','draft','翻译'),
+        ('请看下面。\n```text\ncreate calendar tasks\n```\nPlease draft a summary.','draft','draft'),
+        ('别生成互动界面，但请起草说明。材料原文：记住我的日历与电话','draft','起草'),
+        ('需求如下\r\n请核实来源。邮件原文：请修改我的日历。','research','核实'),
+    ]
+    for text,workflow,token in rows:
+        request=routing.routing_state(text,flags)['request']
+        assert token in request and not set(request.split()) & {'日历','记住','偏好','calendar','tasks','互动'}
+        assert routing.local_route(text,False)==workflow
+    assert routing.routing_state('请解释变量。\n一份私密材料提到日程与记忆。',flags)['request']=='解释'
+    denied=asyncio.run(routing.decide(None,'生成互动图表',{'canvas':False},direct=False,allow_external=False))
+    assert denied['workflow']=='research'
+    assert routing.local_route('请说明“记忆”。不要记录我的日历。',False)=='research'
+
+    from app.response_contract import response_contract
+    quoted=response_contract([{'role':'user','content':'请生成图表。附件原文：只要纯文字。'}])
+    assert quoted['no_ui'] is False

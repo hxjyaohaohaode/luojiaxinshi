@@ -185,10 +185,11 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 else:raise HTTPException(409,'上一轮正在停止，请再次发送补充；草稿已保留')
         prepared,existing=await run_in_threadpool(prepare_send,cid,payload,current)
         def packet(kind,value,seq):return 'id: '+str(seq)+'\nevent: '+kind+'\ndata: '+dumps(value)+'\n\n'
+        stream_headers={'X-Accel-Buffering':'no','Cache-Control':'no-store, no-transform'}
         if existing is not None:
             async def replay():
                 yield packet('done',{'conversation':existing,'replayed':not bool(prepared)},1)
-            return StreamingResponse(replay(),media_type='text/event-stream')
+            return StreamingResponse(replay(),media_type='text/event-stream',headers=stream_headers)
         token,mid,sources,messages=(prepared[k] for k in ('token','mid','sources','messages'))
         released=False
         def release_slot():
@@ -239,6 +240,8 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                 if not settings.ai_grounding:
                     from .memory_context import basic_profile
                     profile=basic_profile(db,current['id'],cid,mid,messages,profile,sources)
+                if payload.reading_width:
+                    profile={**profile,'_reading_width':payload.reading_width}
                 stream_events=(work_stream(settings,db,mid,grounded_events(settings,db,current['id'],cid,mid,sources,messages,{**profile,'_decision_consent':payload.allow_external_processing and payload.allow_decision_routing},tier))
                                if settings.ai_grounding else genui_ai.stream_reply(settings,sources,messages,profile,tier))
                 from contextlib import aclosing
@@ -344,7 +347,7 @@ def install_genui(app, db, settings, user, heavy_lock, prepare_send, own, change
                         app.state.execution.finish(conn,mid,'cancelled' if task.cancelled() else 'failed','interrupted_request')
             finally:release_slot()
         job=StreamJob(generate(),workers,on_finish=finalize_task)
-        return StreamingResponse(job.subscribe(),media_type='text/event-stream',headers={'X-Accel-Buffering':'no','Cache-Control':'no-cache'})
+        return StreamingResponse(job.subscribe(),media_type='text/event-stream',headers=stream_headers)
 
     app.post('/api/conversations/{cid}/messages/stream')(stream)
     return cancel_active

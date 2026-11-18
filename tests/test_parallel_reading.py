@@ -65,3 +65,12 @@ def test_reader_can_select_an_assigned_short_span_without_retyping_it():
     for bad in [{'ref':'E9','whole_span':True},{'ref':'E8','whole_span':True,'quote':'编造日期'}]:
         with pytest.raises(AgentError):
             verified_report({'findings':[bad],'gaps':[]},[source])
+
+
+def test_a_late_matching_passage_survives_a_small_partition_budget():
+    from app.agent_runtime.team import reading_index
+    rows=[{'ref':f'E{i}','source_id':'a','locator':'正文','quote':'普通文字五个字'} for i in range(12)]
+    rows[-1]['quote']='紫色染料褪色'
+    rows.append({'ref':'E12','source_id':'b','locator':'附录','quote':'紫色染料比例'})
+    picked=reading_index(rows,['a','b'],max_chars=12,question='请核对紫色染料')
+    assert [r['ref'] for r in picked]==['E11','E12']

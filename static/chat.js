@@ -265,13 +265,34 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if($('#chat-composer'))$('#chat-composer').dataset.cacheKey='chat:'+result.id;
     return current;
   }
-  function schedulePoll(cid,renderId){
+  let recoveringCid=null;
+  function schedulePoll(cid,renderId,delay=1400){
     clearTimeout(pollTimer);pollTimer=setTimeout(async()=>{
-      if(renderId!==state.renderId||!active(cid))return;
-      try{const result=await api('/conversations/'+cid);if(renderId!==state.renderId||!active(cid))return;if(result.version>current.version||(result.version===current.version&&(result.processing||result.processing!==current.processing))){receiveConversation(result);update();}if(current.processing)schedulePoll(cid,renderId);}
-      catch(e){if(active(cid))toast(e.message,true);}
-    },1400);
+      const turn=submission;
+      const live=()=>renderId===state.renderId&&active(cid)&&turn===submission;
+      if(!live())return;
+      try{
+        const result=await api('/conversations/'+cid);
+        if(!live())return;
+        if(result.version>=current.version){
+          receiveConversation(result);outbox?.reconcile(result.messages);
+          if(!current.processing)recoveringCid=null;
+          update();
+        }
+        if(current.processing)schedulePoll(cid,renderId);
+      }catch(error){
+        if(!live())return;
+        if(error.status>=400&&error.status<500&&![408,429].includes(error.status)){
+          recoveringCid=null;drawComposerContext();return;
+        }
+        recoveringCid=cid;drawComposerContext();
+        schedulePoll(cid,renderId,Math.min(delay*2,15000));
+      }
+    },delay);
   }
+  window.addEventListener('online',()=>{
+    if(recoveringCid&&active(recoveringCid))schedulePoll(recoveringCid,state.renderId,150);
+  });
   async function send(retryId,structuredText=null,regenerateId=null,structuredContext=null){
     if(retryId||regenerateId)return transmit(retryId,structuredText,regenerateId,structuredContext);
     const input=$('#chat-input'),renderId=state.renderId;
@@ -292,7 +313,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   }
   function drawComposerContext(){
     const reference=$('#composer-reference');if(reference){reference.hidden=!replyTarget;reference.replaceChildren();if(replyTarget){const text=document.createElement('span');text.textContent=(replyTarget.role==='assistant'?'引用小信使：':'引用我的消息：')+(replyTarget.excerpt||replyTarget.preview||'');const close=document.createElement('button');close.type='button';close.className='icon-button';close.dataset.chatAction='clear-quote';close.setAttribute('aria-label','取消引用');close.textContent='×';reference.append(text,close);}}
-    const status=$('#chat-outbox-status');if(status){const count=outbox?.items.length||0;status.hidden=!count;status.replaceChildren();if(count){const text=document.createElement('span');text.textContent=outbox.paused?'消息未确认，已保留 '+count+' 条':count+' 条消息待确认';status.append(text);if(outbox.paused){const retry=document.createElement('button');retry.type='button';retry.className='link-button';retry.dataset.chatAction='retry-outbox';retry.textContent='核对回执并继续';status.append(retry);}}}
+    const status=$('#chat-outbox-status');if(status){const count=outbox?.items.length||0,recovering=!!recoveringCid&&recoveringCid===current?.id;status.hidden=!count&&!recovering;status.replaceChildren();if(recovering&&!count){status.textContent='正在同步回复进度…';}if(count){const text=document.createElement('span');text.textContent=outbox.paused?'消息未确认，已保留 '+count+' 条':count+' 条消息待确认';status.append(text);if(outbox.paused){const retry=document.createElement('button');retry.type='button';retry.className='link-button';retry.dataset.chatAction='retry-outbox';retry.textContent='核对回执并继续';status.append(retry);}}}
   }
   let quoteSelection=null;
   document.addEventListener('pointerdown',event=>{const control=event.target.closest?.('[data-chat-action=quote]');if(!control)return;const article=control.closest('[data-message-id]'),selection=window.getSelection();quoteSelection=selection?.rangeCount&&article?.contains(selection.anchorNode)&&article.contains(selection.focusNode)?{id:control.dataset.id,text:selection.toString().trim()}:null;},true);
@@ -338,7 +359,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         opened.decision_preference=saved;rememberRouting(cid,useRouter);
       }
       const allowExternal=true;
-      const payload={version:current.version,content:retryId||regenerateId?'':text,source_ids:sourceIds,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,reply_to:batch?messageInput(batch[0]).reply_to:null,additional_messages:batch?batch.slice(1).map(messageInput):[],allow_external_processing:allowExternal,allow_decision_routing:useRouter};
+      const thread=$('#chat-thread'),reply=thread?.querySelector('.message-assistant .message-content');
+      const threadStyle=thread&&getComputedStyle(thread);
+      const width=reply?.clientWidth||(thread&&thread.clientWidth-parseFloat(threadStyle.paddingLeft)-parseFloat(threadStyle.paddingRight));
+      const readingWidth=width>0?(width<480?'compact':width<800?'regular':'wide'):null;
+      const payload={reading_width:readingWidth,version:current.version,content:retryId||regenerateId?'':text,source_ids:sourceIds,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,reply_to:batch?messageInput(batch[0]).reply_to:null,additional_messages:batch?batch.slice(1).map(messageInput):[],allow_external_processing:allowExternal,allow_decision_routing:useRouter};
       let result;
       pending={controller:new AbortController(),cid,renderId,raw:'',parser:null,mid:null,tier:1,expanded:false};streaming=pending;
       await streamChat(cid,payload,{csrf:state.session.csrf,signal:pending.controller.signal,onEvent:(type,data)=>{
@@ -365,7 +390,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         }else if(type==='delta'){
           if(!pending.parser||data.message_id!==pending.mid)throw Error('这条回复跟当前消息对不上，已经停止接收。');pending.raw+=data.text;pending.expanded||=!!data.expanded_template;pending.parser.push(data.text);
           const m=current.messages.find(m=>m.id===pending.mid);if(m){m.genui.raw=pending.raw;if(pending.tier===3)m.content=pending.raw;m._liveParts=pending.tier===1||pending.expanded?pending.parser.snapshot():[{kind:'text',text:pending.raw}];paintMessages();}
-        }else if(type==='done'){const follow=nearBottom()&&!chatViewportHeld($('#chat-thread'));result=data.conversation;receiveConversation(result);accepting=false;update();if(follow)revealLatestChatReply($('#chat-thread'));}
+        }else if(type==='done'){pending.done=true;recoveringCid=null;const follow=nearBottom()&&!chatViewportHeld($('#chat-thread'));result=data.conversation;receiveConversation(result);accepting=false;update();if(follow)revealLatestChatReply($('#chat-thread'));}
       }});
       if(!live())return;
       const failedRevision=result?.messages.flatMap(m=>m.versions||[m]).find(m=>m.request_id===requestId&&m.status==='failed');
@@ -376,10 +401,21 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
       if(!cid||branchDraft){update();throw error;}
       if(!live())return;
       // Reconcile server acknowledgement without erasing text typed after sending.
-      try{const result=await api('/conversations/'+cid);if(!live())return;receiveConversation(result);
-        if(result.messages.some(m=>m.request_id===requestId)){acknowledge();await drafts.flush(cacheKey);}
-        if(current.processing)schedulePoll(cid,renderId);
-      }catch{/* The local draft survives when acknowledgement is unknown. */}
+      const interrupted=pending&&!pending.done&&!pending.controller.signal.aborted&&!error.status;
+      try{
+        const result=await api('/conversations/'+cid);
+        if(!live())return;
+        receiveConversation(result);
+        const receipt=result.messages.flatMap(message=>[message,...(message.versions||[])]).find(message=>message.request_id===requestId);
+        if(receipt){acknowledge();await drafts.flush(cacheKey);}
+        if(current.processing){
+          if(interrupted)recoveringCid=cid;
+          schedulePoll(cid,renderId);
+        }
+        if(interrupted&&receipt&&['processing','complete'].includes(receipt.status))return;
+      }catch{
+        if(interrupted&&live()){recoveringCid=cid;schedulePoll(cid,renderId);}
+      }
       if(batch)outbox?.fail(batch,error.message);
       if(error.name!=='AbortError')throw error;
     }finally{
@@ -642,7 +678,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     return true;
   }
   function clearSession(){
-    submission++;accepting=false;sending=false;
+    submission++;accepting=false;sending=false;recoveringCid=null;
     clearTimeout(pollTimer);clearTimeout(feedbackTimer);clearTimeout(feedbackPoll);
     streaming?.controller.abort();streaming=null;
     cancelAnimationFrame(paintFrame);paintFrame=0;

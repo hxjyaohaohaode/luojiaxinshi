@@ -91,8 +91,9 @@ async def stream(settings, db, mid, source_events):
                             for record in steps:
                                 if record['id'] == key:
                                     record.update(state='complete' if kind == 'agent.completed' else 'interrupted', finished_at=now)
-                    persist()
-                    await queue.put({'type': 'work', 'steps': visible_steps()})
+                    if kind in {'tool.started','tool.completed','agent.started','agent.completed','agent.failed','agent.cancelled'}:
+                        persist()
+                        await queue.put({'type': 'work', 'steps': visible_steps()})
                 if event['type'] == 'phase':
                     now = int(time.time())
                     for record in steps:
@@ -129,8 +130,28 @@ async def stream(settings, db, mid, source_events):
 
     runner = asyncio.create_task(produce())
     try:
+        pending = None
         while True:
-            item = await queue.get()
+            item = pending if pending is not None else await queue.get()
+            pending = None
+            # Only combine text that has already arrived while the consumer
+            # was committing. Never wait to fill a batch or cross a phase,
+            # a revision, a UI fragment or a different kind of text.
+            if isinstance(item, dict) and item.get('type') in {'preview', 'delta'}:
+                pieces = [item['text']]
+                length = len(pieces[0])
+                while length < 8192 and not queue.empty():
+                    candidate = queue.get_nowait()
+                    if (not isinstance(candidate, dict) or candidate.get('type') != item['type']
+                            or candidate.get('reset') or candidate.get('clear_ui')
+                            or candidate.get('expanded_template') != item.get('expanded_template')
+                            or length + len(candidate['text']) > 8192):
+                        pending = candidate
+                        break
+                    pieces.append(candidate['text'])
+                    length += len(candidate['text'])
+                if len(pieces) > 1:
+                    item = {**item, 'text': ''.join(pieces)}
             if item is sentinel:
                 break
             if isinstance(item, BaseException):

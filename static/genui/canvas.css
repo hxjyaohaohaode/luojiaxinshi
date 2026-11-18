@@ -74,3 +74,15 @@ html[data-authored] [data-campus-reflow="grid"] > * { grid-column: auto !importa
 html[data-authored] [data-campus-reflow="flex"] { flex-wrap: wrap !important; }
 html[data-authored] [data-campus-reflow="flex"] > * { max-inline-size: 100% !important; min-inline-size: 0 !important; }
 html[data-authored] table[data-campus-reflow="pan"] { display: block !important; overflow-x: auto !important; }
+
+html[data-authored] figure svg[viewBox]:not([width]):not([height]) {
+  max-inline-size: min(100%, var(--campus-vector-width, 100%));
+}
+html[data-authored] #openui-root > :where(article, main, section, div):only-child > :where(h1, h2, p, figure):first-child {
+  margin-block-start: 0;
+}
+
+html[data-authored] #openui-root[inert] :where(button, input, select, textarea, [role=slider]) {
+  opacity: .62;
+  cursor: default;
+}

@@ -2,7 +2,7 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-ZIB6EIX5.js",
+    "js": "/static/dist/app-T77W2EPR.js",
     "css": "/static/dist/styles-I4GXENQW.css"
   },
   "sources": {
@@ -35,7 +35,7 @@
     "static/chat-outbox.js": "8b3967e2bb708c8f9ee8d1bc11e8eac5633b66afb0ce7a51aeaf9a99a23557bb",
     "static/chat-viewport.js": "e5d21a159288a68826f9f5ee6b18b6a989edcf56f840975112513edee9eb7c96",
     "static/chat-wait.js": "e530ab05d5f461a6589840d4f3a47a304bf869c055d6f67fe484bffa077ca105",
-    "static/chat.js": "c00b81c2c0c39e3858da0d38e19a3b3fc871166b6e1f4a9810c6d81b56db4ea2",
+    "static/chat.js": "a0000246b7a1db8ccabaa3ce4f3230d0827b8e2c048aafab3c6dfa5541cbd08d",
     "static/choreography.js": "1247ba5e56476a136a52b62cd51d9413ec77a460b5dd57a81dfce72f8c2cf067",
     "static/chrome.js": "1b5a2a49a7216a8ddc17275a66ed8e9ae7bd9bb02f8e9c73cc050441b05814fc",
     "static/collaboration-followup.js": "53d019679e7b1ae9fa0097186055e425f07203184ee863294c1d6cce92f9f3ad",
@@ -80,12 +80,12 @@
     "static/genui/math.js": "0703e0c25e10a049458784eaa6dafefef928c83fb99e3264f9befbc6e44dc4d6",
     "static/genui/memory-notice.js": "d96538a87f11230ca19eb2efc01cabc8be1bd9bedee99d1e773753b534381999",
     "static/genui/openui-codec.js": "24e7bb76d62e7155f44cbe1a00e35c296ae4f3fe8651c1a7bdb223f7f2c47800",
-    "static/genui/openui.js": "df105f330b324bde6653bfc2a202ff46d9a87b057e240ccdf91fb2f946422d98",
+    "static/genui/openui.js": "a396a215d70deaf42c4bc9500bd5ff57ed7eecb777d0413fd87e99d62cfa2894",
     "static/genui/plot.js": "194914b7c4706da56641429b723304398b0aff880b9f34288012505001216540",
     "static/genui/renderer.js": "662b82cf5a86104fe21eb10c3a3c08326b2ab1b3b14760a6fec71ea533686709",
     "static/genui/security.js": "0c4dd92ccf0f8425a03d3e20ac6b96d86de2463ef2fcefded890f37be88495c8",
     "static/genui/stream-text.js": "38b4062a2bd1b9fea930a82c952448b627f933d4e344cfe242f81a6ec445a325",
-    "static/genui/transport.js": "ad176733e5ca386962cbb5633732016aa1ace0eeb8914d08b956079ba471c64a",
+    "static/genui/transport.js": "5bd9d0f63c5de607dac701033674d72a5604244242606cda17e97bc779607617",
     "static/genui/typography.js": "ac79b898c4877b91c65ecbf7f265fa58b32fa76b3f7060c4c7761212fef54707",
     "static/genui/work-view.js": "1c80bfd1707b35444ab3b28e77a6fd565cc2a5a9b1baadde736060204cadc28b",
     "static/getting-started.js": "947eff405157fc52e20b93db197bcc71c8ff34cff2e30c3a9b75a26ccb66374a",
@@ -215,12 +215,12 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-NW7ZOBBX.js": "2a0cda9f63783d1477d7fe20ca4ad4323aa9ad91e390bf53ac24668d99d6707d",
     "static/dist/chunks/calendar-EBEUPB25.js": "53a92b48df50e558392800201150fcacf13cd717ff6c5e91e45fa85f98d2d7f9",
-    "static/dist/app-ZIB6EIX5.js": "061160c17904e3ac6cb5169310b706de271400457b0cfc65e4af4742933ca5c4",
+    "static/dist/app-T77W2EPR.js": "4aaac7f1f0137074a0a4c0ad04a83dbf7f2ac074d5b0bfa685024511fe933a3d",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
     "static/dist/chunks/memory-CMBMXAQ5.js": "881679d5707d5570684593af545e8c1e054c563875a26910aa2401c693ca8fdb",
     "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
     "static/dist/chunks/charts-NJK6ZI2V.js": "4fca2a9b77faf1b0f558fc6c5ce1d20e2066b1102f4918b4b698345907471608",
-    "static/dist/chunks/chat-DNZAGYCJ.js": "7163f0d4a5194dfbddb4a5809dec6ca389064a64a6eb6b0a2eebe6cfef49b0cd",
+    "static/dist/chunks/chat-FPVEWLTL.js": "dc44da639124839760303648e71f50017e3e64db50577b2f1223228c236001c4",
     "static/dist/chunks/chunk-QRC6NDUT.js": "6cbca853771c7d7235b56033dfbc403dc04a856b6c6d3ea0a9d2f67531a35763",
     "static/dist/chunks/chunk-HHFMEND4.js": "a9f4b9f3bdece3db9e4e4d8c4c8373783ec47fc9d2d0d405fbb7709e8136a246",
     "static/dist/chunks/chunk-O743CP2V.js": "8b5803ab8245f2d0a20a9a583a0225c52af71ab7509cc0a124acffd395ab155f",
@@ -234,6 +234,6 @@
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
     "static/dist/styles-I4GXENQW.css": "f74beaedd1dccf030c3cf7bf360ae28f2431f18c7b6eae2438c27a6cd24091d5",
-    "static/dist/index.html": "06ae80a4a4315cf7c4ed1b0ca439d79df7a3ea8f4588e9364c90bb8b71140d89"
+    "static/dist/index.html": "22b4362b48d8361be5fdf0fa0d36a3c2c50f3d36341cb1beace3962611aa6f24"
   }
 }

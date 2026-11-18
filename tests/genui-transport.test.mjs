@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SSEDecoder} from '../static/genui/transport.js';
+import {SSEDecoder,streamChat} from '../static/genui/transport.js';
 const packet=(seq,type,data)=>`id: ${seq}\nevent: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
 test('original chat accepts actual agent status and bounded parallel tool steps',()=>{
   const seen=[],decoder=new SSEDecoder((type,data)=>seen.push([type,data]));
@@ -40,4 +40,23 @@ test('SSE gaps, malformed frames and oversized events stop safely',()=>{
   assert.throws(()=>feed(packet(2,'delta',{text:'missing'})),/缺失/);assert.throws(()=>feed(packet(1,'delta',{text:'partial'})),/连接中断/);
   assert.throws(()=>feed('id: 1\nevent: delta\ndata: {bad}\n\n'),/解析/);
   assert.throws(()=>{const p=new SSEDecoder(()=>{},{eventBytes:10});p.push(new TextEncoder().encode(packet(1,'delta',{text:'long message'})));},/过长/);
+});
+
+
+test('a silent socket expires while heartbeats extend the same request',async t=>{
+  const encoder=new TextEncoder(),calls=[];
+  t.mock.method(globalThis,'fetch',async(url,{signal})=>{
+    calls.push(url);
+    const body=new ReadableStream({start(controller){
+      signal.addEventListener('abort',()=>{try{controller.error(new DOMException('closed','AbortError'));}catch{}},{once:true});
+      if(calls.length===2){
+        const interval=setInterval(()=>controller.enqueue(encoder.encode(': keepalive\n\n')),10);
+        setTimeout(()=>{clearInterval(interval);controller.enqueue(encoder.encode(packet(1,'done',{})));},100);
+      }
+    }});
+    return new Response(body,{headers:{'content-type':'text/event-stream'}});
+  });
+  await assert.rejects(streamChat('a',{},{csrf:'synthetic',onEvent:()=>{},idleMs:40}),/没有收到数据/);
+  const events=[];await streamChat('a',{},{csrf:'synthetic',onEvent:t=>events.push(t),idleMs:65});
+  assert.deepEqual(events,['done']);assert.equal(calls.length,2);
 });

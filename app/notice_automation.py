@@ -155,12 +155,18 @@ def queue_ready(conn,settings,only_uid=None):
     users=conn.execute('SELECT u.* FROM users u JOIN notice_automation_settings a ON a.user_id=u.id WHERE a.enabled=1 AND a.consented_at IS NOT NULL'+(' AND u.id=?' if only_uid else ''),params).fetchall()
     for user in users:
         digest=profile_hash(user['profile'])
-        quiet_ids=quiet_notices(conn,user['id'])
         # Initial website snapshots stay silent for delivery, but still need
         # automatic age/relevance analysis after global AI consent. Otherwise
         # every historical opportunity remains an unclassified user chore.
-        for notice in conn.execute("SELECT * FROM notices WHERE user_id=? AND status IN ('received','draft','failed')",(user['id'],)).fetchall():
-            profile=conn.execute('SELECT * FROM notice_profile_checks WHERE notice_id=?',(notice['id'],)).fetchone()
+        candidates=conn.execute('''SELECT n.*,p.profile_hash AS checked_profile
+            FROM notices n LEFT JOIN notice_profile_checks p ON p.notice_id=n.id
+            LEFT JOIN notice_automation_jobs j ON j.notice_id=n.id AND j.input_version=n.version AND j.profile_hash=?
+            WHERE n.user_id=? AND n.status IN ('received','draft','failed')
+            AND (j.id IS NULL OR (j.state='cancelled' AND j.attempts=0))''',(digest,user['id'])).fetchall()
+        if not candidates:continue
+        quiet_ids=quiet_notices(conn,user['id'])
+        for notice in candidates:
+            checked_profile=notice['checked_profile']
             if notice['status']=='draft' and notice['draft_version']==notice['version']:
                 # Manual drafts remain under the owner's control. Legacy AI
                 # drafts with no profile fingerprint need a current analysis;
@@ -168,7 +174,7 @@ def queue_ready(conn,settings,only_uid=None):
                 prior=json.loads(notice['draft'] or '{}')
                 generated=isinstance(prior.get('quality'),dict)
                 upgrade=generated and prior['quality'].get('status')=='needs_review' and prior.get('extraction_version')!=EXTRACTION_VERSION
-                if not profile and not generated or profile and profile['profile_hash']==digest and not upgrade:continue
+                if (checked_profile is None and not generated) or (checked_profile==digest and not upgrade):continue
             if not eligible(conn,notice,settings,quiet_ids=quiet_ids):continue
             now=int(time.time())
             conn.execute("INSERT OR IGNORE INTO notice_automation_jobs(id,user_id,notice_id,input_version,profile_hash,state,created_at) VALUES(?,?,?,?,?,'queued',?)",

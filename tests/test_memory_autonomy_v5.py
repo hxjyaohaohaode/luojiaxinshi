@@ -304,3 +304,15 @@ def test_ai_edit_receipt_requires_exact_case_and_spacing_in_the_request(env,monk
     assert edit(c,old,instruction='替换为 B').status_code==200
     assert edit(c,old,instruction=changed).status_code==409
     assert len(calls)==1 and c.get('/api/memory/items/'+old['id']).json()['content']=='B'
+
+
+def test_background_updates_share_a_batch_across_owners(env):
+    older=uid(account(env));newer=uid(account(env,'other'));db=env[0].state.db
+    with db.connect(write=True) as conn:
+        for i,owner in enumerate([older,older,older,newer]):
+            conn.execute('INSERT INTO memory_jobs(id,user_id,source_kind,source_id,created_at) VALUES(?,?,?,?,?)',
+                         (f'fair-{i}',owner,'message',f'missing-{i}',i))
+    drain_jobs(db,limit=2)
+    with db.connect() as conn:
+        done=[r[0] for r in conn.execute("SELECT id FROM memory_jobs WHERE id LIKE 'fair-%' AND state='done' ORDER BY id")]
+    assert done==['fair-0','fair-3']
