@@ -21,8 +21,8 @@ class SandboxUI(Strict):
     preferredWidth: int | None = Field(default=None, ge=280, le=1440)
     initialHeight: int = Field(default=240, ge=80, le=1600)
     placeholderMessages: list[str] = Field(default_factory=list, max_length=4)
-    css: str = Field(default='', max_length=24000)
     html: list[str] = Field(min_length=1, max_length=100)
+    css: str = Field(default='', max_length=24000)
     jsFunctions: str = Field(default='', max_length=32000)
     jsExpressions: list[str] = Field(default_factory=list, max_length=40)
 

@@ -12,15 +12,15 @@ export function capabilityIdentity(user){
 
 export function createGettingStarted({state,api,esc,showDialog,toast,onPreferences}){
   const saving=new Set();
-  function identityMarkup(){const identity=capabilityIdentity(state.session?.user);return `<p class="getting-started-identity" data-identity-state="${identity.state}"><strong>${esc(identity.label)}</strong> · ${esc(identity.description)}</p>`;}
+  function identityMarkup(compact=false){const identity=capabilityIdentity(state.session?.user);return `<p class="getting-started-identity" data-identity-state="${identity.state}"><strong>${esc(identity.label)}</strong>${compact?'':' · '+esc(identity.description)}</p>`;}
   function mount(root=document.querySelector('#content')){
     const user=state.session?.user,existing=root?.querySelector('[data-getting-started]');
     if(!root||root.dataset.page!=='dashboard'||!user||guideDismissed(user.profile)){existing?.remove();return;}
-    if(existing&&existing.dataset.owner===String(user.id)){existing.querySelector('[data-identity-state]')?.replaceWith(document.createRange().createContextualFragment(identityMarkup()));return;}
+    if(existing&&existing.dataset.owner===String(user.id)){existing.querySelector('[data-identity-state]')?.replaceWith(document.createRange().createContextualFragment(identityMarkup(true)));return;}
     existing?.remove();
     const banner=document.createElement('aside');banner.className='getting-started';banner.dataset.gettingStarted='';banner.dataset.owner=user.id;banner.setAttribute('aria-labelledby','getting-started-title');
-    banner.innerHTML=`<div class="between wrap"><h2 id="getting-started-title">现在能用什么</h2><button type="button" class="button small plain" data-onboarding-dismiss>暂时跳过</button></div><p>先收好通知原文，核对后加入本人待办，再记录办理与跟进；无需等待学院身份确认。</p>${identityMarkup()}<button type="button" class="button small" data-onboarding-open>查看三步说明</button><p class="form-error" role="alert" hidden></p>`;
-    root.prepend(banner);
+    banner.innerHTML=`<div><h2 id="getting-started-title">使用说明</h2>${identityMarkup(true)}</div><div class="getting-started-actions"><button type="button" class="button small plain" data-onboarding-open>查看三步说明</button><button type="button" class="button small plain" data-onboarding-dismiss>暂时跳过</button></div><p class="form-error" role="alert" hidden></p>`;
+    root.append(banner);
   }
   function open(){
     const user=state.session?.user;if(!user)return;

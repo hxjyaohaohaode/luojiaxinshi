@@ -96,7 +96,8 @@ def arrangement_occurrences(data, start, end):
     first = date.fromisoformat(data['start_date'])
     step = {'weekly': 7, 'biweekly': 14}.get(data.get('repeat'), 0)
     last = date.fromisoformat(data['repeat_until']) if step and data.get('repeat_until') else first
-    day = first
+    offset = max(0, (start - first).days)
+    day = first + timedelta(days=((offset + step - 1) // step) * step) if step else first
     while day <= last and day < end:
         if day >= start:
             yield day
@@ -215,6 +216,8 @@ def build_reminders(tasks, notices, arrangements, now=None):
                       'text': f'其中 {drafts} 则已经整理好，等你确认' if drafts else '整理一下，看看有没有要做的事',
                       'notice_id': waiting[0]['id'] if len(waiting) == 1 else None,
                       'revision': sorted((n['id'], n['status'], n.get('version', 1)) for n in waiting)})
+    from .agenda import conflict_reminders
+    items.extend(conflict_reminders(tasks, arrangements, now))
     for item in items:
         item['id'] = reminder_id(item)
         item.pop('revision', None)

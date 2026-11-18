@@ -67,7 +67,9 @@ async def gather_evidence(run, question, attachments):
     if not callable(getattr(run.provider,'read_evidence',None)) or run.focused_visual:return
     ids={s['id'] for s in attachments}
     docs=[s for s in run.records.values() if (s['id'] in ids or s.get('evidence_kind')=='web_page') and s.get('sections')]
-    jobs=assignments(question,docs,run.workflow)
+    approach=getattr(run,'profile',{}).get('_approach')
+    workflow='research' if approach=='corroborate' and run.workflow!='direct' else run.workflow
+    jobs=assignments(question,docs,workflow)
     if not jobs:return
     started=time.monotonic()
     outcomes=[]

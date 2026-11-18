@@ -35,6 +35,28 @@ WORKFLOWS = {
     'memory': ('用户要回顾、更正、记住或遗忘其个人信息、习惯与偏好。', '核对当前范围和版本，区分本人明确陈述、临时选择与推断；更新或遗忘须取得真实回执。'),
     'draft': ('需要拟写、整理、提出可逆的准备步骤或帮助形成选择。', '交付可编辑的草稿；把隐含需求作为待验证的建议，能从已有材料验证的先完成。'),
 }
+APPROACHES = {
+    'straight': '单一目标，直接交付。',
+    'corroborate': '多个来源、时效、适用性或口径冲突，需要独立核查。',
+    'time_plan': '排时间、查占用、避免冲突或比较可选时间段。',
+    'follow_through': '多步骤、承接前轮、发生更正或碰到缺件，需要持续跟进。'
+}
+APPROACH_INSTRUCTIONS = {
+    'straight': '',
+    'corroborate': '按发布主体、日期、适用对象和更正关系交叉核对。找不到原文时明确缺哪一项，不把转述升级为正式事实。',
+    'time_plan': '涉及本人日程且获准时，用 workspace_read(kind=agenda) 核对日期区间内的重复课程、实际占用、待办时间点与重叠。按硬约束和仍需确认的假设排时间，建议不写入。',
+    'follow_through': '从本轮清单和实际回执接续，先核查变化与缺口；区分已经完成、尚未执行和因资料或权限不足被阻的事项。'
+}
+
+
+def local_approach(text, direct):
+    request=positive_request(text)
+    if re.search(r'排期|排班|规划时间|排时间|空档|空闲|冲突.{0,6}(?:课|日程)|日程.{0,8}冲突|课表|时段|time slot|availability',request,re.I):return 'time_plan'
+    if re.search(r'核查|核实|核对|查证|冲突|交叉|正式更正|原文|corroborate|verify',request,re.I):return 'corroborate'
+    if not direct and re.search(r'接着|继续|跟进|分步|依次|补件|然后|下一步|follow.up',request,re.I):return 'follow_through'
+    return 'straight'
+
+
 # Transmit a linguistic projection of the current request. Unrecognized strings (including
 # proper names), digits, quotes, URLs and pasted passages have no representation on the wire.
 INTENT_WORDS = (
@@ -47,6 +69,7 @@ INTENT_WORDS = (
     '记住 记忆 记得 以后 偏好 习惯 更正 忘记 遗忘 跨会话 临时 长期 '
     '帮我 请问 如何 怎么 能不能 需要 是否 准备 安排 拟稿 草稿 拟写 写一封 建议 计划 '
     '期限 截止 地点 资格 条件 流程 来源 范围 报名 申请 学分 约分 平均数 中位数 '
+    '操作 调节 示意图 立即 输入 排期 撞期 冲突 空闲 空档 课表 时段 分步 依次 然后 跟进 核查 补件 交叉 '
     'explain define compare summarize draft translate research verify sources workflow requirements '
     'interactive timeline formula chart image remember forget preference calendar tasks continue follow up'
 ).split()
@@ -63,7 +86,7 @@ _HIGH = re.compile(r'通知|规定|条例|学校|武大|本校|校历|官网|官
 _GENERAL = re.compile(r'什么是|是什么|是什么意思|解释.{0,14}|用.{0,6}话说|通俗.{0,8}讲|怎么理解|有什么区别|'
                       r'^.{0,5}(?:你好|您好|早上好|晚上好|谢谢|hello|hi)[。！!？? ]*$|'
                       r'\b(?:what is|what does|explain|define)\b',re.I)
-_UI = re.compile(r'互动|交互|可拖|可点击|滑块|计算器|可视化|时间轴|图文混排|图表|交互式|interactive',re.I)
+_UI = re.compile(r'互动|交互|可(?:以)?操作|可(?:以)?调节|让我输入.{0,32}(?:立即|实时)|可拖|可点击|滑块|计算器|可视化|时间轴|图文混排|图表|交互式|interactive',re.I)
 _CONTINUE = re.compile(r'接着|继续|刚才|上次|上一[条轮]|第二项|前面|那[么个]|上面的|follow.up|continue',re.I)
 _MEMORY = re.compile(r'记住|记得|记忆|偏好|以后都|遗忘|忘记|remember|forget',re.I)
 _WORK = re.compile(r'待办|日历|日程|回执|办理进度|我的材料|标记完成|撤销|calendar|my tasks',re.I)
@@ -101,11 +124,11 @@ def local_route(text, direct):
     return 'direct' if direct else 'research'
 
 
-def choice(answers):
-    result = answers.get('workflow') if isinstance(answers,dict) else None
+def choice(answers, field='workflow', options=WORKFLOWS):
+    result = answers.get(field) if isinstance(answers,dict) else None
     if not isinstance(result,dict) or result.get('type') != 'choice':return None
     name, scores = result.get('choice'), result.get('probabilities')
-    if not isinstance(name,str) or name not in WORKFLOWS or not isinstance(scores,dict) or set(scores)!=set(WORKFLOWS):return None
+    if not isinstance(name,str) or name not in options or not isinstance(scores,dict) or set(scores)!=set(options):return None
     if any(type(v) not in (float,int) or not math.isfinite(v) or not 0<=v<=1 for v in scores.values()):return None
     ranked = sorted(scores.values(),reverse=True)
     if abs(sum(ranked)-1)>.02 or scores[name]!=ranked[0] or ranked[0]<.68 or ranked[0]-ranked[1]<.18:return None
@@ -116,24 +139,31 @@ async def decide(key, text, flags, *, direct, allow_external):
     global COOLDOWN_UNTIL
     start=time.monotonic()
     route=local_route(text,direct)
+    approach=local_approach(text,direct)
+    approach_via='local'
     via='local'
     state=routing_state(text,flags)
     if key and allow_external and state['request'] and start>=COOLDOWN_UNTIL:
         payload={'model':MODEL,'state':state,'provider':{'data_collection':'deny'},
                  'questions':{'workflow':{'type':'choice','instructions':'选择最适合开始本轮任务的工作方式。request 只保留意图词，未出现的个人事实未知。能力开关不能替用户同意任何动作。',
-                                          'criteria':{name:spec[0] for name,spec in WORKFLOWS.items()}}}}
+                                          'criteria':{name:spec[0] for name,spec in WORKFLOWS.items()}},
+                              'approach':{'type':'choice','instructions':'这项任务最需要哪种完成方式？只判断方法，不授予资料或操作权限。','criteria':APPROACHES}}}
         try:
             async with asyncio.timeout(3.0), httpx.AsyncClient(timeout=2.8,follow_redirects=False,trust_env=False) as client:
                 response=await client.post(ENDPOINT,json=payload,headers={'Authorization':'Bearer '+key})
                 response.raise_for_status()
-                selected=choice(response.json().get('answers'))
+                answers=response.json().get('answers')
+                selected=choice(answers)
+                strategy=choice(answers,'approach',APPROACHES)
+            if strategy and (not direct or strategy=='straight') and (strategy!='time_plan' or flags.get('schedule')):
+                approach,approach_via=strategy,'openrouter'
             if selected and (selected!='direct' or direct):
                 route,via=selected,'openrouter'
             else:via='local_uncertain'
         except (httpx.HTTPError, TimeoutError, ValueError, AttributeError):
             COOLDOWN_UNTIL=time.monotonic()+20
             via='local_unavailable'
-    return {'workflow':route,'via':via,'elapsed_ms':round((time.monotonic()-start)*1000)}
+    return {'workflow':route,'via':via,'approach':approach,'approach_via':approach_via,'elapsed_ms':round((time.monotonic()-start)*1000)}
 
 
 STYLE_HINTS = {

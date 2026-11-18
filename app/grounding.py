@@ -761,7 +761,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
                 raise
             decision={**decision,'workflow':'research','escalated_from':'direct'}
             yield {'type':'preview','text':'','reset':True}
-        profile={**profile,'_workflow':decision['workflow']}
+        profile={**profile,'_workflow':decision['workflow'],'_approach':decision.get('approach','straight')}
     if access['schedule'] and scope_start is None:
         from .agent_runtime.workspace import history_evidence
         with db.connect() as conn:profile={**profile,'_operation_evidence':history_evidence(conn,uid,cid,messages)}

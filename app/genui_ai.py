@@ -6,7 +6,7 @@ import json
 import re
 
 import httpx
-from pydantic import Field,ConfigDict,ValidationError
+from pydantic import Field,ConfigDict,ValidationError,model_validator
 
 from .ai import AIError, ReplyValidationError, check_evidence
 from .chat_ai import ChatAnswer, GroundingClaim, IMAGE_MIME, PROMPT, MAX_CITATIONS
@@ -58,6 +58,27 @@ class UIAnswer(IndexedAnswer):
 class CanvasAnswer(IndexedAnswer):
     answer: str = Field(min_length=0,max_length=80000)
     ui: AuthoredCanvas | None = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def media_attribution(cls, value):
+        # Some providers place reply-level asset provenance inside the authored document.
+        # Keep the original IDs subject to the usual evidence and ownership validation.
+        if not isinstance(value, dict) or not isinstance(value.get('ui'), dict):
+            return value
+        ui = value['ui']
+        if not ('media_sources' in ui or 'image_sources' in ui):
+            return value
+        reply = dict(value)
+        ui = dict(ui)
+        for key in ('image_sources', 'media_sources'):
+            if key in ui:
+                nested = ui.pop(key)
+                if key in reply and reply[key] != nested:
+                    raise ValueError('图像或媒体来源在界面与正文的声明不一致')
+                reply[key] = nested
+        reply['ui'] = ui
+        return reply
 
 
 class OpenUIAnswer(CanvasAnswer):

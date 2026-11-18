@@ -34,7 +34,7 @@
     removeItem(key){if(Object.hasOwn(savedFields,key)){const next={...savedFields};delete next[key];writeFields(next);}},
     clear(){writeFields(Object.create(null));}
   });
-  function changed(){if(enabled)send('state',state());if(!approved)queueMicrotask(lockActions);measure();publishText();}
+  function changed(){flowChanged=true;if(enabled)send('state',state());if(!approved)queueMicrotask(lockActions);measure();publishText();}
   // A short interval in a position-based diagram can wrap its own label.
   // Grow the hit target vertically while keeping its authored horizontal scale.
   function fitPositionedControls(){
@@ -52,10 +52,40 @@
       if(bottom>track.clientHeight)track.style.minHeight=Math.ceil(bottom+track.offsetHeight-track.clientHeight)+'px';
     }
   }
+
+  let reflowWidth=-1,flowChanged=true;
+  function fitAuthoredFlow(){
+    if(!authoredCanvas||!root.clientWidth)return;
+    const width=root.clientWidth;
+    if(width===reflowWidth&&!flowChanged)return;
+    reflowWidth=width;flowChanged=false;
+    for(const node of root.querySelectorAll('[data-campus-reflow]'))node.removeAttribute('data-campus-reflow');
+    if(root.scrollWidth<=width+1)return;
+    for(const node of root.querySelectorAll('article,section,main,header,footer,div,figure,form,fieldset,table,ul,ol,dl,nav')){
+      if(!node.clientWidth||node.namespaceURI!=='http://www.w3.org/1999/xhtml')continue;
+      const parent=node.parentElement,css=getComputedStyle(node);
+      if(!parent||['absolute','fixed'].includes(css.position)||['auto','scroll'].includes(css.overflowX))continue;
+      // Preserve a deliberate horizontal reading area or positioned diagram.
+      let contained=false;
+      for(let ancestor=parent;ancestor&&ancestor!==root;ancestor=ancestor.parentElement){
+        if(['scroll','auto'].includes(getComputedStyle(ancestor).overflowX)){contained=true;break;}
+      }
+      if(contained)continue;
+      const exceeds=node.getBoundingClientRect().width>parent.clientWidth+1;
+      if(!exceeds&&node.scrollWidth<=node.clientWidth+1)continue;
+      if(node.localName==='table'){node.dataset.campusReflow='pan';continue;}
+      if(exceeds)node.dataset.campusReflow='width';
+      if(node.scrollWidth>node.clientWidth+1){
+        if(css.display.includes('grid'))node.dataset.campusReflow='grid';
+        else if(css.display.includes('flex'))node.dataset.campusReflow='flex';
+      }
+    }
+  }
+
   function measure(){
     if(scheduled)return;
     scheduled=requestAnimationFrame(()=>{
-      scheduled=0;fitPositionedControls();
+      scheduled=0;fitAuthoredFlow();fitPositionedControls();
       const rect=root.getBoundingClientRect(),e=error.hidden?0:error.getBoundingClientRect().height+16;
       const media=[...root.querySelectorAll('img[data-material],video[data-material]')].map(node=>{
         const {x,y,width,height}=node.getBoundingClientRect();
@@ -213,15 +243,16 @@
     if(data.type!=='render')return;
     const ui=data.content;
     if(!ui||typeof ui.css!=='string'||!Array.isArray(ui.html))return;
-    if(!data.complete&&!ui.cssComplete)return;
     authoredCanvas=Number.isInteger(ui.preferredWidth);
+    if(!data.complete&&!ui.cssComplete&&(!authoredCanvas||!ui.html.some(Boolean)))return;
     document.documentElement.toggleAttribute('data-authored',authoredCanvas);
     for(const sheet of legacyStyles){const media=authoredCanvas?'not all':'all';if(sheet.media!==media)sheet.media=media;}
-    style.textContent=ui.css;
+    if((data.complete||ui.cssComplete)&&style.textContent!==ui.css){style.textContent=ui.css;flowChanged=true;}
     const localReady=!!data.complete||!!ui.localReady;
     const previous=started?controls():null;
     const html=data.complete?ui.html.join(''):ui.html.join('').replace(/\[E\d+\]/g,'');
     if(html!==rendered){
+      flowChanged=true;
       const next=sanitize(html);
       if(started&&previousTemplate)updateVerified(root,previousTemplate,next);else morph(root,next);
       rendered=html;previousTemplate=next;
@@ -268,7 +299,7 @@
   nativeAdd.call(document,'touchcancel',()=>touchPoint=null,{capture:true,passive:true});
   // Authored validity handlers can update button.disabled after capture
   // listeners. Keep pending host actions locked after those handlers settle.
-  new MutationObserver(()=>{if(!approved)lockActions();else citations();publishText();measure();}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled']});
+  new MutationObserver(records=>{if(records.some(record=>record.type==='childList'))flowChanged=true;if(!approved)lockActions();else citations();publishText();measure();}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled']});
   nativeAdd.call(document,'click',publishText,false);
   nativeAdd.call(window,'error',()=>{failed=true;enabled=false;root.inert=true;reportError('此界面的计算未能完成，可重新生成或查看文字内容。');send('runtime_error');});
   nativeAdd.call(window,'unhandledrejection',event=>{event.preventDefault();reportError(event.reason?.message||'操作未完成，请重试。');});

@@ -85,6 +85,35 @@ try{
   await page.waitForFunction(()=>window.__openuiRepair.localInteractive&&window.__openuiRepair.controls.days==='10'&&window.__openuiRepair.controls.hours==='3');
   assert.equal(await probe.locator('#total').textContent(),'30');await page.evaluate(()=>{window.__openuiRepair.dispose();document.getElementById('openui-repair-probe').remove();delete window.__openuiRepair;});
   checks.push('修正重建只保留实际改过且字段契约一致的输入，未改初值使用新稿；共享按钮阻止重复监听');
+  // Stream content first, then an unexpectedly wide authored grid. This is independent of the chat fixture's CSS-first reply.
+  const flowPage=await context.newPage();
+  await flowPage.setViewportSize({width:320,height:640});await flowPage.goto(origin+'/privacy');
+  await flowPage.evaluate(async()=>{
+    const {SandboxRenderer}=await import('/static/genui/openui.js');
+    const mount=document.createElement('main');document.body.replaceChildren(mount);
+    mount.style.cssText='width:100%;min-width:0';document.body.style.cssText='margin:0;display:block';
+    const spec={complete:false,errors:[],sandbox:{title:'合成路程比较',preferredWidth:880,initialHeight:1400,revision:1,
+      html:['<article><h2>步行路线</h2><div class="paths"><section>沿湖路线</section><section>林荫路线</section></div></article>'],
+      htmlComplete:false,css:'',cssComplete:false,jsFunctions:[],jsExpressions:[]}};
+    window.flowRenderer=new SandboxRenderer(mount,spec);
+    window.flowRenderer.frame.style.cssText='display:block;width:100%;margin:0;border:0';
+  });
+  const flowFrame=flowPage.locator('iframe.openui-frame'),inside=flowFrame.contentFrame();
+  await inside.getByText('沿湖路线').waitFor();
+  await flowPage.waitForFunction(()=>{const h=document.querySelector('iframe').getBoundingClientRect().height;return h>2&&h<300;});
+  assert.equal(await inside.locator('#openui-root').evaluate(node=>node.inert),true);
+  await flowPage.evaluate(()=>{const r=window.flowRenderer;r.update({...r.spec,sandbox:{...r.spec.sandbox,htmlComplete:true,cssComplete:true,
+    css:'.paths{display:grid;grid-template-columns:370px 370px;gap:14px}.paths section{padding:10px}'}});});
+  for(const width of [320,390,844,768,1440,320]){
+    await flowPage.setViewportSize({width,height:670});
+    await flowPage.waitForFunction(w=>Math.abs(document.querySelector('iframe').getBoundingClientRect().width-w)<3,width);
+    await inside.locator('.paths').evaluate(async node=>{
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      if(node.scrollWidth>node.clientWidth+1||document.documentElement.scrollWidth>innerWidth+1)throw Error('生成列超出可用宽度');
+    });
+  }
+  await flowPage.close();
+  checks.push('自由 HTML 在 CSS 完成前可读，1400px 建议高度不会撑开首屏；固定双列随六次视口变化重新排版');
   assert.deepEqual(errors,[]);
   const report={passed:true,browser:engineName,source:'synthetic agent arguments, real application API/database/browser',checks,errors,captureWarnings,firstHtmlMs:firstAt,localControlsMs:localAt,interactiveMs:finishedAt};
   await writeFile(out+'/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

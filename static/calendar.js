@@ -26,7 +26,7 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
   const control=(label,action,attrs='',cls='')=>`<button type="button" class="button ${cls}" data-calendar-action="${action}" ${attrs}>${label}</button>`;
   phone.addEventListener('change',()=>{if(belongs())refresh();});
   compactWeek.addEventListener('change',()=>{if(belongs())refresh();});
-  const belongs=()=>(location.hash==='#calendar'||/^#calendar\/[A-Za-z0-9_-]+$/.test(location.hash))&&$('#calendar-body');
+  const belongs=()=>(location.hash==='#calendar'||/^#calendar\/(?:[A-Za-z0-9_-]+|day\/\d{4}-\d{2}-\d{2})$/.test(location.hash))&&$('#calendar-body');
   const range=()=>view==='day'||(view==='list'&&listDay)?[selected,selected]:view==='week'?[startWeek(selected),addDays(startWeek(selected),6)]:[selected.slice(0,7)+'-01',addDays(shiftMonth(selected.slice(0,7)+'-01',1),-1)];
   function filter(list){return list.filter(e=>visible.has(e.kind)&&(!appliedQuery||(e.source==='task'?taskMatches?.has(e.id):(e.title+' '+e.location+' '+e.notes).toLocaleLowerCase().includes(appliedQuery.trim().toLocaleLowerCase()))));}
   function searchFeedback(){
@@ -184,7 +184,13 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     const wholeMonth=listDay?control('查看整月','list-month','','small plain'):'';
     if(!list.length)return `<div class="calendar-empty"><h3>${query||visible.size<5?'没找到匹配的安排':listDay?'这天还空着':view==='week'?'这一周还没有安排':'这个月还没有安排'}</h3><div class="row wrap">${wholeMonth}${control('新建安排','new','','small')}</div></div>`;
     const pages=Math.max(1,Math.ceil(list.length/12));listPage=Math.min(Math.max(1,listPage),pages);
-    return `<div class="calendar-agenda">${list.slice((listPage-1)*12,listPage*12).map(e=>agendaRow(e)).join('')}</div><div class="calendar-pagination">${control(icon('back'),'list-prev',listPage===1?'disabled':'','small')}<span>${listDay?'当日':view==='week'?'本周':'本月'} ${list.length} 项 · ${listPage} / ${pages}</span>${wholeMonth}${control(icon('arrow'),'list-next',listPage===pages?'disabled':'','small')}</div>`;
+    const byDay=new Map();
+    for(const item of list.slice((listPage-1)*12,listPage*12)){
+      if(!byDay.has(item.day))byDay.set(item.day,[]);
+      byDay.get(item.day).push(item);
+    }
+    const groups=[...byDay].map(([day,items])=>`<section class="agenda-day"><h3><time datetime="${esc(day)}">${esc(pretty(day))}</time></h3>${items.map(item=>agendaRow(item,false)).join('')}</section>`).join('');
+    return `<div class="calendar-agenda">${groups}</div><div class="calendar-pagination">${control(icon('back'),'list-prev',listPage===1?'disabled':'','small')}<span>${listDay?'当日':view==='week'?'本周':'本月'} ${list.length} 项 · ${listPage} / ${pages}</span>${wholeMonth}${control(icon('arrow'),'list-next',listPage===pages?'disabled':'','small')}</div>`;
   }
   function options(){
     showDialog('显示与导出',`<div class="stack"><label class="field">每周从哪一天开始<select id="calendar-week-start" aria-label="每周开始日期"><option value="1" ${weekStartsOn===1?'selected':''}>周一</option><option value="0" ${weekStartsOn===0?'selected':''}>周日</option></select></label><fieldset class="calendar-option-group"><legend>显示哪些安排</legend>${Object.entries(kinds).map(([kind,label])=>`<label class="check"><input type="checkbox" data-calendar-kind="${kind}" ${visible.has(kind)?'checked':''}><i class="calendar-dot ${kind}"></i>${label}</label>`).join('')}<label class="check"><input type="checkbox" id="calendar-option-done" ${showDone?'checked':''}>包含已完成待办</label></fieldset><label class="field">查找安排<input id="calendar-option-query" type="search" maxlength="500" value="${esc(query)}" placeholder="课程、地点或备注"></label><div class="small muted" role="status" data-calendar-search-status hidden></div><label class="field">跳转日期<input id="calendar-option-date" type="date" min="2000-01-01" max="2100-12-31" value="${selected}"></label><div class="row wrap">${control('重置筛选','reset-filters','','small plain')}${control('回到今天','today','','small')}${control('学期与周次','semester','','small')}${control('导出与提醒','exports','','small')}${control('还没定日期的待办','undated','','small')}</div><p class="small muted">日、周视图会显示完整的 24 小时。跨天的安排按天分段，箭头表示接着前一天，或延续到第二天。</p><div class="form-footer"><button type="button" class="button primary" data-action="close-dialog">完成</button></div></div>`);
@@ -367,5 +373,12 @@ export function createCalendarUI({state,api,esc,icon,companion,showDialog,ask,to
     readDisplay();
     refresh();if(query.trim()&&searchTaskVersion!==taskVersionKey())searchCalendar(query);
   }
-  return {render,refresh,applyRecords,persist:stash,openRecord};
+  function openDay(day){
+    const parsed=new Date(day+'T12:00:00Z');
+    if(Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==day)return;
+    clearTimeout(searchTimer);searchRequest++;searchBusy=false;searchError='';
+    selected=day;view='day';listDay=false;query='';appliedQuery='';taskMatches=null;
+    visible=new Set(Object.keys(kinds));refresh();
+  }
+  return {render,refresh,applyRecords,persist:stash,openRecord,openDay};
 }

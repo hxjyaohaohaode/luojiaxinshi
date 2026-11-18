@@ -21,6 +21,7 @@ export function createReminders({state, api, esc, icon, toast, showDialog, push=
   function notified() { try { return new Set(JSON.parse(localStorage.getItem(NOTIFIED_KEY)||'[]')); } catch { return new Set(); } }
   function remember(key) { const seen=notified();seen.add(key);try { localStorage.setItem(NOTIFIED_KEY,JSON.stringify([...seen].slice(-200))); } catch {} }
   function target(item) {
+    if(item.kind==='schedule_conflict'&&item.calendar_date)return '#calendar/day/'+encodeURIComponent(item.calendar_date);
     if(item.case_id)return '#collaboration/'+encodeURIComponent(item.case_id);
     if(item.task_id)return '#tasks/'+encodeURIComponent(item.task_id);
     if(item.arrangement_id)return '#calendar/'+encodeURIComponent(item.arrangement_id);

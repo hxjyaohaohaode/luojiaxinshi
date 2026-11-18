@@ -578,12 +578,22 @@ def ingest_task(conn, uid, tid):
         return None
     status = {'pending': '待办理', 'done': '本人标记完成', 'cancelled': '本人取消'}[task['status']]
     content = f'办理记录：{title}。当前状态：{status}。这是本人记录，不等于学校确认办结。'
+    if details.get('due_date'):
+        deadline = ' '.join(filter(None, (details['due_date'], details.get('due_time'))))
+        label = '本人已核实的截止' if details.get('deadline_confirmed') else '待核实的截止'
+        content += f' {label}：{deadline}。'
+    if details.get('planned_at'):
+        content += f" 个人计划时间：{details['planned_at']}。"
+    requirements = set(details.get('materials') or [])
     workflow=conn.execute('SELECT data FROM task_workflows WHERE task_id=?',(tid,)).fetchone()
     if workflow:
         data=json.loads(workflow['data']);names={'preparing':'准备中','submitted':'已提交','accepted':'本人记录已受理','rejected':'本人记录未受理','supplement':'需要补充材料','blocked':'办理受阻'}
         details_text='；'.join(str(data.get(key,'')).strip()[:200] for key in ('outcome','next_step') if data.get(key))
         details_text=SECRET.sub('[凭证已省略]',details_text)
         if not REJECT_INSTRUCTION.search(details_text):content+=f" 本人办理进度：{names.get(data.get('stage'),'尚未提交')}。"+details_text
+    if requirements:
+        prepared = set(data.get('prepared_materials') or []) if workflow else set()
+        content += f' 材料清单共 {len(requirements)} 项，本人标记已备 {len(requirements & prepared)} 项。'
     value = {'scope': 'global', 'project_id': None, 'topic': '', 'kind': 'intention' if task['status'] == 'pending' else 'episode',
              'content': content, 'semantic_key': 'task:' + tid}
     old = conn.execute('''SELECT m.*,d.locked,d.review_status,e.source_version FROM personal_memories m JOIN memory_evidence e ON e.memory_id=m.id

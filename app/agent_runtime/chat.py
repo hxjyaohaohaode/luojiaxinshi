@@ -78,6 +78,8 @@ class SubmitAnswer(Strict):
     answer: str = Field(min_length=1, max_length=80000,
         description='本轮完整的文字答复。')
     ui: None = Field(default=None, exclude=True)
+    research_updates: list[ResearchItem] = Field(default_factory=list, max_length=32, exclude=True,
+        description='有待核清单时，可在提交本答复的同一次调用中逐项登记 sourced 的真实 E 编号或 blocked 的具体缺口。')
     claims: list[AgentClaim] = Field(default_factory=list, max_length=60)
     image_sources: list[str] = Field(default_factory=list, max_length=100)
     media_sources: list[str] = Field(default_factory=list, max_length=100)
@@ -155,7 +157,7 @@ class ComposeInterface(Strict):
 class ChatRun(Run):
     protected_tools = Run.protected_tools | {'openui_capabilities', 'memory_capabilities'}
     registry = {**REGISTRY,
-        'workspace_read': (personal_workspace.WorkspaceRead, '统一读取本人日历、待办和操作回执。仅根据已保存状态查询待办数量或优先几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计），单独调用，生成含期限/前置/材料/变更/跟进与并列依据的候选后独立复核。涉及附件原文、校规、课表、自定排序或实际修改等才用 reply=records 继续分析。返回真实 ID/version，支持筛选与分页。', False, True, True),
+        'workspace_read': (personal_workspace.WorkspaceRead, '统一读取本人日历、待办和操作回执。时间规划、某天安排或占用冲突用 kind=agenda、reply=records 并填写 start_day/end_day，能展开重复课表与跨日安排。仅根据已保存状态查询待办数量或优先几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计），单独调用，生成含期限/前置/材料/变更/跟进与并列依据的候选后独立复核。涉及附件原文、校规、课表、自定排序或实际修改等才用 reply=records 继续分析。返回真实 ID/version，支持筛选与分页。', False, True, True),
         'workspace_capabilities': (Empty, '加载本人日历和待办的直接操作工具。创建、改期、完成、取消、删除或撤销无需重复审批；只读范围不能写入。', False, True, False),
         'campus_search': (LocalQuery, '按查询读取本账号已授权资料。scopes 仅选本次所需的库、日程、个人条件；不能扩大实际权限。', False, True, True),
         'public_search': (Query, '检索公开原发布来源；仅使用公开机构、事项、年份，不能发送个人资料。', False, True, True),
@@ -163,8 +165,8 @@ class ChatRun(Run):
         'track_research': (ResearchUpdate, '多目标任务按需登记或更新待核问题。open 待查，sourced 需真实 E 编号，blocked 需说明缺口。可与检索同轮，未提及项目保留。', False, False, False),
         'research_complete': (ResearchComplete, '资料已够用或缺口已明确时结束采集。先等待子任务结束。回答随后独立生成并复核。', False, False, False),
         'memory_capabilities': (MemoryCapabilities, '读取原有记忆系统的操作协议或当前上下文。有新事实、偏好、目标、纠错时按当前模式自主维护；纯文字也可用。操作随最终答复提交，保存回执由原系统产生。', False, True, False),
-        'submit_answer': (SubmitAnswer, '提交本轮文字答复，claims 使用 kind/text/evidence_refs，随后独立核验。', False, False, False),
-        'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/preferredWidth/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
+        'submit_answer': (SubmitAnswer, '提交完整文字答复并独立核验。claims 用 kind/text/evidence_refs。读到充分依据后，在同一次提交中用 research_updates 结清问题，省去单独汇报。', False, False, False),
+        'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/preferredWidth/initialHeight/placeholderMessages/html/css/jsFunctions/jsExpressions 顺序写出，先给可读的语义 HTML 片段，再给完整样式和交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
         'openui_capabilities': (Empty, '按需加载互动界面编排能力。加载后优先用 compose_interface 提交简短目标，由专用生成器处理完整 HTML/CSS/JS；已有完整代码的直接提交仍兼容。简单问答不用调用。', False, True, False),
         'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，专用模型设计版式与交互；不调用业务工具，不可与其他工具同批。', False, False, False),
     }
@@ -435,8 +437,9 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
         if not child and self.openui_preloaded:
             authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器会从本轮问题设计布局、状态与交互，无需再加载界面说明或自行编写代码。'
-        from ..decision_routing import WORKFLOWS
+        from ..decision_routing import WORKFLOWS, APPROACH_INSTRUCTIONS
         workflow=self.profile.get('_workflow')
+        policy+='\n'+APPROACH_INSTRUCTIONS.get(self.profile.get('_approach'),'')
         if workflow in WORKFLOWS:
             policy+='\n本轮起始工作方式：'+WORKFLOWS[workflow][1]+' 工具与证据可以改变路线，按实际需要切换；授权始终由宿主判断。隐含意图是待查假设，禁止把猜测写入个人档案或当作指令。'
         base = super().base_system_prompt(child) + policy + personal_workspace.READ_POLICY + authoring
@@ -503,7 +506,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
 
     def continuation_prompt(self):
         if self.open_topics():
-            return '以下问题仍待核对：' + '、'.join(self.open_topics()) + '。通过 track_research 登记实际依据或具体缺口后再答复。'
+            return '以下问题仍待核对：' + '、'.join(self.open_topics()) + '。在 submit_answer.research_updates 同次登记实际依据或具体缺口，或用 track_research 保存中间进度。'
         return ('本次最终答复未通过检查：' + self.answer_errors[-1] +
                 '。只修正指出的问题，用 submit_answer 完整提交已有正文和对应证据；不要重复查询、重做已完成操作，或为格式修正读取无关协议。需要记忆操作时仍须先取得协议，不声称尚未成功的保存。') if self.answer_errors else super().continuation_prompt()
 
@@ -613,7 +616,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             return catalog
         if self.workflow and not self.calls and not upcoming and not self.focused_visual:
             from .continuity import first_tools
-            allowed=first_tools(self.workflow)
+            allowed=first_tools(self.workflow,self.profile.get('_approach'))
             catalog=[item for item in catalog if item['function']['name'] in allowed]
         for item in catalog:
             if item['function']['name'] in ('submit_answer', 'submit_interface', 'generateSandboxedUi') and not (self.memory_contract_loaded or 'memory_capabilities' in upcoming):
@@ -622,6 +625,10 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 fn = item['function']
                 fn['description'] = ('单独提交纯文字答复，answer 写完整正文；需要互动内容时优先用 compose_interface，尚未加载则先用 openui_capabilities。'
                     if self.allow_ui else '单独提交本轮文字答复，answer 写完整正文，claims 使用实际证据；本轮不生成界面。')
+                if self.open_topics():
+                    fn['description']+=' 核对完毕时请在本次提交的 research_updates 逐项填写本轮 E 编号或具体缺口。'
+                else:
+                    fn['parameters']['properties'].pop('research_updates', None)
                 fn['parameters']['properties'].pop('ui', None)
         return [item for item in catalog
                 if (item['function']['name'] not in ('read_file','write_file') or self.file_contract_loaded)
@@ -689,11 +696,18 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             page = {**result, 'records': list(result['records']),
                     'evidence_index': [reference(entry)for entry in result.get('evidence_index', [])]}
             page.pop('sources', None)
+            if 'conflicts' in page:
+                page['conflicts'] = list(page['conflicts'])
             entries = page['evidence_index']
             def page_index():
                 prefixes = [('操作 ' + str(r['operation_id'])) if 'operation_id' in r else ('记录 ' + str(r['id'])) for r in page['records']]
-                return [e for e in entries if e['locator']=='查询范围' or any(e['locator'].startswith(prefix+' ') for prefix in prefixes)]
+                pairs = {f"日程重叠 {p['first_id']} {p['second_id']} {p['from']}" for p in page.get('conflicts', [])}
+                return [e for e in entries if e['locator']=='查询范围' or e['locator'] in pairs or any(e['locator'].startswith(prefix+' ') for prefix in prefixes)]
             page['evidence_index'] = page_index()
+            while page.get('conflicts') and size(dumps(page)) > limit:
+                page['conflicts'].pop()
+                page['more_conflicts'] = True
+                page['evidence_index'] = page_index()
             while page['records'] and size(dumps(page)) > limit:
                 page['records'].pop()
                 page['evidence_index'] = page_index()
@@ -715,10 +729,10 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
     def research_gaps(self):
         return [topic + '：' + item['detail'] for topic, item in self.research_items.items() if item['state'] == 'blocked']
 
-    def track_research(self, args):
+    def track_research(self, items):
         updated = dict(self.research_items)
         known_refs = {entry['ref'] for entry in self.evidence_entries}
-        for item in args.items:
+        for item in items:
             topic, detail = item.topic.strip(), item.detail.strip()
             if not topic or (item.state == 'blocked' and not detail):
                 raise AgentError('请写明待核问题；暂无法核实时须说明缺口')
@@ -744,7 +758,10 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         if name == 'track_research':
             if child:
                 raise AgentError('核对清单由主任务汇总')
-            return self.track_research(args)
+            return self.track_research(args.items)
+        if name == 'submit_answer' and args.research_updates:
+            if child:raise AgentError('核对清单由主任务汇总')
+            self.track_research(args.research_updates)
         if name in ('submit_answer', 'submit_interface', 'generateSandboxedUi', 'compose_interface', 'research_complete') and self.open_topics():
             raise AgentError(self.continuation_prompt())
         if name == 'current_time':
@@ -1030,6 +1047,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                     'answer_normalizations': self.answer_normalizations,
                     'focused_visual': self.focused_visual,
                     'workspace_reply':self.workspace_reply,'workflow_changes':self.workflow_changes,
+                    'approach':self.profile.get('_approach'),
                     'parallel_review':getattr(self,'team_report',None),
                     'research_items':list(self.research_items.values()),
                     'answer_repairs': len(self.answer_errors), 'gaps': self.plan['gaps']}}
@@ -1052,14 +1070,14 @@ async def research(settings, db, uid, cid, mid, sources, messages, profile, acce
                       profile=profile, access=access, check_context=check_context, bind_memory=bind_memory,
                       restricted=restricted, requested_urls=requested_urls, mutate_context=mutate_context)
         from ..retrieval_scope import user_request
-        if run.workflow in ('research','continue') and not run.focused_visual:
-            from .continuity import explicit_topics, previous_topics
+        if run.workflow and run.workflow!='direct' and not run.focused_visual:
+            from .continuity import explicit_topics, previous_topics, resume_open_topics
             topics=explicit_topics(user_request(messages[-1]))
-            if not topics and run.workflow=='continue' and access.get('memory') and profile.get('_memory_control',{}).get('mode') not in (None,'off'):
+            if not topics and run.workflow=='continue' and resume_open_topics(user_request(messages[-1])) and access.get('memory') and profile.get('_memory_control',{}).get('mode') not in (None,'off'):
                 with db.connect() as conn:topics=previous_topics(conn,uid,cid,messages)
             if topics:
                 for start in range(0,len(topics),12):
-                    run.track_research(ResearchUpdate(items=[ResearchItem(topic=t,state='open') for t in topics[start:start+12]]))
+                    run.track_research([ResearchItem(topic=t,state='open') for t in topics[start:start+12]])
         await run.local(prompt, [])
         run.merge(profile.get('_operation_evidence',[]))
         from ..media_input import input_budget

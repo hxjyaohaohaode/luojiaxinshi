@@ -9,6 +9,7 @@ import re
 import time
 from ..usage_limits import check_count, check_storage, limits_for
 from typing import Literal
+from datetime import date
 
 from fastapi import HTTPException
 from pydantic import Field, model_validator
@@ -27,7 +28,7 @@ POLICY = '''个人日历和待办使用 workspace_read 读取最新记录；需�
 这些回执只证明本站日历/待办变化；不证明已同步手机日历、触发系统闹钟、提交作业、通知他人或完成学校手续。需要外部结果时必须有对应真实业务回执。
 不确定或不知道就直接说明。不得虚构查看范围、测试通过、完成操作或未知事实。回答简要说明实际结果和未完成事项。'''
 POLICY += '\n面向用户用“已保存”“待办”“已标记完成”“已撤销”等短词，不输出 committed/pending、字段名或内部 ID。'
-READ_POLICY = '本人日历和待办统一用 workspace_read。仅根据已保存状态询问待办数量或优先关注几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计）。该简报已包含期限、前置、材料、待核变更、跟进和并列项依据，不需选择 records 再重写；服务端整理候选后仍独立核验。需要结合附件原文、校规、课表、用户另定的排序标准，或要求精确单句/实际修改时，才用 reply=records 继续完整工具链。实际修改先用 workspace_capabilities 取得协议并核对回执；分析不改记录，本站保存不代表学校手续完成。'
+READ_POLICY = '本人日历和待办统一用 workspace_read。查具体日期的课表、重叠或可排时段用 kind=agenda 加 start_day/end_day、reply=records。has_more 时翻页；未登记的时间不能保证空闲。仅根据已保存状态询问待办数量或优先关注几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计）。该简报已包含期限、前置、材料、待核变更、跟进和并列项依据，不需选择 records 再重写；服务端整理候选后仍独立核验。需要结合附件原文、校规、课表、用户另定的排序标准，或要求精确单句/实际修改时，才用 reply=records 继续完整工具链。实际修改先用 workspace_capabilities 取得协议并核对回执；分析不改记录，本站保存不代表学校手续完成。'
 TASK_STATE_POLICY = '个人待办的 status=done 表示本人已标记完成，cancelled 表示已取消；workflow.data.stage 是保留的阶段记录，不能仅因它仍为 preparing 就说已完成事项尚未完成。handling_state 是服务器依据上述独立状态计算的当前办理路径，可直接用于解释现在能做什么；不是学校受理证明。前置是否满足看 workflow.blocked，原要求变化看 pending_changes/change_review，二者分别核对。followup_at 是个人跟进安排，不是正式截止。'
 TASK_STATE_POLICY += ' query_task_status_counts 是数据库对 query_scope 匹配的全部本人待办的统计，独立于详情分页；不含日历、筛选范围外或其他账号。材料勾选表示本人准备状态，不等同于前置任务未完成。用户问哪两件待办就分别选两条，不能把多条合并冒充一件。'
 
@@ -53,7 +54,9 @@ def fold_fields(value, field, model):
 
 
 class WorkspaceRead(Strict):
-    kind: Literal['all', 'calendar', 'tasks', 'operations'] = Field(default='all', description='tasks 同时返回当前办理阶段、前置约束、材料准备、待核实变动和跟进状态；operations 只查本对话助手操作回执，不是办理进度。')
+    kind: Literal['all', 'agenda', 'calendar', 'tasks', 'operations'] = Field(default='all', description='tasks 同时返回当前办理阶段、前置约束、材料准备、待核实变动和跟进状态；operations 只查本对话助手操作回执，不是办理进度。')
+    start_day: str = Field(default='', max_length=10, description='agenda 必填，起始日期 YYYY-MM-DD，按校园所在时区。')
+    end_day: str = Field(default='', max_length=10, description='agenda 必填，结束日期含当日，最多连续31天。')
     target_id: str = Field(default='', max_length=80)
     query: str = Field(default='', max_length=160, description='按空白分隔的关键词须全部匹配；统计与详情使用同一筛选条件。')
     offset: int = Field(default=0, ge=0, le=10000)
@@ -63,6 +66,14 @@ class WorkspaceRead(Strict):
 
     @model_validator(mode='after')
     def briefing_scope(self):
+        if self.kind=='agenda':
+            if self.target_id or self.query:
+                raise ValueError('时间规划须核对区间内全部本人占用，请勿只筛选单一标题')
+            first,last=date.fromisoformat(self.start_day),date.fromisoformat(self.end_day)
+            if first.isoformat()!=self.start_day or last.isoformat()!=self.end_day or not (2000<=first.year<=last.year<=2100 and 0<=(last-first).days<=30):
+                raise ValueError('请提供有效的起止日期，单次最多查询31天')
+        elif self.start_day or self.end_day:
+            raise ValueError('日期区间用于 kind=agenda')
         if self.reply == 'task_briefing' and self.kind != 'tasks':
             raise ValueError('待办简报仅支持 kind=tasks；综合日历或操作回执请用 reply=records')
         return self
@@ -242,6 +253,13 @@ def evidence_sections(result):
     each returned record to a complete summary and its original detail fields.
     """
     sections = []
+    if result.get('query_scope',{}).get('kind')=='agenda':
+        sections.append({'locator':'查询范围','text':dumps({k:result[k] for k in ('query_scope','total','offset','has_more','more_conflicts','scope_note')}),'_retrieval_score':5})
+        for pair in result['conflicts']:
+            sections.append({'locator':'日程重叠 '+pair['first_id']+' '+pair['second_id']+' '+pair['from'],'text':dumps(pair),'_retrieval_score':5})
+        for event in result['records']:
+            sections.append({'locator':'记录 '+event['id']+' '+event['kind']+' '+event['starts_at'],'text':dumps(event)})
+        return sections
     if 'records' in result:
         sections.append({'locator': '查询范围', 'text': dumps({k: v for k, v in result.items() if k not in ('records','state_semantics')}), '_retrieval_score': 5})
         records = result['records']
@@ -330,6 +348,9 @@ def history_evidence(conn, uid, cid, messages):
 
 
 def read(conn, uid, cid, args):
+    if args.kind=='agenda':
+        from ..agenda import read_agenda
+        return read_agenda(conn,uid,args)
     items = []
     if args.kind == 'operations':
         items = operations(conn, uid, cid)

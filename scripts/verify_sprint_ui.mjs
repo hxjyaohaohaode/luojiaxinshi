@@ -102,7 +102,9 @@ for(const engine of engines){
     await check('first arrival guide is optional, honest about unverified identity, and persisted per account',async()=>{
       const guide=page.locator('[data-getting-started]');await guide.waitFor();
       assert.equal(await guide.locator('[data-identity-state]').getAttribute('data-identity-state'),'pending');
-      assert.match(await guide.innerText(),/填写教师、员工等个人条件不会获得学院发布或管理权限/);
+      await guide.locator('[data-onboarding-open]').click();
+      assert.match(await page.locator('[data-onboarding-guide]').innerText(),/填写教师、员工等个人条件不会获得学院发布或管理权限/);
+      await page.locator('[data-onboarding-guide] [data-action="close-dialog"]').click();
       await guide.locator('[data-onboarding-dismiss]').click();await guide.waitFor({state:'detached'});
       assert.ok((await api('/session')).user.profile.dismissed_hints.includes('workspace-capabilities-v1'));
       await page.reload();await page.locator('.personal-home').waitFor();assert.equal(await page.locator('[data-getting-started]').count(),0);

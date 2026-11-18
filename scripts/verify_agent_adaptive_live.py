@@ -62,6 +62,8 @@ def check(case='files', output_name=None):
     output=ROOT/'artifacts'/(output_name or ('agent-adaptive-live' if case=='files' else 'agent-adaptive-live-'+case));output.mkdir(parents=True,exist_ok=True)
     prompts={
         'files':PROMPT,
+        'agenda_plan':'请核对我 2027-03-02 上午的日历，看看哪些已保存的安排撞在一起，重叠多久？11:00 之后还能在上午安排一段连续 30 分钟的复盘吗？给出理由和建议时间，只需分析。',
+        'travel_ui':'请帮我做一个可以操作的行程比较。合成的两种步行方案分别是 12 分钟和 20 分钟，09:00 出发。让我输入第一条路等待的分钟数，立即看到两条路到达的钟点和哪条更早，打平也要准确。让计算、路程示意图和简短文字自然接在一起，手机上可以直接改。',
         'direct':'用两句话解释什么是中位数，再给一个短例子。',
         'continuation':'接着刚才的合成草案，只改第二项的时长为45分钟。请列出两项的名称和当前时长。',
         'mixed_layout':'制作一个可以操作的图文互动答复。合成小组在4天内每天读6页，公式为总页数＝天数×每天页数。请绘制阅读进度示意图，展示公式，用一个可编辑输入改变天数并立即更新总页数。只用题中这些数值，以自然的文档布局连接图、公式和计算。',
@@ -91,6 +93,14 @@ def check(case='files', output_name=None):
             client.post('/api/auth/login',json={'username':'synthetic-agent','password':'SyntheticOnly2026!'}).raise_for_status()
             client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf']
             chat=client.post('/api/conversations',json={'title':'原聊天 Agent 合成验收'}).json()
+            if case=='agenda_plan':
+                for title,day,start,end,repeat in (
+                    ('合成研讨','2027-02-23','09:00','10:30','weekly'),
+                    ('合成实验','2027-03-02','10:00','11:00','none'),
+                    ('合成交接','2027-03-02','11:00','11:30','none')):
+                    client.post('/api/arrangements',json={'request_id':ident(),'data':{
+                        'title':title,'start_date':day,'end_date':day,'start_time':start,'end_time':end,
+                        'repeat':repeat,'repeat_until':'2027-03-09' if repeat=='weekly' else None}}).raise_for_status()
             if case=='continuation':
                 with app.state.db.connect(write=True) as conn:
                     parent=ident(); now=int(time.time())
@@ -141,7 +151,7 @@ def check(case='files', output_name=None):
                 return await send_http(session,request,**kwargs)
             with patch.object(httpx.AsyncClient,'send',meter):
                 response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
-                    'content':prompts[case],'request_id':ident(),'allow_external_processing':True,'allow_decision_routing':case in ('direct','research','continuation','mixed_layout','team_review')})
+                    'content':prompts[case],'request_id':ident(),'allow_external_processing':True,'allow_decision_routing':case in ('direct','research','continuation','mixed_layout','team_review','travel_ui','agenda_plan')})
             response.raise_for_status()
             final=client.get('/api/conversations/'+chat['id']).json()['messages'][-1]
             with app.state.db.connect() as conn:
@@ -201,6 +211,11 @@ def check(case='files', output_name=None):
                 assert len(grounding['work_summary']['cited_sources'])>=2 and len(requests_made)<=8
             if case=='continuation':
                 assert all(term in report['answer'] for term in ('20','45','初读','复核'))
+            if case=='agenda_plan':
+                assert 'workspace_read' in calls and all(value in report['answer'] for value in ('10:00','10:30','11:30'))
+                assert '30' in report['answer'] and not final.get('agent',{}).get('operations')
+            if case=='travel_ui':
+                assert report['openui_blocks']==1 and report['stream_has_ui_preview']
             if case=='mixed_layout':
                 assert report['openui_blocks'] and '24' in report['answer']
             assert (case!='files' or calls.count('list_files')==1) and 'research_complete' not in calls and report['review_status']=='checked'
@@ -248,5 +263,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','direct','continuation','mixed_layout','team_review','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','agenda_plan','travel_ui','direct','continuation','mixed_layout','team_review','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

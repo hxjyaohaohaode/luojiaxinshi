@@ -32,3 +32,23 @@ def test_checklist_and_explicit_preference_do_not_learn_quoted_examples():
     assert direct_quote(text,text) and classify(text)=='preference' and admit(text,'preference')=='long_term'
     assert not direct_quote('我的专业是化学。','示例：我的专业是化学。')
     assert not direct_quote('我的专业是化学。','通知原文：\n请看下文。\n我的专业是化学。'.replace(chr(10),chr(10)))
+
+def test_two_decisions_share_one_private_projection_and_fail_independently(monkeypatch):
+    import httpx
+    def answer(name, options):
+        return {'type':'choice','choice':name,'probabilities':{option:int(option==name) for option in options}}
+    answers={'workflow':answer('workspace',routing.WORKFLOWS),'approach':answer('time_plan',routing.APPROACHES)}
+    requests=[]
+    async def post(self,url,**kwargs):
+        requests.append(kwargs['json'])
+        return httpx.Response(200,request=httpx.Request('POST',url),json={'answers':answers})
+    monkeypatch.setattr(httpx.AsyncClient,'post',post)
+    monkeypatch.setattr(routing,'COOLDOWN_UNTIL',0)
+    result=asyncio.run(routing.decide('dummy','请检查日程冲突。通知全文：我的姓名是张明',{'schedule':True},direct=False,allow_external=True))
+    assert result['workflow']=='workspace' and result['approach']=='time_plan' and result['approach_via']=='openrouter'
+    assert len(requests)==1 and set(requests[0]['questions'])=={'workflow','approach'} and '张明' not in json.dumps(requests,ensure_ascii=False)
+    del answers['workflow']
+    partial=asyncio.run(routing.decide('dummy','请核对课表',{'schedule':True},direct=False,allow_external=True))
+    assert partial['via']=='local_uncertain' and partial['approach_via']=='openrouter'
+    denied=asyncio.run(routing.decide('dummy','请核对课表',{'schedule':False},direct=False,allow_external=False))
+    assert len(requests)==2 and denied['approach_via']=='local'

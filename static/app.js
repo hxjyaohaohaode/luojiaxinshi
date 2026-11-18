@@ -466,6 +466,8 @@ async function route(){
   const recordTarget=/^(tasks|calendar|memory)\/([A-Za-z0-9_-]{1,100})$/.exec(page);
   const materialTarget=/^chat\/([A-Za-z0-9_-]{1,100})\/source\/([A-Za-z0-9_-]{1,100})$/.exec(page);
   const branchTarget=/^chat\/([a-f0-9]{32})\/branch\/([a-f0-9]{32})$/.exec(page);
+  const calendarDay=/^calendar\/day\/(\d{4}-\d{2}-\d{2})$/.exec(page);
+  if(calendarDay)page='calendar';
   if(recordTarget)page=recordTarget[1];
   if(state.insightSelection&&(state.insightSelection.kind!==page||state.insightSelection.owner!==state.session?.user.id))state.insightSelection=null;
   if(page.startsWith('invite=')){
@@ -546,7 +548,8 @@ async function route(){
     content.dataset.page=page;
     simplifyPageHeading();if(page==='dashboard')gettingStarted.mount(content);
     try{
-      if(recordTarget?.[1]==='tasks')await workflowUI.openTask(recordTarget[2]);
+      if(calendarDay)await calendarUI.openDay(calendarDay[1]);
+      else if(recordTarget?.[1]==='tasks')await workflowUI.openTask(recordTarget[2]);
       else if(recordTarget?.[1]==='calendar')await calendarUI.openRecord(recordTarget[2]);
       else if(recordTarget?.[1]==='memory')await memoryUI.openRecord(recordTarget[2]);
     }catch(error){if(id===state.renderId)toast(error.message||'这项记录已移除或无法访问。',true);}
@@ -977,7 +980,7 @@ const noticePreparation=createNoticePreparation({api,getOwner:()=>state.session?
   onError:async(error,n)=>{toast('原件已保存；'+error.message,true);if(location.hash==='#notice/'+n.id)await refreshNotice();}
 });
 const noticeUI=createNoticeComposer({esc,field,area,icon,toast,showDialog,api,ask,getAI:()=>state.session?.ai||{},persist:persistCurrentForms,onRender:form=>intakeUI.attachSingle(form)});
-const calendarUI=lazyUI(()=>import('./calendar.js').then(({createCalendarUI})=>createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts,saveDisplayPreferences})),['render','openRecord'],{refresh:undefined,applyRecords:undefined,persist:undefined});
+const calendarUI=lazyUI(()=>import('./calendar.js').then(({createCalendarUI})=>createCalendarUI({state,api,esc,icon,companion,showDialog,ask,toast,field,area,download,moveSelection,calendarHelp,editTask,taskRow,drafts,saveDisplayPreferences})),['render','openRecord','openDay'],{refresh:undefined,applyRecords:undefined,persist:undefined});
 let menuFocusFrame=0,menuFocusTimer=0,menuRequest=0,menuReturnTarget=null;
 function setMenu(open,focus=true,opener=null){
   const request=++menuRequest;cancelAnimationFrame(menuFocusFrame);clearTimeout(menuFocusTimer);

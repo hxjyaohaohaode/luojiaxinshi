@@ -28,7 +28,7 @@ export class SandboxRenderer{
     this.container=container;this.options=options;this.spec=spec;this.controls={};this.initial={};this.storage={};this.draftKey=draftKey(options);this.records=new Map();this.view={};
     this.token=crypto.randomUUID();this.status=el('p','openui-status','正在生成界面…');this.status.setAttribute('role','status');
     this.frame=el('iframe','openui-frame');this.frame.title=spec.sandbox?.title||'互动回答';this.frame.setAttribute('sandbox','allow-scripts');this.frame.setAttribute('allow','camera \'none\'; microphone \'none\'; geolocation \'none\'; clipboard-read \'none\'; clipboard-write \'none\'');this.frame.setAttribute('referrerpolicy','no-referrer');this.frame.setAttribute('scrolling','no');
-    this.frame.src='/static/genui/sandbox.html';this.frame.height=String(spec.sandbox?.initialHeight||160);this.frame.hidden=!spec.complete&&!spec.sandbox?.html?.join('').trim();
+    this.frame.src='/static/genui/sandbox.html';this.frame.height=String(spec.sandbox?.preferredWidth ? 1 : spec.sandbox?.initialHeight||160);this.frame.hidden=!spec.complete&&!spec.sandbox?.html?.join('').trim();
     this.toolbar=el('div','openui-toolbar');this.reset=button('重置选择',()=>this.post('restore',{controls:this.initial}),'button small plain');this.toolbar.append(this.reset);this.toolbar.hidden=true;
     this.fallback=el('details','openui-fallback');this.fallback.append(el('summary','','文字内容'),el('div','openui-readable'));
     this.message=event=>this.receive(event);window.addEventListener('message',this.message);
@@ -57,7 +57,7 @@ export class SandboxRenderer{
       delete this.container.dataset.authored;
       this.container.style.removeProperty('--answer-width');
     }
-    this.frame.hidden=!spec.complete&&(!ui.cssComplete||!ui.html?.join('').trim());
+    this.frame.hidden=!spec.complete&&(!ui.html?.join('').trim()||(!ui.preferredWidth&&!ui.cssComplete));
     const signature=JSON.stringify([ui,spec.complete]);if(signature===this.signature)return;this.signature=signature;
     this.declaredMedia=new Set();
     this.placeMedia([]);
@@ -67,7 +67,7 @@ export class SandboxRenderer{
     }
     this.fallback.lastChild.textContent=openUIPlainText(ui).replace(/\[E\d+\]/g,'');
     this.fallback.hidden=!this.fallback.lastChild.textContent.trim();
-    if(!spec.complete)this.status.textContent=ui.localReady?'正在核对内容…':ui.htmlComplete?'正在生成交互…':ui.cssComplete?'正在生成界面…':'正在生成样式…';
+    if(!spec.complete)this.status.textContent=ui.localReady?'正在核对内容…':ui.htmlComplete?'正在生成交互…':ui.html?.length?'正在生成内容…':'正在准备内容…';
     this.render();
   }
   program(){const ui=this.spec.sandbox;return JSON.stringify([ui.jsFunctions,ui.jsExpressions]);}

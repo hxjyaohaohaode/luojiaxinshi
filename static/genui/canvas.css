@@ -41,3 +41,36 @@ button, summary, select { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, :before, :after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Readable while only the first authored HTML fragments have arrived. */
+:where(html[data-authored]) body {
+  font: 400 15px/1.6 var(--font-sans);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+html[data-authored] :is(body, #openui-root),
+html[data-authored] #openui-root > :where(main, article, section, div):only-child {
+  min-block-size: 0 !important;
+  block-size: auto !important;
+  max-inline-size: 100% !important;
+  min-inline-size: 0 !important;
+}
+:where(html[data-authored]) :where(p, figure, blockquote, ul, ol, h1, h2, h3) { margin-block: .45em .65em; }
+:where(html[data-authored]) :where(h1, h2, h3) { line-height: 1.35; text-wrap: pretty; }
+:where(html[data-authored]) h1 { font-size: 1.3em; }
+:where(html[data-authored]) h2 { font-size: 1.15em; }
+:where(html[data-authored]) h3 { font-size: 1.05em; }
+:where(html[data-authored]) figure { margin-inline: 0; }
+:where(html[data-authored]) :where(input, textarea, select, button) { max-inline-size: 100%; }
+html[data-authored] #openui-root :where(pre, math[display=block]) {
+  max-inline-size: 100%; overflow-x: auto;
+}
+html[data-authored] [data-campus-reflow] {
+  min-inline-size: 0 !important; max-inline-size: 100% !important;
+  box-sizing: border-box !important;
+}
+html[data-authored] [data-campus-reflow="grid"] { grid-template-columns: minmax(0,1fr) !important; grid-auto-flow: row !important; }
+html[data-authored] [data-campus-reflow="grid"] > * { grid-column: auto !important; min-inline-size: 0 !important; }
+html[data-authored] [data-campus-reflow="flex"] { flex-wrap: wrap !important; }
+html[data-authored] [data-campus-reflow="flex"] > * { max-inline-size: 100% !important; min-inline-size: 0 !important; }
+html[data-authored] table[data-campus-reflow="pan"] { display: block !important; overflow-x: auto !important; }

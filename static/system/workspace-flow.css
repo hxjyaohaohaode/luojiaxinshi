@@ -1,0 +1,33 @@
+/* Give the records priority while retaining full hit targets for touch and keyboard. */
+#content > .library-heading { justify-content:space-between; }
+#content .source-category-filter[hidden], #content .source-toolbar [hidden] { display:none; }
+.source-category-filter { margin-block:8px 12px; }
+.agenda-day { min-width:0; }
+.agenda-day h3 { margin:0; padding:10px 12px 6px; font-size:13px; line-height:1.4; font-weight:600; color:var(--muted); }
+.agenda-day + .agenda-day { margin-block-start:8px; }
+.agenda-day .agenda-time { font-variant-numeric:tabular-nums; }
+@media (max-width:650px) {
+  #content > .library-heading { display:flex; justify-content:space-between; }
+  .library-refine .library-date[open] { display:block; width:100%; margin-inline:0; }
+  .library-refine .library-date[open] > div {
+    position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    width:100%; min-width:0; box-sizing:border-box; padding:4px 0; gap:8px; box-shadow:none; border:0;
+  }
+  .library-date .field, .library-date input { min-width:0; width:100%; box-sizing:border-box; }
+  .content[data-page=tasks] .task-filter-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:2px 4px; }
+  .task-filter-row > .mobile-task-status { grid-column:1; min-width:0; }
+  .task-filter-row > .mobile-task-status select { max-width:100%; }
+  .task-filter-row > .view-toggle { grid-column:2; margin:0; }
+  .task-filter-row > .task-date-filter { grid-column:3; width:auto; min-width:0; }
+  .task-filter-row > .task-date-filter[open] { grid-column:1/-1; }
+  .task-filter-row > #task-count { grid-column:1/-1; justify-self:end; line-height:1.4; }
+  .content[data-page=sources] .source-category-filter { margin-block:4px 8px; }
+  .content[data-page=sources] .source-toolbar { margin-block:4px; }
+  .content[data-page=sources] .source-directory-empty { text-align:start; padding:8px 0; }
+  .content[data-page=sources] .source-access { gap:4px 8px; margin-block:4px 8px; }
+  .agenda-day .agenda-row { padding-block:8px; min-height:48px; gap:6px; }
+  .agenda-day .agenda-title { min-width:0; overflow-wrap:anywhere; }
+  .agenda-day .agenda-time { align-self:start; line-height:1.45; }
+  .content[data-page=memory] .memory-tree-head { margin-block:0 4px; }
+  .memory-tree-main .memory-breadcrumbs { padding-block:2px; margin-block:0 3px; }
+}
