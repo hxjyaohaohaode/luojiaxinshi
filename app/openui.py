@@ -6,6 +6,7 @@ Only the browser's opaque-origin sandbox ever executes authored JavaScript.
 from copy import deepcopy
 from html.parser import HTMLParser
 import json
+import re
 import math
 from typing import Literal
 
@@ -36,6 +37,7 @@ class Document(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.text, self.controls, self.links, self.ids = [], {}, [], set()
         self.media = []
+        self.excerpts = []
         self.hidden = 0
         self.current = None
         self.option = None
@@ -51,6 +53,7 @@ class Document(HTMLParser):
         if p.get('id'):
             if p['id'] in self.ids:raise ValueError('openui_duplicate_id')
             self.ids.add(p['id'])
+        if 'data-web-source' in p:self.excerpts.append(p['data-web-source'])
         if tag == 'a' and p.get('href'):self.links.append(p['href'])
         if tag in ('img','video') and 'data-material' in p:
             self.media.append((p['data-material'], 'image' if tag=='img' else 'video'))
@@ -117,9 +120,21 @@ def encode_ui(value):
     return '\n```openui\n'+json.dumps(ui, ensure_ascii=False, separators=(',', ':'))+'\n```'
 
 
+def reader_lead(text):
+    """Omit an internal review receipt when an authored document already contains the answer."""
+    blocks=text.split('\n\n',1)
+    if re.match(r'^\s*(?:已(?:按|根据)(?:上述|以上|这|两|[一二三四五六七八九十\d]).{0,24}(?:意见|反馈|复核|审查).{0,10}(?:修复|修正|修改|调整)|已完成(?:上述|以上|本轮)(?:审查|复核|评审)(?:修复|意见))',blocks[0]):
+        return blocks[1].lstrip() if len(blocks)>1 else ''
+    return text
+
+
 def check_authored_media(ui, sources):
     from .chat_media import resource_index
-    declared = inspect_document(ui).media
+    document = inspect_document(ui)
+    pages = {s['id'] for s in sources if s.get('evidence_kind')=='web_page' and s.get('url') and s.get('sections')}
+    if not set(document.excerpts)<=pages:
+        raise ValueError('网页摘录须来自本轮已读取的公开网页原文')
+    declared = document.media
     if declared and not set(declared) <= {(item['id'],item['kind']) for item in resource_index(sources)}:
         raise ValueError('媒体必须使用本轮已授权原件的 ID 和真实类型')
 

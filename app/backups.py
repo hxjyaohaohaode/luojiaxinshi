@@ -63,6 +63,8 @@ def restore_database(source:Path,destination:Path):
             from .publisher_sync import TABLES as PUBLISHER_TABLES
             from .push_delivery import TABLES as PUSH_TABLES
             from .notice_automation import TABLES as AUTOMATION_TABLES
+            from .notice_calendar import TABLES as NOTICE_CALENDAR_TABLES
+            from .decision_routing import TABLES as ROUTER_TABLES
             from .group_delivery import TABLES as GROUP_DELIVERY_TABLES
             from .notice_matters import TABLES as MATTER_TABLES
             from .campus import TABLES as CAMPUS_TABLES
@@ -100,7 +102,7 @@ def restore_database(source:Path,destination:Path):
             for meta_key,required in (('message_interaction_schema_version',MESSAGE_INTERACTION_TABLES),('proactive_feedback_schema_version',FEEDBACK_TABLES),('notice_matters_schema_version',MATTER_TABLES),('notice_ingest_schema_version',INGEST_TABLES),('task_material_schema_version',MATERIAL_TABLES),
                     ('source_sync_schema_version',SYNC_TABLES),('qq_group_schema_version',GROUP_TABLES),
                     ('publisher_sync_schema_version',PUBLISHER_TABLES),('push_delivery_schema_version',PUSH_TABLES),
-                    ('notice_automation_schema_version',AUTOMATION_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES),('campus_schema_version',CAMPUS_TABLES),('verification_schema_version',VERIFICATION_TABLES),('mail_delivery_schema_version',MAIL_TABLES),('delivery_policy_schema_version',DELIVERY_POLICY_TABLES)):
+                    ('notice_automation_schema_version',AUTOMATION_TABLES),('notice_calendar_schema_version',NOTICE_CALENDAR_TABLES),('router_preferences_schema_version',ROUTER_TABLES),('qq_group_delivery_schema_version',GROUP_DELIVERY_TABLES),('campus_schema_version',CAMPUS_TABLES),('verification_schema_version',VERIFICATION_TABLES),('mail_delivery_schema_version',MAIL_TABLES),('delivery_policy_schema_version',DELIVERY_POLICY_TABLES)):
                 current=original.execute('SELECT value FROM meta WHERE key=?',(meta_key,)).fetchone()
                 if current and (current[0]!='1' or not required.issubset(tables)):
                     raise ValueError('备份缺少收件、办理材料或提醒数据，或版本不兼容：'+meta_key)

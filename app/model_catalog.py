@@ -47,7 +47,7 @@ def validate(settings):
 
 def public_configuration(settings):
     kind=channel(settings.ai_base_url)
-    return {'configured':bool(settings.ai_api_key),'model':settings.ai_model,'composition_model':settings.ai_composition_model,
+    return {'decision_routing':bool(settings.openrouter_api_key),'configured':bool(settings.ai_api_key),'model':settings.ai_model,'composition_model':settings.ai_composition_model,
         'context_tokens':settings.ai_context_tokens,'max_output_tokens':settings.ai_output_tokens,'thinking':'enabled',
         'notice_review_enabled':settings.notice_semantic_review,'notice_review_model':settings.notice_review_model,
         'notice_auto_repair':settings.notice_auto_repair and settings.notice_semantic_review,

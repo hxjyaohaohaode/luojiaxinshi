@@ -73,6 +73,7 @@ class Settings:
     notice_thinking: str = 'enabled'
     notice_review_model: str = 'mimo-v2.6-flash'
     notice_fast_enabled: bool = False
+    openrouter_api_key: str = field(default='', repr=False, kw_only=True)
     agent_enabled: bool = True
     agent_context_bytes: int = 2000000
     agent_oss_url: str = 'http://127.0.0.1:11434/v1'
@@ -132,6 +133,7 @@ class Settings:
         if result.mail_region not in {'cn-hangzhou','ap-southeast-1','ap-southeast-2','us-east-1','eu-central-1'}:
             raise ValueError('MAIL_REGION 不是邮件推送支持的区域')
         result.voice_clone_enabled=os.getenv('VOICE_CLONE_ENABLED','false').strip().lower() in {'true','1','yes'}
+        result.openrouter_api_key=os.getenv('OPENROUTER_API_KEY','').strip()
         result.agent_enabled=os.getenv('AGENT_ENABLED','true').strip().lower() in {'true','1','yes'}
         result.agent_context_bytes=int(os.getenv('AGENT_CONTEXT_BYTES',str(cls.agent_context_bytes)))
         if not 24000 <= result.agent_context_bytes <= 2000000:

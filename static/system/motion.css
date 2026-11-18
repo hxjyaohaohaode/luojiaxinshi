@@ -113,9 +113,11 @@
   gap: 8px;
   width: max-content;
   max-width: calc(100% - 16px);
-  min-height: 28px;
-  padding: 4px 10px;
-  border-radius: 16px;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 0;
+  box-shadow: none;
+  border-radius: 8px;
   background: var(--surface, #fff);
   color: var(--ink, #263c31);
   font-size: 12px;
@@ -130,6 +132,9 @@
   background: var(--accent, #25734b);
 }
 .route-feedback > .button { margin: 0; min-height: 32px; padding: 3px 8px; pointer-events: auto; }
+@media (max-width: 640px) {
+  .route-feedback { inset-block-start: calc(6px + env(safe-area-inset-top)); }
+}
 
 /* ---------- 文字逐字浮现（choreography.js 拆分字符） ---------- */
 .text-reveal > .tr-char { display: inline-block; white-space: pre; will-change: transform, opacity; }

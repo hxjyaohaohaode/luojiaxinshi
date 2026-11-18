@@ -444,24 +444,27 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
     @app.post('/api/notices/{nid}/changes')
     def propose(nid: str, payload: ChangeProposal, current=Depends(user)):
         with db.connect(write=True) as conn:
-            record = own_notice(conn, nid, current['id'])
-            expect_version(record, payload.notice_version)
-            if conn.execute('SELECT COUNT(*) FROM notice_changes WHERE notice_id=?', (nid,)).fetchone()[0] >= 100:
-                raise HTTPException(422, '每则通知最多保存 100 条变更记录')
-            proposal = {**payload.model_dump(), 'notice_id': nid}
-            if payload.kind == 'unverified' and payload.targets:
-                raise HTTPException(422, '待核实线索不能携带正式修改操作')
-            impacts = impact(conn, proposal, current['id'])
-            if payload.kind != 'unverified' and not impacts:
-                raise HTTPException(422, '请至少选择一项受影响的待办')
-            # Identical retries recover the original proposal, including after a lost response.
-            prior = conn.execute('SELECT * FROM notice_changes WHERE notice_id=? AND data=?', (nid, dumps(proposal))).fetchone()
-            if prior:
-                return {**dict(prior), 'data': proposal, 'impact': impacts, 'replayed': True}
-            cid, now = ident(), int(time.time())
-            conn.execute('INSERT INTO notice_changes VALUES(?,?,?,?,?,?,?,?)', (cid, nid, current['id'], dumps(proposal), 'pending', 1, now, now))
-            audit(conn, current['id'], nid, 'change_proposed', after={'change_id': cid, 'kind': payload.kind, 'targets': [x['task_id'] for x in impacts]})
-            return {'id': cid, 'notice_id': nid, 'data': proposal, 'state': 'pending', 'version': 1, 'created_at': now, 'impact': impacts}
+            return propose_change(conn,nid,payload,current)
+
+    def propose_change(conn,nid,payload,current):
+        record = own_notice(conn, nid, current['id'])
+        expect_version(record, payload.notice_version)
+        if conn.execute('SELECT COUNT(*) FROM notice_changes WHERE notice_id=?', (nid,)).fetchone()[0] >= 100:
+            raise HTTPException(422, '每则通知最多保存 100 条变更记录')
+        proposal = {**payload.model_dump(), 'notice_id': nid}
+        if payload.kind == 'unverified' and payload.targets:
+            raise HTTPException(422, '待核实线索不能携带正式修改操作')
+        impacts = impact(conn, proposal, current['id'])
+        if payload.kind != 'unverified' and not impacts:
+            raise HTTPException(422, '请至少选择一项受影响的待办')
+        # Identical retries recover the original proposal, including after a lost response.
+        prior = conn.execute('SELECT * FROM notice_changes WHERE notice_id=? AND data=?', (nid, dumps(proposal))).fetchone()
+        if prior:
+            return {**dict(prior), 'data': proposal, 'impact': impacts, 'replayed': True}
+        cid, now = ident(), int(time.time())
+        conn.execute('INSERT INTO notice_changes VALUES(?,?,?,?,?,?,?,?)', (cid, nid, current['id'], dumps(proposal), 'pending', 1, now, now))
+        audit(conn, current['id'], nid, 'change_proposed', after={'change_id': cid, 'kind': payload.kind, 'targets': [x['task_id'] for x in impacts]})
+        return {'id': cid, 'notice_id': nid, 'data': proposal, 'state': 'pending', 'version': 1, 'created_at': now, 'impact': impacts}
 
     @app.get('/api/notices/{nid}/changes/{cid}')
     def read_change(nid: str, cid: str, current=Depends(user)):
@@ -484,69 +487,90 @@ def install_workflow(app, db, user, own_notice, own_task, expect_version, serial
     @app.post('/api/notices/{nid}/changes/{cid}/decision')
     def decide(nid: str, cid: str, payload: ChangeDecision, current=Depends(user)):
         with db.connect(write=True) as conn:
-            record = own_notice(conn, nid, current['id'])
-            row = conn.execute('SELECT * FROM notice_changes WHERE id=? AND notice_id=? AND user_id=?', (cid, nid, current['id'])).fetchone()
-            if not row:
-                raise HTTPException(404, '变更不存在或无权访问')
-            desired = 'applied' if payload.decision == 'apply' else 'dismissed'
-            if row['state'] == desired:
-                return {'id': cid, 'state': desired, 'replayed': True}
-            expect_version(row, payload.version)
-            if row['state'] != 'pending':
-                raise HTTPException(409, '该变更已处理，不能重复变更其结论')
-            data = json.loads(row['data'])
-            if payload.decision == 'apply':
-                if not payload.verified:
-                    raise HTTPException(422, '请核实发布方、事项范围和变更原文后再确认')
-                if data['kind'] == 'unverified' or not data['targets']:
-                    raise HTTPException(422, '待核实线索不能直接改变正式安排；核实后请根据最新事项建立正式变更')
-                expect_version(record, data['notice_version'])
-                impacts = impact(conn, data, current['id'])
+            return decide_change(conn,nid,cid,payload,current)
+
+    def decide_change(conn,nid,cid,payload,current,*,automatic=False):
+        record = own_notice(conn, nid, current['id'])
+        row = conn.execute('SELECT * FROM notice_changes WHERE id=? AND notice_id=? AND user_id=?', (cid, nid, current['id'])).fetchone()
+        if not row:
+            raise HTTPException(404, '变更不存在或无权访问')
+        desired = 'applied' if payload.decision == 'apply' else 'dismissed'
+        if row['state'] == desired:
+            return {'id': cid, 'state': desired, 'replayed': True}
+        expect_version(row, payload.version)
+        if row['state'] != 'pending':
+            raise HTTPException(409, '该变更已处理，不能重复变更其结论')
+        data = json.loads(row['data'])
+        if payload.decision == 'apply':
+            if not payload.verified:
+                raise HTTPException(422, '请核实发布方、事项范围和变更原文后再确认')
+            if data['kind'] == 'unverified' or not data['targets']:
+                raise HTTPException(422, '待核实线索不能直接改变正式安排；核实后请根据最新事项建立正式变更')
+            expect_version(record, data['notice_version'])
+            impacts = impact(conn, data, current['id'])
+            existing = get_sources(conn, nid, True)
+            if automatic:
+                from .ai import normalized
+                evidence = []
+                for quote in data['text'].splitlines():
+                    found=next(({'source_id':s['id'],'locator':part['locator'],'quote':quote}
+                                for s in existing if (s.get('origin') or {}).get('url')==data['source_url']
+                                for part in s['sections'] if normalized(quote) in normalized(part['text'])),None)
+                    if not found or len(quote)>1600 or len(evidence)>=10:
+                        raise HTTPException(422,'需要逐项核对当前原文与变更依据')
+                    evidence.append(found)
+            else:
                 source = text_source(data['text'], '变更依据：' + data['source_label'])
-                existing = get_sources(conn, nid, True)
                 if total_chars(existing + [source]) > MAX_CHARS:
                     raise HTTPException(422, '有效原文合计超过 10000 字，请先整理当前材料，再重新预览变更')
                 evidence = [{'source_id': source['id'], 'locator': s['locator'], 'quote': s['text'][:1600]} for s in source['sections'][:10]]
                 store_source(conn, nid, source)
-                for item, target in zip(impacts, data['targets']):
-                    after = item['after']
-                    after['evidence'] = (after['evidence'] + evidence)[-30:]
-                    if DATE_FIELDS.intersection(target['patch']):
-                        after['deadline_confirmed'] = bool(after['due_date'])
-                        after['deadline_evidence'] = evidence
-                        after['resolution_note'] = payload.note
-                    if 'scheduled' in target['patch']:
-                        # The verified proposal is the evidence for the new interval.
-                        # Never retain stale quotes or accept client-supplied provenance.
-                        if after.get('scheduled') is not None:
-                            from .deadline_evidence import analyze
-                            support=analyze([data['text']],data.get('published_at') or record['published_at'])
-                            for day_key,time_key in [('start_date','start_time'),('end_date','end_time')]:
-                                day,clock=after['scheduled'].get(day_key),after['scheduled'].get(time_key)
-                                if day and (not support.supports_date(day,clock) or clock and not support.supports_time(day,clock)):
-                                    raise HTTPException(422,'更正后的活动日期或时刻与更正原文不对应，请核对完整日期、时刻及发布依据')
-                            after['scheduled']['confirmed'] = True
-                            after['scheduled']['evidence'] = evidence
-                        after['resolution_note'] = payload.note
-                    try:
-                        # Official facts may invalidate a saved personal reminder.
-                        # Save the confirmed facts and require a separate review;
-                        # never reject a real date withdrawal just to keep an alarm.
-                        validate_task(TaskData.model_validate({**after,'reminder_at':None}), get_sources(conn, nid), [], enforce_future=False)
-                    except ValueError as exc:
-                        raise HTTPException(422, str(exc)) from None
-                    conn.execute('UPDATE tasks SET data=?,status=?,version=version+1,updated_at=? WHERE id=?',
-                                 (dumps(after), item['status'], int(time.time()), item['task_id']))
-                    reconcile_materials(conn, item['task_id'], after['materials'])
-                    record_change(conn,current['id'],item['task_id'],item['before'],after,item['old_status'],item['status'],cid)
-                    audit(conn, current['id'], nid, 'change_applied', before={'data': item['before'], 'status': item['old_status']},
-                          after={'data': after, 'status': item['status'], 'change_id': cid, 'verification_note': payload.note}, task_id=item['task_id'])
-                # Previously generated drafts must never reintroduce superseded facts.
+            for item, target in zip(impacts, data['targets']):
+                after = item['after']
+                after['evidence'] = (after['evidence'] + evidence)[-30:]
+                if DATE_FIELDS.intersection(target['patch']):
+                    after['deadline_confirmed'] = bool(after['due_date'])
+                    after['deadline_evidence'] = evidence
+                    after['resolution_note'] = payload.note
+                if 'scheduled' in target['patch']:
+                    # The verified proposal is the evidence for the new interval.
+                    # Never retain stale quotes or accept client-supplied provenance.
+                    if after.get('scheduled') is not None:
+                        from .deadline_evidence import analyze
+                        support=analyze([data['text']],data.get('published_at') or record['published_at'])
+                        for day_key,time_key in [('start_date','start_time'),('end_date','end_time')]:
+                            day,clock=after['scheduled'].get(day_key),after['scheduled'].get(time_key)
+                            if day and (not support.supports_date(day,clock) or clock and not support.supports_time(day,clock)):
+                                raise HTTPException(422,'更正后的活动日期或时刻与更正原文不对应，请核对完整日期、时刻及发布依据')
+                        after['scheduled']['confirmed'] = True
+                        after['scheduled']['evidence'] = evidence
+                    after['resolution_note'] = payload.note
+                try:
+                    # Official facts may invalidate a saved personal reminder.
+                    # Save the confirmed facts and require a separate review;
+                    # never reject a real date withdrawal just to keep an alarm.
+                    validate_task(TaskData.model_validate({**after,'reminder_at':None}), get_sources(conn, nid), [], enforce_future=False)
+                except ValueError as exc:
+                    raise HTTPException(422, str(exc)) from None
+                conn.execute('UPDATE tasks SET data=?,status=?,version=version+1,updated_at=? WHERE id=?',
+                             (dumps(after), item['status'], int(time.time()), item['task_id']))
+                reconcile_materials(conn, item['task_id'], after['materials'])
+                record_change(conn,current['id'],item['task_id'],item['before'],after,item['old_status'],item['status'],cid)
+                audit(conn, current['id'], nid, 'change_applied', before={'data': item['before'], 'status': item['old_status']},
+                      after={'data': after, 'status': item['status'], 'change_id': cid, 'verification_note': payload.note, 'calendar_automatic':automatic}, task_id=item['task_id'])
+            # Previously generated drafts must never reintroduce superseded facts.
+            if not automatic:
                 invalidate(conn, nid)
                 conn.execute("UPDATE notices SET status='confirmed' WHERE id=?", (nid,))
-            conn.execute('UPDATE notice_changes SET state=?,version=version+1,updated_at=? WHERE id=?', (desired, int(time.time()), cid))
-            audit(conn, current['id'], nid, 'change_decided', after={'change_id': cid, 'state': desired, 'note': payload.note})
-            return {'id': cid, 'state': desired, 'replayed': False}
+        conn.execute('UPDATE notice_changes SET state=?,version=version+1,updated_at=? WHERE id=?', (desired, int(time.time()), cid))
+        audit(conn, current['id'], nid, 'change_decided', after={'change_id': cid, 'state': desired, 'note': payload.note})
+        return {'id': cid, 'state': desired, 'replayed': False}
+
+    def sync_notice_calendar(conn, uid, nid):
+        from .notice_calendar import sync_revision
+        sync_revision(conn, uid, nid, propose_change, decide_change)
+
+    db.sync_notice_calendar = sync_notice_calendar
 
     @app.post('/api/tasks/{tid}/calendar-check')
     def calendar_check(tid: str, payload: CalendarCheck, current=Depends(user)):

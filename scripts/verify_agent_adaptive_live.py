@@ -40,7 +40,7 @@ class StreamTimeline:
                     if 'data' not in fields:continue
                     value=json.loads(fields['data']);kind=fields.get('event')
                     if kind=='agent' and value.get('kind')=='model.started' and value.get('data',{}).get('agent_id')=='root':model_step+=1
-                    if kind=='preview':
+                    if kind=='preview' and value.get('text','').strip():
                         elapsed=round(time.monotonic()-started,3)
                         self.timeline.setdefault('first_text_seconds',elapsed)
                         if model_step:first_text_by_step.setdefault(model_step,elapsed)
@@ -62,11 +62,15 @@ def check(case='files', output_name=None):
     output=ROOT/'artifacts'/(output_name or ('agent-adaptive-live' if case=='files' else 'agent-adaptive-live-'+case));output.mkdir(parents=True,exist_ok=True)
     prompts={
         'files':PROMPT,
+        'direct':'用两句话解释什么是中位数，再给一个短例子。',
+        'continuation':'接着刚才的合成草案，只改第二项的时长为45分钟。请列出两项的名称和当前时长。',
+        'mixed_layout':'制作一个可以操作的图文互动答复。合成小组在4天内每天读6页，公式为总页数＝天数×每天页数。请绘制阅读进度示意图，展示公式，用一个可编辑输入改变天数并立即更新总页数。只用题中这些数值，以自然的文档布局连接图、公式和计算。',
         'ui':'仅用本条消息：这是一项工程测试，不是真实通知。演示活动在2026年11月3日18:00截止，需要报名表和课程截图。请先突出截止时间，再做可勾选的材料清单，原文说明按需展开。不联网，不写文件，不用模板。',
         'openui':'仅用本条消息：这是隔离的合成工程验收，没有真实学校活动。请用自由生成的 HTML/CSS/JS 制作中文准备时间工具：每天2小时、准备7天，合计14小时。需要 hours 滑块（0.5至8，步长0.5）、days 数字输入（1至30的整数）、total 输出；改变输入立即重算，空值或无效天数显示具体错误并清除旧结果。包含“按当前条件继续分析”按钮，点击时必须通过 CampusUI.sendPrompt 在本聊天发起下一轮，携带当前小时、天数与合计；不要添加本地分析文案或其他换算。自行设计布局和样式，保持简洁，适应手机。代码字段流式输出。不联网、不写文件、不创建待办或日历、不保存记忆。',
         'notice_compare':'这是合成校园资料。请把这两份附件做成一个可以操作的通知更正对照，让我能在“只看变化”和“全部条目”之间切换，选中变化能看原文与更正依据。让差异本身一眼可读；全部条目包括未变的参与年级。请自行设计界面。仅用本次材料，不联网，不写入待办、日历或记忆。',
         'prep_timeline':'这是合成资料。请做一个可直接拖动的个人准备时间轴，横轴从09:00到12:00。拟稿从09:00开始用30分钟，核对从10:00开始用30分钟，整理从11:00开始用15分钟。拖动任务块能以15分钟为步长调整开始时间，并就地更新该任务的起止时间。键盘也能移动任务。刷新时保留我已保存的选择。请自行设计界面；只做个人试排，不联网，不写入待办、日历或记忆。',
         'conflict':'仅用本条消息，纯文字作答。这是合成工程资料：同一演示活动的通知甲写“11月3日18:00截止”，通知乙写“11月3日16:00截止”。两份材料都没有发布时间、版本号或替代说明。告诉我这项活动的最终截止时间，说明依据。',
+        'team_review':'请联合核对三份合成材料。说明正式截止时间、申请年级、需要的材料和提交渠道，判断群内转述能否替代正式通知；给出下一步。仅用附件，不联网，不创建待办。用纯文字回答。',
         'research':'请结合本次附件帮我把这次申请理清楚，我现在先做什么？用文字答复，只用本次会话材料，不联网，不写入待办或日历。',
         'clarify':'仅用本条消息，这是合成工程测试，没有真实账户或活动资料。帮我完成报名。请用一句话回复。',
         'memory':'我长期用中文写报告，所有项目都习惯先看结论再看依据。请用纯文字简短回复，不联网。',
@@ -87,6 +91,13 @@ def check(case='files', output_name=None):
             client.post('/api/auth/login',json={'username':'synthetic-agent','password':'SyntheticOnly2026!'}).raise_for_status()
             client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf']
             chat=client.post('/api/conversations',json={'title':'原聊天 Agent 合成验收'}).json()
+            if case=='continuation':
+                with app.state.db.connect(write=True) as conn:
+                    parent=ident(); now=int(time.time())
+                    conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'user',?,'complete',?)",
+                                 (parent,chat['id'],'给合成小组排两项：初读20分钟、复核30分钟。',now-50))
+                    conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,parent_id,created_at) VALUES(?,?,'assistant',?,'complete',?,?)",
+                                 (ident(),chat['id'],'先初读20分钟，然后复核30分钟。',parent,now-45))
             if case in ('visual','mixed','timetable'):
                 import io
                 from PIL import Image,ImageDraw,ImageFont
@@ -104,10 +115,14 @@ def check(case='files', output_name=None):
                     for name,raw in [('tone.wav',wav()),('colors.mp4',mp4()),('notes.txt',b'Engineering test. Prepare the repository and a report outline first.')]:
                         uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,raw)})
                         uploaded.raise_for_status();chat=uploaded.json()
-            if case in ('research','notice_compare'):
+            if case in ('research','notice_compare','team_review'):
                 notices={
                     '申请通知.txt':'合成校园事项。参与对象为二年级学生。申请人需准备签字申请表和成绩单，截止时间为11月3日18:00。提交渠道另行通知。',
                     '办理群转述.txt':'合成群内转述，未经发布方确认。有人说同一申请截止时间是11月3日16:00，未提供正式更正文件。'}
+                if case=='team_review':
+                    notices={'发布方原通知.txt':'合成读书项目原通知。对象为二年级学生。申请表需签字，另交成绩单。原截止时间为2027年4月10日17:00。提交到文科楼201室。',
+                             '正式补充通知.txt':'合成项目发布方正式补充通知。替代原截止时间，现延至2027年4月12日12:00；提交改为教学楼305室。参与对象和申请材料没有变化。',
+                             '群内消息.txt':'合成群内转述，有人称4月13日18:00也能补交，没有发布方确认或正式文件。'}
                 if case=='notice_compare':
                     notices={'活动原通知.txt':'合成活动原通知。参与对象为二年级学生。截止时间为11月23日17:00，材料交到文科楼201室。',
                              '正式更正.txt':'合成发布方正式更正，替代原通知的截止时间与地点。截止时间改为11月24日12:00，地点改为文科楼305室。参与对象仍为二年级学生。'}
@@ -115,8 +130,18 @@ def check(case='files', output_name=None):
                     uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,body.encode(),'text/plain')})
                     uploaded.raise_for_status();chat=uploaded.json()
             started=time.monotonic()
-            response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
-                'content':prompts[case],'request_id':ident(),'allow_external_processing':True})
+            from unittest.mock import patch
+            import httpx
+            send_http=httpx.AsyncClient.send
+            requests_made=[]
+            async def meter(session,request,**kwargs):
+                if str(request.url).startswith(settings.ai_base_url.rstrip('/')+'/') and request.url.path.endswith('/chat/completions'):
+                    if case=='team_review' and len(requests_made)>=8:raise RuntimeError('Synthetic team acceptance request limit reached')
+                    requests_made.append(round(time.monotonic()-started,3))
+                return await send_http(session,request,**kwargs)
+            with patch.object(httpx.AsyncClient,'send',meter):
+                response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
+                    'content':prompts[case],'request_id':ident(),'allow_external_processing':True,'allow_decision_routing':case in ('direct','research','continuation','mixed_layout','team_review')})
             response.raise_for_status()
             final=client.get('/api/conversations/'+chat['id']).json()['messages'][-1]
             with app.state.db.connect() as conn:
@@ -125,11 +150,11 @@ def check(case='files', output_name=None):
             with app.state.db.connect() as conn:
                 trace=[json.loads(r['body']) for r in conn.execute('SELECT body FROM agent_messages ORDER BY rowid')]
             (output/'synthetic-transcript.json').write_text(json.dumps(trace,ensure_ascii=False,indent=2),encoding='utf-8')
-            report={'synthetic_input':True,'route':'/api/conversations/{cid}/messages/stream','model':settings.ai_model,
+            report={'synthetic_input':True,'synthetic_question':prompts[case],'route':'/api/conversations/{cid}/messages/stream','model':settings.ai_model,
                     'elapsed_seconds':round(time.monotonic()-started,2),'status':final['status'],'error':final['error'],
                     'answer':final.get('genui',{}).get('raw',final['content']),
                     'interactive_blocks':sum(p['kind']=='ui' for p in final.get('parts',[])),
-                    'planning_mode':grounding.get('planning_mode'),'review_status':grounding.get('status'),
+                    'planning_mode':grounding.get('planning_mode'),'decision':grounding.get('decision'),'models':grounding.get('models'),'review_status':grounding.get('status'),
                     'harness':grounding.get('harness'),'work_summary':grounding.get('work_summary'),'tools':calls,'agent_execution':grounding.get('agent_execution'),'usage':grounding.get('usage'),
                     'review_issues':grounding.get('review_issues'),'repair_history':grounding.get('repair_history'),
                     'memory_operations':grounding.get('memory_operations',[]),
@@ -140,6 +165,7 @@ def check(case='files', output_name=None):
                 authored=next(p['spec']['sandbox'] for p in final['parts'] if p['kind']=='ui' and p['spec'].get('sandbox'))
                 (output/'generated-ui.json').write_text(json.dumps(authored,ensure_ascii=False,indent=2),encoding='utf-8')
             report['case']=case
+            report['actual_mimo_request_starts']=requests_made
             report['stream_timeline']=stream_timeline
             if case=='workspace':
                 from app.agent_runtime.clock import current_time
@@ -162,7 +188,21 @@ def check(case='files', output_name=None):
             report['claims']=submissions[-1].get('claims',[]) if submissions else []
             (output/'results.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
             print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
-            assert final['status']=='complete' and report['validated'] and report['planning_mode']=='agent_tool_loop',report['error']
+            assert final['status']=='complete' and report['validated'],report['error']
+            if case=='direct':
+                assert report['planning_mode']=='adaptive_direct' and report['review_status']=='checked' and '中位数' in report['answer']
+                return report
+            assert report['planning_mode']=='agent_tool_loop',report['planning_mode']
+            if case=='team_review':
+                readers=report['agent_execution']['parallel_review']['assignments']
+                assert len(readers)==3 and all(r['status']=='completed' and r['verified_quotes'] for r in readers),readers
+                assert max(r['start_ms'] for r in readers)<min(r['end_ms'] for r in readers)
+                assert all(term in report['answer'] for term in ('二年级','成绩单','申请表','305','12:00'))
+                assert len(grounding['work_summary']['cited_sources'])>=2 and len(requests_made)<=8
+            if case=='continuation':
+                assert all(term in report['answer'] for term in ('20','45','初读','复核'))
+            if case=='mixed_layout':
+                assert report['openui_blocks'] and '24' in report['answer']
             assert (case!='files' or calls.count('list_files')==1) and 'research_complete' not in calls and report['review_status']=='checked'
             if case in ('ui','openui','notice_compare','prep_timeline'):
                 assert grounding['work_summary']['ui_components'] and report['interactive_blocks']
@@ -208,5 +248,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','direct','continuation','mixed_layout','team_review','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

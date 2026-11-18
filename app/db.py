@@ -343,6 +343,8 @@ class Database:
             init_push(conn)
             from .notice_automation import initialize as init_notice_automation
             init_notice_automation(conn)
+            from .decision_routing import initialize as init_router_preferences
+            init_router_preferences(conn)
             from .message_interactions import initialize as init_message_interactions
             init_message_interactions(conn)
             from .proactive_feedback import initialize as init_proactive_feedback

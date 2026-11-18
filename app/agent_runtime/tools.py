@@ -15,7 +15,7 @@ REGISTRY = {
     'write_file': (types.WriteFile, '写入任务文件。覆盖前必须先读取并提供当前 SHA256，需本人批准。', True, False, False),
     'exec_command': (types.Command, '在无网络、宿主只读的 Docker 沙箱中执行 argv，限时 30 秒。', True, False, False),
     'load_skill': (types.LoadSkill, '按名称加载维护者安装的技能说明；技能不能扩大工具权限。', False, True, True),
-    'spawn_agent': (types.Spawn, '并行启动只读子任务，最多 3 个；子任务不能再次派生或执行写操作。', False, False, False),
+    'spawn_agent': (types.Spawn, '并行启动只读子任务，同时最多 3 个，整轮最多 6 个；子任务不能再次派生或执行写操作。', False, False, False),
     'list_agents': (types.Empty, '查看本轮子任务的真实状态。', False, True, False),
     'send_message': (types.MessageAgent, '向本轮子任务补充要求，下一个模型步骤会收到。', False, False, False),
     'wait_agents': (types.WaitAgents, '等待本轮指定子任务并读取已完成结果。', False, False, False),

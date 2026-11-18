@@ -32,6 +32,15 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
   let submission=0,accepting=false,branchDraft=null;
   let outbox=null,replyTarget=null,emojiTarget=null,feedbackPoll=null,feedbackReading=false;
   const chatFeedback=new ChatFeedback();
+  const routerKey=id=>'luojia:decision:'+state.session.user.id+':'+(id||'new');
+  function routingEnabled(id=current?.id){
+    if(current?.id===id&&typeof current?.decision_preference?.enabled==='boolean')return current.decision_preference.enabled;
+    try{
+      const saved=localStorage.getItem(routerKey(id));
+      return saved===null?!!state.session.consent?.accepted:saved==='on';
+    }catch{return false;}
+  }
+  function rememberRouting(id,enabled){try{localStorage.setItem(routerKey(id),enabled?'on':'off');}catch{}}
   function receiveConversation(value){current=chatFeedback.apply(value);return current;}
   async function syncFeedback(){if(feedbackReading||!current||!active(current.id)||document.visibilityState!=='visible')return;const cid=current.id,epoch=chatFeedback.epoch;feedbackReading=true;try{const value=await api('/conversations/'+cid+'/message-feedback');if(current?.id===cid&&active(cid)&&chatFeedback.accept(current,value,epoch))drawMessages();}catch{/* Read-only refresh never interrupts text or model work. */}finally{feedbackReading=false;}}
   function scheduleFeedback(){clearTimeout(feedbackPoll);feedbackPoll=setTimeout(async()=>{await syncFeedback();if($('#chat-workspace'))scheduleFeedback();},15000);}
@@ -126,7 +135,7 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         <input id="composer-file-input" type="file" multiple accept="${materialFormats}" hidden>
         <button type="button" class="icon-button composer-plus" data-chat-action="composer-menu" aria-label="添加附件与更多选项" aria-expanded="false" aria-controls="composer-menu">${icon('plus')}</button>
         <div class="composer-entry"><label for="chat-input" class="sr-only">给小信使的消息</label><textarea id="chat-input" name="content" rows="1" maxlength="6000" placeholder="写下问题…" aria-describedby="chat-shortcuts">${esc(drafts.peek(key()).payload?.content||'')}</textarea><button class="button primary send-button" type="submit" aria-label="发送消息" title="Enter 发送 · Shift + Enter 换行">${icon('arrow')}</button></div>
-        <div class="composer-actions" id="composer-menu" aria-label="输入选项" hidden><button type="button" class="button small plain composer-emoji" data-chat-action="emoji-picker" aria-label="表情与表情包" aria-expanded="false"><span aria-hidden="true">☺</span> 表情与表情包</button><button type="button" class="button small plain composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')} 语音输入</button>${call(icon('upload')+' 添加文件与图片','pick-attachments','','small plain')}${call(icon('folder')+' 添加文件夹','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
+        <div class="composer-actions" id="composer-menu" aria-label="输入选项" hidden><button type="button" class="button small plain composer-emoji" data-chat-action="emoji-picker" aria-label="表情与表情包" aria-expanded="false"><span aria-hidden="true">☺</span> 表情与表情包</button><button type="button" class="button small plain composer-voice" data-chat-action="dictate" aria-label="语音输入" aria-pressed="false">${icon('mic')} 语音输入</button>${call(icon('upload')+' 添加文件与图片','pick-attachments','','small plain')}${call(icon('folder')+' 添加文件夹','upload','','small plain')}${call(icon('doc')+' 粘贴通知原文','paste-text','','small plain')}${call(icon('search')+' 查看与搜索材料','toggle-materials','','small plain')}${state.session.ai.decision_routing?'<button type="button" class="button small plain" data-chat-action="decision-routing" aria-pressed="'+routingEnabled()+'">OpenRouter 辅助选流程 · '+(routingEnabled()?'已开启':'已关闭')+'</button>':''}${call('项目与记忆','context-settings','','small plain')}${call('记住我刚才说的','remember','','small plain')}</div>
         <span id="chat-shortcuts" class="sr-only">Enter 发送，Shift 加 Enter 换行。中文输入法选词时不会发送。</span>
         <div class="composer-status sr-only"><span class="autosave-status" role="status"></span><span id="chat-count">${current?.sources.length||0} 份材料 · 仅本人可见</span></div>
       </form>
@@ -318,10 +327,18 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     const acknowledge=()=>{if(batch){const received=new Set(current?.messages.filter(message=>message.role==='user').map(message=>message.client_request_id));if(batch.some(item=>!received.has(item.id)))throw Error('服务端未返回完整的逐条收件回执，待发送内容仍保留');for(const item of batch)presenter?.markContextSubmitted(item.ui_context,false);outbox?.acknowledge(batch.map(item=>item.id));return;}const checkpoint=current?.messages.findLast(m=>m.role==='user'&&m.interaction?.message_id===uiContext?.message_id)?.interaction?.checkpoint;presenter?.markContextSubmitted(uiContext,checkpoint?.status==='saved');if(!retryId&&!regenerateId&&structuredText===null&&input.value===rawText){input.value='';attachments?.clear();drafts.stage(cacheKey,{content:'',source_ids:[]});fitComposer();}};
     accepting=true;sending=true;setComposerMenu(false);update();
     try{
+      const useRouter=!!state.session.ai.decision_routing&&routingEnabled();
+      const creatingConversation=!current;
       persist();await drafts.flush(key());await ensureConversation(renderId);if(renderId!==state.renderId||turn!==submission)return;
       cid=current.id;cacheKey=key();outbox?.rekey('luojia:outbox:'+state.session.user.id+':'+key());clearTimeout(pollTimer);
+      if(creatingConversation&&state.session.ai.decision_routing){
+        const opened=current;
+        const saved=await api('/conversations/'+cid+'/decision-routing',{method:'PUT',json:{enabled:useRouter,version:opened.decision_preference?.version||0}});
+        if(renderId!==state.renderId||turn!==submission||current!==opened)return;
+        opened.decision_preference=saved;rememberRouting(cid,useRouter);
+      }
       const allowExternal=true;
-      const payload={version:current.version,content:retryId||regenerateId?'':text,source_ids:sourceIds,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,reply_to:batch?messageInput(batch[0]).reply_to:null,additional_messages:batch?batch.slice(1).map(messageInput):[],allow_external_processing:allowExternal};
+      const payload={version:current.version,content:retryId||regenerateId?'':text,source_ids:sourceIds,request_id:requestId,retry_message_id:retryId||null,regenerate_message_id:regenerateId||null,steer_message_id:steerId,ui_context:uiContext,reply_to:batch?messageInput(batch[0]).reply_to:null,additional_messages:batch?batch.slice(1).map(messageInput):[],allow_external_processing:allowExternal,allow_decision_routing:useRouter};
       let result;
       pending={controller:new AbortController(),cid,renderId,raw:'',parser:null,mid:null,tier:1,expanded:false};streaming=pending;
       await streamChat(cid,payload,{csrf:state.session.csrf,signal:pending.controller.signal,onEvent:(type,data)=>{
@@ -469,6 +486,18 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
     if(['copy','like','dislike','branch','regenerate','version','share-link'].includes(action)){control.classList.add('request-pending');control.setAttribute('aria-busy','true');}
     try{
       if(branchDraft&&action==='remove-source')return;
+      if(action==='decision-routing'){
+        const enabled=routingEnabled();
+        if(!enabled&&!await ask('启用 OpenRouter 辅助选流程？','只发送本轮问题中脱敏后的任务用语和能力开关。材料、个人资料、历史和记忆保留在原系统。'))return;
+        const chat=current,owner=state.session.user.id;
+        const saved=chat?await api('/conversations/'+chat.id+'/decision-routing',{method:'PUT',json:{enabled:!enabled,version:chat.decision_preference?.version||0}}):null;
+        if(state.session.user?.id!==owner||current!==chat)return;
+        if(saved)chat.decision_preference=saved;
+        rememberRouting(chat?.id,!enabled);
+        const control=$('[data-chat-action="decision-routing"]');
+        control.textContent='OpenRouter 辅助选流程 · '+(enabled?'已关闭':'已开启');
+        control.setAttribute('aria-pressed',String(!enabled));
+      }
       if(action==='composer-menu'){setComposerMenu($('#composer-menu').hidden);}
       else if(action==='dictate'){setComposerMenu(false);await dictate($('#chat-input'),control,{api,toast,ask});}
       else if(action==='quote')chooseQuote(id);

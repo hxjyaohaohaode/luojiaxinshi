@@ -113,9 +113,13 @@ def seed_published_replays(conn, owner, directories):
         report=json.loads((directory/'results.json').read_text(encoding='utf-8'))
         if not (report['synthetic_input'] and report['validated'] and report['status']=='complete'):raise ValueError('Expected verified synthetic reply')
         trace=json.loads((directory/'synthetic-transcript.json').read_text(encoding='utf-8'))
-        question=next(m['content'] for m in trace if m['role']=='user')
+        question=report.get('synthetic_question') or next(m['content'] for m in trace if m['role']=='user')
         program=json.loads((directory/'generated-ui.json').read_text(encoding='utf-8'))
         raw=report['answer']
+        if report.get('repair_history') and '\n```openui' in raw:
+            from app.openui import reader_lead
+            lead,canvas=raw.split('\n```openui',1)
+            raw=reader_lead(lead)+'\n```openui'+canvas
         parts=message_parts(raw,1,True,settings.genui_limits,{})
         if not any(p.get('spec',{}).get('sandbox')==program for p in parts):raise ValueError('Published reply and authored artifact differ')
         sources={'user-input':{'id':'user-input','name':'本轮合成问题','evidence_kind':'user_input','sections':[{'locator':'当前问题','text':question}]}}

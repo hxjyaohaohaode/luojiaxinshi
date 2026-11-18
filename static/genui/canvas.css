@@ -6,12 +6,29 @@
   --color-text-secondary: #576860;
   --color-border-primary: #d9e2dc;
   --color-accent: #166047;
+  --text: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --accent: var(--color-accent);
   --font-sans: system-ui, "Microsoft YaHei", sans-serif;
   font-family: var(--font-sans);
   color: var(--color-text-primary);
 }
 *,:before,:after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+html[data-authored], html[data-authored] body, html[data-authored] #openui-root {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+html[data-authored] #openui-root > :where(div, main, article, section):only-child {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+}
+html[data-authored] :where(figure, math, input, select, textarea) { max-inline-size: 100%; }
+html[data-authored] input[type="range"] { margin-inline: 0; }
+html[data-authored] math[display="block"] { overflow-x: auto; }
 #openui-root { display: flow-root; container-type: inline-size; min-width: 0; overflow-wrap: anywhere; }
 button, input, select, textarea { font: inherit; }
 img, svg, canvas { max-inline-size: 100%; }

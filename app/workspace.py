@@ -43,6 +43,7 @@ class SendMessage(Version):
     regenerate_message_id: str | None = Field(default=None,max_length=40)
     steer_message_id: str | None = Field(default=None,max_length=40)
     allow_external_processing: bool = True
+    allow_decision_routing: bool = False
     reply_to: QuoteInput | None = None
     additional_messages: list[MessageInput] = Field(default_factory=list,max_length=15)
     ui_context: Interaction | None = None
@@ -101,6 +102,8 @@ def conversation_detail(conn,cid,uid,settings):
         raise HTTPException(404,'对话不存在或无权访问')
     result=dict(row)
     consent=conn.execute('SELECT granted_at FROM conversation_ai_consents WHERE conversation_id=?',(cid,)).fetchone()
+    from .decision_routing import preference
+    result['decision_preference']=preference(conn,cid)
     result['model_consent']=bool(consent)
     result['model_consent_at']=consent['granted_at'] if consent else None
     expired=bool(row['processing_token'] and (row['processing_at'] or 0)<time.time()-settings.ai_workflow_timeout-30)
@@ -136,6 +139,11 @@ def conversation_detail(conn,cid,uid,settings):
     return result
 
 
+class DecisionPreference(Strict):
+    enabled: bool
+    version: int = Field(ge=0)
+
+
 def install_workspace(app,db,settings,user,heavy_lock):
     def own(conn,cid,uid,version=None,idle=False):
         row=conn.execute('SELECT * FROM conversations WHERE id=? AND user_id=?',(cid,uid)).fetchone()
@@ -166,6 +174,17 @@ def install_workspace(app,db,settings,user,heavy_lock):
             check_count(conn,current['id'],'conversations','conversations','会话')
             conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(cid,current['id'],payload.title,now,now))
             return conversation_detail(conn,cid,current['id'],settings)
+
+    @app.put('/api/conversations/{cid}/decision-routing')
+    def configure_decision(cid:str,payload:DecisionPreference,current=Depends(user)):
+        from .decision_routing import preference
+        with db.connect(write=True) as conn:
+            own(conn,cid,current['id'])
+            old=preference(conn,cid)
+            if old['enabled'] is payload.enabled:return old
+            if old['version']!=payload.version:raise HTTPException(409,'另一设备已调整会话路由权限，请刷新后再设置')
+            conn.execute('INSERT INTO conversation_router_preferences VALUES(?,?,1) ON CONFLICT(conversation_id) DO UPDATE SET enabled=excluded.enabled,version=version+1',(cid,payload.enabled))
+            return preference(conn,cid)
 
     @app.get('/api/conversations/{cid}')
     def read(cid:str,current=Depends(user)):
@@ -447,7 +466,7 @@ def install_workspace(app,db,settings,user,heavy_lock):
                     from .work_summary import stream as work_stream
                     from contextlib import aclosing
                     result=None;usage={}
-                    pipeline=work_stream(settings,db,mid,events(settings,db,current['id'],cid,mid,sources,messages,json.loads(current['profile']),3))
+                    pipeline=work_stream(settings,db,mid,events(settings,db,current['id'],cid,mid,sources,messages,{**json.loads(current['profile']), '_decision_consent':payload.allow_external_processing and payload.allow_decision_routing},3))
                     async with asyncio.timeout(settings.ai_workflow_timeout), aclosing(pipeline):
                         async for event in pipeline:
                             if event['type']=='phase':

@@ -274,6 +274,8 @@ def ingest_notice(conn, uid, *, sources, title='', source_label='', source_url='
         conn.execute("UPDATE notices SET version=version+1,status='received',materials_complete=0,fingerprint=?,title=?,source_label=?,source_url=?,published_at=COALESCE(?,published_at),processing_token=NULL,processing_at=NULL,error=NULL,updated_at=? WHERE id=?",
             (digest,title,source_label,source_url,published_at,now,nid))
         from .notice_intake import reopen
+        from .notice_calendar import supersede
+        supersede(conn,nid)
         reopen(conn, nid)
     elif duplicate:
         # Extra provenance does not invalidate a user's reviewed action plan.

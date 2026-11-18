@@ -39,7 +39,15 @@ class Trace:
         self.calls=[]
         self.phases=[]
         self.repairs=set()
+        self.first_output={}
         self.stop_reason=None
+
+    def observe_output(self,event):
+        kind=event.get('type')
+        key=None
+        if kind in ('preview','delta') and isinstance(event.get('text'),str) and event['text'].strip():key='first_text_seconds'
+        elif kind=='ui_preview' and any((event.get('content') or {}).get('html') or []):key='first_html_seconds'
+        if key and key not in self.first_output:self.first_output[key]=round(time.monotonic()-self.started,3)
 
     def phase(self,name):
         now=time.monotonic()
@@ -58,7 +66,7 @@ class Trace:
         phases=[{k:v for k,v in p.items() if k!='_start'} for p in self.phases]
         if phases:phases[-1]['elapsed_seconds']=round(time.monotonic()-self.phases[-1]['_start'],3)
         calls=[{k:v for k,v in call.items() if k!='_start'} for call in self.calls]
-        return {'version':VERSION,'elapsed_seconds':round(time.monotonic()-self.started,3),'calls':calls,
+        return {'version':VERSION,**self.first_output,'elapsed_seconds':round(time.monotonic()-self.started,3),'calls':calls,
             'call_count':len(self.calls),'phases':phases,'cached_input_tokens':sum(c.get('cached_input_tokens',0) for c in self.calls),
             'stop_reason':self.stop_reason,'loop_limits':{'generations':GENERATION_LIMIT,'protocol_repairs':PROTOCOL_RETRIES,'semantic_repairs':SEMANTIC_RETRIES}}
 

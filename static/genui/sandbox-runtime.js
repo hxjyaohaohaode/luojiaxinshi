@@ -215,6 +215,7 @@
     if(!ui||typeof ui.css!=='string'||!Array.isArray(ui.html))return;
     if(!data.complete&&!ui.cssComplete)return;
     authoredCanvas=Number.isInteger(ui.preferredWidth);
+    document.documentElement.toggleAttribute('data-authored',authoredCanvas);
     for(const sheet of legacyStyles){const media=authoredCanvas?'not all':'all';if(sheet.media!==media)sheet.media=media;}
     style.textContent=ui.css;
     const localReady=!!data.complete||!!ui.localReady;
@@ -224,6 +225,10 @@
       const next=sanitize(html);
       if(started&&previousTemplate)updateVerified(root,previousTemplate,next);else morph(root,next);
       rendered=html;previousTemplate=next;
+    }
+    if(data.complete&&Array.isArray(data.excerpts)){
+      const byId=new Map(data.excerpts.slice(0,40).filter(s=>typeof s?.id==='string'&&typeof s.text==='string').map(s=>[s.id,s.text.slice(0,240)]));
+      for(const slot of root.querySelectorAll('[data-web-source]')){const excerpt=byId.get(slot.dataset.webSource)||'';if(slot.textContent!==excerpt)slot.textContent=excerpt;}
     }
     if(localReady&&!started){
       started=true;enabled=true;approved=!!data.complete;root.inert=false;initial=controls();initialContract=contracts();

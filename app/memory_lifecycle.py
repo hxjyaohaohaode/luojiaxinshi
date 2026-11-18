@@ -124,7 +124,7 @@ FACETS = (
     ('identity.study', r'我的专业|我就读|我是.{0,15}(?:学生|研究生)|我的年级'),
     ('work.tool', r'采用|使用.{0,12}(?:框架|工具|软件)|工具偏好'),
 )
-STABLE = re.compile(r'记住|记一下|以后|平时|通常|一直|始终|长期|每次|我的(?:名字|称呼|专业|校区|年级)|我叫|叫我|remember|always|usually', re.I)
+STABLE = re.compile(r'记住|记一下|以后|今后|平时|通常|一直|始终|长期|每次|我的(?:名字|称呼|专业|校区|年级)|我叫|叫我|remember|always|usually', re.I)
 TEMPORARY = re.compile(r'仅本次|只在本次|只(?:用|在|限|针对)这(?:次|轮)|这(?:次|篇|封|份|段)|本次(?!项目)|本轮|临时|暂时|今天|明天|今晚|稍后|一会儿|today|tomorrow|this (?:turn|time)', re.I)
 PERSONAL_CONTEXT = re.compile(r'(?:我的|我目前|我现在|我正在|我计划|我打算|我希望|我需要|我们|本项目|这个项目|本次项目)')
 

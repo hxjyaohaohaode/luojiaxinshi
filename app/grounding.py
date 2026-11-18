@@ -518,6 +518,8 @@ def check_result(result, sources):
         if part['kind'] != 'ui':continue
         if part['spec'].get('sandbox'):
             from .openui import inspect_document
+            from .openui import check_authored_media
+            check_authored_media(part['spec']['sandbox'],sources)
             for url in inspect_document(part['spec']['sandbox']).links:
                 if not url.startswith('#') and (not public_url(url) or url not in allowed_urls):raise ValueError('界面链接须为本轮证据中登记的公开网址')
         for node in part['spec']['nodes'].values():
@@ -647,6 +649,7 @@ async def events(settings, db, uid, cid, mid, initial_sources, messages, profile
     trace=Trace();token=CURRENT.set(trace)
     try:
         async for event in _events(settings,db,uid,cid,mid,initial_sources,messages,profile,tier):
+            trace.observe_output(event)
             if event['type']=='phase':trace.phase(event['phase'])
             yield event
     finally:
@@ -686,9 +689,6 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         profile={k:v for k,v in profile.items() if k not in PERSONAL_KEYS}
     if not access['attachments']:
         initial_sources=[]
-    if access['schedule'] and scope_start is None:
-        from .agent_runtime.workspace import history_evidence
-        with db.connect() as conn:profile={**profile,'_operation_evidence':history_evidence(conn,uid,cid,messages)}
     question = question_context(messages)
     # 记忆召回只看最新一句：拼进来的历史会把旧话题的记忆排进上下文，也会让“继续”判定失效。
     latest_users=[m for m in messages if m['role']=='user']
@@ -696,6 +696,75 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     contract = response_contract(messages)
     writing_tier = 3 if contract.get('no_ui') else tier
     restricted = scope_start is not None or web_restricted(messages)
+    decision = None
+    if settings.openrouter_api_key and settings.ai_api_key and settings.ai_supports_json and settings.agent_enabled:
+        from .decision_routing import decide, safe_direct, needs_research
+        from .genui import parse_message
+        from .memory import memory_access as memory_access_for_routing
+        from .context_snapshot import capture, assert_current
+        from dataclasses import replace
+        direct = safe_direct(memory_question, has_context=(len(messages)>1 or latest.get('interaction') or latest.get('reply_to')),
+                             has_materials=bool(initial_sources))
+        from .decision_routing import preference
+        with db.connect() as conn:
+            router_allowed=preference(conn,cid)['enabled'] is not False and bool(profile.get('_decision_consent'))
+        decision = await decide(settings.openrouter_api_key,memory_question,
+                                {**access,'web':not restricted,'memory':access['profile'] and not restricted and memory_access_for_routing(messages),
+                                 'canvas':writing_tier==1},direct=direct,
+                                allow_external=router_allowed and not restricted and not latest.get('interaction'))
+        if decision['workflow']=='direct' and direct:
+            from .decision_routing import style_context
+            from .context_snapshot import bind_memories
+            quick_access=dict.fromkeys(access,False)
+            quick_access['memory']=quick_access['profile']=bool(access['profile'] and not restricted and memory_access_for_routing(messages))
+            with db.connect() as conn:
+                quick_snapshot=capture(conn,uid,cid,quick_access,set())
+            hints, used, memory_use=await asyncio.to_thread(style_context,db,uid,cid,memory_question,quick_access)
+            with db.connect() as conn:
+                quick_snapshot=bind_memories(conn,uid,cid,quick_snapshot,used)
+            fast=replace(settings,ai_model=settings.ai_summary_model,ai_output_tokens=min(settings.ai_output_tokens,2048))
+            quick_report={'status':'checking','started_at':int(time.time()),'planning_mode':'adaptive_direct',
+                          'route':'direct_text','decision':decision,'context_snapshot':quick_snapshot,'memory':memory_use,
+                          'model_modes':{'composition':'disabled'},'models':{'composition':fast.ai_model},
+                          'response_contract':contract,'attempts':1,'usage':total}
+            yield {'type':'phase','phase':'writing','label':'正在回复…'}
+            draft=None
+            pending=''
+            showing=False
+            try:
+                quick_profile={**{k:profile[k] for k in ('response_detail','response_style') if k in profile},
+                               '_style_hints':hints,'_quick_explanation':True,'_grounding_context':{'route':'direct_text'}}
+                async for event in genui_ai.stream_reply(fast,[],[latest],quick_profile,3):
+                    if event['type']=='preview':
+                        pending+=event['text']
+                        if not showing and 'NEEDS_EVIDENCE'.startswith(pending.strip()):continue
+                        if pending.strip().startswith('NEEDS_EVIDENCE'):continue
+                        yield {'type':'preview','text':pending,'reset':not showing}
+                        pending='';showing=True
+                    elif event['type']=='complete':
+                        draft=event['result'];add_usage(total,event.get('usage',{}))
+                if not needs_research(draft):
+                    check_response_contract(parse_message(draft['answer']),contract)
+                    checks=check_result(draft,[])
+                    with db.connect() as conn:assert_current(conn,uid,cid,quick_snapshot)
+                    CURRENT.get().stop_reason='program_checked'
+                    quick_report.update(status='checked',checked_at=int(time.time()),checks=checks+['通用简答经程序校验；未调用独立事实复核模型'])
+                    save_report(db,mid,[],quick_report)
+                    yield {'type':'delta','text':draft['answer']}
+                    yield {'type':'complete','result':draft,'usage':total,'sources':[]}
+                    return
+            except (ReplyValidationError, ValueError):
+                pass
+            except BaseException:
+                quick_report.update(status='not_published',finished_at=int(time.time()))
+                save_report(db,mid,[],quick_report)
+                raise
+            decision={**decision,'workflow':'research','escalated_from':'direct'}
+            yield {'type':'preview','text':'','reset':True}
+        profile={**profile,'_workflow':decision['workflow']}
+    if access['schedule'] and scope_start is None:
+        from .agent_runtime.workspace import history_evidence
+        with db.connect() as conn:profile={**profile,'_operation_evidence':history_evidence(conn,uid,cid,messages)}
     requested_urls = [] if restricted else requested_web_urls(db, uid, cid, messages)
     from .context_engine import pack_history
     from .memory import recall,memory_access
@@ -724,6 +793,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     context_snapshot=bind_sessions(context_snapshot,profile)
     sources = []
     report = {'version': VERSION, 'status': 'checking', 'started_at': int(time.time()), 'limitations': ['检索与模型复核不能保证零错误；重要时限、资格和手续仍须核对原发布方。']}
+    if decision:report['decision']=decision
     report['models']={'analysis':settings.ai_model,'composition':settings.ai_composition_model if writing_tier==1 else settings.ai_model,'verification':settings.ai_model}
     report['model_modes']={'analysis':'enabled','composition':'enabled','verification':'enabled'}
     report['response_contract']=contract
@@ -924,10 +994,15 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             # the current request, original evidence and exact rejected draft,
             # not another copy of every previous answer and verification trace.
             current_messages = ([{'role':'user','content':question}] if attempt else messages) + ([{'role':'assistant','content':'以下是尚未通过核验、从未向用户发布的待修正草稿；它不是事实依据：\n'+rejected_answer}] if feedback and rejected_answer else [])
-            current_messages += ([{'role': 'user', 'content': '逐项修复以下累计问题，只改必要内容，不添加新身份、要求或事实。保留本轮请求的范围、交互和仍成立的内容；无法证实的说法去掉或明确未知，建议标明是个人建议。返回完整有效回答。display_number_to_ref 仅用于定位最近一次事实审查的显示编号，改稿继续使用本轮 [E编号] 与 evidence_refs，不抄显示序号：' + dumps({'issues':repair_issues,'display_number_to_ref':repair_citation_map})}] if feedback else [])
+            current_messages += ([{'role': 'user', 'content': '为原用户重新给出完整成品。直接回答原问题，不要写已修改、采纳意见、评审或生成过程。逐项修复以下累计问题，只改必要内容，不添加新身份、要求或事实。保留本轮请求的范围、交互和仍成立的内容；无法证实的说法去掉或明确未知，建议标明是个人建议。返回完整有效回答。display_number_to_ref 仅用于定位最近一次事实审查的显示编号，改稿继续使用本轮 [E编号] 与 evidence_refs，不抄显示序号：' + dumps({'issues':repair_issues,'display_number_to_ref':repair_citation_map})}] if feedback else [])
             writing_profile = profile
+            writer_settings = settings
             if attempt:
                 writing_profile = {**profile, '_grounding_context': {k:v for k,v in context.items() if k in ('now','timezone','response_contract','ui_contract','route','host_activity')}, '_repairing':True}
+                if writing_tier==1 and agent_result and agent_result.get('composition_model')==settings.ai_ui_model:
+                    from dataclasses import replace
+                    writer_settings=replace(settings,ai_composition_model=settings.ai_ui_model)
+                    writing_profile.update(_ui_composition_only=True,_ui_composition_thinking=settings.ai_ui_thinking)
             try:
                 if in_loop:
                     from .agent_runtime.authoring import rebase_draft
@@ -935,7 +1010,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
                     provider_draft = rebase_draft(agent_result['candidate_raw'], agent_result['evidence_entries'], sources_for_answer)
                     yield {'type': 'preview', 'text': json.loads(agent_result['candidate_raw'])['answer'], 'reset': True}
                 else:
-                    async for event in genui_ai.stream_reply(settings, sources_for_answer, current_messages, writing_profile, writing_tier):
+                    async for event in genui_ai.stream_reply(writer_settings, sources_for_answer, current_messages, writing_profile, writing_tier):
                         if event['type'] in ('preview','ui_preview'):
                             yield event
                         if event['type'] == 'complete':

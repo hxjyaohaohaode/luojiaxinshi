@@ -48,6 +48,18 @@ def actions(env, client, chat, mid, *values):
         return apply_actions(conn, uid(client), chat['id'], mid, list(values))
 
 
+def test_corrections_reach_general_answers_across_conversations_in_authorized_scope(env):
+    from app.decision_routing import style_context
+    c=account(env);chat=conversation(c);other=conversation(c);db=env[0].state.db
+    message(env,c,chat,'今后请用英文回答。')
+    hints,used,_=style_context(db,uid(c),other['id'],'解释中位数',ACCESS)
+    assert '用英文回答。' in hints and len(used)==1
+    message(env,c,chat,'以后请用中文回答。')
+    hints,used,_=style_context(db,uid(c),other['id'],'解释中位数',ACCESS)
+    assert '用中文回答。' in hints and '用英文回答。' not in hints
+    assert style_context(db,uid(c),other['id'],'解释中位数',{**ACCESS,'memory':False})[0]==[]
+
+
 def test_auto_ingestion_is_durable_idempotent_and_has_exact_sources(env):
     c = account(env); chat = conversation(c); p = project(c)
     context(c, chat, project_id=p['id'])

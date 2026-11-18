@@ -10,10 +10,19 @@ export class AgentView{
     // operations from every attempt remain real and must stay visible too.
     const operations=[...new Map([...(message.versions||[]),message].flatMap(v=>v.agent?.operations||[]).map(o=>[o.operation_id,o])).values()];
     const state={...message.agent,operations},key=JSON.stringify([message.status,state,busy,readOnly]);if(key===this.key)return;this.key=key;
-    const previous=this.root.querySelector('.chat-research'),wasOpen=previous?.open;
+    const previous=this.root.querySelector('.chat-research:not(.chat-workgroup)'),wasOpen=previous?.open;
+    const teamBefore=this.root.querySelector('.chat-workgroup'),teamOpen=teamBefore?.open,teamFocus=teamBefore?.querySelector('summary')===document.activeElement;
     const restoreFocus=previous?.querySelector('summary')===document.activeElement;
     this.root.replaceChildren();
-    this.root.hidden=!(state.approvals?.length||state.files?.length||state.operations?.length||state.research_items?.length);
+    this.root.hidden=!(state.approvals?.length||state.files?.length||state.operations?.length||state.research_items?.length||state.members?.length);
+    if(state.members?.length){
+      const group=el('details','chat-research chat-workgroup'),title=el('summary'),list=el('ul');
+      const labels={started:'进行中',completed:'已返回',failed:'未完成',cancelled:'已停止',interrupted:'已中断'};
+      group.open=teamOpen??(message.status==='processing');
+      title.append(el('strong','','智能体分工'),el('span','small muted',state.members.filter(m=>m.status==='completed').length+' / '+state.members.length+' 已返回'));
+      for(const member of state.members){const item=el('li');item.append(el('span','',member.name),el('span','small muted',labels[member.status]||'等待结果'));list.append(item);}
+      group.append(title,list);this.root.append(group);if(teamFocus)title.focus({preventScroll:true});
+    }
     if(state.research_items?.length){
       const items=state.research_items,details=el('details','chat-research'),summary=el('summary');
       const open=items.filter(item=>item.state==='open').length,blocked=items.filter(item=>item.state==='blocked').length;

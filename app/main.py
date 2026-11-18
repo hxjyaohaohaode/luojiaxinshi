@@ -948,6 +948,7 @@ def create_app(settings=None):
                     runtime.finish(conn,call_id,'succeeded','draft_ready')
                     from .notice_automation import mark_profile
                     mark_profile(conn,nid,current['id'],payload.version+1,current['profile'])
+                    db.sync_notice_calendar(conn,current['id'],nid)
                     result=detailed_notice(conn,nid,current['id'])
             if result is None:
                 raise HTTPException(409,'生成期间材料已改变，本次旧草稿已丢弃，请刷新后重新生成')

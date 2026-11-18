@@ -33,7 +33,7 @@ def main():
     flags={'creationflags':subprocess.CREATE_NO_WINDOW} if os.name=='nt' else {}
     results=[]
     verify_script=os.getenv('OPENUI_VERIFY_SCRIPT','scripts/verify_openui.mjs')
-    if verify_script not in ('scripts/verify_openui.mjs','scripts/verify_openui_generated.mjs','scripts/verify_authored_canvas.mjs','scripts/verify_chat_layout.mjs','scripts/verify_chat_interactions.mjs','scripts/verify_task_board.mjs','scripts/verify_chat_recovery.mjs'):raise ValueError('Unknown OpenUI verification script')
+    if verify_script not in ('scripts/verify_openui.mjs','scripts/verify_openui_generated.mjs','scripts/verify_authored_canvas.mjs','scripts/verify_chat_layout.mjs','scripts/verify_chat_interactions.mjs','scripts/verify_task_board.mjs','scripts/verify_chat_recovery.mjs','scripts/verify_mixed_canvas.mjs'):raise ValueError('Unknown OpenUI verification script')
     env.pop('OPENUI_REVIEW_GATE',None)
     if verify_script=='scripts/verify_chat_recovery.mjs':env['OPENUI_REVIEW_GATE']='1'
     if verify_script=='scripts/verify_task_board.mjs':env.update(CAMPUS_VERIFY_ORIGIN='http://127.0.0.1:8794',CAMPUS_VERIFY_USER='openui-preview',CAMPUS_VERIFY_PASSWORD='OpenUIFixture2026!')
@@ -55,7 +55,7 @@ def main():
                     time.sleep(.15)
                 for name in os.getenv('OPENUI_BROWSERS','chromium,firefox,webkit').split(','):
                     if name not in ('chromium','firefox','webkit'):raise ValueError('Unknown browser engine')
-                    target=('artifacts/canvas-browser/' if verify_script=='scripts/verify_authored_canvas.mjs' else 'artifacts/chat-recovery/' if verify_script=='scripts/verify_chat_recovery.mjs' else 'artifacts/task-board-refinements/' if verify_script=='scripts/verify_task_board.mjs' else 'artifacts/chat-interactions/' if verify_script=='scripts/verify_chat_interactions.mjs' else 'artifacts/chat-layout/' if verify_script=='scripts/verify_chat_layout.mjs' else 'artifacts/openui-live/browser/' if env.get('OPENUI_REPLAY_FILE') else 'artifacts/openui-browser/')+name
+                    target=('artifacts/mixed-canvas/' if verify_script=='scripts/verify_mixed_canvas.mjs' else 'artifacts/canvas-browser/' if verify_script=='scripts/verify_authored_canvas.mjs' else 'artifacts/chat-recovery/' if verify_script=='scripts/verify_chat_recovery.mjs' else 'artifacts/task-board-refinements/' if verify_script=='scripts/verify_task_board.mjs' else 'artifacts/chat-interactions/' if verify_script=='scripts/verify_chat_interactions.mjs' else 'artifacts/chat-layout/' if verify_script=='scripts/verify_chat_layout.mjs' else 'artifacts/openui-live/browser/' if env.get('OPENUI_REPLAY_FILE') else 'artifacts/openui-browser/')+name
                     run_env=dict(env,OPENUI_BROWSER=name,OPENUI_ARTIFACT_DIR=target)
                     with (OUT/(name+'.log')).open('w',encoding='utf-8') as output:
                         try:code=subprocess.run(['node',verify_script],cwd=ROOT,env=run_env,stdout=output,stderr=subprocess.STDOUT,timeout=150).returncode

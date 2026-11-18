@@ -3,7 +3,8 @@
 .openui-surface[data-authored] {
   inline-size: min(100%, var(--answer-width));
   max-inline-size: 100%;
-  margin-block: clamp(8px, 1.4vw, 18px) 6px;
+  margin-block: clamp(2px, .5vw, 8px) 4px;
+  align-self: start;
 }
 .openui-surface[data-authored] .openui-toolbar {
   margin-block-start: 4px;

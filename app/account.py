@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .security import DUMMY_PASSWORD, rate_limit, verify_password
 
 # 版本用于展示内容与记录同意时的原文版本；更新不会触发登录后的重复确认。
-POLICY_VERSION = '2026-11-14'
+POLICY_VERSION = '2026-11-18'
 CONFIRM_PHRASE = '注销账号'
 
 SCHEMA = """
@@ -57,6 +57,7 @@ def legal_information(settings):
         'operator_name': settings.operator_name,
         'operator_contact': settings.operator_contact,
         'model_provider': '小米 MiMo',
+        'decision_routing_available': bool(settings.openrouter_api_key),
         'ai_configured': bool(ai.get('configured')),
         'backup_retention_days': retention_days(),
         'registration_mode': settings.registration_mode,

@@ -87,6 +87,7 @@ def presentation_tier(tier,choice='auto',*,no_ui=False):
 
 
 def composition_thinking(profile,tier):
+    if profile.get('_quick_explanation'):return False
     return not (tier==1 and profile.get('_ui_composition_only') and not profile.get('_ui_composition_thinking'))
 
 
@@ -305,6 +306,9 @@ def prompt_authoring_index(sources,profile):
 
 
 def payload(settings, sources, messages, profile, tier):
+    if profile.get('_quick_explanation'):
+        from .decision_routing import quick_payload
+        return quick_payload(settings,messages,profile)
     from .chat_media import resource_index
     if not profile.get('_grounding_context'):
         from .context_engine import pack_history
@@ -432,7 +436,7 @@ async def _stream_reply(settings, sources, messages, profile, tier):
                             preview=ui_stream.packet(envelope.push(delta))
                             if preview:
                                 yield {'type':'ui_preview','content':preview}
-                        if text:
+                        if text and not (profile.get('_repairing') and tier==1):
                             # The actual provider stream is visible immediately. A preview
                             # cannot mount controls or acquire validated citation status.
                             yield {'type':'preview' if buffered_answer else 'delta','text':text}
@@ -464,8 +468,10 @@ async def _stream_reply(settings, sources, messages, profile, tier):
             if tier==1:
                 authored=result.pop('ui',None)
                 if authored:
-                    from .openui import check_authored_media
+                    from .openui import check_authored_media, reader_lead
                     check_authored_media(authored,sources)
+                    if profile.get('_repairing'):
+                        result['answer']=reader_lead(result['answer'])
                     appended=encode_authored_ui(authored)
                     if len(result['answer']+appended)>80000:raise ValueError('authored_ui_answer_limit')
                     result['answer']+=appended

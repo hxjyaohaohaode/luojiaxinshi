@@ -111,17 +111,17 @@ class Run:
     def agent_list(self):
         return [{'agent_id': aid, 'name': a['name'], 'status': a['status'], 'result': a['result']} for aid, a in self.agents.items()]
 
-    def spawn(self, name, task):
-        if len(self.agents) >= 3 or any(a['name'] == name for a in self.agents.values()):
-            raise AgentError('每轮最多启动 3 个子任务，名称不能重复')
+    def spawn(self, name, task, *, worker=None):
+        if len(self.agents)>=6 or sum(a['status']=='running' for a in self.agents.values())>=3 or any(a['name']==name for a in self.agents.values()):
+            raise AgentError('最多同时运行 3 个子任务，整轮最多 6 个，名称不能重复')
         aid = ident()
         entry = {'name': name, 'status': 'running', 'result': '', 'mailbox': []}
         self.agents[aid] = entry
         self.emit('agent.started', {'agent_id': aid, 'name': name})
 
-        async def worker():
+        async def supervise():
             try:
-                entry['result'] = await self.loop(task, aid, child=True)
+                entry['result'] = await worker(aid) if worker else await self.loop(task, aid, child=True)
                 entry['status'] = 'completed'
             except asyncio.CancelledError:
                 entry['status'] = 'cancelled'
@@ -135,7 +135,7 @@ class Run:
                     self.emit('agent.' + entry['status'], {'agent_id': aid, 'name': name, 'result': entry['result']})
                 except AgentError:
                     pass
-        entry['task'] = asyncio.create_task(worker())
+        entry['task'] = asyncio.create_task(supervise())
         return {'agent_id': aid, 'name': name, 'status': 'running'}
 
     async def wait_agents(self, ids, timeout):

@@ -25,7 +25,7 @@ function messageInteraction(record,message,options){
   const emojiKey=JSON.stringify(message.emojis||[]);if(record.emojiKey!==emojiKey){record.emojiKey=emojiKey;record.emojis?.remove();record.emojis=null;if(message.emojis?.length){const list=el('div','message-emojis');for(const emoji of message.emojis){const control=button(emoji,null,'');control.dataset.chatAction='emoji-reaction';control.dataset.id=message.id;control.setAttribute('aria-label','已添加表情 '+emoji+'，修改表情');list.append(control);}record.article.insertBefore(list,record.footer);record.emojis=list;}}
   record.pending?.remove();record.pending=null;if(message._outbox){const item=message._outbox;record.pending=el('div','message-pending-receipt'+(['uncertain','failed','paused'].includes(item.state)?' is-uncertain':''),{queued:'等待发送',sending:'正在确认收件',uncertain:'尚未确认收下，消息已保留',failed:'尚未发送成功',paused:'已暂停发送'}[item.state]||'待确认');record.pending.title=item.error||'';record.content.after(record.pending);}
 }
-function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],openCitation:number=>record.citationView?.open(number),hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
+function replyHostContext(host,record,options){return {...host,linkResources:record.linkResources||[],webExcerpts:record.webExcerpts||[],openCitation:number=>record.citationView?.open(number),hostActions:{...host.hostActions,open_sources:{run:()=>record.citationView?.entries?.length?record.citationView.open():options.openSources?.()}}};}
 export class ConversationView{
   constructor(container,options){this.container=container;this.options=options;this.records=new Map();}
   configure(options){Object.assign(this.options,options);}
@@ -103,7 +103,8 @@ export class ConversationView{
       const policy=replyPolicy(messages,message,this.options);
       const fixedReply=message.grounding?.planning_mode==='host_acknowledgement',badge=r.label.querySelector('.ai-badge');if(badge){badge.textContent=fixedReply?'系统回复':'AI 生成';badge.title=fixedReply?'系统回复':'这条回复由 AI 生成，可能有误，重要信息请以学校正式通知为准';}
       const links=message.status==='complete'&&message.genui?.validated?(message.evidence_sources||[]).map(source=>source.url).filter(url=>typeof url==='string'):[];
-      if(JSON.stringify(links)!==JSON.stringify(r.linkResources)){r.linkResources=links;r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
+      const webExcerpts=message.status==='complete'&&message.genui?.validated?(message.evidence_sources||[]).filter(s=>s.evidence_kind==='web_page'&&s.url&&s.preview).map(s=>({id:s.id,text:s.preview})).slice(0,40):[];
+      if(JSON.stringify([links,webExcerpts])!==JSON.stringify([r.linkResources,r.webExcerpts])){r.linkResources=links;r.webExcerpts=webExcerpts;r.renderer?.setHostContext(replyHostContext(this.host,r,this.options));}
       const redirected=message.status==='cancelled'&&message.error?.includes('按更新后的问题继续'),lastVersion=message.versions?.at(-1),keptPrevious=message.status==='complete'&&lastVersion?.id!==message.id&&['failed','cancelled'].includes(lastVersion?.status);
       r.status.textContent=message.status==='processing'?(message._phaseLabel||((message.genui?.raw||message.content)?'正在书写…':this.options.sources?.length?'正在对照材料…':'正在思考…')):message.status==='complete'?(keptPrevious?(lastVersion.agent?.operations?.length?'新回复未完成，操作结果见下方；正文为上一版':'新版本未完成，已保留上一版'):''):redirected?'已按补充继续':'回复未完成';
       const active=message.status==='processing'&&message.id===activeMessage;

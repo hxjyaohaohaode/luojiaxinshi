@@ -90,7 +90,7 @@ export class SandboxRenderer{
       sessionStorage.setItem(this.draftKey,JSON.stringify(draft));
     }catch{this.error('此标签页无法暂存调整，请使用“保存互动进度”。');}
   }
-  render(){if(this.ready&&this.spec.sandbox)this.post('render',{content:this.spec.sandbox,complete:!!this.spec.complete&&!this.spec.errors?.length,snapshot:this.restoreSnapshot()});}
+  render(){if(this.ready&&this.spec.sandbox)this.post('render',{content:this.spec.sandbox,excerpts:this.spec.complete&&!this.spec.errors?.length?this.options.webExcerpts||[]:[],complete:!!this.spec.complete&&!this.spec.errors?.length,snapshot:this.restoreSnapshot()});}
   restart(){const edited=Object.fromEntries(Object.entries(this.controls).filter(([key,value])=>JSON.stringify(value)!==JSON.stringify(this.initial[key])));this.pendingRestore={state:{controls:edited},view:{},contract:this.controlContract||{}};this.storage={};this.storageEdited=false;this.token=crypto.randomUUID();this.initialized=false;this.ready=false;this.interactive=false;this.localInteractive=false;this.lastAction=0;this.controls={};this.initial={};this.status.hidden=false;const old=this.frame;this.frame=old.cloneNode(false);this.frame.addEventListener('load',this.load);old.removeEventListener('load',this.load);old.replaceWith(this.frame);old.src='about:blank';this.signature=null;}
   schedule(){this.render();}
   placeMedia(slots){

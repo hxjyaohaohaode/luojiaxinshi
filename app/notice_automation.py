@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from pydantic import Field, model_validator
 from starlette.concurrency import run_in_threadpool
 
+from . import notice_calendar
 from .usage_limits import limits_for
 from .db import dumps, ident
 from .models import Generate, Strict
@@ -48,6 +49,7 @@ def initialize(conn):
     if version and (version[0]!='1' or not TABLES.issubset(tables)):
         raise ValueError('通知自动整理记录版本不兼容或缺少必要数据表')
     conn.executescript(SCHEMA)
+    notice_calendar.initialize(conn)
 
 
 def profile_hash(profile):
@@ -248,6 +250,7 @@ async def run_worker(app,db,settings):
 class AutomationSettings(Strict):
     enabled: bool
     allow_external_processing: bool=False
+    calendar_mode: notice_calendar.Mode | None=None
     daily_limit: int | None=Field(default=None,ge=1,le=1000000)
     version: int=Field(default=0,ge=0)
 
@@ -264,6 +267,8 @@ def status(conn,uid):
     result['daily_limit_max']=limits_for(conn).automation_daily_max
     result['daily_limit']=min(result['daily_limit'],result['daily_limit_max'])
     result['enabled']=bool(result['enabled'])
+    result['calendar_mode']=notice_calendar.policy(conn,uid)
+    result['calendar_receipts']=notice_calendar.last_receipts(conn,uid)
     result['jobs']=[dict(r) for r in conn.execute('SELECT j.*,n.title FROM notice_automation_jobs j JOIN notices n ON n.id=j.notice_id WHERE j.user_id=? ORDER BY j.created_at DESC,j.rowid DESC LIMIT 30',(uid,))]
     result['used_today']=conn.execute('SELECT count(*) FROM notice_automation_attempts WHERE user_id=? AND started_at>=?',(uid,today_start())).fetchone()[0]
     result['counts']={r['state']:r['total'] for r in conn.execute('SELECT state,count(*) AS total FROM notice_automation_jobs WHERE user_id=? GROUP BY state',(uid,))}
@@ -285,6 +290,7 @@ def install(app,db,settings,user):
             now=int(time.time())
             conn.execute('INSERT INTO notice_automation_settings VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled,consented_at=excluded.consented_at,version=version+1,daily_limit=excluded.daily_limit,updated_at=excluded.updated_at',
                          (current['id'],payload.enabled,now if payload.enabled else None,1,daily_limit,now))
+            if payload.calendar_mode is not None:notice_calendar.set_policy(conn,current['id'],payload.calendar_mode)
             if payload.enabled:queue_ready(conn,settings,current['id'])
             else:conn.execute("UPDATE notice_automation_jobs SET state='cancelled',finished_at=?,error='本人已停用自动整理' WHERE user_id=? AND state='queued'",(now,current['id']))
             return status(conn,current['id'])

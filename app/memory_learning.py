@@ -19,7 +19,7 @@ from .memory_policy import catalog, effective, normalized, rows_for, save_policy
 from .memory_store import (decorate, digest, insert_memory, invalidate_dependents,
                            record_revision, settings_for, usable_derived)
 
-UNCERTAIN = re.compile(r'如果|假如|假设|例如|举例|假装|引用|据说|也许|可能|想象|是不是|是否|[？?]|他说|她说|朋友说|同学说|老师说')
+UNCERTAIN = re.compile(r'如果|假如|假设|例如|举例|示例|例子|演示|假装|引用|据说|也许|可能|想象|是不是|是否|[？?]|他说|她说|朋友说|同学说|老师说')
 SECRET = re.compile(r'\b(?:sk|tp|ttp)-[a-zA-Z0-9_-]{16,}|'
                     r'-----BEGIN[^\r\n]*PRIVATE KEY-----[\s\S]*?(?:-----END[^\r\n]*PRIVATE KEY-----|$)|-----BEGIN[^\r\n]*PRIVATE KEY|'
                     r'authorization\s*:\s*(?:bearer|basic)\s+\S+|'
@@ -135,7 +135,7 @@ def source_message(conn, uid, cid, mid):
 
 
 def classify(quote):
-    if re.search(r'偏好|喜欢|习惯|倾向|先.{0,8}再|简洁|简短', quote):
+    if re.search(r'偏好|喜欢|习惯|倾向|先.{0,8}再|简洁|简短|(?:以后|今后|每次|始终).{0,14}(?:回答|回复|写作|输出|用[中英]文)', quote):
         return 'preference'
     if re.search(r'必须|禁止|不要|不得|只能|不能|要求', quote):
         return 'constraint'
@@ -167,7 +167,16 @@ def scope_value(context, text, requested='current'):
             'topic': ''}
 
 
+SOURCE_HEADER = re.compile(r'(?:示例|例子|转述|引用|粘贴的?(?:通知|原文)|材料原文|通知原文|邮件原文|example|quotation)\s*[：:]\s*$',re.I)
+
+
 def direct_quote(quote, source):
+    if not quote:return False
+    # A source introduced on its own line remains quoted across the following paragraph.
+    for block in re.split(r'\n[ \t]*\n',source):
+        if quote.rstrip('。！；\n') not in block:continue
+        before=block.split(quote.rstrip('。！；\n'),1)[0]
+        if any(SOURCE_HEADER.search(line.strip()) for line in before.splitlines()):return False
     enclosing = [part for part in re.split(r'[。！；\n]', source) if quote.rstrip('。！；\n') in part]
     if not enclosing or any(UNCERTAIN.search(part.split(quote.rstrip('。！；\n'),1)[0]) or re.search(r'["“「『>]|```', part)
         or re.match(r'\s*[？?]',part.split(quote.rstrip('。！；\n'),1)[-1]) for part in enclosing):
@@ -175,7 +184,7 @@ def direct_quote(quote, source):
     return bool(quote and quote in source and not UNCERTAIN.search(quote)
                 and not SECRET.search(quote) and not REJECT_INSTRUCTION.search(quote)
                 and not re.search(r'```|^\s*>', quote)
-                and re.search(r'我|我们|记住|记一下|以后|本项目|这个项目|本次项目', quote))
+                and re.search(r'我|我们|记住|记一下|以后|今后|每次|始终|本项目|这个项目|本次项目', quote))
 
 
 def evidence(mid, quote):
@@ -269,7 +278,7 @@ def ingest_message(conn, uid, cid, mid, messages=None,explicit_backfill=False):
                 if len(named)==1:context={**source_scope,'project_id':named[0]['id'],'topics':[]}
             if not 4 <= len(quote) <= 2000 or not direct_quote(quote, text):
                 continue
-            if not re.search(r'记住|记一下|我(?:平时|通常|一直|更)?(?:喜欢|偏好|习惯|叫|住在|计划|决定|希望|需要|正在|目前|打算)|我的(?:名字|称呼|校区|专业|年级)|我们(?:决定|采用)|(?:本|这个)项目.{0,8}(?:必须|采用|使用|禁止)', quote):
+            if not re.search(r'(?:以后|今后|每次|始终).{0,14}(?:回答|回复|写作|输出|用[中英]文)|记住|记一下|我(?:平时|通常|一直|更)?(?:喜欢|偏好|习惯|叫|住在|计划|决定|希望|需要|正在|目前|打算)|我的(?:名字|称呼|校区|专业|年级)|我们(?:决定|采用)|(?:本|这个)项目.{0,8}(?:必须|采用|使用|禁止)', quote):
                 continue
             lifetime = admit(quote,classify(quote))
             if not known_scope:lifetime='session'

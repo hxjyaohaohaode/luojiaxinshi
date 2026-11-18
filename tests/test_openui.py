@@ -17,6 +17,17 @@ from test_workflow import env, account
 from test_workspace import conversation
 from test_genui_transport import events, payload
 
+def test_web_excerpt_linked_to_actual_page_and_internal_review_lead():
+    from app.openui import reader_lead,check_authored_media
+    assert reader_lead('已按两条意见修复：内部过程。')==''
+    assert reader_lead('截止时间改为十点。')=='截止时间改为十点。'
+    ui=json.loads(FIXTURE.read_text(encoding='utf-8'))
+    ui['html']=['<article><p data-web-source="page-1"></p><math><mi>x</mi></math></article>']
+    page={'id':'page-1','url':'https://school.example.edu.cn/notice','evidence_kind':'web_page','sections':[{'locator':'正文','text':'原文'}]}
+    check_authored_media(ui,[page])
+    with pytest.raises(ValueError,match='网页摘录'):check_authored_media(ui,[{**page,'evidence_kind':'web_summary'}])
+
+
 FIXTURE=Path(__file__).resolve().parent.parent/'fixtures/genui/openui-planner.json'
 UI=json.loads(FIXTURE.read_text(encoding='utf-8'))
 
