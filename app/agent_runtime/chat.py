@@ -228,6 +228,7 @@ class ChatRun(Run):
         self.openui_preloaded=bool(self.allow_ui and service.settings.ai_context_tokens>=65536 and self.context_bytes>=96000
             and (self.profile.get('_workflow')=='compose' or re.search(r'生成式|交互|互动|界面|滑块|计算器|可视化|图表|模拟器',latest_question)))
         self.openui_protocol_loaded=False
+        self.ui_writer_exhausted=False
         self.notice_skill = ''
         if (self.access.get('attachments') and len(self.original) >= 2 and self.context_bytes >= 96000
                 and re.search(r'申请|报名|办理|通知|补件', latest_question)):
@@ -439,7 +440,9 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
         if not child and self.initial_memory_protocol:
             authoring+='\n本轮已按会话权限读取记忆维护协议。本人新陈述的习惯可在同一次 submit_answer 中提交；memory_actions 是操作对象数组。简短回应用户的具体偏好，实际保存状态以系统回执为准。\n'+self.initial_memory_protocol
-        if not child and self.openui_preloaded:
+        if not child and self.ui_writer_exhausted:
+            authoring+='\n独立界面生成器两次输出均未通过结构校验。保留已读取的来源和任务进度，加载 openui_capabilities 后由你用 generateSandboxedUi 自行创作并提交复核。'
+        elif not child and self.openui_preloaded:
             authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器会从本轮问题设计布局、状态与交互，无需再加载界面说明或自行编写代码。'
         from ..decision_routing import WORKFLOWS, APPROACH_INSTRUCTIONS
         workflow=self.profile.get('_workflow')
@@ -630,6 +633,8 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 fn = item['function']
                 fn['description'] = ('单独提交纯文字答复，answer 写完整正文；需要互动内容时优先用 compose_interface，尚未加载则先用 openui_capabilities。'
                     if self.allow_ui else '单独提交本轮文字答复，answer 写完整正文，claims 使用实际证据；本轮不生成界面。')
+                if self.ui_writer_exhausted:
+                    fn['description']='提交纯文字答复。如当前任务要求互动，请使用 openui_capabilities 和 generateSandboxedUi。'
                 if self.open_topics():
                     fn['description']+=' 核对完毕时请在本次提交的 research_updates 逐项填写本轮 E 编号或具体缺口。'
                 else:
@@ -638,8 +643,8 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
         return [item for item in catalog
                 if (item['function']['name'] not in ('read_file','write_file') or self.file_contract_loaded)
                 and (item['function']['name'] != 'generateSandboxedUi' or self.allow_ui and (getattr(self,'openui_protocol_loaded',False) or 'openui_capabilities' in upcoming))
-                and (item['function']['name'] != 'openui_capabilities' or self.allow_ui and not self.openui_preloaded and not self.openui_protocol_loaded)
-                and (item['function']['name'] != 'compose_interface' or self.allow_ui and (self.openui_preloaded or self.openui_protocol_loaded or 'openui_capabilities' in upcoming))
+                and (item['function']['name'] != 'openui_capabilities' or self.allow_ui and (not self.openui_preloaded or self.ui_writer_exhausted) and not self.openui_protocol_loaded)
+                and (item['function']['name'] != 'compose_interface' or self.allow_ui and not self.ui_writer_exhausted and (self.openui_preloaded or self.openui_protocol_loaded or 'openui_capabilities' in upcoming))
                 and (item['function']['name'] != 'memory_capabilities' or self.memory_available())
                 and (item['function']['name'] != 'workspace_capabilities' or self.mutate_context and personal_workspace.write_allowed(self.user_messages))]
 
@@ -840,10 +845,14 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             self.openui_protocol_loaded=True
             from ..chat_media import resource_index
             resources=resource_index(self.original) if self.access.get('attachments') else []
+            if self.ui_writer_exhausted:
+                return {'renderer':'open_generative_ui','preferred_submit':'generateSandboxedUi','rules':OPEN_UI_RULES,
+                        'resources':resources,'next_step':'根据原任务和现有证据自行编排界面，单独调用 generateSandboxedUi 提交复核。'}
             return {'renderer':'open_generative_ui','preferred_submit':'compose_interface',
                     'next_step':'证据够用后调用 compose_interface，只写简短目标、阅读顺序和必要交互。专用生成器已有本轮用户要求、证据和完整协议，无需在主模型中重复编写代码；输出仍经原有独立复核。直接生成协议仅保留兼容。',
                     'rules':OPEN_UI_RULES,'resources':resources}
         if name == 'compose_interface':
+            if self.ui_writer_exhausted:raise AgentError('独立生成器已结束，请使用 openui_capabilities 和 generateSandboxedUi')
             if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
             from ..security import rate_limit
             from ..ai import ReplyValidationError
@@ -881,8 +890,11 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                                 self.usage['completion_tokens']+=usage.get('output_tokens') or 0
                     break
                 except ReplyValidationError as exc:
-                    if attempt:raise
                     self.guard()
+                    if attempt:
+                        self.ui_writer_exhausted=True
+                        self.queue.put_nowait({'type':'preview','text':'','reset':True,'clear_ui':True})
+                        raise AgentError('两次界面草稿均未通过结构校验。请保留已有证据，加载 openui_capabilities 后用 generateSandboxedUi 自行创作。校验反馈：'+str(exc)[:450]) from None
                     # Only the dedicated author sees its rejected draft. No
                     # business tool, external submission, or child is replayed.
                     writer_messages=[*self.user_messages]

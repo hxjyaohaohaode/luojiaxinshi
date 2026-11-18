@@ -171,6 +171,13 @@ def scope_value(context, text, requested='current'):
 SOURCE_HEADER = re.compile(r'(?:示例|例子|转述|引用|粘贴的?(?:通知|原文)|材料原文|通知原文|邮件原文|example|quotation)\s*[：:]\s*$',re.I)
 
 
+def durable_preference(quote, source):
+    from .memory_lifecycle import admit
+    return bool(re.match(r'^(?:我(?:自己)?(?:长期|通常|一直|平时|每次|始终|习惯|喜欢)|我的(?:习惯|偏好))',quote)
+                and classify(quote)=='preference' and direct_quote(quote,source)
+                and admit(quote,'preference')=='long_term')
+
+
 def direct_quote(quote, source):
     if not quote:return False
     # A source introduced on its own line remains quoted across the following paragraph.
@@ -279,7 +286,7 @@ def ingest_message(conn, uid, cid, mid, messages=None,explicit_backfill=False):
                 if len(named)==1:context={**source_scope,'project_id':named[0]['id'],'topics':[]}
             if not 4 <= len(quote) <= 2000 or not direct_quote(quote, text):
                 continue
-            if not re.search(r'(?:以后|今后|每次|始终).{0,14}(?:回答|回复|写作|输出|用[中英]文)|记住|记一下|我(?:平时|通常|一直|更)?(?:喜欢|偏好|习惯|叫|住在|计划|决定|希望|需要|正在|目前|打算)|我的(?:名字|称呼|校区|专业|年级)|我们(?:决定|采用)|(?:本|这个)项目.{0,8}(?:必须|采用|使用|禁止)', quote):
+            if not re.search(r'(?:以后|今后|每次|始终).{0,14}(?:回答|回复|写作|输出|用[中英]文)|记住|记一下|我(?:平时|通常|一直|更)?(?:喜欢|偏好|习惯|叫|住在|计划|决定|希望|需要|正在|目前|打算)|我的(?:名字|称呼|校区|专业|年级)|我们(?:决定|采用)|(?:本|这个)项目.{0,8}(?:必须|采用|使用|禁止)', quote) and not durable_preference(quote,text):
                 continue
             lifetime = admit(quote,classify(quote))
             if not known_scope:lifetime='session'

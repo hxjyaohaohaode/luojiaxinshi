@@ -302,3 +302,32 @@ def test_dedicated_writer_recovers_a_schema_error_without_replaying_business_too
     assert len(main.inputs)==1 and len(seen)==2 and all(width=='compact' for _,width in seen)
     assert any(m['content'].endswith('仅供修复的上份草稿') for m in seen[1][0])
     assert any(p['data'].get('clear_ui') for p in packets)
+
+
+def test_repeated_format_rejection_hands_the_same_turn_to_coordinator(env,monkeypatch):
+    from app import grounding
+    from app.ai import ReplyValidationError
+    from test_agent_runtime import Script,answer,call
+    cfg=env[1];cfg.agent_enabled=cfg.ai_grounding=True;cfg.ai_api_key='synthetic'
+    owner=account(env);chat=conversation(owner)
+    canvas={**UI,'lead':'输入后可以试算。','claims':[{'kind':'interface','text':'输入更新结果'}]}
+    main=Script([answer('',[call('compose_interface',{'brief':'按当前输入试算'})]),
+                 answer('',[call('openui_capabilities',{})]),answer('',[call('generateSandboxedUi',canvas)])])
+    env[0].state.agent_service.provider_factory=lambda *_:main
+    attempts=[];reviews=[]
+    async def writer(*args):
+        attempts.append(1)
+        yield {'type':'preview','text':'初稿'}
+        raise ReplyValidationError('界面结构不完整',draft='已被拒绝的草稿')
+    async def review(settings,result,sources,*_):
+        reviews.append(result)
+        return [],{},grounding.check_result(result,sources)
+    monkeypatch.setattr(genui_ai,'stream_reply',writer)
+    monkeypatch.setattr(grounding,'verify',review)
+    packets=events(owner.post('/api/conversations/'+chat['id']+'/messages/stream',json=payload(chat,content='生成互动试算界面')))
+    final=packets[-1]['data']['conversation']['messages'][-1]
+    assert final['status']=='complete' and final['genui']['validated'] and reviews
+    catalogs=[{tool['function']['name'] for tool in entry[1]} for entry in main.inputs]
+    assert len(attempts)==2 and 'compose_interface' not in catalogs[1] and 'openui_capabilities' in catalogs[1]
+    assert 'generateSandboxedUi' in catalogs[2] and 'compose_interface' not in catalogs[2]
+    assert sum(bool(p['data'].get('clear_ui')) for p in packets)>=2

@@ -37,7 +37,8 @@ def test_plain_text_agent_autonomously_uses_original_memory_protocol_and_receipt
 
 
 @pytest.mark.parametrize('enabled_memory',[True,False])
-def test_self_report_reads_the_allowed_memory_contract_before_the_first_model_call(env,monkeypatch,enabled_memory):
+@pytest.mark.parametrize('restriction',['','不要联网。'])
+def test_self_report_reads_the_allowed_memory_contract_before_the_first_model_call(env,monkeypatch,enabled_memory,restriction):
     from test_memory_context import context
     client=account(env); chat=conversation(client); forbid_writer(monkeypatch)
     env[1].openrouter_api_key='synthetic-local-routing'
@@ -53,7 +54,7 @@ def test_self_report_reads_the_allowed_memory_contract_before_the_first_model_ca
             'operation':'remember','content':quote,'source_quote':quote,'kind':'preference',
             'basis':'explicit','lifetime':'long_term'}])
     model=Script([respond]);env[0].state.agent_service.provider_factory=lambda *_:model
-    reply=final(send(client,chat,quote+'。请用纯文字回应。',allow_decision_routing=False))
+    reply=final(send(client,chat,quote+'。请用纯文字回应。'+restriction,allow_decision_routing=False))
     assert reply['status']=='complete',reply['error']
     assert len(model.inputs)==1
     assert reply['grounding']['agent_execution']['tool_calls']==int(enabled_memory)

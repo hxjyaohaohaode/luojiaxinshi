@@ -17,6 +17,34 @@ from test_memory_context import project,memory,context,uid,ACCESS
 from test_memory_engine import message,items,actions,setting
 
 
+def test_offline_autobiographical_preference_obeys_local_memory_scope(env):
+    from app.grounding import local_only
+    from app.memory_context import context_allowed
+    from app.memory_store import settings_for
+    c=account(env);chat=conversation(c)
+    quoted='我通常按图后文的顺序做笔记，所有项目都习惯先看图再看解释。'
+    question=quoted+'不要联网。'
+    mid=message(env,c,chat,question)
+    saved=next(m for m in items(c) if m['content']==quoted)
+    assert saved['active'] and saved['review_status']=='accepted'
+    evidence=c.get('/api/memory/items/'+saved['id']).json()['evidence']
+    assert any(e['source_id']==mid and e['quote']==quoted for e in evidence)
+    def allowed(*texts):
+        with env[0].state.db.connect() as conn:
+            return context_allowed(conn,chat['id'],[{'role':'user','content':t} for t in texts],settings_for(conn,uid(c)))
+    assert local_only(question) and allowed(question)
+    assert not allowed('请只用附件回答。') and not allowed('仅用本条消息里的信息。')
+    assert not allowed('仅用附件：请使用我的个人资料。')
+    assert not allowed('只用本次会话材料，不联网。') and not allowed('只根据题中条件回答。')
+    assert allowed('请解释“只用附件”这句话。') and not local_only('请解释“只用附件”这句话。')
+    assert allowed('请只用附件。','现在请使用我的个人资料。')
+    context(c,chat,memory_enabled=False)
+    assert not allowed(question)
+    context(c,chat,memory_enabled=True)
+    setting(c,'off')
+    assert not allowed(question)
+
+
 def test_auto_selects_named_projects_and_ignores_foreign_catalog_ids(env):
     c=account(env);other=account(env,'other');chat=conversation(c)
     p=project(c,'论文');q=project(c,'竞赛');foreign=project(other,'他人项目')

@@ -91,8 +91,11 @@ _NEGATED = re.compile(r"(?:不要|不用|不必|无需|不许|禁止|不允许|�
                       r"(?:(?!\b(?:but|instead|please)\b)[^,.;!?\n]){0,100}",re.I)
 
 
-def instruction_text(text):
-    return _SOURCE_START.split(_QUOTED.sub(' ', text.replace('\r\n','\n')), maxsplit=1)[0]
+def instruction_text(text, *, keep_source_label=False):
+    prose=_QUOTED.sub(' ',text.replace('\r\n','\n'))
+    label=_SOURCE_START.search(prose)
+    if label is None:return prose
+    return prose[:label.end() if keep_source_label else label.start()]
 
 
 _HIGH = re.compile(r'通知|规定|条例|学校|武大|本校|校历|官网|官方|联网|最新|今年|今天|明天|期限|截止|资格|报名|'
@@ -144,16 +147,13 @@ def safe_direct(text, *, has_context, has_materials):
 
 
 def volunteered_preference(text):
-    from .memory_learning import DECLINE_LEARNING, classify, direct_quote
-    from .memory_lifecycle import admit
+    from .memory_learning import DECLINE_LEARNING, durable_preference
     # A quoted biography, example, one-off instruction or another person's
     # statement cannot turn an ordinary question into personal memory work.
     if DECLINE_LEARNING.search(text):return False
     for sentence in re.split(r'[。；！\n]', text):
         statement=sentence.strip()
-        if (re.match(r'^(?:我(?:自己)?(?:长期|通常|一直|平时|每次|始终|习惯|喜欢)|我的(?:习惯|偏好))',statement)
-                and classify(statement)=='preference' and direct_quote(statement,text)
-                and admit(statement,'preference')=='long_term'):
+        if durable_preference(statement,text):
             return True
     return False
 

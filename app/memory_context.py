@@ -8,12 +8,16 @@ from .preferences import PERSONAL_KEYS, LOCAL_ONLY_KEYS
 from .retrieval_scope import account_access
 
 
-def runtime_fields(conn, uid, cid, messages):
+def context_allowed(conn, cid, messages, settings):
     from .grounding import message_scope_start
+    return bool(settings['mode'] != 'off' and context_for(conn, cid)['memory_enabled']
+                and account_access(messages)['profile'] and memory_access(messages)
+                and message_scope_start(messages) is None)
+
+
+def runtime_fields(conn, uid, cid, messages):
     settings = settings_for(conn, uid)
-    allowed = (settings['mode'] != 'off' and context_for(conn, cid)['memory_enabled']
-               and account_access(messages)['profile'] and memory_access(messages)
-               and message_scope_start(messages) is None)
+    allowed = context_allowed(conn, cid, messages, settings)
     from .memory_lifecycle import config,session_state,working_for
     working = working_for(conn,cid) if allowed else None
     options=config(conn,uid)

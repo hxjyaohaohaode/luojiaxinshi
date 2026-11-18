@@ -89,6 +89,10 @@ class Coverage(Strict):
 
 
 def local_only(question):
+    from .retrieval_scope import ONLY_SUPPLIED
+    from .decision_routing import instruction_text
+    if ONLY_SUPPLIED.search(instruction_text(question,keep_source_label=True)):
+        return True
     if re.search(r'不要联网|不用联网|不联网|禁止联网', question):
         return True
     # Scope phrases must stay inside their own clause. In particular, "只用官网
@@ -700,7 +704,8 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
     if settings.openrouter_api_key and settings.ai_api_key and settings.ai_supports_json and settings.agent_enabled:
         from .decision_routing import decide, safe_direct, needs_research
         from .genui import parse_message
-        from .memory import memory_access as memory_access_for_routing
+        from .memory_context import context_allowed
+        from .memory_store import settings_for as memory_settings
         from .context_snapshot import capture, assert_current
         from dataclasses import replace
         direct = safe_direct(memory_question, has_context=(len(messages)>1 or latest.get('interaction') or latest.get('reply_to')),
@@ -708,15 +713,16 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
         from .decision_routing import preference
         with db.connect() as conn:
             router_allowed=preference(conn,cid)['enabled'] is not False and bool(profile.get('_decision_consent'))
+            local_memory=context_allowed(conn,cid,messages,memory_settings(conn,uid))
         decision = await decide(settings.openrouter_api_key,memory_question,
-                                {**access,'web':not restricted,'memory':access['profile'] and not restricted and memory_access_for_routing(messages),
+                                {**access,'web':not restricted,'memory':local_memory,
                                  'canvas':writing_tier==1},direct=direct,
                                 allow_external=router_allowed and not restricted and not latest.get('interaction'))
         if decision['workflow']=='direct' and direct:
             from .decision_routing import style_context
             from .context_snapshot import bind_memories
             quick_access=dict.fromkeys(access,False)
-            quick_access['memory']=quick_access['profile']=bool(access['profile'] and not restricted and memory_access_for_routing(messages))
+            quick_access['memory']=quick_access['profile']=local_memory
             with db.connect() as conn:
                 quick_snapshot=capture(conn,uid,cid,quick_access,set())
             hints, used, memory_use=await asyncio.to_thread(style_context,db,uid,cid,memory_question,quick_access)

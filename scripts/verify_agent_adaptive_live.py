@@ -181,6 +181,18 @@ def check(case='files', output_name=None, max_provider_requests=None):
             if report['openui_blocks']:
                 authored=next(p['spec']['sandbox'] for p in final['parts'] if p['kind']=='ui' and p['spec'].get('sandbox'))
                 (output/'generated-ui.json').write_text(json.dumps(authored,ensure_ascii=False,indent=2),encoding='utf-8')
+            if case=='memory':
+                source=next(m for m in client.get('/api/conversations/'+chat['id']).json()['messages'] if m['role']=='user')
+                quote=prompts[case].split('。',1)[0]+'。'
+                records=client.get('/api/memory?limit=500').json()['memories']
+                report['persisted_preference']=False
+                for item in records:
+                    if not (item['active'] and item['kind']=='preference' and item['review_status']=='accepted' and item['content']==quote):
+                        continue
+                    detail=client.get('/api/memory/items/'+item['id']).json()
+                    if any(e['source_kind']=='message' and e['source_id']==source['id'] and e['quote']==quote for e in detail['evidence']):
+                        report['persisted_preference']=True
+                        break
             report['case']=case
             report['max_provider_requests']=max_provider_requests
             report['actual_mimo_request_starts']=requests_made
@@ -251,8 +263,8 @@ def check(case='files', output_name=None, max_provider_requests=None):
                 assert any(word in report['answer'] for word in ('请','哪','提供','需要'))
             if case=='memory':
                 assert 'memory_capabilities' in calls and 'ui_capabilities' not in calls
-                assert report['memory_operations'] and not report['interactive_blocks']
-                assert any(r['status'] in ('accepted','used','session_saved') for r in report['memory_operations'])
+                assert report['decision']['workflow']=='memory' and not report['interactive_blocks']
+                assert report['persisted_preference'], '长期偏好缺少已生效的本人原文和对应消息依据'
             return report
 
 
