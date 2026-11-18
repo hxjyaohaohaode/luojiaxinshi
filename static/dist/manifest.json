@@ -2,8 +2,8 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-T77W2EPR.js",
-    "css": "/static/dist/styles-I4GXENQW.css"
+    "js": "/static/dist/app-B3ACPMHV.js",
+    "css": "/static/dist/styles-ELX5PHEL.css"
   },
   "sources": {
     "static/account-security.js": "642c490d48fb77e1d2ccbe153378a29d9a91e12b30d8ce512fe781389658dfe9",
@@ -35,7 +35,7 @@
     "static/chat-outbox.js": "8b3967e2bb708c8f9ee8d1bc11e8eac5633b66afb0ce7a51aeaf9a99a23557bb",
     "static/chat-viewport.js": "e5d21a159288a68826f9f5ee6b18b6a989edcf56f840975112513edee9eb7c96",
     "static/chat-wait.js": "e530ab05d5f461a6589840d4f3a47a304bf869c055d6f67fe484bffa077ca105",
-    "static/chat.js": "a0000246b7a1db8ccabaa3ce4f3230d0827b8e2c048aafab3c6dfa5541cbd08d",
+    "static/chat.js": "dc4514fd723222be909b25044832f934cd1ce25920e8867d76e432590f6911b4",
     "static/choreography.js": "1247ba5e56476a136a52b62cd51d9413ec77a460b5dd57a81dfce72f8c2cf067",
     "static/chrome.js": "1b5a2a49a7216a8ddc17275a66ed8e9ae7bd9bb02f8e9c73cc050441b05814fc",
     "static/collaboration-followup.js": "53d019679e7b1ae9fa0097186055e425f07203184ee863294c1d6cce92f9f3ad",
@@ -64,7 +64,7 @@
     "static/genui/chart-layout.js": "51c8a4a318e25fa1890ff49ba1b4a1156d40a3af6173f6f7a8c51c09c06f833a",
     "static/genui/charts.js": "041b3c5473e0d362ca98e95e017dd01f74a4db693c83dac7cb408bd1d922af1b",
     "static/genui/chat-policy.js": "bd003183c36ea8f988cc33023e13bfa585948f4c5c0c93ddac1a220f23dcaa08",
-    "static/genui/chat-presenter.js": "deb3e12926bcfc65d2ca4efd6944951516d38092b88f3bfc3d92b1cf5d24c9bd",
+    "static/genui/chat-presenter.js": "ee38fb9579f9843d1fb983f84444dafa936057aadd3ddbf999ab1f7f8a3654cd",
     "static/genui/citations.css": "f26b424488eea3d161661512fce871ca84f90a4adf409bce787d9f65a3080350",
     "static/genui/citations.js": "cc638b430d921a9170b0c3ce64359eb73e23f339dda10348237ad8ef02d9f058",
     "static/genui/core.js": "37258ef75af46044fce1aafb4ef878b102860fe1ee0fb62c8de33d399a0ae999",
@@ -85,7 +85,7 @@
     "static/genui/renderer.js": "662b82cf5a86104fe21eb10c3a3c08326b2ab1b3b14760a6fec71ea533686709",
     "static/genui/security.js": "0c4dd92ccf0f8425a03d3e20ac6b96d86de2463ef2fcefded890f37be88495c8",
     "static/genui/stream-text.js": "38b4062a2bd1b9fea930a82c952448b627f933d4e344cfe242f81a6ec445a325",
-    "static/genui/transport.js": "5bd9d0f63c5de607dac701033674d72a5604244242606cda17e97bc779607617",
+    "static/genui/transport.js": "ed3766f2a6b3c4314bde3bb37d81b58e74777554cafb3ea73aee7c20505430aa",
     "static/genui/typography.js": "ac79b898c4877b91c65ecbf7f265fa58b32fa76b3f7060c4c7761212fef54707",
     "static/genui/work-view.js": "1c80bfd1707b35444ab3b28e77a6fd565cc2a5a9b1baadde736060204cadc28b",
     "static/getting-started.js": "947eff405157fc52e20b93db197bcc71c8ff34cff2e30c3a9b75a26ccb66374a",
@@ -158,7 +158,7 @@
     "static/system/base.css": "27da96f073ed16fce3a3baa6b5db0f21756a4d1a5aac5e128355763ba11c0a2b",
     "static/system/campus-imports.css": "c5e9fe3a09526fd8886d0ff36158873ee0e3aed061e3c008e5986f4d8dd45f38",
     "static/system/campus-roster.css": "3b7b6be934937cc174412dfaaa4385084211bab0f0e66dafc52e8e5314a2ae91",
-    "static/system/chat-conversation.css": "97d907d32341612fd17981ef4e3c62809ab119ab2ba33d9ed9b3f7ebb053164c",
+    "static/system/chat-conversation.css": "ade56d1a108ab108c9457d6255a4b37697837b7b6e3f42ffab0f86ab777c0bf8",
     "static/system/chat-layout.css": "bc0f5166d720035e207bd884012d701e5d44167ad2467662264faa090516b3d8",
     "static/system/chat-refinements.css": "808edde120e476677b40273021a390d42abc655ecf26f30babcc0f8815553f11",
     "static/system/collaboration-followup.css": "46764ae96b2b53126edee1021a041fb1fd3a645c03cecc585c1e396f7a33bf20",
@@ -215,12 +215,12 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-NW7ZOBBX.js": "2a0cda9f63783d1477d7fe20ca4ad4323aa9ad91e390bf53ac24668d99d6707d",
     "static/dist/chunks/calendar-EBEUPB25.js": "53a92b48df50e558392800201150fcacf13cd717ff6c5e91e45fa85f98d2d7f9",
-    "static/dist/app-T77W2EPR.js": "4aaac7f1f0137074a0a4c0ad04a83dbf7f2ac074d5b0bfa685024511fe933a3d",
+    "static/dist/app-B3ACPMHV.js": "c5a8a9612a6b32f1252de0de503228c5be54cbde963d92f771064872ba701373",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
     "static/dist/chunks/memory-CMBMXAQ5.js": "881679d5707d5570684593af545e8c1e054c563875a26910aa2401c693ca8fdb",
     "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
     "static/dist/chunks/charts-NJK6ZI2V.js": "4fca2a9b77faf1b0f558fc6c5ce1d20e2066b1102f4918b4b698345907471608",
-    "static/dist/chunks/chat-FPVEWLTL.js": "dc44da639124839760303648e71f50017e3e64db50577b2f1223228c236001c4",
+    "static/dist/chunks/chat-JPYZJBEU.js": "518add7d313f4b75a2a25e4ddf528b7b62dcce63389c8ba1573f756fd339f7cb",
     "static/dist/chunks/chunk-QRC6NDUT.js": "6cbca853771c7d7235b56033dfbc403dc04a856b6c6d3ea0a9d2f67531a35763",
     "static/dist/chunks/chunk-HHFMEND4.js": "a9f4b9f3bdece3db9e4e4d8c4c8373783ec47fc9d2d0d405fbb7709e8136a246",
     "static/dist/chunks/chunk-O743CP2V.js": "8b5803ab8245f2d0a20a9a583a0225c52af71ab7509cc0a124acffd395ab155f",
@@ -233,7 +233,7 @@
     "static/dist/chunks/campus-D2CCLL6V.js": "5a9c7eb95125d864aed3db72b8ac24a2cc90610784cb27be5cf1b7db523d0892",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-I4GXENQW.css": "f74beaedd1dccf030c3cf7bf360ae28f2431f18c7b6eae2438c27a6cd24091d5",
-    "static/dist/index.html": "22b4362b48d8361be5fdf0fa0d36a3c2c50f3d36341cb1beace3962611aa6f24"
+    "static/dist/styles-ELX5PHEL.css": "d8723e8f120d196a6fde072ec1a5724a49c3ded2a7fd27f7abadd841caccb7d3",
+    "static/dist/index.html": "783de5dead6d549fffa5d15cd0baaf6894467d16c2110275326d30aa970e4fa4"
   }
 }

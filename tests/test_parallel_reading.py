@@ -34,7 +34,9 @@ def test_independent_readers_overlap_and_failed_reader_cannot_publish_an_unassig
         run.service=SimpleNamespace(model_slots=asyncio.Semaphore(4));run.guard=lambda:None;run.emit=lambda *a:None
         run.evidence_entries=[{'source_id':d['id'],'ref':f'E{i}','quote':d['id'],'locator':'正文'} for i,d in enumerate(docs,1)]
         monkeypatch.setattr('app.agent_runtime.team.rate_limit',lambda *a:None)
-        await gather_evidence(run,'核对三份通知的要求',docs)
+        observations=[]
+        await gather_evidence(run,'核对三份通知的要求',docs,on_observation=observations.append)
+        assert sorted(v['data']['observation']['quote'] for v in observations)==['correction','notice']
         assert peak==3 and all(len(s)==1 for s in seen)
         assert sorted(r['status'] for r in run.team_report['assignments'])==['completed','completed','failed']
         assert sorted(row['attempts'] for row in run.team_report['assignments'])==[1,1,2]

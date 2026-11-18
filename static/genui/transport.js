@@ -12,6 +12,10 @@ export class SSEDecoder{
       if(!['start','phase','work','agent','preview','ui_preview','delta','done'].includes(fields.event))throw Error('回复事件暂不支持。');let data;try{data=JSON.parse(fields.data);}catch{throw Error('回复数据未通过解析，已保留收到的内容。');}
       if(fields.event==='ui_preview'&&(typeof data?.message_id!=='string'||!data.content||typeof data.content!=='object'||Array.isArray(data.content)))throw Error('界面预览无效。');
       if(fields.event==='agent'&&(typeof data?.message_id!=='string'||typeof data.kind!=='string'||!data.state||typeof data.state.thread_id!=='string'||!Array.isArray(data.state.approvals)||data.state.approvals.length>8||!Array.isArray(data.state.files)))throw Error('工具执行状态无效。');
+      if(fields.event==='agent'&&data.kind==='source.checked'){
+        const source=data.data?.observation;
+        if(!source||typeof source.name!=='string'||[...source.name].length>80||typeof source.locator!=='string'||[...source.locator].length>120||typeof source.quote!=='string'||!source.quote||[...source.quote].length>220||typeof source.truncated!=='boolean')throw Error('原文摘录无效。');
+      }
       if(fields.event==='phase'&&(!['planning','retrieving','searching','coverage','writing','verifying'].includes(data?.phase)||typeof data?.label!=='string'||data.label.length>160))throw Error('回复阶段无效。');
       if((fields.event==='work'||data?.steps!==undefined)&&(!Array.isArray(data.steps)||data.steps.length>48||data.steps.some(s=>!s||typeof s.id!=='string'||typeof s.title!=='string'||s.title.length>80||typeof s.summary!=='string'||s.summary.length>160||!['running','complete','interrupted'].includes(s.state))))throw Error('工作摘要无效。');
       if(['delta','preview'].includes(fields.event)&&(typeof data?.text!=='string'||data.text.length>1048576))throw Error('回复增量无效。');

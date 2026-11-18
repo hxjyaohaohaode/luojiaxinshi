@@ -60,3 +60,12 @@ test('a silent socket expires while heartbeats extend the same request',async t=
   const events=[];await streamChat('a',{},{csrf:'synthetic',onEvent:t=>events.push(t),idleMs:65});
   assert.deepEqual(events,['done']);assert.equal(calls.length,2);
 });
+
+test('source excerpts are bounded plain data from the current reading task',()=>{
+  const state={thread_id:'test',approvals:[],files:[]};
+  const frame=observation=>new TextEncoder().encode(packet(1,'agent',{message_id:'m',kind:'source.checked',data:{observation},state}));
+  const receipt={name:'合成原件',locator:'第 2 段',quote:'原句 🌿',truncated:false};
+  const seen=[];new SSEDecoder((_,data)=>seen.push(data.data.observation)).push(frame(receipt));
+  assert.deepEqual(seen,[receipt]);
+  assert.throws(()=>new SSEDecoder(()=>{}).push(frame({...receipt,quote:'🌿'.repeat(221)})),/原文摘录/);
+});

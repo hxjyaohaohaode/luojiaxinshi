@@ -376,7 +376,11 @@ export function createChatUI({state,api,esc,icon,companion,greeting,toast,showDi
         }else if(type==='work'){
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._work=data.steps;paintMessages();}
         }else if(type==='agent'){
-          if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m.agent=data.state;paintMessages();}
+          if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){
+            m.agent=data.state;
+            if(data.kind==='source.checked'&&!m._sourceObservation)m._sourceObservation=data.data?.observation;
+            paintMessages();
+          }
         }else if(type==='ui_preview'){
           if(data.message_id!==pending.mid)return;const m=current.messages.find(m=>m.id===pending.mid);if(m){m._uiPreview=applyPreview(m._uiPreview,data.content);paintMessages();}
         }else if(type==='preview'){

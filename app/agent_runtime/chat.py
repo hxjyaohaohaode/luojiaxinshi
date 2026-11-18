@@ -1130,7 +1130,7 @@ async def research(settings, db, uid, cid, mid, sources, messages, profile, acce
                     result=await run.tool(call,'root',False,output_limit=min(16000,run.context_bytes//8))
                     if run.memory_contract_loaded:run.initial_memory_protocol=result['content']
                 from .team import gather_evidence
-                await gather_evidence(run,question,sources)
+                await gather_evidence(run,question,sources,on_observation=run.queue.put_nowait)
                 if run.workflow=='compose' and run.allow_ui and not requested_urls and not sources and not run.history and not run.open_topics():
                     from ..decision_routing import self_contained_canvas
                     if self_contained_canvas(prompt):
@@ -1152,6 +1152,7 @@ async def research(settings, db, uid, cid, mid, sources, messages, profile, acce
             # Only agent packets are consumed as state updates. Text and UI
             # deltas can arrive character by character on a long response.
             if event['type'] == 'agent':
+                if event['kind']=='source.checked':run.guard()
                 with db.connect() as conn:
                     event['state'] = message_state(conn, uid, cid, mid)
             yield event

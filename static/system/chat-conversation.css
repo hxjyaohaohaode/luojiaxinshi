@@ -171,3 +171,7 @@
 .history-pagination:empty { display:none; }
 .history-workspace .history-empty { padding:18px 4px;text-align:center;font-size:13px; }
 .history-workspace .history-empty p { margin:4px 0 0;color:var(--muted); }
+
+.message-assistant .reading-observation { max-inline-size:min(100%,68ch);min-inline-size:0;margin:6px 0 10px;overflow-wrap:anywhere; }
+.reading-observation figcaption { color:var(--muted);font-size:.8rem;line-height:1.5; }
+.reading-observation blockquote { margin:.25rem 0 0;padding-inline-start:.7rem;border-inline-start:2px solid var(--line);font-size:.93rem;line-height:1.55; }

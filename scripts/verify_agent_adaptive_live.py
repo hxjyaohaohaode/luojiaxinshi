@@ -44,6 +44,8 @@ class StreamTimeline:
                         elapsed=round(time.monotonic()-started,3)
                         self.timeline.setdefault('first_text_seconds',elapsed)
                         if model_step:first_text_by_step.setdefault(model_step,elapsed)
+                    if kind=='agent' and value.get('kind')=='source.checked' and value.get('data',{}).get('observation',{}).get('quote'):
+                        self.timeline.setdefault('first_source_excerpt_seconds',round(time.monotonic()-started,3))
                     if kind=='done' and first_text_by_step:
                         self.timeline['last_model_first_text_seconds']=first_text_by_step[max(first_text_by_step)]
             if message['type']=='http.response.body' and b'event: ui_preview\n' in body:

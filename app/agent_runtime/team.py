@@ -73,7 +73,7 @@ def verified_report(raw, entries):
     return {'findings':findings,'gaps':gaps}
 
 
-async def gather_evidence(run, question, attachments):
+async def gather_evidence(run, question, attachments, *, on_observation=None):
     if not callable(getattr(run.provider,'read_evidence',None)) or run.focused_visual:return
     ids={s['id'] for s in attachments}
     docs=[s for s in run.records.values() if (s['id'] in ids or s.get('evidence_kind')=='web_page') and s.get('sections')]
@@ -130,6 +130,17 @@ async def gather_evidence(run, question, attachments):
                             # Retry only this partition with its original spans. Never reuse an invalid model quote.
                             prompt=job.question+'\n上份摘录未通过引用或格式检查。仅从 assigned_evidence 中选取真实的 ref，完整短段使用 whole_span:true。访问不到的内容放在 gaps，勿猜编号或日期。'
                             continue
+                        if on_observation and result['findings']:
+                            finding=result['findings'][0]
+                            original=next(e for e in entries if e['ref']==finding['ref'])
+                            # Render only exact characters from a source the owner
+                            # supplied or authorized this turn. A normalized match
+                            # can verify a finding but cannot supply a literal quote.
+                            quote=finding['quote'] if finding['quote'] in original['quote'] else original['quote']
+                            observation={'name':run.records[finding['source_id']]['name'][:80],
+                                         'locator':original['locator'][:120], 'quote':quote[:220],
+                                         'truncated':len(quote)>220}
+                            on_observation({'type':'agent','kind':'source.checked','data':{'observation':observation}})
                         result['coverage']=coverage
                         omitted=sum(item['available']-item['selected'] for item in coverage.values())
                         if omitted:

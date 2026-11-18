@@ -113,6 +113,17 @@ export class ConversationView{
       if(active&&(message._work?.length||message.grounding?.steps?.length)){const stage=message._phase||[...(message._work||message.grounding?.steps||[])].reverse().find(s=>s.state==='running')?.stage;r.status.textContent=stage==='verifying'?'核验中':message.preview||message._preview!==undefined?'生成中':'处理中';}
       const pose=active?(message._phase==='writing'?'writing':message._phase==='verifying'||message._phase==='searching'||message._phase==='retrieving'?'search':(message.genui?.raw||message.content)?'writing':this.options.sources?.length?'search':'thinking'):message.status==='complete'?'complete':'rest';
       if(r.pose!==pose){r.pose=pose;const avatar=r.label.querySelector('img');avatar.src='/static/assets/luojia-messenger-'+pose+'.png';avatar.dataset.replyPose=pose;}
+      // Show the first exact excerpt until answer text arrives. Its source
+      // stays visible and it never enters the answer or conversation history.
+      const observation=active&&!message._preview&&!message.preview?.text&&!message.content&&!message._uiPreview?message._sourceObservation:null;
+      if(observation&&!r.observation){
+        const figure=el('figure','reading-observation');
+        const caption=el('figcaption','','原文摘录 · '+observation.name+(observation.locator?' · '+observation.locator:''));
+        figure.append(caption,el('blockquote','',observation.quote+(observation.truncated?'…':'')));
+        r.content.before(figure);r.observation=figure;
+      }else if(!observation&&r.observation){
+        r.observation.remove();r.observation=null;
+      }
       const previewing=active&&(message._preview!==undefined||!!message.preview);
       r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',previewing);
       // Keep the preview until the complete verified result can replace it.
