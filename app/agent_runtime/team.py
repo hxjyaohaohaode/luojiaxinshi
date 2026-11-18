@@ -55,6 +55,9 @@ def verified_report(raw, entries):
     for item in raw['findings'][:8]:
         if not isinstance(item,dict):raise AgentError('核读条目缺少依据')
         ref,quote=item.get('ref'),item.get('quote')
+        if item.get('whole_span') is True and quote is None and isinstance(ref,str) and ref in index:
+            original=index[ref]['quote']
+            if len(original)<=500:quote=original
         if not isinstance(ref,str) or ref not in index or not isinstance(quote,str) or not quote.strip() or len(quote)>500 or normalized(quote) not in normalized(index[ref]['quote']):
             raise AgentError('核读条目没有对应分配材料的原句')
         findings.append({'ref':ref,'source_id':index[ref]['source_id'],'locator':index[ref]['locator'],'quote':quote})
@@ -90,24 +93,37 @@ async def gather_evidence(run, question, attachments):
         report['spans']=len(entries)
         if not entries:raise AgentError('未获得本轮可引用原文')
         async with run.service.model_slots:
-            run.guard()
-            if run.calls>=MODEL_CALL_LIMIT-3:raise AgentError('共享调用预算已保留给汇总与复核')
-            rate_limit(run.db,'agent-model:'+run.uid,run.settings.ai_daily_limit*24,86400)
-            run.calls+=1
             report['start_ms']=round((time.monotonic()-started)*1000)
-            run.emit('model.started',{'agent_id':aid,'step':1,'model':run.settings.ai_summary_model,'thinking':'disabled'})
+            prompt=job.question
             try:
                 async with asyncio.timeout(min(run.settings.ai_timeout,45)):
-                    raw,usage=await run.provider.read_evidence(job.question,entries)
-                run.usage['model_calls']+=1
-                run.usage['prompt_tokens']+=usage.get('prompt_tokens') or 0
-                run.usage['completion_tokens']+=usage.get('completion_tokens') or 0
-                run.guard()
-                result=verified_report(raw,entries)
-                report['verified_quotes']=len(result['findings'])
-                report['gaps']=result['gaps']
-                return dumps(result)
+                    for attempt in (1,2):
+                        run.guard()
+                        if run.calls>=MODEL_CALL_LIMIT-3:raise AgentError('共享调用预算已保留给汇总与复核')
+                        rate_limit(run.db,'agent-model:'+run.uid,run.settings.ai_daily_limit*24,86400)
+                        run.calls+=1
+                        report['attempts']=attempt
+                        run.emit('model.started',{'agent_id':aid,'step':attempt,'model':run.settings.ai_summary_model,'thinking':'disabled'})
+                        try:
+                            raw,usage=await run.provider.read_evidence(prompt,entries)
+                            run.usage['model_calls']+=1
+                            run.usage['prompt_tokens']+=usage.get('prompt_tokens') or 0
+                            run.usage['completion_tokens']+=usage.get('completion_tokens') or 0
+                            run.guard()
+                            result=verified_report(raw,entries)
+                        except (AgentError,ValueError) as exc:
+                            if attempt==2:raise
+                            # Retry only this partition with its original spans. Never reuse an invalid model quote.
+                            prompt=job.question+'\n上份摘录未通过引用或格式检查。仅从 assigned_evidence 中选取真实的 ref，完整短段使用 whole_span:true。访问不到的内容放在 gaps，勿猜编号或日期。'
+                            continue
+                        report['verified_quotes']=len(result['findings'])
+                        report['gaps']=result['gaps']
+                        return dumps(result)
+            except AgentError:
+                report['failure_kind']='evidence_or_budget'
+                raise
             except (TimeoutError,AIError,ValueError) as exc:
+                report['failure_kind']='timeout' if isinstance(exc,TimeoutError) else 'invalid_response' if isinstance(exc,ValueError) else 'provider_unavailable'
                 raise AgentError('本次核读未能完成，需由主任务回查依据') from exc
             finally:
                 report['end_ms']=round((time.monotonic()-started)*1000)

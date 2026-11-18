@@ -53,6 +53,55 @@
     }
   }
 
+  const adjustedLabels=new WeakMap();
+  let diagramStyleVersion=0,diagramStyleReady=false;
+  function restoreLabel(label){
+    const saved=adjustedLabels.get(label);
+    if(!saved)return;
+    if(label.style.fontSize===saved.applied)label.style.setProperty('font-size',saved.value,saved.priority);
+    adjustedLabels.delete(label);
+  }
+  function fitDiagramLabels(){
+    // A responsive viewBox shrinks its text with the drawing. Grow labels only
+    // where the author left room; keep the original geometry of dense figures.
+    for(const svg of root.querySelectorAll('figure svg[viewBox]')){
+      const labels=[...svg.querySelectorAll('text')];
+      if(!labels.length||labels.length>80)continue;
+      const bounds=svg.getBoundingClientRect();
+      if(!bounds.width)continue;
+      for(const label of labels){
+        const previous=adjustedLabels.get(label);
+        if(previous&&(previous.width!==bounds.width||previous.styleVersion!==diagramStyleVersion||label.style.fontSize!==previous.applied))restoreLabel(label);
+      }
+      if(bounds.width>800)continue;
+      const boxes=labels.map(label=>label.getBoundingClientRect());
+      const overlaps=(a,b)=>a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1;
+      labels.forEach((label,index)=>{
+        if(adjustedLabels.has(label))return;
+        const matrix=label.getScreenCTM(),scale=matrix&&Math.hypot(matrix.c,matrix.d);
+        const cssSize=parseFloat(getComputedStyle(label).fontSize);
+        if(!scale||!cssSize||cssSize*scale>=11||!boxes[index].width)return;
+        const original=boxes[index];
+        const saved={value:label.style.fontSize,priority:label.style.getPropertyPriority('font-size')};
+        label.style.setProperty('font-size',(11/scale)+'px','important');
+        adjustedLabels.set(label,{...saved,applied:label.style.fontSize,width:bounds.width,styleVersion:diagramStyleVersion});
+        const grown=label.getBoundingClientRect();
+        const clipped=grown.left<bounds.left-1||grown.right>bounds.right+1||grown.top<bounds.top-1||grown.bottom>bounds.bottom+1;
+        const collides=boxes.some((box,i)=>i!==index&&overlaps(grown,box)&&!overlaps(original,box));
+        if(clipped||collides)restoreLabel(label);
+        else boxes[index]=grown;
+      });
+    }
+  }
+
+  let diagramFrame=0;
+  function scheduleDiagramLabels(){
+    if(diagramFrame||!diagramStyleReady)return;
+    diagramFrame=requestAnimationFrame(()=>{
+      diagramFrame=0;
+      fitDiagramLabels();
+    });
+  }
   let reflowWidth=-1,flowChanged=true;
   function fitAuthoredFlow(){
     if(!authoredCanvas||!root.clientWidth)return;
@@ -60,7 +109,7 @@
     if(width===reflowWidth&&!flowChanged)return;
     reflowWidth=width;flowChanged=false;
     for(const node of root.querySelectorAll('[data-campus-reflow]'))node.removeAttribute('data-campus-reflow');
-    if(root.scrollWidth<=width+1)return;
+    if(root.scrollWidth<=width+1){scheduleDiagramLabels();return;}
     for(const node of root.querySelectorAll('article,section,main,header,footer,div,figure,form,fieldset,table,ul,ol,dl,nav')){
       if(!node.clientWidth||node.namespaceURI!=='http://www.w3.org/1999/xhtml')continue;
       const parent=node.parentElement,css=getComputedStyle(node);
@@ -80,6 +129,7 @@
         else if(css.display.includes('flex'))node.dataset.campusReflow='flex';
       }
     }
+    scheduleDiagramLabels();
   }
 
   function measure(){
@@ -247,7 +297,8 @@
     if(!data.complete&&!ui.cssComplete&&(!authoredCanvas||!ui.html.some(Boolean)))return;
     document.documentElement.toggleAttribute('data-authored',authoredCanvas);
     for(const sheet of legacyStyles){const media=authoredCanvas?'not all':'all';if(sheet.media!==media)sheet.media=media;}
-    if((data.complete||ui.cssComplete)&&style.textContent!==ui.css){style.textContent=ui.css;flowChanged=true;}
+    if(!diagramStyleReady&&(ui.cssComplete||data.complete)){diagramStyleReady=true;flowChanged=true;}
+    if((data.complete||ui.cssComplete)&&style.textContent!==ui.css){style.textContent=ui.css;flowChanged=true;diagramStyleVersion++;}
     const localReady=!!data.complete||!!ui.localReady;
     const previous=started?controls():null;
     const html=data.complete?ui.html.join(''):ui.html.join('').replace(/\[E\d+\]/g,'');

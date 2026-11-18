@@ -37,6 +37,7 @@ def test_independent_readers_overlap_and_failed_reader_cannot_publish_an_unassig
         await gather_evidence(run,'核对三份通知的要求',docs)
         assert peak==3 and all(len(s)==1 for s in seen)
         assert sorted(r['status'] for r in run.team_report['assignments'])==['completed','completed','failed']
+        assert sorted(row['attempts'] for row in run.team_report['assignments'])==[1,1,2]
         assert len(run.pending_agent_results())==3
     # No owner, provider credential, database mutation or external network needed for the barrier.
     asyncio.run(exercise())
@@ -56,3 +57,11 @@ def test_route_preference_is_owned_versioned_and_persisted(env):
     assert c.put(url,json={'enabled':True,'version':0}).status_code==409
     assert c.get('/api/conversations/'+chat['id']).json()['decision_preference']['enabled'] is False
     with env[0].state.db.connect() as conn:assert preference(conn,chat['id'])['enabled'] is False
+
+def test_reader_can_select_an_assigned_short_span_without_retyping_it():
+    source={'ref':'E8','source_id':'revision','locator':'发布方更正','quote':'正式更正：4月12日 12:00。'}
+    report=verified_report({'findings':[{'ref':'E8','whole_span':True}],'gaps':[]},[source])
+    assert report['findings']==[source]
+    for bad in [{'ref':'E9','whole_span':True},{'ref':'E8','whole_span':True,'quote':'编造日期'}]:
+        with pytest.raises(AgentError):
+            verified_report({'findings':[bad],'gaps':[]},[source])

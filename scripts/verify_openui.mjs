@@ -93,7 +93,7 @@ try{
     const mount=document.createElement('main');document.body.replaceChildren(mount);
     mount.style.cssText='width:100%;min-width:0';document.body.style.cssText='margin:0;display:block';
     const spec={complete:false,errors:[],sandbox:{title:'合成路程比较',preferredWidth:880,initialHeight:1400,revision:1,
-      html:['<article><h2>步行路线</h2><div class="paths"><section>沿湖路线</section><section>林荫路线</section></div></article>'],
+      html:['<article><h2>步行路线</h2><div class="paths"><section>沿湖路线</section><section>林荫路线</section></div><figure><svg viewBox="0 0 800 120" style="display:block;width:100%"><text x="100" y="80" font-size="12">入口</text><text x="650" y="80" font-size="12">终点</text></svg></figure></article>'],
       htmlComplete:false,css:'',cssComplete:false,jsFunctions:[],jsExpressions:[]}};
     window.flowRenderer=new SandboxRenderer(mount,spec);
     window.flowRenderer.frame.style.cssText='display:block;width:100%;margin:0;border:0';
@@ -107,10 +107,17 @@ try{
   for(const width of [320,390,844,768,1440,320]){
     await flowPage.setViewportSize({width,height:670});
     await flowPage.waitForFunction(w=>Math.abs(document.querySelector('iframe').getBoundingClientRect().width-w)<3,width);
-    await inside.locator('.paths').evaluate(async node=>{
-      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      if(node.scrollWidth>node.clientWidth+1||document.documentElement.scrollWidth>innerWidth+1)throw Error('生成列超出可用宽度');
-    });
+    await inside.locator('.paths').evaluate(async(node,targetWidth)=>{
+      const label=document.querySelector('figure svg text');
+      const readable=()=>{
+        const m=label.getScreenCTM();
+        return m&&parseFloat(getComputedStyle(label).fontSize)*Math.hypot(m.c,m.d)>=10.9;
+      };
+      const ready=()=>innerWidth===targetWidth&&readable()&&node.scrollWidth<=node.clientWidth+1&&document.documentElement.scrollWidth<=innerWidth+1;
+      const deadline=performance.now()+2500;
+      while(!ready()&&performance.now()<deadline)await new Promise(resolve=>requestAnimationFrame(resolve));
+      if(!ready())throw Error('生成列或示意图未完成重排 '+JSON.stringify([targetWidth,innerWidth,label.outerHTML,readable()]));
+    },width);
   }
   await flowPage.close();
   checks.push('自由 HTML 在 CSS 完成前可读，1400px 建议高度不会撑开首屏；固定双列随六次视口变化重新排版');
