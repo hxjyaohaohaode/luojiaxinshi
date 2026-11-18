@@ -101,13 +101,12 @@ def test_post_compile_repair_retains_native_ui_object_and_reference_mapping(env,
     monkeypatch.setattr(genui_ai,'stream_reply',real_stream)
     async def verify(settings,result,sources,question,context):return [],{},grounding.check_result(result,sources)
     monkeypatch.setattr(grounding,'verify',verify)
-    base={**answer(),'citations':[],'citation_refs':['E1'],'ui':{'state':{'question':''},'nodes':[
-        {'id':'body','type':'Section','props':{'title':'原文核对'},'children':['question']},
-        {'id':'question','type':'TextInput','props':{'label':'疑问','bind':'question'}}]}}
+    base={**answer(),'citations':[],'citation_refs':['E1'],'ui':{'renderer':'open_generative_ui','title':'原文核对',
+        'preferredWidth':640,'html':['<label for="question">疑问</label><input id="question">']}}
     seen=[];client=httpx.AsyncClient
     def transport(request):
         seen.append(json.loads(request.content));value=json.loads(json.dumps(base))
-        if len(seen)==1:value['ui']['nodes'][0]['props']['children']=['question']
+        if len(seen)==1:value['ui']['html'].append('<a href="https://example.edu/other">未登记来源</a>')
         raw=json.dumps(value,ensure_ascii=False)
         body='data: '+json.dumps({'choices':[{'delta':{'content':raw},'finish_reason':'stop'}]})+'\n\n'
         return httpx.Response(200,content=body)
@@ -119,7 +118,7 @@ def test_post_compile_repair_retains_native_ui_object_and_reference_mapping(env,
     previous=next(m['content'] for m in seen[1]['messages'] if m['role']=='assistant' and '从未向用户发布' in m['content'])
     native=json.loads(previous.split('\n',1)[1])
     assert native['citation_refs']==['E1'] and native['citations']==[]
-    assert native['ui']['nodes'][0]['props']['children']==['question'] and '```genui' not in native['answer']
+    assert 'https://example.edu/other' in native['ui']['html'][-1] and '```openui' not in native['answer']
     assert '"display_number_to_ref":[{"number":1,"ref":"E1"}]' in seen[1]['messages'][-1]['content']
     assert 'repair_draft' not in json.dumps(packets) and message['genui']['validated']
 
