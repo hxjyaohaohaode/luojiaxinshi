@@ -137,6 +137,7 @@ def read_agenda(conn, uid, args):
         'records': records, 'total': len(events), 'offset': args.offset, 'has_more': args.offset + len(records) < len(events),
         'query_scope': {'kind': 'agenda', 'start_day': args.start_day, 'end_day': args.end_day, 'timezone': 'Asia/Shanghai'},
         'conflicts': [{'first': a['title'], 'first_id': a['id'], 'second': b['title'], 'second_id': b['id'],
-                       'from': stamp(b['start']), 'until': stamp(min(a['end'], b['end']))} for a, b in pairs],
+                       'from': stamp(b['start']), 'until': stamp(min(a['end'], b['end'])),
+                       'minutes': int((min(a['end'], b['end']) - b['start']).total_seconds() // 60)} for a, b in pairs],
         'more_conflicts': more, 'scope_note': '仅含本人已保存的安排与待办。全天或未给具体时刻不推断占用；截止和办理窗口不是持续占用。',
     }

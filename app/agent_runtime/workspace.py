@@ -28,7 +28,7 @@ POLICY = '''个人日历和待办使用 workspace_read 读取最新记录；需�
 这些回执只证明本站日历/待办变化；不证明已同步手机日历、触发系统闹钟、提交作业、通知他人或完成学校手续。需要外部结果时必须有对应真实业务回执。
 不确定或不知道就直接说明。不得虚构查看范围、测试通过、完成操作或未知事实。回答简要说明实际结果和未完成事项。'''
 POLICY += '\n面向用户用“已保存”“待办”“已标记完成”“已撤销”等短词，不输出 committed/pending、字段名或内部 ID。'
-READ_POLICY = '本人日历和待办统一用 workspace_read。查具体日期的课表、重叠或可排时段用 kind=agenda 加 start_day/end_day、reply=records。has_more 时翻页；未登记的时间不能保证空闲。仅根据已保存状态询问待办数量或优先关注几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计）。该简报已包含期限、前置、材料、待核变更、跟进和并列项依据，不需选择 records 再重写；服务端整理候选后仍独立核验。需要结合附件原文、校规、课表、用户另定的排序标准，或要求精确单句/实际修改时，才用 reply=records 继续完整工具链。实际修改先用 workspace_capabilities 取得协议并核对回执；分析不改记录，本站保存不代表学校手续完成。'
+READ_POLICY = '本人日历和待办统一用 workspace_read。查具体日期的课表、重叠或可排时段用 kind=agenda 加 start_day/end_day、reply=records。has_more 时翻页。已列全时直接使用各记录与重叠项的 evidence_ref 引用，无需再次读取同一窗口；未登记的时间不能保证空闲。仅根据已保存状态询问待办数量或优先关注几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计）。该简报已包含期限、前置、材料、待核变更、跟进和并列项依据，不需选择 records 再重写；服务端整理候选后仍独立核验。需要结合附件原文、校规、课表、用户另定的排序标准，或要求精确单句/实际修改时，才用 reply=records 继续完整工具链。实际修改先用 workspace_capabilities 取得协议并核对回执；分析不改记录，本站保存不代表学校手续完成。'
 TASK_STATE_POLICY = '个人待办的 status=done 表示本人已标记完成，cancelled 表示已取消；workflow.data.stage 是保留的阶段记录，不能仅因它仍为 preparing 就说已完成事项尚未完成。handling_state 是服务器依据上述独立状态计算的当前办理路径，可直接用于解释现在能做什么；不是学校受理证明。前置是否满足看 workflow.blocked，原要求变化看 pending_changes/change_review，二者分别核对。followup_at 是个人跟进安排，不是正式截止。'
 TASK_STATE_POLICY += ' query_task_status_counts 是数据库对 query_scope 匹配的全部本人待办的统计，独立于详情分页；不含日历、筛选范围外或其他账号。材料勾选表示本人准备状态，不等同于前置任务未完成。用户问哪两件待办就分别选两条，不能把多条合并冒充一件。'
 

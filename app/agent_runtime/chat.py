@@ -697,7 +697,11 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                     'evidence_index': [reference(entry)for entry in result.get('evidence_index', [])]}
             page.pop('sources', None)
             if 'conflicts' in page:
-                page['conflicts'] = list(page['conflicts'])
+                by_locator = {e['locator']: e['ref'] for e in page['evidence_index']}
+                page['records'] = [dict(event, evidence_ref=by_locator.get(
+                    f"记录 {event['id']} {event['kind']} {event['starts_at']}")) for event in page['records']]
+                page['conflicts'] = [dict(pair, evidence_ref=by_locator.get(
+                    f"日程重叠 {pair['first_id']} {pair['second_id']} {pair['from']}")) for pair in page['conflicts']]
             entries = page['evidence_index']
             def page_index():
                 prefixes = [('操作 ' + str(r['operation_id'])) if 'operation_id' in r else ('记录 ' + str(r['id'])) for r in page['records']]

@@ -51,7 +51,7 @@ APPROACH_INSTRUCTIONS = {
 
 def local_approach(text, direct):
     request=positive_request(text)
-    if re.search(r'排期|排班|规划时间|排时间|空档|空闲|冲突.{0,6}(?:课|日程)|日程.{0,8}冲突|课表|时段|time slot|availability',request,re.I):return 'time_plan'
+    if re.search(r'排期|排班|规划时间|排时间|空档|空闲|(?:冲突|撞在一起|重叠).{0,16}(?:课|日程|日历|安排)|(?:日程|日历|安排).{0,24}(?:冲突|撞在一起|重叠)|课表|时段|time slot|availability',request,re.I):return 'time_plan'
     if re.search(r'核查|核实|核对|查证|冲突|交叉|正式更正|原文|corroborate|verify',request,re.I):return 'corroborate'
     if not direct and re.search(r'接着|继续|跟进|分步|依次|补件|然后|下一步|follow.up',request,re.I):return 'follow_through'
     return 'straight'
