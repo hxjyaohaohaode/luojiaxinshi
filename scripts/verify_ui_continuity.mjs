@@ -138,6 +138,10 @@ for(const name of names){
         await scenario('旧记忆页面响应不修改当前路由状态',async check=>{
           await open('settings','a[href="#memory"]');
           await delay('/memory/tree/status','GET',()=>page.locator('a[href="#memory"]').click(),async()=>{
+            const status=page.locator('.route-feedback [role=status]');
+            await status.waitFor();
+            const size=await page.locator('.route-feedback').boundingBox();
+            check(size.height<=44&&size.width<=200,'切换页面使用单行状态提示',{width:size.width,height:size.height});
             await page.locator((viewport.width<=850?'.mobile-bottom-nav':'.sidebar')+' a[href="#tasks"]').click();await page.waitForSelector('#task-results');
           },async()=>{await page.waitForFunction(()=>document.querySelector('#content')?.dataset.page==='tasks'&&!document.querySelector('.route-feedback'));check(await page.locator('#task-results').count()===1,'旧页面响应不覆盖待办');check(await page.locator('#content').getAttribute('data-page')==='tasks','当前页面布局标识保持正确');},{allowAbort:true});
         });

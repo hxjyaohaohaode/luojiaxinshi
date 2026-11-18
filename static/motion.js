@@ -43,16 +43,17 @@ export function motionToggle(){
 }
 
 // A real pending route gets feedback after 280 ms; fast routes add no visual flash.
-export function beginRouteFeedback(content,title='正在打开你的空间'){
+export function beginRouteFeedback(content,title='正在打开页面'){
   activeRouteFeedback?.();
   let host,slowTimer;
   const timer=setTimeout(()=>{
     if(!content.isConnected)return;
     host=document.createElement('div');host.className='route-feedback';
-    host.innerHTML=loadingState(title,'正在读取已保存的内容。')+'<div class="route-skeleton" aria-hidden="true"><span></span><span></span><span></span></div>';content.before(host);
+    const status=document.createElement('span');status.setAttribute('role','status');
+    host.append(status);content.before(host);status.textContent=title;
     slowTimer=setTimeout(()=>{
       if(!host?.isConnected)return;
-      host.querySelector('p').textContent='连接有些慢。已保存的资料仍在，可以稍候或重新加载。';
+      status.textContent='连接较慢，仍在加载';
       host.insertAdjacentHTML('beforeend','<button type="button" class="button small" data-action="refresh">重新加载</button>');
     },12000);
   },280);

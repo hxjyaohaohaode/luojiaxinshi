@@ -10,3 +10,12 @@
 .chat-agent-actions .chat-agent-approval pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-size:.82rem;margin-block:.6rem;color:var(--ink,#243b30);background:transparent;opacity:1}
 .chat-agent-approval .actions{display:flex;gap:.6rem;flex-wrap:wrap}
 .chat-agent-files{padding-left:1.25rem;overflow-wrap:anywhere}
+.chat-research {border-block:1px solid var(--line,#dce5df);padding:.5rem 0;min-width:0}
+.chat-research summary {cursor:pointer;padding:.35rem 0}
+.chat-research summary span {margin-inline-start:.65rem}
+.chat-research ul {list-style:none;padding:0;margin:.25rem 0}
+.chat-research li {display:grid;grid-template-columns:auto minmax(0,1fr);gap:.2rem .65rem;align-items:baseline;padding:.3rem 0;overflow-wrap:anywhere}
+.chat-research li p {grid-column:2;margin:0}
+.research-state {font-size:12px;color:var(--muted,#53615a)}
+.chat-research [data-state=sourced] .research-state {color:var(--accent,#226744)}
+.chat-research [data-state=blocked] .research-state {font-weight:600}

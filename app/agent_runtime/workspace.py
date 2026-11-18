@@ -142,16 +142,63 @@ WRITE_TOOLS = {
 }
 
 
-def write_allowed(messages):
-    """Only actual user prose authorizes effects, never attachments/UI labels."""
+def requested_effects(messages):
+    """Resolve explicit personal operations from the latest user's own clauses."""
     from ..retrieval_scope import user_request
-    requests = [user_request(m) for m in messages if m.get('role') == 'user']
-    if not requests:
-        return False
-    latest = requests[-1]
+    latest = next((user_request(m) for m in reversed(messages) if m.get('role') == 'user'), '')
     if re.search(r'只读|(?:只|仅).{0,6}(?:建议|分析|解释)|(?:不要|别|禁止|先不).{0,8}(?:保存|写入|修改|操作|创建|添加|执行|删除|取消|完成|安排|改期|提醒|撤销|恢复)|read.only|do not (?:save|change|create|delete|cancel|complete|schedule)', latest, re.I):
-        return False
-    return bool(re.search(r'添加|加到|加入|加进|记到|记下来|记下|建个|建一个|建一条|创建|新建|保存|修改|改到|改成|改期|安排|排到|设(?:个|置)|提醒我|标(?:为|记)|完成|取消|删除|撤销|恢复|管理|create|add|schedule|reschedule|update|cancel|delete|undo|mark|remind', latest, re.I))
+        return set()
+    # Quoted notice text, questions about an action and drafts are frequent
+    # in this workspace. None of them direct a change to an actual record.
+    prose = re.sub(r'“[^”]*”|「[^」]*」|‘[^’]*’|"[^"]*"|`[^`]*`', '事项', latest)
+    effects = set()
+    for clause in re.split(r'[，,。！？；;\n]|\b(?:and then|but)\b', prose, flags=re.I):
+        clause = clause.strip()
+        if re.search(r'怎么|如何|为什么|是否|哪些|多少|什么时候|何时|了吗|了没|了么|\b(?:how|which|when|whether|what)\b', clause, re.I):
+            continue
+        if re.match(r'(?:请|麻烦|先|帮我|替我|给我|你|能否|能不能|可以|想让你)*\s*(?:查看|查询|列出|统计|看看|查一下|分析|解释|告诉我|梳理|整理|起草|拟定|草拟|建议)|(?:please\s+)?(?:list|show|explain|draft)\b', clause, re.I):
+            continue
+        if re.search(r'(?:已经|已被|已于|原文写|通知说|通知要求|群里说|假如|如果)|\b(?:already|if|said)\b', clause, re.I):
+            continue
+        if re.search(r'(?:起草|草拟|草稿|保存为文件|另存为|写到文件|\b(?:draft|file)\b)', clause, re.I) and not re.search(r'待办|日历|日程|\b(?:calendar|task)\b',clause,re.I):
+            continue
+        if re.search(r'添加|加到|加入|加进|记到|记下来|记下|建个|建一个|建一条|创建|新建|保存|提醒我|(?:帮我|给我|替我|请)安排|安排.{0,8}(?:到|进).{0,4}(?:日历|日程)|\b(?:create|add|schedule|remind)\b', clause, re.I):
+            effects.add('create')
+        if re.search(r'修改|更新|改到|改成|改为|调整|改期|排到|设置|\b(?:reschedule|update|edit|move)\b', clause, re.I):
+            effects.add('update')
+        # Reporting that something was cancelled is common in a notice. Only a
+        # request directed at the assistant can change status or remove a record.
+        if not re.match(r'^(?:请|帮我|替我|给我|麻烦|把|将|先|然后|再|直接|能帮我|可以帮我|能不能帮我|标记|标为|设为|改为|勾选|勾掉|取消|删除|删掉|作废|移除|恢复|撤销|撤回|重新打开|\s*(?:(?:please|kindly)\s+)?(?:mark|set|cancel|delete|remove|restore|reopen|undo)\b)',clause,re.I):
+            continue
+        if re.search(r'(?:取消|删除|撤销|恢复)了|[吗么]\s*$|\b(?:was|has been|was already)\b',clause,re.I):
+            continue
+        if re.search(r'(?:标(?:记|为|成)|设为|改(?:成|为)|勾选|勾掉).{0,12}完成|(?:请|帮我|替我)完成.{0,12}(?:待办|任务)|\b(?:mark|set)\b.*\b(?:done|complete[d]?)\b', clause, re.I):
+            effects.add('done')
+        if re.search(r'取消|作废|\bcancel\b', clause, re.I):
+            effects.add('cancelled')
+        if re.search(r'删除|删掉|移除|\b(?:delete|remove)\b', clause, re.I):
+            effects.add('delete')
+        if re.search(r'恢复|重新打开|改回待办|标(?:为|记为?)待(?:办|完成)|\b(?:restore|reopen)\b', clause, re.I):
+            effects.add('pending')
+        if re.search(r'撤销|撤回刚才|\bundo\b', clause, re.I):
+            effects.add('undo')
+    return effects
+
+
+def write_allowed(messages, tool=None, args=None):
+    effects = requested_effects(messages)
+    if tool is None:
+        return bool(effects)
+    if tool == 'workspace_undo':
+        return 'undo' in effects
+    if tool == 'task_write' and args.operation == 'update':
+        required = {args.status} if args.status else set()
+        if args.fields.model_fields_set:
+            required.add('update')
+        return bool(required) and required <= effects
+    if tool == 'calendar_write' and args.operation == 'delete':
+        return bool(effects & {'delete', 'cancelled'})
+    return args.operation in effects
 
 
 def record(conn, uid, kind, target):

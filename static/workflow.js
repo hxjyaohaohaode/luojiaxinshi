@@ -280,8 +280,19 @@ export function createWorkflowUI({state,api,esc,icon,showDialog,toast,field,area
   document.addEventListener('click',async e=>{
     const b=e.target.closest('[data-workflow-task],[data-change-new],[data-change-open],[data-calendar-check],[data-workflow-export],[data-dismiss-change],[data-workflow-focus]');if(!b||b.disabled)return;
     if(b.dataset.workflowFocus){
-      const selectors={prerequisites:'.workflow-advanced',materials:'[data-prepared-materials]',choice:'[data-optional-choice]',receipt:'.workflow-receipt',followup:'.workflow-followup',review:'[data-workflow-review]'},target=b.closest('#workflow-form')?.querySelector(selectors[b.dataset.workflowFocus]||':not(*)');
-      if(target){finishReferenceMotion();if(target.tagName==='DETAILS')target.open=true;target.scrollIntoView({block:'nearest'});target.querySelector('input:not([type=hidden]),select,textarea,button')?.focus({preventScroll:true});}return;
+      const selectors={prerequisites:'.workflow-advanced',materials:'[data-prepared-materials]',upload:'.personal-material-upload',submission:'.personal-submission-editor',choice:'[data-optional-choice]',receipt:'.workflow-receipt',followup:'.workflow-followup',review:'[data-workflow-review]'};
+      const form=b.closest('#workflow-form');
+      let target=form?.querySelector(selectors[b.dataset.workflowFocus]);
+      if(!target&&['upload','submission'].includes(b.dataset.workflowFocus))target=form?.querySelector('.personal-materials');
+      if(target){
+        finishReferenceMotion();
+        for(let node=target;node&&node!==form;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+        target.scrollIntoView({block:'nearest'});
+        const control=target.querySelector('input:not([type=hidden]):not(:disabled),select:not(:disabled),textarea,button');
+        if(!control)target.tabIndex=-1;
+        (control||target).focus({preventScroll:true});
+      }
+      return;
     }
     const selection=window.getSelection();if(e.detail&&b.matches('.task-primary')&&selection&&!selection.isCollapsed&&b.contains(selection.anchorNode))return;
     b.disabled=true;

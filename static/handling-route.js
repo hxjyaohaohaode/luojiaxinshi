@@ -24,10 +24,10 @@ export function currentHandlingStep(task){
   if(d.action_kind==='optional'&&d.participation!=='joined')return d.participation==='declined'?{kind:'choice',label:'已选择不参加',detail:'保留原通知，可按实际情况重新选择是否参加。'}:{kind:'choice',label:'先决定是否参加',detail:'选择后再推进报名或提交，准备资料可以先做。'};
   if(task.workflow?.blocked||task.execution_issues?.length)return {kind:'prerequisites',label:'处理这一步的前提',detail:task.execution_issues?.map(x=>x.label).join('；')||'查看未完成的前置步骤；可先准备不依赖它们的材料。'};
   if(d.stage==='blocked')return {kind:'blocked',label:'核对阻碍是否已经解除',detail:d.outcome||'查看实际原因，按当前情况更新办理进度。'};
+  if(d.stage==='supplement')return {kind:'materials',label:'按反馈补充材料',detail:d.outcome||'补充实际要求的文件，再记录这次提交。'};
   if(task.followup_due&&d.next_step)return {kind:'followup',label:'到时间跟进了',detail:d.next_step};
   if(['submitted','accepted','waiting'].includes(d.stage))return {kind:'receipt',label:'跟进实际反馈',detail:d.next_step||'保留提交凭证，等待或查询受理结果。'};
   if(d.stage==='rejected')return {kind:'receipt',label:'先核对未通过的反馈',detail:d.outcome||'查看实际原因，再决定是否补充、重新办理或结束个人事项。'};
-  if(d.stage==='supplement')return {kind:'materials',label:'按反馈补充材料',detail:d.outcome||'补充实际要求的文件，再记录这次提交。'};
   const missing=materials.filter(value=>!d.prepared_materials?.includes(value));
   if(missing.length)return {kind:'materials',label:'先准备材料',detail:missing.join('、')};
   return {kind:'start',label:d.execution_mode==='submission'?'进入原渠道办理':'开始这一步',detail:task.data.submission||task.data.details||task.data.title};
@@ -45,9 +45,14 @@ export function handlingGuide(task,{esc,candidates=[]}){
     actions.push(...dependencies.map(item=>`<button type="button" class="button small primary" data-workflow-task="${esc(item.id)}">先处理：${esc(item.title||item.data?.title||'前置事项')}</button>`),focus('prerequisites','查看办理前提'));
     if(d.materials?.length)actions.push(focus('materials','先准备不依赖前提的材料'));
   }
-  if(step.kind==='materials')actions.push(focus('materials','开始准备材料'));
+  if(step.kind==='materials'){
+    if(progress.stage==='supplement')actions.push(focus('upload','上传本次补件'));
+    else actions.push(focus('materials','开始准备材料'),focus('upload','添加本人文件'));
+    if(task.followup_due&&progress.next_step)actions.push(focus('followup','查看到期跟进'));
+  }
   if(step.kind==='choice')actions.push(focus('choice','选择是否参加'));
   if(step.kind==='receipt')actions.push(focus('receipt','查看提交与实际反馈'));
+  if(step.kind==='start'&&progress.execution_mode==='submission')actions.push(focus('submission','记录已发生的提交'));
   if(step.kind==='blocked')actions.push(focus('receipt','更新阻碍与办理进度'));
   if(step.kind==='followup')actions.push(focus('followup','查看本次跟进安排'));
   const facts=[['办理渠道',d.submission],['地点',d.location],['联系',d.contact]].filter(([,value])=>value);

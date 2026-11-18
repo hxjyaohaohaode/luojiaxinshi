@@ -32,3 +32,11 @@ export function primaryWorkspaceNav(context,user) {
   return [['dashboard','grid','首页'],['notices','doc','通知'],chat,
     user?.profile?.campus_role==='teacher'?['calendar','calendar','日程']:['tasks','tasks','待办']];
 }
+
+export function navigationPage(route) {
+  const [page, section] = route.replace(/^#/, '').split('/');
+  if (page === 'campus' && section) return 'campus/' + section;
+  if (['notice','intake','new'].includes(page)) return 'notices';
+  if (['memory','terms','privacy'].includes(page)) return 'settings';
+  return page || 'dashboard';
+}

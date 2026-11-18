@@ -53,7 +53,7 @@ test('a superseded navigation cannot leave a loading overlay or erase the curren
   const timers=new Map(),hosts=[];let id=0;
   globalThis.setTimeout=(callback,delay)=>{const key=++id;timers.set(key,{callback,delay});return key;};
   globalThis.clearTimeout=key=>timers.delete(key);
-  globalThis.document={createElement:()=>({isConnected:false,querySelector:()=>({set textContent(value){hosts.at(-1).text=value;}}),insertAdjacentHTML(_position,html){this.action=html;},remove(){this.isConnected=false;}})};
+  globalThis.document={createElement:()=>({isConnected:false,setAttribute(key,value){this[key]=value;},append(child){this.child=child;},insertAdjacentHTML(_position,html){this.action=html;},remove(){this.isConnected=false;}})};
   const content={isConnected:true,before(host){host.isConnected=true;hosts.push(host);}};
   const runNext=()=>{const [key,timer]=[...timers].sort((a,b)=>a[1].delay-b[1].delay)[0];timers.delete(key);timer.callback();};
   let finish;
@@ -62,11 +62,11 @@ test('a superseded navigation cannot leave a loading overlay or erase the curren
     finish=beginRouteFeedback(content,'second');
     old(); // A late finally from the first request must not cancel the second.
     assert.equal(timers.size,1);runNext();
-    assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.match(hosts[0].innerHTML,/second/);
-    runNext();assert.match(hosts[0].text,/连接有些慢/);assert.match(hosts[0].action,/重新加载/);
+    assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.equal(hosts[0].child.textContent,'second');assert.equal(hosts[0].child.role,'status');
+    runNext();assert.match(hosts[0].child.textContent,/连接较慢/);assert.match(hosts[0].action,/重新加载/);
     const newer=beginRouteFeedback(content,'third');
     assert.equal(hosts[0].isConnected,false);finish();finish=newer;
-    runNext();assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.match(hosts[1].innerHTML,/third/);
+    runNext();assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.equal(hosts[1].child.textContent,'third');
     finish();assert.equal(timers.size,0);assert.equal(hosts.filter(host=>host.isConnected).length,0);
   }finally{finish?.();globalThis.setTimeout=originalTimeout;globalThis.clearTimeout=originalClear;if(originalDocument===undefined)delete globalThis.document;else globalThis.document=originalDocument;}
 });

@@ -244,7 +244,7 @@ def test_public_search_feedback_registers_unique_sources_and_redacts_queries(env
                  'url': f'https://example.edu/p{number}'}], {'status':'searched','queries':proposed}, {'prompt_tokens':1}
     monkeypatch.setattr(evidence_web,'search',search)
     c=account(env);chat=conversation(c);seen=[];writer(monkeypatch,seen=seen)
-    model=Script([answer('',[call('public_search',{'query':'公开报名办法 手机13800138000'}),call('public_search',{'query':'公开报名办法例外'})]),complete()])
+    model=Script([answer('',[call('public_search',{'query':'公开报名办法 手机13800138000'}),call('public_search',{'query':'公开报名办法例外'}),call('public_search',{'query':'公开报名办法例外'})]),complete()])
     env[0].state.agent_service.provider_factory=lambda *_:model
     m=final(send(c,chat,'请联网核对公开报名办法'))
     assert m['status']=='complete',m['error']

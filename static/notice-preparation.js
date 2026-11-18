@@ -7,19 +7,20 @@ export function createNoticePreparation({api,getOwner,onStart=()=>{},onResult=()
     if(!owner)return Promise.resolve(null);
     if(pending.has(identity))return pending.get(identity);
     if(notice.draft||notice.status==='processing'||notice.status==='confirmed')return Promise.resolve(notice);
+    const release=()=>{if(pending.get(identity)===job)pending.delete(identity);};
     const job=Promise.resolve().then(async()=>{
-      if(getOwner()!==owner)return null;
-      onStart(notice);
       try{
+        if(getOwner()!==owner)return null;
+        onStart(notice);
         const result=await api(`/notices/${encodeURIComponent(notice.id)}/generate`,{method:'POST',json:{version:notice.version,allow_external_processing:true,processing_mode:processingMode}});
-        pending.delete(identity);
+        release();
         if(getOwner()===owner)await onResult(result);
         return result;
       }catch(error){
-        pending.delete(identity);
+        release();
         if(getOwner()===owner){try{await onError(error,notice);}catch{/* A failed refresh must not resend or reject an unobserved background job. */}}
         return null;
-      }finally{pending.delete(identity);}
+      }finally{release();}
     });
     pending.set(identity,job);
     return job;

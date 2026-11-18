@@ -72,9 +72,19 @@
     const initialValues=inputs.map(({node})=>({node,value:node.value,checked:node.checked}));
     function reset(){for(const item of initialValues){item.node.value=item.value;if(['checkbox','radio'].includes(item.node.type))item.node.checked=item.checked;}update();changed();}
     if(config.prompt){
-      const button=root.querySelector('#'+CSS.escape(config.prompt.id));
-      if(!button||typeof config.prompt.text!=='string'||!config.prompt.text.trim())throw Error('继续提问按钮配置无效');
-      const status=config.prompt.status?root.querySelector('#'+CSS.escape(config.prompt.status)):errorNode;
+      const {id,text}=config.prompt;
+      if(typeof id!=='string'||!id.trim()||id.length>128||typeof text!=='string'||!text.trim()||text.length>2000)throw Error('继续提问按钮配置无效');
+      let button=root.querySelector('#'+CSS.escape(id));
+      let status=config.prompt.status?root.querySelector('#'+CSS.escape(config.prompt.status)):null;
+      if(!button){
+        // A model may declare a follow-up without emitting its markup. The
+        // native control still uses the same reviewed, user-gesture-bound bridge.
+        const actions=document.createElement('div');actions.className='ui-action-bar';
+        button=document.createElement('button');button.id=id;button.type='button';button.className='ui-primary';
+        button.textContent=text;actions.append(button);root.append(actions);
+        if(!approved){lockedButtons.set(button,false);button.disabled=true;}
+      }
+      if(!status)status=errorNode;
       nativeAdd.call(button,'click',async event=>{
         event.preventDefault();event.stopImmediatePropagation();
         const value=update();if(!value.valid)return;button.disabled=true;if(status){status.hidden=false;status.textContent='正在发送…';}

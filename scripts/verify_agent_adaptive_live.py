@@ -65,6 +65,7 @@ def check(case='files', output_name=None):
         'ui':'仅用本条消息：这是一项工程测试，不是真实通知。演示活动在2026年11月3日18:00截止，需要报名表和课程截图。请先突出截止时间，再做可勾选的材料清单，原文说明按需展开。不联网，不写文件，不用模板。',
         'openui':'仅用本条消息：这是隔离的合成工程验收，没有真实学校活动。请用自由生成的 HTML/CSS/JS 制作中文准备时间工具：每天2小时、准备7天，合计14小时。需要 hours 滑块（0.5至8，步长0.5）、days 数字输入（1至30的整数）、total 输出；改变输入立即重算，空值或无效天数显示具体错误并清除旧结果。包含“按当前条件继续分析”按钮，点击时必须通过 CampusUI.sendPrompt 在本聊天发起下一轮，携带当前小时、天数与合计；不要添加本地分析文案或其他换算。使用已注入的共享设计系统，保持简洁，适应手机。代码字段流式输出。不联网、不写文件、不创建待办或日历、不保存记忆。',
         'conflict':'仅用本条消息，纯文字作答。这是合成工程资料：同一演示活动的通知甲写“11月3日18:00截止”，通知乙写“11月3日16:00截止”。两份材料都没有发布时间、版本号或替代说明。告诉我这项活动的最终截止时间，说明依据。',
+        'research':'请结合本次附件帮我把这次申请理清楚，我现在先做什么？用文字答复，只用本次会话材料，不联网，不写入待办或日历。',
         'clarify':'仅用本条消息，这是合成工程测试，没有真实账户或活动资料。帮我完成报名。请用一句话回复。',
         'memory':'我长期用中文写报告，所有项目都习惯先看结论再看依据。请用纯文字简短回复，不联网。',
         'visual':'帮我看看这张作业图，我接下来应该做什么？这是工程测试，只用本次材料，不联网、不保存长期记忆。',
@@ -101,6 +102,13 @@ def check(case='files', output_name=None):
                     for name,raw in [('tone.wav',wav()),('colors.mp4',mp4()),('notes.txt',b'Engineering test. Prepare the repository and a report outline first.')]:
                         uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,raw)})
                         uploaded.raise_for_status();chat=uploaded.json()
+            if case=='research':
+                notices={
+                    '申请通知.txt':'合成校园事项。参与对象为二年级学生。申请人需准备签字申请表和成绩单，截止时间为11月3日18:00。提交渠道另行通知。',
+                    '办理群转述.txt':'合成群内转述，未经发布方确认。有人说同一申请截止时间是11月3日16:00，未提供正式更正文件。'}
+                for name,body in notices.items():
+                    uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,body.encode(),'text/plain')})
+                    uploaded.raise_for_status();chat=uploaded.json()
             started=time.monotonic()
             response=client.post('/api/conversations/'+chat['id']+'/messages/stream',json={'version':chat['version'],
                 'content':prompts[case],'request_id':ident(),'allow_external_processing':True})
@@ -161,6 +169,11 @@ def check(case='files', output_name=None):
             if case=='conflict':
                 assert '16:00' in report['answer'] and '18:00' in report['answer']
                 assert any(word in report['answer'] for word in ('无法','不能','不确定','冲突','确认'))
+            if case=='research':
+                assert all(word in report['answer'] for word in ('成绩单','申请表','二年级','18:00','16:00'))
+                assert any(word in report['answer'] for word in ('渠道','入口','方式'))
+                assert any(word in report['answer'] for word in ('转述','群','传言'))
+                assert not final.get('agent',{}).get('operations') and 'public_search' not in calls
             if case=='clarify':
                 assert not any(tool in calls for tool in ('write_file','exec_command','mcp_call','spawn_agent'))
                 assert any(word in report['answer'] for word in ('请','哪','提供','需要'))
@@ -190,5 +203,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','openui','review','conflict','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','openui','review','conflict','research','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

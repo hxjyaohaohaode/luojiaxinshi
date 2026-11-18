@@ -27,14 +27,14 @@ def current_step(task):
     stage = progress.get('stage')
     if stage == 'blocked':
         return step('blocked', '核对阻碍是否已经解除', progress.get('outcome') or '查看实际原因，按当前情况更新办理进度。')
+    if stage == 'supplement':
+        return step('materials', '按反馈补充材料', progress.get('outcome') or '补充实际要求的文件，再记录这次提交。')
     if task.get('followup_due') and progress.get('next_step'):
         return step('followup', '到时间跟进了', progress['next_step'])
     if stage in {'submitted', 'accepted', 'waiting'}:
         return step('receipt', '跟进实际反馈', progress.get('next_step') or '保留提交凭证，等待或查询受理结果。')
     if stage == 'rejected':
         return step('receipt', '先核对未通过的反馈', progress.get('outcome') or '查看实际原因，再决定是否补充、重新办理或结束个人事项。')
-    if stage == 'supplement':
-        return step('materials', '按反馈补充材料', progress.get('outcome') or '补充实际要求的文件，再记录这次提交。')
     missing = [item for item in data.get('materials', []) if item not in progress.get('prepared_materials', [])]
     if missing:
         return step('materials', '先准备材料', '、'.join(missing))

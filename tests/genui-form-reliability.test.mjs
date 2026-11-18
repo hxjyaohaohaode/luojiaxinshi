@@ -10,7 +10,8 @@ function setup(values={x:'8',y:'2'},attributes={}){
     getAttribute:key=>attributes[id]?.[key]??null,matches:()=>true,setAttribute(){},removeAttribute(){}};
   nodes.result={textContent:''};nodes.error={textContent:'',hidden:true};nodes.ask={listeners:{}};let requests=0,published=0;
   const root={querySelector:s=>nodes[s.slice(1)]||null,append(){}};
-  const sandbox={root,document:{documentElement:{lang:'zh-CN'}},CSS:{escape:v=>v},Intl,queueMicrotask,setTimeout,Object,Number,Set,Error,
+  const document={documentElement:{lang:'zh-CN'},createElement:()=>({listeners:{},append(child){nodes[child.id]=child;}})};
+  const sandbox={root,document,approved:false,lockedButtons:new Map(),CSS:{escape:v=>v},Intl,queueMicrotask,setTimeout,Object,Number,Set,Error,
     nativeAdd:{call(node,type,handler){(node.listeners[type]??=[]).push(handler);}},publishText:()=>published++,measure(){},changed:()=>published++,lockActions(){},request:async()=>{requests++;}};
   vm.createContext(sandbox);vm.runInContext(body+';globalThis.bind=bindForm;',sandbox);
   return {nodes,form,bind:sandbox.bind,requests:()=>requests,published:()=>published,emit:async(node,type)=>{for(const handler of node.listeners[type]||[])await handler({preventDefault(){},stopImmediatePropagation(){}});}};
@@ -32,6 +33,15 @@ test('a fractional default is a valid native numeric step base',()=>{
   const env=setup({x:'0.3'}, {x:{value:'0.1',step:'0.2'}});
   const model=env.bind({inputs:{x:{}},outputs:{result:v=>v.x},error:'error'});
   assert.equal(env.nodes.result.textContent,'0.3');env.nodes.x.value='0.2';model.update();assert.equal(env.nodes.result.textContent,'—');
+});
+test('an omitted declared follow-up button leaves calculation usable and awaits review',()=>{
+  const env=setup();
+  env.bind({inputs:{x:{}},outputs:{result:v=>v.x*2},error:'error',prompt:{id:'continue',text:'按当前条件继续分析'}});
+  assert.equal(env.nodes.result.textContent,'16');
+  assert.equal(env.nodes.continue.type,'button');
+  assert.equal(env.nodes.continue.textContent,'按当前条件继续分析');
+  assert.equal(env.nodes.continue.disabled,true);
+  assert.equal(env.requests(),0);
 });
 test('native reset and explicit reset recalculate outputs and publish fresh state',async()=>{
   const env=setup();const model=env.bind({inputs:{x:{},y:{}},outputs:{result:v=>v.x/v.y},error:'error'});

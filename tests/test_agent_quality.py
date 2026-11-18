@@ -258,6 +258,31 @@ def test_native_claim_schema_has_one_stable_citation_protocol():
         SubmitAnswer.model_validate({'answer':'测试','claims':[{'kind':'fact','text':'测试','citation_indices':[0]}]})
 
 
+def test_long_research_rejects_early_finish_and_restores_topics_after_reload(env, monkeypatch):
+    c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
+    def track(*items):
+        return answer('',[call('track_research',{'items':list(items)})])
+    script=[
+        track({'topic':'材料','state':'open'},{'topic':'提交渠道','state':'open'}),
+        answer('',[call('submit_answer',{'answer':'过早结束'})]),
+        track({'topic':'材料','state':'sourced','refs':['E99999']}),
+        track({'topic':'材料','state':'sourced','refs':['E1']}),
+    ]
+    for index in range(9):
+        script.append(answer('',[call('campus_search',{'query':f'核对材料第{index+1}条','scopes':[]})]))
+    script.extend([track({'topic':'提交渠道','state':'blocked','detail':'原文没有给出办理入口'}),
+                   answer('',[call('submit_answer',{'answer':'请向发布方核实提交渠道。'})])])
+    provider=Script(script)
+    env[0].state.agent_service.provider_factory=lambda *_:provider
+    m=final(send(c,chat,'只用本消息，核对材料与提交渠道。我的材料是申请表。'))
+    assert m['status']=='complete',m['error']
+    assert len(provider.inputs)==15 and '过早结束' not in m['content']
+    assert '本轮已登记' in provider.inputs[3][0][-1]['content']
+    assert m['grounding']['plan']['gaps']==['提交渠道：原文没有给出办理入口']
+    restored=c.get('/api/conversations/'+chat['id']).json()['messages'][-1]['agent']['research_items']
+    assert [(x['topic'], x['state']) for x in restored]==[('材料','sourced'),('提交渠道','blocked')]
+
+
 def test_identical_control_heading_deduplicates_without_removing_distinct_information():
     from app.agent_runtime.authoring import normalize_ui
     heading={'id':'heading','type':'Heading','props':{'text':'材料清单','level':3}}

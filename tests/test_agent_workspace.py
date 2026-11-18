@@ -355,6 +355,37 @@ def test_chat_readonly_rejects_write_even_when_model_attempts_it(env, monkeypatc
     assert c.get('/api/arrangements').json() == []
 
 
+def test_research_and_create_requests_never_authorize_a_different_status():
+    done=w.TaskWrite(operation='update',target_id='task',version=1,status='done')
+    delete=w.CalendarWrite(operation='delete',target_id='calendar',version=1)
+    for request in ('我完成了哪些待办？','请整理申请资料，告诉我怎么取消报名','请起草“把待办标记完成”的说明','请添加一个待办','明天的项目讨论已取消','我取消了项目讨论'):
+        messages=[{'role':'user','content':request}]
+        assert not w.write_allowed(messages,'task_write',done)
+        assert not w.write_allowed(messages,'calendar_write',delete)
+    assert w.write_allowed([{'role':'user','content':'把计算作业标记完成'}],'task_write',done)
+
+
+def test_unspecified_calendar_target_shows_the_actual_record_before_removal(env,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from test_agent_chat import wait_approval
+    env[1].agent_enabled=env[1].ai_grounding=True
+    env[1].ai_api_key='synthetic-no-network'
+    c=account(env);chat=conversation(c);writer(monkeypatch)
+    c.post('/api/arrangements',json={'request_id':ident(),'data':calendar().data.model_dump()}).raise_for_status()
+    item=c.get('/api/arrangements').json()[0]
+    model=Script([answer('',[call('workspace_capabilities')]),
+                  answer('',[call('calendar_write',{'operation':'delete','target_id':item['id'],'version':item['version']})]),complete()])
+    env[0].state.agent_service.provider_factory=lambda *_:model
+    with ThreadPoolExecutor() as pool:
+        job=pool.submit(send,c,chat,'请取消那条日历安排')
+        _,approval=wait_approval(c,chat['id'])
+        assert approval['arguments']['target_title']==item['data']['title']
+        assert len(c.get('/api/arrangements').json())==1
+        c.post(f"/api/conversations/{chat['id']}/agent/approvals/{approval['id']}",json={'digest':approval['digest'],'decision':'deny'}).raise_for_status()
+        assert not final(job.result(timeout=15))['agent']['operations']
+    assert len(c.get('/api/arrangements').json())==1
+
+
 def test_long_task_details_cannot_split_identity_status_and_schedule_evidence():
     from app.grounding import source
     from app.genui_ai import evidence_index

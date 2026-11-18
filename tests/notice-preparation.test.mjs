@@ -19,6 +19,18 @@ test('logout or account switch suppresses preparation UI and error callbacks',as
   finish({id:'one',status:'draft'});await first;assert.equal(results,0);assert.equal(controller.isPending('one'),false);
 });
 
+test('a failed attempt cannot clear a newer retry while its callback finishes',async()=>{
+  let calls=0,retry,finish;
+  const notice={id:'one',version:1,status:'received'};
+  const controller=createNoticePreparation({getOwner:()=>1,
+    api:()=>++calls===1?Promise.reject(Error('temporary')):new Promise(resolve=>finish=resolve),
+    onError:()=>{retry=controller.prepare(notice);}});
+  await controller.prepare(notice);
+  assert.equal(controller.prepare(notice),retry);
+  finish({...notice,draft:{}});await retry;
+  assert.equal(controller.isPending(notice.id),false);assert.equal(calls,2);
+});
+
 test('existing work is reused and network failures are not automatically retried',async()=>{
   let calls=0,errors=0;
   const controller=createNoticePreparation({getOwner:()=>1,api:async()=>{calls++;throw Error('network');},onError:()=>errors++});

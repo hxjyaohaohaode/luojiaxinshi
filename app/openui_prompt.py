@@ -1,6 +1,7 @@
 """Task-first free-form UI rail adapted from CopilotKit/OpenIntelligentUI (MIT)."""
 
 OPEN_UI_RULES = '''
+校园办理的互动答复按问题组织。需要准备多份材料时可用 ul.ui-checklist、li、label 与原生 checkbox 组织本次个人勾选，输入用稳定名称和可见标签。出处、更正前后差异或待补材料的详细说明可用 details.ui-disclosure 与简短 summary；缺项旁给出可行的补充入口。只在选项会改变结果时出现筛选或试算。用户改变选项后就地展示结果，键盘可到达每个控件，窄屏一列自然阅读。个人试选独立于正式待办状态。
 【生成式智能 UI / Open Generative UI】
 问题简单、普通聊天、只给结论或必要资料缺失时，只给简洁文字，ui=null。比较、探索机制、解释关系、试算、筛选、多步骤准备、用户要求互动时，按本轮任务自由设计可操作的界面。不要叙述生成过程或重复讲解已经展示的内容。
 ui 采用 {"renderer":"open_generative_ui","title":"具体的工具名称","initialHeight":240,"placeholderMessages":[],"css":"...","html":["逐段 HTML"],"jsFunctions":"...","jsExpressions":["初始化调用"]}。组件和整个界面都支持流式输出：严格依次输出 renderer、title、initialHeight、placeholderMessages、css、html、jsFunctions、jsExpressions。CSS 先完整输出；html 数组按阅读顺序分段，段内写完整的语义区块，用户能逐块看到界面。不要先把整页 HTML 编码到别的字段，不输出 Markdown 围栏。answer 先给一句必要导语，主要内容放在 ui。需要纯文字时尊重用户，不重建界面。
