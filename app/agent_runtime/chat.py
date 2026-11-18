@@ -662,14 +662,22 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             return super().approval_arguments(name, args, rule)
         if not self.access.get('schedule') or not personal_workspace.write_allowed(self.user_messages, name, args):
             raise AgentError('本轮没有明确要求此项状态操作，请保留现有记录')
-        from ..retrieval_scope import user_request
         with self.db.connect() as conn:
             kind = 'tasks' if name == 'task_write' else 'calendar'
             target = personal_workspace.record(conn, self.uid, kind, args.target_id)
-        title = target['data']['title']
-        latest = user_request(next(m for m in reversed(self.user_messages) if m['role']=='user'))
-        if args.target_id in latest or (title and title in latest):
-            return None
+            title = target['data']['title']
+            if personal_workspace.write_allowed(self.user_messages, name, args, targets=(args.target_id,)):
+                return None
+            if title and personal_workspace.write_allowed(self.user_messages, name, args, targets=(title,)):
+                table = 'tasks' if kind == 'tasks' else 'arrangements'
+                # A shorter stored name may be part of another explicitly
+                # named record. The same visible name can also occur twice.
+                other_titles = conn.execute(f"""SELECT json_extract(data,'$.title') AS title FROM {table}
+                    WHERE user_id=? AND id<>? AND instr(json_extract(data,'$.title'),?)>0""",
+                    (self.uid, args.target_id, title))
+                if not any(personal_workspace.write_allowed(self.user_messages, name, args, targets=(item['title'],))
+                           for item in other_titles):
+                    return None
         # A pronoun or inferred target can be resolved by the user. The
         # approval is tied to the actual record, version and proposed change.
         return {**args.model_dump(), 'target_title': title}

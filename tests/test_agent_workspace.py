@@ -365,7 +365,26 @@ def test_research_and_create_requests_never_authorize_a_different_status():
     assert w.write_allowed([{'role':'user','content':'把计算作业标记完成'}],'task_write',done)
 
 
-def test_unspecified_calendar_target_shows_the_actual_record_before_removal(env,monkeypatch):
+def test_status_is_bound_to_the_action_clause_and_its_direction():
+    done=w.TaskWrite(operation='update',target_id='task',version=1,status='done')
+    pending=done.model_copy(update={'status':'pending'})
+    for request in ('把“计算作业”标为待完成','把计算作业标记为未完成','mark 计算作业 as not done'):
+        messages=[{'role':'user','content':request}]
+        assert w.write_allowed(messages,'task_write',pending,targets=('计算作业',))
+        assert not w.write_allowed(messages,'task_write',done)
+    messages=[{'role':'user','content':'把“计算作业”标记完成，然后查看“成绩单”的进度'}]
+    assert w.write_allowed(messages,'task_write',done,targets=('计算作业',))
+    assert not w.write_allowed(messages,'task_write',done,targets=('成绩单',))
+
+
+@pytest.mark.parametrize('request_text,other_title', [
+    ('请取消那条日历安排', None),
+    ('请取消研讨会，再查看项目讨论', '研讨会'),
+    ('如果研讨会延期，请取消项目讨论', None),
+    ('请取消“项目讨论”', '项目讨论'),
+    ('请取消学院项目讨论', '学院项目讨论'),
+])
+def test_ambiguous_calendar_target_shows_the_actual_record_before_removal(env,monkeypatch,request_text,other_title):
     from concurrent.futures import ThreadPoolExecutor
     from test_agent_chat import wait_approval
     env[1].agent_enabled=env[1].ai_grounding=True
@@ -373,17 +392,19 @@ def test_unspecified_calendar_target_shows_the_actual_record_before_removal(env,
     c=account(env);chat=conversation(c);writer(monkeypatch)
     c.post('/api/arrangements',json={'request_id':ident(),'data':calendar().data.model_dump()}).raise_for_status()
     item=c.get('/api/arrangements').json()[0]
+    if other_title:
+        c.post('/api/arrangements',json={'request_id':ident(),'data':{**calendar().data.model_dump(),'title':other_title}}).raise_for_status()
     model=Script([answer('',[call('workspace_capabilities')]),
                   answer('',[call('calendar_write',{'operation':'delete','target_id':item['id'],'version':item['version']})]),complete()])
     env[0].state.agent_service.provider_factory=lambda *_:model
     with ThreadPoolExecutor() as pool:
-        job=pool.submit(send,c,chat,'请取消那条日历安排')
+        job=pool.submit(send,c,chat,request_text)
         _,approval=wait_approval(c,chat['id'])
         assert approval['arguments']['target_title']==item['data']['title']
-        assert len(c.get('/api/arrangements').json())==1
+        assert len(c.get('/api/arrangements').json())==1+bool(other_title)
         c.post(f"/api/conversations/{chat['id']}/agent/approvals/{approval['id']}",json={'digest':approval['digest'],'decision':'deny'}).raise_for_status()
         assert not final(job.result(timeout=15))['agent']['operations']
-    assert len(c.get('/api/arrangements').json())==1
+    assert len(c.get('/api/arrangements').json())==1+bool(other_title)
 
 
 def test_long_task_details_cannot_split_identity_status_and_schedule_evidence():

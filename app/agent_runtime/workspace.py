@@ -142,7 +142,7 @@ WRITE_TOOLS = {
 }
 
 
-def requested_effects(messages):
+def requested_effects(messages, targets=()):
     """Resolve explicit personal operations from the latest user's own clauses."""
     from ..retrieval_scope import user_request
     latest = next((user_request(m) for m in reversed(messages) if m.get('role') == 'user'), '')
@@ -150,10 +150,22 @@ def requested_effects(messages):
         return set()
     # Quoted notice text, questions about an action and drafts are frequent
     # in this workspace. None of them direct a change to an actual record.
-    prose = re.sub(r'“[^”]*”|「[^」]*」|‘[^’]*’|"[^"]*"|`[^`]*`', '事项', latest)
+    # Mark an exact quoted record name as a target without interpreting verbs
+    # inside it. Only its own action clause can authorize a direct change.
+    quoted = r'“[^”]*”|「[^」]*」|‘[^’]*’|"[^"]*"|`[^`]*`'
+    patterns = [quoted, *(re.escape(target) for target in targets if target)]
+    def mask_record(match):
+        text = match.group()
+        return '\0' if text in targets or text[1:-1] in targets else '事项'
+    prose = re.sub('|'.join(patterns), mask_record, latest.replace('\0', ''))
+    if targets and re.search(r'如果|假如|要是|若是|\bif\b', prose, re.I):
+        # A named action following a condition is not unconditional consent.
+        return set()
     effects = set()
-    for clause in re.split(r'[，,。！？；;\n]|\b(?:and then|but)\b', prose, flags=re.I):
+    for clause in re.split(r'[，,。！？；;\n]|(?:然后|同时|并且|再)(?=(?:请|把|将|查看|查询|整理|取消|删除|恢复|标记))|\b(?:and then|but)\b', prose, flags=re.I):
         clause = clause.strip()
+        if targets and '\0' not in clause:
+            continue
         if re.search(r'怎么|如何|为什么|是否|哪些|多少|什么时候|何时|了吗|了没|了么|\b(?:how|which|when|whether|what)\b', clause, re.I):
             continue
         if re.match(r'(?:请|麻烦|先|帮我|替我|给我|你|能否|能不能|可以|想让你)*\s*(?:查看|查询|列出|统计|看看|查一下|分析|解释|告诉我|梳理|整理|起草|拟定|草拟|建议)|(?:please\s+)?(?:list|show|explain|draft)\b', clause, re.I):
@@ -172,21 +184,22 @@ def requested_effects(messages):
             continue
         if re.search(r'(?:取消|删除|撤销|恢复)了|[吗么]\s*$|\b(?:was|has been|was already)\b',clause,re.I):
             continue
-        if re.search(r'(?:标(?:记|为|成)|设为|改(?:成|为)|勾选|勾掉).{0,12}完成|(?:请|帮我|替我)完成.{0,12}(?:待办|任务)|\b(?:mark|set)\b.*\b(?:done|complete[d]?)\b', clause, re.I):
+        pending = re.search(r'恢复|重新打开|改回待办|(?:标(?:为|记为?|成)|设为|改(?:成|为)).{0,3}(?:待办|待完成|未完成)|\b(?:restore|reopen|incomplete|pending|not (?:complete[d]?|done))\b', clause, re.I)
+        if pending:
+            effects.add('pending')
+        elif re.search(r'(?:标(?:记|为|成)|设为|改(?:成|为)|勾选|勾掉).{0,12}完成|(?:请|帮我|替我)完成.{0,12}(?:待办|任务)|\b(?:mark|set)\b.*\b(?:done|complete[d]?)\b', clause, re.I):
             effects.add('done')
         if re.search(r'取消|作废|\bcancel\b', clause, re.I):
             effects.add('cancelled')
         if re.search(r'删除|删掉|移除|\b(?:delete|remove)\b', clause, re.I):
             effects.add('delete')
-        if re.search(r'恢复|重新打开|改回待办|标(?:为|记为?)待(?:办|完成)|\b(?:restore|reopen)\b', clause, re.I):
-            effects.add('pending')
         if re.search(r'撤销|撤回刚才|\bundo\b', clause, re.I):
             effects.add('undo')
     return effects
 
 
-def write_allowed(messages, tool=None, args=None):
-    effects = requested_effects(messages)
+def write_allowed(messages, tool=None, args=None, *, targets=()):
+    effects = requested_effects(messages, targets)
     if tool is None:
         return bool(effects)
     if tool == 'workspace_undo':
