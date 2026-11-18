@@ -275,6 +275,9 @@ def submission_context(conn,cid,payload):
                 summary.append({'block':int(index),'node':'sandbox','path':'controls.'+key,'label':control['label'],
                     'value':value,'changed':not same(value,control['value']),'input_type':control['type'],
                     **({'validation':validation} if validation else {})})
+            for key,value in state.get('storage',{}).items():
+                summary.append({'block':int(index),'node':'sandbox','path':'storage.'+key,'label':'界面内的个人选择 · '+key,
+                                'value':value,'changed':True,'input_type':'local_state'})
             continue
         fields,actions=contracts(spec);state=deepcopy(spec['state'])
         if set(block['inputs'])-(set(fields)|set(actions)):raise ValueError('interaction_input')

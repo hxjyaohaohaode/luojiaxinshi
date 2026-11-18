@@ -1,9 +1,10 @@
 // Authored code is data here. Execution belongs exclusively to sandbox-runtime.js.
 export function validateOpenUI(value){
   if(!value||typeof value!=='object'||Array.isArray(value)||value.renderer!=='open_generative_ui')throw Error('openui_renderer');
-  const allowed=['renderer','title','initialHeight','placeholderMessages','css','html','jsFunctions','jsExpressions'];
+  const allowed=['renderer','title','preferredWidth','initialHeight','placeholderMessages','css','html','jsFunctions','jsExpressions'];
   if(Object.keys(value).some(k=>!allowed.includes(k))||typeof value.title!=='string'||!value.title.trim()||value.title.length>100)throw Error('openui_fields');
   const ui={initialHeight:240,placeholderMessages:[],css:'',jsFunctions:'',jsExpressions:[],...value};
+  if(ui.preferredWidth!=null&&(!Number.isInteger(ui.preferredWidth)||ui.preferredWidth<280||ui.preferredWidth>1440))throw Error('openui_width');
   if(!Number.isInteger(ui.initialHeight)||ui.initialHeight<80||ui.initialHeight>1600)throw Error('openui_height');
   if(!Array.isArray(ui.html)||!ui.html.length||ui.html.length>100||ui.html.some(s=>typeof s!=='string')||!ui.html.join('').trim())throw Error('openui_html');
   if(typeof ui.css!=='string'||ui.css.length>24000||typeof ui.jsFunctions!=='string'||ui.jsFunctions.length>32000)throw Error('openui_code');
@@ -19,7 +20,7 @@ export function previewSpec(content){return {v:1,roots:[],nodes:{},state:{contro
 export function applyPreview(previous,patch){
   if(!patch||typeof patch!=='object')throw Error('openui_preview');
   const next=previous?{...previous,html:[...previous.html],jsExpressions:[...(previous.jsExpressions||[])]}:{renderer:'open_generative_ui',css:'',html:[],jsFunctions:'',jsExpressions:[],generating:true};
-  if(patch.reset){next.revision=(previous?.revision||0)+1;next.css='';next.html=[];next.jsFunctions='';next.jsExpressions=[];next.cssComplete=false;next.htmlComplete=false;next.localReady=false;next.jsFunctionsComplete=false;next.jsExpressionsComplete=false;}
+  if(patch.reset){delete next.preferredWidth;next.revision=(previous?.revision||0)+1;next.css='';next.html=[];next.jsFunctions='';next.jsExpressions=[];next.cssComplete=false;next.htmlComplete=false;next.localReady=false;next.jsFunctionsComplete=false;next.jsExpressionsComplete=false;}
   if(patch.css!==undefined){if(typeof patch.css!=='string'||patch.css.length>24000)throw Error('openui_preview_css');next.css+=patch.css;}
   if(patch.html!==undefined){
     if(!Array.isArray(patch.html)||patch.html.length>100)throw Error('openui_preview_html');
@@ -29,6 +30,7 @@ export function applyPreview(previous,patch){
   if(patch.jsExpressions!==undefined){if(!Array.isArray(patch.jsExpressions)||patch.jsExpressions.length>40)throw Error('openui_preview_js');for(const item of patch.jsExpressions){if(!item||!Number.isInteger(item.index)||item.index<0||item.index>=40||typeof item.text!=='string'||item.text.length>16000)throw Error('openui_preview_js');next.jsExpressions[item.index]=item.text;}}
   for(const key of ['cssComplete','htmlComplete','jsFunctionsComplete','jsExpressionsComplete','localReady'])if(patch[key]!==undefined){if(typeof patch[key]!=='boolean')throw Error('openui_preview_flags');next[key]=patch[key];}
   if(patch.title!==undefined){if(typeof patch.title!=='string'||patch.title.length>100)throw Error('openui_preview_title');next.title=patch.title;}
+  if(patch.preferredWidth!==undefined){if(!Number.isInteger(patch.preferredWidth)||patch.preferredWidth<280||patch.preferredWidth>1440)throw Error('openui_width');next.preferredWidth=patch.preferredWidth;}
   if(patch.initialHeight!==undefined){if(!Number.isInteger(patch.initialHeight)||patch.initialHeight<80||patch.initialHeight>1600)throw Error('openui_preview_height');next.initialHeight=patch.initialHeight;}
   if(new TextEncoder().encode(JSON.stringify(next)).length>150000)throw Error('openui_preview_limit');
   return next;

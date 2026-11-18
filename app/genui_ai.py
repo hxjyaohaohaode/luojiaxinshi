@@ -11,7 +11,7 @@ from pydantic import Field,ConfigDict,ValidationError
 from .ai import AIError, ReplyValidationError, check_evidence
 from .chat_ai import ChatAnswer, GroundingClaim, IMAGE_MIME, PROMPT, MAX_CITATIONS
 from .genui import LIMITS
-from .genui_prompt import system_prompt,expand_template,encode_authored_ui
+from .genui_prompt import system_prompt,encode_authored_ui
 from .genui import parse_message,CATALOG
 from .models import Strict
 from .genui_state import context_text
@@ -55,19 +55,22 @@ class UIAnswer(IndexedAnswer):
     ui: SandboxUI | AuthoredUI | None = None
 
 
-class OpenUIAnswer(IndexedAnswer):
+class AuthoredCanvas(SandboxUI):
+    preferredWidth: int = Field(default=840, ge=280, le=1440, description='根据本题信息密度选取的舒适桌面宽度，实际宽度随容器收缩。')
+
+
+class CanvasAnswer(IndexedAnswer):
     answer: str = Field(min_length=0,max_length=80000)
-    ui: SandboxUI | None = None
+    ui: AuthoredCanvas | None = None
+
+
+class OpenUIAnswer(CanvasAnswer):
     memory_actions: list = Field(default_factory=list,max_length=0)
 
 
 def answer_model(tier,profile):
-    if tier==1:return OpenUIAnswer if profile.get('_ui_composition_only') else UIAnswer
-    return TemplateAnswer if tier==2 else IndexedAnswer
-
-
-class TemplateAnswer(IndexedAnswer):
-    ui_template: dict | None = None
+    if tier==1:return OpenUIAnswer if profile.get('_ui_composition_only') else CanvasAnswer
+    return IndexedAnswer
 
 
 def capabilities(settings):
@@ -78,15 +81,13 @@ def choose_tier(settings):
     caps = capabilities(settings)
     available = 3 if not caps['json'] or caps['context_tokens'] < 4096 else 2 if caps['context_tokens'] < 16000 else 1
     requested = int(settings.genui_tier) if settings.genui_tier != 'auto' else available
-    return max(requested, available)
+    return 1 if max(requested, available)==1 else 3
 
 
 def presentation_tier(tier,choice='auto',*,no_ui=False):
     """The planner can simplify a view, never exceed deployment capabilities."""
     if no_ui or choice=='text':return 3
-    # Compact describes information density, not the old four-template engine.
-    # Explicit deployment tier 2 stays compatible; capable models freely compose.
-    return tier
+    return 1 if tier==1 else 3
 
 
 def composition_thinking(profile,tier):
@@ -352,7 +353,7 @@ def payload(settings, sources, messages, profile, tier):
     if composition_only:
         request_role='\n本调用是展示编排阶段。依据 Pro 提供的 coverage_check、evidence_index 与原文组织正文和控件，不重新检索或补造事实。直接输出有效 JSON；事实、未知和建议仍须清楚区分。稿件随后由 Pro 独立核验，未通过不会发布。'
         if profile.get('_ui_composition_only'):
-            request_role='\n本调用只做界面编排与代码生成。用户原话和已登记 evidence_index 优先，interface_brief 是主 Agent 提供的展示建议；不另做研究或重新设计业务流程。使用已注入的设计原语，数值试算用 CampusUI.form 避免重复写验证监听代码；正文一行导语即可，不重写基础控件样式，不提交 memory_actions。输出完整有效 JSON；稿件随后由 Pro 独立核验。'
+            request_role='\n本调用只做界面编排与代码生成。用户原话和已登记 evidence_index 优先，interface_brief 是主 Agent 提供的展示建议；不另做研究或重新设计业务流程。自行创作本题的布局、CSS、数据呈现和本地交互。根据内容选择 preferredWidth；正文只需一句导语，不提交 memory_actions。输出完整有效 JSON；稿件随后由 Pro 独立核验。'
         prompt+=('\n本轮把证据覆盖检查与文字组织合并：逐项识别当前问题、所给证据、个人条件、冲突和缺项，依据完整原文组织回答；不得补造未知。只完成当前用户要求，保持必要条件与准确引用。仍会由另一独立调用核验全部回答后发布。' if focused else request_role)
     request = {'model':model,'messages':[{'role':'system','content':prompt},{'role':'user','content':materials}]+[{'role':m['role'],'content':context_text(m)} for m in messages],
                'stream':True,'stream_options':{'include_usage':True},'thinking':{'type':'enabled' if composition_thinking(profile,tier) else 'disabled'},'max_completion_tokens':settings.ai_output_tokens}
@@ -462,23 +463,18 @@ async def _stream_reply(settings, sources, messages, profile, tier):
                 raise ValueError('invalid_evidence_or_stream')
             result=resolve_citations(result.model_dump(),authoring_index(sources,profile) if profile.get('_grounding_context') else [])
             check_evidence(result['citations'],sources)
+            if any(part['kind']=='ui' for part in parse_message(result['answer'])):
+                raise ValueError('界面须写入独立的 ui 字段，正文只接受可读 Markdown')
             if tier==1:
                 authored=result.pop('ui',None)
                 if authored:
-                    if any(p['kind']=='ui' for p in parse_message(result['answer'])):raise ValueError('authored_ui_duplicate_channels')
+                    from .openui import check_authored_media
+                    check_authored_media(authored,sources)
                     appended=encode_authored_ui(authored)
                     if len(result['answer']+appended)>80000:raise ValueError('authored_ui_answer_limit')
                     result['answer']+=appended
                     appended_flags['authored_ui']=True
                     if not buffered_answer:yield {'type':'delta','text':appended,'authored_ui':True}
-            if tier==2:
-                if any(p['kind']=='ui' for p in parse_message(result['answer'])):
-                    raise ValueError('template_mode_raw_ui')
-                appended=expand_template(result.pop('ui_template',None))
-                if appended:
-                    result['answer']+=appended
-                    appended_flags['expanded_template']=True
-                    if not buffered_answer:yield {'type':'delta','text':appended,'expanded_template':True}
         else:
             result={'answer':raw,'citations':[],'image_sources':[]}
         if buffered_answer:yield {'type':'delta','text':result['answer'],**appended_flags}

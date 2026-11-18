@@ -19,8 +19,8 @@ try{
   await page.goto(`${origin}/#chat/${chat.id}`);
   await page.locator('#chat-input').fill('融合媒体验收：在回复中播放我上传的视频，无需分析视频内容。');
   await page.locator('#chat-input').press('Enter');
-  const reply=page.locator('.message-assistant').last(),video=reply.locator('.genui video');
-  await reply.locator('.genui[data-complete=true]').waitFor({timeout:30000});
+  const reply=page.locator('.message-assistant').last(),video=reply.locator('.openui-media-layer video');
+  await reply.locator('iframe.openui-frame').waitFor({timeout:30000});
   assert.equal(await reply.locator('.gu-error').count(),0);
   await video.waitFor();
   await video.evaluate(v=>new Promise((resolve,reject)=>{
@@ -32,7 +32,7 @@ try{
   assert.ok(src.includes(`/api/conversations/${chat.id}/sources/${chat.sources[0].id}/download`),src);
   assert.ok(await video.evaluate(v=>v.videoWidth>0 && Number.isFinite(v.duration)));
   await video.evaluate(async v=>{v.muted=true;await v.play();});
-  await page.waitForFunction(()=>document.querySelector('.message-assistant .genui video')?.currentTime>0);
+  await page.waitForFunction(()=>document.querySelector('.message-assistant .openui-media-layer video')?.currentTime>0);
   await video.evaluate(v=>v.pause());
   checks.push('真实上传 → Agent 宿主资源 → 原消息视频组件：私有资源实际解码并播放');
   const range=await api.get(src,{headers:{Range:'bytes=0-31'}});
@@ -40,9 +40,9 @@ try{
   checks.push('已鉴权媒体 Range 请求返回 206 和准确字节段');
   await page.reload();await video.waitFor();assert.equal(await video.getAttribute('src'),src);
   await video.evaluate(async v=>{v.muted=true;await v.play();});
-  await page.waitForFunction(()=>document.querySelector('.message-assistant .genui video')?.currentTime>0.15);
+  await page.waitForFunction(()=>document.querySelector('.message-assistant .openui-media-layer video')?.currentTime>0.15);
   await video.evaluate(v=>v.pause());
-  assert.equal(await reply.locator('div.gu-video').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
+  assert.equal(await reply.locator('.openui-media-layer').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
   checks.push('刷新原对话后媒体引用保持一致');
   for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844],['narrow',320,720],['keyboard',390,420]]){
     await page.setViewportSize({width,height});

@@ -17,6 +17,7 @@ class SandboxUI(Strict):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=False)
     renderer: Literal['open_generative_ui']
     title: str = Field(min_length=1, max_length=100)
+    preferredWidth: int | None = Field(default=None, ge=280, le=1440)
     initialHeight: int = Field(default=240, ge=80, le=1600)
     placeholderMessages: list[str] = Field(default_factory=list, max_length=4)
     css: str = Field(default='', max_length=24000)
@@ -30,6 +31,7 @@ class Document(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.text, self.controls, self.links, self.ids = [], {}, [], set()
+        self.media = []
         self.hidden = 0
         self.current = None
         self.option = None
@@ -46,6 +48,8 @@ class Document(HTMLParser):
             if p['id'] in self.ids:raise ValueError('openui_duplicate_id')
             self.ids.add(p['id'])
         if tag == 'a' and p.get('href'):self.links.append(p['href'])
+        if tag in ('img','video') and 'data-material' in p:
+            self.media.append((p['data-material'], 'image' if tag=='img' else 'video'))
         if tag == 'label':self.label_frames.append({'for':p.get('for'),'keys':[],'text':[]})
         if tag in ('input', 'select', 'textarea') and p.get('type','').lower() not in ('submit', 'button', 'reset'):
             key = p.get('id') or p.get('name')
@@ -94,7 +98,7 @@ def inspect_document(value):
 
 
 def validate_ui(value):
-    ui = SandboxUI.model_validate(value).model_dump()
+    ui = SandboxUI.model_validate(value).model_dump(exclude_none=True)
     if len(json.dumps(ui, ensure_ascii=False).encode())>131072:raise ValueError('openui_size_limit')
     if not ''.join(ui['html']).strip():raise ValueError('openui_empty_html')
     if any(len(s)>160 for s in ui['placeholderMessages']):raise ValueError('openui_placeholder_limit')
@@ -107,6 +111,13 @@ def encode_ui(value):
     ui, _ = validate_ui(value)
     # A single JSON line safely contains Markdown fences inside generated code.
     return '\n```openui\n'+json.dumps(ui, ensure_ascii=False, separators=(',', ':'))+'\n```'
+
+
+def check_authored_media(ui, sources):
+    from .chat_media import resource_index
+    declared = inspect_document(ui).media
+    if declared and not set(declared) <= {(item['id'],item['kind']) for item in resource_index(sources)}:
+        raise ValueError('媒体必须使用本轮已授权原件的 ID 和真实类型')
 
 
 class OpenUIBlock:
@@ -136,7 +147,17 @@ class OpenUIBlock:
 
 
 def validate_controls(spec, state):
-    if not isinstance(state, dict) or set(state)!={'controls'} or not isinstance(state['controls'], dict):raise ValueError('openui_state')
+    allowed = {'controls', 'storage'} if (spec.get('sandbox') or {}).get('preferredWidth') else {'controls'}
+    if not isinstance(state, dict) or set(state)-allowed or not isinstance(state.get('controls'), dict):
+        raise ValueError('openui_state')
+    fields = state.get('storage', {})
+    if not isinstance(fields, dict) or len(fields) + len(state['controls']) > 40:
+        raise ValueError('openui_state_limit')
+    for key, value in fields.items():
+        if (not isinstance(key, str) or not 0 < len(key) <= 100
+                or key in ('__proto__', 'constructor', 'prototype') or any(ord(c)<32 or ord(c)==127 for c in key)
+                or not isinstance(value, str) or len(value)>4000):
+            raise ValueError('openui_storage_value')
     if set(state['controls'])-set(spec['controls']):raise ValueError('openui_unknown_control')
     for key, value in state['controls'].items():
         control = spec['controls'][key]
@@ -206,7 +227,7 @@ class UIStreamDecoder:
         if self.completed_expressions>self.published_expressions:
             patch['jsExpressions']=[{'index':i,'text':current['jsExpressions'][i]} for i in range(self.published_expressions,self.completed_expressions)]
             self.published_expressions=self.completed_expressions
-        for key in ('title','initialHeight','cssComplete','htmlComplete','jsFunctionsComplete','jsExpressionsComplete','localReady'):
+        for key in ('title','preferredWidth','initialHeight','cssComplete','htmlComplete','jsFunctionsComplete','jsExpressionsComplete','localReady'):
             if key in current and current[key]!=previous.get(key):patch[key]=current[key]
         self.emitted=deepcopy(current)
         return patch
@@ -274,10 +295,12 @@ class UIStreamDecoder:
             if char.isspace():continue
             if self.literal and char not in ',]}':self.literal+=char;continue
             if self.literal:
-                if self.path==self.prefix+('initialHeight',):
+                if self.path in (self.prefix+('initialHeight',), self.prefix+('preferredWidth',)):
                     try:
-                        height=json.loads(self.literal)
-                        if isinstance(height,(int,float)) and math.isfinite(height):self.content['initialHeight']=max(80,min(1600,int(height)));self.changed=True
+                        metric=self.path[-1]
+                        low,high=(80,1600) if metric=='initialHeight' else (280,1440)
+                        value=json.loads(self.literal)
+                        if type(value) is int and low<=value<=high:self.content[metric]=value;self.changed=True
                     except ValueError:pass
                 self.literal='';self.consumed()
             if char=='"':

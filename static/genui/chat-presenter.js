@@ -115,12 +115,13 @@ export class ConversationView{
       const previewing=active&&(message._preview!==undefined||!!message.preview);
       r.article.classList.toggle('is-streaming',active);r.article.classList.toggle('has-preview',previewing);
       // Keep the preview until the complete verified result can replace it.
+      r.savedSnapshotVersion=message.genui?.snapshot_version??0;
       const contentState=[message._preview,previewing?'':message.genui?.raw??message.content,message.status,message.genui?.validated,feature.enabled,JSON.stringify(message._uiPreview),message.preview?.sequence];
       if(!r.contentState||contentState.some((value,index)=>value!==r.contentState[index])){
         r.contentState=contentState;const parts=this.parts(message);r.parts=parts;
         if(feature.enabled){
           if(r.plainProse){r.plainProse.dispose();r.plainProse=null;}
-          if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,reveal:!!this.options.transitionProse,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
+          if(!r.renderer){r.content.replaceChildren();r.renderer=new MessageRenderer(r.content,{...this.options,messageId:message.id,snapshotVersion:()=>r.savedSnapshotVersion,reveal:!!this.options.transitionProse,...replyHostContext(this.host,r,this.options),aiLabel:false,compact:true,externalActions:true,limits:feature.limits,snapshots:message.genui?.snapshots||{},
             imageResources:this.options.imageResources||[],askModel:event=>this.options.askModel({...event,message_id:message.id}),
             onChange:()=>{this.interactionOrigin=message.id;if(r.save){clearActionFeedback(r.save);r.save.textContent='保存互动进度';r.saveFeedback.textContent='';}},
             onContentRendered:()=>r.citationView?.decorate(),
@@ -191,7 +192,7 @@ export class ConversationView{
         replaceInOrder(r.tools,controls);
         r.tools.hidden=!controls.length;
       }
-      if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer||r.save.disabled)return;r.save.disabled=true;r.save.setAttribute('aria-busy','true');r.saveFeedback.textContent='';const snapshots=r.renderer.snapshots(),sent=JSON.stringify(snapshots);try{await this.options.save(message.id,snapshots);if(JSON.stringify(r.renderer.snapshots())===sent){r.renderer.markSaved();actionSucceeded(r.save,'互动进度已保存');r.saveFeedback.textContent='互动进度已保存';}else r.saveFeedback.textContent='上次选择已保存，当前修改尚未保存';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.removeAttribute('aria-busy');r.save.disabled=!replyPolicy(this.messages,message,this.options).save;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
+      if(!r.save){r.saveFeedback=el('span','gu-save-feedback');r.saveFeedback.setAttribute('role','status');r.save=button('保存互动进度',async()=>{if(!r.renderer||r.save.disabled)return;r.save.disabled=true;r.save.setAttribute('aria-busy','true');r.saveFeedback.textContent='';const snapshots=r.renderer.snapshots(),sent=JSON.stringify(snapshots);try{const result=await this.options.save(message.id,snapshots);if(result?.snapshot_version!==undefined)r.savedSnapshotVersion=result.snapshot_version;if(JSON.stringify(r.renderer.snapshots())===sent){r.renderer.markSaved();actionSucceeded(r.save,'互动进度已保存');r.saveFeedback.textContent='互动进度已保存';}else r.saveFeedback.textContent='上次选择已保存，当前修改尚未保存';}catch(error){r.saveFeedback.textContent=error.message||'暂未保存，请重试。';}finally{r.save.removeAttribute('aria-busy');r.save.disabled=!replyPolicy(this.messages,message,this.options).save;}},'button small plain');r.footer.append(r.save,r.saveFeedback);}
       r.save.hidden=!(policy.save&&feature.enabled&&r.parts?.some(p=>p.kind==='ui'&&(p.spec.sandbox||Object.values(p.spec.nodes).some(n=>n.props?.bind||['Table','Tabs','Accordion','Carousel','Form','Markdown','Plot'].includes(n.type)||n.type.endsWith('Chart')))));r.save.disabled=!policy.save||r.save.getAttribute('aria-busy')==='true';
       r.footer.hidden=!(message.genui?.raw||message.content||message.versions?.length>1);
       if(feature.debug&&message.genui){if(!r.debug){r.debug=el('details','gu-raw-debug');r.debug.append(el('summary','','查看原始回复'),el('pre'));r.article.append(r.debug);}r.debug.lastChild.textContent=message.genui.raw;}

@@ -38,10 +38,11 @@ try{
   await page.locator('.message-assistant').last().locator('.openui-status').waitFor({state:'hidden'});finishedAt=Date.now()-start;
   assert.ok(finishedAt>firstAt);assert.equal(await iframe.getAttribute('data-continuity-probe'),'same-frame');assert.equal(frameRequests.length,1);
   assert.equal(await frame.locator('#total').innerText(),'20');checks.push('同一 iframe 完成复核并保留先前输入，没有重载或重建');
+  await page.evaluate(()=>localStorage.setItem('openui-isolation-probe','host-only'));
   const isolation=await frame.locator('body').evaluate(async()=>{
     let parentBlocked=false,storageBlocked=false,autoSendBlocked=false;
     try{void parent.document.body;}catch{parentBlocked=true;}
-    try{void localStorage.getItem('secret');}catch{storageBlocked=true;}
+    try{storageBlocked=localStorage.getItem('openui-isolation-probe')===null;}catch{storageBlocked=true;}
     try{await CampusUI.sendPrompt({text:'自动请求必须被拒绝'});}catch{autoSendBlocked=true;}
     return {parentBlocked,storageBlocked,autoSendBlocked};
   });assert.deepEqual(isolation,{parentBlocked:true,storageBlocked:true,autoSendBlocked:true});checks.push('生成代码无法读取宿主 DOM/存储，加载后自动请求模型被拒绝');

@@ -101,6 +101,41 @@ async def fixture_writer(_settings,sources,_messages,profile,_tier):
 
 grounding.verify=review
 genui_ai.stream_reply=fixture_writer
+
+
+def seed_published_replays(conn, owner, directories):
+    """Load actual, verified synthetic replies unchanged into this loopback test database."""
+    from app.conversation_tools import select_reply
+    from app.genui_api import message_parts
+    for dirname in directories.split(os.pathsep):
+        directory=Path(dirname).resolve()
+        if not directory.is_relative_to((ROOT/'artifacts').resolve()):raise ValueError('Replay outside synthetic artifacts')
+        report=json.loads((directory/'results.json').read_text(encoding='utf-8'))
+        if not (report['synthetic_input'] and report['validated'] and report['status']=='complete'):raise ValueError('Expected verified synthetic reply')
+        trace=json.loads((directory/'synthetic-transcript.json').read_text(encoding='utf-8'))
+        question=next(m['content'] for m in trace if m['role']=='user')
+        program=json.loads((directory/'generated-ui.json').read_text(encoding='utf-8'))
+        raw=report['answer']
+        parts=message_parts(raw,1,True,settings.genui_limits,{})
+        if not any(p.get('spec',{}).get('sandbox')==program for p in parts):raise ValueError('Published reply and authored artifact differ')
+        sources={'user-input':{'id':'user-input','name':'本轮合成问题','evidence_kind':'user_input','sections':[{'locator':'当前问题','text':question}]}}
+        for item in trace:
+            if item['role']!='tool':continue
+            receipt=json.loads(item['content'])
+            if receipt.get('source_id') and receipt.get('sections'):
+                sid=receipt['source_id']
+                sources[sid]={'id':sid,'name':receipt['name'],'evidence_kind':'material','sections':receipt['sections']}
+        ordered=[sources[sid] for sid in report['work_summary']['cited_sources']]
+        citations=[{'source_id':src['id'],'name':src['name'],'locator':src['sections'][0]['locator'],'quote':src['sections'][0]['text']} for src in ordered]
+        cid,parent,mid,now=ident(),ident(),ident(),int(time.time())
+        dumps=lambda value:json.dumps(value,ensure_ascii=False)
+        conn.execute('INSERT INTO conversations(id,user_id,title,created_at,updated_at) VALUES(?,?,?,?,?)',(cid,owner,program['title'],now,now))
+        conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,created_at) VALUES(?,?,'user',?,'complete',?)",(parent,cid,question,now))
+        conn.execute("INSERT INTO conversation_messages(id,conversation_id,role,content,status,parent_id,citations,created_at) VALUES(?,?,'assistant',?,'complete',?,?,?)",(mid,cid,raw.split('```openui')[0].strip(),parent,dumps(citations),now))
+        conn.execute('INSERT INTO genui_messages(message_id,raw,parts,tier,validated,updated_at) VALUES(?,?,?,1,1,?)',(mid,raw,dumps(parts),now))
+        conn.execute('INSERT INTO reply_grounding(message_id,sources,report) VALUES(?,?,?)',(mid,dumps(ordered),dumps({'status':report['review_status'],'work_summary':report['work_summary']})))
+        select_reply(conn,mid)
+
 with app.state.db.connect(write=True) as conn:
     row=conn.execute("SELECT id FROM users WHERE username='openui-preview'").fetchone()
     if not row:
@@ -109,6 +144,7 @@ with app.state.db.connect(write=True) as conn:
                      (uid,'openui-preview',hash_password('OpenUIFixture2026!'),'生成式界面验收','user','{"memory_enabled":false}',int(time.time())))
     else:uid=row['id']
     record_consent(conn,uid)
+    if directories:=os.getenv("OPENUI_PUBLISHED_REPLAYS"):seed_published_replays(conn,uid,directories)
 
 if __name__=='__main__':
     import uvicorn

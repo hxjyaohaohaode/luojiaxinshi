@@ -20,6 +20,16 @@ from test_genui_transport import events, payload
 FIXTURE=Path(__file__).resolve().parent.parent/'fixtures/genui/openui-planner.json'
 UI=json.loads(FIXTURE.read_text(encoding='utf-8'))
 
+def test_isolated_custom_state_is_bounded_and_scoped_to_new_authored_answers():
+    from app.openui import validate_controls
+    authored={'controls':{},'sandbox':{'preferredWidth':720}}
+    state={'controls':{},'storage':{'schedule':'[540,615]'}}
+    assert validate_controls(authored,state)==state
+    for invalid in ({'constructor':'x'},{'x':False},{'a'+chr(10):'x'},{str(i):'x' for i in range(41)}):
+        with pytest.raises(ValueError):validate_controls(authored,{'controls':{},'storage':invalid})
+    with pytest.raises(ValueError):validate_controls({'controls':{},'sandbox':{}},state)
+
+
 def test_wrapping_labels_keep_human_names_and_exclude_option_and_editor_values():
     ui={**UI,'html':['<label><span>学习小时</span><input id="hours" type="number" value="8"></label>',
         '<label>选择方案<select id="plan"><option value="a">方案一</option><option value="b">方案二</option></select></label>',
@@ -122,7 +132,8 @@ def test_snapshots_only_accept_authored_controls_and_types():
 @pytest.mark.parametrize('envelope',['json','fence','bare_fence','serialized'])
 def test_provider_stream_forwards_ui_fragments_before_final_json(env,monkeypatch,envelope):
     cfg=env[1];cfg.ai_api_key='synthetic';cfg.ai_grounding=False
-    document={'answer':'合成验收示例。','ui':UI,'citations':[],'image_sources':[]}
+    authored={**UI,'preferredWidth':736}
+    document={'answer':'合成验收示例。','ui':authored,'citations':[],'image_sources':[]}
     raw=json.dumps(document,ensure_ascii=False)
     if envelope=='fence':raw='```json\n'+raw+'\n```'
     elif envelope=='bare_fence':raw='```\n'+raw+'\n```'
@@ -139,7 +150,8 @@ def test_provider_stream_forwards_ui_fragments_before_final_json(env,monkeypatch
     if envelope!='serialized':assert len(previews)>10 and any(p['content'].get('html') for p in previews)
     else:assert not previews  # Cannot speculate about a second encoded layer.
     assert packets[-1]['type']=='complete'
-    assert parse_message(packets[-1]['result']['answer'])[1]['spec']['sandbox']==UI
+    assert parse_message(packets[-1]['result']['answer'])[1]['spec']['sandbox']==authored
+    if previews:assert any(e['content'].get('preferredWidth')==736 for e in previews)
 
 
 def test_stream_state_reload_followup_and_cross_account_rejection(env,monkeypatch):

@@ -72,11 +72,7 @@ def encode_authored_ui(value):
 
 
 def capability_module(tier):
-    if tier==3:return '只输出可读 Markdown 文字，不生成 genui 或 HTML。可用正常表格、任务列表、代码块和有序列表；客户端会进行安全的渐进增强。'
-    if tier==2:
-        templates=json.dumps(CATALOG['templates'],ensure_ascii=False,separators=(',',':'))
-        return ('互动选择原则：简单问答保持文字；多步骤计划、至少2项2维的对比、用户给定参数的计算或表格才使用界面。先生成 answer 文字，不能在 answer 内写 genui。'
-                '可选 ui_template={"name":"模板名","slots":{...}}，不需要界面时为null。数值不得编造，估算必须标注。服务器确定性展开以下模板；slots 不允许表达式或动作：'+templates)
+    if tier!=1:return '只输出可读 Markdown 文字，不生成 genui 或 HTML。可用正常表格、任务列表、代码块和有序列表。'
     from .openui_prompt import OPEN_UI_RULES
     return OPEN_UI_RULES
 
@@ -92,7 +88,7 @@ def system_prompt(tier, output_schema, supports_json=True, *, indexed_evidence=F
     module=capability_module(tier)
     if not supports_json:
         return persona+module+'\n答复语言跟随用户。本次不支持结构化引用检查；涉及材料事实请提醒本人对照原文核对。'
-    return persona+'输出 JSON，answer 使用 Markdown，生成的 HTML/CSS/JS 只放在 ui 中。符合以下 Schema：\n'+json.dumps(output_schema,ensure_ascii=False,separators=(',',':'))+'\n'+module+'\n优先输出 answer 字段，再输出 ui 或 ui_template，让必要正文先到达。简单问题不强行生成 UI；列表、时间线或表格采用精简结构，复用宿主样式，不添加宣传口号、装饰标题和无必要的解释性段落。界面与容器自适应，信息不足时直接说明具体缺项。'
+    return persona+'输出 JSON，answer 使用 Markdown，生成的 HTML/CSS/JS 只放在 ui 中。符合以下 Schema：\n'+json.dumps(output_schema,ensure_ascii=False,separators=(',',':'))+'\n'+module+'\n先输出 answer，再输出按本次任务创作的 ui。界面的结构、视觉和状态逻辑均由本轮作者决定。简单问题直接回答。界面与容器自适应，信息不足时直接说明具体缺项。'
 
 
 def expand_template(value):

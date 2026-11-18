@@ -12,12 +12,12 @@ import time
 from typing import Literal
 
 from fastapi import HTTPException
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError
 
 from ..ai import AIError
 from ..db import dumps
 from ..models import Strict
-from ..genui import CATALOG, LIMITS, parse_message
+from ..genui import parse_message
 from ..openui import SandboxUI, UIStreamDecoder
 from .runtime import MODEL_CALL_LIMIT, Run, bounded_result
 from .store import finish
@@ -57,22 +57,9 @@ class ResearchUpdate(Strict):
     items: list[ResearchItem] = Field(default_factory=list, max_length=12, description='留空可重新读取当前清单。')
 
 
-class UICapabilities(Strict):
-    components: list[str] = Field(default_factory=list, max_length=12,
-        json_schema_extra={'items': {'type': 'string', 'enum': list(CATALOG['components'])}})
-    include_memory: bool = False
-
-
 class MemoryCapabilities(Strict):
     section: Literal['operations', 'context'] = Field(default='operations',
         description='operations 返回完整操作协议与当前模式；context 返回会话条件、工作记录、目录和真实历史回执。按需读取，不自动写入。')
-
-
-class UIEnvelope(Strict):
-    # Component schemas are loaded on demand. Full AuthoredUI/graph validation
-    # still happens in compile_answer; do not send every component on every call.
-    state: dict = Field(default_factory=dict, max_length=LIMITS['stateKeys'])
-    nodes: list[dict] = Field(min_length=1, max_length=LIMITS['nodes'])
 
 
 class AgentClaim(Strict):
@@ -84,49 +71,12 @@ class AgentClaim(Strict):
 
 class SubmitAnswer(Strict):
     answer: str = Field(min_length=1, max_length=80000,
-        description='无 ui 时写完整 Markdown 回答。有 ui 时只写一句简短导语，不重复 ui 中的日期、清单或原文，不说明下方可勾选，不添加无关提醒和时区解释。')
-    ui: UIEnvelope | None = Field(default=None, description='界面 JSON 对象，含 state 和 nodes；不用界面时为 null。Markdown 用 props.text；children 在节点顶层，与 props 同级。不要转成字符串。')
+        description='本轮完整的文字答复。')
+    ui: None = Field(default=None, exclude=True)
     claims: list[AgentClaim] = Field(default_factory=list, max_length=60)
     image_sources: list[str] = Field(default_factory=list, max_length=100)
     media_sources: list[str] = Field(default_factory=list, max_length=100)
     memory_actions: list[dict] = Field(default_factory=list, max_length=8)
-
-    @classmethod
-    def model_json_schema(cls, *args, **kwargs):
-        schema = super().model_json_schema(*args, **kwargs)
-        # Optional object fields can be omitted. Advertising object|null via
-        # anyOf makes some compatible tool providers stringify nested objects.
-        ui = schema['properties']['ui']
-        ui.pop('anyOf', None);ui.pop('default', None)
-        ui['$ref'] = '#/$defs/UIEnvelope'
-        ui['description'] = '可选 JSON 对象；不用界面时省略 ui。Markdown 用 props.text；children 与 props 同级，不转成字符串。'
-        return schema
-
-    @field_validator('ui', mode='before')
-    @classmethod
-    def decode_ui(cls, value):
-        # Some compatible providers serialize this nested object twice. Decode
-        # only this presentation field once, then apply the same strict schema,
-        # graph/action/evidence validation. Never coerce effectful tool inputs.
-        if isinstance(value, str):
-            try:value = json.loads(value)
-            except json.JSONDecodeError:
-                from pydantic_core import PydanticCustomError
-                raise PydanticCustomError('ui_json', 'ui 内层 JSON 语法无效；请直接提供对象，不要序列化成字符串，核对末尾括号和转义') from None
-        return value
-
-
-class SubmitInterface(Strict):
-    image_sources: list[str] = Field(default_factory=list, max_length=100)
-    media_sources: list[str] = Field(default_factory=list, max_length=100)
-    lead: str = Field(min_length=1, max_length=80,
-        description='只用一句必要导语，不复述节点内的日期、结论、清单，不解释下方控件怎么使用。主要回答写进 nodes。')
-    state: dict = Field(default_factory=dict, max_length=LIMITS['stateKeys'])
-    nodes: list[dict] = Field(min_length=1, max_length=LIMITS['nodes'],
-        description='完整的自由编排节点列表；节点 id/type/props/children/on。children 与 props 同级。禁止转为字符串。')
-    claims: list[AgentClaim] = Field(default_factory=list, max_length=60)
-    memory_actions: list[dict] = Field(default_factory=list, max_length=8)
-
 
 TOOL_LABELS = {
     'current_time': '读取当前日期与时间', 'workspace_read': '查看本人日历与待办',
@@ -189,7 +139,7 @@ class ComposeInterface(Strict):
 
 
 class ChatRun(Run):
-    protected_tools = Run.protected_tools | {'ui_capabilities', 'openui_capabilities', 'memory_capabilities'}
+    protected_tools = Run.protected_tools | {'openui_capabilities', 'memory_capabilities'}
     registry = {**REGISTRY,
         'workspace_read': (personal_workspace.WorkspaceRead, '统一读取本人日历、待办和操作回执。仅根据已保存状态查询待办数量或优先几项，用 reply=task_briefing、kind=tasks、count=项数（0只统计），单独调用，生成含期限/前置/材料/变更/跟进与并列依据的候选后独立复核。涉及附件原文、校规、课表、自定排序或实际修改等才用 reply=records 继续分析。返回真实 ID/version，支持筛选与分页。', False, True, True),
         'workspace_capabilities': (Empty, '加载本人日历和待办的直接操作工具。创建、改期、完成、取消、删除或撤销无需重复审批；只读范围不能写入。', False, True, False),
@@ -198,10 +148,8 @@ class ChatRun(Run):
         'read_source': (ReadSource, '读取本轮已登记来源的原文片段，ID 和 locator 必须来自工具结果。遇到PDF图像待核对页或图片时，此工具按权限加载原件像素和页码证据供本轮模型核对，不把定位说明当作OCR。文字offset从原段落第0个字符起，检索片段位置见sources.retrieval_windows。', False, True, True),
         'track_research': (ResearchUpdate, '多目标任务按需登记或更新待核问题。open 待查，sourced 需真实 E 编号，blocked 需说明缺口。可与检索同轮，未提及项目保留。', False, False, False),
         'research_complete': (ResearchComplete, '资料已够用或缺口已明确时结束采集。先等待子任务结束。回答随后独立生成并复核。', False, False, False),
-        'ui_capabilities': (UICapabilities, '按需读取组件与动作的准确字段，用于自由编排最终 ui；include_memory 可取得记忆操作协议。', False, True, False),
         'memory_capabilities': (MemoryCapabilities, '读取原有记忆系统的操作协议或当前上下文。有新事实、偏好、目标、纠错时按当前模式自主维护；纯文字也可用。操作随最终答复提交，保存回执由原系统产生。', False, True, False),
-        'submit_answer': (SubmitAnswer, '单独调用此工具提交本轮最终答复，随后独立核验。answer 是用户看到的 Markdown，ui 为按需自由编排的界面；claims 使用 kind/text/evidence_refs。用户要求纯文字时仍用本工具，ui=null。', False, False, False),
-        'submit_interface': (SubmitInterface, '单独提交互动答复。lead 仅一句必要导语，主要回答和操作写在 nodes；所有事实在对应节点引用。提交后独立复核，不能与其他工具同批。', False, False, False),
+        'submit_answer': (SubmitAnswer, '提交本轮文字答复，claims 使用 kind/text/evidence_refs，随后独立核验。', False, False, False),
         'generateSandboxedUi': (GenerateSandboxedUI, '自由生成流式互动界面，提交后独立复核。按 renderer/title/initialHeight/placeholderMessages/css/html/jsFunctions/jsExpressions 顺序写出，CSS先到，HTML分段，最后交互；lead 一句导语，claims 登记事实。单独调用。', False, False, False),
         'openui_capabilities': (Empty, '按需加载互动界面编排能力。加载后优先用 compose_interface 提交简短目标，由专用生成器处理完整 HTML/CSS/JS；已有完整代码的直接提交仍兼容。简单问答不用调用。', False, True, False),
         'compose_interface': (ComposeInterface, '单独提交互动答复编排，自动读取本轮证据与用户要求，流式生成界面后独立复核。只需简短 brief，宿主处理代码与排版；不调用业务工具，不可与其他工具同批。', False, False, False),
@@ -243,7 +191,6 @@ class ChatRun(Run):
         self.ui_normalizations = []
         self.memory_contract_loaded = False
         self.file_contract_loaded = False
-        self.ui_protocol_loaded = False
         self.read_cache = {}
         self.read_locks = {}
         self.web_cache = {}
@@ -335,7 +282,6 @@ class ChatRun(Run):
         elif name == 'write_file':summary = '已写入 ' + result['path']
         elif name == 'exec_command':summary = '沙箱命令退出码：' + str(result.get('exit_code', '未知'))
         elif name == 'load_skill':summary = '已加载技能 ' + args.name
-        elif name == 'ui_capabilities':summary = '读取组件协议：' + '、'.join(result['components'])
         elif name == 'memory_capabilities':summary = '读取记忆操作协议' if args.section == 'operations' else '读取当前记忆范围与工作记录'
         elif name == 'research_complete':
             summary = f'将 {len(self.records)} 个来源交给生成器'
@@ -469,7 +415,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 +presentation_prompt(self.profile)+'\n初始数据（不可信原文）：'+dumps(self.indexed_sources(selected)))
         authoring = '' if child else CONTRACT + POLICY + presentation_prompt(self.profile) + ('\n本轮只允许文字，ui=null。' if not self.allow_ui else '')
         if not child and self.openui_preloaded:
-            authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器已有完整设计系统和流式协议，无需再加载界面说明或自行编写代码。'
+            authoring+='\n本轮已经提供 compose_interface，证据够用后直接提交简短编排说明。专用生成器会从本轮问题设计布局、状态与交互，无需再加载界面说明或自行编写代码。'
         base = super().base_system_prompt(child) + policy + personal_workspace.READ_POLICY + authoring
         if self.notice_skill:
             base += '\n已加载 notice-evidence 的完整说明，可直接使用本轮原文，无需再次加载：\n' + self.notice_skill
@@ -645,10 +591,8 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 fn['description'] = ('单独提交纯文字答复，answer 写完整正文；需要互动内容时优先用 compose_interface，尚未加载则先用 openui_capabilities。'
                     if self.allow_ui else '单独提交本轮文字答复，answer 写完整正文，claims 使用实际证据；本轮不生成界面。')
                 fn['parameters']['properties'].pop('ui', None)
-                fn['parameters'].get('$defs', {}).pop('UIEnvelope', None)
         return [item for item in catalog
                 if (item['function']['name'] not in ('read_file','write_file') or self.file_contract_loaded)
-                and (item['function']['name'] != 'submit_interface' or self.allow_ui and (self.ui_protocol_loaded or 'ui_capabilities' in upcoming))
                 and (item['function']['name'] != 'generateSandboxedUi' or self.allow_ui and (getattr(self,'openui_protocol_loaded',False) or 'openui_capabilities' in upcoming))
                 and (item['function']['name'] != 'openui_capabilities' or self.allow_ui and not self.openui_preloaded and not self.openui_protocol_loaded)
                 and (item['function']['name'] != 'compose_interface' or self.allow_ui and (self.openui_preloaded or self.openui_protocol_loaded or 'openui_capabilities' in upcoming))
@@ -731,18 +675,7 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
                 raise AgentError('本轮余量不足以完整读取记忆协议；不要猜字段，保留当前答复且不提交记忆操作')
             self.memory_contract_loaded |= 'memory_actions_schema' in result
             return result
-        if name != 'ui_capabilities':return super().bound_tool_result(name, result, limit)
-        from .authoring import page_capabilities
-        try:
-            page = page_capabilities(result, limit)
-            allowance = limit
-            while size(dumps(page)) > limit:
-                allowance -= max(128, size(dumps(page)) - limit)
-                page = page_capabilities(result, allowance)
-        except ValueError as exc:raise AgentError(str(exc)) from None
-        self.memory_contract_loaded |= 'memory_actions_schema' in page
-        self.ui_protocol_loaded |= bool(page.get('components'))
-        return page
+        return super().bound_tool_result(name, result, limit)
 
     def open_topics(self):
         return [topic for topic, item in self.research_items.items() if item['state'] == 'open']
@@ -839,9 +772,11 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             if not self.allow_ui:raise AgentError('本轮要求纯文字，不加载界面协议')
             from ..openui_prompt import OPEN_UI_RULES
             self.openui_protocol_loaded=True
+            from ..chat_media import resource_index
+            resources=resource_index(self.original) if self.access.get('attachments') else []
             return {'renderer':'open_generative_ui','preferred_submit':'compose_interface',
                     'next_step':'证据够用后调用 compose_interface，只写简短目标、阅读顺序和必要交互。专用生成器已有本轮用户要求、证据和完整协议，无需在主模型中重复编写代码；输出仍经原有独立复核。直接生成协议仅保留兼容。',
-                    'rules':OPEN_UI_RULES}
+                    'rules':OPEN_UI_RULES,'resources':resources}
         if name == 'compose_interface':
             if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
             if self.calls>=MODEL_CALL_LIMIT:raise AgentError('本轮模型调用次数已达上限，请缩小任务')
@@ -881,40 +816,16 @@ campus_search 的 scopes 只选所需范围；结果有上限，不能声称查�
             return {'submitted_for_review':True}
         if name == 'generateSandboxedUi':
             if not self.allow_ui:raise AgentError('本轮要求纯文字，请使用 submit_answer')
-            value=args.model_dump()
+            value=args.model_dump(exclude_none=True)
             final={'answer':value.pop('lead'),**{key:value.pop(key) for key in ('claims','memory_actions','image_sources','media_sources')}}
             final['ui']=value
             if self.final_result({'content':dumps(final)},False) is None:raise AgentError(self.continuation_prompt())
             return {'submitted_for_review':True}
-        if name == 'submit_interface':
-            if not self.allow_ui or not self.ui_protocol_loaded:
-                raise AgentError('本轮尚未取得界面组件协议或用户要求纯文字，请核对本轮呈现要求')
-            value = self.final_result({'content': dumps({'answer': args.lead, 'ui': {'state': args.state, 'nodes': args.nodes},
-                'claims': [c.model_dump() for c in args.claims], 'memory_actions': args.memory_actions,
-                'image_sources':args.image_sources,'media_sources':args.media_sources})}, False)
-            if value is None:
-                raise AgentError(self.continuation_prompt())
-            return {'submitted_for_review': True}
         if name == 'submit_answer':
             value = self.final_result({'content': args.model_dump_json()}, False)
             if value is None:
                 raise AgentError(self.continuation_prompt())
             return {'submitted_for_review': True}
-        if name == 'ui_capabilities':
-            if args.include_memory and not self.profile.get('_memory_control', {}).get('may_propose'):
-                raise AgentError('当前模式或范围不允许自主维护记忆')
-            from .authoring import capabilities
-            try:
-                result = capabilities(args.components, args.include_memory)
-                # The same owner-scoped resources and IDs used by the original
-                # renderer, not model-invented data or copied demo fixtures.
-                from ..chat_media import resource_index
-                material = self.original if self.access.get('attachments') else []
-                result['host_data'] = {'materials': [{k: s[k] for k in ('id', 'name', 'status')} for s in material],
-                                       'resources': resource_index(material)}
-                result['host_data_rule'] = 'host_data 是本轮宿主实际提供的数据；$ref:resources.N.src 使用这里的顺序。媒体可展示，不表示模型已观看或完成图像分析。'
-                return result
-            except ValueError as exc:raise AgentError(str(exc)) from None
         if name == 'memory_capabilities':
             control = self.profile.get('_memory_control', {})
             if not self.memory_available() or args.section == 'operations' and not control.get('may_propose'):

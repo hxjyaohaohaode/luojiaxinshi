@@ -191,11 +191,14 @@ def test_connection_reuse_and_cost_details_preserve_provider_boundaries(env,monk
 def test_structural_ui_spelling_is_normalized_without_changing_content():
     node={'id':'group','type':'Section','props':{'children':[{'id':'body','type':'Markdown','props':{'text':'合成内容'}}]}}
     raw=json.dumps({'answer':'结果','ui':{'nodes':[node]}},ensure_ascii=False)
-    changes=[];result=compile_answer(raw,[],[],normalization_log=changes)
-    assert '合成内容' in result['answer'] and changes==[{'node':'group','field':'props.children','normalized_to':'children'}]
-    assert 'children' in node['props']  # No mutation of the original model output.
+    from app.agent_runtime.authoring import normalize_ui
+    from app.genui_prompt import encode_authored_ui
+    old,changes=normalize_ui(json.loads(raw)['ui'])
+    assert '合成内容' in encode_authored_ui(old) and changes==[{'node':'group','field':'props.children','normalized_to':'children'}]
+    assert 'children' in node['props']
+    with pytest.raises(ValueError,match='组件树'):compile_answer(raw,[],[])
     node['children']=[]
-    with pytest.raises(ValueError,match='歧义'):compile_answer(json.dumps({'answer':'结果','ui':{'nodes':[node]}}),[],[])
+    with pytest.raises(ValueError,match='歧义'):normalize_ui({'nodes':[node]})
 
 
 def test_normalized_container_cannot_smuggle_an_unsafe_action():
@@ -221,15 +224,16 @@ def test_interface_contract_is_discovered_lazily_and_uses_same_review(env,monkey
         assert 'submit_interface' not in [t['function']['name'] for t in tools]
         submit=next(t['function'] for t in tools if t['function']['name']=='submit_answer')
         assert 'ui' not in submit['parameters']['properties']
-        return answer('',[call('ui_capabilities',{'components':['Checklist']})])
+        return answer('',[call('openui_capabilities',{})])
     def second(messages,tools):
-        assert 'submit_interface' in [t['function']['name'] for t in tools]
-        return answer('',[call('submit_interface',{'lead':'整理后的准备事项。','state':{'ready':[]},
-            'nodes':[{'id':'list','type':'Checklist','props':{'bind':'ready','label':'准备事项','items':[{'id':'one','label':'核对原文'}]}}]})])
+        names={t['function']['name'] for t in tools}
+        assert 'generateSandboxedUi' in names and 'submit_interface' not in names
+        return answer('',[call('generateSandboxedUi',{'lead':'整理后的准备事项。','renderer':'open_generative_ui',
+            'title':'材料准备','preferredWidth':540,'html':['<label><input id="check" type="checkbox">核对原文</label>']})])
     model=Script([first,second]);env[0].state.agent_service.provider_factory=lambda *_:model
     result=final(send(c,chat,'生成可勾选的准备事项'))
     assert result['status']=='complete' and result['grounding']['status']=='checked',result['error']
-    assert result['genui']['validated'] and 'Checklist' in result['grounding']['work_summary']['ui_components']
+    assert result['genui']['validated'] and 'OpenGenerativeUI' in result['grounding']['work_summary']['ui_components']
     assert len(model.inputs)==2 and result['grounding']['agent_execution']['answer_in_loop']
 
 

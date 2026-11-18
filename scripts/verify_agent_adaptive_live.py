@@ -63,7 +63,9 @@ def check(case='files', output_name=None):
     prompts={
         'files':PROMPT,
         'ui':'仅用本条消息：这是一项工程测试，不是真实通知。演示活动在2026年11月3日18:00截止，需要报名表和课程截图。请先突出截止时间，再做可勾选的材料清单，原文说明按需展开。不联网，不写文件，不用模板。',
-        'openui':'仅用本条消息：这是隔离的合成工程验收，没有真实学校活动。请用自由生成的 HTML/CSS/JS 制作中文准备时间工具：每天2小时、准备7天，合计14小时。需要 hours 滑块（0.5至8，步长0.5）、days 数字输入（1至30的整数）、total 输出；改变输入立即重算，空值或无效天数显示具体错误并清除旧结果。包含“按当前条件继续分析”按钮，点击时必须通过 CampusUI.sendPrompt 在本聊天发起下一轮，携带当前小时、天数与合计；不要添加本地分析文案或其他换算。使用已注入的共享设计系统，保持简洁，适应手机。代码字段流式输出。不联网、不写文件、不创建待办或日历、不保存记忆。',
+        'openui':'仅用本条消息：这是隔离的合成工程验收，没有真实学校活动。请用自由生成的 HTML/CSS/JS 制作中文准备时间工具：每天2小时、准备7天，合计14小时。需要 hours 滑块（0.5至8，步长0.5）、days 数字输入（1至30的整数）、total 输出；改变输入立即重算，空值或无效天数显示具体错误并清除旧结果。包含“按当前条件继续分析”按钮，点击时必须通过 CampusUI.sendPrompt 在本聊天发起下一轮，携带当前小时、天数与合计；不要添加本地分析文案或其他换算。自行设计布局和样式，保持简洁，适应手机。代码字段流式输出。不联网、不写文件、不创建待办或日历、不保存记忆。',
+        'notice_compare':'这是合成校园资料。请把这两份附件做成一个可以操作的通知更正对照，让我能在“只看变化”和“全部条目”之间切换，选中变化能看原文与更正依据。让差异本身一眼可读；全部条目包括未变的参与年级。请自行设计界面。仅用本次材料，不联网，不写入待办、日历或记忆。',
+        'prep_timeline':'这是合成资料。请做一个可直接拖动的个人准备时间轴，横轴从09:00到12:00。拟稿从09:00开始用30分钟，核对从10:00开始用30分钟，整理从11:00开始用15分钟。拖动任务块能以15分钟为步长调整开始时间，并就地更新该任务的起止时间。键盘也能移动任务。刷新时保留我已保存的选择。请自行设计界面；只做个人试排，不联网，不写入待办、日历或记忆。',
         'conflict':'仅用本条消息，纯文字作答。这是合成工程资料：同一演示活动的通知甲写“11月3日18:00截止”，通知乙写“11月3日16:00截止”。两份材料都没有发布时间、版本号或替代说明。告诉我这项活动的最终截止时间，说明依据。',
         'research':'请结合本次附件帮我把这次申请理清楚，我现在先做什么？用文字答复，只用本次会话材料，不联网，不写入待办或日历。',
         'clarify':'仅用本条消息，这是合成工程测试，没有真实账户或活动资料。帮我完成报名。请用一句话回复。',
@@ -102,10 +104,13 @@ def check(case='files', output_name=None):
                     for name,raw in [('tone.wav',wav()),('colors.mp4',mp4()),('notes.txt',b'Engineering test. Prepare the repository and a report outline first.')]:
                         uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,raw)})
                         uploaded.raise_for_status();chat=uploaded.json()
-            if case=='research':
+            if case in ('research','notice_compare'):
                 notices={
                     '申请通知.txt':'合成校园事项。参与对象为二年级学生。申请人需准备签字申请表和成绩单，截止时间为11月3日18:00。提交渠道另行通知。',
                     '办理群转述.txt':'合成群内转述，未经发布方确认。有人说同一申请截止时间是11月3日16:00，未提供正式更正文件。'}
+                if case=='notice_compare':
+                    notices={'活动原通知.txt':'合成活动原通知。参与对象为二年级学生。截止时间为11月23日17:00，材料交到文科楼201室。',
+                             '正式更正.txt':'合成发布方正式更正，替代原通知的截止时间与地点。截止时间改为11月24日12:00，地点改为文科楼305室。参与对象仍为二年级学生。'}
                 for name,body in notices.items():
                     uploaded=client.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},files={'files':(name,body.encode(),'text/plain')})
                     uploaded.raise_for_status();chat=uploaded.json()
@@ -159,10 +164,10 @@ def check(case='files', output_name=None):
             print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
             assert final['status']=='complete' and report['validated'] and report['planning_mode']=='agent_tool_loop',report['error']
             assert (case!='files' or calls.count('list_files')==1) and 'research_complete' not in calls and report['review_status']=='checked'
-            if case in ('ui','openui'):
+            if case in ('ui','openui','notice_compare','prep_timeline'):
                 assert grounding['work_summary']['ui_components'] and report['interactive_blocks']
                 assert all(p['spec']['complete'] and not p['spec']['errors'] for p in final['parts'] if p['kind']=='ui')
-            if case=='openui':
+            if case in ('openui','notice_compare','prep_timeline'):
                 assert report['openui_blocks']==1 and report['stream_has_ui_preview']
                 assert 'generateSandboxedUi' in calls or 'compose_interface' in calls
             assert grounding['agent_execution']['answer_in_loop']
@@ -203,5 +208,5 @@ def check_review():
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','openui','review','conflict','research','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--allow-paid-synthetic-test',action='store_true',required=True);parser.add_argument('--case',choices=['files','ui','openui','review','conflict','research','notice_compare','prep_timeline','clarify','memory','visual','timetable','mixed','workspace'],default='files');parser.add_argument('--output-name');args=parser.parse_args()
     check_review() if args.case=='review' else check(args.case,args.output_name)

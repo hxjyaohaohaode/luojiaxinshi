@@ -1,20 +1,12 @@
 # 生成式智能 UI：OpenIntelligentUI 适配
 
-复杂交互任务现在由现有 Agent 通过 `compose_interface` 提交简短编排目标，再由专用 UI 生成器流式生成 HTML、CSS 和 JavaScript。明确请求互动且上下文足够时，直接提供编排入口，省去重复加载协议；其他任务仍可按需加载 `openui_capabilities`，直接 `generateSandboxedUi` 和历史组件图继续兼容。用户问题、已有证据、当前个人权限与真实工作台操作由原聊天链路管理，简单问题可直接回答。
+复杂交互任务由主 Agent 核对意图与证据，调用 `compose_interface` 交给专用生成器。新的互动答复从空白文档写出语义 HTML、CSS 和 JavaScript。模型决定内容顺序、图形、交互和合适宽度。纯文字答复经 `submit_answer` 返回。历史消息继续按发布时的协议读取。
 
 ## 上游与实际采用范围
 
-参考 [CopilotKit/OpenIntelligentUI](https://github.com/CopilotKit/OpenIntelligentUI)，核对提交 `8391a94c1c3939c679e40ddd7bfc08a9ef690e70`（MIT）：
+本轮参考 [thesysdev/open-intelligent-ui 的源码](https://github.com/thesysdev/open-intelligent-ui/tree/dd45370b3ca785692c4c761cbafe4242421275f6)。上游的 `src/lib/prompt-options.ts` 与 `src/lib/library.ts` 把界面创作交给模型，使用 OpenUI Lang 组合表现和交互。本项目取用按问题设计界面、将视觉和本地状态一并生成的思路，沿用现有 MiMo、Python/FastAPI 和原生浏览器运行时。模型可直接编写所需的标记、样式和脚本。
 
-| 上游文件 | 本项目采用的机制 |
-| --- | --- |
-| `docs/interactive-answers.md`、`apps/agent/src/visualization_router.py` | 按任务选择文字或可操作界面；输入、假设、结果和真实操作区分；用户主动追问 |
-| `apps/app/src/components/generative-ui/open-generative-ui/schema.ts` | `initialHeight → placeholderMessages → css → html → jsFunctions → jsExpressions` 顺序；正文与行为分开传送 |
-| 同目录 `renderer.tsx`、`frame-content.ts` | CSS 完成后显示渐进 HTML；就地更新 DOM；持续测量高度；保留同一画布到最终交互 |
-| `apps/app/src/lib/sandbox/sandbox-functions.ts` | 验证宿主桥参数；显式用户操作才继续模型；外部原文按已登记来源打开 |
-| `packages/design-system/src/index.ts` | 主题变量、原生表单、SVG 色组和图形辅助类；适配为本地共享设计系统，统一珞珈绿、字阶、间距与状态 |
-
-本项目将这些机制适配为 Python/FastAPI、现有 SSE 与浏览器原生 iframe；模型仍为已配置的 MiMo。不新增 CopilotKit、Next.js、LangGraph、Jev、Websandbox 或 CDN 运行依赖。宿主桥兼容 `Websandbox.connection.remote.sendPrompt/openLink` 的调用写法，执行边界由本项目实现。上游许可保留在 `docs/licenses/open-intelligent-ui/LICENSE.txt`。
+上一版流式协议与隔离画布参考 [CopilotKit/OpenIntelligentUI](https://github.com/CopilotKit/OpenIntelligentUI/tree/8391a94c1c3939c679e40ddd7bfc08a9ef690e70)。相应许可保存在 `docs/licenses/open-intelligent-ui/LICENSE.txt`。现有消息继续使用本地的 SSE、分通道传输、代码隔离、宿主动作和独立证据复核。
 
 ## 真实流式路径
 
@@ -30,7 +22,7 @@
 
 ## 外观与生成耗时
 
-`static/genui/design-system.css` 预先提供主题、基础控件、SVG 色组与可组合布局；模型只写当前工具特有的样式。可直接组合 `ui-split/ui-grid/ui-stack/ui-field/ui-result/ui-value/ui-primary/ui-list/ui-segmented` 等原语，不固定整页模板。重点结果、参数与主操作各自成组，窄屏自然纵排。提示词限制重复统计卡、额外换算和无用分析文案，减少生成量与误算入口。
+每份新文档自行提供 CSS 和 `preferredWidth`（280–1440 像素）。实际宽度受聊天栏、材料面板和视口约束，高度随内容变化。`static/genui/canvas.css` 提供字体、焦点和可访问性的基础样式。带有旧协议标记的历史答复可使用原有样式。图形、栏目、控件及其外观由本次生成代码决定。
 
 简单试算使用隔离运行时的 `CampusUI.form({inputs,outputs,digits,error,prompt})`：`inputs` 定义已有控件的范围、整数和步长，`outputs` 只放结果元素 ID 与计算函数，`digits` 是顶层精度（0..6）。共享实现处理空值、校验、错误清除旧结果、即时重算和显式追问，减少每次生成的重复程序。`prompt` 独占该按钮的点击处理，阻止后加监听重复发送；每次真实手势最多发出一个宿主请求。仅对没有竞争顶层值、也没有同名结果元素的情况，兼容把数字 `digits` 放在 `outputs` 内的明确拼写，计算函数不改写。
 
@@ -48,7 +40,7 @@
 | 原“保存互动进度”按钮 | 原 `PUT .../messages/{mid}/ui-state` 保存；版本冲突返回 409，账号隔离不变 |
 | 原生输入的稳定 `id` | 自动捕获文本、数字、选择、滑块、勾选；刷新后恢复，并派发输入事件重算 |
 
-服务器从真实生成的 HTML 提取输入 ID、类型、选项、初始值和标签，再检查快照与 `interaction.selections`。客户端不能凭空增加输入或替换标签；初始值与已改变值分别标识。自定义视图选择可同步到带稳定 ID 的隐藏输入。任意 JavaScript 堆、动画时间和第三方组件内部状态不自动持久化。
+服务器从真实生成的 HTML 提取输入 ID、类型、选项、初始值和标签，再检查快照与 `interaction.selections`。客户端不能凭空增加输入或替换标签；初始值与已改变值分别标识。自定义视图可使用带稳定 ID 的隐藏输入，或用 CampusUI.storage 读写本回答的有界字符串字典。兼容的 localStorage 名称指向同一个隔离字典。本标签页暂存按账号、对话、消息、块、脚本版本和保存版本限定。点击保存后可在其他设备恢复。任意 JavaScript 堆、动画时间和第三方组件内部状态不自动持久化。
 
 独立复核要求修正界面时，旧脚本在原隔离文档中停止，新稿使用新的隔离文档。只恢复用户实际改过、且 ID、类型、标签、范围、步长与选项仍一致的字段；未改过的初值采用新稿。这样既保留兼容输入，也不会用旧初值覆盖纠正后的事实。普通流式到最终完成仍保持同一 iframe，不走修正重建路径。
 
@@ -71,6 +63,8 @@ node --test tests/genui-openui.test.mjs
 浏览器入口在 8794 启动独立合成账号，使用实际编排入口、增量解码、原聊天接口与数据库，覆盖 Chromium、Firefox、WebKit 的生成中首段可见、复核中本地计算、同画布开放宿主动作、输入保留、计算与筛选、非法数值、原生键盘、保存刷新、当前结果复制、手机/键盘高度、显式追问与隔离。报告在 `artifacts/openui-browser/{browser}/report.json`；合成延时不代表真实模型速度。WebKit 截图同步器注入的空 `body {}` 被主应用 CSP 拒绝时，仅在截图期间单独登记为工具日志，不放宽主应用 CSP。
 
 共享表单按钮另行注入重复监听，检查一次点击只生成一条用户消息；修正回归同时检查已编辑字段保留与未编辑初值更新。真实模型产物可通过 `OPENUI_REPLAY_FILE=artifacts/…/generated-ui.json`、`OPENUI_VERIFY_SCRIPT=scripts/verify_openui_generated.mjs` 离线重放；回放仅将已发布的显示引用恢复到当前合成输入的证据编号，再走正常编译，CSS/JavaScript 不改写。
+
+通知更正、拖动时间轴两份已核验的合成产物可以通过 OPENUI_PUBLISHED_REPLAYS（目录以系统路径分隔符连接）、OPENUI_VERIFY_SCRIPT=scripts/verify_authored_canvas.mjs 和上述浏览器入口回放。回放使用原始问题、证据、完整发布答复和独立测试数据库，覆盖五组视口、键盘/拖动、同标签刷新及另一浏览器会话恢复。
 
 真实模型验证沿用 `scripts/verify_agent_adaptive_live.py --case openui --allow-paid-synthetic-test --output-name openui-live`：使用临时账号、合成输入和原聊天完整复核链，会计费，不进入 CI。生成产物保存在 `artifacts/openui-live/generated-ui.json`。单次通过不能代表所有题型的生成质量或延迟。
 

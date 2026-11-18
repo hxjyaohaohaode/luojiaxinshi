@@ -9,7 +9,7 @@ from copy import deepcopy
 
 from ..ai import check_evidence
 from ..genui import CATALOG, LIMITS, ROOT, parse_message
-from ..genui_ai import UIAnswer, evidence_index, resolve_citations
+from ..genui_ai import CanvasAnswer, evidence_index, resolve_citations
 from ..genui_prompt import encode_authored_ui
 
 
@@ -26,7 +26,7 @@ CONTRACT = '''
 answer 先给本题结论、最重要的条件或下一步；正文中的材料事实就近引用工具 evidence_index 中的 [E编号]。不要手写显示编号、citations 或 citation_indices。没有依据的结论保留未知。执行回执只证明那次操作；读取和子任务概述不能证明学校手续已经完成。
 每条 claim 聚焦一个可核对的事实，evidence_refs 只放支持这条事实的原文；不能把相邻的另一个材料顺手挂到同一 claim。图像/音视频中的直接观察属于 fact，尚未直接观察到的推断才是 inference。
 submit_answer 不能与其他工具放在同一批。也兼容无工具调用的最终 JSON 内容。服务器将检查引文、交互协议、当前权限，并独立复核后发布；有问题会阻止发布。简单问答不需要检索或界面，不因流程而额外搜索。
-需要分层阅读、选择、筛选、试算、解释关系等交互时，使用 compose_interface 提交简短的目标、阅读顺序和必要交互说明，由专用生成器编排 HTML/CSS/JS；无需自己写界面代码或再次复述已经提供的原文。它能读取同一轮证据和用户要求，不能调用业务工具，结果随后独立复核。CSS 先到、HTML 分段、交互最后到。事实缺口先查证，简单问题仍用 submit_answer。尚未提供编排工具时，调用 openui_capabilities 加载；直接生成协议和旧原生组件仍兼容。
+需要分层阅读、选择、筛选、试算、解释关系等交互时，使用 compose_interface 提交简短的目标、阅读顺序和必要交互说明，由专用生成器编排 HTML/CSS/JS；无需自己写界面代码或再次复述已经提供的原文。它能读取同一轮证据和用户要求，不能调用业务工具，结果随后独立复核。CSS 先到、HTML 分段、交互最后到。事实缺口先查证，简单问题仍用 submit_answer。尚未提供编排工具时，调用 openui_capabilities 加载；画布的排版、状态和本地交互均由本轮模型设计。
 memory_control.may_propose=true 时，主动判断本轮是否有新事实、偏好、项目目标或纠错；有维护需要才读取 memory_capabilities，再随最终答复提交 memory_actions，不必等用户说“记住”。没有新信息不为凑流程调用。纯文字答复同样可以维护记忆。临时要求不能变成长期偏好，目标 ID、版本和范围不能猜，关闭或限制记忆时不提交操作。已有记忆不能当作当前官方规定。
 仅查看、解释本轮附件时，理解原图和完成当前问题优先，记忆维护不是读取附件或开始回答的前置步骤；没有明确的新长期条件、偏好或项目决定时，不为这次“看看内容”读取记忆操作协议。格式修复只提交已有正文，不重新分析原图、重复查询或重做已执行操作。
 长期偏好与本次答复要求分别处理；每条 source_quote 只摘取支持这一条的最小完整原句，不把同一消息里的临时指令混入长期记录。维护操作在答复核验后才执行，本次提交前没有保存回执，正文不能声称“已保存/已记下”；用实际内容说明本轮如何响应，保存状态由宿主真实回执展示。
@@ -165,8 +165,9 @@ def compile_answer(raw, sources, entries, *, allow_ui=True, normalization_log=No
     value = json.loads(raw)
     changes = []
     if isinstance(value, dict) and value.get('ui') is not None:
-        value['ui'], changes = normalize_ui(value['ui'])
-    parsed = UIAnswer.model_validate(value)
+        if not isinstance(value['ui'], dict) or value['ui'].get('renderer') != 'open_generative_ui':
+            raise ValueError('新互动答复须用 compose_interface 自主生成 HTML、CSS 和交互；不能提交组件树或模板。')
+    parsed = CanvasAnswer.model_validate(value)
     # Reuse the existing lifecycle decision for each quoted sentence. A
     # durable sentence cannot confer lifetime on a following one-off command.
     # Return feedback; never silently rewrite the user's meaning or action.
@@ -190,6 +191,8 @@ def compile_answer(raw, sources, entries, *, allow_ui=True, normalization_log=No
     if any(p['kind'] == 'ui' for p in parse_message(result['answer'])):
         raise ValueError('answer 只能写 Markdown，界面须放在 ui 字段')
     if ui:
+        from ..openui import check_authored_media
+        check_authored_media(ui, sources)
         result['answer'] += encode_authored_ui(ui)
     if len(result['answer']) > 80000:
         raise ValueError('回答超过长度上限')

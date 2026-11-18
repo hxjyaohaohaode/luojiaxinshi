@@ -26,6 +26,13 @@ settings = Settings(DATA, origin=f'http://127.0.0.1:{PORT}', ai_api_key='synthet
 app = create_app(settings)
 
 
+def fixture_checklist():
+    return {'title':'本次准备','preferredWidth':690,'css':'fieldset{display:grid;gap:12px} details{margin-block:14px}',
+            'html':['<fieldset><legend>准备材料</legend><label><input type="checkbox" id="form">报名表</label>'
+                    '<label><input type="checkbox" id="schedule">课程截图</label></fieldset>',
+                    '<details><summary>演示原文与核对项</summary><p>演示活动在 2026 年 11 月 3 日 18:00 截止。提交入口和资格条件尚未提供。</p></details>']}
+
+
 class FixtureProvider:
     model = 'synthetic-agent-fixture'
 
@@ -44,39 +51,21 @@ class FixtureProvider:
                 refs=[e['ref'] for m in messages if m['role']=='tool' for e in json.loads(m['content']).get('evidence_index',[]) if e.get('source_id','').startswith('workspace-')]
                 calls=[('submit_answer',{'answer':'已添加项目讨论，并创建报告准备待办。','claims':[{'kind':'fact','text':'已添加项目讨论，并创建报告准备待办。','evidence_refs':refs}]})]
             return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':name,'arguments':json.dumps(args,ensure_ascii=False)}} for name,args in calls]},{}
-        if '融合媒体验收' in user:
-            if messages[-1]['role'] != 'tool':
-                name, arguments = 'ui_capabilities', {'components':['Video']}
-            else:
-                available = json.loads(messages[-1]['content'])['host_data']['resources']
-                index = next(i for i, value in enumerate(available) if value['kind'] == 'video')
-                name, arguments = 'submit_interface', {'lead':'这是你上传的视频。', 'nodes':[
-                    {'id':'clip','type':'Video','props':{'src':{'$ref':f'resources.{index}.src'},'label':'上传的视频'}}],
-                    'claims':[{'kind':'interface','text':'播放本轮用户上传的视频，未分析内容'}]}
-            return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':name,'arguments':json.dumps(arguments,ensure_ascii=False)}}]},{}
-        if '真实生成回放验收' in user:
-            # Replay only the isolated, synthetic live-test output through the
-            # original chat renderer. This never calls the paid provider.
-            if messages[-1]['role'] != 'tool':
-                name,arguments='ui_capabilities',{'components':['Checklist','Accordion','Callout','Markdown']}
-            else:
-                trace=json.loads((ROOT/os.environ.get('AGENT_UI_REPLAY_DIR','artifacts/agent-adaptive-live-ui')/'synthetic-transcript.json').read_text(encoding='utf-8'))
-                submitted=[call for m in trace for call in m.get('tool_calls',[]) if call['function']['name'] in ('submit_answer','submit_interface')][-1]
-                name,arguments=submitted['function']['name'],json.loads(submitted['function']['arguments'])
-            return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':name,'arguments':json.dumps(arguments,ensure_ascii=False)}}]},{}
-        if '排版验收' in user:
-            if messages[-1]['role'] != 'tool':
-                return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':'ui_capabilities','arguments':json.dumps({'components':['Section','KeyValue','Checklist','Accordion','Markdown','Button']})}}]}, {'prompt_tokens':20,'completion_tokens':10}
-            authored={'answer':'**先准备报名表和课程截图，再核对提交入口。**\n\n以下是你提供的演示信息，勾选只记录本次准备进度。',
-                'ui':{'state':{'ready':[]},'nodes':[
-                    {'id':'facts','type':'Section','props':{'surface':'soft'},'children':[
-                        {'id':'key','type':'KeyValue','props':{'items':[{'label':'截止时间','value':'2026 年 11 月 3 日 18:00'},{'label':'待确认','value':'提交入口、资格条件'}]}}]},
-                    {'id':'prepare','type':'Checklist','props':{'label':'准备材料','bind':'ready','items':[{'id':'form','label':'报名表','description':'检查必填项与签字'},{'id':'schedule','label':'课程截图','description':'核对时间和完整性'}]}},
-                    {'id':'details','type':'Accordion','props':{'labels':['演示原文与核对项']},'children':[
-                        {'id':'original','type':'Markdown','props':{'text':'演示材料：报名截止为 2026 年 11 月 3 日 18:00，需要报名表和课程截图。\n\n提交入口和资格条件尚未提供，需查阅原通知。'}}]},
-                    {'id':'action','type':'Button','props':{'label':'添加通知原文','variant':'secondary'},'on':{'click':{'kind':'host','name':'upload_material','params':{}}}}
-                ]},'claims':[{'kind':'interface','text':'清单用于本次准备进度'}]}
-            return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':'submit_answer','arguments':json.dumps(authored,ensure_ascii=False)}}]}, {'prompt_tokens':20,'completion_tokens':60}
+        if any(key in user for key in ('融合媒体验收','排版验收')):
+            tools_available={t['function']['name'] for t in tools}
+            if 'openui_capabilities' in tools_available:
+                name,args='openui_capabilities',{}
+            elif 'generateSandboxedUi' in tools_available:
+                if '融合媒体验收' in user:
+                    discovery=next(json.loads(m['content']) for m in reversed(messages) if m['role']=='tool' and 'resources' in m['content'])
+                    video=next(item for item in discovery['resources'] if item['kind']=='video')
+                    ui={'title':'视频原件','preferredWidth':720,'css':'video{display:block;width:100%;aspect-ratio:16/9}',
+                        'html':[f'<video controls data-material="{video["id"]}" aria-label="上传的视频"></video>']}
+                else:ui=fixture_checklist()
+                name,args='generateSandboxedUi',{'renderer':'open_generative_ui','lead':'以下是本次合成材料。',**ui,
+                    'claims':[{'kind':'interface','text':'呈现本轮用户提供的材料'}]}
+            else:name,args='compose_interface',{'brief':user}
+            return {'role':'assistant','content':'','tool_calls':[{'id':ident(),'type':'function','function':{'name':name,'arguments':json.dumps(args,ensure_ascii=False)}}]},{}
         chat = any(t['function']['name'] == 'research_complete' for t in tools)
         if messages[-1]['role'] == 'tool':
             if chat:
@@ -94,6 +83,18 @@ app.state.agent_service.provider_factory = lambda *_: FixtureProvider()
 
 
 async def fixture_writer(settings, sources, messages, profile, tier):
+    if profile.get('_ui_composition_only'):
+        from app.openui import encode_ui
+        if '融合媒体验收' in str(messages):
+            from app.chat_media import resource_index
+            source=next(item for item in resource_index(sources) if item['kind']=='video')
+            ui={'title':'视频原件','preferredWidth':720,'css':'video{display:block;width:100%;aspect-ratio:16/9}',
+                'html':[f'<video controls data-material="{source["id"]}" aria-label="上传的视频"></video>']}
+        else:ui=fixture_checklist()
+        ui={'renderer':'open_generative_ui',**ui}
+        draft={'answer':'以下是本次合成材料。','ui':ui,'claims':[{'kind':'interface','text':'呈现本轮合成材料'}]}
+        yield {'type':'complete','result':{'answer':draft['answer']+encode_ui(ui),'citations':[],'image_sources':[]},'repair_draft':json.dumps(draft,ensure_ascii=False),'usage':{}}
+        return
     text='【合成验收回复】你提供的要求是：'
     source=next(s for s in sources if s['evidence_kind']=='user_input');part=source['sections'][0]
     result={'answer':text+part['text']+'[1]','citations':[{'source_id':source['id'],'locator':part['locator'],'quote':part['text']}],

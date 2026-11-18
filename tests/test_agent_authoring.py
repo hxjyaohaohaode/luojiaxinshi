@@ -81,13 +81,14 @@ def test_invalid_answer_feedback_returns_to_loop_without_fake_completion(env, mo
 
 def test_native_authored_ui_not_old_compact_template(env, monkeypatch):
     c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
-    ui={'state':{'checked':[]},'nodes':[{'id':'choice','type':'Checklist','props':{'label':'准备事项','bind':'checked','items':[{'id':'a','label':'核对原文'}]}}]}
+    ui={'renderer':'open_generative_ui','title':'准备事项','preferredWidth':560,'css':'label {display:flex;gap:.6em}',
+        'html':['<label><input id="choice" type="checkbox">核对原文</label>']}
     model=Script([draft('先核对原文，再准备材料。',ui=ui)]);env[0].state.agent_service.provider_factory=lambda *_:model
     m=final(send(c,chat,'做一个可勾选的准备清单'))
     assert m['status']=='complete',m['error']
-    assert 'Checklist' in m['grounding']['work_summary']['ui_components'] and m['genui']['validated']
+    assert 'OpenGenerativeUI' in m['grounding']['work_summary']['ui_components'] and m['genui']['validated']
     assert genui_ai.presentation_tier(1,'compact')==1
-    assert genui_ai.presentation_tier(2,'compact')==2
+    assert genui_ai.presentation_tier(2,'compact')==3
 
 
 def test_independent_rejection_cannot_publish_agent_draft(env, monkeypatch):
@@ -211,14 +212,9 @@ def test_serialized_presentation_gets_full_validation_and_effect_inputs_stay_str
     from app.agent_runtime.chat import SubmitAnswer
     from app.agent_runtime.types import WriteFile
     ui={'state':{},'nodes':[{'id':'note','type':'Markdown','props':{'text':'测试'}}]}
-    value=SubmitAnswer.model_validate({'answer':'测试','ui':json.dumps(ui)},strict=True)
-    assert compile_answer(value.model_dump_json(),[],[])['answer'].endswith('```')
-    assert SubmitAnswer.model_validate({'answer':'测试','ui':'null'},strict=True).ui is None
-    for invalid in ('[]','true','{"nodes":[],"state":{}}'):
+    assert SubmitAnswer.model_validate({'answer':'测试','ui':None},strict=True).ui is None
+    for invalid in (ui,json.dumps(ui),'[]','true','{"nodes":[],"state":{}}'):
         with pytest.raises(ValidationError):SubmitAnswer.model_validate({'answer':'测试','ui':invalid},strict=True)
-    ui['nodes'][0]['on']={'click':{'kind':'open_url','url':'javascript:alert(1)'}}
-    with pytest.raises((ValueError,genui_ai.AIError)):
-        compile_answer(SubmitAnswer.model_validate({'answer':'测试','ui':json.dumps(ui)}).model_dump_json(),[],[])
     with pytest.raises(ValidationError):WriteFile.model_validate({'path':'x.txt','content':123},strict=True)
 
 
@@ -289,10 +285,10 @@ def test_long_history_does_not_starve_current_ui_schema(env, monkeypatch):
     c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
     def finish(messages, tools):
         result=json.loads(messages[-1]['content'])
-        assert 'error' not in result and 'Markdown' in result['components']
+        assert result['renderer']=='open_generative_ui' and 'html' in result['rules']
         assert size(messages)+size(tools) <= env[1].agent_context_bytes
         return answer('',[call('submit_answer',{'answer':'界面协议已读取。','claims':[{'kind':'interface','text':'界面协议已读取。'}]})])
-    model=Script([answer('',[call('ui_capabilities',{'components':['Markdown','KeyValue','Checklist']})]), finish])
+    model=Script([answer('',[call('openui_capabilities',{})]), finish])
     env[0].state.agent_service.provider_factory=lambda *_:model
     message=final(send(c,chat,'读取需要的界面协议'))
     assert message['status']=='complete',message['error']
@@ -326,4 +322,4 @@ def test_component_protocol_pages_whole_schemas_within_budget():
     assert set(page['components'])|set(page['deferred_components'])==set(complete['components'])
     with pytest.raises(ValueError):page_capabilities(complete,512)
     ui_schema=SubmitAnswer.model_json_schema()['properties']['ui']
-    assert '$ref' in ui_schema and 'anyOf' not in ui_schema  # Optional object, no provider stringification hint.
+    assert ui_schema['type']=='null'  # The text tool accepts only an omitted or empty UI.

@@ -31,8 +31,8 @@ def test_prompt_is_task_first_streaming_and_preserves_safety_persona():
     assert 'answer 为自然语言纯文本' not in prompt
     assert len(capability_module(1).encode())<12288
     assert '问题简单' in prompt and '只给简洁文字' in prompt
-    assert '不是页面模板' in prompt and '流式输出' in prompt
-    assert '无边框排版' in prompt and '新闻对照' in prompt and '演练' in prompt
+    assert '预设' not in capability_module(1) and '流式输出' in prompt
+    assert 'preferredWidth' in prompt and '自行定义类名' in prompt and 'ui-split' not in prompt
     assert '不改写事实' in prompt and 'changed:false' in prompt
     assert '隔离 iframe' in prompt and '稳定的 id' in prompt
     assert 'genui v1' not in capability_module(3)
@@ -89,7 +89,7 @@ def test_offline_domain_cases_and_negative_evaluation():
     assert not evaluate({'id':'wrong-choice','response':'普通文字','expected':'ui'})['passed']
 
 
-def test_tier2_stream_expands_only_after_template_validation(env,monkeypatch):
+def test_limited_tier_rejects_new_templates(env,monkeypatch):
     cfg=env[1];cfg.ai_api_key='fixture';cfg.genui_tier='2';seen=[]
     raw=json.dumps({'answer':'按照给定时长估算。','citations':[],'image_sources':[],'ui_template':{'name':'study_time','slots':{'hours':2,'days':7}}},ensure_ascii=False)
     body=''.join('data: '+json.dumps({'choices':[{'delta':{'content':raw[i:i+7]}}]})+'\n\n' for i in range(0,len(raw),7))+'data: '+json.dumps({'choices':[{'delta':{},'finish_reason':'stop'}]})+'\n\n'
@@ -97,10 +97,9 @@ def test_tier2_stream_expands_only_after_template_validation(env,monkeypatch):
     def transport(request):seen.append(json.loads(request.content));return httpx.Response(200,content=body)
     monkeypatch.setattr('app.genui_ai.httpx.AsyncClient',lambda **kwargs:client(transport=httpx.MockTransport(transport),**kwargs))
     async def collect():return [event async for event in stream_reply(cfg,[],[{'role':'user','content':'每天2小时、7天'}],{},2)]
-    output=asyncio.run(collect());assert output[-2]['expanded_template']
-    assert ''.join(e['text'] for e in output if e['type']=='delta')==output[-1]['result']['answer']
-    assert any(p['kind']=='ui' for p in parse_message(output[-1]['result']['answer']))
-    assert 'ui_template' in seen[0]['messages'][0]['content']
+    from app.ai import AIError
+    with pytest.raises(AIError):asyncio.run(collect())
+    assert 'ui_template' not in seen[0]['messages'][0]['content']
 
 
 def test_tier3_without_json_only_streams_text(env,monkeypatch):
@@ -174,18 +173,17 @@ def test_authored_object_does_not_bypass_state_actions_or_catalog_checks(change)
 
 @pytest.mark.parametrize('body_text',['','正文与界面共同构成结果。'])
 @pytest.mark.parametrize('protocol',['legacy','stable'])
-@pytest.mark.parametrize('shape',['flat','inline'])
+@pytest.mark.parametrize('shape',['single','multiple'])
 def test_structured_ui_real_adapter_reconciles_stream_and_exact_evidence(env,monkeypatch,body_text,protocol,shape):
     from app.grounding import check_result
     cfg=env[1];cfg.ai_api_key='synthetic-only';seen=[]
-    ui=authored_ui();ui['nodes'][2]['props']['text']='材料给定的规则。[1]'
+    ui={'renderer':'open_generative_ui','title':'规则','preferredWidth':672,'html':['<p>材料给定的规则。[1]</p>']}
     sources=[{'id':'source','kind':'text','name':'原文','status':'ready','content':b'', 'sections':[{'locator':'段1','text':'材料给定的规则。'}]}]
     claim={'kind':'fact','text':'材料给定的规则。','citation_indices':[1]}
     if protocol=='stable':
-        ui['nodes'][2]['props']['text']='材料给定的规则。[E1]'
+        ui['html']=['<p>材料给定的规则。[E1]</p>']
         claim.update(citation_indices=[],evidence_refs=['E1'])
-    if shape=='inline':
-        root=ui['nodes'][0];root['children']=ui['nodes'][1:];ui['nodes']=[root]
+    if shape=='multiple':ui['html'].append('<details><summary>原文</summary>材料给定的规则。</details>')
     raw=json.dumps({'answer':body_text,'ui':ui,'citations':[],'citation_refs':['E1'] if protocol=='legacy' else [],'image_sources':[],
         'claims':[claim]},ensure_ascii=False)
     frames=''.join('data: '+json.dumps({'choices':[{'delta':{'content':raw[i:i+3]}}]})+'\n\n' for i in range(0,len(raw),3))

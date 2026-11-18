@@ -5,6 +5,8 @@
   const post=parent.postMessage.bind(parent),pending=new Map(),nativeAdd=EventTarget.prototype.addEventListener,now=performance.now.bind(performance);
   const style=document.createElement('style');document.head.append(style);
   let token=null,enabled=false,approved=false,started=false,failed=false,gestureUntil=0,sequence=0,rendered='',initial=null,initialContract=null,scheduled=0,textFrame=0;
+  let authoredCanvas=false;
+  const legacyStyles=document.querySelectorAll('[data-legacy-design]');
   const lockedButtons=new Map();
   const send=(type,data={})=>post({channel:'campus-openui',token,type,...data},'*');
   const reportError=message=>{error.hidden=false;error.textContent=message;measure();};
@@ -12,13 +14,61 @@
   function contracts(){const out={};for(const input of root.querySelectorAll('input,select,textarea')){const key=input.id||input.name;if(!key)continue;out[key]={type:input.type||input.tagName,label:input.labels?.[0]?.textContent?.trim()||input.getAttribute('aria-label')||key,min:input.getAttribute('min'),max:input.getAttribute('max'),step:input.getAttribute('step'),options:input.tagName==='SELECT'?[...input.options].map(o=>o.value):null};}return out;}
   function lockActions(){if(approved)return;for(const b of root.querySelectorAll('button:not([data-ui-local])')){if(!lockedButtons.has(b))lockedButtons.set(b,b.disabled);if(!b.disabled)b.disabled=true;}}
   function publishText(){if(textFrame||!enabled)return;textFrame=requestAnimationFrame(()=>{textFrame=0;const values=controls(),fields=[];for(const input of root.querySelectorAll('input,select,textarea')){const key=input.id||input.name;if(!Object.hasOwn(values,key)||input.type==='hidden')continue;const label=input.labels?.[0]?.innerText?.trim()||input.getAttribute('aria-label')||key;fields.push(label+'：'+(typeof values[key]==='boolean'?(values[key]?'已选中':'未选中'):values[key]));}send('text',{text:root.innerText+'\n\n'+fields.join('\n')});});}
-  function changed(){if(enabled)send('state',{controls:controls()});if(!approved)queueMicrotask(lockActions);measure();publishText();}
-  function measure(){if(scheduled)return;scheduled=requestAnimationFrame(()=>{scheduled=0;const rect=root.getBoundingClientRect();const e=error.hidden?0:error.getBoundingClientRect().height+16;send('resize',{height:Math.ceil(Math.max(rect.height,root.scrollHeight)+e)});});}
+  let savedFields=Object.create(null),previousTemplate=null,hadInput=false,storageEdited=false;
+  function state(extra={}){return {controls:controls(),...(authoredCanvas?{storage:storageEdited?{...savedFields}:{},storageEdited}:{}),...extra};}
+  function writeFields(next){
+    if(Object.keys(next).length>40||new TextEncoder().encode(JSON.stringify(next)).length>16000)throw new DOMException('互动进度过长','QuotaExceededError');
+    savedFields=next;
+    storageEdited||=hadInput;
+    if(enabled)send('state',state());
+  }
+  const storage=Object.freeze({
+    get length(){return Object.keys(savedFields).length;},
+    key:index=>Object.keys(savedFields)[index]??null,
+    getItem:key=>Object.hasOwn(savedFields,key)?savedFields[key]:null,
+    setItem(key,value){
+      key=String(key);value=String(value);
+      if(!key||key.length>100||/[\u0000-\u001f\u007f]/.test(key)||['__proto__','prototype','constructor'].includes(key)||value.length>4000)throw Error('此互动进度无法保存');
+      if(savedFields[key]!==value)writeFields(Object.assign(Object.create(null),savedFields,{[key]:value}));
+    },
+    removeItem(key){if(Object.hasOwn(savedFields,key)){const next={...savedFields};delete next[key];writeFields(next);}},
+    clear(){writeFields(Object.create(null));}
+  });
+  function changed(){if(enabled)send('state',state());if(!approved)queueMicrotask(lockActions);measure();publishText();}
+  // A short interval in a position-based diagram can wrap its own label.
+  // Grow the hit target vertically while keeping its authored horizontal scale.
+  function fitPositionedControls(){
+    if(!authoredCanvas||!started)return;
+    for(const node of root.querySelectorAll('[tabindex][role=slider],button[aria-valuenow]')){
+      const track=node.offsetParent;
+      if(!track||track===root||!root.contains(track)||getComputedStyle(node).position!=='absolute')continue;
+      const css=getComputedStyle(node);
+      if(css.writingMode!=='horizontal-tb'||css.flexDirection!=='column')continue;
+      const labels=[...node.children].filter(child=>getComputedStyle(child).position!=='absolute');
+      const labelHeight=labels.reduce((sum,child)=>sum+child.getBoundingClientRect().height,0);
+      const required=Math.ceil(labelHeight+(parseFloat(css.rowGap)||0)*Math.max(0,labels.length-1)+parseFloat(css.paddingBlockStart)+parseFloat(css.paddingBlockEnd)+node.offsetHeight-node.clientHeight);
+      if(required>node.offsetHeight+1)node.style.minHeight=required+'px';
+      const bottom=node.offsetTop+node.offsetHeight+2;
+      if(bottom>track.clientHeight)track.style.minHeight=Math.ceil(bottom+track.offsetHeight-track.clientHeight)+'px';
+    }
+  }
+  function measure(){
+    if(scheduled)return;
+    scheduled=requestAnimationFrame(()=>{
+      scheduled=0;fitPositionedControls();
+      const rect=root.getBoundingClientRect(),e=error.hidden?0:error.getBoundingClientRect().height+16;
+      const media=[...root.querySelectorAll('img[data-material],video[data-material]')].map(node=>{
+        const {x,y,width,height}=node.getBoundingClientRect();
+        return {tag:node.localName,id:node.dataset.material,label:node.alt||node.getAttribute('aria-label'),x,y,width,height};
+      });
+      send('resize',{height:Math.ceil(Math.max(rect.height,root.scrollHeight)+e),media});
+    });
+  }
   function request(name,args){
     if(!approved)return Promise.reject(Error('内容正在核对，完成后可继续提问或打开来源。'));
     if(!enabled||now()>gestureUntil)return Promise.reject(Error('请点击操作后再继续。'));
     gestureUntil=0;
-    const id=++sequence;send('state',{controls:controls()});
+    const id=++sequence;send('state',state());
     return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{pending.delete(id);reject(Error('操作未完成，请核对当前对话后重试。'));},60000);pending.set(id,{resolve,reject,timeout});send('action',{id,name,args});});
   }
   function bindForm(config){
@@ -76,7 +126,7 @@
       if(typeof id!=='string'||!id.trim()||id.length>128||typeof text!=='string'||!text.trim()||text.length>2000)throw Error('继续提问按钮配置无效');
       let button=root.querySelector('#'+CSS.escape(id));
       let status=config.prompt.status?root.querySelector('#'+CSS.escape(config.prompt.status)):null;
-      if(!button){
+      if(!button&&!authoredCanvas){
         // A model may declare a follow-up without emitting its markup. The
         // native control still uses the same reviewed, user-gesture-bound bridge.
         const actions=document.createElement('div');actions.className='ui-action-bar';
@@ -85,7 +135,8 @@
         if(!approved){lockedButtons.set(button,false);button.disabled=true;}
       }
       if(!status)status=errorNode;
-      nativeAdd.call(button,'click',async event=>{
+      if(!button)reportError('此回答缺少继续提问按钮，仍可修改本地输入。');
+      else nativeAdd.call(button,'click',async event=>{
         event.preventDefault();event.stopImmediatePropagation();
         const value=update();if(!value.valid)return;button.disabled=true;if(status){status.hidden=false;status.textContent='正在发送…';}
         try{await request('sendPrompt',{text:config.prompt.text,values:{...value.values,...value.results}});if(status)status.textContent='已发送';}
@@ -95,7 +146,7 @@
     }
     update();return Object.freeze({update,reset,values:()=>({...current.values}),results:()=>({...current.results})});
   }
-  const api=Object.freeze({form:bindForm,sendPrompt:args=>request('sendPrompt',args),openLink:args=>request('openLink',args),hostAction:args=>request('hostAction',args)});
+  const api=Object.freeze({form:bindForm,storage,sendPrompt:args=>request('sendPrompt',args),openLink:args=>request('openLink',args),hostAction:args=>request('hostAction',args)});
   Object.defineProperty(window,'CampusUI',{value:api,writable:false,configurable:false});
   Object.defineProperty(window,'Websandbox',{value:Object.freeze({connection:Object.freeze({remote:api})}),writable:false,configurable:false});
   function sanitize(html){
@@ -124,6 +175,23 @@
     }
     while(cursor){const next=cursor.nextSibling;cursor.remove();cursor=next;}
   }
+  // Verification can renumber citations after the author has populated a list
+  // or moved a graphic. Update only the parts changed in the static source.
+  function updateVerified(live,old,fresh){
+    if(old.isEqualNode(fresh))return;
+    if(old.nodeType===3){if(live.nodeType===3&&live.data===old.data)live.data=fresh.data;return;}
+    if(live.nodeType!==1||old.nodeType!==1||fresh.nodeType!==1)return;
+    for(const attr of old.attributes)if(!fresh.hasAttribute(attr.name))live.removeAttribute(attr.name);
+    for(const attr of fresh.attributes)if(old.getAttribute(attr.name)!==attr.value)live.setAttribute(attr.name,attr.value);
+    const before=[...old.childNodes],after=[...fresh.childNodes];
+    if(before.length!==after.length||before.some((node,i)=>node.nodeName!==after[i].nodeName)){morph(live,fresh);return;}
+    const children=[...live.childNodes];
+    before.forEach((node,i)=>{
+      if(node.isEqualNode(after[i]))return;
+      const child=node.id?[...live.children].find(el=>el.id===node.id):children[i];
+      if(child?.nodeName===node.nodeName)updateVerified(child,node,after[i]);
+    });
+  }
   function citations(){
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
     while(walker.nextNode())if(!walker.currentNode.parentElement.closest('button,script,style,textarea,code,pre'))nodes.push(walker.currentNode);
@@ -146,27 +214,41 @@
     const ui=data.content;
     if(!ui||typeof ui.css!=='string'||!Array.isArray(ui.html))return;
     if(!data.complete&&!ui.cssComplete)return;
+    authoredCanvas=Number.isInteger(ui.preferredWidth);
+    for(const sheet of legacyStyles){const media=authoredCanvas?'not all':'all';if(sheet.media!==media)sheet.media=media;}
     style.textContent=ui.css;
     const localReady=!!data.complete||!!ui.localReady;
     const previous=started?controls():null;
     const html=data.complete?ui.html.join(''):ui.html.join('').replace(/\[E\d+\]/g,'');
-    if(html!==rendered){morph(root,sanitize(html));rendered=html;}
+    if(html!==rendered){
+      const next=sanitize(html);
+      if(started&&previousTemplate)updateVerified(root,previousTemplate,next);else morph(root,next);
+      rendered=html;previousTemplate=next;
+    }
     if(localReady&&!started){
       started=true;enabled=true;approved=!!data.complete;root.inert=false;initial=controls();initialContract=contracts();
+      if(authoredCanvas){
+        savedFields=Object.assign(Object.create(null),data.snapshot?.state?.storage);
+        storageEdited=Object.keys(savedFields).length>0;
+        Object.defineProperty(window,'localStorage',{value:storage,configurable:false});
+      }
       if(approved)citations();
-      run(ui.jsFunctions);for(const expression of ui.jsExpressions||[])run(expression);
-      restore(data.snapshot?.state?.controls||initial,data.snapshot?.contract||null);lockActions();send('state',{controls:controls(),initial,contract:initialContract});if(!failed)send(approved?'interactive':'local_ready');
+      run(ui.jsFunctions);
+      for(const expression of ui.jsExpressions||[])run(expression);
+      if(authoredCanvas&&!ui.jsExpressions?.length&&typeof window.afterRender==='function'&&(ui.jsFunctions.match(/\bafterRender\b/g)||[]).length===1)window.afterRender();
+      restore(data.snapshot?.state?.controls||initial,data.snapshot?.contract||null);lockActions();send('state',state({initial,contract:initialContract}));if(!failed)send(approved?'interactive':'local_ready');
     }else if(data.complete&&started&&!approved&&!failed){
-      approved=true;for(const [b,disabled]of lockedButtons)b.disabled=disabled;lockedButtons.clear();citations();restore(previous||controls());send('state',{controls:controls(),initial});send('interactive');
+      approved=true;for(const [b,disabled]of lockedButtons)b.disabled=disabled;lockedButtons.clear();citations();if(previous&&JSON.stringify(previous)!==JSON.stringify(controls()))restore(previous);send('state',state({initial}));send('interactive');
     }else if(started&&previous){
       // A citation-number update can morph the HTML after local use. Restore
       // actual inputs and recalculate without restarting authored listeners.
-      restore(previous);lockActions();
+      if(JSON.stringify(previous)!==JSON.stringify(controls()))restore(previous);lockActions();
     }
     measure();
   });
   nativeAdd.call(document,'click',event=>{if(event.isTrusted&&enabled)gestureUntil=now()+1500;const citation=event.target.closest('[data-citation]');if(citation){event.preventDefault();request('citation',{number:Number(citation.dataset.citation)}).catch(e=>reportError(e.message));return;}const link=event.target.closest('a[href]');if(link&&!link.getAttribute('href').startsWith('#')){event.preventDefault();request('openLink',{url:link.href}).catch(e=>reportError(e.message));}},true);
   nativeAdd.call(document,'keydown',event=>{if(event.isTrusted&&enabled&&['Enter',' '].includes(event.key))gestureUntil=now()+1500;},true);
+  for(const type of ['pointerdown','keydown','input','change'])nativeAdd.call(document,type,event=>{if(event.isTrusted&&enabled)hadInput=true;},true);
   nativeAdd.call(document,'submit',event=>event.preventDefault(),true);
   nativeAdd.call(document,'input',changed,true);nativeAdd.call(document,'change',changed,true);
   // Native reading gestures do not bubble across the opaque iframe boundary.
@@ -181,7 +263,7 @@
   nativeAdd.call(document,'touchcancel',()=>touchPoint=null,{capture:true,passive:true});
   // Authored validity handlers can update button.disabled after capture
   // listeners. Keep pending host actions locked after those handlers settle.
-  new MutationObserver(()=>{if(!approved)lockActions();publishText();}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled']});
+  new MutationObserver(()=>{if(!approved)lockActions();else citations();publishText();measure();}).observe(root,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled']});
   nativeAdd.call(document,'click',publishText,false);
   nativeAdd.call(window,'error',()=>{failed=true;enabled=false;root.inert=true;reportError('此界面的计算未能完成，可重新生成或查看文字内容。');send('runtime_error');});
   nativeAdd.call(window,'unhandledrejection',event=>{event.preventDefault();reportError(event.reason?.message||'操作未完成，请重试。');});

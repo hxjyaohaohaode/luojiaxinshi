@@ -49,3 +49,21 @@ html.reading-content .chat-main > .chat-heading {
 }
 @media(prefers-reduced-motion:reduce) { .chat-main > .chat-heading { transition:none; } }
 html[data-ui-motion=off] .chat-main > .chat-heading { transition:none; }
+
+/* Align the transcript and composer to the same reading column on wide displays. */
+@media (min-width: 851px) {
+  .chat-main { --conversation-width: 70rem; }
+  .chat-reading-area #chat-thread > .message {
+    inline-size: min(100%, var(--conversation-width));
+    margin-inline: auto;
+  }
+  .chat-main > #chat-composer {
+    inline-size: min(100%, var(--conversation-width));
+    margin-inline: auto !important;
+  }
+  #chat-thread .message-assistant .gu-markdown { max-inline-size: 78ch; }
+}
+@media (max-width: 600px) {
+  .chat-reading-area:has(.chat-turn-rail[hidden]) > #chat-thread { padding-inline: 0; }
+  .openui-surface[data-authored] { margin-block-start: 6px; }
+}

@@ -174,20 +174,20 @@ def test_unconfigured_stream_retains_question(env):
 
 
 def test_capabilities_are_vendor_independent_and_conservative(env):
-    cfg=env[1];assert choose_tier(cfg)==1;cfg.ai_context_tokens=8000;assert choose_tier(cfg)==2
-    cfg.genui_tier='1';assert choose_tier(cfg)==2;cfg.ai_supports_json=False;assert choose_tier(cfg)==3
+    cfg=env[1];assert choose_tier(cfg)==1;cfg.ai_context_tokens=8000;assert choose_tier(cfg)==3
+    cfg.genui_tier='1';assert choose_tier(cfg)==3;cfg.ai_supports_json=False;assert choose_tier(cfg)==3
     cfg.ai_model='another-provider';assert choose_tier(cfg)==3
 
 
 def test_real_adapter_decodes_recorded_sse_and_validates_evidence(env,monkeypatch):
     cfg=env[1];cfg.ai_api_key='synthetic-credential';seen=[]
-    result={'answer':RAW,'citations':[],'image_sources':[]};raw=json.dumps(result,ensure_ascii=True)
+    result={'answer':'先核对报名材料，再起草个人安排。\n可依次完成。','citations':[],'image_sources':[]};raw=json.dumps(result,ensure_ascii=True)
     body=''.join('data: '+json.dumps({'choices':[{'delta':{'content':raw[i:i+13]},'finish_reason':None}]})+'\n\n' for i in range(0,len(raw),13))
     body+='data: '+json.dumps({'choices':[{'delta':{},'finish_reason':'stop'}],'usage':{'prompt_tokens':10,'completion_tokens':20}})+'\n\ndata: [DONE]\n\n'
     def transport(request):seen.append(json.loads(request.content));return httpx.Response(200,content=body,headers={'content-type':'text/event-stream'})
     client=httpx.AsyncClient;monkeypatch.setattr(genui_ai.httpx,'AsyncClient',lambda **kwargs:client(transport=httpx.MockTransport(transport),**kwargs))
     async def collect():return [event async for event in genui_ai.stream_reply(cfg,[],[{'role':'user','content':'安排学习'}],{'phone':'private-contact','campus_role':'student'},1)]
-    output=asyncio.run(collect());assert ''.join(e['text'] for e in output if e['type']=='delta')==RAW
+    output=asyncio.run(collect());assert ''.join(e['text'] for e in output if e['type']=='delta')==result['answer']
     assert output[-1]['result']=={**result,'claims':[],'media_sources':[],'memory_actions':[]} and seen[0]['stream'];assert 'private-contact' not in json.dumps(seen)
 
 

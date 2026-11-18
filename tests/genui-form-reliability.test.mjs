@@ -4,14 +4,14 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const runtime=readFileSync(new URL('../static/genui/sandbox-runtime.js',import.meta.url),'utf8');
 const body=runtime.slice(runtime.indexOf('  function bindForm('),runtime.indexOf('  const api=Object.freeze'));
-function setup(values={x:'8',y:'2'},attributes={}){
+function setup(values={x:'8',y:'2'},attributes={},authoredCanvas=false){
   const form={listeners:{}};const nodes={};
   for(const [id,value]of Object.entries(values))nodes[id]={id,value,type:'number',checked:false,required:false,validity:{valid:true},form,listeners:{},labels:[{innerText:id}],
     getAttribute:key=>attributes[id]?.[key]??null,matches:()=>true,setAttribute(){},removeAttribute(){}};
   nodes.result={textContent:''};nodes.error={textContent:'',hidden:true};nodes.ask={listeners:{}};let requests=0,published=0;
   const root={querySelector:s=>nodes[s.slice(1)]||null,append(){}};
   const document={documentElement:{lang:'zh-CN'},createElement:()=>({listeners:{},append(child){nodes[child.id]=child;}})};
-  const sandbox={root,document,approved:false,lockedButtons:new Map(),CSS:{escape:v=>v},Intl,queueMicrotask,setTimeout,Object,Number,Set,Error,
+  const sandbox={root,document,authoredCanvas,reportError:text=>{nodes.error.textContent=text;},approved:false,lockedButtons:new Map(),CSS:{escape:v=>v},Intl,queueMicrotask,setTimeout,Object,Number,Set,Error,
     nativeAdd:{call(node,type,handler){(node.listeners[type]??=[]).push(handler);}},publishText:()=>published++,measure(){},changed:()=>published++,lockActions(){},request:async()=>{requests++;}};
   vm.createContext(sandbox);vm.runInContext(body+';globalThis.bind=bindForm;',sandbox);
   return {nodes,form,bind:sandbox.bind,requests:()=>requests,published:()=>published,emit:async(node,type)=>{for(const handler of node.listeners[type]||[])await handler({preventDefault(){},stopImmediatePropagation(){}});}};
@@ -59,4 +59,10 @@ test('local edits never request a model; invalid input blocks explicit follow-up
   const env=setup();env.bind({inputs:{x:{},y:{}},outputs:{result:v=>v.x/v.y},error:'error',prompt:{id:'ask',text:'分析当前选择'}});
   env.nodes.x.value='';await env.emit(env.nodes.x,'input');await env.emit(env.nodes.ask,'click');assert.equal(env.requests(),0);
   env.nodes.x.value='10';await env.emit(env.nodes.x,'input');await env.emit(env.nodes.ask,'click');assert.equal(env.requests(),1);
+});
+
+test('a newly authored canvas keeps its calculated values without inventing a missing button',()=>{
+  const env=setup({x:'8'}, {}, true);
+  env.bind({inputs:{x:{}},outputs:{result:v=>v.x*2},error:'error',prompt:{id:'omitted',text:'继续'}});
+  assert.equal(env.nodes.result.textContent,'16');assert.equal(env.nodes.omitted,undefined);
 });

@@ -113,17 +113,18 @@ def test_ui_discovery_receives_actual_private_media_without_an_extra_writer(env,
     def compose(messages, tools):
         result = json.loads(messages[-1]['content'])
         observed.append(result)
-        resources = result['host_data']['resources']
+        resources = result['resources']
         assert len(resources) == 1 and resources[0]['id'] == chat['sources'][0]['id']
         assert 'data:video' not in json.dumps(result)
-        return answer('', [call('submit_interface', {'lead': '这是你上传的视频。', 'nodes': [
-            {'id': 'clip', 'type': 'Video', 'props': {'src': {'$ref': 'resources.0.src'}, 'label': '上传的视频'}}]})])
-    model = Script([answer('', [call('ui_capabilities', {'components': ['Video']})]), compose])
+        return answer('', [call('generateSandboxedUi', {'lead':'这是你上传的视频。','renderer':'open_generative_ui',
+            'title':'视频','preferredWidth':680,'html':['<video controls data-material="'+resources[0]['id']+'" aria-label="上传的视频"></video>']})])
+    model = Script([answer('', [call('openui_capabilities', {})]), compose])
     env[0].state.agent_service.provider_factory = lambda *_: model
     result = final(send(c, chat, '在回复里放一个播放器，展示我上传的视频，无需分析视频。'))
     assert result['status'] == 'complete', (result['error'], [r.get('host_data') for r in observed],
         [json.loads(m['content']).get('error') for messages,_ in model.inputs for m in messages if m['role']=='tool'])
     assert result['genui']['validated'] and result['grounding']['route'] == 'agent_answer'
-    assert 'Video' in result['grounding']['work_summary']['ui_components']
-    path = observed[0]['host_data']['resources'][0]['src']
+    assert 'OpenGenerativeUI' in result['grounding']['work_summary']['ui_components']
+    assert 'data-material' in result['genui']['raw']
+    path = observed[0]['resources'][0]['src']
     assert c.get(path).content == MP4 and outsider.get(path).status_code == 404
