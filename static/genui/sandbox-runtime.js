@@ -71,20 +71,22 @@
       if(!bounds.width)continue;
       for(const label of labels){
         const previous=adjustedLabels.get(label);
-        if(previous&&(previous.width!==bounds.width||previous.styleVersion!==diagramStyleVersion||label.style.fontSize!==previous.applied))restoreLabel(label);
+        if(previous&&(bounds.width>800||previous.styleVersion!==diagramStyleVersion||label.style.fontSize!==previous.applied))restoreLabel(label);
       }
       if(bounds.width>800)continue;
       const boxes=labels.map(label=>label.getBoundingClientRect());
       const overlaps=(a,b)=>a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1;
       labels.forEach((label,index)=>{
-        if(adjustedLabels.has(label))return;
+        const previous=adjustedLabels.get(label);
         const matrix=label.getScreenCTM(),scale=matrix&&Math.hypot(matrix.c,matrix.d);
-        const cssSize=parseFloat(getComputedStyle(label).fontSize);
-        if(!scale||!cssSize||cssSize*scale>=11||!boxes[index].width)return;
+        const cssSize=previous?.baseSize??parseFloat(getComputedStyle(label).fontSize);
+        if(!scale||!cssSize||!boxes[index].width)return;
+        if(cssSize*scale>=11){if(previous)restoreLabel(label);return;}
+        if(previous?.scale===scale)return;
         const original=boxes[index];
-        const saved={value:label.style.fontSize,priority:label.style.getPropertyPriority('font-size')};
+        const saved=previous||{value:label.style.fontSize,priority:label.style.getPropertyPriority('font-size'),baseSize:cssSize};
         label.style.setProperty('font-size',(11/scale)+'px','important');
-        adjustedLabels.set(label,{...saved,applied:label.style.fontSize,width:bounds.width,styleVersion:diagramStyleVersion});
+        adjustedLabels.set(label,{...saved,applied:label.style.fontSize,scale,styleVersion:diagramStyleVersion});
         const grown=label.getBoundingClientRect();
         const clipped=grown.left<bounds.left-1||grown.right>bounds.right+1||grown.top<bounds.top-1||grown.bottom>bounds.bottom+1;
         const collides=boxes.some((box,i)=>i!==index&&overlaps(grown,box)&&!overlaps(original,box));

@@ -24,20 +24,22 @@ settings=Settings(DATA,origin=f'http://127.0.0.1:{PORT}',ai_api_key='synthetic-n
                   ai_model='offline-openui-fixture',ai_daily_limit=10000,agent_enabled=True,ai_grounding=True)
 app=create_app(settings)
 REVIEW_GATE=os.getenv('OPENUI_REVIEW_GATE')=='1'
-review_gate=asyncio.Event()
-review_gate.set()
+fixture_gates={stage:asyncio.Event() for stage in ('behavior','review')}
+for gate in fixture_gates.values():gate.set()
 if REVIEW_GATE:
+    from typing import Literal
     from pydantic import BaseModel,ConfigDict
 
-    class ReviewGate(BaseModel):
+    class FixtureGate(BaseModel):
         model_config=ConfigDict(extra='forbid')
         hold:bool
 
-    @app.post('/api/fixture/review-gate')
-    async def control_review_gate(payload:ReviewGate):
-        if payload.hold:review_gate.clear()
-        else:review_gate.set()
-        return {'synthetic':True,'held':not review_gate.is_set()}
+    @app.post('/api/fixture/{stage}-gate')
+    async def control_fixture_gate(stage:Literal['behavior','review'],payload:FixtureGate):
+        gate=fixture_gates[stage]
+        if payload.hold:gate.clear()
+        else:gate.set()
+        return {'synthetic':True,'held':not gate.is_set()}
 replay=os.getenv('OPENUI_REPLAY_FILE','')
 if replay:
     replay_path=Path(replay).resolve()
@@ -73,7 +75,7 @@ app.state.agent_service.provider_factory=lambda *_:FixtureProvider()
 
 async def review(settings,result,sources,question,context):
     if REVIEW_GATE:
-        await asyncio.wait_for(review_gate.wait(),timeout=45)
+        await asyncio.wait_for(fixture_gates['review'].wait(),timeout=45)
     else:
         await asyncio.sleep(float(os.getenv('OPENUI_REVIEW_DELAY','1.2')))
     return [],{},grounding.check_result(result,sources)
@@ -95,7 +97,10 @@ async def fixture_writer(_settings,sources,_messages,profile,_tier):
     yield {'type':'preview','text':value['answer']}
     for i in range(0,len(raw),90):
         packet=decoder.packet(raw[i:i+90])
-        if packet:yield {'type':'ui_preview','content':packet}
+        if packet:
+            if REVIEW_GATE and packet.get('localReady'):
+                await asyncio.wait_for(fixture_gates['behavior'].wait(),timeout=45)
+            yield {'type':'ui_preview','content':packet}
         await asyncio.sleep(.04)
     yield {'type':'complete','result':{'answer':value['answer']+encode_ui(ui),'citations':[],'image_sources':[]},'repair_draft':raw,'usage':{}}
 

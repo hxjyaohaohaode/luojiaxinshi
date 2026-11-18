@@ -20,21 +20,30 @@ page.on('console',m=>{if(m.type()==='error'){
 async function capture(path){capturing=true;try{await page.screenshot({path,caret:'initial'});await page.evaluate(()=>0);}finally{capturing=false;}}
 page.on('request',r=>{if(r.url().endsWith('/static/genui/sandbox.html'))frameRequests.push(r.url());});
 page.setDefaultTimeout(30000);
+const gated=process.env.OPENUI_REVIEW_GATE==='1';
+const csrf=(await(await login.get('/api/session')).json()).csrf;
+async function setStage(stage,hold){
+  if(!gated)return;
+  const response=await login.post('/api/fixture/'+stage+'-gate',{headers:{'X-CSRF-Token':csrf},data:{hold}});
+  assert.equal(response.status(),200);assert.equal((await response.json()).held,hold);
+}
 let firstAt=0,localAt=0,finishedAt=0;
 try{
+  await setStage('behavior',true);await setStage('review',true);
   await page.goto(origin+'/#chat/new');await page.locator('#chat-input').fill('生成式界面验收：每天2小时、准备7天，制作可调时间和材料清单。');
   const start=Date.now();await page.locator('#chat-input').press('Enter');
   const iframe=page.locator('.message-assistant').last().locator('iframe.openui-frame');await iframe.waitFor();
   const frame=iframe.contentFrame();await frame.locator('#total').waitFor();firstAt=Date.now()-start;
   assert.equal(await page.locator('.message-assistant').last().evaluate(n=>n.classList.contains('is-streaming')),true);
-  assert.equal(await frame.locator('#openui-root').getAttribute('inert'),'');
   assert.equal(await frame.locator('#openui-root').getAttribute('inert'),'','HTML must appear before behavior is released.');
   await iframe.evaluate(node=>node.dataset.continuityProbe='same-frame');
   await capture(out+'/streaming.png');checks.push('模型尚在生成后续 HTML/JS 时，第一段组件已显示；预览保持 inert');
+  await setStage('behavior',false);
   await frame.locator('#openui-root:not([inert])').waitFor();localAt=Date.now()-start;
   assert.equal(await page.locator('.message-assistant').last().evaluate(n=>n.classList.contains('is-streaming')),true);
   await frame.locator('#days').fill('10');assert.equal(await frame.locator('#total').innerText(),'20');
   assert.equal(await frame.locator('#continue').isDisabled(),true);checks.push('复核期间先用本地计算，发送模型按钮保持禁用');
+  await setStage('review',false);
   await page.locator('.message-assistant').last().locator('.openui-status').waitFor({state:'hidden'});finishedAt=Date.now()-start;
   assert.ok(finishedAt>firstAt);assert.equal(await iframe.getAttribute('data-continuity-probe'),'same-frame');assert.equal(frameRequests.length,1);
   assert.equal(await frame.locator('#total').innerText(),'20');checks.push('同一 iframe 完成复核并保留先前输入，没有重载或重建');
@@ -125,4 +134,4 @@ try{
   const report={passed:true,browser:engineName,source:'synthetic agent arguments, real application API/database/browser',checks,errors,captureWarnings,firstHtmlMs:firstAt,localControlsMs:localAt,interactiveMs:finishedAt};
   await writeFile(out+'/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }catch(error){await capture(out+'/failure.png').catch(()=>{});await writeFile(out+'/report.json',JSON.stringify({passed:false,error:String(error),checks,errors,captureWarnings,firstHtmlMs:firstAt,interactiveMs:finishedAt},null,2));throw error;}
-finally{await context.close();await browser.close();await login.dispose();}
+finally{await Promise.allSettled([setStage('behavior',false),setStage('review',false)]);await context.close();await browser.close();await login.dispose();}
