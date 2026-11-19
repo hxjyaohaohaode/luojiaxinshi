@@ -93,7 +93,7 @@ def add_integration(doc):
     style.add_paragraph(doc,'官方语音输入支持 MP3 与 WAV；当前应用先实现 PCM WAV。三种 TTS 首轮统一使用非流式 WAV 输出，生成后由用户点击播放；不把设计、复刻的兼容流式接口当作已经验证的低延迟实时播放。语音数据在应用内存中处理，不保存到通知库；外发前确认本次处理许可。')
     style.add_paragraph(doc,'验收与后续对接','heading2')
     style.add_paragraph(doc,'本轮完成模型配置及请求适配，不代表真实 API 已连通。获得密钥后逐一验证：文字通知提取与引用、截图理解、流式回答、ASR 日期和人名转写、普通播报、音色设计、已授权声音复刻；并核对实际权限、费用、延迟及目标设备录音播放兼容性。声音模型按需要单独验收，不增加日常文本任务的无关调用。')
-    style.add_paragraph(doc,'工程接入字段、路由、限制和核验清单详见“系统_开发/MIMO_INTEGRATION.md”。原有本地解析、数据库检索、日期校验、权限、个人确认及日历导出继续由确定性程序处理。全部原件保留，本文件作为小米模型版使用。','note')
+    style.add_paragraph(doc,'工程接入字段、路由、限制和核验清单详见“系统_开发/docs/integrations/MIMO_INTEGRATION.md”。原有本地解析、数据库检索、日期校验、权限、个人确认及日历导出继续由确定性程序处理。全部原件保留，本文件作为小米模型版使用。','note')
     style.add_paragraph(doc,'小米官方接口依据（2026年10月14日核对）','heading2')
     references=[('聊天接口','https://mimo.mi.com/docs/en-US/api/chat'),('结构化输出','https://mimo.mi.com/docs/en-US/quick-start/usage-guide/text-generation/structured-output'),('图片理解','https://mimo.mi.com/docs/en-US/quick-start/usage-guide/multimodal-understanding/image-understanding'),('ASR 接口','https://mimo.mi.com/docs/en-US/api/audio/Speech-Recognition'),('TTS 接口','https://mimo.mi.com/docs/en-US/api/audio/tts')]
     add_reference_links(doc,references)

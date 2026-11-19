@@ -26,7 +26,7 @@ cp .env.example .env
 .venv/bin/python manage.py serve
 ```
 
-无 API 密钥可以保存通知、解析附件、手工整理、编辑待办、使用日历。当前代码使用 MiMo 接口，填入本机 `.env` 的 `MIMO_API_KEY` 后重启；配置和已验证范围见 `MIMO_INTEGRATION.md`。不要把密钥贴进 Issue、提交记录或截图。部署配置由维护者管理，普通用户设置中不提供模型凭证配置。
+无 API 密钥可以保存通知、解析附件、手工整理、编辑待办、使用日历。当前代码使用 MiMo 接口，填入本机 `.env` 的 `MIMO_API_KEY` 后重启；配置和已验证范围见 `docs/integrations/MIMO_INTEGRATION.md`。不要把密钥贴进 Issue、提交记录或截图。部署配置由维护者管理，普通用户设置中不提供模型凭证配置。
 
 ## 验证修改
 
@@ -41,14 +41,14 @@ npm run build:check
 .\.venv\Scripts\python.exe scripts/evaluate_genui.py
 npm audit
 .\.venv\Scripts\python.exe -m pip_audit -r requirements.lock
-# 改动界面时再运行浏览器回归（需要 Playwright 浏览器，见 TESTING.md）
+# 改动界面时再运行浏览器回归（需要 Playwright 浏览器，见 docs/operations/TESTING.md）
 .\.venv\Scripts\python.exe scripts/run_browser_checks.py
 .\.venv\Scripts\python.exe scripts/run_agent_browser_checks.py
 ```
 
-`package-lock.json` 固定 esbuild 和 Playwright 等开发依赖；构建工具链也纳入 `npm audit`。前端源码修改后必须更新产物，`build:check` 只验证一致性，不代替生成构建。完整后端可按 [TESTING.md](TESTING.md) 使用隔离分片审计脚本执行。
+`package-lock.json` 固定 esbuild 和 Playwright 等开发依赖；构建工具链也纳入 `npm audit`。前端源码修改后必须更新产物，`build:check` 只验证一致性，不代替生成构建。完整后端可按 [测试说明](docs/operations/TESTING.md) 使用隔离分片审计脚本执行。
 
-互动组件画廊地址为 `/static/genui/gallery.html`，可检查所有组件、亮暗主题和窄屏。需要真实 HTTP 流程但没有模型密钥时，运行 `python scripts/genui_test_server.py`，打开 `http://127.0.0.1:8767`。该服务只用 `artifacts/genui-browser-data` 下的合成测试数据，回复明确标记为工程示例，不代表真实模型输出。测试账号及测试入口见该脚本；完整的测试体系、浏览器回归入口和 CI 说明见 [TESTING.md](TESTING.md)。
+互动组件画廊地址为 `/static/genui/gallery.html`，可检查所有组件、亮暗主题和窄屏。需要真实 HTTP 流程但没有模型密钥时，运行 `python scripts/genui_test_server.py`，打开 `http://127.0.0.1:8767`。该服务只用 `artifacts/genui-browser-data` 下的合成测试数据，回复明确标记为工程示例，不代表真实模型输出。测试账号及测试入口见该脚本；完整的测试体系、浏览器回归入口和 CI 说明见 [测试说明](docs/operations/TESTING.md)。
 
 ## 分支与协作
 
@@ -73,8 +73,10 @@ git push -u origin my-change
 
 ## 附件与资料
 
-`项目资料/文件清单.json` 记录共享附件的相对路径、大小和 SHA-256。原始 Word/PDF 没有重新排版或覆盖；目录中只保留定稿版本，早期修订已移除，需要时可从 git 历史取回。应用附件解析器支持的格式和预览限制见 README。真实用户上传文件保存在私有数据库中，不能用 Git 作为账户数据同步或备份渠道。
+维护文档按主题放入 [docs](docs/README.md)。本地检查生成的日志、截图和临时数据放在 Git 已忽略的 `artifacts/` 中。要追溯 2026 年 11 月的冲刺记录，可直接打开[历史验收归档](docs/archive/README.md)。
 
-本仓库未新增一个替用户决定的项目开源许可证。公开可见不等同于所有素材都取得了再分发或商业授权；第三方依赖许可见 `THIRD_PARTY_NOTICES.md`，原创角色来源见 `ASSETS.md`。对外发行前由项目维护者确定项目许可证和校园标识的使用方式。
+`项目资料/文件清单.json` 记录共享附件的相对路径、大小和 SHA-256。原始 Word/PDF 没有重新排版或覆盖；目录中只保留定稿版本，早期修订已移除，需要时可从 git 历史取回。附件解析与预览支持的格式见[完整使用说明](docs/product/GUIDE.md#互动回答与附件预览)。真实用户上传文件保存在私有数据库中，不能用 Git 作为账户数据同步或备份渠道。
+
+本仓库未新增一个替用户决定的项目开源许可证。公开可见不等同于所有素材都取得了再分发或商业授权；第三方依赖许可见 `THIRD_PARTY_NOTICES.md`，原创角色来源见 `design/ASSETS.md`。对外发行前由项目维护者确定项目许可证和校园标识的使用方式。
 
 `scripts/update_mimo_documents.py` 是维护者的本机文档套版辅助脚本，依赖另行提供的个人文档模板，不参与应用启动或测试。协作所需的已生成 Word / PDF 成品已包含在 `项目资料/`，无需运行该脚本。

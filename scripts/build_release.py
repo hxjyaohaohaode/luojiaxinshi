@@ -7,14 +7,15 @@ import sys
 ROOT=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(ROOT))
 from app.version import VERSION
-FILES=['README.md','CONTRIBUTING.md','OPERATIONS.md','TESTING.md','ASSETS.md','REDESIGN.md','INTEGRATIONS.md','MIMO_INTEGRATION.md','requirements.lock','requirements-dev.txt',
+FILES=['README.md','CONTRIBUTING.md','requirements.lock','requirements-dev.txt',
        '.env.example','.dockerignore','.gitignore','.gitattributes','Dockerfile','compose.yaml','compose.shared-host.yaml','compose.proxy-network.yaml','Caddyfile',
        'manage.py','start.ps1','stop.ps1','启动工作台.cmd','停止工作台.cmd','重启工作台.cmd','pytest.ini',
-       'package.json','package-lock.json','THIRD_PARTY_NOTICES.md','deploy/aliyun-message-policy.json',
+       'package.json','package-lock.json','THIRD_PARTY_NOTICES.md','docs/archive/sprint-2026-11.zip','app/whu_college_catalog.json',
+       'deploy/aliyun-message-policy.json',
        'deploy/modelscope/Dockerfile','deploy/modelscope/studio_entrypoint.py','deploy/modelscope/.dockerignore']
-for directory,extensions in [('app',{'.py'}),('static',{'.js','.css','.svg','.html','.png','.webm','.json','.webmanifest'}),('tests',{'.py','.mjs'}),
+for directory,extensions in [('app',{'.py'}),('static',{'.js','.css','.svg','.html','.png','.webp','.webm','.mp4','.vtt','.json','.webmanifest'}),('tests',{'.py','.mjs'}),
                              ('scripts',{'.py','.mjs','.ps1'}),('docs',{'.md','.txt','.json'}),
-                             ('schema',{'.json'}),('fixtures',{'.json','.md'}),('skills',{'.md'}),('design',{'.html','.md'}),
+                             ('schema',{'.json'}),('fixtures',{'.json','.md','.html'}),('skills',{'.md'}),('design',{'.html','.md'}),
                              ('项目资料',{'.md','.txt','.json','.csv','.docx','.pdf','.png','.html'})]:
     FILES.extend(str(p.relative_to(ROOT)).replace('\\','/') for p in (ROOT/directory).rglob('*')
                  if p.is_file() and not p.is_symlink() and p.suffix in extensions and '__pycache__' not in p.parts)
@@ -29,8 +30,10 @@ with zipfile.ZipFile(destination) as archive:
     assert not any('/data/' in name or '/artifacts/' in name or name.endswith('/.env') for name in archive.namelist())
     assert all('campus-notice/static/'+name in archive.namelist() for name in
                ('manifest.webmanifest','notification-worker.js','pwa.js','offline.html','assets/app-icon.svg'))
-    assert all('campus-notice/'+name in archive.namelist() for name in
-               ('compose.shared-host.yaml','compose.proxy-network.yaml','docs/SHARED_HOST_DEPLOYMENT.md','scripts/verify_shared_host_config.py'))
+    required=('compose.shared-host.yaml','compose.proxy-network.yaml','docs/operations/SHARED_HOST_DEPLOYMENT.md',
+              'scripts/verify_shared_host_config.py','docs/README.md','docs/product/GUIDE.md','docs/archive/sprint-2026-11.zip',
+              'static/assets/onboarding/first-steps.mp4','static/assets/onboarding/first-steps.webp','static/assets/onboarding/first-steps.zh.vtt')
+    assert all('campus-notice/'+name in archive.namelist() for name in required)
 checksum=hashlib.sha256(destination.read_bytes()).hexdigest()
 destination.with_suffix('.zip.sha256').write_text(checksum+'  '+destination.name+'\n',encoding='ascii')
 print(f'{destination.name}: {len(FILES)} files, {destination.stat().st_size} bytes, SHA256 {checksum}')

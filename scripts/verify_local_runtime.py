@@ -280,7 +280,7 @@ def main():
                 'percentile_method':'nearest_rank',
                 'ordinary_crud_latency_ms':{'samples':len(crud),'p50':round(rank(crud,.5),1),'p95':round(rank(crud,.95),1),'max':round(crud[-1],1)},
                 'engineering_targets':{
-                    'scope':'Engineering proposal in docs/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.',
+                    'scope':'Engineering proposal in docs/operations/PILOT_RELEASE_GATES.md; separate from functional assertions and real campus acceptance.',
                     'ordinary_crud_p95':{'limit_ms_exclusive':1000,'passed':rank(crud,.95)<1000},
                     'write_total_wait_p95':{'limit_ms_exclusive':100,'passed':lock_timings['wait']['p95_ms']<100},
                     'write_acquisitions':{'allowed_failures':0,'passed':lock_timings['failed_acquisitions']==0}},
