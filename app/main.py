@@ -468,7 +468,7 @@ def create_app(settings=None):
             verification.require_verified_alias(payload.username,proof)
             if payload.account_kind=='phone' and (proof['channel']!='sms' or verification.normalize('sms',payload.username)!=proof['destination']):
                 raise HTTPException(422,'手机号账号必须验证同一个手机号')
-            profile=Profile(campus_role=payload.campus_role).model_dump()
+            profile=Profile(campus_role=payload.campus_role,first_use_guide_seen=False).model_dump()
             if payload.account_kind!='username':
                 profile[payload.account_kind]=payload.username
             if proof['channel']=='sms':profile['phone']=proof['destination']

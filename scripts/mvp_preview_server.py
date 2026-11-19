@@ -64,7 +64,7 @@ def seed():
                 'display_name': '虚构验收同学', 'accepted_terms': True})
     assert r.status_code == 200, r.text
     c.headers['X-CSRF-Token'] = c.get('/api/session').json()['csrf']
-    c.put('/api/profile', json={'college': '资源与环境科学学院（虚构验收）', 'level': '本科', 'grade': '2025级', 'semester': '2026—2027学年第一学期'})
+    c.put('/api/profile', json={'college': '资源与环境科学学院（虚构验收）', 'level': '本科', 'grade': '2025级', 'semester': '2026—2027学年第一学期', 'first_use_guide_seen': True}).raise_for_status()
     now = datetime.now(timezone(timedelta(hours=8)))
     day = (now + timedelta(days=3)).date().isoformat()
     for i, title in enumerate(['虚构验收｜秋季学生实践项目申请', '虚构验收｜课程材料报送与签字确认', '虚构验收｜校园活动报名通知']):

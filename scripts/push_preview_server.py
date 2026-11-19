@@ -75,6 +75,8 @@ def seed_pilot():
         accounts=[('pilot-site','admin'),('pilot-counselor','user')]
         if os.getenv('SPRINT_BROWSER_FIXTURE')=='1':
             accounts.extend(('sprint-'+engine,'user') for engine in ['chromium','firefox','webkit'])
+        if os.getenv('GUIDE_BROWSER_FIXTURE')=='1':
+            accounts.extend([('guide-first','user'),('guide-second','user')])
         for username,role in accounts:
             verified_registration(client,{'username':username,'display_name':username,
                 'password':'PilotFixtureOnly2026!','accepted_terms':True,'invite':new_invite(app.state.db,role)})

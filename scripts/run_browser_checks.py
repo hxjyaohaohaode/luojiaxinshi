@@ -16,6 +16,7 @@ sys.path.insert(0,str(ROOT))
 from scripts.run_openui_browser_checks import ensure_fixture_port_free
 OUT = ROOT / 'artifacts' / 'ci-browser'
 SUITES = [('verify_sprint_ui.mjs', 'sprint-ui-browser'),
+          ('verify_first_use_guide.mjs', 'first-use-guide'),
           ('verify_frontend_stability.mjs', 'frontend-v9-browser'),
           ('verify_frontend_review.mjs', 'frontend-v8-browser'),
           ('verify_reference_interactions.mjs', 'reference-interactions-browser'),
@@ -62,8 +63,9 @@ def main():
     if not data.is_relative_to((ROOT / 'artifacts').resolve()):
         raise SystemExit('Synthetic data must stay under artifacts/.')
     env = dict(os.environ, CAMPUS_AUTO_LOAD_ENV='0', MVP_PORT='8786', MVP_DATA_DIR=str(data), INTAKE_TEST_ORIGIN='http://127.0.0.1:8786', PYTHONUNBUFFERED='1')
-    pilot_suites={'verify_pilot_workspace.mjs','verify_sprint_ui.mjs','verify_account_lifecycle.mjs','verify_frontend_finish.mjs','verify_campus_administration.mjs'}
+    pilot_suites={'verify_pilot_workspace.mjs','verify_sprint_ui.mjs','verify_account_lifecycle.mjs','verify_frontend_finish.mjs','verify_campus_administration.mjs','verify_first_use_guide.mjs'}
     env['PILOT_BROWSER_FIXTURE']='1' if not selected or pilot_suites.intersection(selected) else '0'
+    env['GUIDE_BROWSER_FIXTURE']='1' if not selected or 'verify_first_use_guide.mjs' in selected else '0'
     env['ACCOUNT_BROWSER_FIXTURE']='1' if not selected or 'verify_account_lifecycle.mjs' in selected else '0'
     env['SPRINT_BROWSER_FIXTURE']='1' if not selected or 'verify_sprint_ui.mjs' in selected else '0'
     env['QQ_GROUP_BROWSER_FIXTURE']='1' if not selected or 'verify_qq_group_intake_ui.mjs' in selected else '0'

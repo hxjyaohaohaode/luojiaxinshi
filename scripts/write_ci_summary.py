@@ -44,6 +44,7 @@ def main():
             values = ['report unavailable', '-', '-', '-']
         rows.append([label, *values])
     browsers = [('Sprint workflows and loading performance', 'artifacts/sprint-ui-browser/report.json'),
+                ('First-use guide and account persistence', 'artifacts/first-use-guide/report.json'),
                 ('Browser stability', 'artifacts/frontend-v9-browser/report.json'),
                 ('Browser regression', 'artifacts/frontend-v8-browser/report.json'),
                 ('Reference interactions', 'artifacts/reference-interactions-browser/report.json'),

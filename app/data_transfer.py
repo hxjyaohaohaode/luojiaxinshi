@@ -385,6 +385,7 @@ def install_data_transfer(app,db,user):
                 # Importing an editable profile must never replace an identity contact.
                 existing=json.loads(conn.execute('SELECT profile FROM users WHERE id=?',(current['id'],)).fetchone()[0])
                 profile={**data['profile'],'phone':existing.get('phone',''),
+                         'first_use_guide_seen':existing.get('first_use_guide_seen'),
                          'notification_preferences':existing.get('notification_preferences',{})}
                 conn.execute('UPDATE users SET profile=? WHERE id=?',(dumps(profile),current['id']))
         return {'added':added,'skipped':skipped,'warnings':warnings}

@@ -100,19 +100,18 @@ for(const engine of engines){
       await page.locator('[name=username]').fill('sprint-'+engine);await page.locator('[name=password]').fill('PilotFixtureOnly2026!');await page.locator('#auth-form [type=submit]').click();await page.locator('#content:not([inert])').waitFor();
     });
     await check('first arrival guide is optional, honest about unverified identity, and persisted per account',async()=>{
-      const guide=page.locator('[data-getting-started]');await guide.waitFor();
+      const guide=page.locator('dialog[open] [data-onboarding-guide]');await guide.waitFor();
       assert.equal(await guide.locator('[data-identity-state]').getAttribute('data-identity-state'),'pending');
-      await guide.locator('[data-onboarding-open]').click();
-      assert.match(await page.locator('[data-onboarding-guide]').innerText(),/填写教师、员工等个人条件不会获得学院发布或管理权限/);
-      await page.locator('[data-onboarding-guide] [data-action="close-dialog"]').click();
-      await guide.locator('[data-onboarding-dismiss]').click();await guide.waitFor({state:'detached'});
-      assert.ok((await api('/session')).user.profile.dismissed_hints.includes('workspace-capabilities-v1'));
+      await guide.getByText('我的学院身份',{exact:true}).click();
+      assert.match(await guide.innerText(),/填写教师、员工等个人条件不会获得学院发布或管理权限/);
+      await guide.getByRole('button',{name:'跳过指引'}).click();await guide.waitFor({state:'hidden'});
+      assert.equal((await api('/session')).user.profile.first_use_guide_seen,true);
       await page.reload();await page.locator('.personal-home').waitFor();assert.equal(await page.locator('[data-getting-started]').count(),0);
     });
     await check('the skipped guide remains accessible from the personal page',async()=>{
       await nav('settings');await page.locator('[data-action=getting-started]').click();
       const guide=page.locator('[data-onboarding-guide]');await guide.waitFor();
-      assert.match(await guide.innerText(),/个人完成、校方受理与审核结果分别记录/);assert.equal(await guide.locator('[data-onboarding-link]').count(),3);
+      assert.equal(await guide.getByRole('heading',{name:'从哪里收通知？'}).isVisible(),true);assert.equal(await guide.locator('[data-onboarding-link]').count(),3);
       await page.keyboard.press('Escape');await page.locator('#dialog').waitFor({state:'hidden'});
     });
     await check('54 actual tasks are committed through ordinary intake and confirmation',async()=>{

@@ -216,9 +216,9 @@ async function api(path, options={}) {
     }
   }
 }
-function showDialog(title,body,{replaceHistory=false,dismissFooter=true}={}){
+function showDialog(title,body,{replaceHistory=false,dismissFooter=true,returnFocus=null}={}){
   persistCurrentForms();if(replaceHistory)dialogNavigation.clear();else dialogNavigation.remember(title);state.dialogRequest=(state.dialogRequest||0)+1;const request=state.dialogRequest,d=$('#dialog');
-  if(!d.open)dialogReturnTarget=lastDialogTrigger?.isConnected?lastDialogTrigger:document.activeElement;
+  if(!d.open)dialogReturnTarget=returnFocus?.isConnected?returnFocus:lastDialogTrigger?.isConnected?lastDialogTrigger:document.activeElement;
   d.setAttribute('aria-labelledby','dialog-title');
   const wasOpen=d.open,forward=dialogNavigation.hasParent();
   d.innerHTML=`<div class="dialog-head">${dialogNavigation.hasParent()?`<button type="button" class="icon-button" data-dialog-back aria-label="返回上一级" title="返回上一级">${icon('back')}</button>`:''}<h2 id="dialog-title" tabindex="-1">${esc(title)}</h2><button class="icon-button" data-action="close-dialog" aria-label="关闭">${icon('close')}</button></div><div class="dialog-body">${body}</div>`;
@@ -396,7 +396,7 @@ function settingsPage({preserveScroll=false}={}){
   const item=(title,text,action,i='settings')=>`<button type="button" class="settings-item" data-action="${action}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${esc(text)}</small></span>${icon('arrow')}</button>`;
   const link=(title,text,href,i)=>`<a class="settings-item" href="${href}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${text}</small></span>${icon('arrow')}</a>`;
   const menus={
-    personal:item('现在能用什么','个人收件、办理与学院身份说明','getting-started','info')+item('个人条件',labels['settings-profile'],'settings-profile','doc')+item('回答偏好',labels['settings-preferences'],'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
+    personal:item('新手指引','用一条示例通知，走一遍从收件到日程的三步','getting-started','info')+item('个人条件',labels['settings-profile'],'settings-profile','doc')+item('回答偏好',labels['settings-preferences'],'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
     account:item('账号安全',labels['settings-security'],'settings-security','shield')+item('智能通知偏好','关注内容、分级汇总与免打扰','settings-notification','bell')+item('账号容量','通知、会话与文件使用情况','account-usage','doc')+item('模型与处理记录',labels['settings-model'],'settings-model','spark')+link('通知来源','常用网站、公众号与群','#sources','history')+item('导入与导出','备份与迁移资料','settings-data','down')+link('隐私政策与用户协议','数据与服务条款','#privacy','shield')+(state.session.user.role==='admin'?item('运行就绪与验收证据','服务配置、实际连接、队列与本环境验收记录','settings-operations','shield'):''),
     display:item('添加到桌面','手机与电脑安装入口','settings-install','down')+item('语音播报','朗读回复与播放控制','settings-speech','mic')+(state.session.genui?item('互动回答',labels['settings-genui'],'settings-genui','grid'):'')
   };
@@ -562,6 +562,7 @@ async function route(){
     choreograph(content);
   }catch(error){if(id!==state.renderId)return;if(error.status===401){push.stop();state.session=null;drafts.clear();authPage();}else {if(!('status' in error))console.error('界面加载失败',error);content.innerHTML=empty('暂时未能打开',('status' in error)?error.message:'页面暂时未能显示，你的已保存内容仍然保留。请重新加载。',button('重新加载','refresh'),false,'static');}}
   finally{finishRouteFeedback();if(id===state.renderId&&$('#content')){content.inert=false;content.removeAttribute('aria-busy');content.classList.remove('route-pending');if(['notices','tasks'].includes(page)&&!$('#dialog').open&&state.listFocus?.[page])content.querySelector(state.listFocus[page])?.focus({preventScroll:true});}}
+  if(id===state.renderId&&page==='dashboard')gettingStarted.onHomeReady();
 }
 function simplifyPageHeading(){
   for(const header of $$('#content .page-title')){

@@ -98,6 +98,8 @@ class Profile(Strict):
     motion_enabled: bool | None = None
     companion_enabled: bool | None = None
     dismissed_hints: list[Annotated[str,Field(max_length=80)]] | None = Field(default=None,max_length=60)
+    # None on existing/imported profiles: an update is not a first visit.
+    first_use_guide_seen: bool | None = None
     workspace_home: Literal['personal','college','system'] | None = None
     sidebar_width: int | None = Field(default=None,ge=180,le=460)
     sidebar_collapsed: bool | None = None
@@ -111,7 +113,7 @@ class Profile(Strict):
 
 
 DISPLAY_PREFERENCES=('task_view','calendar_view','calendar_kinds','calendar_show_done',
-                     'motion_enabled','companion_enabled','dismissed_hints','workspace_home',
+                     'motion_enabled','companion_enabled','dismissed_hints','first_use_guide_seen','workspace_home',
                      'sidebar_width','sidebar_collapsed')
 
 

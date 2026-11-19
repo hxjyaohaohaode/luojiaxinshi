@@ -2,8 +2,8 @@
   "format": 1,
   "esbuild": "0.28.2",
   "entries": {
-    "js": "/static/dist/app-TFKK4TIO.js",
-    "css": "/static/dist/styles-Q3IYELBI.css"
+    "js": "/static/dist/app-4IUXMVMT.js",
+    "css": "/static/dist/styles-OA3KSELP.css"
   },
   "sources": {
     "static/account-security.js": "642c490d48fb77e1d2ccbe153378a29d9a91e12b30d8ce512fe781389658dfe9",
@@ -12,7 +12,7 @@
     "static/action-plans.js": "9400d8d512896acd4cb4a93708ece08f3fcb3d0fd56ae60e3c0faade29a97c7b",
     "static/action-review.js": "383c8cbe06797e65e5c91c7f9ffe22ed2605701122f143d535f78be54df2b668",
     "static/app.css": "7b0905dee1ae4836ac134cb3f7fbfd96b723d1e222eb081a1039e650f409b5f9",
-    "static/app.js": "d4a98726fbadb58b20d06765438366b8913844afdcc2f7984e89d86d4649efc1",
+    "static/app.js": "7f52c25aa2afa473cb7c766a9b9fba813c96dca9f6a96a44c3a3e5142495d3a5",
     "static/attachments.js": "70a1389601c6624a6fea2f4fb89d30df32795e7c0d0f37e2eb7ad0089982193c",
     "static/audio-wav.js": "43dd5c6b7ef0e3ec2f528c612423b5c051ada778beca4ceb657ae9375327fe87",
     "static/auth-feedback.js": "68051aa490a37284b64cea16abb492bee9732073101452a08960d8b94b4d70f2",
@@ -88,7 +88,7 @@
     "static/genui/transport.js": "ed3766f2a6b3c4314bde3bb37d81b58e74777554cafb3ea73aee7c20505430aa",
     "static/genui/typography.js": "ac79b898c4877b91c65ecbf7f265fa58b32fa76b3f7060c4c7761212fef54707",
     "static/genui/work-view.js": "068efc8edf74a157bb4bc958fcc718706d1529c30bba7ad6b6a023009ed76aae",
-    "static/getting-started.js": "947eff405157fc52e20b93db197bcc71c8ff34cff2e30c3a9b75a26ccb66374a",
+    "static/getting-started.js": "23a6b0fa6396823106063c289b29e5c9a988945f372419843bae84066627a7fd",
     "static/handling-assistant.js": "d87c8ffc03d427289745384d17ad41c5e1edcf9e0b004ea32818771c233a9497",
     "static/handling-route.js": "68bdbcf9fa6b6cbe04bcd55cf07f521e4b5c1b68823219db9359c370fe26741b",
     "static/index.html": "5af59f8c45f11f0437eb6979f19303011ba031873058904ab3f45264e358e4c7",
@@ -97,7 +97,7 @@
     "static/layout.css": "1bf6d6ffcd16a997b86cf1a61974187192fd95743dfad892f095f824e68bb36a",
     "static/legal.js": "82ba3048e18dbb9bbdcf97e77d8c34e644fa1c1688432a41b0adefb171e0965f",
     "static/library.css": "dbced8b4e6b0aed732bc9f24271b0f862b0f3b76517d59c0e344bd02049d62ec",
-    "static/library.js": "6660c1a227da8843064ebcf7e806f03ffc6a457750ac437771100fe451cdc876",
+    "static/library.js": "d0e16815f32cea2cc164a32ad63ae03654ee559d692dcce5376956f2b41049c0",
     "static/list-clock.js": "8ed5532a106a1b13ef35dbb2c34179e27d2d66fa12464f43fa643b6bc1b566e5",
     "static/list-viewport.js": "404b2b406c8f58b047cca60140ddc273c97424300c9b52ec24f549a4532b817e",
     "static/mail-notifications.js": "9e86eaa935028226c925d2d085f15e645e892cb47c49ed7f0f3e899c080974eb",
@@ -166,7 +166,7 @@
     "static/system/execution-trace.css": "ff5a4f11e0cd586e43c7df4d1edab3deb1ac9de172917b6985ff4f3290fa81bd",
     "static/system/features.css": "199ea546935eba27b64982e5330468f9d90a6d2133d92b9f551a6bd6739f7a0e",
     "static/system/flat-layout.css": "48fa76bf65c50cf58b292df8f241166d965794b5c9819b69dde05def13832e39",
-    "static/system/getting-started.css": "36ff1ee6ce25d055ec0737f2f03b5d478d792c8d09b3b07302e64b452d544149",
+    "static/system/getting-started.css": "24182d57871e8af88d8021806dcb07ef165910fd3d2626acee80117a67aa38f9",
     "static/system/handling-route.css": "e7acd77f641e1e8c6aefb171682ca8e652f7b5c9cedfcb96895d5a3ea953ed59",
     "static/system/insight-data.css": "bb9fa72c01e613c10719f14b5999b60a562bbf67fa42acbf8a5e50bb934f867a",
     "static/system/layout.css": "261b8a48d8d64cdf5142a073ea835a59885f32065f438922c881bdbb375edc9a",
@@ -215,7 +215,7 @@
     "static/dist/chunks/notice-lifecycle-HMHB7TH7.js": "85479cc211f868345efc19b32670b0594b589ce083218506cbe84c313cb60ad6",
     "static/dist/chunks/insights-NW7ZOBBX.js": "2a0cda9f63783d1477d7fe20ca4ad4323aa9ad91e390bf53ac24668d99d6707d",
     "static/dist/chunks/calendar-EBEUPB25.js": "53a92b48df50e558392800201150fcacf13cd717ff6c5e91e45fa85f98d2d7f9",
-    "static/dist/app-TFKK4TIO.js": "a03346f40d2c62b71998595ce889e4b494befdbad2a7ae408e60c254ee5570fd",
+    "static/dist/app-4IUXMVMT.js": "a4ce6aeda8d4cb6612ae5a306f4fb9a22e2eeb80687d8df752c43476997bd944",
     "static/dist/chunks/chunk-VHWCVQYR.js": "ee3f5e93dcc10ca53a258f34c016ed12fca6e8bd097c2fc5dab5a8e3f1a0fbca",
     "static/dist/chunks/memory-YH2W7ORI.js": "e358f2a9eef11eb0f6247413dcfbef93078c4d2a97ffb009ceb05e500e6d7ea6",
     "static/dist/chunks/collaboration-CMBOZBVL.js": "40b4300beb844a60737b1d3ecd5748262eedb0d7ae7f6b76c54054e78858bf6e",
@@ -233,7 +233,7 @@
     "static/dist/chunks/campus-D2CCLL6V.js": "5a9c7eb95125d864aed3db72b8ac24a2cc90610784cb27be5cf1b7db523d0892",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-Q3IYELBI.css": "65f13d53cd7a12eb345a4d3cc371db52a299adfba5de116870ad26ce9f96af92",
-    "static/dist/index.html": "1ad2f8e2004ca37f066f5776cda8baf2bf6e604576493b4581f8c919ee4a4dce"
+    "static/dist/styles-OA3KSELP.css": "20a2f87c7f259d64c956fc89a6ad4b8e7c58373b89f78f1977377534ca73c94f",
+    "static/dist/index.html": "33c4d0425f08abc9b4d570b1f65d3b97105e34cd0bc23d55854dae2c4d2139c2"
   }
 }
