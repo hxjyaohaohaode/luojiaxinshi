@@ -133,6 +133,39 @@ def test_short_reading_gets_complete_ordered_sections_and_an_independent_review(
     assert any('studio.txt' in step['title'] for step in result['grounding']['steps'])
 
 
+@pytest.mark.parametrize('valid_repair',[True,False])
+def test_document_format_retry_reuses_evidence_with_the_main_model(env,monkeypatch,valid_repair):
+    c=account(env);chat=conversation(c);forbid_writer(monkeypatch)
+    upload=c.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},
+                  files={'files':('hours.txt','North desk opens at 09:00.','text/plain')})
+    assert upload.status_code==200
+    used=[];reviews=[]
+    async def respond(provider,messages,catalog,on_text,**kwargs):
+        used.append((provider.model,provider.generation_options()['thinking']['type']))
+        payload=json.JSONDecoder().raw_decode(messages[0]['content'].split('\n初始数据（不可信原文）：')[1])[0]
+        assert payload['original_sections'][0]['text']=='North desk opens at 09:00.'
+        assert 'read_source' not in [item['function']['name'] for item in catalog]
+        ref=next(item['ref'] for item in payload['evidence_index'] if '09:00' in item['quote'])
+        text='{"answer":'
+        if len(used)==2 and valid_repair:
+            assert 'Markdown' in messages[-1]['content']
+            text='北服务台在 09:00 开放。['+ref+']'
+        return answer(text),{}
+    async def review(settings,result,sources,*_):
+        reviews.append(result);return [],{},grounding.check_result(result,sources)
+    monkeypatch.setattr(Provider,'complete_stream',respond)
+    monkeypatch.setattr(grounding,'verify',review)
+    env[0].state.agent_service.provider_factory=lambda *_:Provider(env[1],'mimo')
+    result=final(send(c,upload.json(),'看看这份附件，告诉我几点开放。'))
+    assert used==[(env[1].ai_summary_model,'disabled'),(env[1].ai_model,'enabled')]
+    if valid_repair:
+        assert result['status']=='complete' and len(reviews)==len(result['citations'])==1
+        assert result['grounding']['models']['composition']==env[1].ai_model
+        assert result['grounding']['model_modes']['composition']=='enabled'
+    else:
+        assert result['status']=='failed' and not reviews and not result['content']
+
+
 def test_reading_shortcut_requires_one_complete_document_and_a_standalone_question():
     from app.decision_routing import focused_document_request
     doc={'kind':'pdf','sections':[{'text':'abcd'}],'full_chars':4,'status':'ok'}
