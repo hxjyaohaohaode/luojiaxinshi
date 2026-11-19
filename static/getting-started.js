@@ -46,7 +46,7 @@ export function createGettingStarted({state,api,esc,toast,onPreferences,renderHo
   }
   function showVideo(resume){
     const base='/static/assets/onboarding/first-steps';
-    const revision='2',film=base+'.mp4?v='+revision;
+    const revision='3',film=base+'.mp4?v='+revision;
     showDialog('新手操作演示',`<div class="guide-player">
       <video controls playsinline preload="none" poster="${base}.webp" aria-label="收通知、查看日程和订阅武汉大学官网的操作演示">
         <source src="${film}" type="video/mp4"><track kind="captions" src="${base}.zh.vtt?v=${revision}" srclang="zh-CN" label="中文">
