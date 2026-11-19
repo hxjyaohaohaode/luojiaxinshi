@@ -21,6 +21,12 @@
 #content[data-page=sources] .source-toolbar>.record-search { grid-area:2/1/auto/-1; width:100%; max-width:680px; }
 #content[data-page=sources] .source-access { display:flex; flex-wrap:wrap; gap:8px; margin:0; }
 #content[data-page=sources] > .source-access { margin-top:18px; }
+@media(min-width:1001px) {
+  #content[data-page=sources] .source-toolbar:has(>.record-search:not([hidden])) { grid-template-columns:auto minmax(0,1fr) auto; align-items:start; }
+  #content[data-page=sources] .source-toolbar:has(>.record-search:not([hidden]))>h2 { padding-block:8px; }
+  #content[data-page=sources] .source-toolbar>.record-search:not([hidden]) { grid-area:1/2; justify-self:end; }
+  #content[data-page=sources] .source-toolbar:has(>.record-search:not([hidden]))>.button { grid-area:1/3; }
+}
 @media(max-width:600px) {
   .source-page-heading { display:grid; gap:12px; margin-bottom:14px; padding-bottom:14px; }
   #content[data-page=sources] .source-access .button { min-width:0; min-height:44px; width:auto; white-space:normal; }

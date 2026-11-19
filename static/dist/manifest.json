@@ -3,7 +3,7 @@
   "esbuild": "0.28.2",
   "entries": {
     "js": "/static/dist/app-TFKK4TIO.js",
-    "css": "/static/dist/styles-HPB2ILZK.css"
+    "css": "/static/dist/styles-Q3IYELBI.css"
   },
   "sources": {
     "static/account-security.js": "642c490d48fb77e1d2ccbe153378a29d9a91e12b30d8ce512fe781389658dfe9",
@@ -181,7 +181,7 @@
     "static/system/responsive-density.css": "0cee5a6eaf11772d165e353af0b9fc47c54476b3e8726c05d50726a51e806d1b",
     "static/system/secondary-targets.css": "5a0de9f01f02693d35a3a2995b5d4dad0e78cd34bbc007e885e1167dc67955a9",
     "static/system/settings-focus.css": "6663b97315d49da5c5551c43095432a74871076e1eb802e1ee141a9d06b59fe4",
-    "static/system/source-categories.css": "a77b2708e9bf450bcd90314ad8082803bcf8d262c3eae54194c9af05260ad3b0",
+    "static/system/source-categories.css": "b56471d7f7928bed91f365b761a668375f14c4e2e6507b31c08c96a7b16fcfc6",
     "static/system/student-inbox.css": "a36116bdd5410b54fc6e1e6cc069fc3b56e6fa080321a9dd8c69de25f30cd2a3",
     "static/system/task-drag.css": "b75960dabec9212b1e60e047c4e5d7b98b2e3aacbec3d8182f78b12659f3660e",
     "static/system/tokens.css": "ccdf81f42899a30dc36008f75014b089c7f4d271c5659c4e2afb144e6fd94a4d",
@@ -233,7 +233,7 @@
     "static/dist/chunks/campus-D2CCLL6V.js": "5a9c7eb95125d864aed3db72b8ac24a2cc90610784cb27be5cf1b7db523d0892",
     "static/dist/chunks/chunk-O5S2CXFI.js": "a258ed10d3bcf6bdd9bbb92a9a20b6fca000982fe180ada3334861954ceb4f98",
     "static/dist/chunks/chunk-HWBRJJQM.js": "b2e1afdfadc4d1982aa266fac2e75c25deb5397bcdf727881b8036311e3f764d",
-    "static/dist/styles-HPB2ILZK.css": "466baa83ce52626a9b14a9468b0e7260c213b4bff2f0eafb4a5cc08ef9babd67",
-    "static/dist/index.html": "03102e78944e80ab060bba572d52556aded069e97921d006421fefa76c9c0110"
+    "static/dist/styles-Q3IYELBI.css": "65f13d53cd7a12eb345a4d3cc371db52a299adfba5de116870ad26ce9f96af92",
+    "static/dist/index.html": "1ad2f8e2004ca37f066f5776cda8baf2bf6e604576493b4581f8c919ee4a4dce"
   }
 }
