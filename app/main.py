@@ -41,12 +41,12 @@ from .notice_ingest import ingest_notice, fingerprint as intake_fingerprint, int
 
 MAX_BODY = 26*1024*1024
 CST = timezone(timedelta(hours=8))
-# Exact, reviewed Codex annotation stylesheets. A desktop update may change the
-# sheet; retain the previous signature for previews opened in older clients.
-# These hashes authorize CSS only, and only on non-production loopback origins.
+# Codex injects this reviewed stylesheet into its annotation shadow root.
+# Keep the older desktop signature available to local previews.
+CODEX_ANNOTATION_STYLE_HASH = '62lPaUtpvg47KrxPOXYc0Ki8fkE6PNsbY5I9DpyEwZ4='
 LOCAL_ANNOTATION_STYLE_HASHES = (
     'WO55anZ1V8A0G22bY2t72RV4dI79SLI4VnYLgsEeWUc=',
-    '62lPaUtpvg47KrxPOXYc0Ki8fkE6PNsbY5I9DpyEwZ4=',  # Codex 26.1021.3705
+    CODEX_ANNOTATION_STYLE_HASH,
 )
 
 
@@ -57,6 +57,9 @@ class RequestGuard:
         local_preview = not production and urlparse(origin).hostname in {'localhost','127.0.0.1','::1'}
         style_hash = ''.join(f" 'sha256-{digest}'" for digest in LOCAL_ANNOTATION_STYLE_HASHES) if local_preview else ''
         self.csp = ("default-src 'self'; script-src 'self'; style-src 'self'" + style_hash + "; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'").encode('ascii')
+        self.workspace_csp = self.csp
+        if production and origin == 'https://luojia.jianxiaoh.cn':
+            self.workspace_csp += f"; style-src-elem 'self' 'sha256-{CODEX_ANNOTATION_STYLE_HASH}'".encode('ascii')
 
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
@@ -103,10 +106,17 @@ class RequestGuard:
                 # 避免每次打开页面重新下载全部前端代码；接口与首页仍不缓存。
                 immutable=bool(re.fullmatch(r'/static/dist/(?:chunks/|assets/)?[A-Za-z0-9_-]+-[A-Z0-9]{8}\.(?:js|css|png|svg|webm|woff2)',path))
                 cache=b'public, max-age=31536000, immutable' if immutable else b'public, max-age=86400' if path.startswith('/static/assets/') else b'no-cache' if path.startswith('/static/') else b'no-store'
+                policy = self.csp
+                if openui_frame:
+                    policy = frame_csp
+                elif pdf_preview:
+                    policy = self.csp.replace(b"frame-ancestors 'none'", b"frame-ancestors 'self'")
+                elif path == '/' and method in {'GET', 'HEAD'}:
+                    policy = self.workspace_csp
                 extra=[(b'x-content-type-options',b'nosniff'),(b'x-frame-options',b'SAMEORIGIN' if pdf_preview or openui_frame else b'DENY'),
                        (b'referrer-policy',b'no-referrer'),(b'cache-control',cache),
                        (b'permissions-policy',b'camera=(), microphone=(self), on-device-speech-recognition=(self), geolocation=()'),
-                       (b'content-security-policy',frame_csp if openui_frame else self.csp.replace(b"frame-ancestors 'none'",b"frame-ancestors 'self'") if pdf_preview else self.csp)]
+                       (b'content-security-policy',policy)]
                 if self.production:
                     extra.append((b'strict-transport-security',b'max-age=31536000'))
                 message['headers']=message.get('headers',[])+extra
