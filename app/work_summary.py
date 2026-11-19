@@ -69,7 +69,7 @@ async def stream(settings, db, mid, source_events):
             async for event in source_events:
                 if event['type'] == 'agent':
                     from .agent_runtime.chat import TOOL_LABELS
-                    kind, data, now = event['kind'], event['data'], int(time.time())
+                    kind, data, now = event['kind'], event['data'], round(time.time(), 3)
                     key = 'agent-' + data.get('agent_id', 'root') + '-' + data.get('call_id', '')
                     if kind == 'tool.started':
                         title = TOOL_LABELS.get(data.get('tool'), '调用工具')
@@ -95,7 +95,7 @@ async def stream(settings, db, mid, source_events):
                         persist()
                         await queue.put({'type': 'work', 'steps': visible_steps()})
                 if event['type'] == 'phase':
-                    now = int(time.time())
+                    now = round(time.time(), 3)
                     for record in steps:
                         if record['stage'] in STAGES and record['state'] == 'running':
                             record.update(state='complete',finished_at=now)
@@ -103,6 +103,8 @@ async def stream(settings, db, mid, source_events):
                     if event['phase']=='retrieving' and event.get('local_scope')=='message':title,tool='核对限定消息材料','限定材料核对'
                     if event['phase']=='retrieving' and event.get('local_scope')=='public':title,tool='核对对话条件，跳过私有库','对话条件核对'
                     if event['phase']=='retrieving' and event.get('local_scope')=='limited':title,tool='核对允许范围的资料','限定资料检索'
+                    if not event.get('local_scope') and event.get('label'):
+                        title = brief(event['label'].removeprefix('正在').rstrip('…。'), 110)
                     record = {'id':'step-'+str(len(steps)+1),'stage':event['phase'],'title':title,'state':'running','started_at':now,
                               'summary':event['label'],'summary_origin':'server','tools':[tool], 'detail':event.get('detail', '')}
                     steps.append(record)
@@ -113,7 +115,7 @@ async def stream(settings, db, mid, source_events):
                 if event['type'] == 'complete':
                     published = True
                     for step in steps:
-                        if step['state']=='running':step.update(state='complete',finished_at=int(time.time()))
+                        if step['state']=='running':step.update(state='complete',finished_at=round(time.time(),3))
                     persist(event.get('result', {}))
                     await queue.put({'type':'work','steps':visible_steps()})
                     # The persisted verified report, not status prose, is the final record.
@@ -162,5 +164,5 @@ async def stream(settings, db, mid, source_events):
         await asyncio.gather(runner, return_exceptions=True)
         for record in steps:
             if record['state'] == 'running':
-                record.update(state='complete' if published else 'interrupted',finished_at=int(time.time()))
+                record.update(state='complete' if published else 'interrupted',finished_at=round(time.time(),3))
         persist()

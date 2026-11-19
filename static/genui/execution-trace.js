@@ -6,11 +6,12 @@ const finite=value=>typeof value==='number'&&Number.isFinite(value);
 export function traceRecords(message,now=Date.now()/1000){
   return (message._work||message.grounding?.steps||[]).map((step,index)=>{
     const start=finite(step.started_at)?step.started_at:null,end=finite(step.finished_at)?step.finished_at:step.state==='running'?now:null;
-    return {id:step.id||'step-'+index,order:index+1,stage:step.stage,title:step.title||'执行记录',state:step.state||'interrupted',summary:step.summary||'',detail:step.detail||'',start,end,
+    const outcome=step.state==='complete'&&step.summary_origin==='execution'&&step.summary;
+    return {id:step.id||'step-'+index,order:index+1,stage:step.stage,title:outcome||step.title||'执行记录',state:step.state||'interrupted',summary:step.summary||'',detail:step.detail||'',start,end,
       duration:start!==null&&end!==null&&end>=start?end-start:null,lane:step.stage==='agent_tool'||step.stage==='subagent'?'tools':step.stage==='verifying'?'check':'work'};
   });
 }
-export function traceDuration(seconds){if(!finite(seconds))return '未记录';const n=Math.max(0,seconds);return n<60?`${Number(n.toFixed(1))}秒`:`${Math.floor(n/60)}分${Math.floor(n%60)}秒`;}
+export function traceDuration(seconds){if(!finite(seconds))return '未记录';const n=Math.max(0,seconds);if(n>0&&n<.1)return '不足0.1秒';return n<60?`${Number(n.toFixed(1))}秒`:`${Math.floor(n/60)}分${Math.floor(n%60)}秒`;}
 const clock=seconds=>seconds===null?'未记录':new Date(seconds*1000).toLocaleTimeString('zh-CN',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
 // Factual receipts and timing only. No prompt bodies, private reasoning or raw
@@ -26,7 +27,7 @@ export class ExecutionTraceView{
     this.empty=el('p','trace-empty','没有匹配的执行记录');this.empty.setAttribute('role','status');this.models=el('details','trace-models');this.root.append(toolbar,this.overview,this.layout,this.empty,this.models);
     this.list.addEventListener('keydown',event=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(event.key))return;const controls=[...this.list.querySelectorAll('button')],index=controls.indexOf(event.target);if(index<0)return;event.preventDefault();controls[event.key==='Home'?0:event.key==='End'?controls.length-1:Math.max(0,Math.min(controls.length-1,index+(event.key==='ArrowDown'?1:-1)))]?.focus({preventScroll:true});});
   }
-  update(message){this.records=traceRecords(message);this.calls=message.grounding?.harness?.calls||[];this.heading.textContent=`执行轨迹 · ${this.records.length} 项`;this.paint();}
+  update(message){this.records=traceRecords(message);const timing=message.grounding?.harness;this.calls=timing?.calls||[];this.heading.textContent=`执行轨迹 · ${this.records.length} 项`+(finite(timing?.first_text_seconds)?' · 首段 '+traceDuration(timing.first_text_seconds):'');this.paint();}
   choose(id){this.selected=this.selected===id?null:id;this.paint();}
   paint(){
     if(!this.records)return;

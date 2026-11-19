@@ -51,7 +51,7 @@ APPROACH_INSTRUCTIONS = {
 
 def local_approach(text, direct):
     request=positive_request(text)
-    if re.search(r'排期|排班|规划时间|排时间|空档|空闲|(?:冲突|撞在一起|重叠).{0,16}(?:课|日程|日历|安排)|(?:日程|日历|安排).{0,24}(?:冲突|撞在一起|重叠)|课表|时段|time slot|availability',request,re.I):return 'time_plan'
+    if re.search(r'排期|排班|规划时间|排时间|空档|空闲|(?:冲突|撞在一起|重叠).{0,16}(?:课|日程|日历|安排)|(?:课表|日程|日历|安排).{0,24}(?:冲突|撞在一起|重叠)|时段|time slot|availability',request,re.I):return 'time_plan'
     if re.search(r'核查|核实|核对|查证|冲突|交叉|正式更正|原文|corroborate|verify',request,re.I):return 'corroborate'
     if not direct and re.search(r'接着|继续|跟进|分步|依次|补件|然后|下一步|follow.up',request,re.I):return 'follow_through'
     return 'straight'
@@ -165,6 +165,22 @@ def local_route(text, direct):
         if pattern.search(text):return name
     if text.strip() and volunteered_preference(original):return 'memory'
     return 'direct' if direct else 'research'
+
+
+def focused_document_request(question, documents):
+    """Start a short, self-contained reading with the complete supplied text."""
+    if len(documents) != 1 or len(question) > 360:
+        return False
+    doc = documents[0]
+    if doc.get('kind') not in {'pdf','docx','txt','md','csv','xlsx','pptx'} or doc.get('status') != 'ok' or doc.get('warning'):
+        return False
+    size = sum(len(part['text']) for part in doc.get('sections', ()))
+    if not 0 < size <= 10000 or doc.get('full_chars', size) != size:
+        return False
+    request = positive_request(question)
+    if re.search(r'联网|搜索|检索|资料库|最新|官方|核实|查证|对比|对照|结合|冲突|日历|日程|待办|记忆|偏好|保存|添加|创建|更新|删除|导出|提交|今天|明天|下周|上次|之前|继续|提醒|规划|计算|互动|交互|拖动|筛选|绘制|图表|生成|制作|search|compare|save|calendar|interactive', request, re.I):
+        return False
+    return bool(re.search(r'看看|看一下|看下|看一看|读|解读|概括|总结|提取|说明|整理|哪些|讲了什么|summari[sz]e|explain|extract|read',request,re.I))
 
 
 def choice(answers, field='workflow', options=WORKFLOWS):

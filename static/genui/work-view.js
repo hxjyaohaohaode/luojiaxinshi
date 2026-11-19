@@ -16,10 +16,9 @@ export function workHeadline(message){
   }
   if(message.status!=='complete')return '执行未完成';
   if(!receipt)return '处理记录';
-  if(receipt.highlights?.[0])return receipt.highlights[0];
   const facts=[];
   if(receipt.cited_sources?.length)facts.push(`引用 ${receipt.cited_sources.length} 个来源`);
-  if(receipt.tool_calls)facts.push(`执行 ${receipt.tool_calls} 次工具`);
+  if(receipt.tool_calls)facts.push(`${receipt.tool_calls} 次工具调用`);
   if(receipt.ui_components?.length)facts.push('生成互动内容');
   if(receipt.failed_tools)facts.push(`${receipt.failed_tools} 次工具未成功`);
   return facts.join(' · ')||(receipt.verified?'答复已核验':'处理记录');

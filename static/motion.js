@@ -42,22 +42,26 @@ export function motionToggle(){
   return '';
 }
 
-// A real pending route gets feedback after 280 ms; fast routes add no visual flash.
-export function beginRouteFeedback(content,title='正在打开页面'){
+export function beginRouteFeedback(content,page,replacePage){
   activeRouteFeedback?.();
-  let host,slowTimer;
+  let skeleton,slow;
+  if(replacePage){
+    const layout=({calendar:'calendar',dashboard:'dashboard',sources:'library',memory:'library',insights:'dashboard',chat:'chat',new:'form',settings:'form',notice:'form'})[page]||'list';
+    skeleton=document.createElement('div');skeleton.className='destination-skeleton';skeleton.dataset.layout=layout;skeleton.setAttribute('aria-hidden','true');
+    skeleton.innerHTML='<i class="skeleton-header"></i><i class="skeleton-tools"></i><div class="skeleton-content">'+
+      '<i></i>'.repeat(layout==='calendar'?28:layout==='chat'?4:6)+'</div>';
+    content.replaceChildren(skeleton);
+  }
+  const status=document.createElement('span');status.className='sr-only';status.setAttribute('role','status');
+  const label=document.querySelector('.sidebar .nav-item[aria-current=page]')?.textContent.trim()||'页面';
+  content.before(status);status.textContent='正在打开'+label;
   const timer=setTimeout(()=>{
     if(!content.isConnected)return;
-    host=document.createElement('div');host.className='route-feedback';
-    const status=document.createElement('span');status.setAttribute('role','status');
-    host.append(status);content.before(host);status.textContent=title;
-    slowTimer=setTimeout(()=>{
-      if(!host?.isConnected)return;
-      status.textContent='连接较慢，仍在加载';
-      host.insertAdjacentHTML('beforeend','<button type="button" class="button small" data-action="refresh">重新加载</button>');
-    },12000);
-  },280);
-  const finish=()=>{clearTimeout(timer);clearTimeout(slowTimer);host?.remove();if(activeRouteFeedback===finish)activeRouteFeedback=null;};
+    slow=document.createElement('div');slow.className='route-feedback';
+    status.className='';status.textContent='连接较慢，仍在加载';slow.append(status);
+    slow.insertAdjacentHTML('beforeend','<button type="button" class="button small" data-action="refresh">重新加载</button>');content.before(slow);
+  },12000);
+  const finish=()=>{clearTimeout(timer);status.remove();slow?.remove();skeleton?.remove();if(activeRouteFeedback===finish)activeRouteFeedback=null;};
   activeRouteFeedback=finish;return finish;
 }
 

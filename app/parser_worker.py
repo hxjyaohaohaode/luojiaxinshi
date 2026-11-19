@@ -3,11 +3,32 @@ import io
 import json
 import sys
 import zipfile
+from collections import Counter
 
 from defusedxml import ElementTree as ET
 from pypdf import PdfReader
 
 MAX_TEXT = 10000
+
+
+def pdf_page_text(page, plain, extra_space):
+    if not 20 <= len(plain) <= MAX_TEXT or '\n' not in plain:
+        return plain
+    # Preserve multi-column positions only when layout mode retained every
+    # non-whitespace character. Rotated and unsupported text stays available.
+    try:
+        layout = page.extract_text(extraction_mode='layout', layout_mode_space_vertically=False) or ''
+    except (ValueError, TypeError, IndexError, KeyError, ZeroDivisionError):
+        return plain
+    lines = [line.rstrip() for line in layout.splitlines() if line.strip()]
+    if sum('  ' in line.strip() for line in lines) < 2:
+        return plain
+    aligned = '\n'.join(lines)
+    if len(aligned) > min(len(plain) + extra_space, max(512, len(plain)*2)):
+        return plain
+    if Counter(''.join(plain.split())) != Counter(''.join(aligned.split())):
+        return plain
+    return aligned
 
 
 def extract(data, kind, *, max_pages=50):
@@ -47,13 +68,23 @@ def extract(data, kind, *, max_pages=50):
             raise ValueError('加密 PDF 不可解析，请上传解密后的有权处理版本')
         if len(reader.pages) > max_pages:
             raise ValueError(f'PDF 超过 {max_pages} 页，请拆分后上传')
-        for i, page in enumerate(reader.pages, 1):
+        readings = []
+        raw_chars = 0
+        for page in reader.pages:
             content = page.get_contents()
             if content and len(content.get_data()) > 8*1024*1024:
                 raise ValueError('PDF 单页内容过大，请简化文档')
-            text = page.extract_text() or ''
+            plain = (page.extract_text() or '').replace('\x00', '').strip()
+            raw_chars += len(plain)
+            if raw_chars > MAX_TEXT:
+                raise ValueError(f'提取文本超过 {MAX_TEXT:,} 字，未截断；请拆分材料后重新上传')
+            readings.append((page, plain))
+        extra_space = MAX_TEXT - raw_chars
+        for i, (page, plain) in enumerate(readings, 1):
+            text = pdf_page_text(page, plain, extra_space) if extra_space else plain
+            extra_space -= max(0, len(text) - len(plain))
             add(f'第 {i} 页', text)
-            if len(text.strip()) < 8:
+            if len(plain) < 8:
                 from .pdf_visual import page_marker
                 sections.append(page_marker(i))
                 warnings.append(f'第 {i} 页没有足够的可提取文字，可能是扫描件或空白页，请核对')

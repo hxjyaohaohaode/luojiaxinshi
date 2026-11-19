@@ -71,10 +71,10 @@ class Trace:
             'stop_reason':self.stop_reason,'loop_limits':{'generations':GENERATION_LIMIT,'protocol_repairs':PROTOCOL_RETRIES,'semantic_repairs':SEMANTIC_RETRIES}}
 
 
-def start_call(payload):
+def start_call(payload, *, stage=None):
     trace=CURRENT.get()
     if trace is None:return None
-    entry={'stage':trace.stage,'model':payload.get('model'),'thinking':payload.get('thinking',{}).get('type'),
+    entry={'stage':stage or trace.stage,'model':payload.get('model'),'thinking':payload.get('thinking',{}).get('type'),
         'output_limit':payload.get('max_completion_tokens'),'status':'running','_start':time.monotonic()}
     trace.calls.append(entry)
     return entry

@@ -506,8 +506,12 @@ async function route(){
   }
   state.workContext=contextForRoute(state.session.user,currentWorkContext(),page);
   shell(page.split('/')[0]);updateShell(page.split('/')[0]);reminders.start();
-  const content=$('#content'),finishRouteFeedback=beginRouteFeedback(content);content.setAttribute('aria-busy','true');content.inert=true;content.classList.add('route-pending');
-  const visibleRoute=currentWorkContext()+':'+page;if(state.visibleRoute!==visibleRoute&&!recordTarget){content.scrollTop=0;window.scrollTo(0,0);}state.visibleRoute=visibleRoute;
+  const content=$('#content'),visibleRoute=currentWorkContext()+':'+page;
+  const changedPage=state.visibleRoute!==visibleRoute||!!content.querySelector('.destination-skeleton');
+  content.dataset.page=page;
+  const finishRouteFeedback=beginRouteFeedback(content,page.split('/')[0],changedPage);
+  content.setAttribute('aria-busy','true');content.inert=true;content.classList.add('route-pending');
+  if(changedPage&&!recordTarget){content.scrollTop=0;window.scrollTo(0,0);}state.visibleRoute=visibleRoute;
   try{
     content.dataset.page=page;
     if(page==='chat'||page.startsWith('chat/')){

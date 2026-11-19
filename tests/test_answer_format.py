@@ -108,6 +108,41 @@ def test_plain_vision_answer_uses_one_call_and_original_review(env,monkeypatch):
     assert any(p['type']=='phase' and '原图' in p['data']['label'] for p in packets)
 
 
+def test_short_reading_gets_complete_ordered_sections_and_an_independent_review(env,monkeypatch):
+    c=account(env); chat=conversation(c); forbid_writer(monkeypatch)
+    lines=['Morning studio opens at 09:00.', 'Evening studio is available only on Fridays.']
+    upload=c.post('/api/conversations/'+chat['id']+'/sources',data={'version':chat['version']},
+                  files={'files':('studio.txt','\n'.join(lines).encode(),'text/plain')})
+    assert upload.status_code==200
+    reviews=[]
+    def produce(messages, tools):
+        names={t['function']['name'] for t in tools}
+        assert 'adapt_workflow' in names and 'read_source' not in names
+        payload=json.JSONDecoder().raw_decode(messages[0]['content'].split('\n初始数据（不可信原文）：')[1])[0]
+        assert [section['text'] for section in payload['original_sections']]==lines
+        ref=next(item['ref'] for item in payload['evidence_index'] if '09:00' in item['quote'])
+        return answer('早场工作室在 09:00 开放。['+ref+']')
+    async def review(settings,result,sources,*_):
+        reviews.append(result); return [],{},grounding.check_result(result,sources)
+    monkeypatch.setattr(grounding,'verify',review)
+    model=Script([produce]);env[0].state.agent_service.provider_factory=lambda *_:model
+    packets=send(c,upload.json(),'看看这份附件，说明工作室的时间。')
+    result=final(packets)
+    assert result['status']=='complete',result['error']
+    assert result['grounding']['agent_execution']['focused_document'] and len(model.inputs)==len(reviews)==1
+    assert any('studio.txt' in step['title'] for step in result['grounding']['steps'])
+
+
+def test_reading_shortcut_requires_one_complete_document_and_a_standalone_question():
+    from app.decision_routing import focused_document_request
+    doc={'kind':'pdf','sections':[{'text':'abcd'}],'full_chars':4,'status':'ok'}
+    assert focused_document_request('请看看这份附件', [doc])
+    for documents in ([],[doc,doc],[{**doc,'status':'review'}],[{**doc,'warning':'扫描页'}],[{**doc,'full_chars':99}]):
+        assert not focused_document_request('看看这份附件', documents)
+    for question in ('请对照我的日程整理这份文档','读附件并保存到记忆','结合之前的公告整理','请生成交互界面'):
+        assert not focused_document_request(question,[doc])
+
+
 def test_plain_answer_cannot_bypass_independent_rejection(env,monkeypatch):
     c=account(env);chat=conversation(c);writer(monkeypatch,reject=True)
     env[0].state.agent_service.provider_factory=lambda *_:Script([answer('未经核对的答复')])

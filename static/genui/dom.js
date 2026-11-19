@@ -41,7 +41,7 @@ export function inline(text,parent){
   linkedText(text.slice(cursor),parent);
 }
 export function dataTable(props,{view={},changed=()=>{}}={}){
-  const box=el('div','gu-table-wrap'),table=el('table','gu-table'),caption=el('caption','',props.label||'数据'),head=el('thead'),body=el('tbody'),row=el('tr');
+  const box=el('div','gu-table-wrap'),table=el('table','gu-table'),caption=el('caption',props.inlineDocument?'sr-only':'',props.label||'数据'),head=el('thead'),body=el('tbody'),row=el('tr');
   const columns=props.columns||[],source=props.rows||[];table.append(caption,head,body);head.append(row);box.append(table);
   const pager=el('div','gu-pager'),status=el('span','gu-muted');let sortButtons=[];
   function paint(){
@@ -56,7 +56,7 @@ export function dataTable(props,{view={},changed=()=>{}}={}){
   const previous=button('上一页',()=>{view.page--;paint();changed();}),next=button('下一页',()=>{view.page++;paint();changed();});pager.append(previous,status,next);box.append(pager);paint();return box;
 }
 export function markdown(text,{enhance=true,streaming=false,view={},changed=()=>{}}={}){
-  const host=el('div','gu-markdown'),lines=String(text).split('\n');let i=0,count=0;
+  const host=el('div','gu-markdown'),lines=String(text).split('\n');let i=0,count=0,sectionTitle='';
   const cellLine=line=>line.trim().replace(/^\||\|$/g,'').split(/(?<!\\)\|/).map(v=>v.trim().replace(/\\\|/g,'|'));
   while(i<lines.length&&count++<1000){
     const line=lines[i];if(!line.trim()){i++;continue;}
@@ -66,7 +66,7 @@ export function markdown(text,{enhance=true,streaming=false,view={},changed=()=>
     }
     if(line.includes('|')&&i+1<lines.length&&/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(lines[i+1])){
       const labels=cellLine(line),rows=[];i+=2;while(i<lines.length&&lines[i].includes('|')&&rows.length<1000){const cells=cellLine(lines[i++]);rows.push(Object.fromEntries(labels.map((_,n)=>['c'+n,cells[n]||''])));}
-      const key='table'+count;view[key]??=Object.create(null);host.append(dataTable({columns:labels.map((label,n)=>({label,key:'c'+n,sortable:enhance})),rows,pageSize:streaming?1000:10},{view:view[key],changed}));continue;
+      const key='table'+count;view[key]??=Object.create(null);host.append(dataTable({label:sectionTitle||labels.join('、'),inlineDocument:true,columns:labels.map((label,n)=>({label,key:'c'+n,sortable:enhance})),rows,pageSize:streaming?1000:10},{view:view[key],changed}));continue;
     }
     if(/^\s*[-*] \[[ xX]\] /.test(line)){
       const list=el('ul','gu-checklist');while(i<lines.length&&/^\s*[-*] \[[ xX]\] /.test(lines[i])){const match=lines[i].match(/^\s*[-*] \[([ xX])\] (.*)$/),key='check'+i,input=el('input'),label=el('label','gu-check'),li=el('li');input.type='checkbox';input.checked=view[key]??(match[1].toLowerCase()==='x');input.disabled=!enhance;input.addEventListener('change',()=>{view[key]=input.checked;changed();});const span=el('span');inline(match[2],span);label.append(input,span);li.append(label);list.append(li);i++;}host.append(list);continue;
@@ -75,7 +75,7 @@ export function markdown(text,{enhance=true,streaming=false,view={},changed=()=>
       const ordered=/^\s*\d+\./.test(line),list=el(ordered?'ol':'ul',ordered&&enhance?'gu-steps':'gu-list');
       while(i<lines.length&&(ordered?/^\s*\d+\. /:/^\s*[-*] /).test(lines[i])){const li=el('li');inline(lines[i++].replace(/^\s*(?:\d+\.|[-*]) /,''),li);list.append(li);}host.append(list);continue;
     }
-    const heading=line.match(/^(#{1,4}) (.*)$/),node=el(heading?'h'+Math.min(4,heading[1].length+1):line.startsWith('> ')?'blockquote':'p');inline(heading?heading[2]:line.replace(/^> /,''),node);host.append(node);i++;
+    const heading=line.match(/^(#{1,4}) (.*)$/),node=el(heading?'h'+Math.min(4,heading[1].length+1):line.startsWith('> ')?'blockquote':'p');inline(heading?heading[2]:line.replace(/^> /,''),node);if(heading)sectionTitle=node.textContent;host.append(node);i++;
   }
   if(i<lines.length){const more=button('展开剩余内容',()=>{const rest=markdown(lines.slice(i).join('\n'),{enhance,view:view.rest??(view.rest={}),changed});more.replaceWith(rest);changed();});host.append(more);}return host;
 }

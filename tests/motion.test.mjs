@@ -53,20 +53,23 @@ test('a superseded navigation cannot leave a loading overlay or erase the curren
   const timers=new Map(),hosts=[];let id=0;
   globalThis.setTimeout=(callback,delay)=>{const key=++id;timers.set(key,{callback,delay});return key;};
   globalThis.clearTimeout=key=>timers.delete(key);
-  globalThis.document={createElement:()=>({isConnected:false,setAttribute(key,value){this[key]=value;},append(child){this.child=child;},insertAdjacentHTML(_position,html){this.action=html;},remove(){this.isConnected=false;}})};
-  const content={isConnected:true,before(host){host.isConnected=true;hosts.push(host);}};
+  globalThis.document={querySelector:()=>null,createElement:()=>({dataset:{},isConnected:false,setAttribute(key,value){this[key]=value;},append(child){this.child=child;},insertAdjacentHTML(_position,html){this.action=html;},remove(){this.isConnected=false;}})};
+  const content={isConnected:true,before(host){host.isConnected=true;hosts.push(host);},replaceChildren(host){if(this.child)this.child.remove();host.isConnected=true;this.child=host;}};
   const runNext=()=>{const [key,timer]=[...timers].sort((a,b)=>a[1].delay-b[1].delay)[0];timers.delete(key);timer.callback();};
   let finish;
   try{
-    const old=beginRouteFeedback(content,'first');
-    finish=beginRouteFeedback(content,'second');
-    old(); // A late finally from the first request must not cancel the second.
-    assert.equal(timers.size,1);runNext();
-    assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.equal(hosts[0].child.textContent,'second');assert.equal(hosts[0].child.role,'status');
-    runNext();assert.match(hosts[0].child.textContent,/连接较慢/);assert.match(hosts[0].action,/重新加载/);
-    const newer=beginRouteFeedback(content,'third');
-    assert.equal(hosts[0].isConnected,false);finish();finish=newer;
-    runNext();assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.equal(hosts[1].child.textContent,'third');
+    const old=beginRouteFeedback(content,'sources',true),oldSkeleton=content.child;
+    assert.equal(oldSkeleton.dataset.layout,'library');assert.equal(oldSkeleton['aria-hidden'],'true');
+    finish=beginRouteFeedback(content,'calendar',true);
+    old();
+    assert.equal(oldSkeleton.isConnected,false);assert.equal(content.child.isConnected,true);assert.equal(content.child.dataset.layout,'calendar');
+    assert.equal(timers.size,1);assert.equal(hosts.filter(host=>host.isConnected).length,1);assert.equal(hosts.at(-1).role,'status');
+    assert.equal([...timers.values()][0].delay,12000);runNext();
+    assert.match(hosts.at(-1).child.textContent,/连接较慢/);assert.match(hosts.at(-1).action,/重新加载/);
+    const calendar=content.child,newer=beginRouteFeedback(content,'chat',true);
+    finish();finish=newer;assert.equal(calendar.isConnected,false);assert.equal(content.child.dataset.layout,'chat');assert.equal(content.child.isConnected,true);
     finish();assert.equal(timers.size,0);assert.equal(hosts.filter(host=>host.isConnected).length,0);
+    const filled=content.child={remove(){throw new Error('Same-page refresh removed the existing content');}};
+    finish=beginRouteFeedback(content,'chat',false);finish();assert.equal(content.child,filled);
   }finally{finish?.();globalThis.setTimeout=originalTimeout;globalThis.clearTimeout=originalClear;if(originalDocument===undefined)delete globalThis.document;else globalThis.document=originalDocument;}
 });

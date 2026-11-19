@@ -26,7 +26,8 @@ html[data-ui-motion=off] .chat-reading-area > #chat-thread { transition:none; }
 #chat-thread .work-summary-toggle { display:flex; align-items:center; gap:8px; width:fit-content; max-width:100%; min-height:36px; padding:5px 8px; margin-left:-8px; color:inherit; background:transparent; border:0; border-radius:8px; text-align:left; font:inherit; font-size:12px; line-height:1.55; cursor:pointer; }
 #chat-thread .work-summary-toggle:hover { background:var(--surface-2); }
 #chat-thread .work-summary-toggle:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
-#chat-thread .work-title { min-width:0; text-wrap:pretty; }
+#chat-thread .work-title { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:inherit; }
+#chat-thread .work-time { flex:none; min-inline-size:0; }
 #chat-thread .work-chevron { flex:none; transition:rotate 180ms ease; }
 #chat-thread .work-summary[data-expanded=true] .work-chevron { rotate:180deg; }
 #chat-thread .work-disclosure { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,0fr); visibility:hidden; transition:grid-template-rows 220ms cubic-bezier(.22,.8,.24,1),visibility 0s 220ms; }

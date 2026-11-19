@@ -55,8 +55,8 @@
               height var(--dur-4) var(--ease-soft-spring), opacity var(--dur-3) var(--ease-out);
 }
 .hover-follower.is-visible { opacity: 1; }
-.sidebar nav { position: relative; }
-.sidebar nav > .nav-item { position: relative; z-index: 1; }
+.sidebar nav { position: relative; isolation: isolate; }
+.sidebar nav .nav-item, .sidebar nav .sidebar-more > summary { position: relative; z-index: 1; }
 .sidebar nav > .selection-indicator { z-index: 0; }
 
 /* ---------- 勾选与完成 ---------- */
@@ -103,10 +103,23 @@
 }
 #toast.visible { transform: translateX(-50%) translateY(0) scale(1); transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-4) var(--ease-spring), visibility 0s; }
 
-/* ---------- 路由切换：旧内容轻轻淡出，新内容由编排脚本错峰入场 ---------- */
-/* Filter animations can crash the Linux WebKit compositor during navigation
-   (microsoft/playwright#42637). Keep feedback on opacity and transforms. */
-.route-pending { opacity: .55; transition: opacity var(--dur-3) var(--ease-out); }
+.route-pending { opacity: 1; transition: none; }
+.destination-skeleton { display:grid; gap:18px; padding:8px 0; min-width:0; width:100%; }
+.destination-skeleton i { display:block; background:var(--surface-2,#f0f3f1); border-radius:5px; }
+.destination-skeleton .skeleton-header { height:22px; width:min(38%,240px); }
+.destination-skeleton .skeleton-tools { height:34px; width:min(68%,500px); }
+.destination-skeleton .skeleton-content { display:grid; align-content:start; gap:10px; min-width:0; }
+.destination-skeleton .skeleton-content i { height:36px; }
+.destination-skeleton[data-layout=calendar] .skeleton-content { grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; }
+.destination-skeleton[data-layout=calendar] .skeleton-content i { height:clamp(38px,7vh,72px); }
+.destination-skeleton[data-layout=dashboard] .skeleton-content,.destination-skeleton[data-layout=library] .skeleton-content { grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr)); }
+.destination-skeleton:is([data-layout=dashboard],[data-layout=library]) .skeleton-content i { height:78px; }
+.destination-skeleton[data-layout=chat] { padding:18px clamp(14px,5%,56px); }
+.destination-skeleton[data-layout=chat] .skeleton-content { max-width:840px; gap:14px; }
+.destination-skeleton[data-layout=chat] .skeleton-content i { height:12px; width:80%; }
+.destination-skeleton[data-layout=chat] .skeleton-content i:first-child { width:31%; height:32px; justify-self:end; margin-bottom:12px; }
+.destination-skeleton[data-layout=chat] .skeleton-content i:last-child { width:52%; }
+.destination-skeleton[data-layout=form] .skeleton-content { max-width:640px; gap:18px; }
 .route-feedback {
   display: inline-flex;
   align-items: center;

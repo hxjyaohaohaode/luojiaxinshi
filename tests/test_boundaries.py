@@ -48,6 +48,18 @@ def test_real_pdf_text_and_page_locator():
     assert '2027-10-20' in parsed['sections'][0]['text']
 
 
+def test_pdf_layout_preserves_readable_rows_without_losing_cells_or_consuming_other_pages_budget():
+    from app.parser_worker import pdf_page_text
+    plain='Monday\n09:00\nTuesday\n12:00'
+    aligned='Monday    09:00\nTuesday   12:00'
+    class Page:
+        def __init__(self,output): self.output=output
+        def extract_text(self,**options): return self.output
+    assert pdf_page_text(Page(aligned),plain,100)==aligned
+    assert pdf_page_text(Page(aligned),plain,1)==plain
+    assert pdf_page_text(Page(aligned.replace('Tuesday','Sunday')),plain,100)==plain
+
+
 def test_provider_contract_and_usage_without_live_credentials(env,monkeypatch):
     c=account(env);n=notice(c);cfg=env[1];cfg.ai_api_key='FAKE-TEST-KEY'
     original=httpx.Client

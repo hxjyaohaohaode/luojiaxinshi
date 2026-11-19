@@ -815,7 +815,6 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             raise AIError('问题已保存，尚未配置模型。')
         if not settings.ai_supports_json:
             raise AIError('严格核验需要结构化输出，当前模型配置不支持；未降级为无证据回答。')
-        yield {'type': 'phase', 'phase': 'planning', 'label': '正在确认问题、时间范围和需要的资料…'}
         agent_result = None
         if settings.agent_enabled and getattr(db, 'agent_service', None):
             from .agent_runtime.chat import research
@@ -861,6 +860,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             planned,usage={'local_queries':[],'public_queries':[],'web_reason':'按用户明确限定的材料范围执行，本轮不联网。'},{}
             report['planning_mode']='explicit_scope'
         else:
+            yield {'type': 'phase', 'phase': 'planning', 'label': '正在确定本轮需要查阅的资料…'}
             check_context()
             planned, usage = await plan(settings, question, profile, restricted)
             report['planning_mode']='model'
@@ -1041,7 +1041,7 @@ async def _events(settings, db, uid, cid, mid, initial_sources, messages, profil
             rejected_answer = provider_draft if isinstance(provider_draft,str) and len(provider_draft.encode('utf-8'))<=131072 else draft['answer']
             span_refs={(entry['source_id'],entry['locator'],entry['quote']):entry['ref'] for entry in genui_ai.evidence_index(sources_for_answer)}
             repair_citation_map=[{'number':number,'ref':span_refs[(cite['source_id'],cite['locator'],cite['quote'])]} for number,cite in enumerate(draft['citations'],1) if (cite['source_id'],cite['locator'],cite['quote']) in span_refs]
-            yield {'type': 'phase', 'phase': 'verifying', 'label': '正在核对引用、结论与互动内容…'}
+            yield {'type':'phase','phase':'verifying','label':f'复核答复与 {len(draft["citations"])} 处引用' if draft['citations'] else '复核本轮答复'}
             review_config = review_options(settings, draft, sources_for_answer)
             report['model_modes']['verification'] = review_config['thinking']['type']
             report['verification_output_budget'] = review_config['max_completion_tokens']

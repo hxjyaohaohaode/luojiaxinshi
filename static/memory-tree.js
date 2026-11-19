@@ -142,14 +142,18 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
     el.replaceChildren(document.createTextNode(text));
     if(retry){const button=document.createElement('button');button.className='button small';button.dataset.treeAction='refresh';button.textContent='立即更新';el.append(button);}
   }
+  function prepareFrame(){
+    if(!$('#memory-shell.memory-tree-page')){$('#content').innerHTML=frame();placeholder();navDirty=true;}
+    $('#memory-search').value=query[mode];$('#memory-search-scope').value=searchScope;$('#memory-search-scope').hidden=mode==='session';$('#memory-tree-filters').hidden=mode==='session';
+    const filters={'memory-view-type':viewType,'memory-state-filter':stateFilter,'memory-sort':sort};for(const [id,value] of Object.entries(filters))$('#'+id).value=value;
+  }
   async function render({navigation=false,quiet=false}={}){
     clearTimeout(timer);const user=current(),ticket=++revision,ui=captureUiContext(state);if(!user||location.hash.split('/')[0]!=='#memory')return;
     controller?.abort();controller=new AbortController();const request=controller,timeout=setTimeout(()=>request.abort(),25000);
-    if(!$('#memory-shell')||!$('.memory-tree-page')){$('#content').innerHTML=frame();placeholder();navDirty=true;}
     if(navigation)navDirty=true;
-    $('#memory-search').value=query[mode];$('#memory-search-scope').value=searchScope;$('#memory-search-scope').hidden=mode==='session';$('#memory-tree-filters').hidden=mode==='session';
-    const filters={'memory-view-type':viewType,'memory-state-filter':stateFilter,'memory-sort':sort};for(const [id,value] of Object.entries(filters))$('#'+id).value=value;
-    $('.memory-tree-main').setAttribute('aria-busy','true');$('#memory-load-status').textContent=quiet?'':'正在读取…';
+    if($('#memory-shell.memory-tree-page')){
+      prepareFrame();$('.memory-tree-main').setAttribute('aria-busy','true');$('#memory-load-status').textContent=quiet?'':'正在读取…';
+    }
     const wantedMode=mode;
     try{
       const params=new URLSearchParams({q:query[mode],offset:page*50,limit:50});
@@ -159,6 +163,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       const watermark=await api('/memory/tree/status',{signal:request.signal});
       const [start,data]=await Promise.all([api('/memory/tree',{signal:request.signal}),api((mode==='session'?'/memory/session-items?':'/memory/tree/entries?')+params,{signal:request.signal})]);
       if(user!==current()||ticket!==revision||!ui.sameRoute()||wantedMode!==mode)return;
+      if(!$('#memory-shell.memory-tree-page'))prepareFrame();
       summary={...start,jobs:watermark.jobs};indexing=!!(watermark.jobs.queued||watermark.jobs.running);root=start.root_id;if(!node)node=root;
       if(page>0&&page*50>=data.matched){page=Math.max(0,Math.ceil(data.matched/50)-1);return await render();}
       if(navDirty){tree.clear();more.clear();for(const n of start.nodes)tree.set(n.id,n);}
@@ -185,6 +190,7 @@ export function createMemoryWorkbench({state,api,esc,icon,studio,onCatalog,toast
       }
     }catch(error){
       if(user!==current()||ticket!==revision||!ui.sameRoute())return;
+      if(!$('#memory-shell.memory-tree-page'))prepareFrame();
       if(error.status===404&&node&&node!==root){node=root;clearDetail();page=0;navDirty=true;return await render();}
       updateNotice(error.message,true);
       if(!$('#memory-items').children.length)$('#memory-items').innerHTML='<div class="memory-tree-empty"><h2>记忆暂时读不出来</h2><p>保存的内容都还在，网络好了再试一次。</p><button class="button" data-tree-action="refresh">再试一次</button></div>';

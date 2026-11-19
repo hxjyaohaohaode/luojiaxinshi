@@ -100,6 +100,8 @@ def bounded_result(value, limit=16000):
 
 
 class Run:
+    prompt_revision = 0
+    root_model_stage = None
     registry = REGISTRY
     protected_tools = frozenset({'load_skill'})
 
@@ -315,6 +317,7 @@ class Run:
 
     async def loop(self, prompt, aid='root', child=False):
         system = self.system_prompt(child)
+        prompt_revision = self.prompt_revision
         current = [{'role': 'user', 'content': prompt}]
         self.store.message(self.id, aid, current[0])
         previous, repetitions, seen_calls = '', 0, set()
@@ -345,6 +348,9 @@ class Run:
                 feedback(f'本轮还可调用模型 {MODEL_CALL_LIMIT - self.calls} 次。优先汇总已取得的依据，把无法核实的项目标为缺口，然后提交答复。')
             # A tool can make additional capabilities available for this step.
             catalog = self.tool_catalog(child)
+            if prompt_revision != self.prompt_revision:
+                system = self.system_prompt(child)
+                prompt_revision = self.prompt_revision
             continuation_bytes = self.provider.reasoning_bytes(current) if isinstance(self.provider, Provider) else 0
             step_budget = self.context_bytes-continuation_bytes
             step_system = self.fit_system_context(system, step_budget-size(current)-size(catalog)-2048)
@@ -368,7 +374,7 @@ class Run:
                 raise
             async with self.service.model_slots:
                 from ..harness import start_call, finish_call
-                trace = start_call({'model': self.provider.model, **options})
+                trace = start_call({'model': self.provider.model, **options}, stage='subagent' if child else self.root_model_stage)
                 try:
                     message, usage = await self.model_response(packed, catalog, child)
                 except BaseException as exc:

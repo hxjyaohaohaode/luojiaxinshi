@@ -10,7 +10,6 @@ html{scrollbar-gutter:stable}
 .task-results{min-height:230px}
 .pagination{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:18px;min-height:44px;font-size:var(--text-sm);color:var(--muted)}
 .pagination:empty{display:none}
-.route-pending{opacity:.66;transition:opacity .15s}
 .autosave-status{min-height:24px;font-size:var(--text-sm);color:#648571;font-weight:400;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .autosave-status.save-error{color:var(--red)}
 .evidence{border-left:0;border:1px solid #e5ebe2;border-radius:8px;overflow-wrap:anywhere}

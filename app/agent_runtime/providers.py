@@ -56,6 +56,7 @@ class Provider:
 
     def __init__(self, settings, kind):
         self.settings, self.kind = settings, kind
+        self.document_reading = False
         self.reuse_connections, self._client = False, None
         # Provider-only continuation state. Never enters chat events, durable
         # transcripts, logs or final answers. Cleared at the end of this run.
@@ -107,7 +108,7 @@ class Provider:
                    for message in messages if message.get('tool_calls')) if self.kind == 'mimo' else 0
 
     def generation_options(self):
-        return ({'thinking': {'type': 'enabled'}, 'max_completion_tokens': completion_budget(self.settings)}
+        return ({'thinking': {'type': 'disabled' if self.document_reading else 'enabled'}, 'max_completion_tokens': completion_budget(self.settings)}
                 if self.kind == 'mimo' else {'max_tokens': 4096})
 
     async def _request(self, messages, tools, on_text=None, on_answer_arguments=None):

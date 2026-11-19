@@ -45,14 +45,6 @@ dialog[open] { animation: dialog-arrive 280ms var(--motion-ease); }
 dialog[open]::backdrop { animation: backdrop-arrive 240ms ease-out; }
 .chat-composer { transition: box-shadow 260ms, border-color 260ms, background 260ms; }
 .chat-composer:focus-within { border-color: #91b397; box-shadow: 0 0 0 4px #79a66c0c, var(--surface-raised); }
-.chat-composer.is-processing { position: relative; }
-.chat-composer.is-processing::after {
-  content: ''; position: absolute; pointer-events: none; inset: -1px; border: 2px solid transparent; border-radius: inherit;
-  background: conic-gradient(from var(--beam-angle), transparent 55%, #aac889 78%, #3c8054 87%, transparent 94%) border-box;
-  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); mask-composite: exclude;
-  animation: border-beam 3.2s linear infinite;
-}
-@property --beam-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 .processing-steps .is-current b { box-shadow: 0 0 0 4px #56864b12; animation: active-step 2s ease-in-out infinite; }
 .route-skeleton span { background: linear-gradient(100deg,#e8ede2 30%,#f5f7f0 48%,#e8ede2 64%); background-size: 220% 100%; animation: skeleton-pass 1.6s ease-in-out infinite; }
 .route-skeleton span:nth-child(2) { animation-delay: 100ms; }
@@ -85,7 +77,6 @@ dialog[open]::backdrop { animation: backdrop-arrive 240ms ease-out; }
 @keyframes check-pop { 50% { transform: scale(1.14); } }
 @keyframes dialog-arrive { from { opacity: .2; transform: translateY(18px) scale(.98); } }
 @keyframes backdrop-arrive { from { opacity: 0; } }
-@keyframes border-beam { to { --beam-angle: 360deg; } }
 @keyframes active-step { 50% { box-shadow: 0 0 0 7px #56864b08; } }
 @keyframes skeleton-pass { to { background-position: -220% 0; } }
 @media (hover:hover) and (pointer:fine) {
@@ -99,9 +90,7 @@ html[data-ui-motion=off] :is(.selection-indicator,dialog,.task-check .icon,.rout
 html[data-ui-motion=off] [data-orbit] *,
 html[data-ui-motion=off] .chat-composer::after,
 html[data-ui-motion=off] dialog::backdrop { animation: none !important; transition: none !important; }
-html[data-ui-motion=off] .chat-composer.is-processing::after { background: none; border-color: #8eac83; mask: none; }
 @media (prefers-reduced-motion:reduce) {
   [data-tilt],.action-metric,.scene-choice,.notice-card,.sidebar .icon,.source-starter,.notice-upload .upload-symbol,.scene-choice > .icon:last-child,.settings-item-icon,.button:active { transform: none !important; transition: none !important; }
   .selection-indicator,dialog,dialog::backdrop,.task-check .icon,.route-skeleton span,.processing-steps b,[data-orbit] *,.chat-composer::after { animation: none !important; transition: none !important; }
-  .chat-composer.is-processing::after { background: none; border-color: #8eac83; mask: none; }
 }
