@@ -47,9 +47,9 @@ export function beginRouteFeedback(content,page,replacePage){
   let skeleton,slow;
   if(replacePage){
     const layout=({calendar:'calendar',dashboard:'dashboard',sources:'library',memory:'library',insights:'dashboard',chat:'chat',new:'form',settings:'form',notice:'form'})[page]||'list';
-    skeleton=document.createElement('div');skeleton.className='destination-skeleton';skeleton.dataset.layout=layout;skeleton.setAttribute('aria-hidden','true');
+    skeleton=document.createElement('div');skeleton.className='destination-skeleton';skeleton.dataset.layout=layout;skeleton.dataset.page=page;skeleton.setAttribute('aria-hidden','true');
     skeleton.innerHTML='<i class="skeleton-header"></i><i class="skeleton-tools"></i><div class="skeleton-content">'+
-      '<i></i>'.repeat(layout==='calendar'?28:layout==='chat'?4:6)+'</div>';
+      '<i></i>'.repeat(layout==='calendar'?35:page==='sources'?3:layout==='chat'?4:6)+'</div>';
     content.replaceChildren(skeleton);
   }
   const status=document.createElement('span');status.className='sr-only';status.setAttribute('role','status');

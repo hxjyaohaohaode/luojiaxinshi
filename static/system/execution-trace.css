@@ -1,8 +1,8 @@
 .execution-trace { container-type:inline-size; width:100%; min-width:0; margin-top:12px; color:var(--ink); font-size:12px; }
 .work-trace-link { min-height:36px; margin-top:4px; padding:4px 0; background:transparent; border:0; color:var(--green); font:inherit; font-size:12px; cursor:pointer; }
-#dialog:has(.trace-workspace) { width:min(780px,calc(100vw - 48px)); height:auto; max-height:calc(100dvh - 64px); }
-#dialog:has(.trace-workspace) .dialog-body { display:flex; flex-direction:column; }
-.trace-workspace { flex:1; min-width:0; overflow-anchor:none; }
+#dialog:has(.trace-workspace) { width:min(780px,calc(100vw - 48px)); height:fit-content; min-height:0; max-height:min(76dvh,720px); }
+#dialog:has(.trace-workspace) .dialog-body { display:block; flex:0 1 auto; overflow-y:auto; }
+.trace-workspace { min-width:0; overflow-anchor:none; }
 .trace-workspace .execution-trace { margin-top:0; }
 .trace-workspace .trace-toolbar { position:sticky; top:0; z-index:3; background:var(--surface,#fff); }
 @media(max-width:600px) { #dialog:has(.trace-workspace) { width:calc(100vw - 16px); max-height:calc(var(--visual-height,100dvh) - 24px); } }

@@ -46,6 +46,11 @@ try{
   assert.equal(await reply.locator('.work-body').evaluate(n=>getComputedStyle(n).overflowY),'visible');
   await reply.locator('.work-trace-link').click();
   await page.locator('#dialog .trace-record').first().waitFor();
+  const traceFit=await page.locator('#dialog').evaluate(dialog=>{
+    const content=dialog.querySelector('.execution-trace'),workspace=dialog.querySelector('.trace-workspace');
+    return {height:dialog.offsetHeight,viewport:innerHeight,spare:workspace.offsetHeight-content.offsetHeight};
+  });
+  assert.ok(traceFit.height<=traceFit.viewport*.77&&traceFit.spare<8,'Trace uses the recorded content height: '+JSON.stringify(traceFit));
   await page.locator('#dialog .trace-record').filter({hasText:/生成互动界面|读取界面生成协议/}).first().click();
   assert.ok((await page.locator('#dialog .trace-detail').innerText()).trim().length>0);
   await page.keyboard.press('Escape');
