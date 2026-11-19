@@ -25,6 +25,13 @@
 .guide-skip {padding:4px 1px 4px 8px;border:0;background:none;color:#4e6056;font-size:12px!important}
 .guide-tip-action {margin-top:9px;padding:6px 11px;border:1px solid #bdd6c7;border-radius:8px;background:#eff7f2;color:#165336;font-size:13px!important;font-weight:600!important}
 .guide-tip-action:disabled {opacity:.6;cursor:default}
+.guide-tip-actions {display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.guide-watch {padding:5px 2px;border:0;background:none;color:#245b42;text-decoration:underline;text-underline-offset:3px;font-size:13px!important}
+#dialog:has(.guide-player) {width:min(900px,calc(100% - 20px));height:fit-content;min-height:0;max-height:calc(100dvh - 20px)}
+#dialog:has(.guide-player) .dialog-body {display:block;padding:12px;min-height:0}
+.guide-player video {display:block;width:100%;aspect-ratio:16/9;max-height:calc(100dvh - 164px);background:#142e25;border-radius:8px}
+.guide-player-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px}
+.guide-player-footer a {font-size:14px;color:var(--brand)}
 .guide-tip button:focus-visible {outline:2px solid #17744d;outline-offset:2px}
 .guide-layer [hidden] {display:none}
 .guide-tip-short {overflow-y:auto}

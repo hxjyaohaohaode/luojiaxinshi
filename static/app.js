@@ -874,7 +874,7 @@ function lazyUI(load,methods,synchronous={}){
   return feature;
 }
 
-const gettingStarted=createGettingStarted({state,api,esc,toast,onPreferences:applyDisplayPreferences,renderHome:route});
+const gettingStarted=createGettingStarted({state,api,esc,toast,onPreferences:applyDisplayPreferences,renderHome:route,showDialog});
 const verification=createVerificationUI({state,api,esc,toast});
 const pwa=createPWA({showDialog});
 const accountSecurity=createAccountSecurity({state,esc,field,api,verification,showDialog,toast});

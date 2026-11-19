@@ -6,8 +6,8 @@ const picker='.source-page-heading [data-source-action="school-presets"]',search
 const result='#source-preset-list :is([data-source-action="preset-subscribe"],[data-source-action="preset-view"]):enabled';
 const agenda='.home-agenda .home-section-heading a[href="#calendar"]',today='.calendar-toolbar [data-calendar-action="today"]';
 const steps={
-  receive:{page:'dashboard',target:receive,count:'新手指引 · 1 / 3',title:'点「收通知」',text:'群里收到通知时，从这个按钮开始。现在点一下，去看看正文贴在哪里。',action:'sources',label:'我想订阅武大官网'},
-  sources:{page:'dashboard',target:sources,count:'官网订阅 · 1 / 4',title:'点「订阅与来源」',text:'从这里挑选想关注的武大官网栏目。',action:'receive',label:'我想试试收通知'},
+  receive:{page:'dashboard',target:receive,count:'新手指引 · 1 / 3',title:'点「收通知」',text:'群里收到通知时，从这个按钮开始。现在点一下，去看看正文贴在哪里。',action:'sources',label:'我想订阅武大官网',video:true},
+  sources:{page:'dashboard',target:sources,count:'官网订阅 · 1 / 4',title:'点「订阅与来源」',text:'从这里挑选想关注的武大官网栏目。',action:'receive',label:'我想试试收通知',video:true},
   body:{page:'new',target:body,count:'收通知 · 2 / 3',title:'点「通知正文」输入框',text:'把收到的通知粘贴在这里。手头没有通知，也可以点一下空白处试试。'},
   editing:{page:'new',target:body,count:'收通知 · 2 / 3',title:'在这里粘贴原文',text:'填好后可以找保存按钮。只想熟悉页面，也可以留空继续。',action:'save',label:'看保存按钮'},
   save:{page:'new',target:save,count:'收通知 · 3 / 3',title:'用「仅保存原件」收下通知',text:'填好原文并确认有权保存后，点这里留存原件。想知道截止日期在哪里看，可以接着找日程。',complete:true,action:'agenda',label:'再看日程入口'},
@@ -18,10 +18,14 @@ const steps={
   result:{page:'sources',target:result,count:'官网订阅 · 4 / 4',action:'finish',label:'结束指引'}
 };
 
-export function startGuideTour({sameUser,onShown,onEnd}){
-  let current='receive',frame=0,shown=false,enteredPicker=false;
+export function startGuideTour({sameUser,onShown,onEnd,showVideo}){
+  let current='receive',frame=0,shown=false,enteredPicker=false,watching=false;
   const spot=createGuideSpotlight(action=>{
     if(action==='finish'||action==='skip')stop(true);
+    else if(action==='video'){
+      watching=true;spot.hide();
+      showVideo(()=>{watching=false;if(!listeners.signal.aborted)schedule();});
+    }
     else if(action==='agenda'){change('agenda');location.hash='#dashboard';}
     else if(action==='result'&&!document.querySelector(result))change('search');
     else if(Object.hasOwn(steps,action))change(action);
@@ -36,6 +40,7 @@ export function startGuideTour({sameUser,onShown,onEnd}){
   }
   function sync(routeReady=false){
     if(!sameUser()){stop();return;}
+    if(watching)return;
     const step=steps[current],root=document.querySelector('#content');
     if(!root||root.inert)return;
     const actual=location.hash.slice(1)||'dashboard';
@@ -91,7 +96,7 @@ export function startGuideTour({sameUser,onShown,onEnd}){
     if(restore&&focusGuide&&active?.isConnected)active.focus({preventScroll:true});
   }
   function keydown(event){
-    if(event.key==='Escape'){
+    if(!watching&&event.key==='Escape'){
       event.preventDefault();event.stopImmediatePropagation();stop(true);
     }
   }

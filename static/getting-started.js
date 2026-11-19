@@ -11,7 +11,7 @@ export function capabilityIdentity(user){
   return {state:'pending',label:'学院身份待核实',description:'现在可以先使用个人收件和办理功能。填写教师、员工等个人条件不会获得学院发布或管理权限。'+(user?.role==='admin'?'系统管理权限已授权，学院发布身份仍需另行确认。':'')};
 }
 
-export function createGettingStarted({state,api,esc,toast,onPreferences,renderHome}){
+export function createGettingStarted({state,api,esc,toast,onPreferences,renderHome,showDialog}){
   let tour=null;
   const presented=new Set(),writes=new WeakMap();
   const pendingKey=uid=>'campus.first-use-guide.pending.'+uid;
@@ -44,12 +44,24 @@ export function createGettingStarted({state,api,esc,toast,onPreferences,renderHo
       }).catch(()=>{/* The local pending receipt remains until the account write succeeds. */}).finally(()=>writes.delete(session));
     writes.set(session,save);
   }
+  function showVideo(resume){
+    const base='/static/assets/onboarding/first-steps';
+    showDialog('新手操作演示',`<div class="guide-player">
+      <video controls playsinline preload="none" poster="${base}.webp" aria-label="收通知、查看日程和订阅武汉大学官网的操作演示">
+        <source src="${base}.mp4" type="video/mp4"><track kind="captions" src="${base}.zh.vtt" srclang="zh-CN" label="中文">
+      </video>
+      <div class="guide-player-footer"><a href="${base}.mp4" download="珞珈信使新手操作演示.mp4">下载视频</a><button type="button" class="button small" data-action="close-dialog">返回指引</button></div>
+    </div>`,{dismissFooter:false});
+    const dialog=document.querySelector('#dialog'),video=dialog.querySelector('video');
+    dialog.addEventListener('close',()=>{video.pause();resume();},{once:true});
+  }
   function open(){
     const session=state.session;
     if(!session?.user)return;
     tour?.stop();
     tour=startGuideTour({
       sameUser:()=>state.session===session,
+      showVideo,
       onShown:()=>remember(session),
       onEnd:()=>{tour=null;}
     });

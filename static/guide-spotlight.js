@@ -5,10 +5,11 @@ export function createGuideSpotlight(onAction){
   layer.className='guide-layer';
   layer.dataset.onboardingGuide='';
   layer.setAttribute('popover','manual');
-  layer.innerHTML='<div class="guide-ring" aria-hidden="true"></div><aside class="guide-tip" aria-labelledby="guide-title"><div class="guide-tip-heading"><span class="guide-counter"></span><button type="button" class="guide-skip" data-guide-action="skip">跳过指引</button></div><div aria-live="polite" aria-atomic="true"><h2 id="guide-title"></h2><p id="guide-description"></p></div><button type="button" class="guide-tip-action" hidden></button></aside>';
+  layer.innerHTML='<div class="guide-ring" aria-hidden="true"></div><aside class="guide-tip" aria-labelledby="guide-title"><div class="guide-tip-heading"><span class="guide-counter"></span><button type="button" class="guide-skip" data-guide-action="skip">跳过指引</button></div><div aria-live="polite" aria-atomic="true"><h2 id="guide-title"></h2><p id="guide-description"></p></div><div class="guide-tip-actions"><button type="button" class="guide-tip-action" hidden></button><button type="button" class="guide-watch" data-guide-action="video" hidden>看视频演示</button></div></aside>';
   const tip=layer.querySelector('.guide-tip'),ring=layer.querySelector('.guide-ring');
   const counter=tip.querySelector('.guide-counter'),title=tip.querySelector('h2'),description=tip.querySelector('p'),action=tip.querySelector('.guide-tip-action');
   const skip=tip.querySelector('.guide-skip');
+  const watch=tip.querySelector('.guide-watch');
   let anchor=null,frame=0;
   const observer=typeof ResizeObserver==='function'?new ResizeObserver(schedule):null;
   const clamp=(value,min,max)=>Math.max(min,Math.min(value,max));
@@ -67,6 +68,7 @@ export function createGuideSpotlight(onAction){
     const skipLabel=step.complete?'结束指引':'跳过指引';
     if(skip.textContent!==skipLabel)skip.textContent=skipLabel;
     skip.hidden=step.action==='finish';
+    watch.hidden=!step.video;
     action.hidden=!step.action;
     if(step.action){
       if(action.textContent!==step.label)action.textContent=step.label;
