@@ -46,11 +46,12 @@ export function createGettingStarted({state,api,esc,toast,onPreferences,renderHo
   }
   function showVideo(resume){
     const base='/static/assets/onboarding/first-steps';
+    const revision='2',film=base+'.mp4?v='+revision;
     showDialog('新手操作演示',`<div class="guide-player">
       <video controls playsinline preload="none" poster="${base}.webp" aria-label="收通知、查看日程和订阅武汉大学官网的操作演示">
-        <source src="${base}.mp4" type="video/mp4"><track kind="captions" src="${base}.zh.vtt" srclang="zh-CN" label="中文">
+        <source src="${film}" type="video/mp4"><track kind="captions" src="${base}.zh.vtt?v=${revision}" srclang="zh-CN" label="中文">
       </video>
-      <div class="guide-player-footer"><a href="${base}.mp4" download="珞珈信使新手操作演示.mp4">下载视频</a><button type="button" class="button small" data-action="close-dialog">返回指引</button></div>
+      <div class="guide-player-footer"><a href="${film}" download="珞珈信使新手操作演示.mp4">下载视频</a><button type="button" class="button small" data-action="close-dialog">返回指引</button></div>
     </div>`,{dismissFooter:false});
     const dialog=document.querySelector('#dialog'),video=dialog.querySelector('video');
     dialog.addEventListener('close',()=>{video.pause();resume();},{once:true});
