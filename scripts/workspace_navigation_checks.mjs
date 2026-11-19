@@ -146,7 +146,8 @@ export async function verifyWorkspaceNavigation({page,api,nav,resize,check,out,e
     await nav('settings');assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);
     const personal=page.locator('[data-settings-panel=personal]');assert.equal(await personal.locator('.settings-item:visible').count(),4);
     assert.deepEqual(await personal.locator('.settings-item').evaluateAll(items=>items.map(item=>item.dataset.action||item.getAttribute('href'))),['getting-started','settings-profile','settings-preferences','#memory']);
-    await personal.locator('[data-action=getting-started]').click();await page.locator('[data-onboarding-guide]').waitFor();assert.equal(await page.locator('[data-onboarding-guide] ol>li').count(),3);await page.getByRole('button',{name:'跳过指引'}).click();await page.locator('#dialog').waitFor({state:'hidden'});
+    await personal.locator('[data-action=getting-started]').click();await page.locator('.home-heading a[href="#new"][data-guide-current]').waitFor();
+    await page.getByRole('button',{name:'跳过指引'}).click();await page.locator('[data-onboarding-guide]').waitFor({state:'detached'});await nav('settings');
     for(const category of ['account','display','personal']){await page.locator('[data-settings-category='+category+']').click();assert.equal(await page.locator('[data-settings-panel]:visible').count(),1);assert.equal(await page.locator('[data-settings-panel='+category+']').isVisible(),true);}
     await page.locator('[data-settings-category=personal]').focus();await page.keyboard.press('ArrowRight');assert.equal(await page.locator('[data-settings-panel=account]').isVisible(),true);await page.keyboard.press('Home');
     await page.locator('[data-action=settings-profile]').click();const before=await page.locator('#profile-form').evaluate(form=>Object.fromEntries(new FormData(form)));

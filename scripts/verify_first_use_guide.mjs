@@ -1,4 +1,4 @@
-// Run with scripts/run_browser_checks.py --suite verify_first_use_guide.mjs (isolated, real app).
+// Isolated account fixtures and the same screens, routing and source picker as the app.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -6,15 +6,16 @@ import {chromium} from 'playwright';
 import {browserOverride} from './browser-runtime.mjs';
 
 const origin='http://127.0.0.1:8786',out=path.resolve('artifacts/first-use-guide');
+const layer='[data-onboarding-guide]',anchor='[data-guide-current]',ready='#content:not([inert]):not([aria-busy])';
+const receive='.home-heading a[href="#new"]',sources='.home-heading a[href="#sources"]';
+const body='#notice-form textarea[name="body"]',save='#notice-form [value="save"]';
+const errors=[],checks=[];
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true,...browserOverride(chromium)});
-const guide='dialog[open] [data-onboarding-guide]',ready='#content:not([inert]):not([aria-busy])';
-const errors=[],checks=[];
-let passed=false;
-async function openDevice(width){
-  const context=await browser.newContext({viewport:{width,height:width<600?700:850},serviceWorkers:'block',reducedMotion:'reduce'});
+async function device(width){
+  const context=await browser.newContext({viewport:{width,height:width<600?700:850},isMobile:width<600,hasTouch:width<600,serviceWorkers:'block',reducedMotion:'reduce'});
   const page=await context.newPage();page.setDefaultTimeout(10000);
-  page.on('pageerror',error=>errors.push(error.message));
+  page.on('pageerror',err=>errors.push(err.message));
   await context.route(/^https?:/,route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
   return {page,context};
 }
@@ -29,81 +30,100 @@ async function login(page,user,hash='login'){
 async function replay(page){
   await page.goto(origin+'/#settings');
   await page.getByRole('button',{name:/新手指引/}).click();
-  return page.locator(guide);
+  await page.locator(receive+anchor).waitFor();
 }
-async function inBounds(page){
-  const bounds=await page.locator(guide).evaluate(node=>{
-    const box=node.getBoundingClientRect(),dialog=node.closest('dialog').getBoundingClientRect();
-    return {width:box.width,blankBelow:Math.max(0,dialog.bottom-box.bottom),fits:box.left>=0&&box.right<=innerWidth+1&&node.scrollWidth<=node.clientWidth+1&&document.documentElement.scrollWidth<=innerWidth+1};
+async function seen(context){
+  const response=await context.request.get(origin+'/api/session');assert.equal(response.status(),200);
+  return (await response.json()).user.profile.first_use_guide_seen;
+}
+function recordWrites(page){
+  const writes=[];
+  page.on('request',r=>{if(!['GET','HEAD','OPTIONS'].includes(r.method()))writes.push(new URL(r.url()).pathname);});
+  return writes;
+}
+async function pointed(page,selector){
+  const target=page.locator(selector+anchor);
+  await target.waitFor();
+  await page.waitForFunction(selector=>{
+    const target=document.querySelector(selector+'[data-guide-current]'),tip=document.querySelector('.guide-tip'),ring=document.querySelector('.guide-ring');
+    if(!target||!ring||!tip)return false;
+    const t=target.getBoundingClientRect(),c=tip.getBoundingClientRect(),r=ring.getBoundingClientRect();
+    const hit=document.elementFromPoint(t.x+t.width/2,t.y+t.height/2);
+    const apart=c.bottom<=t.top||c.top>=t.bottom||c.right<=t.left||c.left>=t.right;
+    return (hit===target||target.contains(hit))&&apart&&c.width>=238&&c.left>=0&&c.right<=innerWidth+1&&c.top>=0&&c.bottom<=innerHeight+1&&Math.abs(r.left-t.left)<=5&&Math.abs(r.right-t.right)<=5&&Math.abs(r.top-t.top)<=5;
+  },selector,{timeout:3500}).catch(async error=>{
+    const details=await target.evaluate(n=>{
+      const box=e=>e.getBoundingClientRect().toJSON(),t=box(n);
+      return {target:t,tip:box(document.querySelector('.guide-tip')),ring:box(document.querySelector('.guide-ring')),hit:document.elementFromPoint(t.x+t.width/2,t.y+t.height/2)?.outerHTML.slice(0,150)};
+    });
+    throw Error(selector+' '+JSON.stringify(details)+' '+error.message);
   });
-  assert.ok(bounds.width>=240&&bounds.fits&&bounds.blankBelow<50,JSON.stringify(bounds));
+  return target;
 }
-async function assertSeen(context){
-  const r=await context.request.get(origin+'/api/session');assert.equal(r.status(),200);
-  assert.equal((await r.json()).user.profile.first_use_guide_seen,true);
+async function finish(page){
+  await page.getByRole('button',{name:'结束指引'}).click();await page.locator(layer).waitFor({state:'detached'});
+  assert.equal(await page.locator(anchor).count(),0);
 }
+let passed=false;
 try{
-  const desktop=await openDevice(1280),p=desktop.page;
-  await login(p,'guide-first');
-  const tour=p.locator(guide);
-  await tour.getByRole('heading',{name:'从哪里收通知？'}).waitFor();
-  await inBounds(p);
-  checks.push('first visit on desktop');
-  const writes=[];p.on('request',r=>{if(!['GET','HEAD','OPTIONS'].includes(r.method()))writes.push(new URL(r.url()).pathname);});
-  await tour.getByRole('button',{name:'武大官网的'}).click();
-  assert.equal(await tour.locator('[data-guide-route]').getAttribute('href'),'#sources');
-  assert.match(await tour.locator('[data-guide-path-note]').innerText(),/自动收件/);
-  await p.screenshot({path:path.join(out,'desktop.png')});
-  await tour.getByRole('button',{name:'下一步'}).click();
-  await tour.getByRole('heading',{name:'这条通知里，我要做什么？'}).waitFor();
-  assert.equal(await tour.locator('[data-guide-step="2"] h3').evaluate(n=>n===document.activeElement),true);
-  await tour.getByRole('button',{name:'上一步'}).click();
-  assert.equal(await tour.getByRole('button',{name:'武大官网的'}).getAttribute('aria-pressed'),'true');
-  await tour.getByRole('button',{name:'下一步'}).click();
-  await tour.getByRole('button',{name:'下一步'}).click();
-  await tour.getByRole('button',{name:'我要申请'}).click();
-  assert.match(await tour.locator('[data-guide-result]').innerText(),/12 月 4 日 17:00/);
-  await tour.getByRole('button',{name:'仅存资料'}).click();
-  assert.match(await tour.locator('[data-guide-result]').innerText(),/都不会增加事项/);
-  await tour.getByRole('button',{name:'开始使用'}).click();
-  await tour.waitFor({state:'hidden'});await assertSeen(desktop.context);
-  checks.push('next, back, both outcomes and finish');
-  assert.deepEqual(writes.filter(path=>path!=='/api/profile'),[],'Tour must not write notices, subscriptions, AI jobs, or calendars');
-  checks.push('no domain writes');
-  await p.reload();await p.locator(ready+' .personal-home').waitFor();assert.equal(await tour.count(),0);
-  await desktop.context.close();
+  const {page:p,context:desktop}=await device(1280);await login(p,'guide-first');
+  const writes=recordWrites(p);
+  await pointed(p,receive);assert.equal(await p.locator('dialog[open]').count(),0);
+  await p.screenshot({path:path.join(out,'desktop.png')});checks.push('Desktop first visit points to the clickable home link');
+  await p.locator(receive).focus();await p.keyboard.press('Enter');
+  const field=await pointed(p,body);assert.equal(new URL(p.url()).hash,'#new');
+  await field.click();await p.getByRole('button',{name:'看保存按钮'}).click();
+  await pointed(p,save);assert.equal(await p.locator(body).inputValue(),'');
+  assert.equal(await p.locator('#notice-form [name=rights]').isChecked(),false);
+  await p.getByRole('button',{name:'再看日程入口'}).click();
+  await (await pointed(p,'.home-agenda .home-section-heading a[href="#calendar"]')).click();
+  await (await pointed(p,'.calendar-toolbar [data-calendar-action="today"]')).click();
+  await p.locator(layer).waitFor({state:'detached'});assert.equal(await seen(desktop),true);
+  assert.equal(new URL(p.url()).hash,'#calendar');checks.push('Optional calendar walkthrough follows the actual home link and Today control');
+  assert.deepEqual(writes.filter(p=>p!=='/api/profile'),[]);checks.push('Real form, untouched contents, permission and submit; no business writes');
+  await p.goto(origin+'/#dashboard');await p.reload();await p.locator(ready+' .personal-home').waitFor();
+  assert.equal(await p.locator(layer).count(),0);await desktop.close();
 
-  // Fresh browser storage proves persistence comes from the account, not just the first device.
-  const phone=await openDevice(320),m=phone.page;
-  await login(m,'guide-first');assert.equal(await m.locator(guide).count(),0);
-  checks.push('account persistence across devices');
-  const again=await replay(m);
-  await again.getByRole('link',{name:'去收通知'}).click();
-  await m.locator(ready+' #notice-form').waitFor();
-  await replay(m);await again.getByRole('button',{name:'武大官网的'}).click();
-  await again.getByRole('link',{name:'去选武大来源'}).click();
-  await m.getByRole('button',{name:'选择武汉大学来源'}).waitFor();
-  checks.push('replay and both intake links');
-  // Same browser, different account: a direct link opens first and does not consume its tour.
-  await phone.context.clearCookies();await m.goto('about:blank');await login(m,'guide-second','new');
-  await m.locator(ready+' #notice-form').waitFor();
-  assert.equal(await m.locator(guide).count(),0);
-  assert.equal((await (await phone.context.request.get(origin+'/api/session')).json()).user.profile.first_use_guide_seen,false);
-  await m.goto(origin+'/#dashboard');await again.waitFor();
-  checks.push('second account, deep link then first home');
-  await inBounds(m);
-  await again.getByRole('button',{name:'下一步'}).click();await inBounds(m);
-  await m.screenshot({path:path.join(out,'mobile.png')});
-  checks.push('mobile layout');
-  await again.getByRole('button',{name:'跳过指引'}).click();
-  await assertSeen(phone.context);
-  await m.reload();await m.locator(ready+' .personal-home').waitFor();assert.equal(await m.locator(guide).count(),0);
-  checks.push('skip without a second prompt');
-  await replay(m);await m.keyboard.press('Escape');await m.locator('dialog[open]').waitFor({state:'hidden'});
-  await phone.context.close();assert.deepEqual(errors,[]);checks.push('replay and keyboard close');passed=true;
-  console.log('First visit, skip, replay, both outcomes and cross-device/account checks passed.');
+  const {page:m,context:phone}=await device(320);await login(m,'guide-first');
+  assert.equal(await m.locator(layer).count(),0);checks.push('Account receipt across devices');
+  await replay(m);await pointed(m,receive);await m.screenshot({path:path.join(out,'mobile.png')});
+  const sourceWrites=recordWrites(m);
+  await m.getByRole('button',{name:'我想订阅武大官网'}).click();await (await pointed(m,sources)).tap();
+  const open='.source-page-heading [data-source-action="school-presets"]';
+  await (await pointed(m,open)).tap();
+  const search='#source-preset-search';const searchInput=await pointed(m,search);
+  assert.equal(await m.locator('dialog[open] '+layer).count(),1);
+  await searchInput.fill('不存在的栏目abcdef');assert.equal(await m.getByRole('button',{name:'看栏目按钮'}).isDisabled(),true);
+  await searchInput.fill('图书馆');await m.getByRole('button',{name:'看栏目按钮'}).click();
+  const subscribe='#source-preset-list [data-source-action="preset-subscribe"]';
+  const button=await pointed(m,subscribe);
+  assert.match(await button.locator('xpath=ancestor::article').innerText(),/图书馆/);
+  await m.screenshot({path:path.join(out,'source-result.png')});
+  await finish(m);assert.equal(await m.locator('dialog[open] #source-presets').isVisible(),true);
+  assert.deepEqual(sourceWrites.filter(p=>p!=='/api/profile'),[]);checks.push('Mobile native dialog, real search and correct subscription button; no subscription or AI calls');
+  await m.locator('dialog[open] .dialog-head [data-action=close-dialog]').click();
+  await replay(m);await m.keyboard.press('Escape');await m.locator(layer).waitFor({state:'detached'});
+  await replay(m);await m.goto(origin+'/#tasks');await m.locator(ready+'[data-page=tasks]').waitFor();
+  assert.equal(await m.locator(layer).count(),0);checks.push('Escape and unrelated navigation exit the tour');
+
+  await phone.clearCookies();await m.goto('about:blank');await login(m,'guide-second','new');
+  await m.locator(ready+' #notice-form').waitFor();assert.equal(await seen(phone),false);
+  assert.equal(await m.locator(layer).count(),0);await m.goto(origin+'/#dashboard');await pointed(m,receive);
+  await m.getByRole('button',{name:'跳过指引'}).click();await m.locator(layer).waitFor({state:'detached'});
+  assert.equal(await seen(phone),true);await m.reload();await m.locator(ready+' .personal-home').waitFor();
+  assert.equal(await m.locator(layer).count(),0);checks.push('Second account, deep link, skip and no second prompt');
+  await replay(m);await (await pointed(m,receive)).tap();
+  const savedDraft=m.waitForResponse(r=>r.url().endsWith('/api/edit-cache/new-notice')&&r.request().method()==='PUT'&&r.ok());
+  const draftInput=await pointed(m,body);await draftInput.fill('这是一条尚未提交的通知。');
+  await m.getByRole('button',{name:'看保存按钮'}).tap();await pointed(m,save);
+  await m.getByRole('button',{name:'再看日程入口'}).tap();await savedDraft;
+  await pointed(m,'.home-agenda .home-section-heading a[href="#calendar"]');
+  await m.getByRole('button',{name:'跳过指引'}).click();
+  await m.goto(origin+'/#new');await m.reload();await m.locator(ready+' '+body).waitFor();
+  assert.equal(await m.locator(body).inputValue(),'这是一条尚未提交的通知。');checks.push('An actual user edit survives the guide and a reload');
+  await phone.close();assert.deepEqual(errors,[]);passed=true;
+  console.log('Guided real control interactions passed at desktop and phone widths.');
 }catch(error){errors.push(error.message);throw error;}
 finally{
-  await browser.close();
-  await writeFile(path.join(out,'report.json'),JSON.stringify({passed,viewports:[1280,320],checks,errors},null,2));
+  await browser.close();await writeFile(path.join(out,'report.json'),JSON.stringify({passed,checks,errors},null,2));
 }

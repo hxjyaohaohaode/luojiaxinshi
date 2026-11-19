@@ -396,11 +396,12 @@ function settingsPage({preserveScroll=false}={}){
   const item=(title,text,action,i='settings')=>`<button type="button" class="settings-item" data-action="${action}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${esc(text)}</small></span>${icon('arrow')}</button>`;
   const link=(title,text,href,i)=>`<a class="settings-item" href="${href}"><span class="settings-item-icon">${icon(i)}</span><span><strong>${title}</strong><small>${text}</small></span>${icon('arrow')}</a>`;
   const menus={
-    personal:item('新手指引','用一条示例通知，走一遍从收件到日程的三步','getting-started','info')+item('个人条件',labels['settings-profile'],'settings-profile','doc')+item('回答偏好',labels['settings-preferences'],'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
+    personal:item('新手指引','跟着页面上的提示收通知，或订阅武大官网栏目','getting-started','info')+item('个人条件',labels['settings-profile'],'settings-profile','doc')+item('回答偏好',labels['settings-preferences'],'settings-preferences','spark')+link('我的记忆与项目','偏好、项目与专题','#memory','history'),
     account:item('账号安全',labels['settings-security'],'settings-security','shield')+item('智能通知偏好','关注内容、分级汇总与免打扰','settings-notification','bell')+item('账号容量','通知、会话与文件使用情况','account-usage','doc')+item('模型与处理记录',labels['settings-model'],'settings-model','spark')+link('通知来源','常用网站、公众号与群','#sources','history')+item('导入与导出','备份与迁移资料','settings-data','down')+link('隐私政策与用户协议','数据与服务条款','#privacy','shield')+(state.session.user.role==='admin'?item('运行就绪与验收证据','服务配置、实际连接、队列与本环境验收记录','settings-operations','shield'):''),
     display:item('添加到桌面','手机与电脑安装入口','settings-install','down')+item('语音播报','朗读回复与播放控制','settings-speech','mic')+(state.session.genui?item('互动回答',labels['settings-genui'],'settings-genui','grid'):'')
   };
   content.innerHTML=`<h1 class="sr-only">个人与账号</h1><div class="settings-home" data-category="${selected}"><header class="settings-person"><span class="avatar avatar-${esc(summary.tone)}">${esc(summary.name.slice(0,1))}</span><div><h2>${esc(summary.name)}</h2><p>${esc(summary.school)}</p></div></header><div class="settings-layout"><nav class="settings-categories" role="tablist" aria-label="设置分类">${groups.map(([key,label])=>`<button type="button" role="tab" id="settings-category-${key}" data-settings-category="${key}" aria-controls="settings-panel-${key}" aria-selected="${key===selected}" tabindex="${key===selected?0:-1}">${label}</button>`).join('')}</nav><div class="settings-groups">${groups.map(([key,label])=>`<section class="settings-group" role="tabpanel" id="settings-panel-${key}" data-settings-panel="${key}" aria-labelledby="settings-category-${key}" ${key===selected?'':'hidden'}><h3>${label}</h3><div class="settings-menu">${menus[key]}</div>${key==='display'?`<details class="settings-usage"><summary>使用偏好</summary>${companionSetting()}</details>`:''}</section>`).join('')}</div></div></div>`;
+  content.querySelector('[data-settings-panel="personal"]').insertAdjacentHTML('beforeend','<details class="settings-identity"><summary>我的学院身份</summary>'+gettingStarted.identityMarkup()+'</details>');
   const nav=content.querySelector('.settings-categories');
   const choose=(key,focus=false)=>{content.querySelector('.settings-home').dataset.category=key;for(const tab of nav.children){const active=tab.dataset.settingsCategory===key;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus();}for(const panel of content.querySelectorAll('[data-settings-panel]'))panel.hidden=panel.dataset.settingsPanel!==key;};
   nav.addEventListener('click',event=>{const tab=event.target.closest('[data-settings-category]');if(tab)choose(tab.dataset.settingsCategory);});
@@ -562,7 +563,10 @@ async function route(){
     choreograph(content);
   }catch(error){if(id!==state.renderId)return;if(error.status===401){push.stop();state.session=null;drafts.clear();authPage();}else {if(!('status' in error))console.error('界面加载失败',error);content.innerHTML=empty('暂时未能打开',('status' in error)?error.message:'页面暂时未能显示，你的已保存内容仍然保留。请重新加载。',button('重新加载','refresh'),false,'static');}}
   finally{finishRouteFeedback();if(id===state.renderId&&$('#content')){content.inert=false;content.removeAttribute('aria-busy');content.classList.remove('route-pending');if(['notices','tasks'].includes(page)&&!$('#dialog').open&&state.listFocus?.[page])content.querySelector(state.listFocus[page])?.focus({preventScroll:true});}}
-  if(id===state.renderId&&page==='dashboard')gettingStarted.onHomeReady();
+  if(id===state.renderId){
+    gettingStarted.onRouteReady();
+    if(page==='dashboard')gettingStarted.onHomeReady();
+  }
 }
 function simplifyPageHeading(){
   for(const header of $$('#content .page-title')){
@@ -761,11 +765,19 @@ function attachDraftForm(){
   form.dataset.cacheKey=key;drafts.activate(key);
   if(state.notice.review_observation_contract===1)reviewObserver.bind(form,state.session.user.id+':'+key);
 }
+function noticeDraftFields(form){
+  const fields={};
+  for(const el of form.elements){
+    if(!el.name||el.type==='file'||el.type==='submit'||el.name==='prepare_consent')continue;
+    fields[el.name]=el.type==='checkbox'?el.checked:el.value;
+  }
+  return fields;
+}
 function restoreNoticeForm(){
   const form=$('#notice-form');if(!form)return;
   const cached=drafts.peek('new-notice');drafts.activate('new-notice');form.dataset.cacheKey='new-notice';
   const data=cached.payload;
-  if(!data)return;
+  if(!data){form.dataset.initialFields=JSON.stringify(noticeDraftFields(form));return;}
   let restoredContent=false;
   for(const [name,value] of Object.entries(data.fields||{})){
     const el=form.elements.namedItem(name);if(!el||el.type==='file'||name==='prepare_consent')continue;
@@ -787,10 +799,11 @@ function persistCurrentForms(){
   for(const form of $$('form[data-cache-key]')){
     const key=form.dataset.cacheKey;if(drafts.peek(key).retired)continue;
     if(form.id==='notice-form'){
-      const fields={};for(const el of form.elements){if(!el.name||el.type==='file'||el.type==='submit'||el.name==='prepare_consent')continue;fields[el.name]=el.type==='checkbox'?el.checked:el.value;}
+      const fields=noticeDraftFields(form),cached=drafts.peek(key).payload;
       const actual=[...form.elements.files.files];if(actual.length)noticeFiles=actual;
-      const files=actual.length?actual.map(f=>f.name):(drafts.peek(key).payload?.files||[]);
-      const snapshot={fields,files};if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(key).payload))drafts.stage(key,snapshot);
+      const files=actual.length?actual.map(f=>f.name):(cached?.files||[]);
+      if(!cached&&!files.length&&JSON.stringify(fields)===form.dataset.initialFields)continue;
+      const snapshot={fields,files};if(JSON.stringify(snapshot)!==JSON.stringify(cached))drafts.stage(key,snapshot);
     }else if(form.id==='draft-form'){
       captureDrafts();syncIssueControls(form,state.notice.draft?.quality||{},state.drafts,state.qualityDecisions,esc);const snapshot={tasks:state.drafts,quality_resolution:state.qualityResolution,issue_resolutions:state.qualityDecisions,manual_quality_reviewed:state.manualQualityReviewed};if(JSON.stringify(snapshot)!==JSON.stringify(drafts.peek(key).payload))drafts.stage(key,snapshot);
     }else if(form.id==='task-form'&&state.editTask){
@@ -861,7 +874,7 @@ function lazyUI(load,methods,synchronous={}){
   return feature;
 }
 
-const gettingStarted=createGettingStarted({state,api,esc,showDialog,toast,onPreferences:applyDisplayPreferences});
+const gettingStarted=createGettingStarted({state,api,esc,toast,onPreferences:applyDisplayPreferences,renderHome:route});
 const verification=createVerificationUI({state,api,esc,toast});
 const pwa=createPWA({showDialog});
 const accountSecurity=createAccountSecurity({state,esc,field,api,verification,showDialog,toast});
