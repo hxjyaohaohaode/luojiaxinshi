@@ -9,6 +9,13 @@ test('trace keeps actual step times and outcomes; missing measurements remain un
   const records=traceRecords(message,110);assert.equal(records[0].duration,5);assert.equal(records[0].lane,'tools');assert.equal(records[1].duration,4);assert.equal(records[1].lane,'check');assert.equal(records[2].duration,null);
   assert.doesNotMatch(JSON.stringify(records),/must not expose|arguments|private_reasoning/);assert.equal(traceDuration(null),'未记录');assert.equal(traceDuration(61),'1分1秒');assert.equal(traceDuration(0),'0秒');
 });
+test('one nested progress label does not double-count a tool, separate calls remain visible',()=>{
+  const tool={id:'one',stage:'agent_tool',title:'读取材料',state:'complete',started_at:10,finished_at:15,summary_origin:'execution',summary:'已读取两页'};
+  const phase={id:'phase',stage:'writing',title:tool.title,state:'complete',started_at:11,finished_at:15,summary_origin:'server'};
+  const results=traceRecords({_work:[tool,phase,{...tool,id:'two',started_at:16,finished_at:17},{...phase,id:'later',started_at:20,finished_at:22}]});
+  assert.deepEqual(results.map(r=>[r.id,r.order]),[['one',1],['two',2],['later',3]]);
+  assert.equal(results[0].title,'已读取两页');
+});
 test('pull-to-new-chat can retreat before the threshold; a small movement never arms it',()=>{
   const pull=new EndPullState(110);pull.pull(12);assert.equal(pull.armed,false);pull.pull(120);assert.equal(pull.armed,true);pull.pull(55);assert.equal(pull.armed,false);assert.equal(pull.progress,.5);pull.reset();assert.equal(pull.progress,0);
 });

@@ -334,6 +334,8 @@ class ChatRun(Run):
         elif name == 'adapt_workflow':
             summary = '调整工作方式'
             detail = args.reason
+        elif name in ('compose_interface','generateSandboxedUi') and result.get('submitted_for_review'):
+            summary = '已生成互动界面并提交复核'
         elif name == 'mcp_call':summary = '外部工具已返回：' + args.tool
         elif name == 'current_time':summary = '当前日期：' + result['date']
         elif name == 'workspace_read':

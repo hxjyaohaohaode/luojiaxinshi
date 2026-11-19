@@ -4,12 +4,20 @@ const statusText={running:'进行中',complete:'已完成',interrupted:'未完�
 const stageText={planning:'确认范围',retrieving:'查阅资料',searching:'公开检索',coverage:'覆盖检查',writing:'生成回复',verifying:'独立核验',agent_tool:'工具',subagent:'子任务'};
 const finite=value=>typeof value==='number'&&Number.isFinite(value);
 export function traceRecords(message,now=Date.now()/1000){
-  return (message._work||message.grounding?.steps||[]).map((step,index)=>{
+  const steps=message._work||message.grounding?.steps||[],records=[];
+  for(const [index,step] of steps.entries()){
     const start=finite(step.started_at)?step.started_at:null,end=finite(step.finished_at)?step.finished_at:step.state==='running'?now:null;
+    // A writing phase emitted inside the active tool can describe the same
+    // operation. Retain the tool receipt and its measured duration once.
+    const parent=steps[index-1];
+    if(step.stage==='writing'&&step.summary_origin==='server'&&parent?.stage==='agent_tool'&&step.title===parent.title&&
+       start!==null&&finite(parent.started_at)&&start>=parent.started_at&&
+       (parent.state==='running'||finite(parent.finished_at)&&start<=parent.finished_at))continue;
     const outcome=step.state==='complete'&&step.summary_origin==='execution'&&step.summary;
-    return {id:step.id||'step-'+index,order:index+1,stage:step.stage,title:outcome||step.title||'执行记录',state:step.state||'interrupted',summary:step.summary||'',detail:step.detail||'',start,end,
-      duration:start!==null&&end!==null&&end>=start?end-start:null,lane:step.stage==='agent_tool'||step.stage==='subagent'?'tools':step.stage==='verifying'?'check':'work'};
-  });
+    records.push({id:step.id||'step-'+index,order:records.length+1,stage:step.stage,title:outcome||step.title||'执行记录',state:step.state||'interrupted',summary:step.summary||'',detail:step.detail||'',start,end,
+      duration:start!==null&&end!==null&&end>=start?end-start:null,lane:step.stage==='agent_tool'||step.stage==='subagent'?'tools':step.stage==='verifying'?'check':'work'});
+  }
+  return records;
 }
 export function traceDuration(seconds){if(!finite(seconds))return '未记录';const n=Math.max(0,seconds);if(n>0&&n<.1)return '不足0.1秒';return n<60?`${Number(n.toFixed(1))}秒`:`${Math.floor(n/60)}分${Math.floor(n%60)}秒`;}
 const clock=seconds=>seconds===null?'未记录':new Date(seconds*1000).toLocaleTimeString('zh-CN',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
